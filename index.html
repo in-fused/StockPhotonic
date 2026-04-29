@@ -460,106 +460,40 @@
         }
         
         // DATA: Top 40 US stocks (April 2026)
-        const companies = [
-            { id: 1, ticker: "NVDA", name: "NVIDIA Corporation", cap: 5.264, sector: "Semiconductors", color: "#00f9ff", rank: 1 },
-            { id: 2, ticker: "GOOGL", name: "Alphabet Inc. (Google)", cap: 4.216, sector: "Software", color: "#c026d3", rank: 2 },
-            { id: 3, ticker: "AAPL", name: "Apple Inc.", cap: 3.928, sector: "Semiconductors", color: "#00f9ff", rank: 3 },
-            { id: 4, ticker: "MSFT", name: "Microsoft Corporation", cap: 3.157, sector: "Software", color: "#c026d3", rank: 4 },
-            { id: 5, ticker: "AMZN", name: "Amazon.com Inc.", cap: 2.808, sector: "Consumer", color: "#00ff9f", rank: 5 },
-            { id: 6, ticker: "AVGO", name: "Broadcom Inc.", cap: 1.980, sector: "Semiconductors", color: "#00f9ff", rank: 6 },
-            { id: 7, ticker: "META", name: "Meta Platforms Inc.", cap: 1.722, sector: "Software", color: "#c026d3", rank: 7 },
-            { id: 8, ticker: "TSLA", name: "Tesla Inc.", cap: 1.422, sector: "Consumer", color: "#00ff9f", rank: 8 },
-            { id: 9, ticker: "BRK-B", name: "Berkshire Hathaway Inc.", cap: 1.019, sector: "Financials", color: "#ffd700", rank: 9 },
-            { id: 10, ticker: "WMT", name: "Walmart Inc.", cap: 1.017, sector: "Consumer", color: "#00ff9f", rank: 10 },
-            { id: 11, ticker: "JPM", name: "JPMorgan Chase & Co.", cap: 0.835, sector: "Financials", color: "#ffd700", rank: 11 },
-            { id: 12, ticker: "LLY", name: "Eli Lilly and Company", cap: 0.776, sector: "Healthcare", color: "#c026d3", rank: 12 },
-            { id: 13, ticker: "XOM", name: "Exxon Mobil Corporation", cap: 0.616, sector: "Energy", color: "#ff6b00", rank: 13 },
-            { id: 14, ticker: "V", name: "Visa Inc.", cap: 0.597, sector: "Financials", color: "#ffd700", rank: 14 },
-            { id: 15, ticker: "MU", name: "Micron Technology Inc.", cap: 0.592, sector: "Semiconductors", color: "#00f9ff", rank: 15 },
-            { id: 16, ticker: "AMD", name: "Advanced Micro Devices", cap: 0.546, sector: "Semiconductors", color: "#00f9ff", rank: 16 },
-            { id: 17, ticker: "JNJ", name: "Johnson & Johnson", cap: 0.542, sector: "Healthcare", color: "#c026d3", rank: 17 },
-            { id: 18, ticker: "ORCL", name: "Oracle Corporation", cap: 0.497, sector: "Software", color: "#c026d3", rank: 18 },
-            { id: 19, ticker: "MA", name: "Mastercard Incorporated", cap: 0.452, sector: "Financials", color: "#ffd700", rank: 19 },
-            { id: 20, ticker: "COST", name: "Costco Wholesale", cap: 0.443, sector: "Consumer", color: "#00ff9f", rank: 20 },
-            { id: 21, ticker: "INTC", name: "Intel Corporation", cap: 0.427, sector: "Semiconductors", color: "#00f9ff", rank: 21 },
-            { id: 22, ticker: "CAT", name: "Caterpillar Inc.", cap: 0.386, sector: "Industrials", color: "#00b4d8", rank: 22 },
-            { id: 23, ticker: "NFLX", name: "Netflix Inc.", cap: 0.385, sector: "Software", color: "#c026d3", rank: 23 },
-            { id: 24, ticker: "BAC", name: "Bank of America", cap: 0.375, sector: "Financials", color: "#ffd700", rank: 24 },
-            { id: 25, ticker: "CVX", name: "Chevron Corporation", cap: 0.368, sector: "Energy", color: "#ff6b00", rank: 25 },
-            { id: 26, ticker: "ABBV", name: "AbbVie Inc.", cap: 0.349, sector: "Healthcare", color: "#c026d3", rank: 26 },
-            { id: 27, ticker: "CSCO", name: "Cisco Systems", cap: 0.349, sector: "Software", color: "#c026d3", rank: 27 },
-            { id: 28, ticker: "PG", name: "Procter & Gamble", cap: 0.346, sector: "Consumer", color: "#00ff9f", rank: 28 },
-            { id: 29, ticker: "PLTR", name: "Palantir Technologies", cap: 0.343, sector: "Software", color: "#c026d3", rank: 29 },
-            { id: 30, ticker: "HD", name: "The Home Depot", cap: 0.331, sector: "Consumer", color: "#00ff9f", rank: 30 },
-            { id: 31, ticker: "KO", name: "The Coca-Cola Company", cap: 0.325, sector: "Consumer", color: "#00ff9f", rank: 31 },
-            { id: 32, ticker: "LRCX", name: "Lam Research", cap: 0.324, sector: "Semiconductors", color: "#00f9ff", rank: 32 },
-            { id: 33, ticker: "UNH", name: "UnitedHealth Group", cap: 0.322, sector: "Healthcare", color: "#c026d3", rank: 33 },
-            { id: 34, ticker: "AMAT", name: "Applied Materials", cap: 0.321, sector: "Semiconductors", color: "#00f9ff", rank: 34 },
-            { id: 35, ticker: "MS", name: "Morgan Stanley", cap: 0.302, sector: "Financials", color: "#ffd700", rank: 35 }
-        ];
+// =============================================
+// DYNAMIC DATA LOADING - Replaces all hardcoded data
+// =============================================
+let companies = [];
+let connections = [];
+
+async function loadData() {
+    try {
+        const [compRes, connRes] = await Promise.all([
+            fetch('data/companies.json'),
+            fetch('data/connections.json')
+        ]);
         
-        // CONNECTIONS: Curated real-world inspired photonic links (supply, partnership, investment)
-        const connections = [
-            // NVIDIA ecosystem (most connected hub)
-            { source: 1, target: 8, type: "partnership", label: "AI chips for FSD & Dojo", strength: 0.95 },
-            { source: 1, target: 7, type: "supply", label: "GPUs for AI training clusters", strength: 0.92 },
-            { source: 1, target: 4, type: "ecosystem", label: "Azure OpenAI + NVDA GPUs", strength: 0.88 },
-            { source: 1, target: 5, type: "supply", label: "AWS SageMaker & Trainium", strength: 0.85 },
-            { source: 1, target: 6, type: "partnership", label: "Networking + AI silicon", strength: 0.82 },
-            { source: 1, target: 16, type: "competitor", label: "GPU/CPU AI rivalry", strength: 0.78 },
-            { source: 1, target: 15, type: "supply", label: "HBM memory for Blackwell", strength: 0.91 },
-            { source: 1, target: 32, type: "supply", label: "Etch equipment for fabs", strength: 0.79 },
-            { source: 1, target: 34, type: "supply", label: "Deposition & metrology tools", strength: 0.81 },
-            { source: 1, target: 21, type: "ecosystem", label: "Foundry & packaging collab", strength: 0.65 },
-            
-            // Apple supply chain
-            { source: 3, target: 6, type: "supply", label: "Custom silicon & wireless", strength: 0.87 },
-            { source: 3, target: 1, type: "partnership", label: "Future AI silicon exploration", strength: 0.55 },
-            
-            // Amazon & Microsoft cloud rivalry + shared infra
-            { source: 5, target: 4, type: "competitor", label: "Cloud & generative AI battle", strength: 0.72 },
-            { source: 5, target: 1, type: "supply", label: "AWS AI infrastructure", strength: 0.85 },
-            
-            // Berkshire Hathaway investments (classic conglomerate links)
-            { source: 9, target: 31, type: "investment", label: "~9% stake in Coca-Cola", strength: 0.94 },
-            { source: 9, target: 14, type: "investment", label: "Long-term American Express position", strength: 0.81 },
-            { source: 9, target: 25, type: "investment", label: "Significant Chevron holding", strength: 0.76 },
-            { source: 9, target: 28, type: "investment", label: "Consumer staples exposure", strength: 0.68 },
-            
-            // Payments & Banking nexus
-            { source: 11, target: 14, type: "partnership", label: "Visa card network integration", strength: 0.89 },
-            { source: 11, target: 19, type: "partnership", label: "Mastercard global payments", strength: 0.84 },
-            { source: 14, target: 19, type: "competitor", label: "Card network duopoly", strength: 0.71 },
-            { source: 24, target: 11, type: "ecosystem", label: "Banking sector interlocks", strength: 0.65 },
-            { source: 35, target: 11, type: "ecosystem", label: "Wall Street capital flows", strength: 0.62 },
-            
-            // Healthcare & Pharma payers
-            { source: 12, target: 33, type: "partnership", label: "Mounjaro/Zepbound formulary", strength: 0.83 },
-            { source: 17, target: 33, type: "ecosystem", label: "Insurance-pharma dynamics", strength: 0.59 },
-            { source: 26, target: 12, type: "competitor", label: "Immunology & oncology rivalry", strength: 0.67 },
-            
-            // Palantir data/AI platform
-            { source: 29, target: 4, type: "partnership", label: "Azure + Palantir Foundry", strength: 0.79 },
-            { source: 29, target: 2, type: "partnership", label: "Google Cloud analytics", strength: 0.71 },
-            
-            // Oracle vs Microsoft cloud
-            { source: 18, target: 4, type: "competitor", label: "Database & cloud rivalry", strength: 0.64 },
-            
-            // Consumer retail giants
-            { source: 10, target: 20, type: "competitor", label: "Membership retail battle", strength: 0.58 },
-            { source: 10, target: 30, type: "ecosystem", label: "Home improvement supply chain", strength: 0.52 },
-            { source: 28, target: 31, type: "ecosystem", label: "Shared CPG retail channels", strength: 0.61 },
-            { source: 28, target: 10, type: "supply", label: "Consumer goods distribution", strength: 0.55 },
-            
-            // Energy & Industrials
-            { source: 13, target: 25, type: "competitor", label: "Oil major peers", strength: 0.48 },
-            { source: 22, target: 8, type: "partnership", label: "Autonomous heavy equipment", strength: 0.44 },
-            
-            // Additional semi ecosystem
-            { source: 16, target: 15, type: "supply", label: "Memory for AI accelerators", strength: 0.73 },
-            { source: 32, target: 6, type: "supply", label: "Advanced packaging equipment", strength: 0.69 },
-            { source: 34, target: 21, type: "supply", label: "Wafer fab tools collab", strength: 0.66 }
-        ];
+        companies = await compRes.json();
+        connections = await connRes.json();
+        
+        console.log(`✅ Loaded ${companies.length} companies + ${connections.length} connections`);
+        
+        // Initialize the graph with real data
+        if (typeof initPhotonicGraph === 'function') {
+            initPhotonicGraph();
+        } else if (typeof initGraph === 'function') {
+            initGraph();
+        } else {
+            console.warn('Graph init function not found');
+        }
+    } catch (error) {
+        console.error('Data loading failed:', error);
+        alert('Could not load data/companies.json or data/connections.json. Check the files exist.');
+    }
+}
+
+// Start loading
+loadData();
         
         // Map id to company for quick lookup
         const companyMap = {};

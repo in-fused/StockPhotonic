@@ -520,36 +520,38 @@ loadData();
         let animationFrame = null;
         
         // Initialize nodes from companies
-        function initNodes() {
-            nodes = companies.map((c, i) => {
-                // Spread in a nice organic layout (roughly circular with center bias)
-                const angle = (i / companies.length) * Math.PI * 2;
-                const radius = 280 + Math.random() * 120;
-                const centerX = 600;
-                const centerY = 340;
-                
-                return {
-                    ...c,
-                    x: centerX + Math.cos(angle) * radius + (Math.random() - 0.5) * 80,
-                    y: centerY + Math.sin(angle) * radius * 0.7 + (Math.random() - 0.5) * 60,
-                    vx: 0,
-                    vy: 0,
-                    fx: null,
-                    fy: null
-                };
-            });
-            
-            // Build links from connections
-            links = connections.map(conn => {
-                const sourceNode = nodes.find(n => n.id === conn.source);
-                const targetNode = nodes.find(n => n.id === conn.target);
-                return {
-                    ...conn,
-                    source: sourceNode,
-                    target: targetNode
-                };
-            }).filter(l => l.source && l.target);
-        }
+function initNodes() {
+    // Create nodes with positions
+    nodes = companies.map((c, i) => {
+        const angle = (i / companies.length) * Math.PI * 2;
+        const radius = 280 + Math.random() * 120;
+        const centerX = 600;
+        const centerY = 340;
+        
+        return {
+            ...c,
+            x: centerX + Math.cos(angle) * radius + (Math.random() - 0.5) * 80,
+            y: centerY + Math.sin(angle) * radius * 0.7 + (Math.random() - 0.5) * 60,
+            vx: 0,
+            vy: 0,
+            fx: null,
+            fy: null
+        };
+    });
+    
+    // Build links from connections (this is the important part)
+    links = connections.map(conn => {
+        const sourceNode = nodes.find(n => n.id === conn.source);
+        const targetNode = nodes.find(n => n.id === conn.target);
+        return {
+            ...conn,
+            source: sourceNode,
+            target: targetNode
+        };
+    }).filter(l => l.source && l.target);
+    
+    console.log(`🔗 Built ${links.length} connection lines`);
+}
         
         // Simple force-directed simulation
         function simulateForces() {

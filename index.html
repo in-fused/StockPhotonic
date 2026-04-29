@@ -582,7 +582,7 @@
             nodes = companies.map((c, i) => {
                 // Better spread for larger datasets (more even distribution)
                 const angle = (i / companies.length) * Math.PI * 2;
-                const radius = 320 + Math.random() * 180;
+                const radius = 380 + Math.random() * 220;
                 const centerX = 620;
                 const centerY = 360;
                 
@@ -859,7 +859,7 @@
                     const dx = node.x - mouseX;
                     const dy = node.y - mouseY;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 32) {  // Much larger, consistent hitbox for easy clicking/dragging
+                    if (dist < 40) {  // Even larger hitbox - click anywhere near the blob
                         clickedNode = node;
                         break;
                     }

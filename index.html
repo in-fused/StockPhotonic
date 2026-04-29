@@ -478,6 +478,14 @@ async function loadData() {
         
         console.log(`✅ Loaded ${companies.length} companies + ${connections.length} connections`);
         
+
+        // === COMPATIBILITY FIX: Map market_cap → cap so old code works ===
+        companies.forEach(c => {
+           if (c.market_cap !== undefined && c.cap === undefined) {
+               c.cap = c.market_cap;
+           }
+         });
+
         // Initialize the graph with real data
         if (typeof initPhotonicGraph === 'function') {
             initPhotonicGraph();

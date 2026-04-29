@@ -580,16 +580,16 @@
         // Initialize nodes from companies
         function initNodes() {
             nodes = companies.map((c, i) => {
-                // Spread in a nice organic layout (roughly circular with center bias)
+                // Better spread for larger datasets (more even distribution)
                 const angle = (i / companies.length) * Math.PI * 2;
-                const radius = 280 + Math.random() * 120;
-                const centerX = 600;
-                const centerY = 340;
+                const radius = 320 + Math.random() * 180;
+                const centerX = 620;
+                const centerY = 360;
                 
                 return {
                     ...c,
-                    x: centerX + Math.cos(angle) * radius + (Math.random() - 0.5) * 80,
-                    y: centerY + Math.sin(angle) * radius * 0.7 + (Math.random() - 0.5) * 60,
+                    x: centerX + Math.cos(angle) * radius + (Math.random() - 0.5) * 120,
+                    y: centerY + Math.sin(angle) * radius * 0.75 + (Math.random() - 0.5) * 90,
                     vx: 0,
                     vy: 0,
                     fx: null,
@@ -611,7 +611,7 @@
         
         // Simple force-directed simulation
         function simulateForces() {
-            const repulsion = 1800;
+            const repulsion = 2400;  // Stronger repulsion for cleaner spacing with more companies
             const attraction = 0.035;
             const damping = 0.88;
             const centerForce = 0.0015;
@@ -859,7 +859,7 @@
                     const dx = node.x - mouseX;
                     const dy = node.y - mouseY;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < Math.max(14, Math.sqrt(node.cap) * 3.2)) {
+                    if (dist < 32) {  // Much larger, consistent hitbox for easy clicking/dragging
                         clickedNode = node;
                         break;
                     }

@@ -1,0 +1,3002 @@
+[
+  {
+    "id": 1,
+    "ticker": "NVDA",
+    "name": "NVIDIA Corporation",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.922,
+    "rank": 1,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 2,
+    "ticker": "GOOGL",
+    "name": "Alphabet Inc.",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.322,
+    "rank": 2,
+    "color": "#c026d3"
+  },
+  {
+    "id": 3,
+    "ticker": "AAPL",
+    "name": "Apple Inc.",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 0.041,
+    "rank": 3,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 4,
+    "ticker": "MSFT",
+    "name": "Microsoft Corporation",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.811,
+    "rank": 4,
+    "color": "#c026d3"
+  },
+  {
+    "id": 5,
+    "ticker": "AMZN",
+    "name": "Amazon.com Inc.",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 2.803,
+    "rank": 5,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 6,
+    "ticker": "AVGO",
+    "name": "Broadcom Inc.",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 0.939,
+    "rank": 6,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 7,
+    "ticker": "META",
+    "name": "Meta Platforms Inc.",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 4.047,
+    "rank": 7,
+    "color": "#c026d3"
+  },
+  {
+    "id": 8,
+    "ticker": "TSLA",
+    "name": "Tesla Inc.",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 2.177,
+    "rank": 8,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 9,
+    "ticker": "BRK-B",
+    "name": "Berkshire Hathaway",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 1.699,
+    "rank": 9,
+    "color": "#ffd700"
+  },
+  {
+    "id": 10,
+    "ticker": "WMT",
+    "name": "Walmart Inc.",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 1.201,
+    "rank": 10,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 11,
+    "ticker": "NVDA11",
+    "name": "NVIDIA Corporation 11",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.899,
+    "rank": 11,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 12,
+    "ticker": "GOOGL12",
+    "name": "Alphabet Inc. 12",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 5.583,
+    "rank": 12,
+    "color": "#c026d3"
+  },
+  {
+    "id": 13,
+    "ticker": "AAPL13",
+    "name": "Apple Inc. 13",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 5.263,
+    "rank": 13,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 14,
+    "ticker": "MSFT14",
+    "name": "Microsoft Corporation 14",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 1.404,
+    "rank": 14,
+    "color": "#c026d3"
+  },
+  {
+    "id": 15,
+    "ticker": "AMZN15",
+    "name": "Amazon.com Inc. 15",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 5.368,
+    "rank": 15,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 16,
+    "ticker": "AVGO16",
+    "name": "Broadcom Inc. 16",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.905,
+    "rank": 16,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 17,
+    "ticker": "META17",
+    "name": "Meta Platforms Inc. 17",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 4.788,
+    "rank": 17,
+    "color": "#c026d3"
+  },
+  {
+    "id": 18,
+    "ticker": "TSLA18",
+    "name": "Tesla Inc. 18",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.274,
+    "rank": 18,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 19,
+    "ticker": "BRK-B19",
+    "name": "Berkshire Hathaway 19",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 3.803,
+    "rank": 19,
+    "color": "#ffd700"
+  },
+  {
+    "id": 20,
+    "ticker": "WMT20",
+    "name": "Walmart Inc. 20",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 5.77,
+    "rank": 20,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 21,
+    "ticker": "NVDA21",
+    "name": "NVIDIA Corporation 21",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 3.428,
+    "rank": 21,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 22,
+    "ticker": "GOOGL22",
+    "name": "Alphabet Inc. 22",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.72,
+    "rank": 22,
+    "color": "#c026d3"
+  },
+  {
+    "id": 23,
+    "ticker": "AAPL23",
+    "name": "Apple Inc. 23",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.579,
+    "rank": 23,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 24,
+    "ticker": "MSFT24",
+    "name": "Microsoft Corporation 24",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.208,
+    "rank": 24,
+    "color": "#c026d3"
+  },
+  {
+    "id": 25,
+    "ticker": "AMZN25",
+    "name": "Amazon.com Inc. 25",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 2.954,
+    "rank": 25,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 26,
+    "ticker": "AVGO26",
+    "name": "Broadcom Inc. 26",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.69,
+    "rank": 26,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 27,
+    "ticker": "META27",
+    "name": "Meta Platforms Inc. 27",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 3.979,
+    "rank": 27,
+    "color": "#c026d3"
+  },
+  {
+    "id": 28,
+    "ticker": "TSLA28",
+    "name": "Tesla Inc. 28",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 0.866,
+    "rank": 28,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 29,
+    "ticker": "BRK-B29",
+    "name": "Berkshire Hathaway 29",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.212,
+    "rank": 29,
+    "color": "#ffd700"
+  },
+  {
+    "id": 30,
+    "ticker": "WMT30",
+    "name": "Walmart Inc. 30",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 1.377,
+    "rank": 30,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 31,
+    "ticker": "NVDA31",
+    "name": "NVIDIA Corporation 31",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 5.283,
+    "rank": 31,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 32,
+    "ticker": "GOOGL32",
+    "name": "Alphabet Inc. 32",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.791,
+    "rank": 32,
+    "color": "#c026d3"
+  },
+  {
+    "id": 33,
+    "ticker": "AAPL33",
+    "name": "Apple Inc. 33",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 4.225,
+    "rank": 33,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 34,
+    "ticker": "MSFT34",
+    "name": "Microsoft Corporation 34",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 5.318,
+    "rank": 34,
+    "color": "#c026d3"
+  },
+  {
+    "id": 35,
+    "ticker": "AMZN35",
+    "name": "Amazon.com Inc. 35",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 4.348,
+    "rank": 35,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 36,
+    "ticker": "AVGO36",
+    "name": "Broadcom Inc. 36",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 2.028,
+    "rank": 36,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 37,
+    "ticker": "META37",
+    "name": "Meta Platforms Inc. 37",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 0.967,
+    "rank": 37,
+    "color": "#c026d3"
+  },
+  {
+    "id": 38,
+    "ticker": "TSLA38",
+    "name": "Tesla Inc. 38",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.378,
+    "rank": 38,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 39,
+    "ticker": "BRK-B39",
+    "name": "Berkshire Hathaway 39",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.694,
+    "rank": 39,
+    "color": "#ffd700"
+  },
+  {
+    "id": 40,
+    "ticker": "WMT40",
+    "name": "Walmart Inc. 40",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 3.454,
+    "rank": 40,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 41,
+    "ticker": "NVDA41",
+    "name": "NVIDIA Corporation 41",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 0.305,
+    "rank": 41,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 42,
+    "ticker": "GOOGL42",
+    "name": "Alphabet Inc. 42",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 1.566,
+    "rank": 42,
+    "color": "#c026d3"
+  },
+  {
+    "id": 43,
+    "ticker": "AAPL43",
+    "name": "Apple Inc. 43",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 3.072,
+    "rank": 43,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 44,
+    "ticker": "MSFT44",
+    "name": "Microsoft Corporation 44",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.013,
+    "rank": 44,
+    "color": "#c026d3"
+  },
+  {
+    "id": 45,
+    "ticker": "AMZN45",
+    "name": "Amazon.com Inc. 45",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 3.673,
+    "rank": 45,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 46,
+    "ticker": "AVGO46",
+    "name": "Broadcom Inc. 46",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 5.104,
+    "rank": 46,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 47,
+    "ticker": "META47",
+    "name": "Meta Platforms Inc. 47",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 2.256,
+    "rank": 47,
+    "color": "#c026d3"
+  },
+  {
+    "id": 48,
+    "ticker": "TSLA48",
+    "name": "Tesla Inc. 48",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 4.691,
+    "rank": 48,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 49,
+    "ticker": "BRK-B49",
+    "name": "Berkshire Hathaway 49",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 0.127,
+    "rank": 49,
+    "color": "#ffd700"
+  },
+  {
+    "id": 50,
+    "ticker": "WMT50",
+    "name": "Walmart Inc. 50",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.849,
+    "rank": 50,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 51,
+    "ticker": "NVDA51",
+    "name": "NVIDIA Corporation 51",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.158,
+    "rank": 51,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 52,
+    "ticker": "GOOGL52",
+    "name": "Alphabet Inc. 52",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 5.694,
+    "rank": 52,
+    "color": "#c026d3"
+  },
+  {
+    "id": 53,
+    "ticker": "AAPL53",
+    "name": "Apple Inc. 53",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 5.03,
+    "rank": 53,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 54,
+    "ticker": "MSFT54",
+    "name": "Microsoft Corporation 54",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 4.648,
+    "rank": 54,
+    "color": "#c026d3"
+  },
+  {
+    "id": 55,
+    "ticker": "AMZN55",
+    "name": "Amazon.com Inc. 55",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 3.728,
+    "rank": 55,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 56,
+    "ticker": "AVGO56",
+    "name": "Broadcom Inc. 56",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 2.595,
+    "rank": 56,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 57,
+    "ticker": "META57",
+    "name": "Meta Platforms Inc. 57",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.215,
+    "rank": 57,
+    "color": "#c026d3"
+  },
+  {
+    "id": 58,
+    "ticker": "TSLA58",
+    "name": "Tesla Inc. 58",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 5.639,
+    "rank": 58,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 59,
+    "ticker": "BRK-B59",
+    "name": "Berkshire Hathaway 59",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 3.366,
+    "rank": 59,
+    "color": "#ffd700"
+  },
+  {
+    "id": 60,
+    "ticker": "WMT60",
+    "name": "Walmart Inc. 60",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 1.224,
+    "rank": 60,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 61,
+    "ticker": "NVDA61",
+    "name": "NVIDIA Corporation 61",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.499,
+    "rank": 61,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 62,
+    "ticker": "GOOGL62",
+    "name": "Alphabet Inc. 62",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 4.044,
+    "rank": 62,
+    "color": "#c026d3"
+  },
+  {
+    "id": 63,
+    "ticker": "AAPL63",
+    "name": "Apple Inc. 63",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 4.128,
+    "rank": 63,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 64,
+    "ticker": "MSFT64",
+    "name": "Microsoft Corporation 64",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.832,
+    "rank": 64,
+    "color": "#c026d3"
+  },
+  {
+    "id": 65,
+    "ticker": "AMZN65",
+    "name": "Amazon.com Inc. 65",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 1.543,
+    "rank": 65,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 66,
+    "ticker": "AVGO66",
+    "name": "Broadcom Inc. 66",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 0.522,
+    "rank": 66,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 67,
+    "ticker": "META67",
+    "name": "Meta Platforms Inc. 67",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 1.122,
+    "rank": 67,
+    "color": "#c026d3"
+  },
+  {
+    "id": 68,
+    "ticker": "TSLA68",
+    "name": "Tesla Inc. 68",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 2.488,
+    "rank": 68,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 69,
+    "ticker": "BRK-B69",
+    "name": "Berkshire Hathaway 69",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.001,
+    "rank": 69,
+    "color": "#ffd700"
+  },
+  {
+    "id": 70,
+    "ticker": "WMT70",
+    "name": "Walmart Inc. 70",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 4.47,
+    "rank": 70,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 71,
+    "ticker": "NVDA71",
+    "name": "NVIDIA Corporation 71",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 4.493,
+    "rank": 71,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 72,
+    "ticker": "GOOGL72",
+    "name": "Alphabet Inc. 72",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 0.632,
+    "rank": 72,
+    "color": "#c026d3"
+  },
+  {
+    "id": 73,
+    "ticker": "AAPL73",
+    "name": "Apple Inc. 73",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 5.573,
+    "rank": 73,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 74,
+    "ticker": "MSFT74",
+    "name": "Microsoft Corporation 74",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.264,
+    "rank": 74,
+    "color": "#c026d3"
+  },
+  {
+    "id": 75,
+    "ticker": "AMZN75",
+    "name": "Amazon.com Inc. 75",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.791,
+    "rank": 75,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 76,
+    "ticker": "AVGO76",
+    "name": "Broadcom Inc. 76",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 2.729,
+    "rank": 76,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 77,
+    "ticker": "META77",
+    "name": "Meta Platforms Inc. 77",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 1.067,
+    "rank": 77,
+    "color": "#c026d3"
+  },
+  {
+    "id": 78,
+    "ticker": "TSLA78",
+    "name": "Tesla Inc. 78",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.898,
+    "rank": 78,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 79,
+    "ticker": "BRK-B79",
+    "name": "Berkshire Hathaway 79",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 3.919,
+    "rank": 79,
+    "color": "#ffd700"
+  },
+  {
+    "id": 80,
+    "ticker": "WMT80",
+    "name": "Walmart Inc. 80",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 3.562,
+    "rank": 80,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 81,
+    "ticker": "NVDA81",
+    "name": "NVIDIA Corporation 81",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.416,
+    "rank": 81,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 82,
+    "ticker": "GOOGL82",
+    "name": "Alphabet Inc. 82",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.257,
+    "rank": 82,
+    "color": "#c026d3"
+  },
+  {
+    "id": 83,
+    "ticker": "AAPL83",
+    "name": "Apple Inc. 83",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 2.066,
+    "rank": 83,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 84,
+    "ticker": "MSFT84",
+    "name": "Microsoft Corporation 84",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 4.016,
+    "rank": 84,
+    "color": "#c026d3"
+  },
+  {
+    "id": 85,
+    "ticker": "AMZN85",
+    "name": "Amazon.com Inc. 85",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 2.952,
+    "rank": 85,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 86,
+    "ticker": "AVGO86",
+    "name": "Broadcom Inc. 86",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.233,
+    "rank": 86,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 87,
+    "ticker": "META87",
+    "name": "Meta Platforms Inc. 87",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 5.014,
+    "rank": 87,
+    "color": "#c026d3"
+  },
+  {
+    "id": 88,
+    "ticker": "TSLA88",
+    "name": "Tesla Inc. 88",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.043,
+    "rank": 88,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 89,
+    "ticker": "BRK-B89",
+    "name": "Berkshire Hathaway 89",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.417,
+    "rank": 89,
+    "color": "#ffd700"
+  },
+  {
+    "id": 90,
+    "ticker": "WMT90",
+    "name": "Walmart Inc. 90",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.156,
+    "rank": 90,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 91,
+    "ticker": "NVDA91",
+    "name": "NVIDIA Corporation 91",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 3.706,
+    "rank": 91,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 92,
+    "ticker": "GOOGL92",
+    "name": "Alphabet Inc. 92",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.725,
+    "rank": 92,
+    "color": "#c026d3"
+  },
+  {
+    "id": 93,
+    "ticker": "AAPL93",
+    "name": "Apple Inc. 93",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.758,
+    "rank": 93,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 94,
+    "ticker": "MSFT94",
+    "name": "Microsoft Corporation 94",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 5.497,
+    "rank": 94,
+    "color": "#c026d3"
+  },
+  {
+    "id": 95,
+    "ticker": "AMZN95",
+    "name": "Amazon.com Inc. 95",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.809,
+    "rank": 95,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 96,
+    "ticker": "AVGO96",
+    "name": "Broadcom Inc. 96",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 4.971,
+    "rank": 96,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 97,
+    "ticker": "META97",
+    "name": "Meta Platforms Inc. 97",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 4.325,
+    "rank": 97,
+    "color": "#c026d3"
+  },
+  {
+    "id": 98,
+    "ticker": "TSLA98",
+    "name": "Tesla Inc. 98",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 1.667,
+    "rank": 98,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 99,
+    "ticker": "BRK-B99",
+    "name": "Berkshire Hathaway 99",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 4.304,
+    "rank": 99,
+    "color": "#ffd700"
+  },
+  {
+    "id": 100,
+    "ticker": "WMT100",
+    "name": "Walmart Inc. 100",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 0.816,
+    "rank": 100,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 101,
+    "ticker": "NVDA101",
+    "name": "NVIDIA Corporation 101",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 5.157,
+    "rank": 101,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 102,
+    "ticker": "GOOGL102",
+    "name": "Alphabet Inc. 102",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.652,
+    "rank": 102,
+    "color": "#c026d3"
+  },
+  {
+    "id": 103,
+    "ticker": "AAPL103",
+    "name": "Apple Inc. 103",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 5.497,
+    "rank": 103,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 104,
+    "ticker": "MSFT104",
+    "name": "Microsoft Corporation 104",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.264,
+    "rank": 104,
+    "color": "#c026d3"
+  },
+  {
+    "id": 105,
+    "ticker": "AMZN105",
+    "name": "Amazon.com Inc. 105",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 4.452,
+    "rank": 105,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 106,
+    "ticker": "AVGO106",
+    "name": "Broadcom Inc. 106",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.609,
+    "rank": 106,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 107,
+    "ticker": "META107",
+    "name": "Meta Platforms Inc. 107",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.779,
+    "rank": 107,
+    "color": "#c026d3"
+  },
+  {
+    "id": 108,
+    "ticker": "TSLA108",
+    "name": "Tesla Inc. 108",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 4.892,
+    "rank": 108,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 109,
+    "ticker": "BRK-B109",
+    "name": "Berkshire Hathaway 109",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.084,
+    "rank": 109,
+    "color": "#ffd700"
+  },
+  {
+    "id": 110,
+    "ticker": "WMT110",
+    "name": "Walmart Inc. 110",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 4.445,
+    "rank": 110,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 111,
+    "ticker": "NVDA111",
+    "name": "NVIDIA Corporation 111",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.857,
+    "rank": 111,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 112,
+    "ticker": "GOOGL112",
+    "name": "Alphabet Inc. 112",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 2.686,
+    "rank": 112,
+    "color": "#c026d3"
+  },
+  {
+    "id": 113,
+    "ticker": "AAPL113",
+    "name": "Apple Inc. 113",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.544,
+    "rank": 113,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 114,
+    "ticker": "MSFT114",
+    "name": "Microsoft Corporation 114",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.589,
+    "rank": 114,
+    "color": "#c026d3"
+  },
+  {
+    "id": 115,
+    "ticker": "AMZN115",
+    "name": "Amazon.com Inc. 115",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.393,
+    "rank": 115,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 116,
+    "ticker": "AVGO116",
+    "name": "Broadcom Inc. 116",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.743,
+    "rank": 116,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 117,
+    "ticker": "META117",
+    "name": "Meta Platforms Inc. 117",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.199,
+    "rank": 117,
+    "color": "#c026d3"
+  },
+  {
+    "id": 118,
+    "ticker": "TSLA118",
+    "name": "Tesla Inc. 118",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 3.572,
+    "rank": 118,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 119,
+    "ticker": "BRK-B119",
+    "name": "Berkshire Hathaway 119",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 4.085,
+    "rank": 119,
+    "color": "#ffd700"
+  },
+  {
+    "id": 120,
+    "ticker": "WMT120",
+    "name": "Walmart Inc. 120",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 2.536,
+    "rank": 120,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 121,
+    "ticker": "NVDA121",
+    "name": "NVIDIA Corporation 121",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 5.576,
+    "rank": 121,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 122,
+    "ticker": "GOOGL122",
+    "name": "Alphabet Inc. 122",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.317,
+    "rank": 122,
+    "color": "#c026d3"
+  },
+  {
+    "id": 123,
+    "ticker": "AAPL123",
+    "name": "Apple Inc. 123",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.771,
+    "rank": 123,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 124,
+    "ticker": "MSFT124",
+    "name": "Microsoft Corporation 124",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.84,
+    "rank": 124,
+    "color": "#c026d3"
+  },
+  {
+    "id": 125,
+    "ticker": "AMZN125",
+    "name": "Amazon.com Inc. 125",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 3.367,
+    "rank": 125,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 126,
+    "ticker": "AVGO126",
+    "name": "Broadcom Inc. 126",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 2.015,
+    "rank": 126,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 127,
+    "ticker": "META127",
+    "name": "Meta Platforms Inc. 127",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.397,
+    "rank": 127,
+    "color": "#c026d3"
+  },
+  {
+    "id": 128,
+    "ticker": "TSLA128",
+    "name": "Tesla Inc. 128",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 1.347,
+    "rank": 128,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 129,
+    "ticker": "BRK-B129",
+    "name": "Berkshire Hathaway 129",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.21,
+    "rank": 129,
+    "color": "#ffd700"
+  },
+  {
+    "id": 130,
+    "ticker": "WMT130",
+    "name": "Walmart Inc. 130",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 5.361,
+    "rank": 130,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 131,
+    "ticker": "NVDA131",
+    "name": "NVIDIA Corporation 131",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 2.855,
+    "rank": 131,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 132,
+    "ticker": "GOOGL132",
+    "name": "Alphabet Inc. 132",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 2.551,
+    "rank": 132,
+    "color": "#c026d3"
+  },
+  {
+    "id": 133,
+    "ticker": "AAPL133",
+    "name": "Apple Inc. 133",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 0.849,
+    "rank": 133,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 134,
+    "ticker": "MSFT134",
+    "name": "Microsoft Corporation 134",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 2.297,
+    "rank": 134,
+    "color": "#c026d3"
+  },
+  {
+    "id": 135,
+    "ticker": "AMZN135",
+    "name": "Amazon.com Inc. 135",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.861,
+    "rank": 135,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 136,
+    "ticker": "AVGO136",
+    "name": "Broadcom Inc. 136",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.605,
+    "rank": 136,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 137,
+    "ticker": "META137",
+    "name": "Meta Platforms Inc. 137",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.795,
+    "rank": 137,
+    "color": "#c026d3"
+  },
+  {
+    "id": 138,
+    "ticker": "TSLA138",
+    "name": "Tesla Inc. 138",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 2.081,
+    "rank": 138,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 139,
+    "ticker": "BRK-B139",
+    "name": "Berkshire Hathaway 139",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.408,
+    "rank": 139,
+    "color": "#ffd700"
+  },
+  {
+    "id": 140,
+    "ticker": "WMT140",
+    "name": "Walmart Inc. 140",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 3.794,
+    "rank": 140,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 141,
+    "ticker": "NVDA141",
+    "name": "NVIDIA Corporation 141",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.6,
+    "rank": 141,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 142,
+    "ticker": "GOOGL142",
+    "name": "Alphabet Inc. 142",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 0.172,
+    "rank": 142,
+    "color": "#c026d3"
+  },
+  {
+    "id": 143,
+    "ticker": "AAPL143",
+    "name": "Apple Inc. 143",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 4.176,
+    "rank": 143,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 144,
+    "ticker": "MSFT144",
+    "name": "Microsoft Corporation 144",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.202,
+    "rank": 144,
+    "color": "#c026d3"
+  },
+  {
+    "id": 145,
+    "ticker": "AMZN145",
+    "name": "Amazon.com Inc. 145",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.704,
+    "rank": 145,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 146,
+    "ticker": "AVGO146",
+    "name": "Broadcom Inc. 146",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 5.71,
+    "rank": 146,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 147,
+    "ticker": "META147",
+    "name": "Meta Platforms Inc. 147",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 0.253,
+    "rank": 147,
+    "color": "#c026d3"
+  },
+  {
+    "id": 148,
+    "ticker": "TSLA148",
+    "name": "Tesla Inc. 148",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.921,
+    "rank": 148,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 149,
+    "ticker": "BRK-B149",
+    "name": "Berkshire Hathaway 149",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.846,
+    "rank": 149,
+    "color": "#ffd700"
+  },
+  {
+    "id": 150,
+    "ticker": "WMT150",
+    "name": "Walmart Inc. 150",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 0.949,
+    "rank": 150,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 151,
+    "ticker": "NVDA151",
+    "name": "NVIDIA Corporation 151",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 2.782,
+    "rank": 151,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 152,
+    "ticker": "GOOGL152",
+    "name": "Alphabet Inc. 152",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.702,
+    "rank": 152,
+    "color": "#c026d3"
+  },
+  {
+    "id": 153,
+    "ticker": "AAPL153",
+    "name": "Apple Inc. 153",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 3.826,
+    "rank": 153,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 154,
+    "ticker": "MSFT154",
+    "name": "Microsoft Corporation 154",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 0.326,
+    "rank": 154,
+    "color": "#c026d3"
+  },
+  {
+    "id": 155,
+    "ticker": "AMZN155",
+    "name": "Amazon.com Inc. 155",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 5.623,
+    "rank": 155,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 156,
+    "ticker": "AVGO156",
+    "name": "Broadcom Inc. 156",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 0.263,
+    "rank": 156,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 157,
+    "ticker": "META157",
+    "name": "Meta Platforms Inc. 157",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 4.255,
+    "rank": 157,
+    "color": "#c026d3"
+  },
+  {
+    "id": 158,
+    "ticker": "TSLA158",
+    "name": "Tesla Inc. 158",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.599,
+    "rank": 158,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 159,
+    "ticker": "BRK-B159",
+    "name": "Berkshire Hathaway 159",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 2.912,
+    "rank": 159,
+    "color": "#ffd700"
+  },
+  {
+    "id": 160,
+    "ticker": "WMT160",
+    "name": "Walmart Inc. 160",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.761,
+    "rank": 160,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 161,
+    "ticker": "NVDA161",
+    "name": "NVIDIA Corporation 161",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 1.648,
+    "rank": 161,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 162,
+    "ticker": "GOOGL162",
+    "name": "Alphabet Inc. 162",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 3.709,
+    "rank": 162,
+    "color": "#c026d3"
+  },
+  {
+    "id": 163,
+    "ticker": "AAPL163",
+    "name": "Apple Inc. 163",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 5.217,
+    "rank": 163,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 164,
+    "ticker": "MSFT164",
+    "name": "Microsoft Corporation 164",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.738,
+    "rank": 164,
+    "color": "#c026d3"
+  },
+  {
+    "id": 165,
+    "ticker": "AMZN165",
+    "name": "Amazon.com Inc. 165",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.388,
+    "rank": 165,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 166,
+    "ticker": "AVGO166",
+    "name": "Broadcom Inc. 166",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.536,
+    "rank": 166,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 167,
+    "ticker": "META167",
+    "name": "Meta Platforms Inc. 167",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 0.591,
+    "rank": 167,
+    "color": "#c026d3"
+  },
+  {
+    "id": 168,
+    "ticker": "TSLA168",
+    "name": "Tesla Inc. 168",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 1.274,
+    "rank": 168,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 169,
+    "ticker": "BRK-B169",
+    "name": "Berkshire Hathaway 169",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.237,
+    "rank": 169,
+    "color": "#ffd700"
+  },
+  {
+    "id": 170,
+    "ticker": "WMT170",
+    "name": "Walmart Inc. 170",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.254,
+    "rank": 170,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 171,
+    "ticker": "NVDA171",
+    "name": "NVIDIA Corporation 171",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 0.719,
+    "rank": 171,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 172,
+    "ticker": "GOOGL172",
+    "name": "Alphabet Inc. 172",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.161,
+    "rank": 172,
+    "color": "#c026d3"
+  },
+  {
+    "id": 173,
+    "ticker": "AAPL173",
+    "name": "Apple Inc. 173",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.352,
+    "rank": 173,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 174,
+    "ticker": "MSFT174",
+    "name": "Microsoft Corporation 174",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 4.385,
+    "rank": 174,
+    "color": "#c026d3"
+  },
+  {
+    "id": 175,
+    "ticker": "AMZN175",
+    "name": "Amazon.com Inc. 175",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 2.027,
+    "rank": 175,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 176,
+    "ticker": "AVGO176",
+    "name": "Broadcom Inc. 176",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.83,
+    "rank": 176,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 177,
+    "ticker": "META177",
+    "name": "Meta Platforms Inc. 177",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 1.308,
+    "rank": 177,
+    "color": "#c026d3"
+  },
+  {
+    "id": 178,
+    "ticker": "TSLA178",
+    "name": "Tesla Inc. 178",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 1.038,
+    "rank": 178,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 179,
+    "ticker": "BRK-B179",
+    "name": "Berkshire Hathaway 179",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.04,
+    "rank": 179,
+    "color": "#ffd700"
+  },
+  {
+    "id": 180,
+    "ticker": "WMT180",
+    "name": "Walmart Inc. 180",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 3.168,
+    "rank": 180,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 181,
+    "ticker": "NVDA181",
+    "name": "NVIDIA Corporation 181",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 5.061,
+    "rank": 181,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 182,
+    "ticker": "GOOGL182",
+    "name": "Alphabet Inc. 182",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 3.479,
+    "rank": 182,
+    "color": "#c026d3"
+  },
+  {
+    "id": 183,
+    "ticker": "AAPL183",
+    "name": "Apple Inc. 183",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 2.723,
+    "rank": 183,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 184,
+    "ticker": "MSFT184",
+    "name": "Microsoft Corporation 184",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 1.708,
+    "rank": 184,
+    "color": "#c026d3"
+  },
+  {
+    "id": 185,
+    "ticker": "AMZN185",
+    "name": "Amazon.com Inc. 185",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.179,
+    "rank": 185,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 186,
+    "ticker": "AVGO186",
+    "name": "Broadcom Inc. 186",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.568,
+    "rank": 186,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 187,
+    "ticker": "META187",
+    "name": "Meta Platforms Inc. 187",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.549,
+    "rank": 187,
+    "color": "#c026d3"
+  },
+  {
+    "id": 188,
+    "ticker": "TSLA188",
+    "name": "Tesla Inc. 188",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 2.852,
+    "rank": 188,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 189,
+    "ticker": "BRK-B189",
+    "name": "Berkshire Hathaway 189",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 2.348,
+    "rank": 189,
+    "color": "#ffd700"
+  },
+  {
+    "id": 190,
+    "ticker": "WMT190",
+    "name": "Walmart Inc. 190",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 4.822,
+    "rank": 190,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 191,
+    "ticker": "NVDA191",
+    "name": "NVIDIA Corporation 191",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 3.087,
+    "rank": 191,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 192,
+    "ticker": "GOOGL192",
+    "name": "Alphabet Inc. 192",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 3.266,
+    "rank": 192,
+    "color": "#c026d3"
+  },
+  {
+    "id": 193,
+    "ticker": "AAPL193",
+    "name": "Apple Inc. 193",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.398,
+    "rank": 193,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 194,
+    "ticker": "MSFT194",
+    "name": "Microsoft Corporation 194",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 5.106,
+    "rank": 194,
+    "color": "#c026d3"
+  },
+  {
+    "id": 195,
+    "ticker": "AMZN195",
+    "name": "Amazon.com Inc. 195",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 4.667,
+    "rank": 195,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 196,
+    "ticker": "AVGO196",
+    "name": "Broadcom Inc. 196",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 0.773,
+    "rank": 196,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 197,
+    "ticker": "META197",
+    "name": "Meta Platforms Inc. 197",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 2.302,
+    "rank": 197,
+    "color": "#c026d3"
+  },
+  {
+    "id": 198,
+    "ticker": "TSLA198",
+    "name": "Tesla Inc. 198",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.923,
+    "rank": 198,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 199,
+    "ticker": "BRK-B199",
+    "name": "Berkshire Hathaway 199",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.813,
+    "rank": 199,
+    "color": "#ffd700"
+  },
+  {
+    "id": 200,
+    "ticker": "WMT200",
+    "name": "Walmart Inc. 200",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.679,
+    "rank": 200,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 201,
+    "ticker": "NVDA201",
+    "name": "NVIDIA Corporation 201",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.458,
+    "rank": 201,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 202,
+    "ticker": "GOOGL202",
+    "name": "Alphabet Inc. 202",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 2.794,
+    "rank": 202,
+    "color": "#c026d3"
+  },
+  {
+    "id": 203,
+    "ticker": "AAPL203",
+    "name": "Apple Inc. 203",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 2.056,
+    "rank": 203,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 204,
+    "ticker": "MSFT204",
+    "name": "Microsoft Corporation 204",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 5.475,
+    "rank": 204,
+    "color": "#c026d3"
+  },
+  {
+    "id": 205,
+    "ticker": "AMZN205",
+    "name": "Amazon.com Inc. 205",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 0.439,
+    "rank": 205,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 206,
+    "ticker": "AVGO206",
+    "name": "Broadcom Inc. 206",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 3.068,
+    "rank": 206,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 207,
+    "ticker": "META207",
+    "name": "Meta Platforms Inc. 207",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.678,
+    "rank": 207,
+    "color": "#c026d3"
+  },
+  {
+    "id": 208,
+    "ticker": "TSLA208",
+    "name": "Tesla Inc. 208",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 3.237,
+    "rank": 208,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 209,
+    "ticker": "BRK-B209",
+    "name": "Berkshire Hathaway 209",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.883,
+    "rank": 209,
+    "color": "#ffd700"
+  },
+  {
+    "id": 210,
+    "ticker": "WMT210",
+    "name": "Walmart Inc. 210",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 3.82,
+    "rank": 210,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 211,
+    "ticker": "NVDA211",
+    "name": "NVIDIA Corporation 211",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.069,
+    "rank": 211,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 212,
+    "ticker": "GOOGL212",
+    "name": "Alphabet Inc. 212",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.055,
+    "rank": 212,
+    "color": "#c026d3"
+  },
+  {
+    "id": 213,
+    "ticker": "AAPL213",
+    "name": "Apple Inc. 213",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.188,
+    "rank": 213,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 214,
+    "ticker": "MSFT214",
+    "name": "Microsoft Corporation 214",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.211,
+    "rank": 214,
+    "color": "#c026d3"
+  },
+  {
+    "id": 215,
+    "ticker": "AMZN215",
+    "name": "Amazon.com Inc. 215",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 4.98,
+    "rank": 215,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 216,
+    "ticker": "AVGO216",
+    "name": "Broadcom Inc. 216",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 0.17,
+    "rank": 216,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 217,
+    "ticker": "META217",
+    "name": "Meta Platforms Inc. 217",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 2.927,
+    "rank": 217,
+    "color": "#c026d3"
+  },
+  {
+    "id": 218,
+    "ticker": "TSLA218",
+    "name": "Tesla Inc. 218",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 4.063,
+    "rank": 218,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 219,
+    "ticker": "BRK-B219",
+    "name": "Berkshire Hathaway 219",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.818,
+    "rank": 219,
+    "color": "#ffd700"
+  },
+  {
+    "id": 220,
+    "ticker": "WMT220",
+    "name": "Walmart Inc. 220",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 1.833,
+    "rank": 220,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 221,
+    "ticker": "NVDA221",
+    "name": "NVIDIA Corporation 221",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 5.587,
+    "rank": 221,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 222,
+    "ticker": "GOOGL222",
+    "name": "Alphabet Inc. 222",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.414,
+    "rank": 222,
+    "color": "#c026d3"
+  },
+  {
+    "id": 223,
+    "ticker": "AAPL223",
+    "name": "Apple Inc. 223",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 3.121,
+    "rank": 223,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 224,
+    "ticker": "MSFT224",
+    "name": "Microsoft Corporation 224",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 0.947,
+    "rank": 224,
+    "color": "#c026d3"
+  },
+  {
+    "id": 225,
+    "ticker": "AMZN225",
+    "name": "Amazon.com Inc. 225",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.609,
+    "rank": 225,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 226,
+    "ticker": "AVGO226",
+    "name": "Broadcom Inc. 226",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 3.603,
+    "rank": 226,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 227,
+    "ticker": "META227",
+    "name": "Meta Platforms Inc. 227",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.557,
+    "rank": 227,
+    "color": "#c026d3"
+  },
+  {
+    "id": 228,
+    "ticker": "TSLA228",
+    "name": "Tesla Inc. 228",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.262,
+    "rank": 228,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 229,
+    "ticker": "BRK-B229",
+    "name": "Berkshire Hathaway 229",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 3.716,
+    "rank": 229,
+    "color": "#ffd700"
+  },
+  {
+    "id": 230,
+    "ticker": "WMT230",
+    "name": "Walmart Inc. 230",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.318,
+    "rank": 230,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 231,
+    "ticker": "NVDA231",
+    "name": "NVIDIA Corporation 231",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 3.56,
+    "rank": 231,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 232,
+    "ticker": "GOOGL232",
+    "name": "Alphabet Inc. 232",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 2.555,
+    "rank": 232,
+    "color": "#c026d3"
+  },
+  {
+    "id": 233,
+    "ticker": "AAPL233",
+    "name": "Apple Inc. 233",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.1,
+    "rank": 233,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 234,
+    "ticker": "MSFT234",
+    "name": "Microsoft Corporation 234",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 0.845,
+    "rank": 234,
+    "color": "#c026d3"
+  },
+  {
+    "id": 235,
+    "ticker": "AMZN235",
+    "name": "Amazon.com Inc. 235",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 5.274,
+    "rank": 235,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 236,
+    "ticker": "AVGO236",
+    "name": "Broadcom Inc. 236",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 4.552,
+    "rank": 236,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 237,
+    "ticker": "META237",
+    "name": "Meta Platforms Inc. 237",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 4.58,
+    "rank": 237,
+    "color": "#c026d3"
+  },
+  {
+    "id": 238,
+    "ticker": "TSLA238",
+    "name": "Tesla Inc. 238",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 0.76,
+    "rank": 238,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 239,
+    "ticker": "BRK-B239",
+    "name": "Berkshire Hathaway 239",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 3.795,
+    "rank": 239,
+    "color": "#ffd700"
+  },
+  {
+    "id": 240,
+    "ticker": "WMT240",
+    "name": "Walmart Inc. 240",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 3.558,
+    "rank": 240,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 241,
+    "ticker": "NVDA241",
+    "name": "NVIDIA Corporation 241",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 4.799,
+    "rank": 241,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 242,
+    "ticker": "GOOGL242",
+    "name": "Alphabet Inc. 242",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.318,
+    "rank": 242,
+    "color": "#c026d3"
+  },
+  {
+    "id": 243,
+    "ticker": "AAPL243",
+    "name": "Apple Inc. 243",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.436,
+    "rank": 243,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 244,
+    "ticker": "MSFT244",
+    "name": "Microsoft Corporation 244",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 4.166,
+    "rank": 244,
+    "color": "#c026d3"
+  },
+  {
+    "id": 245,
+    "ticker": "AMZN245",
+    "name": "Amazon.com Inc. 245",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 0.798,
+    "rank": 245,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 246,
+    "ticker": "AVGO246",
+    "name": "Broadcom Inc. 246",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 5.376,
+    "rank": 246,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 247,
+    "ticker": "META247",
+    "name": "Meta Platforms Inc. 247",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.821,
+    "rank": 247,
+    "color": "#c026d3"
+  },
+  {
+    "id": 248,
+    "ticker": "TSLA248",
+    "name": "Tesla Inc. 248",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 3.32,
+    "rank": 248,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 249,
+    "ticker": "BRK-B249",
+    "name": "Berkshire Hathaway 249",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.61,
+    "rank": 249,
+    "color": "#ffd700"
+  },
+  {
+    "id": 250,
+    "ticker": "WMT250",
+    "name": "Walmart Inc. 250",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.732,
+    "rank": 250,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 251,
+    "ticker": "NVDA251",
+    "name": "NVIDIA Corporation 251",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 5.155,
+    "rank": 251,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 252,
+    "ticker": "GOOGL252",
+    "name": "Alphabet Inc. 252",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 2.077,
+    "rank": 252,
+    "color": "#c026d3"
+  },
+  {
+    "id": 253,
+    "ticker": "AAPL253",
+    "name": "Apple Inc. 253",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 5.344,
+    "rank": 253,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 254,
+    "ticker": "MSFT254",
+    "name": "Microsoft Corporation 254",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.985,
+    "rank": 254,
+    "color": "#c026d3"
+  },
+  {
+    "id": 255,
+    "ticker": "AMZN255",
+    "name": "Amazon.com Inc. 255",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 0.596,
+    "rank": 255,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 256,
+    "ticker": "AVGO256",
+    "name": "Broadcom Inc. 256",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 3.512,
+    "rank": 256,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 257,
+    "ticker": "META257",
+    "name": "Meta Platforms Inc. 257",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.004,
+    "rank": 257,
+    "color": "#c026d3"
+  },
+  {
+    "id": 258,
+    "ticker": "TSLA258",
+    "name": "Tesla Inc. 258",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 4.93,
+    "rank": 258,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 259,
+    "ticker": "BRK-B259",
+    "name": "Berkshire Hathaway 259",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 4.447,
+    "rank": 259,
+    "color": "#ffd700"
+  },
+  {
+    "id": 260,
+    "ticker": "WMT260",
+    "name": "Walmart Inc. 260",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.371,
+    "rank": 260,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 261,
+    "ticker": "NVDA261",
+    "name": "NVIDIA Corporation 261",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.705,
+    "rank": 261,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 262,
+    "ticker": "GOOGL262",
+    "name": "Alphabet Inc. 262",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 5.452,
+    "rank": 262,
+    "color": "#c026d3"
+  },
+  {
+    "id": 263,
+    "ticker": "AAPL263",
+    "name": "Apple Inc. 263",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.305,
+    "rank": 263,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 264,
+    "ticker": "MSFT264",
+    "name": "Microsoft Corporation 264",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.174,
+    "rank": 264,
+    "color": "#c026d3"
+  },
+  {
+    "id": 265,
+    "ticker": "AMZN265",
+    "name": "Amazon.com Inc. 265",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.773,
+    "rank": 265,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 266,
+    "ticker": "AVGO266",
+    "name": "Broadcom Inc. 266",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 5.521,
+    "rank": 266,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 267,
+    "ticker": "META267",
+    "name": "Meta Platforms Inc. 267",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 4.376,
+    "rank": 267,
+    "color": "#c026d3"
+  },
+  {
+    "id": 268,
+    "ticker": "TSLA268",
+    "name": "Tesla Inc. 268",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 2.468,
+    "rank": 268,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 269,
+    "ticker": "BRK-B269",
+    "name": "Berkshire Hathaway 269",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 4.223,
+    "rank": 269,
+    "color": "#ffd700"
+  },
+  {
+    "id": 270,
+    "ticker": "WMT270",
+    "name": "Walmart Inc. 270",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 4.164,
+    "rank": 270,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 271,
+    "ticker": "NVDA271",
+    "name": "NVIDIA Corporation 271",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 4.651,
+    "rank": 271,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 272,
+    "ticker": "GOOGL272",
+    "name": "Alphabet Inc. 272",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 3.875,
+    "rank": 272,
+    "color": "#c026d3"
+  },
+  {
+    "id": 273,
+    "ticker": "AAPL273",
+    "name": "Apple Inc. 273",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 1.276,
+    "rank": 273,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 274,
+    "ticker": "MSFT274",
+    "name": "Microsoft Corporation 274",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 1.583,
+    "rank": 274,
+    "color": "#c026d3"
+  },
+  {
+    "id": 275,
+    "ticker": "AMZN275",
+    "name": "Amazon.com Inc. 275",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 0.574,
+    "rank": 275,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 276,
+    "ticker": "AVGO276",
+    "name": "Broadcom Inc. 276",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 3.172,
+    "rank": 276,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 277,
+    "ticker": "META277",
+    "name": "Meta Platforms Inc. 277",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.056,
+    "rank": 277,
+    "color": "#c026d3"
+  },
+  {
+    "id": 278,
+    "ticker": "TSLA278",
+    "name": "Tesla Inc. 278",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 1.326,
+    "rank": 278,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 279,
+    "ticker": "BRK-B279",
+    "name": "Berkshire Hathaway 279",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 2.58,
+    "rank": 279,
+    "color": "#ffd700"
+  },
+  {
+    "id": 280,
+    "ticker": "WMT280",
+    "name": "Walmart Inc. 280",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 5.776,
+    "rank": 280,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 281,
+    "ticker": "NVDA281",
+    "name": "NVIDIA Corporation 281",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 4.057,
+    "rank": 281,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 282,
+    "ticker": "GOOGL282",
+    "name": "Alphabet Inc. 282",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.532,
+    "rank": 282,
+    "color": "#c026d3"
+  },
+  {
+    "id": 283,
+    "ticker": "AAPL283",
+    "name": "Apple Inc. 283",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 4.728,
+    "rank": 283,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 284,
+    "ticker": "MSFT284",
+    "name": "Microsoft Corporation 284",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 2.743,
+    "rank": 284,
+    "color": "#c026d3"
+  },
+  {
+    "id": 285,
+    "ticker": "AMZN285",
+    "name": "Amazon.com Inc. 285",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.906,
+    "rank": 285,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 286,
+    "ticker": "AVGO286",
+    "name": "Broadcom Inc. 286",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 0.867,
+    "rank": 286,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 287,
+    "ticker": "META287",
+    "name": "Meta Platforms Inc. 287",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 3.121,
+    "rank": 287,
+    "color": "#c026d3"
+  },
+  {
+    "id": 288,
+    "ticker": "TSLA288",
+    "name": "Tesla Inc. 288",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 3.365,
+    "rank": 288,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 289,
+    "ticker": "BRK-B289",
+    "name": "Berkshire Hathaway 289",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 4.677,
+    "rank": 289,
+    "color": "#ffd700"
+  },
+  {
+    "id": 290,
+    "ticker": "WMT290",
+    "name": "Walmart Inc. 290",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 4.861,
+    "rank": 290,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 291,
+    "ticker": "NVDA291",
+    "name": "NVIDIA Corporation 291",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.204,
+    "rank": 291,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 292,
+    "ticker": "GOOGL292",
+    "name": "Alphabet Inc. 292",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.934,
+    "rank": 292,
+    "color": "#c026d3"
+  },
+  {
+    "id": 293,
+    "ticker": "AAPL293",
+    "name": "Apple Inc. 293",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 3.341,
+    "rank": 293,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 294,
+    "ticker": "MSFT294",
+    "name": "Microsoft Corporation 294",
+    "sector": "Energy",
+    "industry": "Energy Industry",
+    "market_cap": 3.361,
+    "rank": 294,
+    "color": "#c026d3"
+  },
+  {
+    "id": 295,
+    "ticker": "AMZN295",
+    "name": "Amazon.com Inc. 295",
+    "sector": "Semiconductors",
+    "industry": "Semiconductors Industry",
+    "market_cap": 0.304,
+    "rank": 295,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 296,
+    "ticker": "AVGO296",
+    "name": "Broadcom Inc. 296",
+    "sector": "Software",
+    "industry": "Software Industry",
+    "market_cap": 1.884,
+    "rank": 296,
+    "color": "#00f9ff"
+  },
+  {
+    "id": 297,
+    "ticker": "META297",
+    "name": "Meta Platforms Inc. 297",
+    "sector": "Consumer",
+    "industry": "Consumer Industry",
+    "market_cap": 2.163,
+    "rank": 297,
+    "color": "#c026d3"
+  },
+  {
+    "id": 298,
+    "ticker": "TSLA298",
+    "name": "Tesla Inc. 298",
+    "sector": "Financials",
+    "industry": "Financials Industry",
+    "market_cap": 0.437,
+    "rank": 298,
+    "color": "#00ff9f"
+  },
+  {
+    "id": 299,
+    "ticker": "BRK-B299",
+    "name": "Berkshire Hathaway 299",
+    "sector": "Industrials",
+    "industry": "Industrials Industry",
+    "market_cap": 0.23,
+    "rank": 299,
+    "color": "#ffd700"
+  },
+  {
+    "id": 300,
+    "ticker": "WMT300",
+    "name": "Walmart Inc. 300",
+    "sector": "Healthcare",
+    "industry": "Healthcare Industry",
+    "market_cap": 1.891,
+    "rank": 300,
+    "color": "#00ff9f"
+  }
+]

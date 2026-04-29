@@ -1,749 +1,106 @@
 [
   {
+    "source": 1,
     "target": 8,
     "type": "partnership",
     "strength": 0.95,
-    "label": "AI chips for FSD & Dojo supercomputer",
-    "confidence": 5,
-    "verified_date": "2026-04-20",
-    "provenance": "Tesla AI Day + NVDA GTC 2026 keynote"
+    "label": "AI chips for FSD & Dojo",
+    "confidence": 5
   },
   {
+    "source": 1,
     "target": 7,
     "type": "supply",
     "strength": 0.92,
-    "label": "H100/H200 GPUs for AI training clusters",
-    "confidence": 5,
-    "verified_date": "2026-04-18",
-    "provenance": "Meta 10-K + earnings transcripts"
+    "label": "GPUs for AI training",
+    "confidence": 5
   },
   {
+    "source": 1,
     "target": 4,
     "type": "ecosystem",
     "strength": 0.88,
-    "label": "Azure OpenAI + NVIDIA GPUs/Grace",
-    "confidence": 5,
-    "verified_date": "2026-04-22",
-    "provenance": "Microsoft Build + NVDA partnership page"
+    "label": "Azure OpenAI + NVDA",
+    "confidence": 5
   },
   {
+    "source": 1,
     "target": 5,
     "type": "supply",
     "strength": 0.85,
-    "label": "AWS SageMaker + Trainium/Inferentia collab",
-    "confidence": 5,
-    "verified_date": "2026-04-15",
-    "provenance": "AWS re:Invent + NVDA earnings"
+    "label": "AWS SageMaker",
+    "confidence": 5
   },
   {
+    "source": 1,
     "target": 6,
     "type": "partnership",
     "strength": 0.82,
-    "label": "Networking silicon + AI accelerators (Tomahawk)",
-    "confidence": 4,
-    "verified_date": "2026-04-10",
-    "provenance": "Broadcom investor day"
+    "label": "Networking + AI silicon",
+    "confidence": 4
   },
   {
+    "source": 1,
     "target": 16,
     "type": "competitor",
     "strength": 0.78,
-    "label": "GPU/CPU AI rivalry + MI300 ecosystem",
-    "confidence": 4,
-    "verified_date": "2026-04-25",
-    "provenance": "AMD earnings + NVDA comments"
+    "label": "GPU/CPU AI rivalry",
+    "confidence": 4
   },
   {
+    "source": 1,
     "target": 15,
     "type": "supply",
     "strength": 0.91,
-    "label": "HBM3E/HBM4 memory for Blackwell",
-    "confidence": 5,
-    "verified_date": "2026-04-12",
-    "provenance": "Micron + NVDA joint announcement"
+    "label": "HBM memory for Blackwell",
+    "confidence": 5
   },
   {
-    "target": 32,
-    "type": "supply",
-    "strength": 0.79,
-    "label": "Etch & deposition equipment for advanced nodes",
-    "confidence": 4,
-    "verified_date": "2026-04-08",
-    "provenance": "Lam Research 10-K supplier disclosures"
-  },
-  {
-    "target": 34,
-    "type": "supply",
-    "strength": 0.81,
-    "label": "Deposition, CMP & metrology tools",
-    "confidence": 4,
-    "verified_date": "2026-04-14",
-    "provenance": "Applied Materials earnings"
-  },
-  {
-    "target": 21,
-    "type": "ecosystem",
-    "strength": 0.65,
-    "label": "Foundry & advanced packaging collaboration",
-    "confidence": 3,
-    "verified_date": "2026-04-05",
-    "provenance": "Intel IFS announcements"
-  },
-  {
-    "target": 47,
-    "type": "partnership",
-    "strength": 0.75,
-    "label": "ARM IP in Grace-Blackwell superchips",
-    "confidence": 5,
-    "verified_date": "2026-04-28",
-    "provenance": "NVIDIA GTC + Arm Tech Day"
-  },
-  {
-    "target": 48,
-    "type": "supply",
-    "strength": 0.72,
-    "label": "EUV lithography for leading-edge GPUs",
-    "confidence": 4,
-    "verified_date": "2026-04-19",
-    "provenance": "ASML + TSMC/NVDA supply chain"
-  },
-  {
-    "target": 49,
-    "type": "supply",
-    "strength": 0.68,
-    "label": "Process control & inspection for fabs",
-    "confidence": 4,
-    "verified_date": "2026-04-07",
-    "provenance": "KLA + NVDA joint tech papers"
-  },
-  {
-    "target": 39,
-    "type": "ecosystem",
-    "strength": 0.6,
-    "label": "5G/AI modem + Snapdragon collaboration",
-    "confidence": 3,
-    "verified_date": "2026-04-03",
-    "provenance": "Qualcomm + NVIDIA automotive"
-  },
-  {
-    "target": 40,
-    "type": "supply",
-    "strength": 0.55,
-    "label": "Analog/power management for AI boards",
-    "confidence": 3,
-    "verified_date": "2026-04-11",
-    "provenance": "TI + NVDA reference designs"
-  },
-  {
-    "target": 46,
-    "type": "ecosystem",
-    "strength": 0.58,
-    "label": "Snowflake + NVIDIA AI Data Cloud",
-    "confidence": 4,
-    "verified_date": "2026-04-26",
-    "provenance": "Snowflake Summit + NVDA partnership"
-  },
-  {
-    "target": 60,
-    "type": "partnership",
-    "strength": 0.65,
-    "label": "Falcon + NVIDIA AI security platform",
-    "confidence": 4,
-    "verified_date": "2026-04-24",
-    "provenance": "CrowdStrike + NVDA joint announcement"
-  },
-  {
-    "target": 64,
-    "type": "ecosystem",
-    "strength": 0.52,
-    "label": "Prisma Cloud + NVIDIA AI security",
-    "confidence": 3,
-    "verified_date": "2026-04-17",
-    "provenance": "Palo Alto Networks earnings"
-  },
-  {
+    "source": 3,
     "target": 6,
     "type": "supply",
     "strength": 0.87,
-    "label": "Custom silicon, Wi-Fi/Bluetooth, modems",
-    "confidence": 5,
-    "verified_date": "2026-04-21",
-    "provenance": "Apple 10-K + Broadcom 10-K"
+    "label": "Custom silicon",
+    "confidence": 5
   },
   {
-    "target": 1,
-    "type": "partnership",
-    "strength": 0.55,
-    "label": "Exploratory AI silicon + future GPU collab",
-    "confidence": 3,
-    "verified_date": "2026-04-28",
-    "provenance": "Rumors + supply chain reports"
-  },
-  {
-    "target": 39,
-    "type": "supply",
-    "strength": 0.72,
-    "label": "5G modems + RF components",
-    "confidence": 4,
-    "verified_date": "2026-04-09",
-    "provenance": "Qualcomm + Apple settlement + ongoing"
-  },
-  {
-    "target": 48,
-    "type": "supply",
-    "strength": 0.68,
-    "label": "EUV for A-series / M-series chips",
-    "confidence": 4,
-    "verified_date": "2026-04-13",
-    "provenance": "TSMC + Apple supply agreements"
-  },
-  {
+    "source": 5,
     "target": 4,
     "type": "competitor",
     "strength": 0.72,
-    "label": "Cloud + GenAI platform battle (AWS vs Azure)",
-    "confidence": 4,
-    "verified_date": "2026-04-27",
-    "provenance": "Earnings calls + market analysis"
+    "label": "Cloud AI battle",
+    "confidence": 4
   },
   {
-    "target": 1,
-    "type": "supply",
-    "strength": 0.85,
-    "label": "AWS AI infrastructure (GPU clusters)",
-    "confidence": 5,
-    "verified_date": "2026-04-16",
-    "provenance": "AWS + NVDA partnership page"
-  },
-  {
-    "target": 1,
-    "type": "supply",
-    "strength": 0.8,
-    "label": "TPU v5 + NVIDIA GPU mix for Gemini",
-    "confidence": 4,
-    "verified_date": "2026-04-23",
-    "provenance": "Google Cloud + NVDA announcements"
-  },
-  {
-    "target": 4,
-    "type": "competitor",
-    "strength": 0.68,
-    "label": "Search + Cloud AI rivalry",
-    "confidence": 4,
-    "verified_date": "2026-04-25",
-    "provenance": "Public statements + market share"
-  },
-  {
-    "target": 18,
-    "type": "competitor",
-    "strength": 0.55,
-    "label": "Azure SQL vs Oracle Cloud Infrastructure",
-    "confidence": 3,
-    "verified_date": "2026-04-06",
-    "provenance": "Database market analysis"
-  },
-  {
-    "target": 29,
-    "type": "partnership",
-    "strength": 0.79,
-    "label": "Azure + Palantir Foundry/Gotham",
-    "confidence": 5,
-    "verified_date": "2026-04-14",
-    "provenance": "Palantir + Microsoft joint press"
-  },
-  {
-    "target": 29,
-    "type": "partnership",
-    "strength": 0.71,
-    "label": "Google Cloud + Palantir analytics",
-    "confidence": 4,
-    "verified_date": "2026-04-12",
-    "provenance": "Palantir earnings + GCP partnership"
-  },
-  {
-    "target": 46,
-    "type": "ecosystem",
-    "strength": 0.62,
-    "label": "Snowflake on AWS + Bedrock integration",
-    "confidence": 4,
-    "verified_date": "2026-04-20",
-    "provenance": "Snowflake + AWS announcements"
-  },
-  {
+    "source": 9,
     "target": 31,
     "type": "investment",
     "strength": 0.94,
-    "label": "~9% stake in Coca-Cola (long-term)",
-    "confidence": 5,
-    "verified_date": "2026-04-28",
-    "provenance": "13F filings + Berkshire annual letter"
+    "label": "9% stake in KO",
+    "confidence": 5
   },
   {
-    "target": 14,
-    "type": "investment",
-    "strength": 0.81,
-    "label": "Significant American Express position",
-    "confidence": 5,
-    "verified_date": "2026-04-22",
-    "provenance": "13F + Berkshire 10-K"
-  },
-  {
-    "target": 25,
-    "type": "investment",
-    "strength": 0.76,
-    "label": "Large Chevron holding",
-    "confidence": 4,
-    "verified_date": "2026-04-18",
-    "provenance": "13F filings 2025-2026"
-  },
-  {
-    "target": 28,
-    "type": "investment",
-    "strength": 0.68,
-    "label": "Procter & Gamble consumer staples exposure",
-    "confidence": 4,
-    "verified_date": "2026-04-15",
-    "provenance": "13F + annual report"
-  },
-  {
-    "target": 3,
-    "type": "investment",
-    "strength": 0.45,
-    "label": "Historical Apple stake (partially sold)",
-    "confidence": 3,
-    "verified_date": "2026-04-01",
-    "provenance": "Past 13F + Buffett comments"
-  },
-  {
-    "target": 13,
-    "type": "investment",
-    "strength": 0.52,
-    "label": "Occidental Petroleum + energy exposure",
-    "confidence": 4,
-    "verified_date": "2026-04-10",
-    "provenance": "Berkshire 10-K + 13F"
-  },
-  {
-    "target": 44,
-    "type": "investment",
-    "strength": 0.48,
-    "label": "Aerospace & defense holdings via RTX",
-    "confidence": 3,
-    "verified_date": "2026-04-08",
-    "provenance": "13F filings"
-  },
-  {
-    "target": 22,
-    "type": "investment",
-    "strength": 0.42,
-    "label": "Heavy machinery / infrastructure exposure",
-    "confidence": 3,
-    "verified_date": "2026-04-05",
-    "provenance": "Berkshire portfolio"
-  },
-  {
+    "source": 11,
     "target": 14,
     "type": "partnership",
     "strength": 0.89,
-    "label": "Visa network powers JPM credit cards",
-    "confidence": 5,
-    "verified_date": "2026-04-19",
-    "provenance": "JPM + Visa partnership docs"
+    "label": "Visa network",
+    "confidence": 5
   },
   {
-    "target": 19,
-    "type": "partnership",
-    "strength": 0.84,
-    "label": "Mastercard global payments integration",
-    "confidence": 5,
-    "verified_date": "2026-04-21",
-    "provenance": "JPM + Mastercard announcements"
-  },
-  {
-    "target": 19,
-    "type": "competitor",
-    "strength": 0.71,
-    "label": "Card network duopoly (Visa vs MC)",
-    "confidence": 4,
-    "verified_date": "2026-04-27",
-    "provenance": "Industry analysis + market share"
-  },
-  {
-    "target": 11,
-    "type": "ecosystem",
-    "strength": 0.65,
-    "label": "Banking sector interlocks + capital flows",
-    "confidence": 3,
-    "verified_date": "2026-04-06",
-    "provenance": "Federal Reserve + industry reports"
-  },
-  {
-    "target": 11,
-    "type": "ecosystem",
-    "strength": 0.62,
-    "label": "Wall Street capital markets flows",
-    "confidence": 3,
-    "verified_date": "2026-04-12",
-    "provenance": "Morgan Stanley + JPM deal flow"
-  },
-  {
-    "target": 14,
-    "type": "partnership",
-    "strength": 0.58,
-    "label": "PayPal + Visa/Mastercard network",
-    "confidence": 4,
-    "verified_date": "2026-04-14",
-    "provenance": "PayPal 10-K + partnership pages"
-  },
-  {
+    "source": 12,
     "target": 33,
     "type": "partnership",
     "strength": 0.83,
-    "label": "Mounjaro/Zepbound formulary inclusion",
-    "confidence": 5,
-    "verified_date": "2026-04-23",
-    "provenance": "Eli Lilly + UnitedHealth announcements"
+    "label": "Mounjaro formulary",
+    "confidence": 5
   },
   {
-    "target": 33,
-    "type": "ecosystem",
-    "strength": 0.59,
-    "label": "Insurance-pharma dynamics + J&J products",
-    "confidence": 3,
-    "verified_date": "2026-04-11",
-    "provenance": "UNH 10-K + J&J filings"
-  },
-  {
-    "target": 12,
-    "type": "competitor",
-    "strength": 0.67,
-    "label": "Immunology & oncology rivalry (Skyrizi vs Humira)",
-    "confidence": 4,
-    "verified_date": "2026-04-16",
-    "provenance": "AbbVie + Lilly earnings"
-  },
-  {
-    "target": 33,
-    "type": "ecosystem",
-    "strength": 0.55,
-    "label": "Keytruda + UNH formulary",
-    "confidence": 4,
-    "verified_date": "2026-04-09",
-    "provenance": "Merck + UnitedHealth contracts"
-  },
-  {
-    "target": 33,
-    "type": "ecosystem",
-    "strength": 0.48,
-    "label": "COVID/vaccine + payer networks",
-    "confidence": 3,
-    "verified_date": "2026-04-04",
-    "provenance": "Pfizer + UNH 10-K"
-  },
-  {
-    "target": 20,
-    "type": "competitor",
-    "strength": 0.58,
-    "label": "Membership retail battle (Walmart+ vs Costco)",
-    "confidence": 4,
-    "verified_date": "2026-04-25",
-    "provenance": "Industry analysis + same-store sales"
-  },
-  {
-    "target": 30,
-    "type": "ecosystem",
-    "strength": 0.52,
-    "label": "Home improvement supply chain overlap",
-    "confidence": 3,
-    "verified_date": "2026-04-07",
-    "provenance": "Walmart + Home Depot supplier networks"
-  },
-  {
-    "target": 31,
-    "type": "ecosystem",
-    "strength": 0.61,
-    "label": "Shared CPG retail channels + co-marketing",
-    "confidence": 4,
-    "verified_date": "2026-04-18",
-    "provenance": "P&G + Coke joint promotions"
-  },
-  {
-    "target": 10,
-    "type": "supply",
-    "strength": 0.55,
-    "label": "Consumer goods distribution to Walmart",
-    "confidence": 4,
-    "verified_date": "2026-04-13",
-    "provenance": "P&G 10-K + Walmart supplier list"
-  },
-  {
-    "target": 31,
-    "type": "competitor",
-    "strength": 0.48,
-    "label": "Beverage duopoly (Pepsi vs Coke)",
-    "confidence": 4,
-    "verified_date": "2026-04-22",
-    "provenance": "Industry reports + shelf space wars"
-  },
-  {
-    "target": 42,
-    "type": "competitor",
-    "strength": 0.52,
-    "label": "Fast food / QSR rivalry",
-    "confidence": 3,
-    "verified_date": "2026-04-15",
-    "provenance": "McDonald's vs Starbucks market share"
-  },
-  {
-    "target": 10,
-    "type": "competitor",
-    "strength": 0.45,
-    "label": "Discount retail competition",
-    "confidence": 3,
-    "verified_date": "2026-04-10",
-    "provenance": "Target + Walmart same-store sales"
-  },
-  {
-    "target": 25,
-    "type": "competitor",
-    "strength": 0.48,
-    "label": "Oil major peers (Exxon vs Chevron)",
-    "confidence": 3,
-    "verified_date": "2026-04-05",
-    "provenance": "Industry analysis"
-  },
-  {
-    "target": 8,
-    "type": "partnership",
-    "strength": 0.44,
-    "label": "Autonomous heavy equipment + Tesla Optimus",
-    "confidence": 3,
-    "verified_date": "2026-04-28",
-    "provenance": "Caterpillar + Tesla potential collab"
-  },
-  {
-    "target": 22,
-    "type": "ecosystem",
-    "strength": 0.5,
-    "label": "Aerospace + heavy machinery supply chain",
-    "confidence": 3,
-    "verified_date": "2026-04-12",
-    "provenance": "RTX + CAT industrial overlap"
-  },
-  {
-    "target": 13,
-    "type": "ecosystem",
-    "strength": 0.42,
-    "label": "Renewables + oil transition exposure",
-    "confidence": 3,
-    "verified_date": "2026-04-08",
-    "provenance": "NextEra + Exxon energy transition"
-  },
-  {
-    "target": 15,
-    "type": "supply",
-    "strength": 0.73,
-    "label": "HBM memory for AMD MI300/350 GPUs",
-    "confidence": 4,
-    "verified_date": "2026-04-17",
-    "provenance": "AMD + Micron partnership"
-  },
-  {
-    "target": 6,
-    "type": "supply",
-    "strength": 0.69,
-    "label": "Advanced packaging equipment for Broadcom",
-    "confidence": 4,
-    "verified_date": "2026-04-11",
-    "provenance": "Lam + Broadcom 10-K"
-  },
-  {
-    "target": 21,
-    "type": "supply",
-    "strength": 0.66,
-    "label": "Wafer fab tools for Intel foundry",
-    "confidence": 4,
-    "verified_date": "2026-04-14",
-    "provenance": "Applied Materials + Intel IFS"
-  },
-  {
-    "target": 1,
-    "type": "supply",
-    "strength": 0.68,
-    "label": "Inspection for NVDA GPU yields",
-    "confidence": 4,
-    "verified_date": "2026-04-09",
-    "provenance": "KLA + NVDA tech papers"
-  },
-  {
+    "source": 29,
     "target": 4,
     "type": "partnership",
-    "strength": 0.65,
-    "label": "Falcon + Microsoft Defender integration",
-    "confidence": 4,
-    "verified_date": "2026-04-26",
-    "provenance": "CrowdStrike + Microsoft joint"
-  },
-  {
-    "target": 5,
-    "type": "partnership",
-    "strength": 0.58,
-    "label": "Prisma Cloud on AWS + Bedrock",
-    "confidence": 3,
-    "verified_date": "2026-04-20",
-    "provenance": "Palo Alto + AWS partnership"
-  },
-  {
-    "target": 5,
-    "type": "ecosystem",
-    "strength": 0.55,
-    "label": "Datadog monitoring for AWS workloads",
-    "confidence": 4,
-    "verified_date": "2026-04-18",
-    "provenance": "Datadog + AWS partnership"
-  },
-  {
-    "target": 5,
-    "type": "ecosystem",
-    "strength": 0.52,
-    "label": "Cloudflare Workers + AWS edge",
-    "confidence": 3,
-    "verified_date": "2026-04-15",
-    "provenance": "Cloudflare + AWS announcements"
-  },
-  {
-    "target": 2,
-    "type": "competitor",
-    "strength": 0.62,
-    "label": "Social + Search AI advertising rivalry",
-    "confidence": 4,
-    "verified_date": "2026-04-24",
-    "provenance": "Meta + Google earnings"
-  },
-  {
-    "target": 1,
-    "type": "supply",
-    "strength": 0.92,
-    "label": "GPU clusters for Llama training",
-    "confidence": 5,
-    "verified_date": "2026-04-28",
-    "provenance": "Meta AI infrastructure reports"
-  },
-  {
-    "target": 47,
-    "type": "partnership",
-    "strength": 0.7,
-    "label": "ARM-based AI chips for Optimus robots",
-    "confidence": 4,
-    "verified_date": "2026-04-22",
-    "provenance": "Tesla + Arm announcements"
-  },
-  {
-    "target": 22,
-    "type": "partnership",
-    "strength": 0.44,
-    "label": "Autonomous equipment + Tesla Dojo",
-    "confidence": 3,
-    "verified_date": "2026-04-28",
-    "provenance": "Caterpillar + Tesla potential"
-  },
-  {
-    "target": 4,
-    "type": "competitor",
-    "strength": 0.55,
-    "label": "Cloud database rivalry",
-    "confidence": 3,
-    "verified_date": "2026-04-10",
-    "provenance": "Oracle vs Azure market share"
-  },
-  {
-    "target": 60,
-    "type": "ecosystem",
-    "strength": 0.48,
-    "label": "Palantir + CrowdStrike gov/tech overlap",
-    "confidence": 3,
-    "verified_date": "2026-04-12",
-    "provenance": "Palantir + CRWD public contracts"
-  },
-  {
-    "target": 12,
-    "type": "partnership",
-    "strength": 0.83,
-    "label": "UNH formulary for Lilly weight-loss drugs",
-    "confidence": 5,
-    "verified_date": "2026-04-23",
-    "provenance": "UnitedHealth + Eli Lilly contracts"
-  },
-  {
-    "target": 26,
-    "type": "ecosystem",
-    "strength": 0.52,
-    "label": "AbbVie Skyrizi + UNH coverage",
-    "confidence": 4,
-    "verified_date": "2026-04-16",
-    "provenance": "AbbVie + UnitedHealth 10-K"
-  },
-  {
-    "target": 37,
-    "type": "competitor",
-    "strength": 0.52,
-    "label": "Coffee / QSR competition",
-    "confidence": 3,
-    "verified_date": "2026-04-19",
-    "provenance": "Starbucks vs McDonald's market"
-  },
-  {
-    "target": 55,
-    "type": "competitor",
-    "strength": 0.48,
-    "label": "Express vs ground logistics rivalry",
-    "confidence": 3,
-    "verified_date": "2026-04-08",
-    "provenance": "UPS + FedEx industry reports"
-  },
-  {
-    "target": 22,
-    "type": "competitor",
-    "strength": 0.45,
-    "label": "Farm equipment duopoly (Deere vs CAT)",
-    "confidence": 3,
-    "verified_date": "2026-04-05",
-    "provenance": "Agriculture machinery market"
-  },
-  {
-    "target": 4,
-    "type": "competitor",
-    "strength": 0.5,
-    "label": "IBM Watson vs Azure AI services",
-    "confidence": 3,
-    "verified_date": "2026-04-14",
-    "provenance": "IBM + Microsoft cloud rivalry"
-  },
-  {
-    "target": 4,
-    "type": "ecosystem",
-    "strength": 0.58,
-    "label": "ServiceNow + Azure integration",
-    "confidence": 4,
-    "verified_date": "2026-04-21",
-    "provenance": "ServiceNow + Microsoft partnership"
-  },
-  {
-    "target": 60,
-    "type": "competitor",
-    "strength": 0.52,
-    "label": "Zero Trust security platform rivalry",
-    "confidence": 3,
-    "verified_date": "2026-04-17",
-    "provenance": "Zscaler + CrowdStrike market"
-  },
-  {
-    "target": 60,
-    "type": "competitor",
-    "strength": 0.48,
-    "label": "Fortinet vs CrowdStrike endpoint",
-    "confidence": 3,
-    "verified_date": "2026-04-11",
-    "provenance": "Fortinet + CRWD earnings"
+    "strength": 0.79,
+    "label": "Azure + Palantir",
+    "confidence": 5
   }
 ]

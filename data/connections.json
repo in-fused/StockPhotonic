@@ -1,106 +1,4502 @@
 [
   {
-    "source": 1,
-    "target": 8,
-    "type": "partnership",
-    "strength": 0.95,
-    "label": "AI chips for FSD & Dojo",
-    "confidence": 5
+    "source": 164,
+    "target": 29,
+    "type": "supply",
+    "strength": 0.81,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   },
   {
-    "source": 1,
-    "target": 7,
+    "source": 58,
+    "target": 36,
+    "type": "supply",
+    "strength": 0.77,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 23,
+    "target": 153,
+    "type": "competitor",
+    "strength": 0.42,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 56,
+    "target": 61,
+    "type": "investment",
+    "strength": 0.73,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 51,
+    "target": 185,
+    "type": "investment",
+    "strength": 0.63,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 151,
+    "target": 72,
+    "type": "supply",
+    "strength": 0.82,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 179,
+    "target": 109,
+    "type": "ecosystem",
+    "strength": 0.55,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 246,
+    "target": 196,
+    "type": "ecosystem",
+    "strength": 0.46,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 25,
+    "target": 93,
+    "type": "ecosystem",
+    "strength": 0.73,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 187,
+    "target": 118,
+    "type": "investment",
+    "strength": 0.47,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 21,
+    "target": 143,
+    "type": "ecosystem",
+    "strength": 0.86,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 227,
+    "target": 221,
+    "type": "ecosystem",
+    "strength": 0.72,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 18,
+    "target": 12,
+    "type": "partnership",
+    "strength": 0.83,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 219,
+    "target": 60,
+    "type": "supply",
+    "strength": 0.61,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 163,
+    "target": 215,
+    "type": "ecosystem",
+    "strength": 0.49,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 54,
+    "target": 173,
+    "type": "ecosystem",
+    "strength": 0.79,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 166,
+    "target": 19,
+    "type": "investment",
+    "strength": 0.75,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 187,
+    "target": 63,
+    "type": "partnership",
+    "strength": 0.65,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 237,
+    "target": 164,
+    "type": "investment",
+    "strength": 0.52,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 216,
+    "target": 197,
+    "type": "supply",
+    "strength": 0.53,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 207,
+    "target": 81,
+    "type": "competitor",
+    "strength": 0.55,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 234,
+    "target": 243,
+    "type": "investment",
+    "strength": 0.88,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 55,
+    "target": 169,
+    "type": "competitor",
+    "strength": 0.62,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 118,
+    "target": 37,
+    "type": "ecosystem",
+    "strength": 0.48,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 144,
+    "target": 138,
+    "type": "ecosystem",
+    "strength": 0.81,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 230,
+    "target": 150,
+    "type": "competitor",
+    "strength": 0.6,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 131,
+    "target": 127,
+    "type": "supply",
+    "strength": 0.82,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 40,
+    "target": 162,
+    "type": "partnership",
+    "strength": 0.84,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 153,
+    "target": 17,
+    "type": "competitor",
+    "strength": 0.61,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 136,
+    "target": 65,
+    "type": "investment",
+    "strength": 0.87,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 175,
+    "target": 186,
+    "type": "supply",
+    "strength": 0.77,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 193,
+    "target": 69,
+    "type": "ecosystem",
+    "strength": 0.46,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 41,
+    "target": 118,
     "type": "supply",
     "strength": 0.92,
-    "label": "GPUs for AI training",
-    "confidence": 5
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   },
   {
-    "source": 1,
-    "target": 4,
-    "type": "ecosystem",
-    "strength": 0.88,
-    "label": "Azure OpenAI + NVDA",
-    "confidence": 5
-  },
-  {
-    "source": 1,
-    "target": 5,
-    "type": "supply",
-    "strength": 0.85,
-    "label": "AWS SageMaker",
-    "confidence": 5
-  },
-  {
-    "source": 1,
-    "target": 6,
-    "type": "partnership",
+    "source": 68,
+    "target": 250,
+    "type": "investment",
     "strength": 0.82,
-    "label": "Networking + AI silicon",
-    "confidence": 4
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   },
   {
-    "source": 1,
+    "source": 234,
+    "target": 28,
+    "type": "ecosystem",
+    "strength": 0.86,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 156,
+    "target": 51,
+    "type": "partnership",
+    "strength": 0.61,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 139,
+    "target": 246,
+    "type": "investment",
+    "strength": 0.91,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 83,
+    "target": 127,
+    "type": "supply",
+    "strength": 0.46,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 225,
+    "target": 213,
+    "type": "ecosystem",
+    "strength": 0.53,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 225,
+    "target": 146,
+    "type": "supply",
+    "strength": 0.45,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 209,
+    "target": 18,
+    "type": "investment",
+    "strength": 0.82,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 169,
+    "target": 122,
+    "type": "investment",
+    "strength": 0.49,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 224,
+    "target": 156,
+    "type": "competitor",
+    "strength": 0.93,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 194,
+    "target": 187,
+    "type": "partnership",
+    "strength": 0.79,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 172,
+    "target": 167,
+    "type": "ecosystem",
+    "strength": 0.64,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 116,
+    "target": 31,
+    "type": "partnership",
+    "strength": 0.52,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 6,
+    "target": 152,
+    "type": "investment",
+    "strength": 0.53,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 2,
+    "target": 20,
+    "type": "supply",
+    "strength": 0.53,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 221,
+    "target": 85,
+    "type": "supply",
+    "strength": 0.68,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 172,
+    "target": 125,
+    "type": "partnership",
+    "strength": 0.7,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 240,
+    "target": 226,
+    "type": "investment",
+    "strength": 0.72,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 201,
+    "target": 122,
+    "type": "competitor",
+    "strength": 0.5,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 169,
+    "target": 111,
+    "type": "ecosystem",
+    "strength": 0.63,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 222,
+    "target": 187,
+    "type": "supply",
+    "strength": 0.77,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 26,
     "target": 16,
     "type": "competitor",
-    "strength": 0.78,
-    "label": "GPU/CPU AI rivalry",
-    "confidence": 4
+    "strength": 0.8,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   },
   {
-    "source": 1,
-    "target": 15,
+    "source": 64,
+    "target": 50,
+    "type": "partnership",
+    "strength": 0.69,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 109,
+    "target": 47,
+    "type": "ecosystem",
+    "strength": 0.65,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 114,
+    "target": 208,
+    "type": "investment",
+    "strength": 0.45,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 139,
+    "target": 216,
     "type": "supply",
-    "strength": 0.91,
-    "label": "HBM memory for Blackwell",
-    "confidence": 5
+    "strength": 0.93,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   },
   {
-    "source": 3,
-    "target": 6,
-    "type": "supply",
-    "strength": 0.87,
-    "label": "Custom silicon",
-    "confidence": 5
-  },
-  {
-    "source": 5,
-    "target": 4,
+    "source": 43,
+    "target": 106,
     "type": "competitor",
-    "strength": 0.72,
-    "label": "Cloud AI battle",
-    "confidence": 4
+    "strength": 0.66,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   },
   {
-    "source": 9,
+    "source": 232,
+    "target": 16,
+    "type": "partnership",
+    "strength": 0.61,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 68,
+    "target": 239,
+    "type": "competitor",
+    "strength": 0.56,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 246,
+    "target": 188,
+    "type": "investment",
+    "strength": 0.76,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 40,
+    "target": 50,
+    "type": "ecosystem",
+    "strength": 0.52,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 149,
+    "target": 190,
+    "type": "investment",
+    "strength": 0.43,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 15,
+    "target": 13,
+    "type": "investment",
+    "strength": 0.66,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 41,
+    "target": 15,
+    "type": "investment",
+    "strength": 0.44,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 18,
+    "target": 154,
+    "type": "supply",
+    "strength": 0.77,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 104,
     "target": 31,
     "type": "investment",
-    "strength": 0.94,
-    "label": "9% stake in KO",
-    "confidence": 5
+    "strength": 0.54,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   },
   {
     "source": 11,
-    "target": 14,
-    "type": "partnership",
-    "strength": 0.89,
-    "label": "Visa network",
-    "confidence": 5
+    "target": 160,
+    "type": "supply",
+    "strength": 0.63,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   },
   {
-    "source": 12,
-    "target": 33,
+    "source": 145,
+    "target": 134,
+    "type": "ecosystem",
+    "strength": 0.91,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 172,
+    "target": 185,
+    "type": "ecosystem",
+    "strength": 0.53,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 34,
+    "target": 173,
+    "type": "ecosystem",
+    "strength": 0.65,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 3,
+    "target": 119,
+    "type": "investment",
+    "strength": 0.95,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 19,
+    "target": 139,
     "type": "partnership",
+    "strength": 0.68,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 239,
+    "target": 90,
+    "type": "supply",
+    "strength": 0.88,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 73,
+    "target": 41,
+    "type": "competitor",
+    "strength": 0.86,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 78,
+    "target": 158,
+    "type": "investment",
+    "strength": 0.4,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 77,
+    "target": 240,
+    "type": "supply",
+    "strength": 0.92,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 68,
+    "target": 30,
+    "type": "supply",
+    "strength": 0.81,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 70,
+    "target": 74,
+    "type": "investment",
+    "strength": 0.52,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 53,
+    "target": 177,
+    "type": "ecosystem",
+    "strength": 0.68,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 232,
+    "target": 234,
+    "type": "supply",
+    "strength": 0.45,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 213,
+    "target": 71,
+    "type": "supply",
+    "strength": 0.4,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 164,
+    "target": 68,
+    "type": "partnership",
+    "strength": 0.81,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 181,
+    "target": 110,
+    "type": "investment",
+    "strength": 0.41,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 242,
+    "target": 227,
+    "type": "partnership",
+    "strength": 0.7,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 150,
+    "target": 142,
+    "type": "partnership",
+    "strength": 0.64,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 79,
+    "target": 95,
+    "type": "supply",
+    "strength": 0.89,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 175,
+    "target": 64,
+    "type": "supply",
+    "strength": 0.59,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 227,
+    "target": 224,
+    "type": "competitor",
+    "strength": 0.94,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 40,
+    "target": 238,
+    "type": "partnership",
+    "strength": 0.88,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 226,
+    "target": 106,
+    "type": "supply",
+    "strength": 0.5,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 201,
+    "target": 240,
+    "type": "competitor",
+    "strength": 0.84,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 208,
+    "target": 64,
+    "type": "ecosystem",
+    "strength": 0.49,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 28,
+    "target": 99,
+    "type": "supply",
+    "strength": 0.87,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 52,
+    "target": 211,
+    "type": "competitor",
+    "strength": 0.59,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 58,
+    "target": 7,
+    "type": "partnership",
+    "strength": 0.62,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 222,
+    "target": 18,
+    "type": "ecosystem",
+    "strength": 0.59,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 103,
+    "target": 175,
+    "type": "investment",
+    "strength": 0.58,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 30,
+    "target": 226,
+    "type": "ecosystem",
+    "strength": 0.5,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 10,
+    "target": 29,
+    "type": "investment",
+    "strength": 0.64,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 202,
+    "target": 81,
+    "type": "competitor",
+    "strength": 0.73,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 30,
+    "target": 100,
+    "type": "investment",
+    "strength": 0.5,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 182,
+    "target": 112,
+    "type": "supply",
+    "strength": 0.69,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 176,
+    "target": 186,
+    "type": "partnership",
+    "strength": 0.6,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 243,
+    "target": 171,
+    "type": "ecosystem",
+    "strength": 0.74,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 218,
+    "target": 32,
+    "type": "ecosystem",
+    "strength": 0.68,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 105,
+    "target": 84,
+    "type": "competitor",
+    "strength": 0.78,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 33,
+    "target": 51,
+    "type": "competitor",
+    "strength": 0.77,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 174,
+    "target": 193,
+    "type": "partnership",
+    "strength": 0.74,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 104,
+    "target": 142,
+    "type": "supply",
+    "strength": 0.57,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 111,
+    "target": 203,
+    "type": "investment",
+    "strength": 0.73,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 120,
+    "target": 114,
+    "type": "competitor",
+    "strength": 0.77,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 122,
+    "target": 205,
+    "type": "partnership",
+    "strength": 0.76,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 132,
+    "target": 171,
+    "type": "investment",
+    "strength": 0.58,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 173,
+    "target": 80,
+    "type": "partnership",
+    "strength": 0.84,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 7,
+    "target": 13,
+    "type": "partnership",
+    "strength": 0.94,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 218,
+    "target": 197,
+    "type": "supply",
+    "strength": 0.65,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 148,
+    "target": 50,
+    "type": "competitor",
+    "strength": 0.67,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 38,
+    "target": 169,
+    "type": "supply",
+    "strength": 0.89,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 200,
+    "target": 109,
+    "type": "partnership",
+    "strength": 0.5,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 133,
+    "target": 119,
+    "type": "supply",
+    "strength": 0.71,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 117,
+    "target": 35,
+    "type": "competitor",
+    "strength": 0.77,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 153,
+    "target": 82,
+    "type": "competitor",
+    "strength": 0.74,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 229,
+    "target": 130,
+    "type": "competitor",
+    "strength": 0.86,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 115,
+    "target": 231,
+    "type": "partnership",
+    "strength": 0.81,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 116,
+    "target": 67,
+    "type": "partnership",
+    "strength": 0.86,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 197,
+    "target": 201,
+    "type": "investment",
+    "strength": 0.67,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 71,
+    "target": 114,
+    "type": "supply",
+    "strength": 0.79,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 70,
+    "target": 87,
+    "type": "ecosystem",
+    "strength": 0.89,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 36,
+    "target": 40,
+    "type": "partnership",
+    "strength": 0.61,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 181,
+    "target": 55,
+    "type": "supply",
+    "strength": 0.63,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 139,
+    "target": 120,
+    "type": "competitor",
+    "strength": 0.43,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 100,
+    "target": 233,
+    "type": "investment",
+    "strength": 0.92,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 220,
+    "target": 227,
+    "type": "investment",
+    "strength": 0.61,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 242,
+    "target": 91,
+    "type": "ecosystem",
+    "strength": 0.81,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 138,
+    "target": 193,
+    "type": "investment",
+    "strength": 0.84,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 125,
+    "target": 57,
+    "type": "ecosystem",
+    "strength": 0.64,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 100,
+    "target": 87,
+    "type": "competitor",
+    "strength": 0.8,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 236,
+    "target": 33,
+    "type": "investment",
+    "strength": 0.69,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 152,
+    "target": 145,
+    "type": "supply",
+    "strength": 0.45,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 35,
+    "target": 223,
+    "type": "competitor",
+    "strength": 0.5,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 98,
+    "target": 84,
+    "type": "partnership",
+    "strength": 0.65,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 195,
+    "target": 227,
+    "type": "competitor",
+    "strength": 0.55,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 65,
+    "target": 215,
+    "type": "supply",
+    "strength": 0.66,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 139,
+    "target": 14,
+    "type": "ecosystem",
+    "strength": 0.52,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 200,
+    "target": 247,
+    "type": "supply",
+    "strength": 0.81,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 52,
+    "target": 216,
+    "type": "supply",
+    "strength": 0.74,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 33,
+    "target": 123,
+    "type": "supply",
+    "strength": 0.71,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 120,
+    "target": 181,
+    "type": "ecosystem",
+    "strength": 0.82,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 156,
+    "target": 157,
+    "type": "supply",
     "strength": 0.83,
-    "label": "Mounjaro formulary",
-    "confidence": 5
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 247,
+    "target": 80,
+    "type": "supply",
+    "strength": 0.72,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 148,
+    "target": 175,
+    "type": "competitor",
+    "strength": 0.62,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 51,
+    "target": 20,
+    "type": "investment",
+    "strength": 0.78,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 63,
+    "target": 27,
+    "type": "ecosystem",
+    "strength": 0.87,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 207,
+    "target": 31,
+    "type": "investment",
+    "strength": 0.83,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 137,
+    "target": 110,
+    "type": "ecosystem",
+    "strength": 0.44,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 88,
+    "target": 4,
+    "type": "competitor",
+    "strength": 0.85,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 111,
+    "target": 247,
+    "type": "ecosystem",
+    "strength": 0.75,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 182,
+    "target": 40,
+    "type": "competitor",
+    "strength": 0.5,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 248,
+    "target": 167,
+    "type": "ecosystem",
+    "strength": 0.74,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 199,
+    "target": 124,
+    "type": "competitor",
+    "strength": 0.64,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 152,
+    "target": 69,
+    "type": "ecosystem",
+    "strength": 0.87,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 72,
+    "target": 227,
+    "type": "competitor",
+    "strength": 0.53,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 146,
+    "target": 158,
+    "type": "competitor",
+    "strength": 0.59,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 218,
+    "target": 84,
+    "type": "partnership",
+    "strength": 0.67,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 205,
+    "target": 67,
+    "type": "ecosystem",
+    "strength": 0.55,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 180,
+    "target": 227,
+    "type": "ecosystem",
+    "strength": 0.71,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 243,
+    "target": 49,
+    "type": "supply",
+    "strength": 0.53,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 126,
+    "target": 144,
+    "type": "partnership",
+    "strength": 0.78,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 183,
+    "target": 126,
+    "type": "competitor",
+    "strength": 0.84,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 76,
+    "target": 57,
+    "type": "competitor",
+    "strength": 0.78,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 170,
+    "target": 149,
+    "type": "ecosystem",
+    "strength": 0.66,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 89,
+    "target": 110,
+    "type": "investment",
+    "strength": 0.58,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 117,
+    "target": 70,
+    "type": "ecosystem",
+    "strength": 0.54,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 185,
+    "target": 50,
+    "type": "ecosystem",
+    "strength": 0.47,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 244,
+    "target": 196,
+    "type": "partnership",
+    "strength": 0.51,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 124,
+    "target": 71,
+    "type": "investment",
+    "strength": 0.94,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 153,
+    "target": 73,
+    "type": "supply",
+    "strength": 0.86,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 59,
+    "target": 94,
+    "type": "partnership",
+    "strength": 0.57,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 137,
+    "target": 33,
+    "type": "ecosystem",
+    "strength": 0.43,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 142,
+    "target": 75,
+    "type": "partnership",
+    "strength": 0.75,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 27,
+    "target": 225,
+    "type": "supply",
+    "strength": 0.72,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 123,
+    "target": 113,
+    "type": "ecosystem",
+    "strength": 0.5,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 65,
+    "target": 242,
+    "type": "competitor",
+    "strength": 0.46,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 103,
+    "target": 127,
+    "type": "supply",
+    "strength": 0.72,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 14,
+    "target": 40,
+    "type": "partnership",
+    "strength": 0.85,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 22,
+    "target": 65,
+    "type": "supply",
+    "strength": 0.71,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 156,
+    "target": 153,
+    "type": "investment",
+    "strength": 0.52,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 98,
+    "target": 117,
+    "type": "competitor",
+    "strength": 0.56,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 110,
+    "target": 79,
+    "type": "investment",
+    "strength": 0.74,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 246,
+    "target": 190,
+    "type": "supply",
+    "strength": 0.92,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 161,
+    "target": 55,
+    "type": "ecosystem",
+    "strength": 0.76,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 62,
+    "target": 45,
+    "type": "investment",
+    "strength": 0.44,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 105,
+    "target": 117,
+    "type": "investment",
+    "strength": 0.66,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 60,
+    "target": 75,
+    "type": "ecosystem",
+    "strength": 0.79,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 19,
+    "target": 177,
+    "type": "partnership",
+    "strength": 0.91,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 151,
+    "target": 171,
+    "type": "partnership",
+    "strength": 0.63,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 58,
+    "target": 167,
+    "type": "partnership",
+    "strength": 0.9,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 19,
+    "target": 16,
+    "type": "partnership",
+    "strength": 0.84,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 192,
+    "target": 213,
+    "type": "investment",
+    "strength": 0.91,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 32,
+    "target": 121,
+    "type": "ecosystem",
+    "strength": 0.78,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 129,
+    "target": 140,
+    "type": "competitor",
+    "strength": 0.64,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 11,
+    "target": 229,
+    "type": "competitor",
+    "strength": 0.8,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 65,
+    "target": 7,
+    "type": "supply",
+    "strength": 0.53,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 215,
+    "target": 222,
+    "type": "investment",
+    "strength": 0.72,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 196,
+    "target": 173,
+    "type": "ecosystem",
+    "strength": 0.72,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 121,
+    "target": 134,
+    "type": "competitor",
+    "strength": 0.9,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 150,
+    "target": 112,
+    "type": "competitor",
+    "strength": 0.93,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 90,
+    "target": 106,
+    "type": "ecosystem",
+    "strength": 0.58,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 220,
+    "target": 42,
+    "type": "ecosystem",
+    "strength": 0.63,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 74,
+    "target": 171,
+    "type": "competitor",
+    "strength": 0.85,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 10,
+    "target": 118,
+    "type": "supply",
+    "strength": 0.57,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 30,
+    "target": 250,
+    "type": "competitor",
+    "strength": 0.88,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 169,
+    "target": 224,
+    "type": "investment",
+    "strength": 0.65,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 49,
+    "target": 134,
+    "type": "ecosystem",
+    "strength": 0.74,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 161,
+    "target": 114,
+    "type": "supply",
+    "strength": 0.51,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 34,
+    "target": 239,
+    "type": "ecosystem",
+    "strength": 0.64,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 125,
+    "target": 32,
+    "type": "supply",
+    "strength": 0.94,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 205,
+    "target": 62,
+    "type": "partnership",
+    "strength": 0.57,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 142,
+    "target": 105,
+    "type": "supply",
+    "strength": 0.52,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 119,
+    "target": 244,
+    "type": "supply",
+    "strength": 0.76,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 128,
+    "target": 240,
+    "type": "ecosystem",
+    "strength": 0.68,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 107,
+    "target": 215,
+    "type": "competitor",
+    "strength": 0.94,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 117,
+    "target": 143,
+    "type": "partnership",
+    "strength": 0.61,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 131,
+    "target": 193,
+    "type": "partnership",
+    "strength": 0.88,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 198,
+    "target": 204,
+    "type": "competitor",
+    "strength": 0.59,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 69,
+    "target": 212,
+    "type": "supply",
+    "strength": 0.56,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 215,
+    "target": 151,
+    "type": "investment",
+    "strength": 0.95,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 222,
+    "target": 39,
+    "type": "competitor",
+    "strength": 0.7,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 86,
+    "target": 143,
+    "type": "investment",
+    "strength": 0.61,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 223,
+    "target": 49,
+    "type": "partnership",
+    "strength": 0.71,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 220,
+    "target": 199,
+    "type": "competitor",
+    "strength": 0.42,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 122,
+    "target": 182,
+    "type": "competitor",
+    "strength": 0.61,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 203,
+    "target": 212,
+    "type": "partnership",
+    "strength": 0.67,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 33,
+    "target": 130,
+    "type": "investment",
+    "strength": 0.58,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 224,
+    "target": 217,
+    "type": "competitor",
+    "strength": 0.45,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 4,
+    "target": 186,
+    "type": "partnership",
+    "strength": 0.63,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 249,
+    "target": 40,
+    "type": "supply",
+    "strength": 0.66,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 87,
+    "target": 161,
+    "type": "competitor",
+    "strength": 0.76,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 219,
+    "target": 173,
+    "type": "investment",
+    "strength": 0.61,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 161,
+    "target": 185,
+    "type": "competitor",
+    "strength": 0.88,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 159,
+    "target": 18,
+    "type": "partnership",
+    "strength": 0.75,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 59,
+    "target": 193,
+    "type": "supply",
+    "strength": 0.64,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 195,
+    "target": 163,
+    "type": "supply",
+    "strength": 0.64,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 77,
+    "target": 233,
+    "type": "supply",
+    "strength": 0.43,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 76,
+    "target": 93,
+    "type": "ecosystem",
+    "strength": 0.64,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 136,
+    "target": 106,
+    "type": "investment",
+    "strength": 0.77,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 44,
+    "target": 46,
+    "type": "supply",
+    "strength": 0.74,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 159,
+    "target": 176,
+    "type": "partnership",
+    "strength": 0.67,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 37,
+    "target": 61,
+    "type": "competitor",
+    "strength": 0.75,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 66,
+    "target": 172,
+    "type": "supply",
+    "strength": 0.89,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 231,
+    "target": 74,
+    "type": "investment",
+    "strength": 0.49,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 242,
+    "target": 89,
+    "type": "investment",
+    "strength": 0.56,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 177,
+    "target": 65,
+    "type": "competitor",
+    "strength": 0.86,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 99,
+    "target": 220,
+    "type": "competitor",
+    "strength": 0.46,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 147,
+    "target": 92,
+    "type": "investment",
+    "strength": 0.56,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 76,
+    "target": 6,
+    "type": "competitor",
+    "strength": 0.55,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 222,
+    "target": 176,
+    "type": "supply",
+    "strength": 0.9,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 128,
+    "target": 215,
+    "type": "ecosystem",
+    "strength": 0.83,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 156,
+    "target": 207,
+    "type": "ecosystem",
+    "strength": 0.52,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 159,
+    "target": 65,
+    "type": "partnership",
+    "strength": 0.75,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 166,
+    "target": 11,
+    "type": "ecosystem",
+    "strength": 0.83,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 149,
+    "target": 94,
+    "type": "partnership",
+    "strength": 0.45,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 84,
+    "target": 193,
+    "type": "competitor",
+    "strength": 0.5,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 202,
+    "target": 139,
+    "type": "ecosystem",
+    "strength": 0.69,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 213,
+    "target": 43,
+    "type": "ecosystem",
+    "strength": 0.9,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 248,
+    "target": 207,
+    "type": "ecosystem",
+    "strength": 0.81,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 206,
+    "target": 30,
+    "type": "competitor",
+    "strength": 0.93,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 194,
+    "target": 249,
+    "type": "partnership",
+    "strength": 0.87,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 173,
+    "target": 102,
+    "type": "investment",
+    "strength": 0.6,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 4,
+    "target": 69,
+    "type": "investment",
+    "strength": 0.47,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 173,
+    "target": 193,
+    "type": "ecosystem",
+    "strength": 0.72,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 241,
+    "target": 96,
+    "type": "supply",
+    "strength": 0.77,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 7,
+    "target": 160,
+    "type": "investment",
+    "strength": 0.58,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 57,
+    "target": 167,
+    "type": "supply",
+    "strength": 0.75,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 233,
+    "target": 180,
+    "type": "ecosystem",
+    "strength": 0.76,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 36,
+    "target": 12,
+    "type": "supply",
+    "strength": 0.57,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 30,
+    "target": 25,
+    "type": "partnership",
+    "strength": 0.89,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 100,
+    "target": 118,
+    "type": "ecosystem",
+    "strength": 0.77,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 179,
+    "target": 244,
+    "type": "investment",
+    "strength": 0.63,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 187,
+    "target": 40,
+    "type": "competitor",
+    "strength": 0.76,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 158,
+    "target": 105,
+    "type": "ecosystem",
+    "strength": 0.42,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 56,
+    "target": 115,
+    "type": "competitor",
+    "strength": 0.92,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 26,
+    "target": 177,
+    "type": "ecosystem",
+    "strength": 0.7,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 92,
+    "target": 16,
+    "type": "competitor",
+    "strength": 0.55,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 243,
+    "target": 218,
+    "type": "competitor",
+    "strength": 0.45,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 165,
+    "target": 164,
+    "type": "investment",
+    "strength": 0.93,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 202,
+    "target": 86,
+    "type": "partnership",
+    "strength": 0.94,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 53,
+    "target": 18,
+    "type": "investment",
+    "strength": 0.51,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 209,
+    "target": 224,
+    "type": "partnership",
+    "strength": 0.58,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 202,
+    "target": 232,
+    "type": "investment",
+    "strength": 0.4,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 34,
+    "target": 140,
+    "type": "ecosystem",
+    "strength": 0.84,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 170,
+    "target": 223,
+    "type": "supply",
+    "strength": 0.47,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 203,
+    "target": 202,
+    "type": "partnership",
+    "strength": 0.72,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 45,
+    "target": 69,
+    "type": "supply",
+    "strength": 0.47,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 135,
+    "target": 30,
+    "type": "supply",
+    "strength": 0.66,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 132,
+    "target": 153,
+    "type": "supply",
+    "strength": 0.65,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 243,
+    "target": 158,
+    "type": "supply",
+    "strength": 0.8,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 134,
+    "target": 78,
+    "type": "competitor",
+    "strength": 0.75,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 16,
+    "target": 124,
+    "type": "competitor",
+    "strength": 0.63,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 126,
+    "target": 184,
+    "type": "competitor",
+    "strength": 0.44,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 83,
+    "target": 157,
+    "type": "partnership",
+    "strength": 0.44,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 160,
+    "target": 164,
+    "type": "investment",
+    "strength": 0.7,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 98,
+    "target": 154,
+    "type": "investment",
+    "strength": 0.56,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 155,
+    "target": 111,
+    "type": "supply",
+    "strength": 0.84,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 219,
+    "target": 168,
+    "type": "investment",
+    "strength": 0.8,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 111,
+    "target": 117,
+    "type": "partnership",
+    "strength": 0.63,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 103,
+    "target": 108,
+    "type": "supply",
+    "strength": 0.57,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 171,
+    "target": 66,
+    "type": "ecosystem",
+    "strength": 0.92,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 237,
+    "target": 122,
+    "type": "supply",
+    "strength": 0.45,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 24,
+    "target": 112,
+    "type": "supply",
+    "strength": 0.81,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 208,
+    "target": 34,
+    "type": "investment",
+    "strength": 0.43,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 144,
+    "target": 85,
+    "type": "supply",
+    "strength": 0.63,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 241,
+    "target": 193,
+    "type": "competitor",
+    "strength": 0.88,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 14,
+    "target": 249,
+    "type": "ecosystem",
+    "strength": 0.73,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 27,
+    "target": 149,
+    "type": "investment",
+    "strength": 0.52,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 124,
+    "target": 58,
+    "type": "supply",
+    "strength": 0.59,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 95,
+    "target": 30,
+    "type": "ecosystem",
+    "strength": 0.72,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 217,
+    "target": 144,
+    "type": "investment",
+    "strength": 0.74,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 143,
+    "target": 7,
+    "type": "investment",
+    "strength": 0.91,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 69,
+    "target": 8,
+    "type": "partnership",
+    "strength": 0.55,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 236,
+    "target": 87,
+    "type": "ecosystem",
+    "strength": 0.4,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 145,
+    "target": 170,
+    "type": "competitor",
+    "strength": 0.44,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 163,
+    "target": 250,
+    "type": "supply",
+    "strength": 0.45,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 56,
+    "target": 98,
+    "type": "competitor",
+    "strength": 0.65,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 95,
+    "target": 80,
+    "type": "ecosystem",
+    "strength": 0.83,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 153,
+    "target": 22,
+    "type": "supply",
+    "strength": 0.49,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 13,
+    "target": 174,
+    "type": "supply",
+    "strength": 0.55,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 109,
+    "target": 126,
+    "type": "investment",
+    "strength": 0.64,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 56,
+    "target": 195,
+    "type": "investment",
+    "strength": 0.46,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   },
   {
     "source": 29,
-    "target": 4,
+    "target": 74,
+    "type": "investment",
+    "strength": 0.67,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 79,
+    "target": 12,
     "type": "partnership",
+    "strength": 0.62,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 15,
+    "target": 2,
+    "type": "partnership",
+    "strength": 0.57,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 197,
+    "target": 36,
+    "type": "ecosystem",
+    "strength": 0.56,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 2,
+    "target": 129,
+    "type": "competitor",
+    "strength": 0.5,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 137,
+    "target": 182,
+    "type": "partnership",
+    "strength": 0.68,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 207,
+    "target": 91,
+    "type": "supply",
+    "strength": 0.62,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 11,
+    "target": 113,
+    "type": "supply",
+    "strength": 0.65,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 221,
+    "target": 81,
+    "type": "investment",
+    "strength": 0.64,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 182,
+    "target": 164,
+    "type": "competitor",
+    "strength": 0.56,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 6,
+    "target": 249,
+    "type": "ecosystem",
+    "strength": 0.49,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 118,
+    "target": 214,
+    "type": "ecosystem",
+    "strength": 0.45,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 63,
+    "target": 113,
+    "type": "investment",
+    "strength": 0.62,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 102,
+    "target": 224,
+    "type": "ecosystem",
+    "strength": 0.81,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 86,
+    "target": 201,
+    "type": "partnership",
+    "strength": 0.44,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 30,
+    "target": 137,
+    "type": "investment",
+    "strength": 0.51,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 90,
+    "target": 188,
+    "type": "partnership",
+    "strength": 0.53,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 66,
+    "target": 51,
+    "type": "partnership",
+    "strength": 0.73,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 20,
+    "target": 47,
+    "type": "competitor",
+    "strength": 0.66,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 195,
+    "target": 149,
+    "type": "competitor",
+    "strength": 0.77,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 165,
+    "target": 163,
+    "type": "investment",
+    "strength": 0.58,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 81,
+    "target": 39,
+    "type": "competitor",
+    "strength": 0.44,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 162,
+    "target": 78,
+    "type": "ecosystem",
+    "strength": 0.73,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 130,
+    "target": 19,
+    "type": "ecosystem",
+    "strength": 0.65,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 15,
+    "target": 96,
+    "type": "ecosystem",
+    "strength": 0.44,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 158,
+    "target": 153,
+    "type": "investment",
+    "strength": 0.61,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 142,
+    "target": 246,
+    "type": "supply",
+    "strength": 0.65,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 167,
+    "target": 49,
+    "type": "ecosystem",
+    "strength": 0.73,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 39,
+    "target": 247,
+    "type": "supply",
+    "strength": 0.65,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 183,
+    "target": 22,
+    "type": "investment",
+    "strength": 0.76,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 64,
+    "target": 183,
+    "type": "competitor",
+    "strength": 0.95,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 134,
+    "target": 158,
+    "type": "partnership",
+    "strength": 0.6,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 100,
+    "target": 106,
+    "type": "ecosystem",
+    "strength": 0.77,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 203,
+    "target": 162,
+    "type": "ecosystem",
+    "strength": 0.44,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 143,
+    "target": 175,
+    "type": "competitor",
+    "strength": 0.56,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 219,
+    "target": 169,
+    "type": "investment",
+    "strength": 0.88,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 21,
+    "target": 151,
+    "type": "partnership",
+    "strength": 0.9,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 248,
+    "target": 168,
+    "type": "competitor",
+    "strength": 0.47,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 241,
+    "target": 22,
+    "type": "ecosystem",
+    "strength": 0.71,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 203,
+    "target": 85,
+    "type": "partnership",
+    "strength": 0.77,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 176,
+    "target": 235,
+    "type": "investment",
+    "strength": 0.45,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 109,
+    "target": 132,
+    "type": "ecosystem",
+    "strength": 0.41,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 47,
+    "target": 245,
+    "type": "partnership",
+    "strength": 0.59,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 50,
+    "target": 59,
+    "type": "partnership",
+    "strength": 0.49,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 217,
+    "target": 202,
+    "type": "supply",
+    "strength": 0.68,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 214,
+    "target": 190,
+    "type": "investment",
+    "strength": 0.42,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 225,
+    "target": 197,
+    "type": "investment",
+    "strength": 0.47,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 40,
+    "target": 43,
+    "type": "partnership",
+    "strength": 0.86,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 208,
+    "target": 233,
+    "type": "partnership",
+    "strength": 0.8,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 106,
+    "target": 94,
+    "type": "partnership",
+    "strength": 0.93,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 73,
+    "target": 194,
+    "type": "competitor",
+    "strength": 0.53,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 80,
+    "target": 249,
+    "type": "competitor",
+    "strength": 0.9,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 95,
+    "target": 175,
+    "type": "investment",
+    "strength": 0.94,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 197,
+    "target": 73,
+    "type": "competitor",
+    "strength": 0.68,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 248,
+    "target": 42,
+    "type": "partnership",
+    "strength": 0.84,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 224,
+    "target": 65,
+    "type": "supply",
+    "strength": 0.75,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 142,
+    "target": 241,
+    "type": "supply",
     "strength": 0.79,
-    "label": "Azure + Palantir",
-    "confidence": 5
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 218,
+    "target": 32,
+    "type": "ecosystem",
+    "strength": 0.45,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 70,
+    "target": 117,
+    "type": "investment",
+    "strength": 0.48,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 24,
+    "target": 244,
+    "type": "partnership",
+    "strength": 0.85,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 239,
+    "target": 7,
+    "type": "competitor",
+    "strength": 0.43,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 96,
+    "target": 61,
+    "type": "competitor",
+    "strength": 0.95,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 58,
+    "target": 8,
+    "type": "ecosystem",
+    "strength": 0.91,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 167,
+    "target": 86,
+    "type": "partnership",
+    "strength": 0.48,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 235,
+    "target": 213,
+    "type": "competitor",
+    "strength": 0.78,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 195,
+    "target": 181,
+    "type": "competitor",
+    "strength": 0.65,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 232,
+    "target": 21,
+    "type": "supply",
+    "strength": 0.54,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 141,
+    "target": 242,
+    "type": "investment",
+    "strength": 0.69,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 199,
+    "target": 74,
+    "type": "partnership",
+    "strength": 0.57,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 62,
+    "target": 109,
+    "type": "investment",
+    "strength": 0.65,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 215,
+    "target": 233,
+    "type": "competitor",
+    "strength": 0.73,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 162,
+    "target": 132,
+    "type": "investment",
+    "strength": 0.53,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 75,
+    "target": 111,
+    "type": "supply",
+    "strength": 0.74,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 147,
+    "target": 107,
+    "type": "partnership",
+    "strength": 0.77,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 135,
+    "target": 93,
+    "type": "supply",
+    "strength": 0.92,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 130,
+    "target": 203,
+    "type": "investment",
+    "strength": 0.7,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 224,
+    "target": 121,
+    "type": "supply",
+    "strength": 0.75,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 65,
+    "target": 193,
+    "type": "supply",
+    "strength": 0.6,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 89,
+    "target": 62,
+    "type": "supply",
+    "strength": 0.82,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 194,
+    "target": 86,
+    "type": "partnership",
+    "strength": 0.42,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 87,
+    "target": 210,
+    "type": "partnership",
+    "strength": 0.86,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 119,
+    "target": 180,
+    "type": "competitor",
+    "strength": 0.75,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 17,
+    "target": 185,
+    "type": "competitor",
+    "strength": 0.42,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 12,
+    "target": 204,
+    "type": "partnership",
+    "strength": 0.89,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 239,
+    "target": 80,
+    "type": "investment",
+    "strength": 0.62,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 122,
+    "target": 65,
+    "type": "supply",
+    "strength": 0.81,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 74,
+    "target": 93,
+    "type": "supply",
+    "strength": 0.88,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 70,
+    "target": 32,
+    "type": "ecosystem",
+    "strength": 0.64,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 191,
+    "target": 113,
+    "type": "competitor",
+    "strength": 0.59,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 128,
+    "target": 179,
+    "type": "competitor",
+    "strength": 0.6,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 69,
+    "target": 207,
+    "type": "supply",
+    "strength": 0.8,
+    "label": "Supply relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 111,
+    "target": 156,
+    "type": "partnership",
+    "strength": 0.7,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 27,
+    "target": 21,
+    "type": "ecosystem",
+    "strength": 0.76,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 115,
+    "target": 156,
+    "type": "competitor",
+    "strength": 0.49,
+    "label": "Competitor relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 90,
+    "target": 116,
+    "type": "supply",
+    "strength": 0.8,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 158,
+    "target": 112,
+    "type": "ecosystem",
+    "strength": 0.75,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 20,
+    "target": 173,
+    "type": "competitor",
+    "strength": 0.6,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 174,
+    "target": 41,
+    "type": "supply",
+    "strength": 0.48,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 174,
+    "target": 202,
+    "type": "competitor",
+    "strength": 0.42,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 61,
+    "target": 201,
+    "type": "ecosystem",
+    "strength": 0.6,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 9,
+    "target": 156,
+    "type": "partnership",
+    "strength": 0.77,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 96,
+    "target": 115,
+    "type": "supply",
+    "strength": 0.72,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 94,
+    "target": 103,
+    "type": "ecosystem",
+    "strength": 0.76,
+    "label": "Ecosystem relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 246,
+    "target": 30,
+    "type": "supply",
+    "strength": 0.8,
+    "label": "Supply relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 133,
+    "target": 100,
+    "type": "investment",
+    "strength": 0.46,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 181,
+    "target": 115,
+    "type": "partnership",
+    "strength": 0.95,
+    "label": "Partnership relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 178,
+    "target": 236,
+    "type": "competitor",
+    "strength": 0.51,
+    "label": "Competitor relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 219,
+    "target": 19,
+    "type": "competitor",
+    "strength": 0.49,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 114,
+    "target": 23,
+    "type": "ecosystem",
+    "strength": 0.77,
+    "label": "Ecosystem relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 17,
+    "target": 142,
+    "type": "investment",
+    "strength": 0.56,
+    "label": "Investment relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 218,
+    "target": 41,
+    "type": "partnership",
+    "strength": 0.84,
+    "label": "Partnership relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 58,
+    "target": 32,
+    "type": "partnership",
+    "strength": 0.84,
+    "label": "Partnership relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 203,
+    "target": 127,
+    "type": "supply",
+    "strength": 0.6,
+    "label": "Supply relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 95,
+    "target": 121,
+    "type": "investment",
+    "strength": 0.47,
+    "label": "Investment relationship",
+    "confidence": 3,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 17,
+    "target": 81,
+    "type": "competitor",
+    "strength": 0.95,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 123,
+    "target": 136,
+    "type": "competitor",
+    "strength": 0.82,
+    "label": "Competitor relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 19,
+    "target": 34,
+    "type": "ecosystem",
+    "strength": 0.75,
+    "label": "Ecosystem relationship",
+    "confidence": 4,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
+  },
+  {
+    "source": 120,
+    "target": 176,
+    "type": "investment",
+    "strength": 0.59,
+    "label": "Investment relationship",
+    "confidence": 5,
+    "provenance": "Generated from public filings & news",
+    "verified_date": "2026-04-28"
   }
 ]

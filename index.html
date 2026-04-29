@@ -200,7 +200,7 @@
                     </div>
                     <div>
                         <div class="font-display text-3xl font-semibold tracking-tighter neon-text">PHOTONIC NEXUS</div>
-                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">TOP 500 • US MARKETS • 2026</div>
+                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">TOP 500 • US MARKETS • 2026 • v4.8 EXPANDED</div>
                     </div>
                 </div>
             </div>
@@ -580,16 +580,16 @@
         // Initialize nodes from companies
         function initNodes() {
             nodes = companies.map((c, i) => {
-                // Spread in a nice organic layout (roughly circular with center bias)
+                // Better spread for larger datasets (more even distribution)
                 const angle = (i / companies.length) * Math.PI * 2;
-                const radius = 280 + Math.random() * 120;
-                const centerX = 600;
-                const centerY = 340;
+                const radius = 380 + Math.random() * 220;
+                const centerX = 620;
+                const centerY = 360;
                 
                 return {
                     ...c,
-                    x: centerX + Math.cos(angle) * radius + (Math.random() - 0.5) * 80,
-                    y: centerY + Math.sin(angle) * radius * 0.7 + (Math.random() - 0.5) * 60,
+                    x: centerX + Math.cos(angle) * radius + (Math.random() - 0.5) * 120,
+                    y: centerY + Math.sin(angle) * radius * 0.75 + (Math.random() - 0.5) * 90,
                     vx: 0,
                     vy: 0,
                     fx: null,
@@ -611,7 +611,7 @@
         
         // Simple force-directed simulation
         function simulateForces() {
-            const repulsion = 1800;
+            const repulsion = 2400;  // Stronger repulsion for cleaner spacing with more companies
             const attraction = 0.035;
             const damping = 0.88;
             const centerForce = 0.0015;
@@ -850,16 +850,19 @@
             
             canvas.addEventListener('mousedown', (e) => {
                 const rect = canvas.getBoundingClientRect();
-                const mouseX = (e.clientX - rect.left - offsetX) / scale;
-                const mouseY = (e.clientY - rect.top - offsetY) / scale;
+                // Use raw screen coordinates (fixes displacement bug)
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
                 
-                // Check if clicking a node
+                // Check if clicking a node (screen-space comparison)
                 let clickedNode = null;
                 for (let node of nodes) {
-                    const dx = node.x - mouseX;
-                    const dy = node.y - mouseY;
+                    const screenX = node.x * scale + offsetX;
+                    const screenY = node.y * scale + offsetY;
+                    const dx = screenX - mouseX;
+                    const dy = screenY - mouseY;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < Math.max(14, Math.sqrt(node.cap) * 3.2)) {
+                    if (dist < 45) {  // Large screen-space hitbox
                         clickedNode = node;
                         break;
                     }

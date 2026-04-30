@@ -15,6 +15,7 @@ import io
 import json
 import sys
 import tempfile
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -127,6 +128,29 @@ REQUIRED_INPUT_FIELDS = {
     "provenance",
     "source_urls",
 }
+AGGREGATED_PROVENANCE = "Aggregated from multiple independent sources"
+
+
+@dataclass
+class ConnectionCandidate:
+    connection: dict[str, Any]
+    source_ticker: str
+    target_ticker: str
+    connection_type: str
+    signal_count: int = 1
+
+
+@dataclass(frozen=True)
+class SignalAggregationSummary:
+    aggregated_edges: int = 0
+    edge_count: int = 0
+    signal_count: int = 0
+
+    @property
+    def average_signals_per_edge(self) -> float:
+        if self.edge_count == 0:
+            return 0.0
+        return self.signal_count / self.edge_count
 
 
 def load_json(path: Path) -> Any:
@@ -231,6 +255,12 @@ def normalize_source_urls(value: Any) -> list[str]:
     return urls
 
 
+def normalize_signal_score(value: Any) -> float:
+    if not is_number(value) or not 0 <= float(value) <= 1:
+        raise ValueError("signal_score must be a number from 0 to 1.")
+    return float(value)
+
+
 def parse_non_negative_int(value: str) -> int:
     try:
         limit = int(value)
@@ -287,6 +317,8 @@ def normalize_connection(
     raw_connection: Any,
     ticker_to_id: dict[str, int],
     verified_date: str,
+    *,
+    require_signal_score: bool = False,
 ) -> dict[str, Any]:
     if not isinstance(raw_connection, dict):
         raise ValueError("New connection records must be objects.")
@@ -333,19 +365,51 @@ def normalize_connection(
         "source_urls": normalize_source_urls(raw_connection["source_urls"]),
         "verified_date": verified_date,
     }
+    if "signal_score" in raw_connection or require_signal_score:
+        connection["signal_score"] = normalize_signal_score(
+            raw_connection.get("signal_score")
+        )
     connection["confidence"] = compute_confidence(connection)
 
-    return {
+    normalized_connection = {
         "source": connection["source"],
         "target": connection["target"],
         "type": connection["type"],
         "strength": connection["strength"],
         "label": connection["label"],
         "confidence": connection["confidence"],
-        "provenance": connection["provenance"],
-        "source_urls": connection["source_urls"],
-        "verified_date": connection["verified_date"],
     }
+    if "signal_score" in connection:
+        normalized_connection["signal_score"] = connection["signal_score"]
+    normalized_connection.update(
+        {
+            "provenance": connection["provenance"],
+            "source_urls": connection["source_urls"],
+            "verified_date": connection["verified_date"],
+        }
+    )
+    return normalized_connection
+
+
+def normalize_connection_candidate(
+    raw_connection: dict[str, Any],
+    ticker_to_id: dict[str, int],
+    verified_date: str,
+    *,
+    require_signal_score: bool,
+) -> ConnectionCandidate:
+    connection = normalize_connection(
+        raw_connection,
+        ticker_to_id,
+        verified_date,
+        require_signal_score=require_signal_score,
+    )
+    return ConnectionCandidate(
+        connection=connection,
+        source_ticker=normalize_ticker(raw_connection["source_ticker"], "source_ticker"),
+        target_ticker=normalize_ticker(raw_connection["target_ticker"], "target_ticker"),
+        connection_type=connection["type"],
+    )
 
 
 def validate_merged_connections(connections: list[dict[str, Any]]) -> None:
@@ -427,6 +491,130 @@ def average_signal_score(signals: list[dict[str, Any]]) -> float | None:
     return sum(scores) / len(scores)
 
 
+def candidate_signal_key(candidate: ConnectionCandidate) -> tuple[str, str, str]:
+    return (
+        candidate.source_ticker,
+        candidate.target_ticker,
+        candidate.connection_type,
+    )
+
+
+def unique_source_urls(connections: list[dict[str, Any]]) -> list[str]:
+    urls: list[str] = []
+    seen_urls: set[str] = set()
+
+    for connection in connections:
+        for source_url in connection["source_urls"]:
+            if source_url in seen_urls:
+                continue
+            seen_urls.add(source_url)
+            urls.append(source_url)
+
+    return urls
+
+
+def independent_signal_connections(
+    connections: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    independent_connections: list[dict[str, Any]] = []
+    seen_urls: set[str] = set()
+
+    for connection in connections:
+        source_urls = connection["source_urls"]
+        has_independent_source = not source_urls
+
+        for source_url in source_urls:
+            if source_url in seen_urls:
+                continue
+            seen_urls.add(source_url)
+            has_independent_source = True
+
+        if has_independent_source:
+            independent_connections.append(connection)
+
+    return independent_connections
+
+
+def average_field(connections: list[dict[str, Any]], field_name: str) -> float:
+    return round(
+        sum(float(connection[field_name]) for connection in connections)
+        / len(connections),
+        4,
+    )
+
+
+def aggregate_signal_candidates(
+    candidates: list[ConnectionCandidate],
+) -> tuple[list[ConnectionCandidate], SignalAggregationSummary]:
+    grouped_candidates: dict[tuple[str, str, str], list[ConnectionCandidate]] = {}
+    for candidate in candidates:
+        grouped_candidates.setdefault(candidate_signal_key(candidate), []).append(candidate)
+
+    aggregated_candidates: list[ConnectionCandidate] = []
+    aggregated_edges = 0
+    signal_count = 0
+
+    for key, group in grouped_candidates.items():
+        if len(group) == 1:
+            candidate = group[0]
+            connection = dict(candidate.connection)
+            connection["source_urls"] = unique_source_urls([candidate.connection])
+            aggregated_candidates.append(
+                ConnectionCandidate(
+                    connection=connection,
+                    source_ticker=candidate.source_ticker,
+                    target_ticker=candidate.target_ticker,
+                    connection_type=candidate.connection_type,
+                    signal_count=candidate.signal_count,
+                )
+            )
+            signal_count += candidate.signal_count
+            continue
+
+        aggregated_edges += 1
+        connections = [candidate.connection for candidate in group]
+        independent_connections = independent_signal_connections(connections)
+        independent_count = len(independent_connections)
+
+        merged_connection = dict(independent_connections[0])
+        merged_connection["strength"] = average_field(
+            independent_connections,
+            "strength",
+        )
+        merged_connection["signal_score"] = average_field(
+            independent_connections,
+            "signal_score",
+        )
+        merged_connection["source_urls"] = unique_source_urls(connections)
+        merged_connection["provenance"] = AGGREGATED_PROVENANCE
+
+        base_confidence = compute_confidence(merged_connection)
+        merged_connection["confidence"] = base_confidence
+        if (
+            independent_count >= 2
+            and merged_connection["signal_score"] >= 0.8
+            and base_confidence == 4
+        ):
+            merged_connection["confidence"] = 5
+
+        aggregated_candidates.append(
+            ConnectionCandidate(
+                connection=merged_connection,
+                source_ticker=key[0],
+                target_ticker=key[1],
+                connection_type=key[2],
+                signal_count=independent_count,
+            )
+        )
+        signal_count += independent_count
+
+    return aggregated_candidates, SignalAggregationSummary(
+        aggregated_edges=aggregated_edges,
+        edge_count=len(aggregated_candidates),
+        signal_count=signal_count,
+    )
+
+
 def apply_signal_controls(
     signals: list[dict[str, Any]],
     *,
@@ -492,12 +680,20 @@ def prepare_connections(
     raw_connections: list[dict[str, Any]],
     *,
     skip_invalid: bool,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str], list[str]]:
+    aggregate_signals: bool,
+) -> tuple[
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[str],
+    list[str],
+    SignalAggregationSummary | None,
+]:
     companies = load_json(COMPANIES_PATH)
     connections = load_json(CONNECTIONS_PATH)
     ticker_to_id = build_ticker_map(companies)
     known_keys = existing_connection_keys(connections)
 
+    candidates: list[ConnectionCandidate] = []
     additions: list[dict[str, Any]] = []
     duplicate_skips: list[str] = []
     invalid_skips: list[str] = []
@@ -505,17 +701,30 @@ def prepare_connections(
 
     for index, raw_connection in enumerate(raw_connections):
         try:
-            connection = normalize_connection(raw_connection, ticker_to_id, today)
+            candidate = normalize_connection_candidate(
+                raw_connection,
+                ticker_to_id,
+                today,
+                require_signal_score=aggregate_signals,
+            )
         except ValueError as error:
             if skip_invalid:
                 invalid_skips.append(f"Signal {index}: skipped during ingestion: {error}")
                 continue
             raise ValueError(f"New connection {index}: {error}") from error
 
+        candidates.append(candidate)
+
+    aggregation_summary: SignalAggregationSummary | None = None
+    if aggregate_signals:
+        candidates, aggregation_summary = aggregate_signal_candidates(candidates)
+
+    for candidate in candidates:
+        connection = candidate.connection
         key = connection_key(connection)
         if key in known_keys:
             duplicate_skips.append(
-                f"{raw_connection['source_ticker']} -> {raw_connection['target_ticker']} "
+                f"{candidate.source_ticker} -> {candidate.target_ticker} "
                 f"({connection['type']}): duplicate"
             )
             continue
@@ -523,7 +732,7 @@ def prepare_connections(
         known_keys.add(key)
         additions.append(connection)
 
-    return connections, additions, duplicate_skips, invalid_skips
+    return connections, additions, duplicate_skips, invalid_skips, aggregation_summary
 
 
 def print_summary(
@@ -537,6 +746,7 @@ def print_summary(
     signals_processed: int | None,
     average_score: float | None,
     signals_filtered_by_score: int | None,
+    aggregation_summary: SignalAggregationSummary | None,
 ) -> None:
     if total_signals_generated is not None:
         print(f"Total signals generated: {total_signals_generated}")
@@ -546,6 +756,12 @@ def print_summary(
         print(f"Average signal score: {average_score:.2f}")
     if signals_filtered_by_score is not None:
         print(f"Signals filtered by score: {signals_filtered_by_score}")
+    if aggregation_summary is not None:
+        print(f"Aggregated edges: {aggregation_summary.aggregated_edges}")
+        print(
+            "Average signals per edge: "
+            f"{aggregation_summary.average_signals_per_edge:.2f}"
+        )
 
     if dry_run:
         print(f"Connections added: 0 (dry run would add {len(additions)})")
@@ -640,9 +856,16 @@ def main() -> int:
             skipped.extend(control_skips)
             signals_processed = len(raw_connections)
 
-        connections, additions, duplicate_skips, invalid_skips = prepare_connections(
+        (
+            connections,
+            additions,
+            duplicate_skips,
+            invalid_skips,
+            aggregation_summary,
+        ) = prepare_connections(
             raw_connections,
             skip_invalid=args.from_signals,
+            aggregate_signals=args.from_signals,
         )
         skipped.extend(invalid_skips)
 
@@ -662,6 +885,7 @@ def main() -> int:
             signals_processed=signals_processed,
             average_score=average_score,
             signals_filtered_by_score=signals_filtered_by_score,
+            aggregation_summary=aggregation_summary,
         )
         return 0
     except ValueError as error:

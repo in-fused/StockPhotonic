@@ -111,6 +111,21 @@ MODERATE_STRENGTH_KEYWORDS: tuple[str, ...] = (
     "using",
 )
 
+SOURCE_TIERS: dict[str, int] = {
+    "sec_filing": 1,
+    "company_release": 1,
+    "announcement": 1,
+    "news": 2,
+    "partner_page": 2,
+    "unknown": 3,
+}
+
+SIGNAL_BASE_SCORES: dict[int, float] = {
+    1: 0.9,
+    2: 0.75,
+    3: 0.6,
+}
+
 
 def load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as file:
@@ -199,6 +214,26 @@ def assign_strength(text: str) -> float:
     return 0.6
 
 
+def normalize_source_type(source_type: str) -> str:
+    normalized = normalize_text(source_type).replace(" ", "_")
+    if normalized in SOURCE_TIERS:
+        return normalized
+    return "unknown"
+
+
+def source_tier(source_type: str) -> int:
+    return SOURCE_TIERS[normalize_source_type(source_type)]
+
+
+def assign_signal_score(text: str, source_type: str) -> float:
+    normalized = normalize_text(text)
+    tier = source_tier(source_type)
+    score = SIGNAL_BASE_SCORES[tier]
+    if any(contains_keyword(normalized, keyword) for keyword in STRONG_STRENGTH_KEYWORDS):
+        score += 0.05
+    return round(min(max(score, 0.6), 0.95), 2)
+
+
 def contains_keyword(text: str, keyword: str) -> bool:
     escaped = re.escape(keyword)
     return bool(re.search(rf"(?<![a-z0-9]){escaped}(?![a-z0-9])", text))
@@ -233,7 +268,8 @@ def build_signal(raw_input: dict[str, str], aliases: dict[str, str], index: int)
         )
 
     source_ticker, target_ticker = tickers[:2]
-    source_type = raw_input["source_type"].strip().replace("_", " ")
+    source_type = normalize_source_type(raw_input["source_type"])
+    tier = source_tier(source_type)
 
     return {
         "source_ticker": source_ticker,
@@ -241,7 +277,14 @@ def build_signal(raw_input: dict[str, str], aliases: dict[str, str], index: int)
         "type": infer_connection_type(raw_input["text"]),
         "label": clean_label(raw_input["text"]),
         "strength": assign_strength(raw_input["text"]),
-        "provenance": f"Generated from simulated {source_type} input before ingestion.",
+        "signal_score": assign_signal_score(raw_input["text"], source_type),
+        "source_meta": {
+            "tier": tier,
+            "type": source_type,
+        },
+        "provenance": (
+            f"Generated from simulated {source_type.replace('_', ' ')} input before ingestion."
+        ),
         "source_urls": [raw_input["source_url"].strip()],
     }
 
@@ -260,7 +303,8 @@ def print_preview(signals: list[dict[str, Any]]) -> None:
         print(
             "- "
             f"{signal['source_ticker']} -> {signal['target_ticker']} "
-            f"({signal['type']}, strength {signal['strength']}): "
+            f"({signal['type']}, strength {signal['strength']}, "
+            f"score {signal['signal_score']}): "
             f"{signal['label']}"
         )
     print()

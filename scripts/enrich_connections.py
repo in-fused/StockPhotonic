@@ -253,6 +253,17 @@ def parse_strength_filter(value: str) -> float:
     return strength
 
 
+def parse_signal_score_filter(value: str) -> float:
+    try:
+        signal_score = float(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("--min-signal-score must be a number.") from error
+
+    if not 0 <= signal_score <= 1:
+        raise argparse.ArgumentTypeError("--min-signal-score must be from 0 to 1.")
+    return signal_score
+
+
 def parse_type_filter(value: str) -> set[str]:
     connection_types = {
         connection_type.strip().lower()
@@ -395,19 +406,58 @@ def signal_label(signal: Any, index: int) -> str:
     return f"Signal {index} ({source_ticker} -> {target_ticker}, {connection_type})"
 
 
+def signal_score(signal: Any) -> float | None:
+    if not isinstance(signal, dict):
+        return None
+
+    score = signal.get("signal_score")
+    if not is_number(score):
+        return None
+    return float(score)
+
+
+def average_signal_score(signals: list[dict[str, Any]]) -> float | None:
+    scores = [
+        score
+        for signal in signals
+        if (score := signal_score(signal)) is not None
+    ]
+    if not scores:
+        return None
+    return sum(scores) / len(scores)
+
+
 def apply_signal_controls(
     signals: list[dict[str, Any]],
     *,
     limit: int | None,
     min_strength: float | None,
+    min_signal_score: float | None,
     allowed_types: set[str] | None,
-) -> tuple[list[dict[str, Any]], list[str]]:
+) -> tuple[list[dict[str, Any]], list[str], int]:
     limited_signals = signals[:limit] if limit is not None else signals
     processed: list[dict[str, Any]] = []
     skipped: list[str] = []
+    score_filtered = 0
 
     for index, signal in enumerate(limited_signals):
         label = signal_label(signal, index)
+        if min_signal_score is not None:
+            score = signal_score(signal)
+            if score is None:
+                skipped.append(
+                    f"{label}: skipped by --min-signal-score; signal_score is invalid."
+                )
+                score_filtered += 1
+                continue
+            if score < min_signal_score:
+                skipped.append(
+                    f"{label}: skipped by --min-signal-score {min_signal_score} "
+                    f"(signal_score {score})."
+                )
+                score_filtered += 1
+                continue
+
         if min_strength is not None:
             strength = signal.get("strength") if isinstance(signal, dict) else None
             if not is_number(strength):
@@ -435,7 +485,7 @@ def apply_signal_controls(
 
         processed.append(signal)
 
-    return processed, skipped
+    return processed, skipped, score_filtered
 
 
 def prepare_connections(
@@ -485,11 +535,17 @@ def print_summary(
     validation_result: str,
     total_signals_generated: int | None,
     signals_processed: int | None,
+    average_score: float | None,
+    signals_filtered_by_score: int | None,
 ) -> None:
     if total_signals_generated is not None:
         print(f"Total signals generated: {total_signals_generated}")
     if signals_processed is not None:
         print(f"Signals processed: {signals_processed}")
+    if average_score is not None:
+        print(f"Average signal score: {average_score:.2f}")
+    if signals_filtered_by_score is not None:
+        print(f"Signals filtered by score: {signals_filtered_by_score}")
 
     if dry_run:
         print(f"Connections added: 0 (dry run would add {len(additions)})")
@@ -545,6 +601,11 @@ def main() -> int:
         help="Only process signals with strength greater than or equal to X.",
     )
     parser.add_argument(
+        "--min-signal-score",
+        type=parse_signal_score_filter,
+        help="Only process signals with signal_score greater than or equal to X.",
+    )
+    parser.add_argument(
         "--types",
         type=parse_type_filter,
         help="Comma-separated allowed connection types, such as supply,partnership.",
@@ -555,17 +616,25 @@ def main() -> int:
         raw_connections = NEW_CONNECTIONS
         total_signals_generated: int | None = None
         signals_processed: int | None = None
+        average_score: float | None = None
+        signals_filtered_by_score: int | None = None
         skipped: list[str] = []
 
         if args.from_signals:
             raw_connections, skipped = generate_signal_inputs()
             total_signals_generated = len(raw_connections)
+            average_score = average_signal_score(raw_connections)
 
         if args.from_signals:
-            raw_connections, control_skips = apply_signal_controls(
+            (
+                raw_connections,
+                control_skips,
+                signals_filtered_by_score,
+            ) = apply_signal_controls(
                 raw_connections,
                 limit=args.limit,
                 min_strength=args.min_strength,
+                min_signal_score=args.min_signal_score,
                 allowed_types=args.types,
             )
             skipped.extend(control_skips)
@@ -591,6 +660,8 @@ def main() -> int:
             validation_result=validation_result,
             total_signals_generated=total_signals_generated,
             signals_processed=signals_processed,
+            average_score=average_score,
+            signals_filtered_by_score=signals_filtered_by_score,
         )
         return 0
     except ValueError as error:

@@ -64,6 +64,24 @@
 
 ---
 
+## Phase 1.5: Graph Intelligence & Clustering
+
+Goal:
+Transform the graph into an intelligence system by surfacing shared exposure, hidden clusters, and ecosystem groupings.
+
+Tasks:
+- Detect shared connections between nodes (common neighbor analysis)
+- Identify soft clusters (nodes with overlapping relationships)
+- Surface hidden exposure groups (indirect relationships)
+- Add sidebar intelligence for clusters and shared exposure
+- Add subtle visual grouping without breaking layout fluidity
+- Keep all intelligence derived from existing dataset only
+
+Deliverable:
+Users understand not just direct connections, but which companies move together and why.
+
+---
+
 ## Phase 2: Real Dataset Foundation (Current Priority – April 30 to May 14, 2026)
 
 **Goal**: Replace generated placeholder data with a smaller, credible core of real public companies and defensible relationships.

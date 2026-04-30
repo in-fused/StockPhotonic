@@ -424,6 +424,9 @@
         const LAYOUT_MODE_HUB = 'hub';
         const SIGNAL_DECLUTTER_THRESHOLD = 0.3;
         const FOCUS_MODE_TRANSITION_MS = 520;
+        const CLUSTER_MIN_STRENGTH = 0.35;
+        const CLUSTER_SHARED_CONNECTION_MIN = 2;
+        const CLUSTER_SECTION_LIMIT = 5;
         const ORBIT_RADIUS_RATIO = 0.035;
         const ORBIT_MIN_RADIUS = 14;
         const ORBIT_MAX_RADIUS = 34;
@@ -603,6 +606,8 @@
         let visibleLinks = [];
         let visibleLinkKeys = new Set();
         let visibleEdgeCountByNodeId = new Map();
+        let graphIntelligenceCache = new Map();
+        let activeClusterNodeIds = new Set();
 
         let selectedNode = null;
         let hoveredNode = null;
@@ -744,6 +749,8 @@
             nodeById = new Map();
             degreeById = new Map();
             adjacencyById = new Map();
+            graphIntelligenceCache = new Map();
+            activeClusterNodeIds = new Set();
 
             companies.forEach(company => {
                 degreeById.set(company.id, 0);
@@ -1162,27 +1169,28 @@
             const radius = node._screenRadius ?? getScreenNodeRadius(node);
             const isSelected = selectedNode && selectedNode.id === node.id;
             const isNeighbor = focusNeighborIds.has(node.id);
+            const isClusterNode = Boolean(selectedNode) && activeClusterNodeIds.has(node.id) && !isSelected;
             const isHovered = hoveredNode && hoveredNode.id === node.id;
             const isSearchHighlighted = highlightedNodeId === node.id && performance.now() < highlightedNodeUntil;
             const industryDimmed = isNodeDimmedByIndustryGroup(node);
             const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
-            const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !industryMatched;
+            const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !industryMatched;
             const isDimmed = focusDimmed || industryDimmed;
             const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : 1;
             const color = node.color || '#00f9ff';
 
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.shadowBlur = isSearchHighlighted ? 42 : isSelected ? 30 : isHovered ? 22 : 12;
+            ctx.shadowBlur = isSearchHighlighted ? 42 : isSelected ? 30 : isHovered ? 22 : isClusterNode ? 18 : 12;
             ctx.shadowColor = color;
 
             const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
-            glow.addColorStop(0, `${hexToRgba(color, 0.82)}`);
-            glow.addColorStop(0.38, `${hexToRgba(color, 0.24)}`);
+            glow.addColorStop(0, `${hexToRgba(color, isClusterNode ? 0.9 : 0.82)}`);
+            glow.addColorStop(0.38, `${hexToRgba(color, isClusterNode ? 0.32 : 0.24)}`);
             glow.addColorStop(1, `${hexToRgba(color, 0)}`);
             ctx.fillStyle = glow;
             ctx.beginPath();
-            ctx.arc(point.x, point.y, radius * 4.3, 0, Math.PI * 2);
+            ctx.arc(point.x, point.y, radius * (isClusterNode ? 5.1 : 4.3), 0, Math.PI * 2);
             ctx.fill();
 
             ctx.fillStyle = color;
@@ -1225,6 +1233,15 @@
                 ctx.beginPath();
                 ctx.arc(point.x, point.y, radius * 1.65, 0, Math.PI * 2);
                 ctx.stroke();
+            } else if (isClusterNode) {
+                ctx.globalAlpha = 0.42;
+                ctx.strokeStyle = '#a5f3fc';
+                ctx.lineWidth = 1;
+                ctx.shadowBlur = 18;
+                ctx.shadowColor = '#00f9ff';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 1.9, 0, Math.PI * 2);
+                ctx.stroke();
             }
 
             ctx.restore();
@@ -1249,14 +1266,15 @@
                     const point = { x: node._screenX ?? fallback.x, y: node._screenY ?? fallback.y };
                     const isSelected = selectedNode && selectedNode.id === node.id;
                     const isNeighbor = focusNeighborIds.has(node.id);
+                    const isClusterNode = Boolean(selectedNode) && activeClusterNodeIds.has(node.id) && !isSelected;
                     const isHovered = hoveredNode && hoveredNode.id === node.id;
                     const radius = node._screenRadius ?? getScreenNodeRadius(node);
                     const rawLabel = getLabelText(node, labelMode);
                     if (!rawLabel) return;
                     const industryDimmed = isNodeDimmedByIndustryGroup(node);
                     const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
-                    const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !industryMatched;
-                    const alpha = industryDimmed ? 0.18 : focusDimmed ? 0.25 : isNeighbor ? 0.82 : 0.72;
+                    const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !industryMatched;
+                    const alpha = industryDimmed ? 0.18 : focusDimmed ? 0.25 : isClusterNode ? 0.86 : isNeighbor ? 0.82 : 0.72;
 
                     ctx.save();
                     const fontSize = labelMode === 'full' ? (isSelected ? 12 : 11) : (isSelected ? 12 : 10);
@@ -1267,7 +1285,7 @@
                     const y = point.y + radius + 14;
                     ctx.globalAlpha = alpha;
                     ctx.fillStyle = 'rgba(3, 7, 18, 0.76)';
-                    ctx.strokeStyle = isSelected || isHovered ? 'rgba(0, 249, 255, 0.58)' : 'rgba(255, 255, 255, 0.12)';
+                    ctx.strokeStyle = isSelected || isHovered || isClusterNode ? 'rgba(0, 249, 255, 0.58)' : 'rgba(255, 255, 255, 0.12)';
                     ctx.lineWidth = 1;
                     roundedRect(ctx, x - 5, y - 11, width + 10, 16, 6);
                     ctx.fill();
@@ -1300,6 +1318,7 @@
             if (selectedNode && selectedNode.id === node.id) return true;
             if (hoveredNode && hoveredNode.id === node.id) return true;
             if (selectedNode && focusNeighborIds.has(node.id)) return true;
+            if (selectedNode && activeClusterNodeIds.has(node.id) && !isFocusModeActive()) return true;
             if (labelMode === 'full') return true;
             if (scale > 0.68 && node.degree >= 2) return true;
             return topLabelIds.has(node.id) || node.degree >= 6;
@@ -1309,6 +1328,7 @@
             if (selectedNode && selectedNode.id === node.id) return 1000;
             if (hoveredNode && hoveredNode.id === node.id) return 900;
             if (focusNeighborIds.has(node.id)) return 500 + node.degree;
+            if (selectedNode && activeClusterNodeIds.has(node.id) && !isFocusModeActive()) return 360 + node.degree;
             return node.degree * 10 + Math.max(0, 320 - (node.rank || 320)) / 20;
         }
 
@@ -1318,6 +1338,8 @@
             selectedNode = node;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
+            const nodeCluster = getNodeCluster(node.id);
+            activeClusterNodeIds = new Set(nodeCluster.clusterNodes.map(item => item.id));
             (adjacencyById.get(node.id) || []).forEach(item => {
                 focusNeighborIds.add(item.node.id);
                 focusLinkKeys.add(item.link.key);
@@ -1341,6 +1363,7 @@
             selectedNode = null;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
+            activeClusterNodeIds = new Set();
             focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
             refreshVisibleGraph();
             showDefaultDashboard();
@@ -1594,6 +1617,7 @@
             selectedNode = null;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
+            activeClusterNodeIds = new Set();
             highlightedNodeId = null;
             currentSearch = '';
 
@@ -1623,6 +1647,165 @@
             return [...select.options].some(option => option.value === value) ? value : '';
         }
 
+        function getSharedConnections(nodeId) {
+            const node = nodeById.get(nodeId) || getNodeFromDomId(nodeId);
+            if (!node) return [];
+
+            const cacheKey = `shared:${node.id}`;
+            if (graphIntelligenceCache.has(cacheKey)) return graphIntelligenceCache.get(cacheKey);
+
+            const selectedNeighbors = adjacencyById.get(node.id) || [];
+            const directNeighborIds = new Set(selectedNeighbors.map(item => item.node.id));
+            const candidates = new Map();
+
+            selectedNeighbors.forEach(selectedNeighborItem => {
+                const sharedNeighbor = selectedNeighborItem.node;
+                const selectedStrength = getConnectionStrength(selectedNeighborItem.link);
+
+                (adjacencyById.get(sharedNeighbor.id) || []).forEach(candidateItem => {
+                    const candidate = candidateItem.node;
+                    if (!candidate || candidate.id === node.id) return;
+
+                    const candidateStrength = getConnectionStrength(candidateItem.link);
+                    const pathStrength = (selectedStrength + candidateStrength) / 2;
+                    const existing = candidates.get(candidate.id) || {
+                        node: candidate,
+                        count: 0,
+                        totalStrength: 0,
+                        sharedNeighbors: [],
+                        sharedNeighborIds: new Set(),
+                        directlyConnected: directNeighborIds.has(candidate.id)
+                    };
+
+                    if (existing.sharedNeighborIds.has(sharedNeighbor.id)) return;
+
+                    existing.count += 1;
+                    existing.totalStrength += pathStrength;
+                    existing.sharedNeighborIds.add(sharedNeighbor.id);
+                    existing.sharedNeighbors.push({
+                        node: sharedNeighbor,
+                        strength: pathStrength,
+                        sourceStrength: selectedStrength,
+                        targetStrength: candidateStrength
+                    });
+                    candidates.set(candidate.id, existing);
+                });
+            });
+
+            const sharedConnections = [...candidates.values()]
+                .map(item => ({
+                    ...item,
+                    avgStrength: item.count ? item.totalStrength / item.count : 0,
+                    score: item.count * (item.count ? item.totalStrength / item.count : 0),
+                    sharedNeighbors: item.sharedNeighbors.sort((a, b) =>
+                        b.strength - a.strength ||
+                        String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
+                    )
+                }))
+                .sort((a, b) =>
+                    b.count - a.count ||
+                    b.avgStrength - a.avgStrength ||
+                    (b.node.degree - a.node.degree) ||
+                    ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
+                    String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
+                );
+
+            graphIntelligenceCache.set(cacheKey, sharedConnections);
+            return sharedConnections;
+        }
+
+        function getNodeCluster(nodeId) {
+            const node = nodeById.get(nodeId) || getNodeFromDomId(nodeId);
+            if (!node) return { clusterNodes: [], clusterItems: [], clusterStrength: 0 };
+
+            const cacheKey = `cluster:${node.id}`;
+            if (graphIntelligenceCache.has(cacheKey)) return graphIntelligenceCache.get(cacheKey);
+
+            const clusterItemsById = new Map();
+            clusterItemsById.set(node.id, {
+                node,
+                role: 'selected',
+                count: 0,
+                avgStrength: 1,
+                score: 1,
+                directLink: null,
+                sharedNeighbors: []
+            });
+
+            (adjacencyById.get(node.id) || [])
+                .filter(item => getConnectionStrength(item.link) >= CLUSTER_MIN_STRENGTH)
+                .forEach(item => {
+                    const strength = getConnectionStrength(item.link);
+                    clusterItemsById.set(item.node.id, {
+                        node: item.node,
+                        role: 'direct',
+                        count: 1,
+                        avgStrength: strength,
+                        score: strength,
+                        directLink: item.link,
+                        sharedNeighbors: []
+                    });
+                });
+
+            getSharedConnections(node.id)
+                .filter(item => item.count >= CLUSTER_SHARED_CONNECTION_MIN && item.avgStrength >= CLUSTER_MIN_STRENGTH)
+                .forEach(item => {
+                    const existing = clusterItemsById.get(item.node.id);
+                    const supportScore = clamp(item.avgStrength * Math.min(1.35, 0.7 + item.count * 0.18), 0, 1);
+
+                    if (existing) {
+                        existing.count = Math.max(existing.count, item.count);
+                        existing.avgStrength = Math.max(existing.avgStrength, item.avgStrength);
+                        existing.score = Math.max(existing.score, supportScore);
+                        existing.sharedNeighbors = item.sharedNeighbors;
+                        if (existing.role !== 'selected') existing.role = existing.role === 'direct' ? 'direct-shared' : 'shared';
+                        return;
+                    }
+
+                    clusterItemsById.set(item.node.id, {
+                        node: item.node,
+                        role: 'shared',
+                        count: item.count,
+                        avgStrength: item.avgStrength,
+                        score: supportScore,
+                        directLink: null,
+                        sharedNeighbors: item.sharedNeighbors
+                    });
+                });
+
+            const clusterItems = [...clusterItemsById.values()].sort((a, b) => {
+                if (a.role === 'selected') return -1;
+                if (b.role === 'selected') return 1;
+                return b.score - a.score ||
+                    b.count - a.count ||
+                    (b.node.degree - a.node.degree) ||
+                    ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
+                    String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''));
+            });
+            const scoredItems = clusterItems.filter(item => item.role !== 'selected');
+            const clusterStrength = scoredItems.length
+                ? scoredItems.reduce((sum, item) => sum + clamp(item.score, 0, 1), 0) / scoredItems.length
+                : 0;
+            const cluster = {
+                clusterNodes: clusterItems.map(item => item.node),
+                clusterItems,
+                clusterStrength
+            };
+
+            graphIntelligenceCache.set(cacheKey, cluster);
+            return cluster;
+        }
+
+        function getHiddenRelationships(nodeId) {
+            return getSharedConnections(nodeId)
+                .filter(item => !item.directlyConnected && item.count >= CLUSTER_SHARED_CONNECTION_MIN)
+                .slice(0, CLUSTER_SECTION_LIMIT);
+        }
+
+        function getConnectionStrength(link) {
+            return clamp(Number(link?.strength) || 0, 0, 1);
+        }
+
         function showNodeDetails(node) {
             const sidebar = document.getElementById('sidebar');
             const empty = document.getElementById('empty-sidebar');
@@ -1637,6 +1820,9 @@
             const nodeSources = getNodeSources(connectionsForNode);
             const whyThisNodeMatters = getNodeImportanceSummary(node, networkSummary, sectorCounts);
             const signalClarity = getSignalClaritySummary(node);
+            const relatedCluster = getNodeCluster(node.id);
+            const sharedExposure = getSharedConnections(node.id);
+            const hiddenRelationships = getHiddenRelationships(node.id);
 
             sidebar.innerHTML = `
                 <div class="flex items-start justify-between gap-4 mb-5">
@@ -1708,6 +1894,10 @@
                     </div>
                 </div>
 
+                ${renderRelatedClusterSection(relatedCluster, node)}
+                ${renderSharedExposureSection(sharedExposure)}
+                ${renderHiddenRelationshipsSection(hiddenRelationships)}
+
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">Sector + Industry Context</div>
                     <div class="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-3">
@@ -1778,6 +1968,139 @@
             `;
             sidebar.classList.remove('hidden');
             empty.classList.add('hidden');
+        }
+
+        function renderRelatedClusterSection(cluster, selectedNodeForCluster) {
+            const clusterItems = (cluster?.clusterItems || [])
+                .filter(item => item.node.id !== selectedNodeForCluster.id)
+                .slice(0, CLUSTER_SECTION_LIMIT);
+            if (!clusterItems.length) return '';
+
+            const clusterStrengthPercent = Math.round((cluster.clusterStrength || 0) * 100);
+            const clusterSize = Math.max(0, (cluster.clusterNodes || []).length - 1);
+            return `
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Related Cluster</div>
+                    <div class="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-3 mb-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <div class="text-[10px] text-white/38 font-mono">CLUSTER NODES</div>
+                                <div class="font-display text-2xl text-white">${clusterSize}</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] text-white/38 font-mono">STRENGTH</div>
+                                <div class="font-display text-2xl text-white">${clusterStrengthPercent}%</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        ${clusterItems.map((item, index) => renderClusterNodeRow(item, index)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderClusterNodeRow(item, index) {
+            const roleLabel = item.role === 'direct-shared' ? 'Direct + shared' : item.role === 'direct' ? 'Direct edge' : 'Shared overlap';
+            const strengthPercent = Math.round((item.avgStrength || item.score || 0) * 100);
+            return `
+                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0 flex items-start gap-2">
+                            <span class="shrink-0 mt-0.5 px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/45 font-mono">#${index + 1}</span>
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')}</div>
+                                <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-sm font-mono text-cyan-200">${strengthPercent}%</div>
+                            <div class="text-[10px] text-white/42">${escapeHtml(roleLabel)}</div>
+                        </div>
+                    </div>
+                </button>
+            `;
+        }
+
+        function renderSharedExposureSection(sharedExposure) {
+            const items = (sharedExposure || [])
+                .filter(item => item.count > 0)
+                .slice(0, CLUSTER_SECTION_LIMIT);
+            if (!items.length) return '';
+
+            return `
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Shared Exposure</div>
+                    <div class="space-y-2">
+                        ${items.map(item => renderSharedExposureRow(item)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSharedExposureRow(item) {
+            const avgStrengthPercent = Math.round((item.avgStrength || 0) * 100);
+            const viaTickers = getSharedNeighborTickerList(item, 3);
+            const relationshipLabel = item.directlyConnected ? 'Direct + shared neighbors' : 'Indirect shared neighbors';
+            return `
+                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')} <span class="text-white/42 font-normal">${escapeHtml(item.node.name || '')}</span></div>
+                            <div class="text-xs text-white/52 mt-1 leading-snug">Overlap through ${escapeHtml(viaTickers || 'shared neighbors')}</div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-sm font-mono text-fuchsia-100">${item.count}</div>
+                            <div class="text-[10px] text-white/42">OVERLAP</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 flex items-center justify-between gap-3 text-[10px] font-mono">
+                        <span class="text-cyan-100/68">${escapeHtml(relationshipLabel)}</span>
+                        <span class="text-white/55">${avgStrengthPercent}% AVG STRENGTH</span>
+                    </div>
+                </button>
+            `;
+        }
+
+        function renderHiddenRelationshipsSection(hiddenRelationships) {
+            if (!hiddenRelationships?.length) return '';
+
+            return `
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Hidden Relationships</div>
+                    <div class="space-y-2">
+                        ${hiddenRelationships.map(item => renderHiddenRelationshipRow(item)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderHiddenRelationshipRow(item) {
+            const avgStrengthPercent = Math.round((item.avgStrength || 0) * 100);
+            const viaTickers = getSharedNeighborTickerList(item, 3);
+            return `
+                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')} <span class="text-white/42 font-normal">${escapeHtml(item.node.name || '')}</span></div>
+                            <div class="text-xs text-white/60 mt-1 leading-snug">Indirect exposure through ${escapeHtml(viaTickers || 'shared neighbors')}</div>
+                            <div class="text-[10px] text-cyan-100/58 font-mono mt-2">COMMON-NEIGHBOR SIGNAL ONLY</div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-sm font-mono text-cyan-200">${item.count}</div>
+                            <div class="text-[10px] text-white/42">${avgStrengthPercent}% AVG</div>
+                        </div>
+                    </div>
+                </button>
+            `;
+        }
+
+        function getSharedNeighborTickerList(item, limit = 3) {
+            return (item.sharedNeighbors || [])
+                .slice(0, limit)
+                .map(shared => shared.node.ticker || shared.node.name || '')
+                .filter(Boolean)
+                .join(', ');
         }
 
         function renderConnectionRow(item, index = 0) {

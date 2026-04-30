@@ -31,6 +31,21 @@ ALLOWED_TYPES = {
 }
 
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+PLACEHOLDER_NAME_PATTERN = re.compile(r"\bCompany\s+\d+\b", re.IGNORECASE)
+SYNTHETIC_TICKER_PATTERN = re.compile(r"\d{2,}$")
+GENERIC_LABELS = {
+    "supply relationship",
+    "partnership relationship",
+    "ecosystem relationship",
+    "competitor relationship",
+    "investment relationship",
+    "relationship",
+}
+GENERIC_LABEL_PATTERN = re.compile(
+    r"^(supply|partnership|ecosystem|competitor|investment)\s+(relationship|connection|edge)$",
+    re.IGNORECASE,
+)
+TICKER_SUFFIX_ALLOWLIST: set[str] = set()
 
 
 def load_json(path: Path) -> Any:
@@ -59,6 +74,7 @@ def validate() -> int:
 
     company_ids: set[int] = set()
     duplicate_company_ids: list[int] = []
+    ticker_counts: Counter[str] = Counter()
 
     for index, company in enumerate(companies):
         if not isinstance(company, dict):
@@ -66,6 +82,8 @@ def validate() -> int:
             continue
 
         company_id = company.get("id")
+        ticker = company.get("ticker")
+        name = company.get("name")
         if not isinstance(company_id, int) or isinstance(company_id, bool):
             errors.append(f"Company {index}: id must be an integer.")
             continue
@@ -74,8 +92,33 @@ def validate() -> int:
             duplicate_company_ids.append(company_id)
         company_ids.add(company_id)
 
+        if not isinstance(ticker, str) or not ticker.strip():
+            errors.append(f"Company {company_id}: ticker must be present and non-empty.")
+        else:
+            normalized_ticker = ticker.strip().upper()
+            ticker_counts[normalized_ticker] += 1
+            if (
+                SYNTHETIC_TICKER_PATTERN.search(normalized_ticker)
+                and normalized_ticker not in TICKER_SUFFIX_ALLOWLIST
+            ):
+                errors.append(
+                    f"Company {company_id}: ticker {ticker!r} looks synthetic "
+                    "because it ends with 2+ digits."
+                )
+
+        if not isinstance(name, str) or not name.strip():
+            errors.append(f"Company {company_id}: name must be present and non-empty.")
+        elif PLACEHOLDER_NAME_PATTERN.search(name):
+            errors.append(
+                f"Company {company_id}: name {name!r} looks like a placeholder."
+            )
+
     for company_id in sorted(set(duplicate_company_ids)):
         errors.append(f"Duplicate company id: {company_id}.")
+
+    for ticker, count in sorted(ticker_counts.items()):
+        if count > 1:
+            errors.append(f"Duplicate ticker: {ticker}.")
 
     edge_keys: Counter[tuple[int, int, str]] = Counter()
     connected_company_ids: set[int] = set()
@@ -94,6 +137,7 @@ def validate() -> int:
         confidence = connection.get("confidence")
         provenance = connection.get("provenance")
         verified_date = connection.get("verified_date")
+        connection_label = connection.get("label")
 
         valid_source = isinstance(source, int) and not isinstance(source, bool)
         valid_target = isinstance(target, int) and not isinstance(target, bool)
@@ -131,13 +175,25 @@ def validate() -> int:
         elif not 1 <= confidence <= 5:
             errors.append(f"{label}: confidence {confidence} is outside 1 to 5.")
         elif confidence < 3:
-            errors.append(f"{label}: Phase 1 core confidence must be at least 3.")
+            errors.append(f"{label}: Phase 2 core confidence must be at least 3.")
 
         if not isinstance(provenance, str) or not provenance.strip():
             errors.append(f"{label}: provenance must be present and non-empty.")
 
         if not isinstance(verified_date, str) or not DATE_PATTERN.match(verified_date):
             errors.append(f"{label}: verified_date must be present as YYYY-MM-DD.")
+
+        if not isinstance(connection_label, str) or not connection_label.strip():
+            errors.append(f"{label}: label must be present and non-empty.")
+        else:
+            normalized_label = " ".join(connection_label.strip().lower().split())
+            if (
+                normalized_label in GENERIC_LABELS
+                or GENERIC_LABEL_PATTERN.match(connection_label.strip())
+            ):
+                errors.append(
+                    f"{label}: label {connection_label!r} is too generic for curated data."
+                )
 
     duplicate_edges = [
         key for key, count in edge_keys.items()

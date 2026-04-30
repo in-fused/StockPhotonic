@@ -2,17 +2,18 @@
 
 **Vision**: The most insightful, beautiful, and trustworthy visualization of corporate interconnections for serious personal investors and their trusted circle.
 
-**Current Version**: v5.4 / Phase 1 baseline (single-file Photonic Canvas app loading 300 companies and 600 connections)
+**Current Version**: v5.5 / Phase 2 Real Dataset Foundation (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
 
 ---
 
-## Phase 0: Foundation (Completed Baseline – April 2026)
+## Phase 0: Static Prototype Foundation (Completed Baseline – April 2026)
 
 **Goal**: Make the prototype maintainable and expand the dataset significantly without breaking the magic.
 
 **Tasks**:
 - [x] Extract data from `index.html` into `data/companies.json` + `data/connections.json` (versioned, documented).
-- [x] Expand to **300 companies** and **600 connections**.
+- [x] Expand static loading into external JSON files.
+- [x] Retire the generated 300-company / 600-connection placeholder dataset after it proved useful for graph stress testing but failed the data credibility bar.
 - [ ] Add provenance UI: Hover/click edge shows source, confidence, verified date, notes.
 - [ ] Add "Last Updated" badge + "Data Quality" score (e.g., 94% of edges have confidence ≥4).
 - [ ] Implement basic Portfolio Exposure calculator in the existing HTML (text input for tickers → highlights connected nodes + simple risk score).
@@ -24,22 +25,40 @@
 
 ---
 
-## Phase 1: Graph Usability Stabilization (Current Immediate Priority – April 29 to May 5, 2026)
+## Phase 1: Graph Usability Stabilization (April 29 to May 5, 2026)
 
-**Goal**: Make the current 300-company / 600-connection static Canvas graph usable and reliable before any future expansion.
+**Goal**: Make the static Canvas graph usable and reliable before any future expansion.
 
 **Tasks**:
 - [ ] Fix node click reliability so click, drag, and pan gestures do not conflict.
 - [ ] Add smooth wheel zoom around the pointer and pan by dragging empty canvas.
 - [ ] Preserve or add reset/fit view controls.
 - [ ] Reduce spiderweb clutter with strength-scaled edge opacity/thickness while preserving color by type.
-- [ ] Add label level-of-detail so all 300 node labels are not drawn at every zoom level.
+- [ ] Add label level-of-detail so all node labels are not drawn at every zoom level.
 - [ ] Improve initial sector-aware layout with stronger spacing and bounded settling.
 - [ ] Add first-degree focus mode on node selection: selected node, neighbor nodes, connected edges, and dimmed unrelated elements.
-- [ ] Keep details in the existing sidebar/panel and include connected companies when data allows.
+- [x] Keep details in the existing sidebar/panel and include connected companies when data allows.
 - [ ] Keep the app static-host friendly and avoid framework migration in this phase.
 
-**Deliverable**: The current graph is stable enough to explore the 300/600 dataset without accidental selections, broken dragging, or unreadable edge dominance.
+**Deliverable**: The graph is stable enough to explore the static dataset without accidental selections, broken dragging, or unreadable edge dominance.
+
+---
+
+## Phase 2: Real Dataset Foundation (Current Priority – April 30 to May 14, 2026)
+
+**Goal**: Replace generated placeholder data with a smaller, credible core of real public companies and defensible relationships.
+
+**Tasks**:
+- [x] Replace fake ticker variants such as `LLY132`, `LLY52`, and `AVG0146`.
+- [x] Replace placeholder company names such as `NVDA Company 1`.
+- [x] Replace generic connection labels such as `Supply relationship`.
+- [x] Keep the dataset small enough to manually review: 60 real companies and 117 curated edges.
+- [x] Strengthen `scripts/validate_data.py` to fail duplicate tickers, synthetic ticker suffixes, placeholder names, and generic labels.
+- [ ] Add edge-level source URLs for the highest-impact supply, partnership, and investment relationships.
+- [ ] Add provenance UI so users can inspect confidence, verified date, and source summary from the graph.
+- [ ] Review top AI/semiconductor, healthcare/PBM, payments, and Berkshire edges before expanding the node count.
+
+**Deliverable**: StockPhotonic presents only real companies in the core dataset. Data credibility is the gate before feature expansion, larger market coverage, ETFs, crypto, options flow, earnings, auth, backend work, or framework migration.
 
 ---
 
@@ -55,9 +74,9 @@
 
 ---
 
-## Phase 2: Data Engine & Backend (May 21 – June 10, 2026)
+## Phase 3: Data Engine & Backend (May 21 – June 10, 2026)
 
-**Goal**: Reliable, automated, transparent data pipeline + persistence for watchlists/notes.
+**Goal**: Reliable, automated, transparent data pipeline + persistence for watchlists/notes after the real static dataset is credible.
 
 **Tasks**:
 - [ ] Set up **Turso** (or Supabase) + Prisma ORM.
@@ -79,7 +98,7 @@
 
 ---
 
-## Phase 3: Personal Investing Power Features (June 11 – July 5, 2026)
+## Phase 4: Personal Investing Power Features (June 11 – July 5, 2026)
 
 **Goal**: Turn the tool into your daily edge for portfolio construction and risk monitoring.
 
@@ -102,7 +121,7 @@
 
 ---
 
-## Phase 4: Polish, Sharing & Community (July 2026+)
+## Phase 5: Polish, Sharing & Community (July 2026+)
 
 - [ ] Public landing page with interactive demo (read-only, no portfolio upload).
 - [ ] Invite system: Generate unique codes for 10-20 friends max (keep it high-signal, low-noise).
@@ -147,14 +166,15 @@
 1. **Three.js vs keep Canvas**: Three.js gives "wow" factor but adds bundle size (~300KB gzipped with postprocessing). Decision by May 10.
 2. **DB Choice**: Turso (SQLite, dead simple) vs Supabase (Postgres + built-in auth/storage). Leaning Turso for simplicity.
 3. **Data Priority Order**:
-   - Week 1: AI/Semi supply chain + Berkshire ecosystem (highest 2026 relevance).
-   - Week 2: Broaden to all sectors.
+   - Current: verify the smaller real-company core before adding more rows.
+   - Next: add edge-level source URLs for the highest-impact AI/Semi, PBM, payments, and Berkshire ecosystem links.
+   - Later: broaden to additional sectors only when each ticker and edge is real and reviewable.
 4. **Friend Circle Size**: Start with 3-5, expand to 15 max. Quality > quantity.
 
 ---
 
 **This roadmap is living**. Update it after every phase retrospective.
 
-**Immediate Next Step**: Complete and validate Phase 1 graph usability stabilization on the current 300-company / 600-connection static dataset before adding new data layers or migrating architecture.
+**Immediate Next Step**: Strengthen the Phase 2 real dataset with better source capture and provenance UI before adding new data layers or migrating architecture.
 
 Let's build something that actually helps you see the market in a way no Bloomberg terminal or Yahoo Finance ever will.

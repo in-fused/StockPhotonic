@@ -2,33 +2,33 @@
 
 **Last Updated**: April 30, 2026
 
-**Current Version**: v5.4 / Phase 1
+**Current Version**: v5.5 / Phase 2 Real Dataset Foundation
 
-**Current Dataset**: 300 companies and 600 connections loaded from static JSON files:
+**Current Dataset**: 60 real US-listed public companies and 117 curated connections loaded from static JSON files:
 
 - `data/companies.json`
 - `data/connections.json`
 
-**Core Principle**: Every connection should be traceable to a verifiable public source. The current v5.4 dataset is a Phase 1 static baseline and does not yet meet the future stricter source-link target for every edge.
+**Core Principle**: Every company must be a real public company and every connection should be traceable to a verifiable public source. Smaller verified data is preferable to larger fake or generated data.
 
 ---
 
 ## Current Dataset Reality
 
-The Phase 1 app is a static Canvas prototype. It loads company and connection data directly from JSON in the browser. There is no backend, no live ingestion, and no automatic data refresh in the current app.
+The current app is a static Canvas prototype. It loads company and connection data directly from JSON in the browser. There is no backend, no live ingestion, and no automatic data refresh in the current app.
 
 ### `data/companies.json`
 
-Current company records use these fields:
+Current company records use these fields. Market caps are static approximate display values in trillions of dollars, not live market data.
 
 ```json
 {
   "id": 1,
   "ticker": "NVDA",
-  "name": "NVDA Company 1",
-  "sector": "Semiconductors",
-  "industry": "Semiconductors Industry",
-  "market_cap": 4.367,
+  "name": "NVIDIA Corporation",
+  "sector": "AI / Semiconductors",
+  "industry": "Graphics Processing Units and AI Accelerators",
+  "market_cap": 4.5,
   "rank": 1,
   "color": "#00f9ff"
 }
@@ -40,14 +40,14 @@ Current connection records use these fields:
 
 ```json
 {
-  "source": 27,
-  "target": 139,
+  "source": 1,
+  "target": 6,
   "type": "supply",
-  "strength": 0.82,
-  "label": "Supply relationship",
-  "confidence": 4,
-  "provenance": "SEC filings, earnings calls, news",
-  "verified_date": "2026-04-28"
+  "strength": 0.9,
+  "label": "HBM memory exposure for AI accelerators",
+  "confidence": 5,
+  "provenance": "Company disclosures and public investor materials",
+  "verified_date": "2026-04-29"
 }
 ```
 
@@ -56,8 +56,9 @@ Important current-field notes:
 - `source` and `target` are numeric company IDs from `data/companies.json`.
 - The current dataset uses `provenance`, not `source_url`.
 - `provenance` is currently a short citation summary, not a per-edge URL.
+- Generic relationship labels are not allowed in curated core data.
 - `verified_date` is present on current edges and should remain present.
-- `confidence` is an integer score from 1 to 5. Phase 1 core edges are expected to be 3 to 5.
+- `confidence` is an integer score from 1 to 5. Phase 2 core edges are expected to be 3 to 5.
 - `strength` is a numeric score from 0 to 1.
 
 ### Current Allowed Connection Types
@@ -76,7 +77,7 @@ Future schema versions may add `subsidiary`, `board_interlock`, and `mna`, but t
 
 ## Future Stricter Provenance Target
 
-The long-term target is stricter than the current Phase 1 data:
+The long-term target is stricter than the current Phase 2 data:
 
 - Keep `provenance` as a concise human-readable source summary.
 - Add `source_url` for each edge when a stable filing, press release, transcript, or article URL is available.
@@ -107,14 +108,16 @@ Recommended future connection shape:
 
 ## Confidence And Verification Expectations
 
-Current Phase 1 expectations:
+Current Phase 2 expectations:
 
 - `confidence` must be present on every connection.
 - `confidence` must be an integer from 1 to 5.
-- Core Phase 1 data should use confidence 3 to 5.
+- Core Phase 2 data should use confidence 3 to 5.
 - `verified_date` must be present on every connection.
 - `verified_date` should use ISO date format: `YYYY-MM-DD`.
 - `provenance` must be present and non-empty on every connection.
+- Company tickers must not use fake numeric suffixes such as `LLY132` or `AVG0146`.
+- Company names must not use placeholder patterns such as `NVDA Company 1`.
 
 Confidence guide:
 
@@ -122,7 +125,7 @@ Confidence guide:
 |-------|---------|
 | 5 | Direct primary-source support, such as SEC filing, company disclosure, official press release, or earnings transcript. |
 | 4 | Strong public support from a reliable source, or multiple reinforcing sources. |
-| 3 | Plausible curated relationship with public support, acceptable for Phase 1 but should be improved over time. |
+| 3 | Plausible curated relationship with public support, acceptable for Phase 2 but should be improved over time. |
 | 2 | Inferred relationship. Future experimental layer only, not core by default. |
 | 1 | Weak or speculative. Do not include in the core dataset. |
 
@@ -140,10 +143,14 @@ Required checks:
 - `source` and `target` must not be the same company.
 - Valid `strength` range: 0 to 1.
 - Valid `confidence` range: 1 to 5.
-- Phase 1 core confidence should be 3 to 5.
+- Phase 2 core confidence should be 3 to 5.
 - `verified_date` present and formatted as `YYYY-MM-DD`.
 - `provenance` present and non-empty.
 - `type` is in the allowed current list: `supply`, `partnership`, `ecosystem`, `competitor`, `investment`.
+- No duplicate tickers.
+- No ticker ending in 2+ digits unless explicitly allowlisted.
+- No placeholder company names matching `Company [number]`.
+- No blank or generic labels such as `Supply relationship`.
 
 Recommended warning checks:
 
@@ -199,7 +206,7 @@ Never include pure speculation, social media rumors, or unverified analyst notes
 
 ## Update Cadence Target
 
-The current Phase 1 dataset is static and manually updated. Future automation can use this target cadence:
+The current Phase 2 dataset is static and manually updated. Future automation can use this target cadence:
 
 | Data Type | Target Frequency | Method |
 |-----------|------------------|--------|
@@ -215,7 +222,7 @@ The current Phase 1 dataset is static and manually updated. Future automation ca
 ## Known Gaps
 
 - The current dataset has `provenance` summaries but not edge-level `source_url` values.
-- The current company names and connection labels are Phase 1 placeholders in many records.
+- Market caps are manually curated approximate display values and are not live prices.
 - There is no automated source refresh or stale-edge review workflow yet.
 - There is no provenance UI in the graph yet.
 - The static dataset should be validated and stabilized before adding ETFs, crypto, options flow, earnings data, or larger market coverage.

@@ -81,6 +81,25 @@
             border-color: rgba(0, 249, 255, 0.55);
         }
 
+        .search-panel {
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.10), rgba(255, 0, 170, 0.045)),
+                rgba(5, 7, 18, 0.96);
+            border: 1px solid rgba(0, 249, 255, 0.24);
+            box-shadow: 0 18px 52px rgba(0, 0, 0, 0.42), 0 0 30px rgba(0, 249, 255, 0.10);
+            backdrop-filter: blur(18px);
+        }
+
+        .search-result {
+            transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+        }
+
+        .search-result.is-active,
+        .search-result:hover {
+            background: rgba(0, 249, 255, 0.12);
+            border-color: rgba(0, 249, 255, 0.34);
+        }
+
         .connection-row {
             border: 1px solid rgba(255, 255, 255, 0.08);
             background: rgba(255, 255, 255, 0.035);
@@ -240,7 +259,9 @@
                 <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-white/35"></i>
                 <input id="search-input" type="text" placeholder="Search ticker or company..."
                        class="w-full bg-black/40 border border-white/20 focus:border-cyan-400 outline-none text-white placeholder:text-white/40 pl-11 py-3 rounded-3xl text-sm"
+                       autocomplete="off"
                        oninput="filterGraph()">
+                <div id="search-panel" class="search-panel hidden absolute left-0 right-0 top-full mt-2 rounded-3xl p-2 z-50"></div>
             </div>
 
             <select id="sector-filter" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
@@ -311,6 +332,12 @@
         const VIEW_ANIMATION_MS = 170;
         const FIT_ANIMATION_MS = 260;
         const PULSE_DURATION_MS = 900;
+        const SEARCH_RESULT_LIMIT = 5;
+        const RECENT_NODE_LIMIT = 5;
+        const SEARCH_FOCUS_SCALE = 1.12;
+        const SEARCH_FOCUS_ANIMATION_MS = 460;
+        const SEARCH_PANEL_CLOSE_MS = 140;
+        const SEARCH_HIGHLIGHT_MS = 1400;
         const LAYOUT_MODE_SECTOR = 'sector';
         const LAYOUT_MODE_HUB = 'hub';
         const HUB_CENTER = { x: 0, y: 0 };
@@ -335,6 +362,11 @@
         let focusLinkKeys = new Set();
         let currentSector = '';
         let currentSearch = '';
+        let searchMatches = [];
+        let highlightedSearchIndex = -1;
+        let searchPanelOpen = false;
+        let searchCloseTimer = null;
+        let recentNodeIds = [];
         let layoutMode = LAYOUT_MODE_SECTOR;
         let hubLayoutPositions = new Map();
 
@@ -347,6 +379,8 @@
         let drawHandle = null;
         let viewAnimationHandle = null;
         let pulseUntil = 0;
+        let highlightedNodeId = null;
+        let highlightedNodeUntil = 0;
 
         const pointerState = {
             active: false,
@@ -384,6 +418,8 @@
                 resizeCanvas();
                 fitGraph();
                 setupCanvasInteractions();
+                setupSearchInteractions();
+                updateSearchMatches();
                 document.getElementById('view-status').innerText = 'READY';
                 console.log(`Loaded ${companies.length} companies + ${connections.length} connections`);
             } catch (error) {
@@ -704,6 +740,7 @@
         function drawGraph(timestamp = 0) {
             drawHandle = null;
             const canvas = document.getElementById('graph-canvas');
+            const now = performance.now();
             const ctx = canvas.getContext('2d');
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -720,7 +757,7 @@
             frameNodes.forEach(node => drawNode(ctx, node, timestamp));
             drawLabels(ctx, frameNodes);
 
-            if (performance.now() < pulseUntil) requestDraw();
+            if (now < pulseUntil || now < highlightedNodeUntil) requestDraw();
         }
 
         function drawBackground(ctx) {
@@ -798,13 +835,14 @@
             const isSelected = selectedNode && selectedNode.id === node.id;
             const isNeighbor = focusNeighborIds.has(node.id);
             const isHovered = hoveredNode && hoveredNode.id === node.id;
+            const isSearchHighlighted = highlightedNodeId === node.id && performance.now() < highlightedNodeUntil;
             const isDimmed = selectedNode && !isSelected && !isNeighbor;
             const alpha = isDimmed ? 0.18 : 1;
             const color = node.color || '#00f9ff';
 
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.shadowBlur = isSelected ? 30 : isHovered ? 22 : 12;
+            ctx.shadowBlur = isSearchHighlighted ? 42 : isSelected ? 30 : isHovered ? 22 : 12;
             ctx.shadowColor = color;
 
             const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
@@ -826,6 +864,19 @@
             ctx.beginPath();
             ctx.arc(point.x - radius * 0.28, point.y - radius * 0.28, Math.max(1.2, radius * 0.28), 0, Math.PI * 2);
             ctx.fill();
+
+            if (isSearchHighlighted) {
+                const remaining = clamp((highlightedNodeUntil - performance.now()) / SEARCH_HIGHLIGHT_MS, 0, 1);
+                const sweep = 1 + (1 - remaining) * 0.48;
+                ctx.globalAlpha = 0.72 * remaining;
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2.4;
+                ctx.shadowBlur = 34;
+                ctx.shadowColor = '#00f9ff';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * (2.45 + sweep), 0, Math.PI * 2);
+                ctx.stroke();
+            }
 
             if (isSelected || isHovered) {
                 const pulse = performance.now() < pulseUntil ? 1 + Math.sin(timestamp * 0.006) * 0.08 : 1;
@@ -937,6 +988,7 @@
             });
             rebuildLayoutPositions();
             showNodeDetails(node);
+            recordRecentNode(node);
             triggerPulse(PULSE_DURATION_MS);
             if (isHubLayoutActive()) fitGraph();
             requestDraw();
@@ -1316,6 +1368,9 @@
             currentSector = document.getElementById('sector-filter').value;
             currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
             refreshVisibleGraph();
+            updateSearchMatches();
+            if (document.activeElement === document.getElementById('search-input')) searchPanelOpen = true;
+            renderSearchPanel();
             if (selectedNode && !visibleNodeIds.has(selectedNode.id)) clearSelection();
             requestDraw();
         }
@@ -1328,8 +1383,276 @@
             document.getElementById('search-input').value = '';
             document.getElementById('layout-mode').value = LAYOUT_MODE_SECTOR;
             refreshVisibleGraph();
+            updateSearchMatches();
+            closeSearchPanel();
             clearSelection(false);
             fitGraph();
+        }
+
+        function setupSearchInteractions() {
+            const input = document.getElementById('search-input');
+            const panel = document.getElementById('search-panel');
+            if (!input || !panel) return;
+
+            input.addEventListener('focus', openSearchPanel);
+            input.addEventListener('click', openSearchPanel);
+            input.addEventListener('blur', scheduleSearchPanelClose);
+            input.addEventListener('keydown', handleSearchKeydown);
+
+            panel.addEventListener('mousedown', event => {
+                if (event.target.closest('[data-search-node-id]')) event.preventDefault();
+            });
+
+            panel.addEventListener('mousemove', event => {
+                const row = event.target.closest('[data-search-index]');
+                if (!row) return;
+                const index = Number(row.dataset.searchIndex);
+                if (Number.isInteger(index) && index !== highlightedSearchIndex) {
+                    highlightedSearchIndex = index;
+                    renderSearchPanel();
+                }
+            });
+
+            panel.addEventListener('click', event => {
+                const row = event.target.closest('[data-search-node-id]');
+                if (!row) return;
+                const node = getNodeFromDomId(row.dataset.searchNodeId);
+                if (node) jumpToSearchNode(node);
+            });
+        }
+
+        function openSearchPanel() {
+            clearSearchCloseTimer();
+            searchPanelOpen = true;
+            updateSearchMatches();
+            renderSearchPanel();
+        }
+
+        function scheduleSearchPanelClose() {
+            clearSearchCloseTimer();
+            searchCloseTimer = window.setTimeout(closeSearchPanel, SEARCH_PANEL_CLOSE_MS);
+        }
+
+        function clearSearchCloseTimer() {
+            if (!searchCloseTimer) return;
+            clearTimeout(searchCloseTimer);
+            searchCloseTimer = null;
+        }
+
+        function closeSearchPanel() {
+            searchPanelOpen = false;
+            highlightedSearchIndex = -1;
+            const panel = document.getElementById('search-panel');
+            if (panel) panel.classList.add('hidden');
+        }
+
+        function updateSearchMatches() {
+            if (!currentSearch) {
+                searchMatches = [];
+                clampSearchHighlight(getRecentNodes().length);
+                return;
+            }
+
+            searchMatches = nodes
+                .map(node => ({ node, score: getSearchMatchScore(node, currentSearch) }))
+                .filter(item => item.score >= 0)
+                .sort((a, b) =>
+                    (a.score - b.score) ||
+                    (getSectorSearchPenalty(a.node) - getSectorSearchPenalty(b.node)) ||
+                    ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
+                    (b.node.degree - a.node.degree) ||
+                    String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
+                )
+                .slice(0, SEARCH_RESULT_LIMIT)
+                .map(item => item.node);
+
+            clampSearchHighlight(searchMatches.length);
+        }
+
+        function getSearchMatchScore(node, term) {
+            if (!node || !term) return -1;
+            const ticker = String(node.ticker || '').toLowerCase();
+            const name = String(node.name || '').toLowerCase();
+            const sector = String(node.sector || '').toLowerCase();
+            const industry = String(node.industry || '').toLowerCase();
+
+            if (ticker === term) return 0;
+            if (ticker.startsWith(term)) return 1;
+            if (name.startsWith(term)) return 2;
+            if (ticker.includes(term)) return 3;
+            if (name.includes(term)) return 4;
+            if (sector.includes(term)) return 5;
+            if (industry.includes(term)) return 6;
+            return -1;
+        }
+
+        function getSectorSearchPenalty(node) {
+            return currentSector && node.sector !== currentSector ? 1 : 0;
+        }
+
+        function clampSearchHighlight(count) {
+            if (!count) {
+                highlightedSearchIndex = -1;
+                return;
+            }
+            highlightedSearchIndex = highlightedSearchIndex < 0 ? 0 : clamp(highlightedSearchIndex, 0, count - 1);
+        }
+
+        function renderSearchPanel() {
+            const panel = document.getElementById('search-panel');
+            if (!panel) return;
+
+            const nodesForPanel = getSearchPanelNodes();
+            if (!searchPanelOpen || (!currentSearch && !nodesForPanel.length)) {
+                panel.classList.add('hidden');
+                panel.innerHTML = '';
+                return;
+            }
+
+            const heading = currentSearch ? 'MATCHES' : 'RECENT NODES';
+            const emptyState = currentSearch && !nodesForPanel.length
+                ? '<div class="px-4 py-4 text-sm text-white/45">No company matches this search.</div>'
+                : '';
+            const resultRows = nodesForPanel
+                .map((node, index) => renderSearchResult(node, index))
+                .join('');
+
+            panel.innerHTML = `
+                <div class="px-3 pt-2 pb-1 text-[10px] text-cyan-200/70 font-mono tracking-[2px]">${heading}</div>
+                <div class="space-y-1">${resultRows || emptyState}</div>
+            `;
+            panel.classList.remove('hidden');
+        }
+
+        function renderSearchResult(node, index) {
+            const activeClass = index === highlightedSearchIndex ? ' is-active' : '';
+            return `
+                <button type="button"
+                        data-search-node-id="${escapeHtml(node.id)}"
+                        data-search-index="${index}"
+                        class="search-result${activeClass} w-full rounded-2xl border border-white/10 px-3 py-2 text-left flex items-center justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-display text-white text-sm">${escapeHtml(node.ticker || '')}</span>
+                            <span class="text-xs text-white/62 truncate">${escapeHtml(node.name || '')}</span>
+                        </div>
+                        <div class="text-[11px] text-cyan-200/58 mt-0.5 truncate">${escapeHtml(node.sector || 'Unknown Sector')}</div>
+                    </div>
+                    <i class="fa-solid fa-location-crosshairs text-cyan-300/70 shrink-0"></i>
+                </button>
+            `;
+        }
+
+        function getSearchPanelNodes() {
+            return currentSearch ? searchMatches : getRecentNodes();
+        }
+
+        function handleSearchKeydown(event) {
+            if (event.key === 'Escape') {
+                closeSearchPanel();
+                event.currentTarget.blur();
+                return;
+            }
+
+            if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return;
+
+            const panelNodes = getSearchPanelNodes();
+            if (!panelNodes.length) return;
+
+            if (!searchPanelOpen) {
+                searchPanelOpen = true;
+                renderSearchPanel();
+            }
+
+            if (event.key === 'ArrowDown') {
+                highlightedSearchIndex = (highlightedSearchIndex + 1 + panelNodes.length) % panelNodes.length;
+                renderSearchPanel();
+                event.preventDefault();
+                return;
+            }
+
+            if (event.key === 'ArrowUp') {
+                highlightedSearchIndex = (highlightedSearchIndex - 1 + panelNodes.length) % panelNodes.length;
+                renderSearchPanel();
+                event.preventDefault();
+                return;
+            }
+
+            if (event.key === 'Enter') {
+                const node = panelNodes[highlightedSearchIndex < 0 ? 0 : highlightedSearchIndex];
+                if (node) jumpToSearchNode(node);
+                event.preventDefault();
+            }
+        }
+
+        function jumpToSearchNode(node) {
+            if (!node) return;
+            ensureNodeVisibleForJump(node);
+            selectNode(node);
+            highlightSearchNode(node);
+            centerGraphOnNode(node);
+            closeSearchPanel();
+            const input = document.getElementById('search-input');
+            if (input) input.blur();
+        }
+
+        function ensureNodeVisibleForJump(node) {
+            let changed = false;
+            const sectorFilter = document.getElementById('sector-filter');
+            const searchInput = document.getElementById('search-input');
+
+            if (currentSector && node.sector !== currentSector) {
+                currentSector = '';
+                if (sectorFilter) sectorFilter.value = '';
+                changed = true;
+            }
+
+            if (currentSearch && getSearchMatchScore(node, currentSearch) < 0) {
+                currentSearch = '';
+                if (searchInput) searchInput.value = '';
+                changed = true;
+            }
+
+            if (changed || !visibleNodeIds.has(node.id)) {
+                refreshVisibleGraph();
+                updateSearchMatches();
+            }
+        }
+
+        function centerGraphOnNode(node) {
+            const position = getNodeLayoutPosition(node);
+            const nextScale = clamp(SEARCH_FOCUS_SCALE, MIN_SCALE, MAX_SCALE);
+            const nextOffsetX = canvasWidth / 2 - position.x * nextScale;
+            const nextOffsetY = canvasHeight / 2 - position.y * nextScale;
+            animateView(nextScale, nextOffsetX, nextOffsetY, SEARCH_FOCUS_ANIMATION_MS);
+        }
+
+        function highlightSearchNode(node) {
+            highlightedNodeId = node.id;
+            highlightedNodeUntil = performance.now() + SEARCH_HIGHLIGHT_MS;
+            triggerPulse(PULSE_DURATION_MS);
+        }
+
+        function recordRecentNode(node) {
+            if (!node) return;
+            recentNodeIds = [node.id, ...recentNodeIds.filter(id => id !== node.id)].slice(0, RECENT_NODE_LIMIT);
+            if (!currentSearch) {
+                clampSearchHighlight(getRecentNodes().length);
+                renderSearchPanel();
+            }
+        }
+
+        function getRecentNodes() {
+            return recentNodeIds
+                .map(id => nodeById.get(id))
+                .filter(Boolean)
+                .slice(0, RECENT_NODE_LIMIT);
+        }
+
+        function getNodeFromDomId(id) {
+            const numericId = Number(id);
+            if (Number.isFinite(numericId) && nodeById.has(numericId)) return nodeById.get(numericId);
+            return nodeById.get(id);
         }
 
         function fitGraph(animate = true) {

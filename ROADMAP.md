@@ -2,7 +2,7 @@
 
 **Vision**: The most insightful, beautiful, and trustworthy visualization of corporate interconnections for serious personal investors and their trusted circle.
 
-**Current Version**: v5.7 / Phase 2.1 Edge-Level Source URLs (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
+**Current Version**: v5.8 / Phase 2.2 Derived Industry-Group Intelligence Foundations (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
 
 ---
 
@@ -59,6 +59,7 @@
 - [x] Add source tiering and `signal_score` concepts for candidate signal prioritization.
 - [x] Add ingestion controls for generated signals: `--from-signals`, `--dry-run`, `--min-signal-score`, `--min-strength`, and `--types`.
 - [x] Add provenance UI so users can inspect confidence, verified date, and source summary from the graph.
+- [x] Add a transitional derived industry-group layer in `index.html` without changing company or connection data files.
 - [ ] Review top AI/semiconductor, healthcare/PBM, payments, and Berkshire edges before expanding the node count.
 
 **Deliverable**: StockPhotonic presents only real companies in the core dataset. Data credibility is the gate before feature expansion, larger market coverage, ETFs, crypto, options flow, earnings, auth, backend work, or framework migration.
@@ -130,25 +131,32 @@
 
 ---
 
-## Future Product Intelligence: Sector -> Industry-Group Correlation Intelligence
+## Product Intelligence: Sector -> Industry-Group Correlation Intelligence
 
 **Goal**: After the immediate product intelligence and graph exploration work is stronger, prepare StockPhotonic to analyze how industry groups relate inside broader sectors and adjacent ecosystems.
 
+**Current Transitional Layer**:
+- Phase 2.2 derives `industryGroup` at runtime inside `index.html` from existing `sector`, `industry`, `name`, and `ticker` fields.
+- The derived value is not stored in `data/companies.json` and is not a normalized schema field yet.
+- Current sidebar correlation language is edge-derived from the existing static graph only. It does not add new factual company claims, URLs, or unsupported relationships.
+
 **Planning Principles**:
 - Sector remains the broad category.
-- Industry group becomes the more specific breakdown inside each sector.
+- Industry group is the more specific derived group inside or near a sector.
 - Example healthcare industry groups: Pharmaceuticals, Insurance / Managed Care, PBM / Pharmacy Benefits, MedTech, and Life Sciences Tools.
-- Keep this as future product direction only. Do not add features, data files, ingestion behavior, or unsupported claims until the schema, sources, and validation rules are ready.
+- Keep the current layer transitional until the schema, sources, and validation rules are ready for normalized industry-group data.
 
 **Future Capabilities**:
 - [ ] Compare relationships between industry groups inside a sector, such as Pharmaceuticals <-> Insurance / PBM.
 - [ ] Compare adjacent ecosystem groups, such as Semiconductors <-> Cloud Infrastructure, Energy Producers <-> Oilfield Services, Retail <-> Payments Networks, and Aerospace OEMs <-> Suppliers.
+- [ ] Add a normalized `industry_group` field or lookup table after the derived groups are reviewed.
+- [ ] Add source-backed correlation records for durable industry-group intelligence.
 - [ ] Build a small-company / IPO discovery layer for smaller companies, newer IPOs, and under-followed names benefiting from large-cap ecosystems.
 - [ ] Evaluate discovery signals such as supplier exposure, platform dependency, government funding support, strategic partnerships, customer concentration, and ecosystem adjacency.
 - [ ] Plan a government / policy relationship layer for public funding, grants, contracts, subsidies, regulation, defense exposure, healthcare reimbursement, energy policy, and industrial policy connections.
 - [ ] Require public, reviewable support before any government, policy, or ecosystem relationship becomes product data.
 
-**Placement**: This belongs after near-term user-facing product intelligence and graph exploration improvements. It is not the immediate next task.
+**Placement**: The current implementation is a static-app foundation. Normalized schema fields, source-backed correlation records, and government/policy relation layers remain future work.
 
 ---
 
@@ -199,7 +207,7 @@
 3. **Data Priority Order**:
    - Current: improve user-facing product intelligence and graph exploration on the smaller real-company core.
    - Next: continue adding edge-level source URLs for the highest-impact AI/Semi, PBM, payments, and Berkshire ecosystem links.
-   - Later: plan sector -> industry-group correlation intelligence only when each ticker, edge, and relationship category is real and reviewable.
+   - Later: normalize industry groups and add source-backed correlation records only when each ticker, edge, and relationship category is real and reviewable.
 4. **Friend Circle Size**: Start with 3-5, expand to 15 max. Quality > quantity.
 
 ---

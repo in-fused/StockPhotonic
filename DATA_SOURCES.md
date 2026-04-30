@@ -2,7 +2,7 @@
 
 **Last Updated**: April 30, 2026
 
-**Current Version**: v5.7 / Phase 2.1 Edge-Level Source URLs
+**Current Version**: v5.8 / Phase 2.2 Derived Industry-Group Intelligence Foundations
 
 **Current Dataset**: 60 real US-listed public companies and 117 curated connections loaded from static JSON files:
 
@@ -15,7 +15,7 @@
 
 ## Current Dataset Reality
 
-The current app is a static Canvas prototype. It loads company and connection data directly from JSON in the browser. There is no backend, no live ingestion, and no automatic data refresh in the current app. The graph UI now surfaces edge provenance and available source links in selected-node connection rows, and shows a compact dataset trust summary near the graph controls.
+The current app is a static Canvas prototype. It loads company and connection data directly from JSON in the browser. There is no backend, no live ingestion, and no automatic data refresh in the current app. The graph UI now surfaces edge provenance and available source links in selected-node connection rows, shows a compact dataset trust summary near the graph controls, and derives a runtime-only industry-group layer from existing company fields.
 
 ### `data/companies.json`
 
@@ -64,10 +64,11 @@ Important current-field notes:
 - `verified_date` is present on current edges and should remain present.
 - `confidence` is an integer score from 1 to 5. Phase 2 core edges are expected to be 3 to 5.
 - `strength` is a numeric score from 0 to 1.
+- `industry_group` is not stored in the current schema. The UI derives an `industryGroup` value at runtime from `sector`, `industry`, `name`, and `ticker`.
 
 ### Current Allowed Connection Types
 
-The current v5.7 dataset uses:
+The current static dataset uses:
 
 - `supply`
 - `partnership`
@@ -196,20 +197,36 @@ Recommended future connection shape:
 }
 ```
 
-`source_urls` is optional in the current v5.7 dataset, but high-confidence edges should gain coverage over time.
+`source_urls` is optional in the current static dataset, but high-confidence edges should gain coverage over time.
+
+---
+
+## Current Derived Industry-Group Layer
+
+Phase 2.2 adds an app-side industry-group layer without changing `data/companies.json`, `data/connections.json`, or validation scripts.
+
+Current hierarchy:
+
+- Sector remains the broad category.
+- Industry group is a more specific derived group inside or near a sector.
+- The current implementation uses deterministic keyword rules against existing company fields and falls back to the existing `industry` value when no rule matches.
+
+The derived industry group is used for the current Industry Group control, graph highlighting, and selected-node sidebar summaries. Connected industry-group distribution, top groups by count, top groups by average edge strength, and the Industry Correlation mini-section are all derived from existing graph edges. This does not add new factual company claims, new URLs, or new relationship records.
+
+This is a transitional layer before normalized industry-group data. A future version may add a source-backed `industry_group` field or lookup table, durable correlation records, and government/policy relation layers after validation rules and public-source requirements are defined.
 
 ---
 
 ## Future Sector And Industry-Group Source Planning
 
-This is future planning only. The current dataset should not change until the product direction, schema, source requirements, and validation rules are ready.
+This section covers the normalized source-backed version of industry-group intelligence. The current Phase 2.2 layer is derived in the app and does not change stored data.
 
 Hierarchy target:
 
 - Sector remains the broad category.
-- Industry group becomes the more specific breakdown inside each sector.
+- Industry group becomes the more specific breakdown inside or near each sector.
 - Example healthcare industry groups: Pharmaceuticals, Insurance / Managed Care, PBM / Pharmacy Benefits, MedTech, and Life Sciences Tools.
-- The current `industry` field is a descriptive company field. A future normalized `industry_group` field or lookup table may be useful, but that is not part of the current v5.7 static dataset.
+- The current `industry` field is a descriptive company field. A future normalized `industry_group` field or lookup table may be useful, but that is not part of the stored static dataset today.
 
 Future correlation intelligence should be source-backed before it becomes product data. Candidate relationship views include:
 

@@ -2,8 +2,8 @@
 
 **Date:** April 29, 2026  
 **Repo:** https://github.com/in-fused/StockPhotonic  
-**Current Version:** v5.7 / Phase 2.1 Edge-Level Source URLs
-**Status:** Current main uses a smaller credible static dataset: 60 real companies and 117 curated connections. Immediate work should stay focused on user-facing product intelligence, graph exploration, and source coverage.
+**Current Version:** v5.8 / Phase 2.2 Derived Industry-Group Intelligence Foundations
+**Status:** Current main uses a smaller credible static dataset: 60 real companies and 117 curated connections. Immediate work should stay focused on user-facing product intelligence, graph exploration, source coverage, and reviewable industry-group foundations.
 
 ---
 
@@ -13,6 +13,7 @@
 - 60 real companies + 117 curated connections loading correctly from static JSON
 - Connection lines now have different colors by type (partnership, supply, ecosystem, competitor, investment)
 - Edge provenance, confidence, verified date, and starter source URL coverage exist for reviewable relationships
+- Industry group is derived at runtime in `index.html` from existing company fields and used for filtering, graph highlighting, and sidebar intelligence
 - Basic force-directed graph rendering
 - Validation scripts help reject placeholder companies, fake tickers, duplicate edges, generic labels, and malformed source URLs
 
@@ -20,7 +21,7 @@
 - User-facing product intelligence and graph exploration need to become easier to read and act on
 - Graph focus, node selection, pan, zoom, drag, and layout behavior still need continued improvement
 - Edge-level source URL coverage is partial and should improve before major dataset expansion
-- Future industry-group correlation work is planning-only until schema and validation rules are ready
+- Industry-group derivation is transitional; normalized schema fields, source-backed correlation records, and validation rules are still future work
 
 ---
 
@@ -36,12 +37,14 @@ You want to expand far beyond the initial “Top 500” scope:
 
 ### Future Sector -> Industry-Group Direction
 
-This is a future product-intelligence layer, not the immediate implementation task.
+This now has a transitional static-app foundation, but normalized product data remains future work.
 
 - Sector remains the broad category.
-- Industry group becomes the more specific breakdown inside each sector.
+- Industry group is currently a more specific derived group inside or near each sector.
+- Phase 2.2 derives industry group from existing `sector`, `industry`, `name`, and `ticker` fields in `index.html`; it is not stored in `data/companies.json`.
 - Example healthcare industry groups: Pharmaceuticals, Insurance / Managed Care, PBM / Pharmacy Benefits, MedTech, and Life Sciences Tools.
-- Future correlation intelligence should compare relationships between industry groups inside a sector or adjacent ecosystem, such as Pharmaceuticals <-> Insurance / PBM, Semiconductors <-> Cloud Infrastructure, Energy Producers <-> Oilfield Services, Retail <-> Payments Networks, and Aerospace OEMs <-> Suppliers.
+- Current sidebar correlation summaries use only existing graph edges and do not add new factual claims, new URLs, or new relationships.
+- Future correlation intelligence may compare relationships between industry groups inside a sector or adjacent ecosystem, such as Pharmaceuticals <-> Insurance / PBM, Semiconductors <-> Cloud Infrastructure, Energy Producers <-> Oilfield Services, Retail <-> Payments Networks, and Aerospace OEMs <-> Suppliers.
 - Future small-company / IPO discovery should surface smaller companies, newer IPOs, and under-followed names benefiting from large-cap ecosystems through source-backed signals such as supplier exposure, platform dependency, government funding support, strategic partnerships, customer concentration, and ecosystem adjacency.
 - Future government / policy relationship planning may cover public funding, grants, contracts, subsidies, regulation, defense exposure, healthcare reimbursement, energy policy, and industrial policy connections. Keep this planning-only until public sources and validation rules support each relationship.
 
@@ -49,8 +52,8 @@ This is a future product-intelligence layer, not the immediate implementation ta
 1. **User-Facing Product Intelligence & Graph Exploration** — Improve how users inspect relationships, provenance, connected companies, and graph focus states
 2. **Options Flow Integration** — Show unusual options activity tied to specific nodes
 3. **Earnings Reports & Financial Disclosures** — Expandable modal per company with key highlights
-4. **Industry Group View** — Toggle between “All Companies” and “Industry Ecosystem” mode after the core graph experience is stronger
-5. **Sector -> Industry-Group Correlation Intelligence** — Compare relationships among industry groups inside sectors and adjacent ecosystems
+4. **Industry Group View** — Current foundation is a derived filter/highlight layer; future mode can use normalized data after review
+5. **Sector -> Industry-Group Correlation Intelligence** — Current sidebar uses edge-derived summaries; future versions can add source-backed correlation records
 6. **Time-Series / Historical View** — See how connections evolved over time
 7. **Risk & Contagion Analysis** — Highlight potential systemic risk paths
 8. **Portfolio Nexus Score** — For any portfolio, show exposure to the broader photonic network
@@ -115,9 +118,10 @@ Current data next priority: build toward reputable-source ingestion using SEC fi
    - Add edge-level source URLs for high-impact relationships when defensible sources are available
    - Keep validation strict before expanding node or edge count
 
-3. **Plan sector -> industry-group intelligence** (future only)
-   - Define hierarchy and source requirements before adding data or UI
-   - Keep industry-group filtering, correlation intelligence, small-company discovery, and policy layers out of the immediate task list
+3. **Strengthen sector -> industry-group intelligence**
+   - Review the derived groups before normalizing them into schema
+   - Define source requirements before adding durable correlation records
+   - Keep small-company discovery and policy layers out of the immediate task list
 
 4. **Later dataset expansion**
    - Add ETFs, crypto links, and broader coverage only after the core graph and source model are stable
@@ -145,8 +149,8 @@ Task:
 1. Improve user-facing product intelligence and graph exploration in small, reviewable increments
 2. Keep the existing photonic design intact and preserve the static-host friendly approach unless migration is explicitly requested
 3. Preserve current data credibility rules and source provenance expectations
-4. Document future sector -> industry-group hierarchy, correlation intelligence, small-company discovery, and government/policy layers without adding features yet
-5. Keep industry group filtering, new data files, and larger dataset expansion future-only unless explicitly requested
+4. Preserve the current derived industry-group layer as runtime-only until normalized schema and validation rules are ready
+5. Keep new data files, source-backed correlation records, government/policy layers, and larger dataset expansion future-only unless explicitly requested
 
 Return a summary of changed files and do not return full file contents unless specifically requested.
 ```

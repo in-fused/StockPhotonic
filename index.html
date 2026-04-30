@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHOTONIC NEXUS - Real Core Dataset - Phase 2.1</title>
+    <title>PHOTONIC NEXUS - Real Core Dataset - Phase 2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -145,6 +145,11 @@
             background: linear-gradient(135deg, rgba(0, 249, 255, 0.08), rgba(192, 38, 211, 0.055));
         }
 
+        .industry-insight-panel {
+            border: 1px solid rgba(255, 0, 170, 0.18);
+            background: linear-gradient(135deg, rgba(255, 0, 170, 0.075), rgba(0, 249, 255, 0.055));
+        }
+
         .source-indicator {
             border: 1px solid rgba(255, 255, 255, 0.11);
             background: rgba(255, 255, 255, 0.045);
@@ -217,7 +222,7 @@
                     </div>
                     <div>
                         <div class="font-display text-3xl font-semibold neon-text">PHOTONIC NEXUS</div>
-                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">REAL CORE DATASET - US MARKETS - 2026 - PHASE 2.1</div>
+                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">REAL CORE DATASET - US MARKETS - 2026 - PHASE 2.2</div>
                     </div>
                 </div>
             </div>
@@ -266,6 +271,10 @@
 
             <select id="sector-filter" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
                 <option value="">All Sectors</option>
+            </select>
+
+            <select id="industry-group-filter" aria-label="Industry Group" title="Industry Group" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                <option value="">All Industry Groups</option>
             </select>
 
             <select id="layout-mode" onchange="setLayoutMode(this.value)" class="bg-black/40 border border-cyan-400/25 text-white text-sm rounded-3xl px-4 py-3 outline-none">
@@ -340,6 +349,133 @@
         const SEARCH_HIGHLIGHT_MS = 1400;
         const LAYOUT_MODE_SECTOR = 'sector';
         const LAYOUT_MODE_HUB = 'hub';
+        const INDUSTRY_GROUP_RULES = [
+            {
+                group: 'PBM / Pharmacy Benefits',
+                sectorKeywords: ['healthcare', 'pharma', 'pbm'],
+                keywords: ['pbm', 'pharmacy benefit', 'retail pharmacy']
+            },
+            {
+                group: 'Insurance / Managed Care',
+                sectorKeywords: ['healthcare', 'pharma', 'pbm'],
+                keywords: ['managed care', 'health insurance', 'healthcare insurance']
+            },
+            {
+                group: 'MedTech',
+                sectorKeywords: ['healthcare', 'pharma', 'pbm'],
+                keywords: ['medtech', 'medical device', 'robotic surgery', 'surgical']
+            },
+            {
+                group: 'Life Sciences Tools',
+                sectorKeywords: ['healthcare', 'pharma', 'pbm'],
+                keywords: ['life sciences', 'diagnostics', 'tools']
+            },
+            {
+                group: 'Pharmaceuticals',
+                sectorKeywords: ['healthcare', 'pharma', 'pbm'],
+                keywords: ['pharmaceutical', 'biotech', 'drug']
+            },
+            {
+                group: 'EDA / Design Software',
+                sectorKeywords: ['ai', 'semiconductor'],
+                keywords: ['electronic design automation', 'eda', 'design automation', 'design software']
+            },
+            {
+                group: 'Memory / HBM',
+                sectorKeywords: ['ai', 'semiconductor'],
+                keywords: ['memory', 'hbm', 'high-bandwidth']
+            },
+            {
+                group: 'Foundry / Manufacturing',
+                sectorKeywords: ['ai', 'semiconductor'],
+                keywords: ['foundry', 'integrated device manufacturing']
+            },
+            {
+                group: 'Semiconductor Equipment',
+                sectorKeywords: ['ai', 'semiconductor'],
+                keywords: ['lithography', 'semiconductor manufacturing equipment', 'wafer fabrication', 'process control', 'yield management', 'equipment']
+            },
+            {
+                group: 'AI Accelerators',
+                sectorKeywords: ['ai', 'semiconductor'],
+                keywords: ['accelerator', 'gpu', 'graphics processing', 'custom silicon', 'cpus, gpus', 'data center accelerators']
+            },
+            {
+                group: 'Cloud Infrastructure',
+                sectorKeywords: ['ai', 'semiconductor', 'cloud', 'big tech'],
+                keywords: ['cloud', 'data center', 'data infrastructure', 'digital infrastructure', 'ai infrastructure', 'data platforms', 'network security']
+            },
+            {
+                group: 'Banks',
+                sectorKeywords: ['payments', 'financial'],
+                keywords: ['banking', 'bank']
+            },
+            {
+                group: 'Payments Networks',
+                sectorKeywords: ['payments', 'financial'],
+                keywords: ['payment network', 'payments network', 'card payment', 'digital payments', 'card issuing']
+            },
+            {
+                group: 'Asset Managers',
+                sectorKeywords: ['payments', 'financial'],
+                keywords: ['asset manager', 'asset management', 'investment manager']
+            },
+            {
+                group: 'Exchanges / Market Infrastructure',
+                sectorKeywords: ['payments', 'financial'],
+                keywords: ['exchange', 'clearing', 'market infrastructure']
+            },
+            {
+                group: 'Insurance',
+                sectorKeywords: ['payments', 'financial'],
+                keywords: ['insurance']
+            },
+            {
+                group: 'E-Commerce',
+                sectorKeywords: ['consumer', 'retail', 'cloud', 'big tech'],
+                keywords: ['e-commerce', 'online retail', 'digital commerce']
+            },
+            {
+                group: 'Big Box Retail',
+                sectorKeywords: ['consumer', 'retail'],
+                keywords: ['mass-market retail', 'warehouse club', 'home improvement retail', 'big box']
+            },
+            {
+                group: 'Restaurants / Food Service',
+                sectorKeywords: ['consumer', 'retail'],
+                keywords: ['restaurant', 'food service', 'quick-service']
+            },
+            {
+                group: 'Consumer Brands',
+                sectorKeywords: ['consumer', 'retail', 'cloud', 'big tech'],
+                keywords: ['beverage', 'consumer devices', 'consumer brands', 'services and silicon']
+            },
+            {
+                group: 'Energy Producers',
+                sectorKeywords: ['energy', 'industrial'],
+                keywords: ['integrated oil and gas', 'exploration and production', 'energy producer']
+            },
+            {
+                group: 'Oilfield Services',
+                sectorKeywords: ['energy', 'industrial'],
+                keywords: ['oilfield services', 'drilling', 'field services']
+            },
+            {
+                group: 'Defense Contractors',
+                sectorKeywords: ['energy', 'industrial'],
+                keywords: ['aerospace and defense systems', 'defense systems', 'defense contractor']
+            },
+            {
+                group: 'Aerospace OEMs',
+                sectorKeywords: ['energy', 'industrial'],
+                keywords: ['commercial aerospace', 'defense aerospace']
+            },
+            {
+                group: 'Industrial Suppliers',
+                sectorKeywords: ['energy', 'industrial'],
+                keywords: ['machinery', 'industrial equipment', 'industrial automation', 'construction machinery', 'agricultural']
+            }
+        ];
         const HUB_CENTER = { x: 0, y: 0 };
         const HUB_RING_GAP = 150;
         const HUB_FIRST_RING_RADIUS = 230;
@@ -361,6 +497,7 @@
         let focusNeighborIds = new Set();
         let focusLinkKeys = new Set();
         let currentSector = '';
+        let currentIndustryGroup = '';
         let currentSearch = '';
         let searchMatches = [];
         let highlightedSearchIndex = -1;
@@ -404,7 +541,10 @@
                     throw new Error('Dataset fetch failed');
                 }
 
-                companies = await compRes.json();
+                companies = (await compRes.json()).map(company => ({
+                    ...company,
+                    industryGroup: deriveIndustryGroup(company)
+                }));
                 connections = await connRes.json();
 
                 document.getElementById('node-count').innerText = `${companies.length} NODES`;
@@ -414,6 +554,7 @@
                 updateDatasetTrustPanel();
 
                 buildSectorFilter();
+                buildIndustryGroupFilter();
                 initGraphData();
                 resizeCanvas();
                 fitGraph();
@@ -439,6 +580,40 @@
             select.innerHTML = '<option value="">All Sectors</option>' + sectors
                 .map(sector => `<option value="${escapeHtml(sector)}">${escapeHtml(sector)}</option>`)
                 .join('');
+        }
+
+        function buildIndustryGroupFilter() {
+            const select = document.getElementById('industry-group-filter');
+            if (!select) return;
+
+            const groups = [...new Set(companies.map(getCompanyIndustryGroup).filter(Boolean))].sort();
+            select.innerHTML = '<option value="">All Industry Groups</option>' + groups
+                .map(group => `<option value="${escapeHtml(group)}">${escapeHtml(group)}</option>`)
+                .join('');
+        }
+
+        function deriveIndustryGroup(company) {
+            if (!company) return 'Other';
+
+            const sector = String(company.sector || '').toLowerCase();
+            const descriptorText = [
+                company.industry,
+                company.name,
+                company.ticker
+            ].map(value => String(value || '').toLowerCase()).join(' ');
+
+            const matchedRule = INDUSTRY_GROUP_RULES.find(rule => {
+                const sectorMatches = !rule.sectorKeywords?.length ||
+                    rule.sectorKeywords.some(keyword => sector.includes(keyword));
+                const keywordMatches = rule.keywords.some(keyword => descriptorText.includes(keyword));
+                return sectorMatches && keywordMatches;
+            });
+
+            return matchedRule?.group || company.industry || 'Other';
+        }
+
+        function getCompanyIndustryGroup(company) {
+            return company?.industryGroup || deriveIndustryGroup(company);
         }
 
         function initGraphData() {
@@ -792,6 +967,8 @@
             const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
             const isFocused = selectedNode && focusLinkKeys.has(link.key);
             const hasFocus = Boolean(selectedNode);
+            const industryFilterActive = isIndustryGroupFilterActive();
+            const touchesIndustryGroup = industryFilterActive && linkTouchesCurrentIndustryGroup(link);
 
             // Edge visibility/opacity scaling: weak connections stay present but
             // quiet, while high-strength and selected ego-network links remain
@@ -802,6 +979,10 @@
             if (hasFocus) {
                 alpha = isFocused ? 0.7 + strength * 0.24 : 0.012;
                 width = isFocused ? width + 1.25 : Math.max(0.25, width * 0.45);
+            }
+            if (touchesIndustryGroup && !isFocused) {
+                alpha = Math.max(alpha, 0.14 + strength * 0.24);
+                width = Math.max(width, 0.7 + strength * 1.2);
             }
 
             ctx.globalAlpha = alpha;
@@ -836,8 +1017,11 @@
             const isNeighbor = focusNeighborIds.has(node.id);
             const isHovered = hoveredNode && hoveredNode.id === node.id;
             const isSearchHighlighted = highlightedNodeId === node.id && performance.now() < highlightedNodeUntil;
-            const isDimmed = selectedNode && !isSelected && !isNeighbor;
-            const alpha = isDimmed ? 0.18 : 1;
+            const industryDimmed = isNodeDimmedByIndustryGroup(node);
+            const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
+            const focusDimmed = selectedNode && !isSelected && !isNeighbor && !industryMatched;
+            const isDimmed = focusDimmed || industryDimmed;
+            const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : 1;
             const color = node.color || '#00f9ff';
 
             ctx.save();
@@ -922,7 +1106,10 @@
                     const radius = node._screenRadius ?? getScreenNodeRadius(node);
                     const rawLabel = getLabelText(node, labelMode);
                     if (!rawLabel) return;
-                    const alpha = selectedNode && !isSelected && !isNeighbor ? 0.25 : isNeighbor ? 0.82 : 0.72;
+                    const industryDimmed = isNodeDimmedByIndustryGroup(node);
+                    const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
+                    const focusDimmed = selectedNode && !isSelected && !isNeighbor && !industryMatched;
+                    const alpha = industryDimmed ? 0.18 : focusDimmed ? 0.25 : isNeighbor ? 0.82 : 0.72;
 
                     ctx.save();
                     const fontSize = labelMode === 'full' ? (isSelected ? 12 : 11) : (isSelected ? 12 : 10);
@@ -979,6 +1166,7 @@
         }
 
         function selectNode(node) {
+            ensureIndustryGroupFilterAllowsNode(node);
             selectedNode = node;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
@@ -1014,6 +1202,9 @@
             const topConnections = connectionsForNode.slice(0, 12);
             const networkSummary = getNodeNetworkSummary(connectionsForNode);
             const sectorCounts = getConnectionSectorCounts(connectionsForNode);
+            const industryGroup = getCompanyIndustryGroup(node);
+            const industryGroupStats = getConnectionIndustryGroupStats(connectionsForNode);
+            const industryCorrelation = getIndustryCorrelationSummary(node, industryGroupStats, sectorCounts);
             const nodeSources = getNodeSources(connectionsForNode);
             const whyThisNodeMatters = getNodeImportanceSummary(node, networkSummary, sectorCounts);
 
@@ -1080,9 +1271,33 @@
                             <div class="text-[10px] text-white/38 font-mono">INDUSTRY</div>
                             <div class="text-sm text-white/82 leading-snug">${escapeHtml(node.industry || 'Unknown')}</div>
                         </div>
+                        <div>
+                            <div class="text-[10px] text-white/38 font-mono">DERIVED INDUSTRY GROUP</div>
+                            <div class="text-sm text-cyan-100/90 leading-snug">${escapeHtml(industryGroup)}</div>
+                        </div>
                     </div>
                     <div class="mt-3 space-y-2">
                         ${renderSectorDistribution(sectorCounts, networkSummary.degree)}
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">CONNECTED INDUSTRY GROUP DISTRIBUTION</div>
+                        <div class="mt-2 space-y-2">
+                            ${renderIndustryGroupDistribution(industryGroupStats, networkSummary.degree)}
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-1 xl:grid-cols-2 gap-3">
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+                            <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP BY COUNT</div>
+                            <div class="mt-2 space-y-2">${renderTopIndustryGroupsByCount(industryGroupStats)}</div>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+                            <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP AVG STRENGTH</div>
+                            <div class="mt-2 space-y-2">${renderTopIndustryGroupsByAverageStrength(industryGroupStats)}</div>
+                        </div>
+                    </div>
+                    <div class="industry-insight-panel rounded-2xl p-3 mt-4">
+                        <div class="text-[10px] text-fuchsia-100/75 font-mono tracking-[1.4px]">INDUSTRY CORRELATION</div>
+                        <div class="mt-2">${renderIndustryCorrelation(industryCorrelation)}</div>
                     </div>
                 </div>
 
@@ -1208,6 +1423,140 @@
 
             return Object.entries(counts)
                 .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
+        }
+
+        function getConnectionIndustryGroupStats(connectionsForNode) {
+            const statsByGroup = new Map();
+
+            connectionsForNode.forEach(item => {
+                const group = getCompanyIndustryGroup(item.node);
+                const strength = clamp(Number(item.link.strength) || 0, 0, 1);
+                const sector = item.node.sector || 'Other';
+                const existing = statsByGroup.get(group) || {
+                    group,
+                    count: 0,
+                    totalStrength: 0,
+                    sectors: new Set()
+                };
+
+                existing.count += 1;
+                existing.totalStrength += strength;
+                existing.sectors.add(sector);
+                statsByGroup.set(group, existing);
+            });
+
+            return [...statsByGroup.values()]
+                .map(item => ({
+                    ...item,
+                    avgStrength: item.count ? item.totalStrength / item.count : 0,
+                    avgStrengthPercent: item.count ? Math.round((item.totalStrength / item.count) * 100) : 0,
+                    sectors: [...item.sectors].sort()
+                }))
+                .sort(sortIndustryGroupStatsByCount);
+        }
+
+        function sortIndustryGroupStatsByCount(a, b) {
+            return b.count - a.count ||
+                b.avgStrength - a.avgStrength ||
+                String(a.group).localeCompare(String(b.group));
+        }
+
+        function sortIndustryGroupStatsByAverageStrength(a, b) {
+            return b.avgStrength - a.avgStrength ||
+                b.count - a.count ||
+                String(a.group).localeCompare(String(b.group));
+        }
+
+        function renderIndustryGroupDistribution(groupStats, degree) {
+            if (!groupStats.length) return '<div class="text-sm text-white/35">No connected industry groups found.</div>';
+            const maxCount = Math.max(...groupStats.map(item => item.count), 1);
+
+            return groupStats.map(item => {
+                const width = Math.max(8, Math.round((item.count / maxCount) * 100));
+                const percent = degree ? Math.round((item.count / degree) * 100) : 0;
+                return `
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <div class="flex items-center justify-between gap-3 text-xs">
+                            <span class="text-white/75 truncate">${item.count} ${escapeHtml(item.group)}</span>
+                            <span class="text-white/38 font-mono shrink-0">${percent}%</span>
+                        </div>
+                        <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+                            <div class="h-full rounded-full bg-fuchsia-300/75" style="width:${width}%; box-shadow:0 0 10px rgba(255, 0, 170, 0.42);"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTopIndustryGroupsByCount(groupStats) {
+            const topGroups = [...groupStats].sort(sortIndustryGroupStatsByCount).slice(0, 3);
+            if (!topGroups.length) return '<div class="text-xs text-white/35">No connected groups.</div>';
+
+            return topGroups.map(item => `
+                <div class="flex items-center justify-between gap-2 text-xs">
+                    <span class="text-white/72 truncate">${escapeHtml(item.group)}</span>
+                    <span class="font-mono text-cyan-200/75 shrink-0">${item.count}</span>
+                </div>
+            `).join('');
+        }
+
+        function renderTopIndustryGroupsByAverageStrength(groupStats) {
+            const topGroups = [...groupStats].sort(sortIndustryGroupStatsByAverageStrength).slice(0, 3);
+            if (!topGroups.length) return '<div class="text-xs text-white/35">No connected groups.</div>';
+
+            return topGroups.map(item => `
+                <div class="flex items-center justify-between gap-2 text-xs">
+                    <span class="text-white/72 truncate">${escapeHtml(item.group)}</span>
+                    <span class="font-mono text-fuchsia-100/75 shrink-0">${item.avgStrengthPercent}%</span>
+                </div>
+            `).join('');
+        }
+
+        function getIndustryCorrelationSummary(node, groupStats, sectorCounts) {
+            const nodeGroup = getCompanyIndustryGroup(node);
+            const topByCount = [...groupStats].sort(sortIndustryGroupStatsByCount)[0] || null;
+            const topByAverageStrength = [...groupStats].sort(sortIndustryGroupStatsByAverageStrength)[0] || null;
+            const connectedSectorCount = sectorCounts.length;
+
+            return {
+                nodeGroup,
+                primaryGroup: topByCount?.group || '',
+                mostExposedGroup: topByCount?.group || '',
+                strongestGroup: topByAverageStrength?.group || '',
+                strongestAveragePercent: topByAverageStrength?.avgStrengthPercent || 0,
+                connectedSectorCount,
+                crossSectorBridge: connectedSectorCount >= 3
+            };
+        }
+
+        function renderIndustryCorrelation(summary) {
+            if (!summary.primaryGroup) {
+                return '<div class="text-sm text-white/35">No edge-derived industry correlation available.</div>';
+            }
+
+            const sectorSpan = summary.connectedSectorCount === 1
+                ? '1 connected sector'
+                : `${summary.connectedSectorCount} connected sectors`;
+
+            return `
+                <div class="space-y-2 text-xs">
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="text-white/42">Primary correlation</span>
+                        <span class="text-white/82 text-right">${escapeHtml(summary.nodeGroup)} <span class="text-cyan-200/75">&harr;</span> ${escapeHtml(summary.primaryGroup)}</span>
+                    </div>
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="text-white/42">Most exposed group</span>
+                        <span class="text-white/82 text-right">${escapeHtml(summary.mostExposedGroup)}</span>
+                    </div>
+                    <div class="flex items-start justify-between gap-3">
+                        <span class="text-white/42">Strongest average</span>
+                        <span class="text-white/82 text-right">${escapeHtml(summary.strongestGroup)} ${summary.strongestAveragePercent}%</span>
+                    </div>
+                    <div class="pt-2 border-t border-white/10 font-mono text-[10px] tracking-[1.2px] ${summary.crossSectorBridge ? 'text-emerald-200/80' : 'text-white/40'}">
+                        ${summary.crossSectorBridge ? 'Cross-sector bridge detected' : escapeHtml(sectorSpan)}
+                    </div>
+                </div>
+            `;
         }
 
         function renderConnectionTypeMix(typeCounts) {
@@ -1366,20 +1715,23 @@
 
         function filterGraph() {
             currentSector = document.getElementById('sector-filter').value;
+            currentIndustryGroup = document.getElementById('industry-group-filter').value;
             currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
             refreshVisibleGraph();
             updateSearchMatches();
             if (document.activeElement === document.getElementById('search-input')) searchPanelOpen = true;
             renderSearchPanel();
-            if (selectedNode && !visibleNodeIds.has(selectedNode.id)) clearSelection();
+            if (selectedNode && (!visibleNodeIds.has(selectedNode.id) || isNodeDimmedByIndustryGroup(selectedNode))) clearSelection();
             requestDraw();
         }
 
         function resetAll() {
             currentSector = '';
+            currentIndustryGroup = '';
             currentSearch = '';
             layoutMode = LAYOUT_MODE_SECTOR;
             document.getElementById('sector-filter').value = '';
+            document.getElementById('industry-group-filter').value = '';
             document.getElementById('search-input').value = '';
             document.getElementById('layout-mode').value = LAYOUT_MODE_SECTOR;
             refreshVisibleGraph();
@@ -1458,7 +1810,7 @@
                 .filter(item => item.score >= 0)
                 .sort((a, b) =>
                     (a.score - b.score) ||
-                    (getSectorSearchPenalty(a.node) - getSectorSearchPenalty(b.node)) ||
+                    (getFilterSearchPenalty(a.node) - getFilterSearchPenalty(b.node)) ||
                     ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
                     (b.node.degree - a.node.degree) ||
                     String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
@@ -1475,6 +1827,7 @@
             const name = String(node.name || '').toLowerCase();
             const sector = String(node.sector || '').toLowerCase();
             const industry = String(node.industry || '').toLowerCase();
+            const industryGroup = String(getCompanyIndustryGroup(node) || '').toLowerCase();
 
             if (ticker === term) return 0;
             if (ticker.startsWith(term)) return 1;
@@ -1483,11 +1836,15 @@
             if (name.includes(term)) return 4;
             if (sector.includes(term)) return 5;
             if (industry.includes(term)) return 6;
+            if (industryGroup.includes(term)) return 7;
             return -1;
         }
 
-        function getSectorSearchPenalty(node) {
-            return currentSector && node.sector !== currentSector ? 1 : 0;
+        function getFilterSearchPenalty(node) {
+            let penalty = 0;
+            if (currentSector && node.sector !== currentSector) penalty += 1;
+            if (currentIndustryGroup && !nodeMatchesCurrentIndustryGroup(node)) penalty += 1;
+            return penalty;
         }
 
         function clampSearchHighlight(count) {
@@ -1536,7 +1893,7 @@
                             <span class="font-display text-white text-sm">${escapeHtml(node.ticker || '')}</span>
                             <span class="text-xs text-white/62 truncate">${escapeHtml(node.name || '')}</span>
                         </div>
-                        <div class="text-[11px] text-cyan-200/58 mt-0.5 truncate">${escapeHtml(node.sector || 'Unknown Sector')}</div>
+                        <div class="text-[11px] text-cyan-200/58 mt-0.5 truncate">${escapeHtml(node.sector || 'Unknown Sector')} / ${escapeHtml(getCompanyIndustryGroup(node))}</div>
                     </div>
                     <i class="fa-solid fa-location-crosshairs text-cyan-300/70 shrink-0"></i>
                 </button>
@@ -1599,11 +1956,18 @@
         function ensureNodeVisibleForJump(node) {
             let changed = false;
             const sectorFilter = document.getElementById('sector-filter');
+            const industryGroupFilter = document.getElementById('industry-group-filter');
             const searchInput = document.getElementById('search-input');
 
             if (currentSector && node.sector !== currentSector) {
                 currentSector = '';
                 if (sectorFilter) sectorFilter.value = '';
+                changed = true;
+            }
+
+            if (currentIndustryGroup && !nodeMatchesCurrentIndustryGroup(node)) {
+                currentIndustryGroup = '';
+                if (industryGroupFilter) industryGroupFilter.value = '';
                 changed = true;
             }
 
@@ -1617,6 +1981,17 @@
                 refreshVisibleGraph();
                 updateSearchMatches();
             }
+        }
+
+        function ensureIndustryGroupFilterAllowsNode(node) {
+            if (!currentIndustryGroup || nodeMatchesCurrentIndustryGroup(node)) return;
+
+            currentIndustryGroup = '';
+            const industryGroupFilter = document.getElementById('industry-group-filter');
+            if (industryGroupFilter) industryGroupFilter.value = '';
+            refreshVisibleGraph();
+            updateSearchMatches();
+            renderSearchPanel();
         }
 
         function centerGraphOnNode(node) {
@@ -1777,7 +2152,10 @@
 
         function shouldDrawLink(link) {
             const isFocused = selectedNode && focusLinkKeys.has(link.key);
-            if (!isFocused && link.strength < getWeakEdgeThreshold()) return false;
+            const industryFilterActive = isIndustryGroupFilterActive();
+            const touchesIndustryGroup = industryFilterActive && linkTouchesCurrentIndustryGroup(link);
+            if (industryFilterActive && !touchesIndustryGroup) return false;
+            if (!isFocused && !touchesIndustryGroup && link.strength < getWeakEdgeThreshold()) return false;
 
             const sourceX = link.source._screenX;
             const sourceY = link.source._screenY;
@@ -1853,8 +2231,24 @@
             if (!node) return false;
             if (currentSector && node.sector !== currentSector) return false;
             if (!currentSearch) return true;
-            const haystack = `${node.ticker || ''} ${node.name || ''} ${node.sector || ''} ${node.industry || ''}`.toLowerCase();
+            const haystack = `${node.ticker || ''} ${node.name || ''} ${node.sector || ''} ${node.industry || ''} ${getCompanyIndustryGroup(node)}`.toLowerCase();
             return haystack.includes(currentSearch);
+        }
+
+        function isIndustryGroupFilterActive() {
+            return Boolean(currentIndustryGroup);
+        }
+
+        function nodeMatchesCurrentIndustryGroup(node) {
+            return !currentIndustryGroup || getCompanyIndustryGroup(node) === currentIndustryGroup;
+        }
+
+        function linkTouchesCurrentIndustryGroup(link) {
+            return nodeMatchesCurrentIndustryGroup(link.source) || nodeMatchesCurrentIndustryGroup(link.target);
+        }
+
+        function isNodeDimmedByIndustryGroup(node) {
+            return isIndustryGroupFilterActive() && !nodeMatchesCurrentIndustryGroup(node);
         }
 
         function findNodeAt(screenX, screenY) {

@@ -20,6 +20,9 @@
     "label": "Advanced-node foundry manufacturing dependency",
     "confidence": 5,
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source_urls": [
+      "https://nvidianews.nvidia.com/news/nvidia-blackwell-platform-arrives-to-power-a-new-era-of-computing"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -30,6 +33,9 @@
     "label": "Data center GPU and AI accelerator competition",
     "confidence": 5,
     "provenance": "Market structure / direct peer relationship",
+    "source_urls": [
+      "https://ir.amd.com/financial-information/sec-filings/content/0000002488-24-000012/amd-20231230.htm"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -53,6 +59,9 @@
     "label": "Cloud AI infrastructure demand exposure",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://cloud.google.com/blog/products/compute/introducing-a3-supercomputers-with-nvidia-h100-gpus?e=48754805"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -63,6 +72,9 @@
     "label": "AWS AI infrastructure accelerator ecosystem",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://aws.amazon.com/nvidia/project-ceiba/"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -73,6 +85,9 @@
     "label": "AI training cluster infrastructure exposure",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://nvidianews.nvidia.com/news/meta-builds-ai-infrastructure-with-nvidia"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -96,6 +111,9 @@
     "label": "HBM memory exposure for accelerator platforms",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://investors.micron.com/news-releases/news-release-details/micron-hbm-designed-leading-amd-ai-platform"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -106,6 +124,9 @@
     "label": "Advanced-node foundry manufacturing dependency",
     "confidence": 5,
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source_urls": [
+      "https://www.amd.com/en/newsroom/press-releases/2025-4-14-amd-achieves-first-tsmc-n2-product-silicon-milesto.html"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -116,6 +137,9 @@
     "label": "Server and PC processor competition",
     "confidence": 5,
     "provenance": "Market structure / direct peer relationship",
+    "source_urls": [
+      "https://ir.amd.com/financial-information/sec-filings/content/0000002488-24-000012/amd-20231230.htm"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -139,6 +163,9 @@
     "label": "Advanced lithography equipment dependency",
     "confidence": 5,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://newsroom.intel.com/press-kit/intel-high-na-euv"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -149,6 +176,9 @@
     "label": "Wafer fabrication equipment dependency",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -159,6 +189,9 @@
     "label": "Etch and deposition equipment dependency",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -169,6 +202,9 @@
     "label": "Semiconductor process-control equipment dependency",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -179,6 +215,9 @@
     "label": "Custom silicon foundry manufacturing dependency",
     "confidence": 4,
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source_urls": [
+      "https://investors.broadcom.com/news-releases/news-release-details/broadcom-delivers-industrys-first-35d-f2f-technology-ai-xpus"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -209,6 +248,9 @@
     "label": "AI data center networking silicon ecosystem",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://investors.broadcom.com/news-releases/news-release-details/broadcom-announces-extended-partnership-meta-deploy-technology"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -219,6 +261,9 @@
     "label": "Arm-based mobile and edge silicon ecosystem",
     "confidence": 5,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://www.qualcomm.com/news/onq/2014/08/how-arm-architecture-and-snapdragon-processors-are-supporting-64-bit-future"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -239,6 +284,9 @@
     "label": "Mobile processor foundry manufacturing dependency",
     "confidence": 5,
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source_urls": [
+      "https://pr.tsmc.com/japanese/news/1597"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -259,6 +307,9 @@
     "label": "EUV lithography dependency for leading-edge foundry nodes",
     "confidence": 5,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://pr.tsmc.com/english/news/1734"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -269,6 +320,9 @@
     "label": "Wafer fabrication equipment dependency",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -279,6 +333,9 @@
     "label": "Etch and deposition equipment dependency",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -289,6 +346,9 @@
     "label": "Yield-management and process-control dependency",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -352,6 +412,9 @@
     "label": "Electronic design automation platform competition",
     "confidence": 5,
     "provenance": "Market structure / direct peer relationship",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/813672/000081367225000024/cdns-20241231.htm"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -362,6 +425,9 @@
     "label": "Advanced chip design software ecosystem",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://www.cadence.com/en_US/home/company/newsroom/press-releases/pr/2026/cadence-and-nvidia-unveil-accelerated-engineering-solutions.html"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -372,6 +438,9 @@
     "label": "Semiconductor IP and EDA design ecosystem",
     "confidence": 4,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://www.synopsys.com/partners/arm.html"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -402,6 +471,9 @@
     "label": "Cloud platform and AI services competition",
     "confidence": 5,
     "provenance": "Market structure / direct peer relationship",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -412,6 +484,9 @@
     "label": "Hyperscale cloud infrastructure competition",
     "confidence": 5,
     "provenance": "Market structure / direct peer relationship",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -422,6 +497,9 @@
     "label": "Enterprise cloud infrastructure competition",
     "confidence": 5,
     "provenance": "Market structure / direct peer relationship",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -432,6 +510,9 @@
     "label": "Enterprise application software competition",
     "confidence": 4,
     "provenance": "Market structure / direct peer relationship",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -492,6 +573,9 @@
     "label": "Cloud data platform deployment ecosystem",
     "confidence": 4,
     "provenance": "Public filings and company partnership announcements",
+    "source_urls": [
+      "https://www.snowflake.com/en/news/press-releases/snowflake-and-aws-significantly-deepen-commitment-to-driving-customer-focused-innovation/"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -512,6 +596,9 @@
     "label": "Arm architecture exposure in consumer devices",
     "confidence": 5,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://developer.apple.com/documentation/apple-silicon"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -522,6 +609,9 @@
     "label": "Enterprise data cloud deployment partnership",
     "confidence": 4,
     "provenance": "Public filings and company partnership announcements",
+    "source_urls": [
+      "https://www.snowflake.com/en/blog/openflow-connector-oracle/"
+    ],
     "verified_date": "2026-04-29"
   },
   {

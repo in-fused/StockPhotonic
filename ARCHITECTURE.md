@@ -10,20 +10,24 @@
 
 ---
 
-## Current State (v0.9 – April 2026)
+## Current State (v5.4 / Phase 1 – April 29, 2026)
 
-- Single `index.html` (~82KB) with embedded Canvas force-directed graph.
-- 40 companies (top by market cap, April 2026 data).
-- ~87 high-quality curated connections (supply, partnership, investment, ecosystem).
+- Single `index.html` with embedded Canvas graph and static JSON loading.
+- 300 companies and 600 connections load from `data/companies.json` and `data/connections.json`.
+- Connection colors are preserved by type: supply, partnership, investment, ecosystem, and competitor.
 - Fully client-side, zero dependencies beyond CDNs (Tailwind, FontAwesome, Chart.js).
-- Strengths: Stunning visual, instant load, works offline after first visit.
-- Limitations: Hardcoded data, no persistence, performance ceiling ~150-200 nodes in vanilla JS, no user accounts.
+- Strengths: Photonic/neon visual identity, static-host friendly deployment, dynamic data counts, and no backend dependency.
+- Current immediate priority: **Phase 1 – Graph Usability Stabilization** for the 300-company / 600-connection dataset.
+- Stabilization scope: reliable node click/drag/pan/zoom interactions, strength-scaled edge opacity/thickness, label level-of-detail, first-degree focus mode, and a more stable sector-aware initial layout.
+- Limitations: No persistence, no user accounts, and no future ETF/crypto/options/earnings layers in the current app.
 
-**Decision**: Do **not** heavy-refactor the HTML yet. Keep it as the living prototype and "demo" entry point. Extract data to JSON immediately for maintainability.
+**Decision**: Do **not** heavy-refactor the app into a new framework during Phase 1. Keep `index.html` as the living static prototype, preserve existing JSON data loading, and stabilize graph usability before future expansion.
 
 ---
 
-## Target Architecture (v2.0 – Recommended Path)
+## Future Target Architecture (v2.0 – Recommended Path)
+
+The following architecture remains a future direction, not the current immediate work. Phase 1 should not convert the app to Next.js, React, Three.js, or a backend-driven architecture.
 
 ### High-Level Stack (Chosen for Solo Dev + Free Hosting + Performance)
 
@@ -233,6 +237,6 @@ StockPhotonic/
 
 ---
 
-**Next Immediate Action**: Generate expanded `companies.json` (80+ entries) + `connections.json` (300+ entries) with full provenance. This becomes the v1.0 dataset.
+**Next Immediate Action**: Finish Phase 1 graph usability stabilization against the current `companies.json` (300 entries) and `connections.json` (600 entries), then validate the graph is stable enough for future data and UI work.
 
 This architecture keeps the magic of the original photonic viz while giving us a professional, maintainable, data-rich foundation that can grow with your investing needs and the friend circle. Ready to build.

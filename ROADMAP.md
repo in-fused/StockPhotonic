@@ -2,17 +2,17 @@
 
 **Vision**: The most insightful, beautiful, and trustworthy visualization of corporate interconnections for serious personal investors and their trusted circle.
 
-**Current Version**: v0.9 (Single-file Photonic Canvas prototype – 40 companies, 87 connections)
+**Current Version**: v5.4 / Phase 1 baseline (single-file Photonic Canvas app loading 300 companies and 600 connections)
 
 ---
 
-## Phase 0: Foundation (This Week – April 28 to May 5, 2026)
+## Phase 0: Foundation (Completed Baseline – April 2026)
 
 **Goal**: Make the prototype maintainable and expand the dataset significantly without breaking the magic.
 
 **Tasks**:
 - [x] Extract data from `index.html` into `data/companies.json` + `data/connections.json` (versioned, documented).
-- [ ] Expand to **80 companies** (top ~60 by cap + 20 strategically important subs/partners) and **300+ high-quality connections**.
+- [x] Expand to **300 companies** and **600 connections**.
 - [ ] Add provenance UI: Hover/click edge shows source, confidence, verified date, notes.
 - [ ] Add "Last Updated" badge + "Data Quality" score (e.g., 94% of edges have confidence ≥4).
 - [ ] Implement basic Portfolio Exposure calculator in the existing HTML (text input for tickers → highlights connected nodes + simple risk score).
@@ -24,29 +24,34 @@
 
 ---
 
-## Phase 1: Modern Frontend (May 6 – May 20, 2026)
+## Phase 1: Graph Usability Stabilization (Current Immediate Priority – April 29 to May 5, 2026)
 
-**Goal**: Production-grade UI/UX with 3D photonic graph while keeping performance and beauty.
+**Goal**: Make the current 300-company / 600-connection static Canvas graph usable and reliable before any future expansion.
 
 **Tasks**:
-- [ ] Scaffold Next.js 15 + TypeScript + Tailwind + shadcn/ui in `frontend/` or root.
-- [ ] Port Canvas logic to **Three.js** (`@react-three/fiber`, `drei`, `@react-three/postprocessing` for bloom/glow).
-- [ ] Implement:
-  - 3D force-directed layout (or use `graphology` + custom forces for stability).
-  - Node: Glowing sphere + inner core + pulsing ring on hover/select.
-  - Edge: Fiber-optic tube (TubeGeometry) with animated particles flowing in direction of "data flow".
-  - LOD: Only render labels for selected + high-degree nodes when zoomed.
-  - Controls: OrbitControls + zoom to fit + "center on node".
-- [ ] Rebuild sidebar as beautiful glassmorphic panel with tabs (Ecosystem / Insights / Performance / Notes).
-- [ ] Add advanced filters: Multi-select sectors, connection type pills, strength slider, "only high-confidence".
-- [ ] Fuzzy search with Fuse.js (ticker, name, connection labels).
-- [ ] Responsive: Mobile drawer for sidebar, touch-friendly graph.
-- [ ] Dark neon theme refinement + accessibility (reduced motion toggle, high-contrast mode).
-- [ ] Deploy preview on Vercel.
+- [ ] Fix node click reliability so click, drag, and pan gestures do not conflict.
+- [ ] Add smooth wheel zoom around the pointer and pan by dragging empty canvas.
+- [ ] Preserve or add reset/fit view controls.
+- [ ] Reduce spiderweb clutter with strength-scaled edge opacity/thickness while preserving color by type.
+- [ ] Add label level-of-detail so all 300 node labels are not drawn at every zoom level.
+- [ ] Improve initial sector-aware layout with stronger spacing and bounded settling.
+- [ ] Add first-degree focus mode on node selection: selected node, neighbor nodes, connected edges, and dimmed unrelated elements.
+- [ ] Keep details in the existing sidebar/panel and include connected companies when data allows.
+- [ ] Keep the app static-host friendly and avoid framework migration in this phase.
 
-**Stretch**: "Photonic Mode" toggle – extra particle density, slower animations, full-screen immersion.
+**Deliverable**: The current graph is stable enough to explore the 300/600 dataset without accidental selections, broken dragging, or unreadable edge dominance.
 
-**Deliverable**: Stunning 3D web app that feels like a sci-fi trading terminal. Friends say "this is the coolest thing I've seen for investing."
+---
+
+## Phase 1 Later: Modern Frontend Exploration (Future, Not Current Phase 1)
+
+**Goal**: Evaluate production-grade UI/UX options after the static Canvas graph is stable.
+
+**Possible Tasks**:
+- [ ] Consider Next.js 15 + TypeScript + Tailwind + shadcn/ui only after the current static app is reliable.
+- [ ] Consider Three.js or Canvas/WebGL rendering for larger future datasets.
+- [ ] Evaluate advanced filters, fuzzy search, mobile drawer UI, and accessibility refinements.
+- [ ] Deploy preview on Vercel when the stable prototype is ready.
 
 ---
 
@@ -150,6 +155,6 @@
 
 **This roadmap is living**. Update it after every phase retrospective.
 
-**Immediate Next Step (You + Me)**: I will now generate the expanded `companies.json` (80 entries) and `connections.json` (300+ entries) with full provenance. You pull them into the repo, replace the hardcoded data in `index.html`, and we have v1.0 ready to share.
+**Immediate Next Step**: Complete and validate Phase 1 graph usability stabilization on the current 300-company / 600-connection static dataset before adding new data layers or migrating architecture.
 
 Let's build something that actually helps you see the market in a way no Bloomberg terminal or Yahoo Finance ever will.

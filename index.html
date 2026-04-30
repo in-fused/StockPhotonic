@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHOTONIC NEXUS • Top 500 US Stocks • v5.4 FIXED</title>
+    <title>PHOTONIC NEXUS - Top 500 US Stocks - Phase 1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
-        
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@500;600&display=swap');
+
         :root {
             --neon-cyan: #00f9ff;
             --neon-magenta: #ff00aa;
@@ -17,22 +17,34 @@
             --neon-gold: #ffd700;
             --neon-orange: #ff6b00;
         }
-        
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Inter', system_ui, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             background: #050508;
             color: #e0e7ff;
             overflow-x: hidden;
         }
-        
+
+        .photonic-bg {
+            background:
+                radial-gradient(circle at 20% 0%, rgba(0, 249, 255, 0.12), transparent 28rem),
+                radial-gradient(circle at 85% 15%, rgba(255, 0, 170, 0.10), transparent 24rem),
+                radial-gradient(circle at 45% 90%, rgba(0, 255, 159, 0.07), transparent 30rem),
+                #050508;
+        }
+
         .font-display {
             font-family: 'Space Grotesk', 'Inter', sans-serif;
             font-weight: 600;
-            letter-spacing: -0.025em;
+            letter-spacing: 0;
         }
 
         .neon-text {
-            text-shadow: 
+            text-shadow:
                 0 0 5px #00f9ff,
                 0 0 10px #00f9ff,
                 0 0 20px #ff00aa,
@@ -49,31 +61,70 @@
             box-shadow: 0 0 60px rgba(0, 249, 255, 0.08);
             border: 1px solid rgba(0, 249, 255, 0.1);
         }
+
+        #graph-canvas {
+            touch-action: none;
+            user-select: none;
+            background:
+                linear-gradient(rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                radial-gradient(circle at center, rgba(0, 249, 255, 0.06), rgba(5, 5, 8, 0.12) 58%);
+            background-size: 46px 46px, 46px 46px, 100% 100%;
+        }
+
+        .focus-button {
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+        }
+
+        .focus-button:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 249, 255, 0.55);
+        }
+
+        .connection-row {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        @media (max-width: 768px) {
+            .page-shell {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            .graph-container {
+                height: 62vh !important;
+            }
+        }
     </style>
 </head>
 <body class="photonic-bg">
-    <!-- HEADER (same as before) -->
     <header class="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
-        <div class="max-w-screen-2xl mx-auto px-8 py-5 flex items-center justify-between">
+        <div class="max-w-screen-2xl mx-auto px-8 py-5 flex items-center justify-between page-shell">
             <div class="flex items-center gap-x-4">
                 <div class="flex items-center gap-x-3">
                     <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-cyan-400 via-violet-500 to-fuchsia-500 flex items-center justify-center relative">
                         <i class="fa-solid fa-atom text-white text-3xl"></i>
                     </div>
                     <div>
-                        <div class="font-display text-3xl font-semibold tracking-tighter neon-text">PHOTONIC NEXUS</div>
-                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">TOP 500 • US MARKETS • 2026 • v5.4 FIXED</div>
+                        <div class="font-display text-3xl font-semibold neon-text">PHOTONIC NEXUS</div>
+                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">TOP 500 - US MARKETS - 2026 - PHASE 1</div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="flex items-center gap-x-3 text-sm">
-                <div class="flex items-center gap-x-2 px-4 py-1.5 rounded-3xl bg-white/5 border border-white/10">
+                <div class="hidden sm:flex items-center gap-x-2 px-4 py-1.5 rounded-3xl bg-white/5 border border-white/10">
                     <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                    <span class="font-mono text-emerald-400 text-xs tracking-widest">LIVE • APR 29 2026</span>
+                    <span class="font-mono text-emerald-400 text-xs tracking-widest">LIVE - APR 29 2026</span>
                 </div>
-                
-                <button onclick="resetAll()" class="px-4 py-2 text-xs rounded-3xl border border-white/20 hover:bg-white/5 flex items-center gap-x-2">
+
+                <button onclick="fitGraph()" class="focus-button px-4 py-2 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-compress"></i>
+                    <span>FIT</span>
+                </button>
+
+                <button onclick="resetAll()" class="focus-button px-4 py-2 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
                     <i class="fa-solid fa-undo"></i>
                     <span>RESET</span>
                 </button>
@@ -81,244 +132,898 @@
         </div>
     </header>
 
-    <div class="max-w-screen-2xl mx-auto px-8 pt-6">
-        <div class="flex items-end justify-between mb-6">
+    <div class="max-w-screen-2xl mx-auto px-8 pt-6 page-shell">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
             <div>
-                <h1 class="font-display text-6xl font-semibold tracking-tighter">Photonic Chart</h1>
-                <p class="text-xl text-white/70 mt-1">Interactive visualization of interconnections across the <span class="font-semibold text-white">Top 500 US-listed stocks</span></p>
+                <h1 class="font-display text-5xl md:text-6xl font-semibold">Photonic Chart</h1>
+                <p class="text-lg md:text-xl text-white/70 mt-1">Interactive visualization of interconnections across the <span class="font-semibold text-white">Top 500 US-listed stocks</span></p>
             </div>
-            
-            <div class="text-right">
+
+            <div class="lg:text-right">
                 <div class="text-sm text-white/60">TOTAL MARKET CAP</div>
-                <div class="font-display text-4xl font-semibold tabular-nums">$73.3T</div>
+                <div id="market-cap-total" class="font-display text-4xl font-semibold tabular-nums">$0.0T</div>
             </div>
         </div>
 
-        <!-- CONTROLS -->
         <div class="glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10">
-            <div class="flex-1">
-                <input id="search-input" type="text" placeholder="Search ticker or company..." 
-                       class="w-full bg-black/40 border border-white/20 focus:border-cyan-400 text-white placeholder:text-white/40 pl-11 py-3 rounded-3xl text-sm"
-                       onkeyup="filterGraph()">
+            <div class="flex-1 min-w-[220px] relative">
+                <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-white/35"></i>
+                <input id="search-input" type="text" placeholder="Search ticker or company..."
+                       class="w-full bg-black/40 border border-white/20 focus:border-cyan-400 outline-none text-white placeholder:text-white/40 pl-11 py-3 rounded-3xl text-sm"
+                       oninput="filterGraph()">
             </div>
-            
-            <select id="sector-filter" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3">
+
+            <select id="sector-filter" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
                 <option value="">All Sectors</option>
-                <option value="Semiconductors">Semiconductors</option>
-                <option value="Software">Software</option>
-                <option value="Consumer">Consumer</option>
-                <option value="Financials">Financials</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Energy">Energy</option>
-                <option value="Industrials">Industrials</option>
             </select>
-            
-            <div class="ml-auto flex items-center gap-x-px text-xs font-mono text-white/50">
-                <div id="node-count" class="px-3 py-1 bg-white/5 rounded-l-3xl">300 NODES</div>
-                <div id="connection-count" class="px-3 py-1 bg-white/5">600 CONNECTIONS</div>
-                <div class="px-3 py-1 bg-emerald-400/10 text-emerald-400 rounded-r-3xl">LIVE</div>
+
+            <div class="lg:ml-auto flex items-center gap-x-px text-xs font-mono text-white/50">
+                <div id="node-count" class="px-3 py-1 bg-white/5 rounded-l-3xl">0 NODES</div>
+                <div id="connection-count" class="px-3 py-1 bg-white/5">0 CONNECTIONS</div>
+                <div id="view-status" class="px-3 py-1 bg-emerald-400/10 text-emerald-400 rounded-r-3xl">READY</div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- GRAPH -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-8">
             <div class="lg:col-span-8">
                 <div class="glass rounded-3xl p-3 graph-container relative overflow-hidden" style="height: 680px;">
-                    <canvas id="graph-canvas" width="1200" height="680" class="w-full h-full rounded-3xl cursor-grab active:cursor-grabbing"></canvas>
+                    <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
                 </div>
             </div>
 
-            <!-- SIDEBAR -->
             <div class="lg:col-span-4">
-                <div id="sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full hidden">
-                    <!-- Sidebar content -->
-                </div>
-                <div id="empty-sidebar" class="glass rounded-3xl p-8 border border-white/10 h-full flex flex-col items-center justify-center text-center">
+                <div id="sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full hidden"></div>
+                <div id="empty-sidebar" class="glass rounded-3xl p-8 border border-white/10 h-full flex flex-col items-center justify-center text-center min-h-[320px]">
                     <i class="fa-solid fa-project-diagram text-5xl text-white/20 mb-4"></i>
                     <div class="font-semibold text-white/60">Click any node to explore</div>
+                    <div class="text-xs text-white/35 mt-2 max-w-xs">Drag empty space to pan. Drag a node to reposition it. Wheel or pinch to zoom.</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        const CACHE_BUST = Date.now();
+        const EDGE_COLORS = {
+            partnership: '#ff00aa',
+            supply: '#00ff9f',
+            ecosystem: '#ffd700',
+            competitor: '#ff6b00',
+            investment: '#c026d3'
+        };
+        const DEFAULT_EDGE_COLOR = '#00f9ff';
+        const DRAG_THRESHOLD_PX = 6;
+        const MIN_SCALE = 0.16;
+        const MAX_SCALE = 2.8;
+
         let companies = [];
         let connections = [];
         let nodes = [];
         let links = [];
-        let selectedNode = null;
-        let offsetX = 0, offsetY = 0, scale = 1;
-        let isDragging = false;
-        let currentFilter = null;
+        let nodeById = new Map();
+        let degreeById = new Map();
+        let adjacencyById = new Map();
+        let topLabelIds = new Set();
 
-        const CACHE_BUST = Date.now();
+        let selectedNode = null;
+        let hoveredNode = null;
+        let focusNeighborIds = new Set();
+        let focusLinkKeys = new Set();
+        let currentSector = '';
+        let currentSearch = '';
+
+        let offsetX = 0;
+        let offsetY = 0;
+        let scale = 1;
+        let canvasWidth = 0;
+        let canvasHeight = 0;
+        let dpr = 1;
+        let drawHandle = null;
+
+        const pointerState = {
+            active: false,
+            pointerId: null,
+            mode: 'idle',
+            node: null,
+            startScreen: { x: 0, y: 0 },
+            lastScreen: { x: 0, y: 0 },
+            nodeStart: { x: 0, y: 0 },
+            moved: false
+        };
 
         async function loadData() {
-            const [compRes, connRes] = await Promise.all([
-                fetch(`data/companies.json?v=${CACHE_BUST}`),
-                fetch(`data/connections.json?v=${CACHE_BUST}`)
-            ]);
-            
-            companies = await compRes.json();
-            connections = await connRes.json();
-            
-            console.log(`✅ Loaded ${companies.length} companies + ${connections.length} connections`);
-            
-            document.getElementById('node-count').innerText = `${companies.length} NODES`;
-            document.getElementById('connection-count').innerText = `${connections.length} CONNECTIONS`;
-            
-            initNodes();
-            drawGraph();
-            setupCanvasInteractions();
+            try {
+                const [compRes, connRes] = await Promise.all([
+                    fetch(`data/companies.json?v=${CACHE_BUST}`),
+                    fetch(`data/connections.json?v=${CACHE_BUST}`)
+                ]);
+
+                if (!compRes.ok || !connRes.ok) {
+                    throw new Error('Dataset fetch failed');
+                }
+
+                companies = await compRes.json();
+                connections = await connRes.json();
+
+                document.getElementById('node-count').innerText = `${companies.length} NODES`;
+                document.getElementById('connection-count').innerText = `${connections.length} CONNECTIONS`;
+                document.getElementById('market-cap-total').innerText = `$${formatNumber(sumMarketCap(companies))}T`;
+                document.getElementById('view-status').innerText = 'LAYOUT';
+
+                buildSectorFilter();
+                initGraphData();
+                resizeCanvas();
+                fitGraph();
+                setupCanvasInteractions();
+                document.getElementById('view-status').innerText = 'READY';
+                console.log(`Loaded ${companies.length} companies + ${connections.length} connections`);
+            } catch (error) {
+                console.error(error);
+                document.getElementById('view-status').innerText = 'ERROR';
+                document.getElementById('empty-sidebar').innerHTML = `
+                    <i class="fa-solid fa-triangle-exclamation text-5xl text-orange-400/70 mb-4"></i>
+                    <div class="font-semibold text-white/75">Dataset could not be loaded</div>
+                    <div class="text-xs text-white/40 mt-2">Run from a static server so JSON fetches are allowed.</div>
+                `;
+            }
         }
 
-        function initNodes() {
-            nodes = companies.map((c, i) => {
-                const angle = (i / companies.length) * Math.PI * 2;
-                const radius = 520 + Math.random() * 280; // Better spread for large graphs
-                return {
-                    ...c,
-                    x: 620 + Math.cos(angle) * radius,
-                    y: 360 + Math.sin(angle) * radius * 0.75,
-                    vx: 0, vy: 0, fx: null, fy: null
+        function buildSectorFilter() {
+            const select = document.getElementById('sector-filter');
+            const sectors = [...new Set(companies.map(company => company.sector).filter(Boolean))].sort();
+            select.innerHTML = '<option value="">All Sectors</option>' + sectors
+                .map(sector => `<option value="${escapeHtml(sector)}">${escapeHtml(sector)}</option>`)
+                .join('');
+        }
+
+        function initGraphData() {
+            nodeById = new Map();
+            degreeById = new Map();
+            adjacencyById = new Map();
+
+            companies.forEach(company => {
+                degreeById.set(company.id, 0);
+                adjacencyById.set(company.id, []);
+            });
+
+            connections.forEach(connection => {
+                if (!degreeById.has(connection.source) || !degreeById.has(connection.target)) return;
+                degreeById.set(connection.source, degreeById.get(connection.source) + 1);
+                degreeById.set(connection.target, degreeById.get(connection.target) + 1);
+            });
+
+            const sectors = [...new Set(companies.map(company => company.sector || 'Other'))].sort();
+            const sectorAnchors = new Map();
+            const anchorRadius = 980;
+            sectors.forEach((sector, index) => {
+                const angle = (index / sectors.length) * Math.PI * 2 - Math.PI / 2;
+                sectorAnchors.set(sector, {
+                    x: Math.cos(angle) * anchorRadius,
+                    y: Math.sin(angle) * anchorRadius * 0.72
+                });
+            });
+
+            const sectorBuckets = new Map();
+            companies.forEach(company => {
+                const sector = company.sector || 'Other';
+                if (!sectorBuckets.has(sector)) sectorBuckets.set(sector, []);
+                sectorBuckets.get(sector).push(company);
+            });
+
+            nodes = [];
+            sectorBuckets.forEach((bucket, sector) => {
+                bucket.sort((a, b) => (a.rank || 9999) - (b.rank || 9999));
+                const anchor = sectorAnchors.get(sector) || { x: 0, y: 0 };
+                bucket.forEach((company, index) => {
+                    const angle = index * 2.399963 + hashNumber(company.ticker || company.id) * 0.0008;
+                    const radius = 72 + Math.sqrt(index) * 62 + (index % 5) * 12;
+                    const degree = degreeById.get(company.id) || 0;
+                    const hubPull = Math.max(0, 1 - Math.min(degree, 12) / 12) * 34;
+                    const node = {
+                        ...company,
+                        degree,
+                        radius: getNodeRadius(company, degree),
+                        anchorX: anchor.x,
+                        anchorY: anchor.y,
+                        x: anchor.x + Math.cos(angle) * Math.max(35, radius - hubPull),
+                        y: anchor.y + Math.sin(angle) * Math.max(35, radius - hubPull) * 0.82,
+                        vx: 0,
+                        vy: 0
+                    };
+                    nodes.push(node);
+                    nodeById.set(node.id, node);
+                });
+            });
+
+            links = connections.map((connection, index) => {
+                const source = nodeById.get(connection.source);
+                const target = nodeById.get(connection.target);
+                if (!source || !target) return null;
+                const key = `${source.id}-${target.id}-${index}`;
+                const strength = clamp(Number(connection.strength) || 0.4, 0.05, 1);
+                const link = {
+                    ...connection,
+                    key,
+                    source,
+                    target,
+                    strength,
+                    curveOffset: getCurveOffset(source.id, target.id, index)
                 };
-            });
+                adjacencyById.get(source.id).push({ node: target, link });
+                adjacencyById.get(target.id).push({ node: source, link });
+                return link;
+            }).filter(Boolean);
 
-            links = connections.map(conn => {
-                const source = nodes.find(n => n.id === conn.source);
-                const target = nodes.find(n => n.id === conn.target);
-                return { ...conn, source, target };
-            }).filter(l => l.source && l.target);
+            topLabelIds = new Set([...nodes]
+                .sort((a, b) => (b.degree - a.degree) || ((a.rank || 9999) - (b.rank || 9999)))
+                .slice(0, 28)
+                .map(node => node.id));
+
+            settleLayout();
         }
 
-        function drawGraph() {
-            const canvas = document.getElementById('graph-canvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        function settleLayout() {
+            const iterations = 190;
+            for (let step = 0; step < iterations; step++) {
+                links.forEach(link => {
+                    const dx = link.target.x - link.source.x;
+                    const dy = link.target.y - link.source.y;
+                    const distance = Math.max(1, Math.hypot(dx, dy));
+                    const targetDistance = 230 - link.strength * 70 + (link.source.radius + link.target.radius) * 3.2;
+                    const force = (distance - targetDistance) * 0.006 * link.strength;
+                    const fx = (dx / distance) * force;
+                    const fy = (dy / distance) * force;
+                    link.source.x += fx;
+                    link.source.y += fy;
+                    link.target.x -= fx;
+                    link.target.y -= fy;
+                });
 
-            // Draw connections with different colors
-            links.forEach(link => {
-                if (!link.source || !link.target) return;
-                
-                let color = '#00f9ff';
-                if (link.type === 'partnership') color = '#ff00aa';
-                if (link.type === 'supply') color = '#00ff9f';
-                if (link.type === 'ecosystem') color = '#ffd700';
-                if (link.type === 'competitor') color = '#ff6b00';
-                if (link.type === 'investment') color = '#c026d3';
-                
-                ctx.strokeStyle = color;
-                ctx.lineWidth = Math.max(0.8, link.strength * 2.2);
-                ctx.shadowBlur = 6;
-                ctx.shadowColor = color;
-                
-                ctx.beginPath();
-                ctx.moveTo(link.source.x * scale + offsetX, link.source.y * scale + offsetY);
-                ctx.lineTo(link.target.x * scale + offsetX, link.target.y * scale + offsetY);
-                ctx.stroke();
-            });
+                for (let i = 0; i < nodes.length; i++) {
+                    const a = nodes[i];
+                    a.x += (a.anchorX - a.x) * 0.006;
+                    a.y += (a.anchorY - a.y) * 0.006;
+                    a.x *= 0.9992;
+                    a.y *= 0.9992;
 
-            // Draw nodes
-            nodes.forEach(node => {
-                if (currentFilter && node.sector !== currentFilter) return;
-                
-                const x = node.x * scale + offsetX;
-                const y = node.y * scale + offsetY;
-                const size = Math.max(5, Math.sqrt(node.market_cap || 0.3) * 3.5);
-
-                ctx.fillStyle = node.color || '#00f9ff';
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '10px monospace';
-                ctx.fillText(node.ticker, x - 16, y + size + 14);
-            });
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const b = nodes[j];
+                        const dx = b.x - a.x;
+                        const dy = b.y - a.y;
+                        const distance = Math.max(0.1, Math.hypot(dx, dy));
+                        const minDistance = a.radius + b.radius + 46;
+                        if (distance < minDistance) {
+                            const push = (minDistance - distance) * 0.045;
+                            const fx = (dx / distance) * push;
+                            const fy = (dy / distance) * push;
+                            a.x -= fx;
+                            a.y -= fy;
+                            b.x += fx;
+                            b.y += fy;
+                        }
+                    }
+                }
+            }
         }
 
         function setupCanvasInteractions() {
             const canvas = document.getElementById('graph-canvas');
-            
-            canvas.addEventListener('mousedown', (e) => {
-                const rect = canvas.getBoundingClientRect();
-                const mx = e.clientX - rect.left;
-                const my = e.clientY - rect.top;
-
-                let found = null;
-                for (let node of nodes) {
-                    const nx = node.x * scale + offsetX;
-                    const ny = node.y * scale + offsetY;
-                    const dist = Math.hypot(nx - mx, ny - my);
-                    if (dist < 42) { found = node; break; }
-                }
-
-                if (found) {
-                    selectedNode = found;
-                    showNodeDetails(found);
-                    isDragging = true;
-                    found.fx = found.x;
-                    found.fy = found.y;
-                }
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                fitGraph(false);
             });
 
-            canvas.addEventListener('mousemove', (e) => {
-                if (!isDragging || !selectedNode) return;
-                const rect = canvas.getBoundingClientRect();
-                const mx = (e.clientX - rect.left - offsetX) / scale;
-                const my = (e.clientY - rect.top - offsetY) / scale;
-                selectedNode.x = mx;
-                selectedNode.y = my;
-                drawGraph();
-            });
+            canvas.addEventListener('wheel', onWheelZoom, { passive: false });
+            canvas.addEventListener('pointerdown', onPointerDown);
+            canvas.addEventListener('pointermove', onPointerMove);
+            canvas.addEventListener('pointerup', onPointerUp);
+            canvas.addEventListener('pointercancel', onPointerCancel);
+            canvas.addEventListener('lostpointercapture', onPointerCancel);
+            canvas.addEventListener('contextmenu', event => event.preventDefault());
+        }
 
-            canvas.addEventListener('mouseup', () => {
-                isDragging = false;
-                if (selectedNode) {
-                    selectedNode.fx = null;
-                    selectedNode.fy = null;
+        function onPointerDown(event) {
+            if (event.button !== 0 && event.pointerType === 'mouse') return;
+
+            const canvas = document.getElementById('graph-canvas');
+            const screen = getEventPoint(event);
+            const node = findNodeAt(screen.x, screen.y);
+
+            // Pointer down: capture the pointer and classify the gesture as either
+            // node-pending or pan-pending. Selection is intentionally delayed until
+            // pointer up so a drag never also fires a click.
+            pointerState.active = true;
+            pointerState.pointerId = event.pointerId;
+            pointerState.mode = node ? 'node-pending' : 'pan-pending';
+            pointerState.node = node;
+            pointerState.startScreen = screen;
+            pointerState.lastScreen = screen;
+            pointerState.nodeStart = node ? { x: node.x, y: node.y } : { x: 0, y: 0 };
+            pointerState.moved = false;
+
+            canvas.setPointerCapture(event.pointerId);
+            canvas.classList.remove('cursor-grab');
+            canvas.classList.add('cursor-grabbing');
+            event.preventDefault();
+        }
+
+        function onPointerMove(event) {
+            const screen = getEventPoint(event);
+
+            if (!pointerState.active || pointerState.pointerId !== event.pointerId) {
+                const nextHover = findNodeAt(screen.x, screen.y);
+                if (nextHover !== hoveredNode) {
+                    hoveredNode = nextHover;
+                    requestDraw();
                 }
-            });
+                return;
+            }
 
-            // Simple pan with right mouse
-            let isPanning = false;
-            let startX, startY;
+            const dxTotal = screen.x - pointerState.startScreen.x;
+            const dyTotal = screen.y - pointerState.startScreen.y;
+            const totalDistance = Math.hypot(dxTotal, dyTotal);
 
-            canvas.addEventListener('mousedown', (e) => {
-                if (e.button === 2) {
-                    isPanning = true;
-                    startX = e.clientX - offsetX;
-                    startY = e.clientY - offsetY;
+            // Drag threshold: only crossing this small distance turns the gesture
+            // into movement. Staying below it preserves click selection reliability.
+            if (!pointerState.moved && totalDistance > DRAG_THRESHOLD_PX) {
+                pointerState.moved = true;
+                pointerState.mode = pointerState.node ? 'node-drag' : 'canvas-pan';
+            }
+
+            if (pointerState.mode === 'node-drag' && pointerState.node) {
+                // Node drag: move the node in graph coordinates while keeping the
+                // current pan/zoom transform unchanged.
+                const world = screenToWorld(screen.x, screen.y);
+                const startWorld = screenToWorld(pointerState.startScreen.x, pointerState.startScreen.y);
+                pointerState.node.x = pointerState.nodeStart.x + (world.x - startWorld.x);
+                pointerState.node.y = pointerState.nodeStart.y + (world.y - startWorld.y);
+                requestDraw();
+            } else if (pointerState.mode === 'canvas-pan') {
+                // Canvas pan: dragging empty space shifts the viewport only. It does
+                // not alter selection, focus, or any node positions.
+                offsetX += screen.x - pointerState.lastScreen.x;
+                offsetY += screen.y - pointerState.lastScreen.y;
+                requestDraw();
+            }
+
+            pointerState.lastScreen = screen;
+            event.preventDefault();
+        }
+
+        function onPointerUp(event) {
+            if (!pointerState.active || pointerState.pointerId !== event.pointerId) return;
+
+            const canvas = document.getElementById('graph-canvas');
+
+            // Click selection: only gestures that never crossed the drag threshold
+            // are treated as clicks. Empty-space clicks clear focus.
+            if (!pointerState.moved) {
+                if (pointerState.node) {
+                    selectNode(pointerState.node);
+                } else {
+                    clearSelection();
                 }
+            }
+
+            pointerState.active = false;
+            pointerState.pointerId = null;
+            pointerState.mode = 'idle';
+            pointerState.node = null;
+            canvas.classList.add('cursor-grab');
+            canvas.classList.remove('cursor-grabbing');
+            requestDraw();
+            event.preventDefault();
+        }
+
+        function onPointerCancel() {
+            pointerState.active = false;
+            pointerState.pointerId = null;
+            pointerState.mode = 'idle';
+            pointerState.node = null;
+            const canvas = document.getElementById('graph-canvas');
+            canvas.classList.add('cursor-grab');
+            canvas.classList.remove('cursor-grabbing');
+        }
+
+        function onWheelZoom(event) {
+            event.preventDefault();
+            const point = getEventPoint(event);
+            const before = screenToWorld(point.x, point.y);
+            const zoomFactor = Math.exp(-event.deltaY * 0.0012);
+            scale = clamp(scale * zoomFactor, MIN_SCALE, MAX_SCALE);
+            offsetX = point.x - before.x * scale;
+            offsetY = point.y - before.y * scale;
+            requestDraw();
+        }
+
+        function resizeCanvas() {
+            const canvas = document.getElementById('graph-canvas');
+            const rect = canvas.getBoundingClientRect();
+            dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+            canvasWidth = Math.max(1, rect.width);
+            canvasHeight = Math.max(1, rect.height);
+            canvas.width = Math.floor(canvasWidth * dpr);
+            canvas.height = Math.floor(canvasHeight * dpr);
+            requestDraw();
+        }
+
+        function requestDraw() {
+            if (drawHandle) return;
+            drawHandle = requestAnimationFrame(drawGraph);
+        }
+
+        function drawGraph(timestamp = 0) {
+            drawHandle = null;
+            const canvas = document.getElementById('graph-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+            drawBackground(ctx);
+
+            const visibleNodeIds = getVisibleNodeIds();
+            const visibleLinks = links.filter(link => visibleNodeIds.has(link.source.id) && visibleNodeIds.has(link.target.id));
+
+            ctx.save();
+            visibleLinks.forEach(link => drawLink(ctx, link));
+            ctx.restore();
+
+            visibleNodeIds.forEach(id => drawNode(ctx, nodeById.get(id), timestamp));
+            drawLabels(ctx, visibleNodeIds);
+
+            if (selectedNode || hoveredNode) requestDraw();
+        }
+
+        function drawBackground(ctx) {
+            const gradient = ctx.createRadialGradient(
+                canvasWidth * 0.5,
+                canvasHeight * 0.5,
+                20,
+                canvasWidth * 0.5,
+                canvasHeight * 0.5,
+                Math.max(canvasWidth, canvasHeight) * 0.78
+            );
+            gradient.addColorStop(0, 'rgba(0, 249, 255, 0.045)');
+            gradient.addColorStop(0.55, 'rgba(255, 0, 170, 0.025)');
+            gradient.addColorStop(1, 'rgba(5, 5, 8, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        }
+
+        function drawLink(ctx, link) {
+            const source = worldToScreen(link.source.x, link.source.y);
+            const target = worldToScreen(link.target.x, link.target.y);
+            const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
+            const isFocused = selectedNode && focusLinkKeys.has(link.key);
+            const hasFocus = Boolean(selectedNode);
+
+            // Edge visibility/opacity scaling: weak connections stay present but
+            // quiet, while high-strength and selected ego-network links remain
+            // visually dominant. Type color is preserved for every edge.
+            const strength = clamp(link.strength, 0.05, 1);
+            let alpha = 0.035 + Math.pow(strength, 1.7) * 0.26;
+            let width = 0.35 + Math.pow(strength, 1.45) * 2.25;
+            if (hasFocus) {
+                alpha = isFocused ? 0.72 + strength * 0.22 : 0.018;
+                width = isFocused ? width + 1.25 : Math.max(0.25, width * 0.45);
+            }
+
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.shadowBlur = isFocused ? 14 : 5;
+            ctx.shadowColor = color;
+
+            const midX = (source.x + target.x) / 2;
+            const midY = (source.y + target.y) / 2;
+            const dx = target.x - source.x;
+            const dy = target.y - source.y;
+            const distance = Math.max(1, Math.hypot(dx, dy));
+            const curve = link.curveOffset * scale;
+            const controlX = midX + (-dy / distance) * curve;
+            const controlY = midY + (dx / distance) * curve;
+
+            ctx.beginPath();
+            ctx.moveTo(source.x, source.y);
+            ctx.quadraticCurveTo(controlX, controlY, target.x, target.y);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+
+        function drawNode(ctx, node, timestamp) {
+            if (!node) return;
+            const point = worldToScreen(node.x, node.y);
+            const radius = Math.max(3.5, node.radius * Math.sqrt(scale));
+            const isSelected = selectedNode && selectedNode.id === node.id;
+            const isNeighbor = focusNeighborIds.has(node.id);
+            const isHovered = hoveredNode && hoveredNode.id === node.id;
+            const isDimmed = selectedNode && !isSelected && !isNeighbor;
+            const alpha = isDimmed ? 0.18 : 1;
+            const color = node.color || '#00f9ff';
+
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.shadowBlur = isSelected ? 30 : isHovered ? 22 : 12;
+            ctx.shadowColor = color;
+
+            const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
+            glow.addColorStop(0, `${hexToRgba(color, 0.82)}`);
+            glow.addColorStop(0.38, `${hexToRgba(color, 0.24)}`);
+            glow.addColorStop(1, `${hexToRgba(color, 0)}`);
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius * 4.3, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.globalAlpha = isDimmed ? 0.28 : 0.86;
+            ctx.beginPath();
+            ctx.arc(point.x - radius * 0.28, point.y - radius * 0.28, Math.max(1.2, radius * 0.28), 0, Math.PI * 2);
+            ctx.fill();
+
+            if (isSelected || isHovered) {
+                const pulse = 1 + Math.sin(timestamp * 0.006) * 0.08;
+                ctx.globalAlpha = isSelected ? 0.9 : 0.55;
+                ctx.strokeStyle = isSelected ? '#ffffff' : color;
+                ctx.lineWidth = isSelected ? 2.2 : 1.4;
+                ctx.shadowBlur = isSelected ? 24 : 14;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 2.05 * pulse, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (isNeighbor) {
+                ctx.globalAlpha = 0.55;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 1.65, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        function drawLabels(ctx, visibleNodeIds) {
+            const labels = [];
+            visibleNodeIds.forEach(id => {
+                const node = nodeById.get(id);
+                if (!node || !shouldDrawLabel(node)) return;
+                labels.push(node);
             });
 
-            canvas.addEventListener('mousemove', (e) => {
-                if (isPanning) {
-                    offsetX = e.clientX - startX;
-                    offsetY = e.clientY - startY;
-                    drawGraph();
-                }
-            });
+            labels
+                .sort((a, b) => labelPriority(b) - labelPriority(a))
+                .slice(0, selectedNode ? 46 : 34)
+                .forEach(node => {
+                    const point = worldToScreen(node.x, node.y);
+                    const isSelected = selectedNode && selectedNode.id === node.id;
+                    const isNeighbor = focusNeighborIds.has(node.id);
+                    const isHovered = hoveredNode && hoveredNode.id === node.id;
+                    const radius = Math.max(3.5, node.radius * Math.sqrt(scale));
+                    const label = node.ticker || node.name;
+                    const alpha = selectedNode && !isSelected && !isNeighbor ? 0.25 : isNeighbor ? 0.82 : 0.72;
 
-            canvas.addEventListener('mouseup', () => isPanning = false);
-            canvas.addEventListener('contextmenu', e => e.preventDefault());
+                    ctx.save();
+                    ctx.font = `${isSelected ? 12 : 10}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+                    const width = ctx.measureText(label).width;
+                    const x = point.x - width / 2;
+                    const y = point.y + radius + 14;
+                    ctx.globalAlpha = alpha;
+                    ctx.fillStyle = 'rgba(3, 7, 18, 0.76)';
+                    ctx.strokeStyle = isSelected || isHovered ? 'rgba(0, 249, 255, 0.58)' : 'rgba(255, 255, 255, 0.12)';
+                    ctx.lineWidth = 1;
+                    roundedRect(ctx, x - 5, y - 11, width + 10, 16, 6);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = isSelected ? '#ffffff' : node.color || '#dbeafe';
+                    ctx.globalAlpha = isSelected || isHovered ? 1 : alpha;
+                    ctx.fillText(label, x, y);
+                    ctx.restore();
+                });
+        }
+
+        function shouldDrawLabel(node) {
+            if (selectedNode && selectedNode.id === node.id) return true;
+            if (hoveredNode && hoveredNode.id === node.id) return true;
+            if (selectedNode && focusNeighborIds.has(node.id) && (scale > 0.22 || node.degree >= 4)) return true;
+            if (scale > 0.7) return true;
+            if (scale > 0.4 && node.degree >= 6) return true;
+            return topLabelIds.has(node.id);
+        }
+
+        function labelPriority(node) {
+            if (selectedNode && selectedNode.id === node.id) return 1000;
+            if (hoveredNode && hoveredNode.id === node.id) return 900;
+            if (focusNeighborIds.has(node.id)) return 500 + node.degree;
+            return node.degree * 10 + Math.max(0, 320 - (node.rank || 320)) / 20;
+        }
+
+        function selectNode(node) {
+            selectedNode = node;
+            focusNeighborIds = new Set();
+            focusLinkKeys = new Set();
+            (adjacencyById.get(node.id) || []).forEach(item => {
+                focusNeighborIds.add(item.node.id);
+                focusLinkKeys.add(item.link.key);
+            });
+            showNodeDetails(node);
+            requestDraw();
+        }
+
+        function clearSelection() {
+            selectedNode = null;
+            focusNeighborIds = new Set();
+            focusLinkKeys = new Set();
+            document.getElementById('sidebar').classList.add('hidden');
+            document.getElementById('empty-sidebar').classList.remove('hidden');
+            requestDraw();
         }
 
         function showNodeDetails(node) {
-            // Simple sidebar implementation
-            alert(`Selected: ${node.ticker} - ${node.name}\nSector: ${node.sector}\nMarket Cap: $${node.market_cap}T`);
+            const sidebar = document.getElementById('sidebar');
+            const empty = document.getElementById('empty-sidebar');
+            const connectionsForNode = [...(adjacencyById.get(node.id) || [])]
+                .sort((a, b) => b.link.strength - a.link.strength);
+            const topConnections = connectionsForNode.slice(0, 12);
+            const typeCounts = {};
+            connectionsForNode.forEach(item => {
+                typeCounts[item.link.type] = (typeCounts[item.link.type] || 0) + 1;
+            });
+
+            sidebar.innerHTML = `
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <div>
+                        <div class="text-xs text-cyan-300/80 font-mono tracking-[2px]">${escapeHtml(node.sector || 'UNKNOWN')}</div>
+                        <h2 class="font-display text-3xl text-white mt-1">${escapeHtml(node.ticker || '')}</h2>
+                        <div class="text-sm text-white/60 mt-1">${escapeHtml(node.name || '')}</div>
+                    </div>
+                    <button onclick="clearSelection()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 mb-5">
+                    <div class="rounded-2xl bg-white/5 border border-white/10 p-3">
+                        <div class="text-[10px] text-white/40 font-mono">RANK</div>
+                        <div class="font-display text-xl text-white">#${escapeHtml(node.rank || '-')}</div>
+                    </div>
+                    <div class="rounded-2xl bg-white/5 border border-white/10 p-3">
+                        <div class="text-[10px] text-white/40 font-mono">CAP</div>
+                        <div class="font-display text-xl text-white">$${formatNumber(node.market_cap || 0)}T</div>
+                    </div>
+                    <div class="rounded-2xl bg-white/5 border border-white/10 p-3">
+                        <div class="text-[10px] text-white/40 font-mono">DEGREE</div>
+                        <div class="font-display text-xl text-white">${connectionsForNode.length}</div>
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <div class="text-xs text-white/45 font-mono mb-2">CONNECTION MIX</div>
+                    <div class="flex flex-wrap gap-2">
+                        ${Object.entries(typeCounts).map(([type, count]) => `
+                            <span class="px-3 py-1 rounded-full text-xs border border-white/10 bg-white/5" style="color:${EDGE_COLORS[type] || DEFAULT_EDGE_COLOR}">
+                                ${escapeHtml(type)} ${count}
+                            </span>
+                        `).join('') || '<span class="text-sm text-white/35">No linked companies found.</span>'}
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mb-3">
+                    <div class="text-xs text-white/45 font-mono">CONNECTED COMPANIES</div>
+                    <button onclick="fitGraph()" class="focus-button px-3 py-1 rounded-full border border-white/15 text-xs text-white/65">FIT VIEW</button>
+                </div>
+                <div class="space-y-2 max-h-[330px] overflow-y-auto pr-1">
+                    ${topConnections.map(item => renderConnectionRow(item)).join('') || '<div class="text-sm text-white/35">No connected companies in current dataset.</div>'}
+                </div>
+            `;
+            sidebar.classList.remove('hidden');
+            empty.classList.add('hidden');
+        }
+
+        function renderConnectionRow(item) {
+            const color = EDGE_COLORS[item.link.type] || DEFAULT_EDGE_COLOR;
+            return `
+                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left block hover:bg-white/10 transition">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <div class="text-sm font-semibold text-white">${escapeHtml(item.node.ticker || '')}</div>
+                            <div class="text-xs text-white/45 truncate max-w-[230px]">${escapeHtml(item.node.name || '')}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] font-mono" style="color:${color}">${escapeHtml(item.link.type || 'link')}</div>
+                            <div class="text-xs text-white/55">${Math.round(item.link.strength * 100)}%</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+                        <div class="h-full rounded-full" style="width:${Math.round(item.link.strength * 100)}%; background:${color}; box-shadow:0 0 10px ${color};"></div>
+                    </div>
+                </button>
+            `;
+        }
+
+        function selectNodeById(id) {
+            const node = nodeById.get(id);
+            if (node) selectNode(node);
         }
 
         function filterGraph() {
-            currentFilter = document.getElementById('sector-filter').value || null;
-            drawGraph();
+            currentSector = document.getElementById('sector-filter').value;
+            currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
+            if (selectedNode && !isNodeVisible(selectedNode)) clearSelection();
+            requestDraw();
         }
 
         function resetAll() {
-            location.reload();
+            currentSector = '';
+            currentSearch = '';
+            document.getElementById('sector-filter').value = '';
+            document.getElementById('search-input').value = '';
+            clearSelection();
+            fitGraph();
         }
 
-        // Boot
+        function fitGraph(animate = true) {
+            const visibleNodes = nodes.filter(isNodeVisible);
+            if (!visibleNodes.length) return;
+
+            const bounds = visibleNodes.reduce((acc, node) => ({
+                minX: Math.min(acc.minX, node.x - node.radius),
+                maxX: Math.max(acc.maxX, node.x + node.radius),
+                minY: Math.min(acc.minY, node.y - node.radius),
+                maxY: Math.max(acc.maxY, node.y + node.radius)
+            }), { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
+
+            const padding = selectedNode ? 120 : 70;
+            const width = Math.max(1, bounds.maxX - bounds.minX);
+            const height = Math.max(1, bounds.maxY - bounds.minY);
+            const nextScale = clamp(Math.min(
+                (canvasWidth - padding * 2) / width,
+                (canvasHeight - padding * 2) / height
+            ), MIN_SCALE, MAX_SCALE);
+            const nextOffsetX = canvasWidth / 2 - ((bounds.minX + bounds.maxX) / 2) * nextScale;
+            const nextOffsetY = canvasHeight / 2 - ((bounds.minY + bounds.maxY) / 2) * nextScale;
+
+            if (!animate) {
+                scale = nextScale;
+                offsetX = nextOffsetX;
+                offsetY = nextOffsetY;
+                requestDraw();
+                return;
+            }
+
+            scale = nextScale;
+            offsetX = nextOffsetX;
+            offsetY = nextOffsetY;
+            requestDraw();
+        }
+
+        function getVisibleNodeIds() {
+            return new Set(nodes.filter(isNodeVisible).map(node => node.id));
+        }
+
+        function isNodeVisible(node) {
+            if (!node) return false;
+            if (currentSector && node.sector !== currentSector) return false;
+            if (!currentSearch) return true;
+            const haystack = `${node.ticker || ''} ${node.name || ''} ${node.sector || ''} ${node.industry || ''}`.toLowerCase();
+            return haystack.includes(currentSearch);
+        }
+
+        function findNodeAt(screenX, screenY) {
+            const visibleIds = getVisibleNodeIds();
+            let closest = null;
+            let closestDistance = Infinity;
+
+            nodes.forEach(node => {
+                if (!visibleIds.has(node.id)) return;
+                const point = worldToScreen(node.x, node.y);
+                const hitRadius = Math.max(14, node.radius * Math.sqrt(scale) + 9);
+                const distance = Math.hypot(point.x - screenX, point.y - screenY);
+                if (distance <= hitRadius && distance < closestDistance) {
+                    closest = node;
+                    closestDistance = distance;
+                }
+            });
+
+            return closest;
+        }
+
+        function getEventPoint(event) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
+        function screenToWorld(x, y) {
+            return {
+                x: (x - offsetX) / scale,
+                y: (y - offsetY) / scale
+            };
+        }
+
+        function worldToScreen(x, y) {
+            return {
+                x: x * scale + offsetX,
+                y: y * scale + offsetY
+            };
+        }
+
+        function getNodeRadius(company, degree) {
+            const cap = Math.max(0.05, Number(company.market_cap) || 0.05);
+            const rankBoost = company.rank && company.rank <= 25 ? 1.8 : 0;
+            return clamp(5.6 + Math.sqrt(cap) * 2.15 + Math.sqrt(degree || 0) * 0.9 + rankBoost, 6, 17);
+        }
+
+        function getCurveOffset(sourceId, targetId, index) {
+            const value = hashNumber(`${sourceId}:${targetId}:${index}`);
+            const direction = (value % 2 === 0) ? 1 : -1;
+            const magnitude = 18 + (value % 17);
+            return direction * magnitude;
+        }
+
+        function sumMarketCap(items) {
+            return items.reduce((sum, item) => sum + (Number(item.market_cap) || 0), 0);
+        }
+
+        function formatNumber(value) {
+            return Number(value).toLocaleString(undefined, {
+                minimumFractionDigits: value >= 10 ? 1 : 2,
+                maximumFractionDigits: value >= 10 ? 1 : 2
+            });
+        }
+
+        function clamp(value, min, max) {
+            return Math.max(min, Math.min(max, value));
+        }
+
+        function hashNumber(value) {
+            const text = String(value);
+            let hash = 2166136261;
+            for (let i = 0; i < text.length; i++) {
+                hash ^= text.charCodeAt(i);
+                hash = Math.imul(hash, 16777619);
+            }
+            return Math.abs(hash >>> 0);
+        }
+
+        function hexToRgba(hex, alpha) {
+            const clean = String(hex || '#00f9ff').replace('#', '');
+            const value = clean.length === 3
+                ? clean.split('').map(char => char + char).join('')
+                : clean.padEnd(6, '0').slice(0, 6);
+            const num = parseInt(value, 16);
+            const r = (num >> 16) & 255;
+            const g = (num >> 8) & 255;
+            const b = num & 255;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function roundedRect(ctx, x, y, width, height, radius) {
+            const r = Math.min(radius, width / 2, height / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + width, y, x + width, y + height, r);
+            ctx.arcTo(x + width, y + height, x, y + height, r);
+            ctx.arcTo(x, y + height, x, y, r);
+            ctx.arcTo(x, y, x + width, y, r);
+            ctx.closePath();
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
         loadData();
     </script>
 </body>

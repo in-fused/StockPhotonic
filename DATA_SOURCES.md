@@ -200,6 +200,46 @@ Recommended future connection shape:
 
 ---
 
+## Future Sector And Industry-Group Source Planning
+
+This is future planning only. The current dataset should not change until the product direction, schema, source requirements, and validation rules are ready.
+
+Hierarchy target:
+
+- Sector remains the broad category.
+- Industry group becomes the more specific breakdown inside each sector.
+- Example healthcare industry groups: Pharmaceuticals, Insurance / Managed Care, PBM / Pharmacy Benefits, MedTech, and Life Sciences Tools.
+- The current `industry` field is a descriptive company field. A future normalized `industry_group` field or lookup table may be useful, but that is not part of the current v5.7 static dataset.
+
+Future correlation intelligence should be source-backed before it becomes product data. Candidate relationship views include:
+
+- Pharmaceuticals <-> Insurance / PBM
+- Semiconductors <-> Cloud Infrastructure
+- Energy Producers <-> Oilfield Services
+- Retail <-> Payments Networks
+- Aerospace OEMs <-> Suppliers
+
+Future small-company / IPO discovery should identify smaller companies, newer IPOs, or under-followed names benefiting from large-cap ecosystems only when public evidence supports the link. Candidate signal categories include:
+
+- Supplier exposure.
+- Platform dependency.
+- Government funding support.
+- Strategic partnerships.
+- Customer concentration.
+- Ecosystem adjacency.
+
+Future government / policy relationship planning may track public funding, grants, contracts, subsidies, regulation, defense exposure, healthcare reimbursement, energy policy, and industrial policy connections. These should remain outside the core dataset until each relationship can be tied to reviewable public sources and a clear confidence rule. Do not promote inferred policy exposure into product data as an unsupported claim.
+
+Potential source categories for these future layers:
+
+- SEC filings and company disclosures for customer concentration, supplier dependency, partnerships, and risk factors.
+- Company investor relations materials, earnings transcripts, and official press releases for ecosystem and platform relationships.
+- Public government records for grants, contracts, awards, subsidies, and agency funding.
+- Regulatory publications and official policy documents for reimbursement, energy, defense, and industrial-policy exposure.
+- Reputable secondary sources only when they explain context that primary sources do not capture directly.
+
+---
+
 ## Confidence And Verification Expectations
 
 Current Phase 2 expectations:

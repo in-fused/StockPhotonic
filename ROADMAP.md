@@ -67,7 +67,7 @@
 
 `signal_score` is an ingestion-quality score based on source tier and keyword strength. It helps prioritize and filter candidate signals before dataset writes. `confidence` is the persisted connection credibility score and remains based on structural validation rules; optional `signal_score` can only adjust the result after the base confidence logic has run.
 
-**Current Next Priority**: Build toward reputable-source ingestion using SEC filings, company releases, official announcements, partner pages, and reputable news as raw inputs while keeping validation strict and reviewable.
+**Current Data Next Priority**: Build toward reputable-source ingestion using SEC filings, company releases, official announcements, partner pages, and reputable news as raw inputs while keeping validation strict and reviewable.
 
 ---
 
@@ -130,6 +130,28 @@
 
 ---
 
+## Future Product Intelligence: Sector -> Industry-Group Correlation Intelligence
+
+**Goal**: After the immediate product intelligence and graph exploration work is stronger, prepare StockPhotonic to analyze how industry groups relate inside broader sectors and adjacent ecosystems.
+
+**Planning Principles**:
+- Sector remains the broad category.
+- Industry group becomes the more specific breakdown inside each sector.
+- Example healthcare industry groups: Pharmaceuticals, Insurance / Managed Care, PBM / Pharmacy Benefits, MedTech, and Life Sciences Tools.
+- Keep this as future product direction only. Do not add features, data files, ingestion behavior, or unsupported claims until the schema, sources, and validation rules are ready.
+
+**Future Capabilities**:
+- [ ] Compare relationships between industry groups inside a sector, such as Pharmaceuticals <-> Insurance / PBM.
+- [ ] Compare adjacent ecosystem groups, such as Semiconductors <-> Cloud Infrastructure, Energy Producers <-> Oilfield Services, Retail <-> Payments Networks, and Aerospace OEMs <-> Suppliers.
+- [ ] Build a small-company / IPO discovery layer for smaller companies, newer IPOs, and under-followed names benefiting from large-cap ecosystems.
+- [ ] Evaluate discovery signals such as supplier exposure, platform dependency, government funding support, strategic partnerships, customer concentration, and ecosystem adjacency.
+- [ ] Plan a government / policy relationship layer for public funding, grants, contracts, subsidies, regulation, defense exposure, healthcare reimbursement, energy policy, and industrial policy connections.
+- [ ] Require public, reviewable support before any government, policy, or ecosystem relationship becomes product data.
+
+**Placement**: This belongs after near-term user-facing product intelligence and graph exploration improvements. It is not the immediate next task.
+
+---
+
 ## Phase 5: Polish, Sharing & Community (July 2026+)
 
 - [ ] Public landing page with interactive demo (read-only, no portfolio upload).
@@ -175,15 +197,15 @@
 1. **Three.js vs keep Canvas**: Three.js gives "wow" factor but adds bundle size (~300KB gzipped with postprocessing). Decision by May 10.
 2. **DB Choice**: Turso (SQLite, dead simple) vs Supabase (Postgres + built-in auth/storage). Leaning Turso for simplicity.
 3. **Data Priority Order**:
-   - Current: verify the smaller real-company core before adding more rows.
-   - Next: add edge-level source URLs for the highest-impact AI/Semi, PBM, payments, and Berkshire ecosystem links.
-   - Later: broaden to additional sectors only when each ticker and edge is real and reviewable.
+   - Current: improve user-facing product intelligence and graph exploration on the smaller real-company core.
+   - Next: continue adding edge-level source URLs for the highest-impact AI/Semi, PBM, payments, and Berkshire ecosystem links.
+   - Later: plan sector -> industry-group correlation intelligence only when each ticker, edge, and relationship category is real and reviewable.
 4. **Friend Circle Size**: Start with 3-5, expand to 15 max. Quality > quantity.
 
 ---
 
 **This roadmap is living**. Update it after every phase retrospective.
 
-**Immediate Next Step**: Strengthen the Phase 2 real dataset with better edge-level source URLs before adding new data layers or migrating architecture.
+**Immediate Next Step**: Improve user-facing product intelligence and graph exploration on the credible Phase 2 dataset before adding new data layers or migrating architecture.
 
 Let's build something that actually helps you see the market in a way no Bloomberg terminal or Yahoo Finance ever will.

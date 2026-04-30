@@ -27,7 +27,96 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPANIES_PATH = ROOT / "data" / "companies.json"
 CONNECTIONS_PATH = ROOT / "data" / "connections.json"
 
-NEW_CONNECTIONS: list[dict[str, Any]] = []
+NEW_CONNECTIONS: list[dict[str, Any]] = [
+    {
+        "source_ticker": "NVDA",
+        "target_ticker": "ARM",
+        "type": "supply",
+        "label": "Arm Neoverse CPU IP in NVIDIA Grace platforms",
+        "strength": 0.74,
+        "provenance": "NVIDIA Grace CPU materials describe Arm-based data center cores.",
+        "source_urls": [
+            "https://www.nvidia.com/en-us/data-center/grace-cpu/",
+        ],
+    },
+    {
+        "source_ticker": "AMZN",
+        "target_ticker": "ARM",
+        "type": "ecosystem",
+        "label": "AWS Graviton Arm-based cloud compute ecosystem",
+        "strength": 0.82,
+        "provenance": "AWS documents Graviton processors for EC2 cloud workloads.",
+        "source_urls": [
+            "https://aws.amazon.com/ec2/graviton/",
+        ],
+    },
+    {
+        "source_ticker": "GOOGL",
+        "target_ticker": "ARM",
+        "type": "ecosystem",
+        "label": "Google Axion Arm CPU cloud infrastructure stack",
+        "strength": 0.78,
+        "provenance": "Google Cloud announced Axion as its Arm-based data center CPU.",
+        "source_urls": [
+            "https://cloud.google.com/blog/products/compute/introducing-googles-new-arm-based-cpu",
+        ],
+    },
+    {
+        "source_ticker": "MSFT",
+        "target_ticker": "ARM",
+        "type": "ecosystem",
+        "label": "Azure Cobalt Arm-based VM infrastructure platform",
+        "strength": 0.76,
+        "provenance": "Microsoft Azure announced Cobalt 100 Arm-based virtual machines.",
+        "source_urls": [
+            "https://azure.microsoft.com/en-us/blog/azure-cobalt-100-based-virtual-machines-are-now-generally-available/",
+        ],
+    },
+    {
+        "source_ticker": "MSFT",
+        "target_ticker": "SNOW",
+        "type": "partnership",
+        "label": "Snowflake data cloud integrations with Microsoft Azure",
+        "strength": 0.68,
+        "provenance": "Snowflake partner materials describe Microsoft Azure and Copilot integrations.",
+        "source_urls": [
+            "https://www.snowflake.com/en/why-snowflake/partners/all-partners/microsoft/",
+        ],
+    },
+    {
+        "source_ticker": "AMZN",
+        "target_ticker": "CRM",
+        "type": "partnership",
+        "label": "AWS services embedded across Salesforce Customer 360",
+        "strength": 0.72,
+        "provenance": "Salesforce and AWS announced expanded native product integrations.",
+        "source_urls": [
+            "https://www.salesforce.com/news/press-releases/2021/06/23/salesforce-aws-partnership-expansion/",
+        ],
+    },
+    {
+        "source_ticker": "GOOGL",
+        "target_ticker": "NOW",
+        "type": "partnership",
+        "label": "ServiceNow workflows integrated with Google Cloud AI",
+        "strength": 0.69,
+        "provenance": "ServiceNow and Google Cloud announced expanded enterprise AI integrations.",
+        "source_urls": [
+            "https://newsroom.servicenow.com/press-releases/details/2025/ServiceNow-and-Google-Cloud-Expand-Partnership-to-Deliver-AI-powered-Tools-to-Millions-of-Users-01-29-2025-traffic/default.aspx",
+        ],
+    },
+    {
+        "source_ticker": "GOOGL",
+        "target_ticker": "SNOW",
+        "type": "partnership",
+        "label": "Snowflake analytics and AI workloads on Google Cloud",
+        "strength": 0.67,
+        "provenance": "Snowflake partner materials describe Google Cloud data and AI deployment support.",
+        "source_urls": [
+            "https://www.snowflake.com/en/why-snowflake/partners/all-partners/gcp/",
+        ],
+    },
+]
 
 REQUIRED_INPUT_FIELDS = {
     "source_ticker",

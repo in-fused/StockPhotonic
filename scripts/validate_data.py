@@ -74,6 +74,14 @@ def compute_confidence(edge: dict[str, Any]) -> int:
     else:
         confidence = 3
 
+    signal_score = edge.get("signal_score")
+    if is_number(signal_score):
+        normalized_signal_score = float(signal_score)
+        if normalized_signal_score >= 0.9 and confidence == 4:
+            confidence = 5
+        elif normalized_signal_score <= 0.65 and confidence >= 4:
+            confidence = 3
+
     return min(5, max(3, confidence))
 
 
@@ -155,6 +163,7 @@ def validate(strict_confidence: bool = False) -> int:
         connection_type = connection.get("type")
         strength = connection.get("strength")
         confidence = connection.get("confidence")
+        signal_score = connection.get("signal_score")
         provenance = connection.get("provenance")
         verified_date = connection.get("verified_date")
         connection_label = connection.get("label")
@@ -228,6 +237,17 @@ def validate(strict_confidence: bool = False) -> int:
                     errors.append(message)
                 else:
                     warnings.append(message)
+
+        if (
+            is_number(signal_score)
+            and float(signal_score) >= 0.9
+            and isinstance(confidence, int)
+            and not isinstance(confidence, bool)
+            and confidence <= 3
+        ):
+            warnings.append(
+                f"{label}: signal_score is high but confidence is low."
+            )
 
         if not isinstance(connection_label, str) or not connection_label.strip():
             errors.append(f"{label}: label must be present and non-empty.")

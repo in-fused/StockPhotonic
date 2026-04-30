@@ -2,7 +2,7 @@
 
 **Date:** April 29, 2026  
 **Repo:** https://github.com/in-fused/StockPhotonic  
-**Current Version:** v5.8 / Phase 2.2 Derived Industry-Group Intelligence Foundations
+**Current Version:** v5.9 / Graph Focus Mode + Signal Clarity System
 **Status:** Current main uses a smaller credible static dataset: 60 real companies and 117 curated connections. Immediate work should stay focused on user-facing product intelligence, graph exploration, source coverage, and reviewable industry-group foundations.
 
 ---
@@ -14,12 +14,14 @@
 - Connection lines now have different colors by type (partnership, supply, ecosystem, competitor, investment)
 - Edge provenance, confidence, verified date, and starter source URL coverage exist for reviewable relationships
 - Industry group is derived at runtime in `index.html` from existing company fields and used for filtering, graph highlighting, and sidebar intelligence
+- Graph Focus Mode + Signal Clarity System isolates selected first-degree networks, filters weaker edges by stored strength, and summarizes visible signal quality in the sidebar
+- Industry Group + signal threshold above 0.3 creates a cleaner subgraph by hiding below-threshold edges and zero-edge nodes
 - Basic force-directed graph rendering
 - Validation scripts help reject placeholder companies, fake tickers, duplicate edges, generic labels, and malformed source URLs
 
 **What’s Broken / Needs Work:**
 - User-facing product intelligence and graph exploration need to become easier to read and act on
-- Graph focus, node selection, pan, zoom, drag, and layout behavior still need continued improvement
+- Larger-scale graph readability and performance still need continued improvement as the dataset grows
 - Edge-level source URL coverage is partial and should improve before major dataset expansion
 - Industry-group derivation is transitional; normalized schema fields, source-backed correlation records, and validation rules are still future work
 
@@ -49,7 +51,7 @@ This now has a transitional static-app foundation, but normalized product data r
 - Future government / policy relationship planning may cover public funding, grants, contracts, subsidies, regulation, defense exposure, healthcare reimbursement, energy policy, and industrial policy connections. Keep this planning-only until public sources and validation rules support each relationship.
 
 ### Future Feature Roadmap
-1. **User-Facing Product Intelligence & Graph Exploration** — Improve how users inspect relationships, provenance, connected companies, and graph focus states
+1. **User-Facing Product Intelligence & Graph Exploration** — Improve how users inspect relationships, provenance, connected companies, graph focus states, and signal clarity
 2. **Options Flow Integration** — Show unusual options activity tied to specific nodes
 3. **Earnings Reports & Financial Disclosures** — Expandable modal per company with key highlights
 4. **Industry Group View** — Current foundation is a derived filter/highlight layer; future mode can use normalized data after review
@@ -111,8 +113,19 @@ Current data next priority: build toward reputable-source ingestion using SEC fi
 
 1. **Improve user-facing product intelligence and graph exploration** (most urgent)
    - Make current relationships, provenance, connected companies, and confidence signals easier to inspect
-   - Improve graph focus, selection, pan, zoom, and layout behavior in small increments
+   - Continue improving graph focus, selection, pan, zoom, and layout behavior in small increments
    - Keep the credible current dataset as the working surface
+
+### Graph Focus Mode + Signal Clarity System
+
+This system is implemented entirely in `index.html` on top of the existing `data/companies.json` and `data/connections.json` files.
+
+- Purpose: reduce visual noise and increase decision clarity without expanding the dataset.
+- Focus Mode is off by default. When enabled and a node is selected, the graph shows only the selected node, first-degree neighbors, and direct connecting edges.
+- Signal Strength Threshold filters existing edges by their stored `strength` value; nodes with no remaining visible edge are pruned when threshold filtering is active, while selected nodes remain usable for search/jump context.
+- Industry Group + threshold above 0.3 acts as an automatic declutter state for a clean visible subgraph.
+- Sidebar Signal Clarity reports active threshold, visible connection count, strongest visible connection, and weakest visible connection.
+- No data files, schema fields, source URLs, or factual relationship claims were added by this feature.
 
 2. **Continue data credibility and source coverage**
    - Add edge-level source URLs for high-impact relationships when defensible sources are available

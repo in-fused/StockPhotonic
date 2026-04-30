@@ -73,12 +73,29 @@
         }
 
         .focus-button {
-            transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
         }
 
         .focus-button:hover {
             background: rgba(255, 255, 255, 0.08);
             border-color: rgba(0, 249, 255, 0.55);
+        }
+
+        .focus-button[aria-pressed="true"],
+        .focus-button.is-active {
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.18), rgba(255, 0, 170, 0.12));
+            border-color: rgba(0, 249, 255, 0.62);
+            color: #ffffff;
+            box-shadow: 0 0 22px rgba(0, 249, 255, 0.16);
+        }
+
+        .signal-control {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(0, 0, 0, 0.28);
+        }
+
+        .signal-slider {
+            accent-color: var(--neon-cyan);
         }
 
         .search-panel {
@@ -282,6 +299,19 @@
                 <option value="hub">Hub Layout</option>
             </select>
 
+            <button id="focus-mode-toggle" onclick="toggleFocusMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                <i class="fa-solid fa-bullseye"></i>
+                <span>Focus Mode</span>
+            </button>
+
+            <div class="signal-control rounded-3xl px-4 py-2 min-w-[240px]">
+                <label for="signal-threshold" class="flex items-center justify-between gap-3 text-[10px] font-mono tracking-[1.3px] text-cyan-100/75">
+                    <span>Signal Strength Threshold</span>
+                    <span id="signal-threshold-value" class="text-white/70 tabular-nums">0.00</span>
+                </label>
+                <input id="signal-threshold" type="range" min="0" max="1" step="0.05" value="0" oninput="setSignalStrengthThreshold(this.value)" class="signal-slider mt-2 w-full">
+            </div>
+
             <div class="lg:ml-auto flex flex-wrap items-center justify-end gap-2">
                 <div id="dataset-trust" class="trust-panel rounded-2xl px-3 py-2 text-xs text-white/65 min-w-[220px]">
                     <div class="flex items-center gap-2 text-cyan-200 font-mono text-[10px] tracking-[1.5px]">
@@ -349,6 +379,8 @@
         const SEARCH_HIGHLIGHT_MS = 1400;
         const LAYOUT_MODE_SECTOR = 'sector';
         const LAYOUT_MODE_HUB = 'hub';
+        const SIGNAL_DECLUTTER_THRESHOLD = 0.3;
+        const FOCUS_MODE_TRANSITION_MS = 520;
         const INDUSTRY_GROUP_RULES = [
             {
                 group: 'PBM / Pharmacy Benefits',
@@ -491,11 +523,15 @@
         let visibleNodes = [];
         let visibleNodeIds = new Set();
         let visibleLinks = [];
+        let visibleLinkKeys = new Set();
+        let visibleEdgeCountByNodeId = new Map();
 
         let selectedNode = null;
         let hoveredNode = null;
         let focusNeighborIds = new Set();
         let focusLinkKeys = new Set();
+        let focusModeEnabled = false;
+        let signalStrengthThreshold = 0;
         let currentSector = '';
         let currentIndustryGroup = '';
         let currentSearch = '';
@@ -516,6 +552,7 @@
         let drawHandle = null;
         let viewAnimationHandle = null;
         let pulseUntil = 0;
+        let focusTransitionUntil = 0;
         let highlightedNodeId = null;
         let highlightedNodeUntil = 0;
 
@@ -555,6 +592,8 @@
 
                 buildSectorFilter();
                 buildIndustryGroupFilter();
+                updateFocusModeControl();
+                updateSignalThresholdControl();
                 initGraphData();
                 resizeCanvas();
                 fitGraph();
@@ -932,7 +971,7 @@
             frameNodes.forEach(node => drawNode(ctx, node, timestamp));
             drawLabels(ctx, frameNodes);
 
-            if (now < pulseUntil || now < highlightedNodeUntil) requestDraw();
+            if (now < pulseUntil || now < highlightedNodeUntil || now < focusTransitionUntil) requestDraw();
         }
 
         function drawBackground(ctx) {
@@ -966,29 +1005,40 @@
             };
             const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
             const isFocused = selectedNode && focusLinkKeys.has(link.key);
+            const isHoveredLink = hoveredNode && (hoveredNode.id === link.source.id || hoveredNode.id === link.target.id);
             const hasFocus = Boolean(selectedNode);
             const industryFilterActive = isIndustryGroupFilterActive();
             const touchesIndustryGroup = industryFilterActive && linkTouchesCurrentIndustryGroup(link);
 
-            // Edge visibility/opacity scaling: weak connections stay present but
-            // quiet, while high-strength and selected ego-network links remain
-            // visually dominant. Type color is preserved for every edge.
             const strength = clamp(link.strength, 0.05, 1);
-            let alpha = 0.018 + Math.pow(strength, 1.8) * 0.36;
-            let width = 0.28 + Math.pow(strength, 1.42) * 2.6;
+            const isStrongSignal = strength >= 0.78;
+            let alpha = 0.01 + Math.pow(strength, 2.35) * 0.46;
+            let width = 0.22 + Math.pow(strength, 1.55) * 2.9;
+
             if (hasFocus) {
-                alpha = isFocused ? 0.7 + strength * 0.24 : 0.012;
+                alpha = isFocused ? 0.74 + strength * 0.22 : 0.01;
                 width = isFocused ? width + 1.25 : Math.max(0.25, width * 0.45);
             }
+
             if (touchesIndustryGroup && !isFocused) {
-                alpha = Math.max(alpha, 0.14 + strength * 0.24);
+                alpha = Math.max(alpha, 0.12 + Math.pow(strength, 1.8) * 0.28);
                 width = Math.max(width, 0.7 + strength * 1.2);
+            }
+
+            if (isHoveredLink) {
+                alpha = Math.max(alpha, 0.58 + strength * 0.28);
+                width += 0.9;
+            }
+
+            if (isStrongSignal && !hasFocus) {
+                alpha = Math.max(alpha, 0.42 + strength * 0.18);
+                width += 0.45;
             }
 
             ctx.globalAlpha = alpha;
             ctx.strokeStyle = color;
             ctx.lineWidth = width;
-            ctx.shadowBlur = isFocused ? 14 : 5;
+            ctx.shadowBlur = isFocused ? 24 : isHoveredLink ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
             ctx.shadowColor = color;
 
             const midX = (source.x + target.x) / 2;
@@ -1019,7 +1069,7 @@
             const isSearchHighlighted = highlightedNodeId === node.id && performance.now() < highlightedNodeUntil;
             const industryDimmed = isNodeDimmedByIndustryGroup(node);
             const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
-            const focusDimmed = selectedNode && !isSelected && !isNeighbor && !industryMatched;
+            const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !industryMatched;
             const isDimmed = focusDimmed || industryDimmed;
             const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : 1;
             const color = node.color || '#00f9ff';
@@ -1108,7 +1158,7 @@
                     if (!rawLabel) return;
                     const industryDimmed = isNodeDimmedByIndustryGroup(node);
                     const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
-                    const focusDimmed = selectedNode && !isSelected && !isNeighbor && !industryMatched;
+                    const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !industryMatched;
                     const alpha = industryDimmed ? 0.18 : focusDimmed ? 0.25 : isNeighbor ? 0.82 : 0.72;
 
                     ctx.save();
@@ -1174,23 +1224,29 @@
                 focusNeighborIds.add(item.node.id);
                 focusLinkKeys.add(item.link.key);
             });
-            rebuildLayoutPositions();
+            focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
+            refreshVisibleGraph();
             showNodeDetails(node);
             recordRecentNode(node);
             triggerPulse(PULSE_DURATION_MS);
-            if (isHubLayoutActive()) fitGraph();
-            requestDraw();
+            if (isFocusModeActive() || isHubLayoutActive()) {
+                fitGraph();
+            } else {
+                requestDraw();
+            }
         }
 
         function clearSelection(refit = true) {
             const wasHubActive = isHubLayoutActive();
+            const wasFocusModeActive = isFocusModeActive();
             selectedNode = null;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
-            rebuildLayoutPositions();
+            focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
+            refreshVisibleGraph();
             document.getElementById('sidebar').classList.add('hidden');
             document.getElementById('empty-sidebar').classList.remove('hidden');
-            if (refit && wasHubActive) fitGraph();
+            if (refit && (wasHubActive || wasFocusModeActive)) fitGraph();
             requestDraw();
         }
 
@@ -1207,6 +1263,7 @@
             const industryCorrelation = getIndustryCorrelationSummary(node, industryGroupStats, sectorCounts);
             const nodeSources = getNodeSources(connectionsForNode);
             const whyThisNodeMatters = getNodeImportanceSummary(node, networkSummary, sectorCounts);
+            const signalClarity = getSignalClaritySummary(node);
 
             sidebar.innerHTML = `
                 <div class="flex items-start justify-between gap-4 mb-5">
@@ -1257,6 +1314,24 @@
                     </div>
                     <div class="flex flex-wrap gap-2 mt-3">
                         ${renderConnectionTypeMix(networkSummary.typeCounts)}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Signal Clarity</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="summary-tile rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">ACTIVE THRESHOLD</div>
+                            <div class="font-display text-2xl text-white">${signalClarity.thresholdLabel}</div>
+                        </div>
+                        <div class="summary-tile rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">VISIBLE CONNECTIONS</div>
+                            <div class="font-display text-2xl text-white">${signalClarity.visibleCount}</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 space-y-2">
+                        ${renderSignalClarityConnection('Strongest connection', signalClarity.strongest)}
+                        ${renderSignalClarityConnection('Weakest visible connection', signalClarity.weakest)}
                     </div>
                 </div>
 
@@ -1387,6 +1462,60 @@
                             Source ${index + 1}
                         </a>
                     `).join('')}
+                </div>
+            `;
+        }
+
+        function getSignalClaritySummary(node) {
+            const visibleConnections = getVisibleConnectionsForNode(node);
+            const strongest = visibleConnections[0] || null;
+            const weakest = visibleConnections.length
+                ? [...visibleConnections].sort((a, b) => a.link.strength - b.link.strength || String(a.node.ticker || '').localeCompare(String(b.node.ticker || '')))[0]
+                : null;
+
+            return {
+                thresholdLabel: signalStrengthThreshold.toFixed(2),
+                visibleCount: visibleConnections.length,
+                strongest,
+                weakest
+            };
+        }
+
+        function getVisibleConnectionsForNode(node) {
+            if (!node) return [];
+
+            return [...(adjacencyById.get(node.id) || [])]
+                .filter(item => visibleLinkKeys.has(item.link.key))
+                .sort((a, b) => b.link.strength - a.link.strength || String(a.node.ticker || '').localeCompare(String(b.node.ticker || '')));
+        }
+
+        function renderSignalClarityConnection(label, item) {
+            if (!item) {
+                return `
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <div class="text-[10px] text-white/38 font-mono tracking-[1.2px]">${escapeHtml(label)}</div>
+                        <div class="mt-1 text-sm text-white/35">No visible connection at this threshold.</div>
+                    </div>
+                `;
+            }
+
+            const color = EDGE_COLORS[item.link.type] || DEFAULT_EDGE_COLOR;
+            const strengthPercent = Math.round(item.link.strength * 100);
+            return `
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-[10px] text-white/38 font-mono tracking-[1.2px]">${escapeHtml(label)}</div>
+                            <div class="mt-1 text-sm text-white/88 font-semibold truncate">${escapeHtml(item.node.ticker || '')} <span class="text-white/45 font-normal">${escapeHtml(item.node.name || '')}</span></div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-sm font-mono" style="color:${color}">${strengthPercent}%</div>
+                            <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(item.link.type || 'link'))}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+                        <div class="h-full rounded-full" style="width:${strengthPercent}%; background:${color}; box-shadow:0 0 12px ${color};"></div>
+                    </div>
                 </div>
             `;
         }
@@ -1713,6 +1842,55 @@
             requestDraw();
         }
 
+        function toggleFocusMode() {
+            setFocusModeEnabled(!focusModeEnabled);
+        }
+
+        function setFocusModeEnabled(enabled) {
+            const nextValue = Boolean(enabled);
+            if (focusModeEnabled === nextValue) return;
+
+            focusModeEnabled = nextValue;
+            focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
+            updateFocusModeControl();
+            refreshVisibleGraph();
+            if (selectedNode) showNodeDetails(selectedNode);
+            triggerPulse(FOCUS_MODE_TRANSITION_MS);
+            if (selectedNode) fitGraph();
+            requestDraw();
+        }
+
+        function updateFocusModeControl() {
+            const toggle = document.getElementById('focus-mode-toggle');
+            if (!toggle) return;
+
+            toggle.setAttribute('aria-pressed', focusModeEnabled ? 'true' : 'false');
+            toggle.classList.toggle('is-active', focusModeEnabled);
+            toggle.title = focusModeEnabled
+                ? 'Focus Mode on: selecting a node isolates its first-degree network.'
+                : 'Focus Mode off: selected nodes keep the broader graph context.';
+        }
+
+        function setSignalStrengthThreshold(value) {
+            const nextValue = clamp(Number(value) || 0, 0, 1);
+            if (Math.abs(signalStrengthThreshold - nextValue) < 0.001) return;
+
+            signalStrengthThreshold = nextValue;
+            updateSignalThresholdControl();
+            refreshVisibleGraph();
+            const selectionCleared = syncSelectionAfterVisibilityChange();
+            if (!selectionCleared && selectedNode) showNodeDetails(selectedNode);
+            triggerPulse(360);
+            requestDraw();
+        }
+
+        function updateSignalThresholdControl() {
+            const slider = document.getElementById('signal-threshold');
+            const value = document.getElementById('signal-threshold-value');
+            if (slider && Number(slider.value) !== signalStrengthThreshold) slider.value = String(signalStrengthThreshold);
+            if (value) value.innerText = signalStrengthThreshold.toFixed(2);
+        }
+
         function filterGraph() {
             currentSector = document.getElementById('sector-filter').value;
             currentIndustryGroup = document.getElementById('industry-group-filter').value;
@@ -1721,7 +1899,7 @@
             updateSearchMatches();
             if (document.activeElement === document.getElementById('search-input')) searchPanelOpen = true;
             renderSearchPanel();
-            if (selectedNode && (!visibleNodeIds.has(selectedNode.id) || isNodeDimmedByIndustryGroup(selectedNode))) clearSelection();
+            syncSelectionAfterVisibilityChange();
             requestDraw();
         }
 
@@ -1730,10 +1908,14 @@
             currentIndustryGroup = '';
             currentSearch = '';
             layoutMode = LAYOUT_MODE_SECTOR;
+            focusModeEnabled = false;
+            signalStrengthThreshold = 0;
             document.getElementById('sector-filter').value = '';
             document.getElementById('industry-group-filter').value = '';
             document.getElementById('search-input').value = '';
             document.getElementById('layout-mode').value = LAYOUT_MODE_SECTOR;
+            updateFocusModeControl();
+            updateSignalThresholdControl();
             refreshVisibleGraph();
             updateSearchMatches();
             closeSearchPanel();
@@ -2065,10 +2247,75 @@
         }
 
         function refreshVisibleGraph() {
-            visibleNodes = nodes.filter(isNodeVisible);
+            const focusActive = isFocusModeActive();
+            const baseVisibleNodeIds = new Set(nodes.filter(nodePassesBaseFilters).map(node => node.id));
+
+            let candidateLinks = links.filter(link => {
+                if (focusActive) return focusLinkKeys.has(link.key);
+                return baseVisibleNodeIds.has(link.source.id) && baseVisibleNodeIds.has(link.target.id);
+            });
+
+            visibleLinks = candidateLinks.filter(linkPassesVisibleGraphFilters);
+            visibleLinkKeys = new Set(visibleLinks.map(link => link.key));
+            visibleEdgeCountByNodeId = new Map();
+
+            visibleLinks.forEach(link => {
+                visibleEdgeCountByNodeId.set(link.source.id, (visibleEdgeCountByNodeId.get(link.source.id) || 0) + 1);
+                visibleEdgeCountByNodeId.set(link.target.id, (visibleEdgeCountByNodeId.get(link.target.id) || 0) + 1);
+            });
+
+            const connectedNodeIds = new Set();
+            visibleLinks.forEach(link => {
+                connectedNodeIds.add(link.source.id);
+                connectedNodeIds.add(link.target.id);
+            });
+            if (focusActive && selectedNode) connectedNodeIds.add(selectedNode.id);
+            if (!focusActive && selectedNode && nodePassesBaseFilters(selectedNode)) connectedNodeIds.add(selectedNode.id);
+
+            if (focusActive || shouldPruneZeroEdgeNodes()) {
+                visibleNodes = nodes.filter(node => connectedNodeIds.has(node.id));
+            } else {
+                visibleNodes = nodes.filter(node => baseVisibleNodeIds.has(node.id));
+            }
+
             visibleNodeIds = new Set(visibleNodes.map(node => node.id));
-            visibleLinks = links.filter(link => visibleNodeIds.has(link.source.id) && visibleNodeIds.has(link.target.id));
             rebuildLayoutPositions();
+        }
+
+        function syncSelectionAfterVisibilityChange() {
+            if (!selectedNode) return false;
+            if (!visibleNodeIds.has(selectedNode.id) || isNodeDimmedByIndustryGroup(selectedNode)) {
+                clearSelection(false);
+                return true;
+            }
+            return false;
+        }
+
+        function isFocusModeActive() {
+            return focusModeEnabled && Boolean(selectedNode);
+        }
+
+        function shouldPruneZeroEdgeNodes() {
+            return signalStrengthThreshold > 0 || isAutoDeclutterActive();
+        }
+
+        function isAutoDeclutterActive() {
+            return isIndustryGroupFilterActive() && signalStrengthThreshold > SIGNAL_DECLUTTER_THRESHOLD;
+        }
+
+        function nodePassesBaseFilters(node) {
+            if (!node) return false;
+            if (currentSector && node.sector !== currentSector) return false;
+            if (!currentSearch) return true;
+            const haystack = `${node.ticker || ''} ${node.name || ''} ${node.sector || ''} ${node.industry || ''} ${getCompanyIndustryGroup(node)}`.toLowerCase();
+            return haystack.includes(currentSearch);
+        }
+
+        function linkPassesVisibleGraphFilters(link) {
+            if (!link) return false;
+            if (signalStrengthThreshold > 0 && link.strength < signalStrengthThreshold) return false;
+            if (isIndustryGroupFilterActive() && !linkTouchesCurrentIndustryGroup(link)) return false;
+            return true;
         }
 
         function isHubLayoutActive() {
@@ -2154,8 +2401,7 @@
             const isFocused = selectedNode && focusLinkKeys.has(link.key);
             const industryFilterActive = isIndustryGroupFilterActive();
             const touchesIndustryGroup = industryFilterActive && linkTouchesCurrentIndustryGroup(link);
-            if (industryFilterActive && !touchesIndustryGroup) return false;
-            if (!isFocused && !touchesIndustryGroup && link.strength < getWeakEdgeThreshold()) return false;
+            if (signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && link.strength < getWeakEdgeThreshold()) return false;
 
             const sourceX = link.source._screenX;
             const sourceY = link.source._screenY;
@@ -2228,11 +2474,7 @@
         }
 
         function isNodeVisible(node) {
-            if (!node) return false;
-            if (currentSector && node.sector !== currentSector) return false;
-            if (!currentSearch) return true;
-            const haystack = `${node.ticker || ''} ${node.name || ''} ${node.sector || ''} ${node.industry || ''} ${getCompanyIndustryGroup(node)}`.toLowerCase();
-            return haystack.includes(currentSearch);
+            return nodePassesBaseFilters(node);
         }
 
         function isIndustryGroupFilterActive() {

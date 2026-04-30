@@ -2,7 +2,7 @@
 
 **Vision**: The most insightful, beautiful, and trustworthy visualization of corporate interconnections for serious personal investors and their trusted circle.
 
-**Current Version**: v5.8 / Phase 2.2 Derived Industry-Group Intelligence Foundations (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
+**Current Version**: v5.9 / Graph Focus Mode + Signal Clarity System (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
 
 ---
 
@@ -33,14 +33,23 @@
 - [ ] Fix node click reliability so click, drag, and pan gestures do not conflict.
 - [ ] Add smooth wheel zoom around the pointer and pan by dragging empty canvas.
 - [ ] Preserve or add reset/fit view controls.
-- [ ] Reduce spiderweb clutter with strength-scaled edge opacity/thickness while preserving color by type.
+- [x] Reduce spiderweb clutter with strength-scaled edge opacity/thickness while preserving color by type.
 - [ ] Add label level-of-detail so all node labels are not drawn at every zoom level.
 - [ ] Improve initial sector-aware layout with stronger spacing and bounded settling.
-- [ ] Add first-degree focus mode on node selection: selected node, neighbor nodes, connected edges, and dimmed unrelated elements.
+- [x] Add first-degree focus mode on node selection: selected node, neighbor nodes, connected edges, and hidden unrelated elements when Focus Mode is enabled.
+- [x] Add Graph Focus Mode + Signal Clarity System to reduce visual noise and increase decision clarity using only existing company and connection data.
+- [x] Add a signal strength threshold slider that filters weaker edges and prunes zero-edge nodes when the threshold creates a cleaner subgraph.
+- [x] Add Signal Clarity sidebar summary for active threshold, visible connection count, strongest visible connection, and weakest visible connection.
 - [x] Keep details in the existing sidebar/panel and include connected companies when data allows.
 - [ ] Keep the app static-host friendly and avoid framework migration in this phase.
 
 **Deliverable**: The graph is stable enough to explore the static dataset without accidental selections, broken dragging, or unreadable edge dominance.
+
+**Graph Focus Mode + Signal Clarity System**:
+- Purpose: reduce noise and make the existing graph more decision-grade by isolating high-signal structures.
+- Focus Mode is off by default; when enabled with a selected node, it shows only the selected node, first-degree neighbors, and the selected node's direct edges.
+- Signal Strength Threshold filters existing edges by their stored strength value; no new data, schema fields, or factual claims are introduced.
+- Industry Group + threshold above 0.3 automatically forms a cleaner visible subgraph by hiding below-threshold edges and zero-edge nodes.
 
 ---
 

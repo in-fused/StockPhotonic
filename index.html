@@ -86,6 +86,33 @@
             background: rgba(255, 255, 255, 0.035);
         }
 
+        .connection-row:hover .connection-title {
+            color: #ffffff;
+        }
+
+        .confidence-badge {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .confidence-badge.high {
+            border-color: rgba(0, 255, 159, 0.34);
+            background: rgba(0, 255, 159, 0.10);
+            color: #7cffc8;
+        }
+
+        .confidence-badge.medium {
+            border-color: rgba(255, 215, 0, 0.34);
+            background: rgba(255, 215, 0, 0.10);
+            color: #ffe66b;
+        }
+
+        .trust-panel {
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background: rgba(0, 249, 255, 0.055);
+        }
+
         @media (max-width: 768px) {
             .page-shell {
                 padding-left: 1rem;
@@ -94,6 +121,10 @@
 
             .graph-container {
                 height: 62vh !important;
+            }
+
+            .connection-row {
+                border-radius: 1rem;
             }
         }
     </style>
@@ -108,7 +139,7 @@
                     </div>
                     <div>
                         <div class="font-display text-3xl font-semibold neon-text">PHOTONIC NEXUS</div>
-                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">TOP 500 - US MARKETS - 2026 - PHASE 1</div>
+                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">REAL CORE DATASET - US MARKETS - 2026 - PHASE 2</div>
                     </div>
                 </div>
             </div>
@@ -136,7 +167,7 @@
         <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
             <div>
                 <h1 class="font-display text-5xl md:text-6xl font-semibold">Photonic Chart</h1>
-                <p class="text-lg md:text-xl text-white/70 mt-1">Interactive visualization of interconnections across the <span class="font-semibold text-white">Top 500 US-listed stocks</span></p>
+                <p class="text-lg md:text-xl text-white/70 mt-1">Interactive visualization of curated interconnections across a real-company US market core dataset</p>
             </div>
 
             <div class="lg:text-right">
@@ -157,10 +188,25 @@
                 <option value="">All Sectors</option>
             </select>
 
-            <div class="lg:ml-auto flex items-center gap-x-px text-xs font-mono text-white/50">
-                <div id="node-count" class="px-3 py-1 bg-white/5 rounded-l-3xl">0 NODES</div>
-                <div id="connection-count" class="px-3 py-1 bg-white/5">0 CONNECTIONS</div>
-                <div id="view-status" class="px-3 py-1 bg-emerald-400/10 text-emerald-400 rounded-r-3xl">READY</div>
+            <div class="lg:ml-auto flex flex-wrap items-center justify-end gap-2">
+                <div id="dataset-trust" class="trust-panel rounded-2xl px-3 py-2 text-xs text-white/65 min-w-[220px]">
+                    <div class="flex items-center gap-2 text-cyan-200 font-mono text-[10px] tracking-[1.5px]">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        DATASET TRUST
+                    </div>
+                    <div class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[10px] leading-4">
+                        <span id="trust-company-count">0 COMPANIES</span>
+                        <span id="trust-connection-count">0 EDGES</span>
+                        <span id="trust-high-confidence">0% CONF >=4</span>
+                        <span id="trust-latest-date">VERIFIED -</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-x-px text-xs font-mono text-white/50">
+                    <div id="node-count" class="px-3 py-1 bg-white/5 rounded-l-3xl">0 NODES</div>
+                    <div id="connection-count" class="px-3 py-1 bg-white/5">0 CONNECTIONS</div>
+                    <div id="view-status" class="px-3 py-1 bg-emerald-400/10 text-emerald-400 rounded-r-3xl">READY</div>
+                </div>
             </div>
         </div>
 
@@ -249,6 +295,7 @@
                 document.getElementById('connection-count').innerText = `${connections.length} CONNECTIONS`;
                 document.getElementById('market-cap-total').innerText = `$${formatNumber(sumMarketCap(companies))}T`;
                 document.getElementById('view-status').innerText = 'LAYOUT';
+                updateDatasetTrustPanel();
 
                 buildSectorFilter();
                 initGraphData();
@@ -816,7 +863,7 @@
                     <div class="text-xs text-white/45 font-mono">CONNECTED COMPANIES</div>
                     <button onclick="fitGraph()" class="focus-button px-3 py-1 rounded-full border border-white/15 text-xs text-white/65">FIT VIEW</button>
                 </div>
-                <div class="space-y-2 max-h-[330px] overflow-y-auto pr-1">
+                <div class="space-y-2 max-h-[440px] overflow-y-auto pr-1">
                     ${topConnections.map(item => renderConnectionRow(item)).join('') || '<div class="text-sm text-white/35">No connected companies in current dataset.</div>'}
                 </div>
             `;
@@ -826,20 +873,30 @@
 
         function renderConnectionRow(item) {
             const color = EDGE_COLORS[item.link.type] || DEFAULT_EDGE_COLOR;
+            const strengthPercent = Math.round(item.link.strength * 100);
+            const confidence = Number(item.link.confidence) || 0;
+            const confidenceClass = getConfidenceClass(confidence);
+            const verifiedDate = formatVerifiedDate(item.link.verified_date);
             return `
                 <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left block hover:bg-white/10 transition">
                     <div class="flex items-center justify-between gap-3">
-                        <div>
-                            <div class="text-sm font-semibold text-white">${escapeHtml(item.node.ticker || '')}</div>
-                            <div class="text-xs text-white/45 truncate max-w-[230px]">${escapeHtml(item.node.name || '')}</div>
+                        <div class="min-w-0">
+                            <div class="connection-title text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')}</div>
+                            <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
                         </div>
-                        <div class="text-right">
+                        <div class="text-right shrink-0">
                             <div class="text-[10px] font-mono" style="color:${color}">${escapeHtml(item.link.type || 'link')}</div>
-                            <div class="text-xs text-white/55">${Math.round(item.link.strength * 100)}%</div>
+                            <div class="text-xs text-white/55">${strengthPercent}%</div>
                         </div>
                     </div>
+                    <div class="mt-2 text-xs text-white/70 leading-snug">${escapeHtml(item.link.label || 'Curated connection')}</div>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                        <span class="confidence-badge ${confidenceClass} px-2 py-0.5 rounded-full text-[10px] font-mono">CONF ${confidence}/5</span>
+                        <span class="text-[10px] text-white/42 font-mono">VERIFIED ${escapeHtml(verifiedDate)}</span>
+                    </div>
+                    <div class="mt-2 text-[11px] leading-relaxed text-white/50">${escapeHtml(item.link.provenance || 'No provenance summary available.')}</div>
                     <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                        <div class="h-full rounded-full" style="width:${Math.round(item.link.strength * 100)}%; background:${color}; box-shadow:0 0 10px ${color};"></div>
+                        <div class="h-full rounded-full" style="width:${strengthPercent}%; background:${color}; box-shadow:0 0 10px ${color};"></div>
                     </div>
                 </button>
             `;
@@ -969,6 +1026,39 @@
 
         function sumMarketCap(items) {
             return items.reduce((sum, item) => sum + (Number(item.market_cap) || 0), 0);
+        }
+
+        function getDatasetTrustMetrics() {
+            const highConfidenceCount = connections.filter(connection => Number(connection.confidence) >= 4).length;
+            const latestVerifiedDate = connections.reduce((latest, connection) => {
+                const date = typeof connection.verified_date === 'string' ? connection.verified_date : '';
+                return date > latest ? date : latest;
+            }, '');
+
+            return {
+                companyCount: companies.length,
+                connectionCount: connections.length,
+                highConfidencePercent: connections.length ? Math.round((highConfidenceCount / connections.length) * 100) : 0,
+                latestVerifiedDate
+            };
+        }
+
+        function updateDatasetTrustPanel() {
+            const metrics = getDatasetTrustMetrics();
+            document.getElementById('trust-company-count').innerText = `${metrics.companyCount} COMPANIES`;
+            document.getElementById('trust-connection-count').innerText = `${metrics.connectionCount} EDGES`;
+            document.getElementById('trust-high-confidence').innerText = `${metrics.highConfidencePercent}% CONF >=4`;
+            document.getElementById('trust-latest-date').innerText = `VERIFIED ${formatVerifiedDate(metrics.latestVerifiedDate)}`;
+        }
+
+        function getConfidenceClass(confidence) {
+            if (confidence >= 4) return 'high';
+            if (confidence === 3) return 'medium';
+            return '';
+        }
+
+        function formatVerifiedDate(value) {
+            return typeof value === 'string' && value.trim() ? value.trim() : '-';
         }
 
         function formatNumber(value) {

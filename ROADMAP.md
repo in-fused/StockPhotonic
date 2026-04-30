@@ -2,7 +2,7 @@
 
 **Vision**: The most insightful, beautiful, and trustworthy visualization of corporate interconnections for serious personal investors and their trusted circle.
 
-**Current Version**: v5.5 / Phase 2 Real Dataset Foundation (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
+**Current Version**: v5.6 / Phase 2 Provenance Visibility (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
 
 ---
 
@@ -15,7 +15,7 @@
 - [x] Expand static loading into external JSON files.
 - [x] Retire the generated 300-company / 600-connection placeholder dataset after it proved useful for graph stress testing but failed the data credibility bar.
 - [ ] Add provenance UI: Hover/click edge shows source, confidence, verified date, notes.
-- [ ] Add "Last Updated" badge + "Data Quality" score (e.g., 94% of edges have confidence ≥4).
+- [x] Add "Last Updated" badge + "Data Quality" score (e.g., 94% of edges have confidence ≥4).
 - [ ] Implement basic Portfolio Exposure calculator in the existing HTML (text input for tickers → highlights connected nodes + simple risk score).
 - [ ] Create `DATA_SOURCES.md` with full attribution and update instructions.
 - [ ] Update `README.md` with screenshots, quick start, and vision.
@@ -55,7 +55,7 @@
 - [x] Keep the dataset small enough to manually review: 60 real companies and 117 curated edges.
 - [x] Strengthen `scripts/validate_data.py` to fail duplicate tickers, synthetic ticker suffixes, placeholder names, and generic labels.
 - [ ] Add edge-level source URLs for the highest-impact supply, partnership, and investment relationships.
-- [ ] Add provenance UI so users can inspect confidence, verified date, and source summary from the graph.
+- [x] Add provenance UI so users can inspect confidence, verified date, and source summary from the graph.
 - [ ] Review top AI/semiconductor, healthcare/PBM, payments, and Berkshire edges before expanding the node count.
 
 **Deliverable**: StockPhotonic presents only real companies in the core dataset. Data credibility is the gate before feature expansion, larger market coverage, ETFs, crypto, options flow, earnings, auth, backend work, or framework migration.
@@ -175,6 +175,6 @@
 
 **This roadmap is living**. Update it after every phase retrospective.
 
-**Immediate Next Step**: Strengthen the Phase 2 real dataset with better source capture and provenance UI before adding new data layers or migrating architecture.
+**Immediate Next Step**: Strengthen the Phase 2 real dataset with better edge-level source URLs before adding new data layers or migrating architecture.
 
 Let's build something that actually helps you see the market in a way no Bloomberg terminal or Yahoo Finance ever will.

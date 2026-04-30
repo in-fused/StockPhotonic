@@ -2,7 +2,7 @@
 
 **Last Updated**: April 30, 2026
 
-**Current Version**: v5.5 / Phase 2 Real Dataset Foundation
+**Current Version**: v5.6 / Phase 2 Provenance Visibility
 
 **Current Dataset**: 60 real US-listed public companies and 117 curated connections loaded from static JSON files:
 
@@ -15,7 +15,7 @@
 
 ## Current Dataset Reality
 
-The current app is a static Canvas prototype. It loads company and connection data directly from JSON in the browser. There is no backend, no live ingestion, and no automatic data refresh in the current app.
+The current app is a static Canvas prototype. It loads company and connection data directly from JSON in the browser. There is no backend, no live ingestion, and no automatic data refresh in the current app. The graph UI now surfaces edge provenance in selected-node connection rows and shows a compact dataset trust summary near the graph controls.
 
 ### `data/companies.json`
 
@@ -63,7 +63,7 @@ Important current-field notes:
 
 ### Current Allowed Connection Types
 
-The current v5.4 dataset uses:
+The current v5.6 dataset uses:
 
 - `supply`
 - `partnership`
@@ -102,7 +102,7 @@ Recommended future connection shape:
 }
 ```
 
-`source_url` is therefore a recommended future enhancement, not a field that exists in the current v5.4 dataset.
+`source_url` is therefore a recommended future enhancement, not a field that exists in the current v5.6 dataset.
 
 ---
 
@@ -155,7 +155,7 @@ Required checks:
 Recommended warning checks:
 
 - Companies with no connections should be reported as graph-health warnings.
-- Missing optional future fields, such as `source_url`, should not fail the current v5.4 dataset.
+- Missing optional future fields, such as `source_url`, should not fail the current v5.6 dataset.
 - Stale `verified_date` values should eventually be warnings until the source refresh workflow is automated.
 
 Run:
@@ -224,7 +224,7 @@ The current Phase 2 dataset is static and manually updated. Future automation ca
 - The current dataset has `provenance` summaries but not edge-level `source_url` values.
 - Market caps are manually curated approximate display values and are not live prices.
 - There is no automated source refresh or stale-edge review workflow yet.
-- There is no provenance UI in the graph yet.
+- The current provenance UI uses concise source summaries; edge-level clickable source URLs are still a future enhancement.
 - The static dataset should be validated and stabilized before adding ETFs, crypto, options flow, earnings data, or larger market coverage.
 
 ---

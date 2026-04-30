@@ -10,6 +10,7 @@ The script uses only the Python standard library and does not modify data files.
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -58,7 +59,25 @@ def is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
-def validate() -> int:
+def compute_confidence(edge: dict[str, Any]) -> int:
+    source_urls = edge.get("source_urls")
+    has_source_urls = isinstance(source_urls, list) and len(source_urls) > 0
+    connection_type = edge.get("type")
+    strength = edge.get("strength")
+
+    if has_source_urls:
+        confidence = 4
+        if connection_type in {"supply", "partnership", "investment"}:
+            confidence = 5
+    elif connection_type == "supply" and is_number(strength) and float(strength) >= 0.75:
+        confidence = 4
+    else:
+        confidence = 3
+
+    return min(5, max(3, confidence))
+
+
+def validate(strict_confidence: bool = False) -> int:
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -199,10 +218,16 @@ def validate() -> int:
                         )
 
         if isinstance(confidence, int) and not isinstance(confidence, bool):
-            if confidence >= 4 and not has_source_urls:
-                warnings.append(
-                    f"{label}: confidence {confidence} but no source_urls present."
+            expected_confidence = compute_confidence(connection)
+            if confidence != expected_confidence:
+                message = (
+                    f"{label}: Confidence mismatch: expected {expected_confidence}, "
+                    f"found {confidence}."
                 )
+                if strict_confidence:
+                    errors.append(message)
+                else:
+                    warnings.append(message)
 
         if not isinstance(connection_label, str) or not connection_label.strip():
             errors.append(f"{label}: label must be present and non-empty.")
@@ -261,4 +286,13 @@ def validate() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(validate())
+    parser = argparse.ArgumentParser(
+        description="Validate StockPhotonic static JSON data."
+    )
+    parser.add_argument(
+        "--strict-confidence",
+        action="store_true",
+        help="Treat confidence score mismatches as validation errors.",
+    )
+    args = parser.parse_args()
+    sys.exit(validate(strict_confidence=args.strict_confidence))

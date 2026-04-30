@@ -255,6 +255,12 @@
         const DRAG_THRESHOLD_PX = 6;
         const MIN_SCALE = 0.16;
         const MAX_SCALE = 2.8;
+        const LABEL_TICKER_SCALE = 0.42;
+        const LABEL_FULL_SCALE = 1.05;
+        const FRAME_MARGIN = 150;
+        const VIEW_ANIMATION_MS = 170;
+        const FIT_ANIMATION_MS = 260;
+        const PULSE_DURATION_MS = 900;
 
         let companies = [];
         let connections = [];
@@ -264,6 +270,9 @@
         let degreeById = new Map();
         let adjacencyById = new Map();
         let topLabelIds = new Set();
+        let visibleNodes = [];
+        let visibleNodeIds = new Set();
+        let visibleLinks = [];
 
         let selectedNode = null;
         let hoveredNode = null;
@@ -279,6 +288,8 @@
         let canvasHeight = 0;
         let dpr = 1;
         let drawHandle = null;
+        let viewAnimationHandle = null;
+        let pulseUntil = 0;
 
         const pointerState = {
             active: false,
@@ -421,6 +432,7 @@
                 .map(node => node.id));
 
             settleLayout();
+            refreshVisibleGraph();
         }
 
         function settleLayout() {
@@ -480,6 +492,7 @@
             canvas.addEventListener('pointerup', onPointerUp);
             canvas.addEventListener('pointercancel', onPointerCancel);
             canvas.addEventListener('lostpointercapture', onPointerCancel);
+            canvas.addEventListener('pointerleave', onPointerLeave);
             canvas.addEventListener('contextmenu', event => event.preventDefault());
         }
 
@@ -489,6 +502,7 @@
             const canvas = document.getElementById('graph-canvas');
             const screen = getEventPoint(event);
             const node = findNodeAt(screen.x, screen.y);
+            cancelViewAnimation();
 
             // Pointer down: capture the pointer and classify the gesture as either
             // node-pending or pan-pending. Selection is intentionally delayed until
@@ -515,6 +529,7 @@
                 const nextHover = findNodeAt(screen.x, screen.y);
                 if (nextHover !== hoveredNode) {
                     hoveredNode = nextHover;
+                    triggerPulse(500);
                     requestDraw();
                 }
                 return;
@@ -529,6 +544,7 @@
             if (!pointerState.moved && totalDistance > DRAG_THRESHOLD_PX) {
                 pointerState.moved = true;
                 pointerState.mode = pointerState.node ? 'node-drag' : 'canvas-pan';
+                cancelViewAnimation();
             }
 
             if (pointerState.mode === 'node-drag' && pointerState.node) {
@@ -570,20 +586,32 @@
             pointerState.pointerId = null;
             pointerState.mode = 'idle';
             pointerState.node = null;
+            if (canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
+                canvas.releasePointerCapture(event.pointerId);
+            }
             canvas.classList.add('cursor-grab');
             canvas.classList.remove('cursor-grabbing');
             requestDraw();
             event.preventDefault();
         }
 
-        function onPointerCancel() {
+        function onPointerCancel(event) {
             pointerState.active = false;
             pointerState.pointerId = null;
             pointerState.mode = 'idle';
             pointerState.node = null;
             const canvas = document.getElementById('graph-canvas');
+            if (event && canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
+                canvas.releasePointerCapture(event.pointerId);
+            }
             canvas.classList.add('cursor-grab');
             canvas.classList.remove('cursor-grabbing');
+        }
+
+        function onPointerLeave() {
+            if (pointerState.active || !hoveredNode) return;
+            hoveredNode = null;
+            requestDraw();
         }
 
         function onWheelZoom(event) {
@@ -591,10 +619,10 @@
             const point = getEventPoint(event);
             const before = screenToWorld(point.x, point.y);
             const zoomFactor = Math.exp(-event.deltaY * 0.0012);
-            scale = clamp(scale * zoomFactor, MIN_SCALE, MAX_SCALE);
-            offsetX = point.x - before.x * scale;
-            offsetY = point.y - before.y * scale;
-            requestDraw();
+            const nextScale = clamp(scale * zoomFactor, MIN_SCALE, MAX_SCALE);
+            const nextOffsetX = point.x - before.x * nextScale;
+            const nextOffsetY = point.y - before.y * nextScale;
+            animateView(nextScale, nextOffsetX, nextOffsetY, VIEW_ANIMATION_MS);
         }
 
         function resizeCanvas() {
@@ -621,18 +649,18 @@
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
             drawBackground(ctx);
-
-            const visibleNodeIds = getVisibleNodeIds();
-            const visibleLinks = links.filter(link => visibleNodeIds.has(link.source.id) && visibleNodeIds.has(link.target.id));
+            updateScreenCache();
+            const frameNodes = visibleNodes.filter(isNodeInFrame);
+            const frameLinks = visibleLinks.filter(shouldDrawLink);
 
             ctx.save();
-            visibleLinks.forEach(link => drawLink(ctx, link));
+            frameLinks.forEach(link => drawLink(ctx, link));
             ctx.restore();
 
-            visibleNodeIds.forEach(id => drawNode(ctx, nodeById.get(id), timestamp));
-            drawLabels(ctx, visibleNodeIds);
+            frameNodes.forEach(node => drawNode(ctx, node, timestamp));
+            drawLabels(ctx, frameNodes);
 
-            if (selectedNode || hoveredNode) requestDraw();
+            if (performance.now() < pulseUntil) requestDraw();
         }
 
         function drawBackground(ctx) {
@@ -652,8 +680,14 @@
         }
 
         function drawLink(ctx, link) {
-            const source = worldToScreen(link.source.x, link.source.y);
-            const target = worldToScreen(link.target.x, link.target.y);
+            const source = {
+                x: link.source._screenX ?? worldToScreen(link.source.x, link.source.y).x,
+                y: link.source._screenY ?? worldToScreen(link.source.x, link.source.y).y
+            };
+            const target = {
+                x: link.target._screenX ?? worldToScreen(link.target.x, link.target.y).x,
+                y: link.target._screenY ?? worldToScreen(link.target.x, link.target.y).y
+            };
             const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
             const isFocused = selectedNode && focusLinkKeys.has(link.key);
             const hasFocus = Boolean(selectedNode);
@@ -662,10 +696,10 @@
             // quiet, while high-strength and selected ego-network links remain
             // visually dominant. Type color is preserved for every edge.
             const strength = clamp(link.strength, 0.05, 1);
-            let alpha = 0.035 + Math.pow(strength, 1.7) * 0.26;
-            let width = 0.35 + Math.pow(strength, 1.45) * 2.25;
+            let alpha = 0.018 + Math.pow(strength, 1.8) * 0.36;
+            let width = 0.28 + Math.pow(strength, 1.42) * 2.6;
             if (hasFocus) {
-                alpha = isFocused ? 0.72 + strength * 0.22 : 0.018;
+                alpha = isFocused ? 0.7 + strength * 0.24 : 0.012;
                 width = isFocused ? width + 1.25 : Math.max(0.25, width * 0.45);
             }
 
@@ -693,8 +727,8 @@
 
         function drawNode(ctx, node, timestamp) {
             if (!node) return;
-            const point = worldToScreen(node.x, node.y);
-            const radius = Math.max(3.5, node.radius * Math.sqrt(scale));
+            const point = { x: node._screenX ?? worldToScreen(node.x, node.y).x, y: node._screenY ?? worldToScreen(node.x, node.y).y };
+            const radius = node._screenRadius ?? getScreenNodeRadius(node);
             const isSelected = selectedNode && selectedNode.id === node.id;
             const isNeighbor = focusNeighborIds.has(node.id);
             const isHovered = hoveredNode && hoveredNode.id === node.id;
@@ -728,7 +762,7 @@
             ctx.fill();
 
             if (isSelected || isHovered) {
-                const pulse = 1 + Math.sin(timestamp * 0.006) * 0.08;
+                const pulse = performance.now() < pulseUntil ? 1 + Math.sin(timestamp * 0.006) * 0.08 : 1;
                 ctx.globalAlpha = isSelected ? 0.9 : 0.55;
                 ctx.strokeStyle = isSelected ? '#ffffff' : color;
                 ctx.lineWidth = isSelected ? 2.2 : 1.4;
@@ -748,28 +782,33 @@
             ctx.restore();
         }
 
-        function drawLabels(ctx, visibleNodeIds) {
+        function drawLabels(ctx, frameNodes) {
+            const labelMode = getLabelMode();
+            if (labelMode === 'none') return;
+
             const labels = [];
-            visibleNodeIds.forEach(id => {
-                const node = nodeById.get(id);
-                if (!node || !shouldDrawLabel(node)) return;
+            frameNodes.forEach(node => {
+                if (!node || !shouldDrawLabel(node, labelMode)) return;
                 labels.push(node);
             });
 
             labels
                 .sort((a, b) => labelPriority(b) - labelPriority(a))
-                .slice(0, selectedNode ? 46 : 34)
+                .slice(0, getLabelLimit(labelMode))
                 .forEach(node => {
-                    const point = worldToScreen(node.x, node.y);
+                    const point = { x: node._screenX ?? worldToScreen(node.x, node.y).x, y: node._screenY ?? worldToScreen(node.x, node.y).y };
                     const isSelected = selectedNode && selectedNode.id === node.id;
                     const isNeighbor = focusNeighborIds.has(node.id);
                     const isHovered = hoveredNode && hoveredNode.id === node.id;
-                    const radius = Math.max(3.5, node.radius * Math.sqrt(scale));
-                    const label = node.ticker || node.name;
+                    const radius = node._screenRadius ?? getScreenNodeRadius(node);
+                    const rawLabel = getLabelText(node, labelMode);
+                    if (!rawLabel) return;
                     const alpha = selectedNode && !isSelected && !isNeighbor ? 0.25 : isNeighbor ? 0.82 : 0.72;
 
                     ctx.save();
-                    ctx.font = `${isSelected ? 12 : 10}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+                    const fontSize = labelMode === 'full' ? (isSelected ? 12 : 11) : (isSelected ? 12 : 10);
+                    ctx.font = `${fontSize}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
+                    const label = truncateLabel(ctx, rawLabel, labelMode === 'full' ? 220 : 82);
                     const width = ctx.measureText(label).width;
                     const x = point.x - width / 2;
                     const y = point.y + radius + 14;
@@ -787,13 +826,30 @@
                 });
         }
 
-        function shouldDrawLabel(node) {
+        function getLabelMode() {
+            if (scale < LABEL_TICKER_SCALE) return 'none';
+            if (scale < LABEL_FULL_SCALE) return 'ticker';
+            return 'full';
+        }
+
+        function getLabelText(node, labelMode) {
+            if (labelMode === 'full') return node.name || node.ticker || '';
+            return node.ticker || node.name || '';
+        }
+
+        function getLabelLimit(labelMode) {
+            if (labelMode === 'full') return selectedNode ? 68 : 54;
+            return selectedNode ? 52 : 36;
+        }
+
+        function shouldDrawLabel(node, labelMode) {
+            if (labelMode === 'none') return false;
             if (selectedNode && selectedNode.id === node.id) return true;
             if (hoveredNode && hoveredNode.id === node.id) return true;
-            if (selectedNode && focusNeighborIds.has(node.id) && (scale > 0.22 || node.degree >= 4)) return true;
-            if (scale > 0.7) return true;
-            if (scale > 0.4 && node.degree >= 6) return true;
-            return topLabelIds.has(node.id);
+            if (selectedNode && focusNeighborIds.has(node.id)) return true;
+            if (labelMode === 'full') return true;
+            if (scale > 0.68 && node.degree >= 2) return true;
+            return topLabelIds.has(node.id) || node.degree >= 6;
         }
 
         function labelPriority(node) {
@@ -812,6 +868,7 @@
                 focusLinkKeys.add(item.link.key);
             });
             showNodeDetails(node);
+            triggerPulse(PULSE_DURATION_MS);
             requestDraw();
         }
 
@@ -956,7 +1013,8 @@
         function filterGraph() {
             currentSector = document.getElementById('sector-filter').value;
             currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
-            if (selectedNode && !isNodeVisible(selectedNode)) clearSelection();
+            refreshVisibleGraph();
+            if (selectedNode && !visibleNodeIds.has(selectedNode.id)) clearSelection();
             requestDraw();
         }
 
@@ -965,12 +1023,13 @@
             currentSearch = '';
             document.getElementById('sector-filter').value = '';
             document.getElementById('search-input').value = '';
+            refreshVisibleGraph();
             clearSelection();
             fitGraph();
         }
 
         function fitGraph(animate = true) {
-            const visibleNodes = nodes.filter(isNodeVisible);
+            if (!visibleNodes.length) refreshVisibleGraph();
             if (!visibleNodes.length) return;
 
             const bounds = visibleNodes.reduce((acc, node) => ({
@@ -991,21 +1050,109 @@
             const nextOffsetY = canvasHeight / 2 - ((bounds.minY + bounds.maxY) / 2) * nextScale;
 
             if (!animate) {
-                scale = nextScale;
-                offsetX = nextOffsetX;
-                offsetY = nextOffsetY;
+                setView(nextScale, nextOffsetX, nextOffsetY);
                 requestDraw();
                 return;
             }
 
-            scale = nextScale;
+            animateView(nextScale, nextOffsetX, nextOffsetY, FIT_ANIMATION_MS);
+        }
+
+        function refreshVisibleGraph() {
+            visibleNodes = nodes.filter(isNodeVisible);
+            visibleNodeIds = new Set(visibleNodes.map(node => node.id));
+            visibleLinks = links.filter(link => visibleNodeIds.has(link.source.id) && visibleNodeIds.has(link.target.id));
+        }
+
+        function updateScreenCache() {
+            visibleNodes.forEach(node => {
+                const point = worldToScreen(node.x, node.y);
+                node._screenX = point.x;
+                node._screenY = point.y;
+                node._screenRadius = getScreenNodeRadius(node);
+            });
+        }
+
+        function isNodeInFrame(node) {
+            const radius = node._screenRadius || getScreenNodeRadius(node);
+            return node._screenX >= -FRAME_MARGIN - radius &&
+                node._screenX <= canvasWidth + FRAME_MARGIN + radius &&
+                node._screenY >= -FRAME_MARGIN - radius &&
+                node._screenY <= canvasHeight + FRAME_MARGIN + radius;
+        }
+
+        function shouldDrawLink(link) {
+            const isFocused = selectedNode && focusLinkKeys.has(link.key);
+            if (!isFocused && link.strength < getWeakEdgeThreshold()) return false;
+
+            const sourceX = link.source._screenX;
+            const sourceY = link.source._screenY;
+            const targetX = link.target._screenX;
+            const targetY = link.target._screenY;
+            const minX = Math.min(sourceX, targetX) - FRAME_MARGIN;
+            const maxX = Math.max(sourceX, targetX) + FRAME_MARGIN;
+            const minY = Math.min(sourceY, targetY) - FRAME_MARGIN;
+            const maxY = Math.max(sourceY, targetY) + FRAME_MARGIN;
+            return maxX >= 0 && minX <= canvasWidth && maxY >= 0 && minY <= canvasHeight;
+        }
+
+        function getWeakEdgeThreshold() {
+            if (scale < 0.3) return 0.42;
+            if (scale < 0.46) return 0.32;
+            if (scale < 0.62) return 0.2;
+            return 0;
+        }
+
+        function getScreenNodeRadius(node) {
+            return Math.max(3.5, node.radius * Math.sqrt(scale));
+        }
+
+        function setView(nextScale, nextOffsetX, nextOffsetY) {
+            cancelViewAnimation();
+            scale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
             offsetX = nextOffsetX;
             offsetY = nextOffsetY;
+        }
+
+        function animateView(nextScale, nextOffsetX, nextOffsetY, duration) {
+            cancelViewAnimation();
+            const startScale = scale;
+            const startOffsetX = offsetX;
+            const startOffsetY = offsetY;
+            const startedAt = performance.now();
+            const safeDuration = Math.max(1, duration || 1);
+
+            const step = now => {
+                const t = clamp((now - startedAt) / safeDuration, 0, 1);
+                const eased = 1 - Math.pow(1 - t, 3);
+                scale = startScale + (nextScale - startScale) * eased;
+                offsetX = startOffsetX + (nextOffsetX - startOffsetX) * eased;
+                offsetY = startOffsetY + (nextOffsetY - startOffsetY) * eased;
+                requestDraw();
+
+                if (t < 1) {
+                    viewAnimationHandle = requestAnimationFrame(step);
+                } else {
+                    viewAnimationHandle = null;
+                }
+            };
+
+            viewAnimationHandle = requestAnimationFrame(step);
+        }
+
+        function cancelViewAnimation() {
+            if (!viewAnimationHandle) return;
+            cancelAnimationFrame(viewAnimationHandle);
+            viewAnimationHandle = null;
+        }
+
+        function triggerPulse(duration = PULSE_DURATION_MS) {
+            pulseUntil = Math.max(pulseUntil, performance.now() + duration);
             requestDraw();
         }
 
         function getVisibleNodeIds() {
-            return new Set(nodes.filter(isNodeVisible).map(node => node.id));
+            return visibleNodeIds;
         }
 
         function isNodeVisible(node) {
@@ -1017,14 +1164,12 @@
         }
 
         function findNodeAt(screenX, screenY) {
-            const visibleIds = getVisibleNodeIds();
             let closest = null;
             let closestDistance = Infinity;
 
-            nodes.forEach(node => {
-                if (!visibleIds.has(node.id)) return;
+            visibleNodes.forEach(node => {
                 const point = worldToScreen(node.x, node.y);
-                const hitRadius = Math.max(14, node.radius * Math.sqrt(scale) + 9);
+                const hitRadius = Math.max(16, getScreenNodeRadius(node) + 10);
                 const distance = Math.hypot(point.x - screenX, point.y - screenY);
                 if (distance <= hitRadius && distance < closestDistance) {
                     closest = node;
@@ -1149,6 +1294,23 @@
             ctx.arcTo(x, y + height, x, y, r);
             ctx.arcTo(x, y, x + width, y, r);
             ctx.closePath();
+        }
+
+        function truncateLabel(ctx, text, maxWidth) {
+            if (ctx.measureText(text).width <= maxWidth) return text;
+            const ellipsis = '...';
+            let low = 0;
+            let high = text.length;
+            while (low < high) {
+                const mid = Math.ceil((low + high) / 2);
+                const candidate = text.slice(0, mid) + ellipsis;
+                if (ctx.measureText(candidate).width <= maxWidth) {
+                    low = mid;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            return text.slice(0, low).trimEnd() + ellipsis;
         }
 
         function escapeHtml(value) {

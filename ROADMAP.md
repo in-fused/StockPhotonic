@@ -139,6 +139,11 @@ Users understand not just direct connections, but which companies move together 
 **Goal**: Reliable, automated, transparent SEC-first data pipeline + persistence for watchlists/notes after the real static dataset is credible.
 
 **Tasks**:
+- [x] **Source Registry + Candidate Ingestion Foundation**
+  - Added `docs/SOURCE_REGISTRY.md` as the source-type, source-tier, relationship-category, and metadata contract for future ingestion.
+  - Added empty candidate files under `data/candidates/` so future expansion can stage records outside production data.
+  - Added dry-run-only candidate ingestion validation that separates source-backed candidates from durable graph writes.
+  - Preserved the manual review requirement before any candidate becomes production data.
 - [ ] Phase A: Build a source registry and ingestion backlog with source tiers, relationship categories, required metadata, review status, and validation expectations.
 - [ ] Phase B: Add a ticker universe from official or exchange-sourced listings as candidate records, not direct production company writes.
 - [ ] Phase C: Add an SEC filings fetch/cache layer using official SEC APIs, fair-access request behavior, proper identifying `User-Agent`, retries/backoff, and local caching.
@@ -163,6 +168,8 @@ Users understand not just direct connections, but which companies move together 
 - [ ] Add "Data Freshness" dashboard (last successful ingest, % edges <30 days old, pending verifications).
 
 **Deliverable**: You can build reviewed, source-backed candidate graph updates from SEC and official-source inputs. Friends can suggest connections that appear only after source capture, validation, and manual review.
+
+**Candidate Layer Rule**: `data/candidates/` is a staging area only. Candidate records can be loaded, validated, and previewed by scripts, but production data remains unchanged until a future reviewed writer is explicitly implemented. The intended flow is SEC-first source discovery -> candidate JSON -> dry-run validation -> manual review -> production validation -> durable write.
 
 ---
 

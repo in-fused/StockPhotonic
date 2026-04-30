@@ -145,9 +145,39 @@ Guardrails:
 - Large expansions should start in candidate files, not directly in production data.
 - Manual review remains required before durable dataset writes.
 
+### Candidate Layer And Ingestion Flow
+
+The repo now has a candidate staging layer for future source-backed expansion:
+
+- `data/candidates/candidate_companies.json`
+- `data/candidates/candidate_connections.json`
+- `docs/SOURCE_REGISTRY.md`
+- `scripts/build_source_registry.py`
+- `scripts/ingest_candidates.py`
+
+Candidate files are intentionally separate from production data. They can hold future source-backed records while `data/companies.json` and `data/connections.json` remain curated, reviewed production files.
+
+Current candidate ingestion flow:
+
+```text
+SEC or official source -> candidate JSON -> scripts/ingest_candidates.py dry run -> manual review -> future production writer
+```
+
+Current safeguards:
+
+- Candidate files start empty; no companies or connections were added.
+- `scripts/ingest_candidates.py` validates source URL, ticker format, source tier, source type, relationship type, duplicate relationships, review status, dates, confidence candidate, and signal score.
+- Promotion is simulation-only. The script prints a preview and never writes `data/companies.json` or `data/connections.json`.
+- A candidate can only be previewed for promotion when both tickers already exist in `data/companies.json`.
+- Candidate relationship types are broader than current production connection types; only currently supported production types can pass promotion validation.
+- Manual review remains required before any durable dataset write.
+
 ### Data Layer
 - Keep `companies.json` + `connections.json` as core
-- Future candidate files, do not add until explicitly needed:
+- Candidate staging files:
+  - `data/candidates/candidate_companies.json`
+  - `data/candidates/candidate_connections.json`
+- Future optional data files, do not add until explicitly needed:
   - `etfs.json`
   - `crypto.json`
   - `industry_groups.json`

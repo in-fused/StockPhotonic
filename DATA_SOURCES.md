@@ -1,142 +1,258 @@
 # StockPhotonic Data Sources & Provenance
 
-**Last Updated**: April 28, 2026
+**Last Updated**: April 30, 2026
 
-**Core Principle**: Every connection in the dataset must be traceable to a verifiable public source. No black-box data. No "trust us" edges.
+**Current Version**: v5.4 / Phase 1
 
----
+**Current Dataset**: 300 companies and 600 connections loaded from static JSON files:
 
-## Tier 1: Primary Sources (Highest Confidence – Used for Core Dataset)
+- `data/companies.json`
+- `data/connections.json`
 
-### 1. Financial Modeling Prep (FMP) – Free Tier
-- **What**: Company profiles, market caps (daily), M&A transactions, financial statements.
-- **Usage**: Live prices/market caps, historical M&A dates, basic descriptions.
-- **Update Cadence**: Daily via API (250 calls/day free – sufficient).
-- **Access**: https://financialmodelingprep.com/developer/docs
-- **Limitations**: M&A coverage good but not exhaustive for small deals.
-
-### 2. OpenCorporates Relationships + API
-- **What**: 30M+ subsidiary, control, and ownership relationships extracted from SEC EDGAR, UK Companies House, and 140+ global registries.
-- **Usage**: Parent → subsidiary edges (especially Exhibit 21 10-K filings for US public companies).
-- **Update Cadence**: Weekly bulk or on-demand API for top 200 tickers.
-- **Access**: https://opencorporates.com/ (free API key for light use; bulk paid but sample available).
-- **Example Edge**: `BRK.B → KO` (Berkshire's long-term control stake via 13F + direct ownership disclosures).
-
-### 3. Corporate Ownership Data (corporateownershipdata.com)
-- **What**: Free, researcher-curated dataset of control and shareholdings in all US public firms (S&P 500 focus).
-- **Usage**: Common ownership patterns (e.g., Vanguard/BlackRock stakes creating "invisible" links between competitors).
-- **Access**: Direct download from site (S&P 500 files available as of 2026).
-- **Example**: Universal ownership metrics between NVDA, MSFT, GOOGL via large index fund overlap.
-
-### 4. SEC EDGAR + CorpWatch EX-21 (via OpenSanctions)
-- **What**: Parsed Exhibit 21 subsidiary lists from every US public company's 10-K.
-- **Usage**: Clean subsidiary trees for conglomerates (BRK, GE, etc.).
-- **Access**: https://www.opensanctions.org/datasets/us_corpwatch/ (JSON/Parquet dumps).
-- **Note**: Only companies/subs, no % ownership unless disclosed.
-
-### 5. Company 10-K / 10-Q / Earnings Transcripts (via FMP or SEC)
-- **What**: Supplier/customer disclosures in risk factors, MD&A, footnotes.
-- **Usage**: High-confidence supply chain edges (e.g., "NVIDIA relies on TSMC for advanced packaging" – direct quote).
-- **Example Sources**:
-  - NVDA 10-K: "We depend on a limited number of third-party manufacturers..."
-  - MU earnings: Explicit HBM revenue guidance tied to AI customers.
+**Core Principle**: Every connection should be traceable to a verifiable public source. The current v5.4 dataset is a Phase 1 static baseline and does not yet meet the future stricter source-link target for every edge.
 
 ---
 
-## Tier 2: Secondary / Curated Sources (High Confidence – Manually Verified)
+## Current Dataset Reality
 
-### Curated Supply Chain & Ecosystem Maps (2024-2026)
-- **Sources**: Company investor presentations, earnings call transcripts (verbatim), press releases, reputable journalism (Bloomberg, WSJ, Reuters, The Information).
-- **Examples**:
-  - NVDA ↔ TSLA: "We are using NVIDIA DRIVE Orin and Thor for next-gen vehicles" – Tesla AI Day + NVDA GTC keynotes.
-  - AMZN ↔ NVDA: AWS Inferentia/Trainium + massive GPU clusters for Bedrock/SageMaker.
-  - LLY ↔ UNH: Formulary inclusion of Mounjaro/Zepbound + UNH 10-K pharmacy benefit manager notes.
-- **Process**: Every edge manually reviewed by project maintainer. Confidence = 4 or 5 only.
+The Phase 1 app is a static Canvas prototype. It loads company and connection data directly from JSON in the browser. There is no backend, no live ingestion, and no automatic data refresh in the current app.
 
-### Board Interlocks (Future – Currently Limited)
-- **Current Status**: Not in core dataset (hard to parse at scale without paid BoardEx).
-- **Plan**: Use SEC proxy statements (DEF 14A) for top 50 companies. Parse "Director Compensation" and "Related Person Transactions" sections.
-- **Tooling**: `sec-api.io` Directors & Board Members API (free tier available).
+### `data/companies.json`
 
----
+Current company records use these fields:
 
-## Tier 3: Experimental / Inferred (Lower Confidence – Clearly Flagged)
-
-- **AI/Tech Ecosystem Inferences**: "Both companies are in the CUDA + PyTorch stack" → low-strength `ecosystem` edge with confidence 2 and explicit warning "Inferred from public technology stack overlap – not a formal partnership."
-- **Competitor-Collab**: Rare cases where rivals have joint ventures (e.g., certain auto tech consortia).
-- **Never Include**: Pure speculation, Twitter rumors, unverified analyst notes.
-
-**Rule**: Experimental edges are hidden by default. User must toggle "Show inferred connections".
-
----
-
-## Data Quality Metrics (Target for v1.0)
-
-| Metric                        | Target | Current (v0.9) | How Measured |
-|-------------------------------|--------|----------------|--------------|
-| % edges with confidence ≥4    | ≥85%   | ~70%           | Validation script |
-| % edges verified <60 days     | ≥70%   | 100% (manual)  | `verified_date` field |
-| Orphan nodes (no connections) | 0      | 2              | Build script |
-| Duplicate edges               | 0      | 0              | Hash check |
-| Source URL present            | 100%   | 65%            | Schema enforcement |
-
-**Validation Script** (`scripts/validate_connections.py`):
-- Rejects any edge with confidence <3 for core dataset.
-- Flags edges >90 days old.
-- Checks referential integrity (source/target IDs exist).
-- Computes graph health: connected components, diameter, average degree.
-
----
-
-## Update Cadence & Automation
-
-| Data Type           | Frequency | Method                  | Owner     |
-|---------------------|-----------|-------------------------|-----------|
-| Market Caps / Prices| Daily     | FMP API                 | Cron      |
-| New M&A             | Daily     | FMP M&A endpoint        | Cron      |
-| Subsidiaries        | Weekly    | OpenCorporates API      | Manual review first 3 months |
-| Curated Supply/Partnerships | Bi-weekly | Manual + transcript NLP | Maintainer |
-| Board Interlocks    | Quarterly | Proxy parsing           | Maintainer |
-| Full Rebuild        | Monthly   | `build_graph.py`        | Maintainer |
-
-**GitHub Action** (future): Runs validation + rebuild on every push to `data/` + nightly for prices.
-
----
-
-## Known Gaps & Future Data Layers (Paid or Complex)
-
-1. **FactSet Revere Supply Chain** – Best-in-class % revenue dependency. ~$ expensive. Consider for v2.5 if project gains traction.
-2. **S&P Global Company Relationships** – 8M+ relationships. Paid.
-3. **Bloomberg Supply Chain** – Enterprise level.
-4. **BoardEx / Equilar** – Director interlocks with full bios. Very valuable for "trust networks" but costly.
-5. **NLP on 10-K Risk Factors** – Auto-extract supplier mentions (e.g., "sole source" language). Requires LLM fine-tuning or heavy regex + human review.
-
-**For Now**: We stay 100% free/open + manual curation for the highest-signal edges (AI infra, Berkshire, payments, pharma payers). This is actually an advantage – our data is more transparent and focused than black-box commercial datasets.
-
----
-
-## How to Contribute Data (for Friends)
-
-1. Open an issue with title `DATA: New connection NVDA ↔ XYZ`.
-2. Include: Type, strength estimate, source URL or filing citation, one-sentence justification.
-3. Maintainer reviews within 48h. If accepted → added with your attribution in `provenance.md`.
-
-**Example Good Contribution**:
-```
-NVDA → ARM (partnership, strength 0.75)
-Source: NVIDIA GTC 2026 keynote + ARM press release "NVIDIA and ARM expand collaboration on AI accelerators"
-Justification: ARM IP in NVIDIA's next-gen Grace-Blackwell superchips; strategic for both in AI edge.
-Confidence: 5
+```json
+{
+  "id": 1,
+  "ticker": "NVDA",
+  "name": "NVDA Company 1",
+  "sector": "Semiconductors",
+  "industry": "Semiconductors Industry",
+  "market_cap": 4.367,
+  "rank": 1,
+  "color": "#00f9ff"
+}
 ```
 
+### `data/connections.json`
+
+Current connection records use these fields:
+
+```json
+{
+  "source": 27,
+  "target": 139,
+  "type": "supply",
+  "strength": 0.82,
+  "label": "Supply relationship",
+  "confidence": 4,
+  "provenance": "SEC filings, earnings calls, news",
+  "verified_date": "2026-04-28"
+}
+```
+
+Important current-field notes:
+
+- `source` and `target` are numeric company IDs from `data/companies.json`.
+- The current dataset uses `provenance`, not `source_url`.
+- `provenance` is currently a short citation summary, not a per-edge URL.
+- `verified_date` is present on current edges and should remain present.
+- `confidence` is an integer score from 1 to 5. Phase 1 core edges are expected to be 3 to 5.
+- `strength` is a numeric score from 0 to 1.
+
+### Current Allowed Connection Types
+
+The current v5.4 dataset uses:
+
+- `supply`
+- `partnership`
+- `ecosystem`
+- `competitor`
+- `investment`
+
+Future schema versions may add `subsidiary`, `board_interlock`, and `mna`, but those are not present in the current static dataset.
+
 ---
 
-## Legal & Attribution
+## Future Stricter Provenance Target
 
-- All data derived from public SEC filings, company disclosures, and open registries.
-- StockPhotonic does **not** redistribute raw bulk datasets. We only surface curated, high-signal subsets with links back to sources.
-- If you use this for investment decisions: This is **not financial advice**. Data is for informational and research purposes. Always verify with primary sources.
+The long-term target is stricter than the current Phase 1 data:
+
+- Keep `provenance` as a concise human-readable source summary.
+- Add `source_url` for each edge when a stable filing, press release, transcript, or article URL is available.
+- Prefer primary-source URLs from SEC filings, company investor relations pages, earnings transcripts, and official press releases.
+- Use reputable secondary sources only when primary sources are unavailable or when the edge reflects market/ecosystem context.
+- Keep low-confidence inferred edges out of the core dataset or clearly flag them as experimental.
+
+Recommended future connection shape:
+
+```json
+{
+  "source": 1,
+  "target": 15,
+  "type": "supply",
+  "strength": 0.91,
+  "label": "HBM memory relationship",
+  "confidence": 5,
+  "provenance": "Company filings and earnings call references",
+  "source_url": "https://example.com/source",
+  "verified_date": "2026-04-20",
+  "notes": "Optional maintainer notes"
+}
+```
+
+`source_url` is therefore a recommended future enhancement, not a field that exists in the current v5.4 dataset.
 
 ---
 
-**Questions?** Open an issue or DM the maintainer. This document is the single source of truth for data philosophy.
+## Confidence And Verification Expectations
+
+Current Phase 1 expectations:
+
+- `confidence` must be present on every connection.
+- `confidence` must be an integer from 1 to 5.
+- Core Phase 1 data should use confidence 3 to 5.
+- `verified_date` must be present on every connection.
+- `verified_date` should use ISO date format: `YYYY-MM-DD`.
+- `provenance` must be present and non-empty on every connection.
+
+Confidence guide:
+
+| Score | Meaning |
+|-------|---------|
+| 5 | Direct primary-source support, such as SEC filing, company disclosure, official press release, or earnings transcript. |
+| 4 | Strong public support from a reliable source, or multiple reinforcing sources. |
+| 3 | Plausible curated relationship with public support, acceptable for Phase 1 but should be improved over time. |
+| 2 | Inferred relationship. Future experimental layer only, not core by default. |
+| 1 | Weak or speculative. Do not include in the core dataset. |
+
+---
+
+## Validation Plan
+
+Dataset validation should check the static JSON files before UI or data-expansion work continues.
+
+Required checks:
+
+- No orphan connections: every connection must point to existing company IDs.
+- No duplicate edges for the same unordered source/target/type combination.
+- Valid `source` and `target` company IDs.
+- `source` and `target` must not be the same company.
+- Valid `strength` range: 0 to 1.
+- Valid `confidence` range: 1 to 5.
+- Phase 1 core confidence should be 3 to 5.
+- `verified_date` present and formatted as `YYYY-MM-DD`.
+- `provenance` present and non-empty.
+- `type` is in the allowed current list: `supply`, `partnership`, `ecosystem`, `competitor`, `investment`.
+
+Recommended warning checks:
+
+- Companies with no connections should be reported as graph-health warnings.
+- Missing optional future fields, such as `source_url`, should not fail the current v5.4 dataset.
+- Stale `verified_date` values should eventually be warnings until the source refresh workflow is automated.
+
+Run:
+
+```bash
+python scripts/validate_data.py
+```
+
+The validator uses only the Python standard library and does not modify data files.
+
+---
+
+## Source Tiers For Future Curation
+
+### Tier 1: Primary Sources
+
+Preferred for high-confidence edges:
+
+- SEC EDGAR filings, including 10-K, 10-Q, 8-K, DEF 14A, and Exhibit 21 subsidiary lists.
+- Company investor relations pages.
+- Official company press releases.
+- Earnings call transcripts and investor presentations.
+- Public regulatory filings and exchange disclosures.
+
+### Tier 2: Reliable Secondary Sources
+
+Useful when primary documents are unavailable or when context is broader than a direct filing:
+
+- Reuters
+- Bloomberg
+- Wall Street Journal
+- Financial Times
+- The Information
+- Reputable industry publications with clear sourcing
+
+### Tier 3: Experimental Or Inferred
+
+Use only outside the default core dataset unless clearly flagged:
+
+- Technology stack overlap.
+- Broad platform ecosystem proximity.
+- Analyst commentary without primary-source confirmation.
+- NLP-suggested edges pending human review.
+
+Never include pure speculation, social media rumors, or unverified analyst notes as core data.
+
+---
+
+## Update Cadence Target
+
+The current Phase 1 dataset is static and manually updated. Future automation can use this target cadence:
+
+| Data Type | Target Frequency | Method |
+|-----------|------------------|--------|
+| Company profile basics | Monthly or on demand | Static JSON rebuild or API-assisted script |
+| Market caps and prices | Daily when live data is introduced | API-backed future layer |
+| New M&A | Daily or weekly | Filing/API review |
+| Subsidiaries | Quarterly | SEC Exhibit 21 / OpenCorporates / CorpWatch review |
+| Curated relationships | Bi-weekly | Manual review with source capture |
+| Full validation | Every data change | `scripts/validate_data.py` or successor |
+
+---
+
+## Known Gaps
+
+- The current dataset has `provenance` summaries but not edge-level `source_url` values.
+- The current company names and connection labels are Phase 1 placeholders in many records.
+- There is no automated source refresh or stale-edge review workflow yet.
+- There is no provenance UI in the graph yet.
+- The static dataset should be validated and stabilized before adding ETFs, crypto, options flow, earnings data, or larger market coverage.
+
+---
+
+## Contribution Expectations
+
+For a proposed new connection, include:
+
+- Source company ticker or ID.
+- Target company ticker or ID.
+- Connection type.
+- Strength estimate from 0 to 1.
+- Confidence score from 1 to 5.
+- `provenance` summary.
+- `source_url` when available.
+- `verified_date`.
+- One-sentence justification.
+
+Example future contribution:
+
+```text
+NVDA -> MU
+type: supply
+strength: 0.80
+confidence: 5
+provenance: NVIDIA and Micron earnings-call commentary on HBM demand
+source_url: https://example.com/source
+verified_date: 2026-04-20
+justification: Micron supplies high-bandwidth memory used in AI accelerator systems.
+```
+
+---
+
+## Legal And Attribution
+
+- Data should be derived from public filings, company disclosures, public registries, and reputable published sources.
+- StockPhotonic should not redistribute proprietary bulk datasets.
+- This project is for informational and research use only. It is not financial advice.

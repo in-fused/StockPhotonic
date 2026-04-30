@@ -77,12 +77,12 @@ StockPhotonic/
 │   ├── companies.json            # 100-200 core nodes (expandable)
 │   ├── connections.json          # 300-1000 high-quality edges
 │   ├── sectors.json
-│   └── provenance.md             # How each connection was sourced
+│   └── provenance.md             # Future detailed source index
 ├── scripts/                      # ETL & maintenance (Python)
 │   ├── ingest_fmp.py             # Market caps, M&A via FinancialModelingPrep
 │   ├── ingest_opencorporates.py  # Subsidiaries from OpenCorporates API
 │   ├── build_graph.py            # Validate, compute centrality, export JSON
-│   └── validate_connections.py   # Confidence scoring rules
+│   └── validate_data.py          # Static JSON integrity checks
 ├── lib/                          # Shared utils
 │   ├── graph.ts                  # Centrality, community detection (via networkx WASM or API)
 │   └── utils.ts
@@ -133,22 +133,21 @@ StockPhotonic/
 ```json
 [
   {
-    "id": 42,
-    "source_id": 1,           // NVDA
-    "target_id": 15,          // MU
-    "type": "supply",         // supply | subsidiary | partnership | investment | board_interlock | mna | ecosystem | competitor
+    "source": 1,              // NVDA company id
+    "target": 15,             // MU company id
+    "type": "supply",         // current: supply | partnership | investment | ecosystem | competitor
     "strength": 0.91,         // 0-1 (revenue dependency or strategic importance)
     "label": "HBM memory for Blackwell GPUs",
     "confidence": 5,          // 1-5 (5 = primary source doc, 1 = inferred)
-    "source": "NVIDIA earnings call + Micron 10-K supplier disclosure",
-    "source_url": "https://...",
-    "verified_date": "2026-04-20",
-    "notes": "Critical for HBM3E ramp; 40%+ of MU's high-margin revenue tied to NVDA"
+    "provenance": "NVIDIA earnings call + Micron 10-K supplier disclosure",
+    "verified_date": "2026-04-20"
   }
 ]
 ```
 
-**Connection Types** (expand as data grows):
+Current Phase 1 data uses `source`/`target` numeric IDs and `provenance` summaries. `source_url`, `notes`, and additional connection types are future schema enhancements, not required by the current static dataset.
+
+**Connection Types** (current plus future expansion):
 - `supply` – Tier-1 supplier (with % revenue if known)
 - `subsidiary` – Majority ownership (>50%)
 - `investment` – Significant stake (e.g., BRK 9% KO)
@@ -159,7 +158,7 @@ StockPhotonic/
 - `competitor` – Direct rival with known collab (rare but useful)
 
 **Provenance Rules** (enforced in validation script):
-- Every edge must have `source` + `confidence >= 3` for core dataset.
+- Every edge must have `provenance`, `verified_date`, and `confidence >= 3` for the core dataset.
 - Auto-flag edges >90 days old for re-verification.
 - "Inferred" edges (e.g., "likely supplier because both in AI stack") have confidence 2 and visible warning.
 
@@ -223,7 +222,7 @@ StockPhotonic/
 
 1. **Local**: `npm run dev` – hot reloads, live graph updates from `data/*.json`.
 2. **Data Update**: Edit JSON manually (for now) or run `python scripts/ingest_*.py`.
-3. **PR Flow**: Every PR must pass `validate_connections.py` (no orphan edges, confidence >=3 for new core data, no duplicates).
+3. **PR Flow**: Every PR touching `data/` must pass `python scripts/validate_data.py` (valid source/target IDs, no duplicate edges, confidence >=3 for core data, provenance and verified dates present).
 4. **Deployment**: Vercel previews on every PR. Main branch auto-deploys to production.
 
 ---

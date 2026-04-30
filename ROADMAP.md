@@ -55,10 +55,19 @@
 - [x] Keep the dataset small enough to manually review: 60 real companies and 117 curated edges.
 - [x] Strengthen `scripts/validate_data.py` to fail duplicate tickers, synthetic ticker suffixes, placeholder names, and generic labels.
 - [ ] Add edge-level source URLs for the highest-impact supply, partnership, and investment relationships. _(in progress: Phase 2.1)_
+- [x] Document the current raw-input signal pipeline from `scripts/generate_signals.py` through `scripts/enrich_connections.py`, `scripts/validate_data.py`, and `data/connections.json`.
+- [x] Add source tiering and `signal_score` concepts for candidate signal prioritization.
+- [x] Add ingestion controls for generated signals: `--from-signals`, `--dry-run`, `--min-signal-score`, `--min-strength`, and `--types`.
 - [x] Add provenance UI so users can inspect confidence, verified date, and source summary from the graph.
 - [ ] Review top AI/semiconductor, healthcare/PBM, payments, and Berkshire edges before expanding the node count.
 
 **Deliverable**: StockPhotonic presents only real companies in the core dataset. Data credibility is the gate before feature expansion, larger market coverage, ETFs, crypto, options flow, earnings, auth, backend work, or framework migration.
+
+**Current Pipeline**: `RAW INPUT -> scripts/generate_signals.py -> signal_score/source_meta -> scripts/enrich_connections.py -> scripts/validate_data.py -> data/connections.json`.
+
+`signal_score` is an ingestion-quality score based on source tier and keyword strength. It helps prioritize and filter candidate signals before dataset writes. `confidence` is the persisted connection credibility score and remains based on structural validation rules; optional `signal_score` can only adjust the result after the base confidence logic has run.
+
+**Current Next Priority**: Build toward reputable-source ingestion using SEC filings, company releases, official announcements, partner pages, and reputable news as raw inputs while keeping validation strict and reviewable.
 
 ---
 

@@ -94,6 +94,79 @@ Do not add guessed, placeholder, or fabricated URLs. If a defensible direct URL 
 
 ---
 
+## Current Signal Ingestion And Scoring Pipeline
+
+The current pipeline is intentionally staged so raw source evidence is separated from curated dataset writes:
+
+```text
+RAW INPUT -> scripts/generate_signals.py -> signal_score/source_meta -> scripts/enrich_connections.py -> scripts/validate_data.py -> data/connections.json
+```
+
+Current scripts:
+
+- `scripts/generate_signals.py` converts raw text/source inputs into structured candidate signals with tickers, relationship type, label, strength, `source_meta`, and `signal_score`.
+- `scripts/enrich_connections.py` safely converts vetted candidate signals into dataset connection records, supports dry runs and filtering, rejects duplicates, and validates the merged result before writing.
+- `scripts/validate_data.py` validates the static JSON dataset and computes expected confidence from structural evidence, with optional `signal_score` adjustment when present.
+
+Important distinction:
+
+- `signal_score` measures the quality and priority of an ingestion signal before it becomes a curated connection. It is based on source tier and keyword strength.
+- `confidence` measures the credibility of a persisted dataset connection. It is still grounded in structural evidence such as type, source URLs, and strength.
+- `signal_score` can influence confidence only after the base confidence logic runs. It cannot determine confidence by itself.
+- `source_meta` belongs to generated candidate signals and records the source type and tier used to score the signal. It is not required in the current static dataset.
+
+Source tier mapping for generated signals:
+
+| Source type | Tier |
+|-------------|------|
+| `sec_filing` | 1 |
+| `company_release` | 1 |
+| `announcement` | 1 |
+| `news` | 2 |
+| `partner_page` | 2 |
+| `unknown` | 3 |
+
+Signal score rules:
+
+- Tier 1 base score: `0.9`
+- Tier 2 base score: `0.75`
+- Tier 3 base score: `0.6`
+- Strong keywords add `0.05`.
+- Moderate keywords do not change the base score.
+- Scores are clamped between `0.6` and `0.95`.
+
+Confidence interaction:
+
+- Existing confidence rules run first.
+- Optional `signal_score >= 0.9` can upgrade confidence from `4` to `5`.
+- Optional `signal_score <= 0.65` can downgrade confidence from `4` or `5` to `3`.
+- Confidence remains clamped between `3` and `5` for core Phase 2 data.
+- Missing `signal_score` is ignored and does not invalidate data.
+
+Useful ingestion and validation commands:
+
+```bash
+python scripts/generate_signals.py --preview
+python scripts/enrich_connections.py --from-signals --dry-run
+python scripts/enrich_connections.py --from-signals --dry-run --min-signal-score 0.8
+python scripts/enrich_connections.py --from-signals --dry-run --min-strength 0.7 --types supply,partnership
+python scripts/validate_data.py
+python scripts/validate_data.py --strict-confidence
+```
+
+CLI concepts:
+
+- `--from-signals` tells `enrich_connections.py` to use generated candidate signals instead of the static `NEW_CONNECTIONS` list.
+- `--dry-run` prints the result without modifying `data/connections.json`.
+- `--min-signal-score` filters generated signals before ingestion based on source quality and keyword score.
+- `--min-strength` filters generated signals before ingestion based on relationship strength.
+- `--types` filters generated signals to specific allowed connection types.
+- `--strict-confidence` makes validator confidence mismatches fail instead of reporting warnings.
+
+Current next priority: build toward reputable-source ingestion using SEC filings, company releases, official announcements, partner pages, and reputable news as raw inputs while keeping validation strict and dataset writes reviewable.
+
+---
+
 ## Future Stricter Provenance Target
 
 The long-term target is stricter than the current Phase 2 data:

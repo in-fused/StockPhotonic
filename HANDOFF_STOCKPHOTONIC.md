@@ -45,6 +45,29 @@ You want to expand far beyond the initial “Top 500” scope:
 
 ## 3. Technical Architecture Recommendations
 
+### Current Data Quality Pipeline
+
+The current baseline has moved away from generated placeholder data and toward a smaller, validated static dataset. Keep this pipeline intact when adding data:
+
+```text
+RAW INPUT -> scripts/generate_signals.py -> signal_score/source_meta -> scripts/enrich_connections.py -> scripts/validate_data.py -> data/connections.json
+```
+
+Current scripts:
+
+- `scripts/generate_signals.py` parses raw evidence into candidate signals and assigns `source_meta` plus `signal_score`.
+- `scripts/enrich_connections.py` ingests vetted candidates, supports `--from-signals`, `--dry-run`, `--min-signal-score`, `--min-strength`, and `--types`, skips duplicates, and validates before writing.
+- `scripts/validate_data.py` validates companies and connections, computes expected confidence, and supports `--strict-confidence`.
+
+Current concepts:
+
+- Source tiers rank raw signal credibility: Tier 1 for SEC filings, company releases, and announcements; Tier 2 for reputable news and partner pages; Tier 3 for unknown sources.
+- `signal_score` is a pre-ingestion quality and priority score. It helps filter candidate signals and may adjust confidence only after base confidence rules run.
+- `confidence` is the persisted connection credibility score. It remains grounded in structural evidence such as connection type, source URLs, and strength.
+- Missing `signal_score` must not invalidate existing dataset records.
+
+Current next priority: build toward reputable-source ingestion using SEC filings, company releases, official announcements, partner pages, and reputable news as raw inputs while keeping validation strict.
+
 ### Data Layer
 - Keep `companies.json` + `connections.json` as core
 - Add new files:

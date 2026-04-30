@@ -2,7 +2,7 @@
 
 **Date:** April 29, 2026  
 **Repo:** https://github.com/in-fused/StockPhotonic  
-**Current Version:** v6.0 / Immersive Default Experience + Ambient Orbit Mode
+**Current Version:** v6.1 / Industry Correlation Engine
 **Status:** Current main uses a smaller credible static dataset: 60 real companies and 117 curated connections. Immediate work should stay focused on user-facing product intelligence, graph exploration, source coverage, and reviewable industry-group foundations.
 
 ---
@@ -21,6 +21,8 @@
 - Wheel zoom is more responsive while staying cursor-centered and respecting the existing min/max scale limits
 - The graph container now includes subtle visible-node, visible-edge, layout, Focus Mode, threshold, and Orbit status overlay stats
 - The default dashboard derives top hubs, strongest connections, sector distribution, industry-group distribution, trust summary, and exploration chips from the loaded static dataset
+- The default dashboard now includes Top Industry Correlations derived from existing loaded graph edges only
+- Selected-node sidebar context can summarize the selected node's derived industry group correlation, connected adjacent groups, strongest adjacent group, and cross-group bridge status
 - Basic force-directed graph rendering
 - Validation scripts help reject placeholder companies, fake tickers, duplicate edges, generic labels, and malformed source URLs
 
@@ -28,7 +30,7 @@
 - User-facing product intelligence and graph exploration need to become easier to read and act on
 - Larger-scale graph readability and performance still need continued improvement as the dataset grows
 - Edge-level source URL coverage is partial and should improve before major dataset expansion
-- Industry-group derivation is transitional; normalized schema fields, source-backed correlation records, and validation rules are still future work
+- Industry-group derivation and correlation analysis are transitional; normalized schema fields, source-backed correlation records, and validation rules are still future work
 
 ---
 
@@ -51,6 +53,9 @@ This now has a transitional static-app foundation, but normalized product data r
 - Phase 2.2 derives industry group from existing `sector`, `industry`, `name`, and `ticker` fields in `index.html`; it is not stored in `data/companies.json`.
 - Example healthcare industry groups: Pharmaceuticals, Insurance / Managed Care, PBM / Pharmacy Benefits, MedTech, and Life Sciences Tools.
 - Current sidebar correlation summaries use only existing graph edges and do not add new factual claims, new URLs, or new relationships.
+- Current Industry Correlation Engine ranks unordered industry-group pairs by current edge count, average strength, and high-confidence edge count. It also exposes involved tickers and dominant connection type from existing edges only.
+- It does not introduce new claims, source records, schema fields, or data relationships.
+- Future normalized `industry_group` schema and source-backed correlation records remain later work.
 - Future correlation intelligence may compare relationships between industry groups inside a sector or adjacent ecosystem, such as Pharmaceuticals <-> Insurance / PBM, Semiconductors <-> Cloud Infrastructure, Energy Producers <-> Oilfield Services, Retail <-> Payments Networks, and Aerospace OEMs <-> Suppliers.
 - Future small-company / IPO discovery should surface smaller companies, newer IPOs, and under-followed names benefiting from large-cap ecosystems through source-backed signals such as supplier exposure, platform dependency, government funding support, strategic partnerships, customer concentration, and ecosystem adjacency.
 - Future government / policy relationship planning may cover public funding, grants, contracts, subsidies, regulation, defense exposure, healthcare reimbursement, energy policy, and industrial policy connections. Keep this planning-only until public sources and validation rules support each relationship.
@@ -64,6 +69,13 @@ This now has a transitional static-app foundation, but normalized product data r
 6. **Time-Series / Historical View** — See how connections evolved over time
 7. **Risk & Contagion Analysis** — Highlight potential systemic risk paths
 8. **Portfolio Nexus Score** — For any portfolio, show exposure to the broader photonic network
+
+### 3D / Sphere Exploration Mode (Planning Only)
+
+- Future visual upgrade; do not implement in the current static-app layer.
+- Goal: true globe-like or sphere-like rotation with manual drag orbit.
+- Current Orbit Mode is ambient 2D Canvas camera drift only.
+- Future implementation may use Canvas pseudo-3D projection or Three.js/WebGL after the current graph and data credibility layers are stable.
 
 ---
 
@@ -141,6 +153,7 @@ This polish layer is also implemented entirely in `index.html` and uses the exis
 - Orbit stops on pointer down, wheel zoom, node click, search jump, pan/drag, filters, threshold changes, reset, and fit actions. The Orbit toggle turns it back on or off.
 - Wheel zoom now uses bounded direct cursor-centered scaling for a faster feel while preserving `MIN_SCALE` and `MAX_SCALE`.
 - The default dashboard derives top hubs, strongest connections, sector mix, industry-group mix, and dataset trust summary from currently loaded data.
+- Top Industry Correlations are derived from existing visible or loaded edges and filter through the existing industry-group filter behavior.
 - Exploration chips apply existing sector or derived industry-group filters, then fit the graph.
 - No data files, scripts, schema fields, source URLs, or new relationship claims were added.
 

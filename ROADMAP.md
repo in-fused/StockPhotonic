@@ -38,6 +38,7 @@
 - [ ] Improve initial sector-aware layout with stronger spacing and bounded settling.
 - [x] Add an immersive first-load presentation: fit graph immediately, start Ambient Orbit Mode by default, and show graph overlay stats.
 - [x] Replace the empty default sidebar with a derived intelligence dashboard for top hubs, strongest connections, sector mix, industry-group mix, trust summary, and exploration chips.
+- [x] Add an Industry Correlation Engine that ranks cross-industry-group pairs from existing loaded graph edges only.
 - [x] Improve scroll zoom feel with higher bounded sensitivity and direct cursor-centered view updates.
 - [x] Add first-degree focus mode on node selection: selected node, neighbor nodes, connected edges, and hidden unrelated elements when Focus Mode is enabled.
 - [x] Add Graph Focus Mode + Signal Clarity System to reduce visual noise and increase decision clarity using only existing company and connection data.
@@ -59,6 +60,7 @@
 - Orbit stops as soon as the user interacts through pointer down, wheel zoom, node selection, search jump, filter controls, threshold controls, or reset/fit actions; the toggle lets users turn it back on.
 - Wheel zoom now uses a more responsive bounded sensitivity with direct cursor-centered updates, while preserving `MIN_SCALE` and `MAX_SCALE`.
 - The default sidebar dashboard uses only existing loaded companies and connections to derive top hubs, strongest connections, sector distribution, industry-group distribution, trust summary, and exploration chips.
+- The Industry Correlation Engine derives cross-industry-group pair rankings from the current static graph only. It uses existing edge count, average strength, high-confidence edge count, involved tickers, and dominant connection type; it does not create claims, data records, source URLs, or relationships.
 - The graph overlay reports visible nodes, visible edges, current layout mode, Focus Mode, active threshold, and Orbit status when active.
 - No data files, schema fields, source URLs, or factual relationship claims were added by this feature.
 
@@ -177,12 +179,15 @@ Users understand not just direct connections, but which companies move together 
 - Phase 2.2 derives `industryGroup` at runtime inside `index.html` from existing `sector`, `industry`, `name`, and `ticker` fields.
 - The derived value is not stored in `data/companies.json` and is not a normalized schema field yet.
 - Current sidebar correlation language is edge-derived from the existing static graph only. It does not add new factual company claims, URLs, or unsupported relationships.
+- The Industry Correlation Engine ranks unordered industry-group pairs from current graph edges by edge count, average strength, and high-confidence edge count.
+- The default dashboard can show the top derived industry correlations for the current visible graph, and selected-node context can summarize the selected node's derived industry group.
 
 **Planning Principles**:
 - Sector remains the broad category.
 - Industry group is the more specific derived group inside or near a sector.
 - Example healthcare industry groups: Pharmaceuticals, Insurance / Managed Care, PBM / Pharmacy Benefits, MedTech, and Life Sciences Tools.
 - Keep the current layer transitional until the schema, sources, and validation rules are ready for normalized industry-group data.
+- Future normalized `industry_group` schema and source-backed correlation records remain later work.
 
 **Future Capabilities**:
 - [ ] Compare relationships between industry groups inside a sector, such as Pharmaceuticals <-> Insurance / PBM.
@@ -195,6 +200,14 @@ Users understand not just direct connections, but which companies move together 
 - [ ] Require public, reviewable support before any government, policy, or ecosystem relationship becomes product data.
 
 **Placement**: The current implementation is a static-app foundation. Normalized schema fields, source-backed correlation records, and government/policy relation layers remain future work.
+
+### 3D / Sphere Exploration Mode (Planning Only)
+
+- Future visual upgrade, not part of the current implementation.
+- Goal: true globe-like or sphere-like rotation with manual drag orbit.
+- Current Orbit Mode is ambient 2D Canvas camera drift only.
+- Future implementation may use Canvas pseudo-3D projection or Three.js/WebGL.
+- Do not implement until the current static Canvas graph, derived intelligence, and data credibility layers remain stable.
 
 ---
 

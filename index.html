@@ -427,6 +427,9 @@
         const CLUSTER_MIN_STRENGTH = 0.35;
         const CLUSTER_SHARED_CONNECTION_MIN = 2;
         const CLUSTER_SECTION_LIMIT = 5;
+        const HIGH_CONFIDENCE_EDGE_MIN = 4;
+        const STRONG_INDUSTRY_CORRELATION_MIN_EDGE_COUNT = 2;
+        const STRONG_INDUSTRY_CORRELATION_MIN_AVG_STRENGTH = 0.72;
         const ORBIT_RADIUS_RATIO = 0.035;
         const ORBIT_MIN_RADIUS = 14;
         const ORBIT_MAX_RADIUS = 34;
@@ -1170,23 +1173,24 @@
             const isSelected = selectedNode && selectedNode.id === node.id;
             const isNeighbor = focusNeighborIds.has(node.id);
             const isClusterNode = Boolean(selectedNode) && activeClusterNodeIds.has(node.id) && !isSelected;
+            const isCorrelationHintNode = isIndustryCorrelationHintNode(node);
             const isHovered = hoveredNode && hoveredNode.id === node.id;
             const isSearchHighlighted = highlightedNodeId === node.id && performance.now() < highlightedNodeUntil;
             const industryDimmed = isNodeDimmedByIndustryGroup(node);
             const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
-            const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !industryMatched;
+            const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isCorrelationHintNode && !industryMatched;
             const isDimmed = focusDimmed || industryDimmed;
-            const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : 1;
+            const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : isCorrelationHintNode ? 0.78 : 1;
             const color = node.color || '#00f9ff';
 
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.shadowBlur = isSearchHighlighted ? 42 : isSelected ? 30 : isHovered ? 22 : isClusterNode ? 18 : 12;
+            ctx.shadowBlur = isSearchHighlighted ? 42 : isSelected ? 30 : isHovered ? 22 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
             ctx.shadowColor = color;
 
             const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
-            glow.addColorStop(0, `${hexToRgba(color, isClusterNode ? 0.9 : 0.82)}`);
-            glow.addColorStop(0.38, `${hexToRgba(color, isClusterNode ? 0.32 : 0.24)}`);
+            glow.addColorStop(0, `${hexToRgba(color, isClusterNode ? 0.9 : isCorrelationHintNode ? 0.86 : 0.82)}`);
+            glow.addColorStop(0.38, `${hexToRgba(color, isClusterNode ? 0.32 : isCorrelationHintNode ? 0.3 : 0.24)}`);
             glow.addColorStop(1, `${hexToRgba(color, 0)}`);
             ctx.fillStyle = glow;
             ctx.beginPath();
@@ -1241,6 +1245,15 @@
                 ctx.shadowColor = '#00f9ff';
                 ctx.beginPath();
                 ctx.arc(point.x, point.y, radius * 1.9, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (isCorrelationHintNode) {
+                ctx.globalAlpha = 0.24;
+                ctx.strokeStyle = '#f0abfc';
+                ctx.lineWidth = 0.9;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#ff00aa';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 1.55, 0, Math.PI * 2);
                 ctx.stroke();
             }
 
@@ -1446,6 +1459,13 @@
                 </div>
 
                 <div class="sidebar-section">
+                    <div class="sidebar-section-title">Top Industry Correlations</div>
+                    <div class="space-y-2">
+                        ${renderDashboardIndustryCorrelationList(stats.topIndustryCorrelations)}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
                     <div class="sidebar-section-title">Sector Distribution</div>
                     <div class="space-y-2">
                         ${renderDashboardDistribution(stats.sectorDistribution, stats.visibleNodeCount, '#67e8f9', 'rgba(0, 249, 255, 0.45)')}
@@ -1477,6 +1497,7 @@
             const strongestConnections = [...linksForStats]
                 .sort((a, b) => b.strength - a.strength || String(a.source.ticker || '').localeCompare(String(b.source.ticker || '')))
                 .slice(0, 5);
+            const topIndustryCorrelations = getIndustryGroupCorrelations(linksForStats).slice(0, 5);
 
             return {
                 contextLabel: activeContext ? 'VISIBLE GRAPH' : 'STATIC DATASET',
@@ -1484,6 +1505,7 @@
                 visibleEdgeCount: visibleLinks.length,
                 topHubs,
                 strongestConnections,
+                topIndustryCorrelations,
                 sectorDistribution: getCompanyDistribution(nodesForStats, node => node.sector || 'Other').slice(0, 6),
                 industryGroupDistribution: getCompanyDistribution(nodesForStats, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 6),
                 trust: getDatasetTrustMetrics()
@@ -1558,6 +1580,127 @@
                             <div class="h-full rounded-full" style="width:${strengthPercent}%; background:${color}; box-shadow:0 0 10px ${color};"></div>
                         </div>
                     </div>
+                `;
+            }).join('');
+        }
+
+        function getIndustryGroupCorrelations(sourceLinks = null) {
+            const linksForCorrelation = Array.isArray(sourceLinks)
+                ? sourceLinks
+                : (visibleLinks.length ? visibleLinks : links);
+            const pairStats = new Map();
+            const sameGroupStats = new Map();
+
+            linksForCorrelation.forEach(link => {
+                if (!link?.source || !link?.target) return;
+
+                const sourceGroup = getCompanyIndustryGroup(link.source) || 'Other';
+                const targetGroup = getCompanyIndustryGroup(link.target) || 'Other';
+                const strength = getConnectionStrength(link);
+                const confidence = Number(link.confidence) || 0;
+                const type = link.type || 'link';
+
+                if (sourceGroup === targetGroup) {
+                    const sameGroup = sameGroupStats.get(sourceGroup) || {
+                        group: sourceGroup,
+                        edgeCount: 0,
+                        totalStrength: 0,
+                        highConfidenceEdgeCount: 0
+                    };
+                    sameGroup.edgeCount += 1;
+                    sameGroup.totalStrength += strength;
+                    if (confidence >= HIGH_CONFIDENCE_EDGE_MIN) sameGroup.highConfidenceEdgeCount += 1;
+                    sameGroupStats.set(sourceGroup, sameGroup);
+                    return;
+                }
+
+                const [groupA, groupB] = [sourceGroup, targetGroup].sort((a, b) => String(a).localeCompare(String(b)));
+                const key = `${groupA}::${groupB}`;
+                const existing = pairStats.get(key) || {
+                    key,
+                    groupA,
+                    groupB,
+                    edgeCount: 0,
+                    totalStrength: 0,
+                    highConfidenceEdgeCount: 0,
+                    typeCounts: new Map(),
+                    tickerCounts: new Map()
+                };
+
+                existing.edgeCount += 1;
+                existing.totalStrength += strength;
+                if (confidence >= HIGH_CONFIDENCE_EDGE_MIN) existing.highConfidenceEdgeCount += 1;
+                existing.typeCounts.set(type, (existing.typeCounts.get(type) || 0) + 1);
+                [link.source, link.target].forEach(node => {
+                    const ticker = node?.ticker || node?.name || '';
+                    if (ticker) existing.tickerCounts.set(ticker, (existing.tickerCounts.get(ticker) || 0) + 1);
+                });
+                pairStats.set(key, existing);
+            });
+
+            const correlations = [...pairStats.values()]
+                .map(item => {
+                    const averageStrength = item.edgeCount ? item.totalStrength / item.edgeCount : 0;
+                    const dominantConnectionType = [...item.typeCounts.entries()]
+                        .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))[0]?.[0] || 'link';
+                    const involvedTickers = [...item.tickerCounts.entries()]
+                        .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
+                        .map(([ticker]) => ticker);
+
+                    return {
+                        key: item.key,
+                        groupA: item.groupA,
+                        groupB: item.groupB,
+                        edgeCount: item.edgeCount,
+                        averageStrength,
+                        averageStrengthPercent: Math.round(averageStrength * 100),
+                        highConfidenceEdgeCount: item.highConfidenceEdgeCount,
+                        involvedTickers,
+                        dominantConnectionType
+                    };
+                })
+                .sort(sortIndustryCorrelations);
+
+            correlations.sameGroupCorrelations = [...sameGroupStats.values()]
+                .map(item => ({
+                    ...item,
+                    averageStrength: item.edgeCount ? item.totalStrength / item.edgeCount : 0,
+                    averageStrengthPercent: item.edgeCount ? Math.round((item.totalStrength / item.edgeCount) * 100) : 0
+                }))
+                .sort((a, b) => b.edgeCount - a.edgeCount || b.averageStrength - a.averageStrength || String(a.group).localeCompare(String(b.group)));
+            correlations.sameGroupEdgeCount = correlations.sameGroupCorrelations.reduce((sum, item) => sum + item.edgeCount, 0);
+
+            return correlations;
+        }
+
+        function sortIndustryCorrelations(a, b) {
+            return b.edgeCount - a.edgeCount ||
+                b.averageStrength - a.averageStrength ||
+                b.highConfidenceEdgeCount - a.highConfidenceEdgeCount ||
+                String(a.groupA).localeCompare(String(b.groupA)) ||
+                String(a.groupB).localeCompare(String(b.groupB));
+        }
+
+        function renderDashboardIndustryCorrelationList(items) {
+            if (!items.length) return '<div class="text-sm text-white/35">No cross-industry correlations in the current graph view.</div>';
+
+            return items.map((item, index) => {
+                const sampleTickers = item.involvedTickers.slice(0, 5).join(', ');
+                const topClass = index === 0 ? 'top-connection top-connection-1' : '';
+                return `
+                    <button onclick="applyIndustryCorrelationFilter('${escapeInlineJsString(item.groupA)}', '${escapeInlineJsString(item.groupB)}')" class="connection-row ${topClass} w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-white/90 leading-snug">${escapeHtml(item.groupA)} <span class="text-cyan-200/70">&harr;</span> ${escapeHtml(item.groupB)}</div>
+                                <div class="text-xs text-white/48 mt-1">${item.edgeCount} edge${item.edgeCount === 1 ? '' : 's'} · ${item.averageStrengthPercent}% avg · ${escapeHtml(formatConnectionType(item.dominantConnectionType))}</div>
+                                <div class="text-[11px] text-white/58 mt-2 truncate">${escapeHtml(sampleTickers || 'No ticker sample')}</div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="font-display text-lg text-white">${item.highConfidenceEdgeCount}</div>
+                                <div class="text-[10px] text-emerald-200/62 font-mono">CONF >=4</div>
+                            </div>
+                        </div>
+                    </button>
                 `;
             }).join('');
         }
@@ -1638,6 +1781,47 @@
             showDefaultDashboard();
             fitGraph();
             requestDraw();
+        }
+
+        function applyIndustryCorrelationFilter(groupA, groupB) {
+            stopOrbitForInteraction();
+            selectedNode = null;
+            focusNeighborIds = new Set();
+            focusLinkKeys = new Set();
+            activeClusterNodeIds = new Set();
+            highlightedNodeId = null;
+            currentSearch = '';
+
+            const nextIndustryGroup = getExistingSelectValue('industry-group-filter', groupA) ||
+                getExistingSelectValue('industry-group-filter', groupB) ||
+                '';
+
+            currentIndustryGroup = nextIndustryGroup;
+            if (currentSector && !sectorSupportsIndustryGroup(currentSector, currentIndustryGroup)) {
+                currentSector = '';
+            }
+
+            const sectorFilter = document.getElementById('sector-filter');
+            const industryGroupFilter = document.getElementById('industry-group-filter');
+            const searchInput = document.getElementById('search-input');
+            if (sectorFilter) sectorFilter.value = currentSector;
+            if (industryGroupFilter) industryGroupFilter.value = currentIndustryGroup;
+            if (searchInput) searchInput.value = '';
+
+            refreshVisibleGraph();
+            updateSearchMatches();
+            closeSearchPanel();
+            showDefaultDashboard();
+            fitGraph();
+            requestDraw();
+        }
+
+        function sectorSupportsIndustryGroup(sector, industryGroup) {
+            if (!sector || !industryGroup) return true;
+            return companies.some(company =>
+                company.sector === sector &&
+                getCompanyIndustryGroup(company) === industryGroup
+            );
         }
 
         function getExistingSelectValue(id, value) {
@@ -1816,7 +2000,7 @@
             const sectorCounts = getConnectionSectorCounts(connectionsForNode);
             const industryGroup = getCompanyIndustryGroup(node);
             const industryGroupStats = getConnectionIndustryGroupStats(connectionsForNode);
-            const industryCorrelation = getIndustryCorrelationSummary(node, industryGroupStats, sectorCounts);
+            const industryCorrelationContext = getIndustryCorrelationContextForNode(node);
             const nodeSources = getNodeSources(connectionsForNode);
             const whyThisNodeMatters = getNodeImportanceSummary(node, networkSummary, sectorCounts);
             const signalClarity = getSignalClaritySummary(node);
@@ -1897,6 +2081,7 @@
                 ${renderRelatedClusterSection(relatedCluster, node)}
                 ${renderSharedExposureSection(sharedExposure)}
                 ${renderHiddenRelationshipsSection(hiddenRelationships)}
+                ${renderIndustryCorrelationContextSection(industryCorrelationContext)}
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">Sector + Industry Context</div>
@@ -1932,10 +2117,6 @@
                             <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP AVG STRENGTH</div>
                             <div class="mt-2 space-y-2">${renderTopIndustryGroupsByAverageStrength(industryGroupStats)}</div>
                         </div>
-                    </div>
-                    <div class="industry-insight-panel rounded-2xl p-3 mt-4">
-                        <div class="text-[10px] text-fuchsia-100/75 font-mono tracking-[1.4px]">INDUSTRY CORRELATION</div>
-                        <div class="mt-2">${renderIndustryCorrelation(industryCorrelation)}</div>
                     </div>
                 </div>
 
@@ -2337,48 +2518,92 @@
             `).join('');
         }
 
-        function getIndustryCorrelationSummary(node, groupStats, sectorCounts) {
+        function getIndustryCorrelationContextForNode(node) {
+            if (!node) return null;
+
+            const cacheKey = `industry-correlation-context:${node.id}`;
+            if (graphIntelligenceCache.has(cacheKey)) return graphIntelligenceCache.get(cacheKey);
+
             const nodeGroup = getCompanyIndustryGroup(node);
-            const topByCount = [...groupStats].sort(sortIndustryGroupStatsByCount)[0] || null;
-            const topByAverageStrength = [...groupStats].sort(sortIndustryGroupStatsByAverageStrength)[0] || null;
-            const connectedSectorCount = sectorCounts.length;
-
-            return {
-                nodeGroup,
-                primaryGroup: topByCount?.group || '',
-                mostExposedGroup: topByCount?.group || '',
-                strongestGroup: topByAverageStrength?.group || '',
-                strongestAveragePercent: topByAverageStrength?.avgStrengthPercent || 0,
-                connectedSectorCount,
-                crossSectorBridge: connectedSectorCount >= 3
-            };
-        }
-
-        function renderIndustryCorrelation(summary) {
-            if (!summary.primaryGroup) {
-                return '<div class="text-sm text-white/35">No edge-derived industry correlation available.</div>';
+            const correlations = getIndustryGroupCorrelations(links);
+            const groupCorrelations = correlations
+                .filter(item => item.groupA === nodeGroup || item.groupB === nodeGroup)
+                .sort(sortIndustryCorrelations);
+            if (!groupCorrelations.length) {
+                graphIntelligenceCache.set(cacheKey, null);
+                return null;
             }
 
-            const sectorSpan = summary.connectedSectorCount === 1
-                ? '1 connected sector'
-                : `${summary.connectedSectorCount} connected sectors`;
+            const strongestCorrelation = [...groupCorrelations]
+                .sort((a, b) => b.averageStrength - a.averageStrength || b.edgeCount - a.edgeCount || b.highConfidenceEdgeCount - a.highConfidenceEdgeCount)
+                [0];
+            const adjacentGroups = [...new Set(groupCorrelations.map(item => getCorrelationAdjacentGroup(item, nodeGroup)).filter(Boolean))]
+                .sort();
+            const directAdjacentGroups = new Set();
+            (adjacencyById.get(node.id) || []).forEach(item => {
+                const adjacentGroup = getCompanyIndustryGroup(item.node);
+                if (adjacentGroup && adjacentGroup !== nodeGroup) directAdjacentGroups.add(adjacentGroup);
+            });
 
+            const topCorrelation = groupCorrelations[0];
+            const context = {
+                nodeGroup,
+                topCorrelation,
+                connectedIndustryGroupCount: adjacentGroups.length,
+                strongestAdjacentGroup: getCorrelationAdjacentGroup(strongestCorrelation, nodeGroup),
+                strongestAveragePercent: strongestCorrelation?.averageStrengthPercent || 0,
+                crossGroupBridge: directAdjacentGroups.size >= 2,
+                isStrong: Boolean(topCorrelation) &&
+                    (topCorrelation.edgeCount >= STRONG_INDUSTRY_CORRELATION_MIN_EDGE_COUNT ||
+                        topCorrelation.averageStrength >= STRONG_INDUSTRY_CORRELATION_MIN_AVG_STRENGTH)
+            };
+
+            graphIntelligenceCache.set(cacheKey, context);
+            return context;
+        }
+
+        function getCorrelationAdjacentGroup(correlation, group) {
+            if (!correlation || !group) return '';
+            if (correlation.groupA === group) return correlation.groupB;
+            if (correlation.groupB === group) return correlation.groupA;
+            return '';
+        }
+
+        function renderIndustryCorrelationContextSection(context) {
+            if (!context?.topCorrelation || !context.strongestAdjacentGroup || context.connectedIndustryGroupCount < 1) return '';
+
+            const top = context.topCorrelation;
+            const topAdjacentGroup = getCorrelationAdjacentGroup(top, context.nodeGroup);
+            const bridgeLabel = context.crossGroupBridge ? 'Cross-group bridge' : 'Primarily group-local';
             return `
-                <div class="space-y-2 text-xs">
-                    <div class="flex items-start justify-between gap-3">
-                        <span class="text-white/42">Primary correlation</span>
-                        <span class="text-white/82 text-right">${escapeHtml(summary.nodeGroup)} <span class="text-cyan-200/75">&harr;</span> ${escapeHtml(summary.primaryGroup)}</span>
-                    </div>
-                    <div class="flex items-start justify-between gap-3">
-                        <span class="text-white/42">Most exposed group</span>
-                        <span class="text-white/82 text-right">${escapeHtml(summary.mostExposedGroup)}</span>
-                    </div>
-                    <div class="flex items-start justify-between gap-3">
-                        <span class="text-white/42">Strongest average</span>
-                        <span class="text-white/82 text-right">${escapeHtml(summary.strongestGroup)} ${summary.strongestAveragePercent}%</span>
-                    </div>
-                    <div class="pt-2 border-t border-white/10 font-mono text-[10px] tracking-[1.2px] ${summary.crossSectorBridge ? 'text-emerald-200/80' : 'text-white/40'}">
-                        ${summary.crossSectorBridge ? 'Cross-sector bridge detected' : escapeHtml(sectorSpan)}
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Industry Correlation Context</div>
+                    <div class="industry-insight-panel rounded-2xl p-3">
+                        <div class="text-xs text-white/44">Top group correlation</div>
+                        <div class="mt-1 text-sm text-white/88 leading-snug">${escapeHtml(context.nodeGroup)} <span class="text-cyan-200/75">&harr;</span> ${escapeHtml(topAdjacentGroup)}</div>
+                        <div class="mt-3 grid grid-cols-2 gap-3">
+                            <div>
+                                <div class="text-[10px] text-white/38 font-mono">CONNECTED GROUPS</div>
+                                <div class="font-display text-xl text-white">${context.connectedIndustryGroupCount}</div>
+                            </div>
+                            <div>
+                                <div class="text-[10px] text-white/38 font-mono">TOP EDGES</div>
+                                <div class="font-display text-xl text-white">${top.edgeCount}</div>
+                            </div>
+                        </div>
+                        <div class="mt-3 space-y-2 text-xs">
+                            <div class="flex items-start justify-between gap-3">
+                                <span class="text-white/42">Strongest adjacent group</span>
+                                <span class="text-white/82 text-right">${escapeHtml(context.strongestAdjacentGroup)} ${context.strongestAveragePercent}%</span>
+                            </div>
+                            <div class="flex items-start justify-between gap-3">
+                                <span class="text-white/42">Dominant type</span>
+                                <span class="text-white/82 text-right">${escapeHtml(formatConnectionType(top.dominantConnectionType))}</span>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-white/10 font-mono text-[10px] tracking-[1.2px] ${context.crossGroupBridge ? 'text-emerald-200/80' : 'text-white/42'}">
+                            ${escapeHtml(bridgeLabel)}
+                        </div>
                     </div>
                 </div>
             `;
@@ -3280,6 +3505,18 @@
             return isIndustryGroupFilterActive() && !nodeMatchesCurrentIndustryGroup(node);
         }
 
+        function isIndustryCorrelationHintNode(node) {
+            if (!node || !selectedNode || isFocusModeActive()) return false;
+            if (node.id === selectedNode.id) return false;
+            if (focusNeighborIds.has(node.id)) return false;
+            if (activeClusterNodeIds.has(node.id)) return false;
+            if (isNodeDimmedByIndustryGroup(node)) return false;
+
+            const context = getIndustryCorrelationContextForNode(selectedNode);
+            if (!context?.isStrong || !context.strongestAdjacentGroup) return false;
+            return getCompanyIndustryGroup(node) === context.strongestAdjacentGroup;
+        }
+
         function findNodeAt(screenX, screenY) {
             let closest = null;
             let closestDistance = Infinity;
@@ -3440,6 +3677,14 @@
                 .replaceAll('>', '&gt;')
                 .replaceAll('"', '&quot;')
                 .replaceAll("'", '&#039;');
+        }
+
+        function escapeInlineJsString(value) {
+            return escapeHtml(String(value)
+                .replaceAll('\\', '\\\\')
+                .replaceAll("'", "\\'")
+                .replaceAll('\r', ' ')
+                .replaceAll('\n', ' '));
         }
 
         loadData();

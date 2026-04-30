@@ -168,6 +168,38 @@ Current next priority: build toward reputable-source ingestion using SEC filings
 
 ---
 
+## Large-Scale Expansion Source Strategy
+
+See `DATA_EXPANSION_PLAN.md` for the dedicated expansion plan. The short version: StockPhotonic should scale through an SEC-first source layer, candidate review queues, and validation before any broad production data writes.
+
+Expansion principles:
+
+- SEC EDGAR should be the primary trusted source layer for durable company and relationship records.
+- Official filings and structured SEC data should be used before third-party mirrors, scraped datasets, or generated API outputs.
+- SEC access must respect fair-access expectations, including caching, backoff, rate discipline, and a proper identifying `User-Agent`.
+- SEC filings should be treated as the source of truth for durable relationship records when a filing directly supports the edge.
+- Large expansion work should begin in source registries, candidate files, or review queues instead of direct writes to `data/companies.json` or `data/connections.json`.
+
+Recommended sequence:
+
+1. Phase A: Build source registry and ingestion backlog.
+2. Phase B: Add ticker universe from official or exchange-sourced listings as candidates.
+3. Phase C: Add SEC filings fetch/cache layer.
+4. Phase D: Add EX-21 subsidiary extraction.
+5. Phase E: Add 13F ownership graph layer.
+6. Phase F: Add company release/news signal extraction.
+7. Phase G: Add API integrations later as optional enrichers.
+
+Future parser/tooling candidates:
+
+- SEC official APIs.
+- `edgartools` Python library.
+- Custom parser for EX-21 subsidiary exhibits.
+- Custom parser for 8-K, 10-K, and S-1 signal extraction.
+- 13F bulk dataset pipeline.
+
+---
+
 ## Future Stricter Provenance Target
 
 The long-term target is stricter than the current Phase 2 data:
@@ -322,17 +354,18 @@ The validator uses only the Python standard library and does not modify data fil
 
 ## Source Tiers For Future Curation
 
-### Tier 1: Primary Sources
+### Tier 1: Primary And Durable Sources
 
 Preferred for high-confidence edges:
 
-- SEC EDGAR filings, including 10-K, 10-Q, 8-K, DEF 14A, and Exhibit 21 subsidiary lists.
-- Company investor relations pages.
-- Official company press releases.
-- Earnings call transcripts and investor presentations.
-- Public regulatory filings and exchange disclosures.
+- SEC EDGAR company submissions API.
+- SEC 10-K, 10-Q, 8-K, S-1, and 424B filings.
+- SEC EX-21 subsidiary exhibits.
+- SEC 13F datasets for institutional ownership networks.
+- Company investor relations releases.
+- Official company partner, customer, supplier, and ecosystem pages.
 
-### Tier 2: Reliable Secondary Sources
+### Tier 2: Reliable Secondary And Context Sources
 
 Useful when primary documents are unavailable or when context is broader than a direct filing:
 
@@ -342,17 +375,50 @@ Useful when primary documents are unavailable or when context is broader than a 
 - Financial Times
 - The Information
 - Reputable industry publications with clear sourcing
+- Exchange and official company profile datasets
+- OpenSanctions, CorpWatch-style, or similar ownership mirrors only when traceable back to original filings or public registries
 
-### Tier 3: Experimental Or Inferred
+### Tier 3: Discovery-Only Or Experimental Sources
 
 Use only outside the default core dataset unless clearly flagged:
 
-- Technology stack overlap.
-- Broad platform ecosystem proximity.
-- Analyst commentary without primary-source confirmation.
-- NLP-suggested edges pending human review.
+- Kaggle or community datasets.
+- Scraped third-party datasets.
+- Unverified API outputs.
+- Any source without clear provenance.
+- Technology stack overlap, broad ecosystem proximity, or NLP-suggested edges pending human review.
 
 Never include pure speculation, social media rumors, or unverified analyst notes as core data.
+
+---
+
+## Future Relationship Categories
+
+The current production dataset should keep using only currently validated connection types. Future expansion planning should define source rules and validation rules before supporting additional categories:
+
+- Subsidiary / ownership.
+- Institutional ownership / shared holder.
+- Supplier / customer.
+- Strategic partnership.
+- Investment.
+- Competitor / peer.
+- Government contract / public funding.
+- IPO / underwriting / capital markets relation.
+- Crypto / mining / blockchain exposure.
+- ETF / holdings exposure.
+
+No new category should enter `data/connections.json` until it has source requirements, validation behavior, confidence rules, and manual review expectations.
+
+---
+
+## Expansion Guardrails
+
+- No source-backed edge enters `data/connections.json` without URL or durable provenance, confidence, and `verified_date`.
+- Third-party data must preserve original source attribution.
+- Datasets must pass validation before commit.
+- Large expansions should start in candidate files or review queues, not directly in production data.
+- Manual review remains required before durable dataset writes.
+- Do not add fake companies, unsupported relationships, placeholder source records, or inferred edges to the core dataset.
 
 ---
 

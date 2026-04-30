@@ -107,6 +107,7 @@ Users understand not just direct connections, but which companies move together 
 - [x] Add ingestion controls for generated signals: `--from-signals`, `--dry-run`, `--min-signal-score`, `--min-strength`, and `--types`.
 - [x] Add provenance UI so users can inspect confidence, verified date, and source summary from the graph.
 - [x] Add a transitional derived industry-group layer in `index.html` without changing company or connection data files.
+- [x] Add `DATA_EXPANSION_PLAN.md` to define SEC-first expansion strategy, source tiers, relationship categories, tooling direction, phase sequence, and production-data guardrails.
 - [ ] Review top AI/semiconductor, healthcare/PBM, payments, and Berkshire edges before expanding the node count.
 
 **Deliverable**: StockPhotonic presents only real companies in the core dataset. Data credibility is the gate before feature expansion, larger market coverage, ETFs, crypto, options flow, earnings, auth, backend work, or framework migration.
@@ -116,6 +117,8 @@ Users understand not just direct connections, but which companies move together 
 `signal_score` is an ingestion-quality score based on source tier and keyword strength. It helps prioritize and filter candidate signals before dataset writes. `confidence` is the persisted connection credibility score and remains based on structural validation rules; optional `signal_score` can only adjust the result after the base confidence logic has run.
 
 **Current Data Next Priority**: Build toward reputable-source ingestion using SEC filings, company releases, official announcements, partner pages, and reputable news as raw inputs while keeping validation strict and reviewable.
+
+**Large-Scale Expansion Rule**: Broad company and relationship growth should follow `DATA_EXPANSION_PLAN.md`. Do not add large batches directly to production JSON. Start with source registry entries, official/exchange ticker-universe candidates, SEC filing fetch/cache work, EX-21 subsidiary extraction, 13F ownership candidates, company release/news signals, and only later optional API enrichers.
 
 ---
 
@@ -131,19 +134,27 @@ Users understand not just direct connections, but which companies move together 
 
 ---
 
-## Phase 3: Data Engine & Backend (May 21 – June 10, 2026)
+## Phase 3: SEC-First Data Engine & Backend (May 21 – June 10, 2026)
 
-**Goal**: Reliable, automated, transparent data pipeline + persistence for watchlists/notes after the real static dataset is credible.
+**Goal**: Reliable, automated, transparent SEC-first data pipeline + persistence for watchlists/notes after the real static dataset is credible.
 
 **Tasks**:
+- [ ] Phase A: Build a source registry and ingestion backlog with source tiers, relationship categories, required metadata, review status, and validation expectations.
+- [ ] Phase B: Add a ticker universe from official or exchange-sourced listings as candidate records, not direct production company writes.
+- [ ] Phase C: Add an SEC filings fetch/cache layer using official SEC APIs, fair-access request behavior, proper identifying `User-Agent`, retries/backoff, and local caching.
+- [ ] Phase D: Add EX-21 subsidiary extraction for candidate ownership records.
+- [ ] Phase E: Add a 13F ownership graph layer for institutional ownership and shared-holder exposure candidates.
+- [ ] Phase F: Add company release and reputable-news signal extraction for supplier/customer, partnership, investment, and ecosystem candidates.
+- [ ] Phase G: Add API integrations later as optional enrichers only after primary-source capture and validation are stable.
 - [ ] Set up **Turso** (or Supabase) + Prisma ORM.
 - [ ] Schema: `companies`, `connections`, `users`, `watchlists`, `notes`, `connection_suggestions`.
-- [ ] Build ETL scripts (`scripts/`):
-  - `ingest_fmp.py`: Daily market caps, profiles, M&A via FinancialModelingPrep free tier.
-  - `ingest_opencorporates.py`: Subsidiaries for top 200 tickers (rate-limited, cached).
-  - `ingest_corpwatch.py`: EX-21 filings for ownership trees.
-  - `validate.py`: Enforce rules (no orphans, confidence ≥3 for core, duplicate detection, staleness flagging).
-  - `compute_centrality.py`: NetworkX – degree, betweenness, eigenvector, community detection (Louvain). Export per-sector "influence scores".
+- [ ] Build future ETL around primary-source provenance first:
+  - SEC official APIs for company submissions and filing metadata.
+  - `edgartools` Python library as a candidate helper for filing discovery and parsing.
+  - Custom parser for EX-21 subsidiary exhibits.
+  - Custom parser for 8-K, 10-K, and S-1 signal extraction.
+  - 13F bulk dataset pipeline for institutional ownership and shared-holder graph layers.
+  - Validation that enforces no orphans, confidence rules, duplicate detection, staleness flagging, URLs/provenance, and review status before production writes.
 - [ ] API Routes:
   - `GET /api/subgraph?ticker=NVDA&depth=2` – returns ego network + metrics.
   - `POST /api/portfolio` – accepts tickers + weights, returns exposure breakdown + risk score.
@@ -151,7 +162,7 @@ Users understand not just direct connections, but which companies move together 
 - [ ] Background job (GitHub Action or cron on Render): Daily data refresh → commit new JSON or push to DB.
 - [ ] Add "Data Freshness" dashboard (last successful ingest, % edges <30 days old, pending verifications).
 
-**Deliverable**: You can run `python scripts/build_graph.py` and have fresh data. Friends can suggest connections that appear after your review.
+**Deliverable**: You can build reviewed, source-backed candidate graph updates from SEC and official-source inputs. Friends can suggest connections that appear only after source capture, validation, and manual review.
 
 ---
 

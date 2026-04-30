@@ -107,6 +107,44 @@ Current concepts:
 
 Current data next priority: build toward reputable-source ingestion using SEC filings, company releases, official announcements, partner pages, and reputable news as raw inputs while keeping validation strict.
 
+### Source Expansion Plan
+
+`DATA_EXPANSION_PLAN.md` is the strategy document for scaling StockPhotonic toward many more real US-listed companies and source-backed relationships without adding unverified data yet.
+
+Expansion strategy:
+
+- SEC EDGAR is the primary trusted source layer for durable relationship records.
+- Official filings and structured SEC data come before third-party mirrors, scraped data, or unverified API output.
+- SEC requests must respect fair-access expectations, including caching, rate discipline, backoff, and a proper identifying `User-Agent`.
+- SEC filings should be treated as source of truth when they directly support a durable relationship.
+- Candidate extraction, review, validation, and production writes must remain separate stages.
+
+Recommended source tiers:
+
+- Tier 1: SEC EDGAR company submissions API, SEC 10-K/10-Q/8-K/S-1/424B filings, EX-21 subsidiary exhibits, SEC 13F datasets, company investor relations releases, and official partner/customer pages.
+- Tier 2: Reputable financial/news sources, exchange or official company profile datasets, and OpenSanctions/CorpWatch-style mirrors only when traceable back to original filings or registries.
+- Tier 3: Kaggle/community datasets, scraped third-party datasets, unverified API outputs, and sources without clear provenance.
+
+Future relationship categories to plan for include subsidiary/ownership, institutional ownership/shared holder, supplier/customer, strategic partnership, investment, competitor/peer, government contract/public funding, IPO/underwriting/capital markets relation, crypto/mining/blockchain exposure, and ETF/holdings exposure.
+
+Recommended expansion sequence:
+
+1. Phase A: Build source registry and ingestion backlog.
+2. Phase B: Add ticker universe from official/exchange-sourced listings as candidates.
+3. Phase C: Add SEC filings fetch/cache layer.
+4. Phase D: Add EX-21 subsidiary extraction.
+5. Phase E: Add 13F ownership graph layer.
+6. Phase F: Add company release/news signal extraction.
+7. Phase G: Add API integrations later as optional enrichers.
+
+Guardrails:
+
+- No source-backed edge enters `data/connections.json` without URL or durable provenance, confidence, and `verified_date`.
+- Third-party data must preserve original source attribution.
+- Datasets must pass validation before commit.
+- Large expansions should start in candidate files, not directly in production data.
+- Manual review remains required before durable dataset writes.
+
 ### Data Layer
 - Keep `companies.json` + `connections.json` as core
 - Future candidate files, do not add until explicitly needed:

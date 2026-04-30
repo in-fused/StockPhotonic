@@ -351,6 +351,20 @@
                 <input id="signal-threshold" type="range" min="0" max="1" step="0.05" value="0" oninput="setSignalStrengthThreshold(this.value)" class="signal-slider mt-2 w-full">
             </div>
 
+            <div class="signal-control rounded-3xl px-4 py-3 min-w-[280px] max-w-[420px] flex-1">
+                <label for="portfolio-input" class="flex items-center justify-between gap-3 text-[10px] font-mono tracking-[1.3px] text-cyan-100/75">
+                    <span>Portfolio Exposure</span>
+                    <span id="portfolio-match-count" class="text-white/55 tabular-nums">0 MATCHED</span>
+                </label>
+                <textarea id="portfolio-input" rows="2" placeholder="NVDA, MSFT, AMZN"
+                          class="mt-2 w-full resize-none bg-black/35 border border-white/15 focus:border-cyan-400 outline-none text-white placeholder:text-white/35 px-3 py-2 rounded-2xl text-xs leading-5"></textarea>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                    <button onclick="analyzePortfolioInput()" class="focus-button px-3 py-1.5 text-[10px] rounded-full border border-cyan-300/25 text-cyan-100/85 font-mono">ANALYZE PORTFOLIO</button>
+                    <button onclick="clearPortfolio()" class="focus-button px-3 py-1.5 text-[10px] rounded-full border border-white/15 text-white/60 font-mono">CLEAR</button>
+                    <span id="portfolio-not-found-note" class="text-[10px] text-orange-200/70 font-mono"></span>
+                </div>
+            </div>
+
             <div class="lg:ml-auto flex flex-wrap items-center justify-end gap-2">
                 <div id="dataset-trust" class="trust-panel rounded-2xl px-3 py-2 text-xs text-white/65 min-w-[220px]">
                     <div class="flex items-center gap-2 text-cyan-200 font-mono text-[10px] tracking-[1.5px]">
@@ -626,6 +640,12 @@
         let searchPanelOpen = false;
         let searchCloseTimer = null;
         let recentNodeIds = [];
+        let portfolioTickerSet = new Set();
+        let matchedPortfolioNodes = [];
+        let unmatchedPortfolioTickers = [];
+        let portfolioAdjacentNodeIds = new Set();
+        let portfolioEdgeKeys = new Set();
+        let portfolioConnectionsByNodeId = new Map();
         let layoutMode = LAYOUT_MODE_SECTOR;
         let hubLayoutPositions = new Map();
         let orbitEnabled = false;
@@ -685,6 +705,7 @@
                 updateFocusModeControl();
                 updateSignalThresholdControl();
                 updateOrbitModeControl();
+                updatePortfolioPanel();
                 initGraphData();
                 resizeCanvas();
                 fitGraph(false, { keepOrbit: true });
@@ -1116,6 +1137,7 @@
             const hasFocus = Boolean(selectedNode);
             const industryFilterActive = isIndustryGroupFilterActive();
             const touchesIndustryGroup = industryFilterActive && linkTouchesCurrentIndustryGroup(link);
+            const isPortfolioLink = isPortfolioAnalysisActive() && portfolioEdgeKeys.has(link.key);
 
             const strength = clamp(link.strength, 0.05, 1);
             const isStrongSignal = strength >= 0.78;
@@ -1142,11 +1164,16 @@
                 width += 0.45;
             }
 
+            if (isPortfolioLink) {
+                alpha = Math.max(alpha, 0.68 + strength * 0.24);
+                width = Math.max(width + 0.65, 1.35 + strength * 2.5);
+            }
+
             ctx.globalAlpha = alpha;
             ctx.strokeStyle = color;
             ctx.lineWidth = width;
-            ctx.shadowBlur = isFocused ? 24 : isHoveredLink ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
-            ctx.shadowColor = color;
+            ctx.shadowBlur = isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
+            ctx.shadowColor = isPortfolioLink ? '#ffd700' : color;
 
             const midX = (source.x + target.x) / 2;
             const midY = (source.y + target.y) / 2;
@@ -1176,25 +1203,27 @@
             const isCorrelationHintNode = isIndustryCorrelationHintNode(node);
             const isHovered = hoveredNode && hoveredNode.id === node.id;
             const isSearchHighlighted = highlightedNodeId === node.id && performance.now() < highlightedNodeUntil;
+            const isPortfolioHolding = isPortfolioAnalysisActive() && isPortfolioNode(node);
+            const isPortfolioAdjacent = isPortfolioAnalysisActive() && isPortfolioAdjacentNode(node);
             const industryDimmed = isNodeDimmedByIndustryGroup(node);
             const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
-            const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isCorrelationHintNode && !industryMatched;
+            const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isCorrelationHintNode && !isPortfolioHolding && !isPortfolioAdjacent && !industryMatched;
             const isDimmed = focusDimmed || industryDimmed;
-            const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : isCorrelationHintNode ? 0.78 : 1;
+            const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : isPortfolioAdjacent ? 0.88 : isCorrelationHintNode ? 0.78 : 1;
             const color = node.color || '#00f9ff';
 
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.shadowBlur = isSearchHighlighted ? 42 : isSelected ? 30 : isHovered ? 22 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
-            ctx.shadowColor = color;
+            ctx.shadowBlur = isPortfolioHolding ? 38 : isSearchHighlighted ? 42 : isSelected ? 30 : isHovered ? 22 : isPortfolioAdjacent ? 20 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
+            ctx.shadowColor = isPortfolioHolding ? '#ffd700' : isPortfolioAdjacent ? '#a5f3fc' : color;
 
             const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
-            glow.addColorStop(0, `${hexToRgba(color, isClusterNode ? 0.9 : isCorrelationHintNode ? 0.86 : 0.82)}`);
-            glow.addColorStop(0.38, `${hexToRgba(color, isClusterNode ? 0.32 : isCorrelationHintNode ? 0.3 : 0.24)}`);
+            glow.addColorStop(0, `${hexToRgba(isPortfolioHolding ? '#ffd700' : color, isPortfolioHolding ? 0.95 : isClusterNode ? 0.9 : isCorrelationHintNode ? 0.86 : 0.82)}`);
+            glow.addColorStop(0.38, `${hexToRgba(isPortfolioHolding ? '#ffd700' : color, isPortfolioHolding ? 0.38 : isClusterNode ? 0.32 : isCorrelationHintNode ? 0.3 : 0.24)}`);
             glow.addColorStop(1, `${hexToRgba(color, 0)}`);
             ctx.fillStyle = glow;
             ctx.beginPath();
-            ctx.arc(point.x, point.y, radius * (isClusterNode ? 5.1 : 4.3), 0, Math.PI * 2);
+            ctx.arc(point.x, point.y, radius * (isPortfolioHolding ? 5.7 : isClusterNode ? 5.1 : 4.3), 0, Math.PI * 2);
             ctx.fill();
 
             ctx.fillStyle = color;
@@ -1218,6 +1247,31 @@
                 ctx.shadowColor = '#00f9ff';
                 ctx.beginPath();
                 ctx.arc(point.x, point.y, radius * (2.45 + sweep), 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            if (isPortfolioHolding) {
+                ctx.globalAlpha = industryDimmed ? 0.28 : 0.9;
+                ctx.strokeStyle = '#ffd700';
+                ctx.lineWidth = 2.3;
+                ctx.shadowBlur = 26;
+                ctx.shadowColor = '#ffd700';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 2.55, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.globalAlpha = industryDimmed ? 0.14 : 0.32;
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 3.35, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (isPortfolioAdjacent) {
+                ctx.globalAlpha = industryDimmed ? 0.14 : 0.36;
+                ctx.strokeStyle = '#a5f3fc';
+                ctx.lineWidth = 1.1;
+                ctx.shadowBlur = 16;
+                ctx.shadowColor = '#00f9ff';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 1.9, 0, Math.PI * 2);
                 ctx.stroke();
             }
 
@@ -1284,10 +1338,12 @@
                     const radius = node._screenRadius ?? getScreenNodeRadius(node);
                     const rawLabel = getLabelText(node, labelMode);
                     if (!rawLabel) return;
+                    const isPortfolioHolding = isPortfolioAnalysisActive() && isPortfolioNode(node);
+                    const isPortfolioAdjacent = isPortfolioAnalysisActive() && isPortfolioAdjacentNode(node);
                     const industryDimmed = isNodeDimmedByIndustryGroup(node);
                     const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
-                    const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !industryMatched;
-                    const alpha = industryDimmed ? 0.18 : focusDimmed ? 0.25 : isClusterNode ? 0.86 : isNeighbor ? 0.82 : 0.72;
+                    const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isPortfolioHolding && !isPortfolioAdjacent && !industryMatched;
+                    const alpha = industryDimmed ? 0.18 : focusDimmed ? 0.25 : isPortfolioHolding ? 0.94 : isPortfolioAdjacent ? 0.82 : isClusterNode ? 0.86 : isNeighbor ? 0.82 : 0.72;
 
                     ctx.save();
                     const fontSize = labelMode === 'full' ? (isSelected ? 12 : 11) : (isSelected ? 12 : 10);
@@ -1298,12 +1354,12 @@
                     const y = point.y + radius + 14;
                     ctx.globalAlpha = alpha;
                     ctx.fillStyle = 'rgba(3, 7, 18, 0.76)';
-                    ctx.strokeStyle = isSelected || isHovered || isClusterNode ? 'rgba(0, 249, 255, 0.58)' : 'rgba(255, 255, 255, 0.12)';
+                    ctx.strokeStyle = isPortfolioHolding ? 'rgba(255, 215, 0, 0.62)' : isSelected || isHovered || isClusterNode || isPortfolioAdjacent ? 'rgba(0, 249, 255, 0.58)' : 'rgba(255, 255, 255, 0.12)';
                     ctx.lineWidth = 1;
                     roundedRect(ctx, x - 5, y - 11, width + 10, 16, 6);
                     ctx.fill();
                     ctx.stroke();
-                    ctx.fillStyle = isSelected ? '#ffffff' : node.color || '#dbeafe';
+                    ctx.fillStyle = isPortfolioHolding ? '#fff7ad' : isSelected ? '#ffffff' : node.color || '#dbeafe';
                     ctx.globalAlpha = isSelected || isHovered ? 1 : alpha;
                     ctx.fillText(label, x, y);
                     ctx.restore();
@@ -1330,6 +1386,7 @@
             if (labelMode === 'none') return false;
             if (selectedNode && selectedNode.id === node.id) return true;
             if (hoveredNode && hoveredNode.id === node.id) return true;
+            if (isPortfolioAnalysisActive() && isPortfolioHighlightedNode(node)) return true;
             if (selectedNode && focusNeighborIds.has(node.id)) return true;
             if (selectedNode && activeClusterNodeIds.has(node.id) && !isFocusModeActive()) return true;
             if (labelMode === 'full') return true;
@@ -1340,6 +1397,8 @@
         function labelPriority(node) {
             if (selectedNode && selectedNode.id === node.id) return 1000;
             if (hoveredNode && hoveredNode.id === node.id) return 900;
+            if (isPortfolioNode(node)) return 780 + node.degree;
+            if (isPortfolioAdjacentNode(node)) return 620 + node.degree;
             if (focusNeighborIds.has(node.id)) return 500 + node.degree;
             if (selectedNode && activeClusterNodeIds.has(node.id) && !isFocusModeActive()) return 360 + node.degree;
             return node.degree * 10 + Math.max(0, 320 - (node.rank || 320)) / 20;
@@ -1437,6 +1496,8 @@
                     </div>
                 </div>
 
+                ${renderPortfolioExposureSection(stats.portfolioExposure)}
+
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">Suggested Exploration</div>
                     <div class="flex flex-wrap gap-2">
@@ -1508,6 +1569,7 @@
                 topIndustryCorrelations,
                 sectorDistribution: getCompanyDistribution(nodesForStats, node => node.sector || 'Other').slice(0, 6),
                 industryGroupDistribution: getCompanyDistribution(nodesForStats, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 6),
+                portfolioExposure: getPortfolioExposureSummary(),
                 trust: getDatasetTrustMetrics()
             };
         }
@@ -1582,6 +1644,183 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function getPortfolioExposureSummary() {
+            const active = isPortfolioAnalysisActive();
+            const matchedIds = new Set(matchedPortfolioNodes.map(node => node.id));
+            const exposureNodeIds = new Set();
+            const hubStatsByNodeId = new Map();
+            const edgeItems = [];
+
+            matchedPortfolioNodes.forEach(holding => {
+                (adjacencyById.get(holding.id) || []).forEach(item => {
+                    exposureNodeIds.add(holding.id);
+                    exposureNodeIds.add(item.node.id);
+                    edgeItems.push(item.link);
+
+                    if (matchedIds.has(item.node.id)) return;
+                    const existing = hubStatsByNodeId.get(item.node.id) || {
+                        node: item.node,
+                        portfolioEdgeCount: 0,
+                        totalStrength: 0
+                    };
+                    existing.portfolioEdgeCount += 1;
+                    existing.totalStrength += getConnectionStrength(item.link);
+                    hubStatsByNodeId.set(item.node.id, existing);
+                });
+            });
+
+            const exposureNodes = [...exposureNodeIds]
+                .map(id => nodeById.get(id))
+                .filter(Boolean);
+            const firstDegreeNodes = [...portfolioAdjacentNodeIds]
+                .map(id => nodeById.get(id))
+                .filter(Boolean);
+            const topHubs = [...hubStatsByNodeId.values()]
+                .map(item => ({
+                    ...item,
+                    avgStrength: item.portfolioEdgeCount ? item.totalStrength / item.portfolioEdgeCount : 0
+                }))
+                .sort((a, b) =>
+                    b.portfolioEdgeCount - a.portfolioEdgeCount ||
+                    b.avgStrength - a.avgStrength ||
+                    (b.node.degree - a.node.degree) ||
+                    ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
+                    String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
+                )
+                .slice(0, 5);
+            const strongestEdge = edgeItems
+                .sort((a, b) => b.strength - a.strength || String(a.source.ticker || '').localeCompare(String(b.source.ticker || '')))[0] || null;
+
+            return {
+                active,
+                matchedCount: matchedPortfolioNodes.length,
+                unmatchedTickers: unmatchedPortfolioTickers,
+                firstDegreeExposureCount: firstDegreeNodes.length,
+                topHubs,
+                topSectors: getCompanyDistribution(exposureNodes, node => node.sector || 'Other').slice(0, 5),
+                topIndustryGroups: getCompanyDistribution(exposureNodes, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 5),
+                strongestEdge
+            };
+        }
+
+        function renderPortfolioExposureSection(summary) {
+            if (!summary?.active) {
+                return `
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title">Portfolio Exposure</div>
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/40">No active portfolio analysis.</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Portfolio Exposure</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="summary-tile rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">MATCHED HOLDINGS</div>
+                            <div class="font-display text-2xl text-white">${summary.matchedCount}</div>
+                        </div>
+                        <div class="summary-tile rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">1ST-DEGREE EXPOSURE</div>
+                            <div class="font-display text-2xl text-white">${summary.firstDegreeExposureCount}</div>
+                        </div>
+                    </div>
+                    ${renderPortfolioUnmatchedTickers(summary.unmatchedTickers)}
+                    <div class="mt-4">
+                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP CONNECTED HUBS</div>
+                        <div class="mt-2 space-y-2">${renderPortfolioHubList(summary.topHubs)}</div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP SECTORS EXPOSED</div>
+                        <div class="mt-2 space-y-2">${renderPortfolioDistribution(summary.topSectors, '#facc15', 'rgba(250, 204, 21, 0.42)')}</div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP INDUSTRY GROUPS EXPOSED</div>
+                        <div class="mt-2 space-y-2">${renderPortfolioDistribution(summary.topIndustryGroups, '#67e8f9', 'rgba(0, 249, 255, 0.42)')}</div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">STRONGEST PORTFOLIO-CONNECTED EDGE</div>
+                        <div class="mt-2">${renderPortfolioStrongestEdge(summary.strongestEdge)}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderPortfolioUnmatchedTickers(tickers) {
+            if (!tickers?.length) return '';
+            return `
+                <div class="mt-3 rounded-2xl border border-orange-300/20 bg-orange-300/10 p-3">
+                    <div class="text-[10px] text-orange-100/70 font-mono tracking-[1.2px]">NOT FOUND</div>
+                    <div class="mt-1 text-sm text-white/70">${escapeHtml(tickers.join(', '))}</div>
+                </div>
+            `;
+        }
+
+        function renderPortfolioHubList(items) {
+            if (!items.length) return '<div class="text-sm text-white/35">No portfolio-connected hubs in the current dataset.</div>';
+
+            return items.map((item, index) => `
+                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0 flex items-center gap-2">
+                            <span class="shrink-0 px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/45 font-mono">#${index + 1}</span>
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')}</div>
+                                <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="font-display text-lg text-white">${item.portfolioEdgeCount}</div>
+                            <div class="text-[10px] text-cyan-200/58 font-mono">LINKS</div>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function renderPortfolioDistribution(entries, color, shadowColor) {
+            if (!entries.length) return '<div class="text-sm text-white/35">No edge-derived exposure.</div>';
+            const total = entries.reduce((sum, [, count]) => sum + count, 0);
+            const maxCount = Math.max(...entries.map(([, count]) => count), 1);
+
+            return entries.map(([label, count]) => {
+                const width = Math.max(8, Math.round((count / maxCount) * 100));
+                const percent = total ? Math.round((count / total) * 100) : 0;
+                return `
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <div class="flex items-center justify-between gap-3 text-xs">
+                            <span class="text-white/75 truncate">${count} ${escapeHtml(label)}</span>
+                            <span class="text-white/38 font-mono shrink-0">${percent}%</span>
+                        </div>
+                        <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+                            <div class="h-full rounded-full" style="width:${width}%; background:${color}; box-shadow:0 0 10px ${shadowColor};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPortfolioStrongestEdge(link) {
+            if (!link) return '<div class="text-sm text-white/35">No portfolio-connected edge found.</div>';
+            const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
+            const strengthPercent = Math.round(getConnectionStrength(link) * 100);
+            return `
+                <div class="connection-row top-connection top-connection-1 rounded-2xl p-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-sm font-semibold text-white/90 truncate">${escapeHtml(link.source.ticker || '')} <span class="text-white/35">to</span> ${escapeHtml(link.target.ticker || '')}</div>
+                            <div class="text-xs text-white/50 leading-snug mt-1">${escapeHtml(link.label || 'Curated connection')}</div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-sm font-mono" style="color:${color}">${strengthPercent}%</div>
+                            <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(link.type || 'link'))}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         function getIndustryGroupCorrelations(sourceLinks = null) {
@@ -1990,6 +2229,47 @@
             return clamp(Number(link?.strength) || 0, 0, 1);
         }
 
+        function getPortfolioContextForNode(node) {
+            if (!node || !isPortfolioAnalysisActive()) {
+                return { inPortfolio: false, adjacent: false, connectedTickers: [] };
+            }
+
+            const inPortfolio = isPortfolioNode(node);
+            const connectedTickers = getPortfolioConnectionItemsForNode(node)
+                .map(item => item.holding?.ticker || '')
+                .filter(Boolean)
+                .sort((a, b) => String(a).localeCompare(String(b)));
+
+            return {
+                inPortfolio,
+                adjacent: !inPortfolio && connectedTickers.length > 0,
+                connectedTickers
+            };
+        }
+
+        function renderNodePortfolioBadges(context) {
+            if (!context?.inPortfolio && !context?.adjacent) return '';
+
+            const badges = [];
+            if (context.inPortfolio) {
+                badges.push('<span class="px-2.5 py-1 rounded-full border border-yellow-300/35 bg-yellow-300/10 text-yellow-100 text-[10px] font-mono tracking-[1.2px]">IN PORTFOLIO</span>');
+            }
+            if (context.adjacent) {
+                badges.push('<span class="px-2.5 py-1 rounded-full border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 text-[10px] font-mono tracking-[1.2px]">PORTFOLIO-ADJACENT</span>');
+            }
+
+            const connectedLine = context.connectedTickers?.length
+                ? `<div class="mt-2 text-xs text-cyan-100/68">Connected to portfolio via ${escapeHtml(context.connectedTickers.join(', '))}</div>`
+                : '';
+
+            return `
+                <div class="mt-3">
+                    <div class="flex flex-wrap gap-2">${badges.join('')}</div>
+                    ${connectedLine}
+                </div>
+            `;
+        }
+
         function showNodeDetails(node) {
             const sidebar = document.getElementById('sidebar');
             const empty = document.getElementById('empty-sidebar');
@@ -2007,6 +2287,7 @@
             const relatedCluster = getNodeCluster(node.id);
             const sharedExposure = getSharedConnections(node.id);
             const hiddenRelationships = getHiddenRelationships(node.id);
+            const portfolioContext = getPortfolioContextForNode(node);
 
             sidebar.innerHTML = `
                 <div class="flex items-start justify-between gap-4 mb-5">
@@ -2014,6 +2295,7 @@
                         <div class="text-xs text-cyan-300/80 font-mono tracking-[2px]">${escapeHtml(node.sector || 'UNKNOWN')}</div>
                         <h2 class="font-display text-3xl text-white mt-1">${escapeHtml(node.ticker || '')}</h2>
                         <div class="text-sm text-white/60 mt-1">${escapeHtml(node.name || '')}</div>
+                        ${renderNodePortfolioBadges(portfolioContext)}
                     </div>
                     <button onclick="clearSelection()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70">
                         <i class="fa-solid fa-xmark"></i>
@@ -2836,17 +3118,139 @@
             layoutMode = LAYOUT_MODE_SECTOR;
             focusModeEnabled = false;
             signalStrengthThreshold = 0;
+            resetPortfolioState();
             document.getElementById('sector-filter').value = '';
             document.getElementById('industry-group-filter').value = '';
             document.getElementById('search-input').value = '';
             document.getElementById('layout-mode').value = LAYOUT_MODE_SECTOR;
+            const portfolioInput = document.getElementById('portfolio-input');
+            if (portfolioInput) portfolioInput.value = '';
             updateFocusModeControl();
             updateSignalThresholdControl();
+            updatePortfolioPanel();
             refreshVisibleGraph();
             updateSearchMatches();
             closeSearchPanel();
             clearSelection(false);
             fitGraph();
+        }
+
+        function analyzePortfolioInput() {
+            stopOrbitForInteraction();
+            const input = document.getElementById('portfolio-input');
+            const parsedTickers = parsePortfolioTickers(input?.value || '');
+            const nodeByTicker = getNodeByTickerMap();
+
+            portfolioTickerSet = new Set(parsedTickers);
+            matchedPortfolioNodes = parsedTickers
+                .map(ticker => nodeByTicker.get(ticker))
+                .filter(Boolean);
+            unmatchedPortfolioTickers = parsedTickers.filter(ticker => !nodeByTicker.has(ticker));
+
+            recomputePortfolioExposure();
+            updatePortfolioPanel();
+            refreshVisibleGraph();
+            if (selectedNode) showNodeDetails(selectedNode);
+            triggerPulse(700);
+            if (matchedPortfolioNodes.length) fitGraph();
+            requestDraw();
+        }
+
+        function clearPortfolio() {
+            stopOrbitForInteraction();
+            resetPortfolioState();
+            const input = document.getElementById('portfolio-input');
+            if (input) input.value = '';
+            updatePortfolioPanel();
+            refreshVisibleGraph();
+            if (selectedNode) showNodeDetails(selectedNode);
+            requestDraw();
+        }
+
+        function resetPortfolioState() {
+            portfolioTickerSet = new Set();
+            matchedPortfolioNodes = [];
+            unmatchedPortfolioTickers = [];
+            portfolioAdjacentNodeIds = new Set();
+            portfolioEdgeKeys = new Set();
+            portfolioConnectionsByNodeId = new Map();
+        }
+
+        function parsePortfolioTickers(value) {
+            const seen = new Set();
+            return String(value || '')
+                .split(/[\s,]+/)
+                .map(item => item.trim().toUpperCase())
+                .filter(Boolean)
+                .filter(item => {
+                    if (seen.has(item)) return false;
+                    seen.add(item);
+                    return true;
+                });
+        }
+
+        function getNodeByTickerMap() {
+            return new Map(nodes
+                .map(node => [String(node.ticker || '').toUpperCase(), node])
+                .filter(([ticker]) => Boolean(ticker)));
+        }
+
+        function recomputePortfolioExposure() {
+            portfolioAdjacentNodeIds = new Set();
+            portfolioEdgeKeys = new Set();
+            portfolioConnectionsByNodeId = new Map();
+
+            if (!isPortfolioAnalysisActive()) return;
+
+            const holdingIds = new Set(matchedPortfolioNodes.map(node => node.id));
+            matchedPortfolioNodes.forEach(holding => {
+                (adjacencyById.get(holding.id) || []).forEach(item => {
+                    portfolioEdgeKeys.add(item.link.key);
+                    if (holdingIds.has(item.node.id)) return;
+
+                    portfolioAdjacentNodeIds.add(item.node.id);
+                    const existing = portfolioConnectionsByNodeId.get(item.node.id) || [];
+                    existing.push({ holding, link: item.link });
+                    portfolioConnectionsByNodeId.set(item.node.id, existing);
+                });
+            });
+        }
+
+        function updatePortfolioPanel() {
+            const matchCount = document.getElementById('portfolio-match-count');
+            const notFound = document.getElementById('portfolio-not-found-note');
+            if (matchCount) matchCount.innerText = `${matchedPortfolioNodes.length} MATCHED`;
+            if (!notFound) return;
+
+            if (!unmatchedPortfolioTickers.length) {
+                notFound.innerText = '';
+                return;
+            }
+
+            const visibleTickers = unmatchedPortfolioTickers.slice(0, 4).join(', ');
+            const hiddenCount = unmatchedPortfolioTickers.length - 4;
+            notFound.innerText = `NOT FOUND: ${visibleTickers}${hiddenCount > 0 ? ` +${hiddenCount}` : ''}`;
+        }
+
+        function isPortfolioAnalysisActive() {
+            return portfolioTickerSet.size > 0;
+        }
+
+        function isPortfolioNode(node) {
+            return Boolean(node) && matchedPortfolioNodes.some(item => item.id === node.id);
+        }
+
+        function isPortfolioAdjacentNode(node) {
+            return Boolean(node) && !isPortfolioNode(node) && portfolioAdjacentNodeIds.has(node.id);
+        }
+
+        function isPortfolioHighlightedNode(node) {
+            return isPortfolioNode(node) || isPortfolioAdjacentNode(node);
+        }
+
+        function getPortfolioConnectionItemsForNode(node) {
+            if (!node) return [];
+            return portfolioConnectionsByNodeId.get(node.id) || [];
         }
 
         function setupSearchInteractions() {
@@ -3199,6 +3603,11 @@
             });
             if (focusActive && selectedNode) connectedNodeIds.add(selectedNode.id);
             if (!focusActive && selectedNode && nodePassesBaseFilters(selectedNode)) connectedNodeIds.add(selectedNode.id);
+            if (isPortfolioAnalysisActive()) {
+                matchedPortfolioNodes.forEach(node => {
+                    if (nodePassesBaseFilters(node)) connectedNodeIds.add(node.id);
+                });
+            }
 
             if (focusActive || shouldPruneZeroEdgeNodes()) {
                 visibleNodes = nodes.filter(node => connectedNodeIds.has(node.id));
@@ -3224,6 +3633,7 @@
             ];
             if (isFocusModeActive()) items.push('Focus Mode');
             if (signalStrengthThreshold > 0) items.push(`Threshold ${signalStrengthThreshold.toFixed(2)}`);
+            if (isPortfolioAnalysisActive()) items.push(`Portfolio ${matchedPortfolioNodes.length}`);
             if (orbitEnabled) items.push('Orbit On');
 
             overlay.innerHTML = items.map(item => `
@@ -3291,8 +3701,16 @@
         }
 
         function getFitNodes() {
-            if (!isHubLayoutActive()) return visibleNodes;
-            return visibleNodes.filter(node => selectedNode.id === node.id || focusNeighborIds.has(node.id));
+            const baseNodes = isHubLayoutActive()
+                ? visibleNodes.filter(node => selectedNode.id === node.id || focusNeighborIds.has(node.id))
+                : visibleNodes;
+            if (!isPortfolioAnalysisActive()) return baseNodes;
+
+            const fitNodeById = new Map(baseNodes.map(node => [node.id, node]));
+            visibleNodes
+                .filter(isPortfolioHighlightedNode)
+                .forEach(node => fitNodeById.set(node.id, node));
+            return [...fitNodeById.values()];
         }
 
         function rebuildLayoutPositions() {
@@ -3352,7 +3770,8 @@
             const isFocused = selectedNode && focusLinkKeys.has(link.key);
             const industryFilterActive = isIndustryGroupFilterActive();
             const touchesIndustryGroup = industryFilterActive && linkTouchesCurrentIndustryGroup(link);
-            if (signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && link.strength < getWeakEdgeThreshold()) return false;
+            const isPortfolioLink = isPortfolioAnalysisActive() && portfolioEdgeKeys.has(link.key);
+            if (signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && !isPortfolioLink && link.strength < getWeakEdgeThreshold()) return false;
 
             const sourceX = link.source._screenX;
             const sourceY = link.source._screenY;

@@ -2,7 +2,7 @@
 
 **Date:** April 29, 2026  
 **Repo:** https://github.com/in-fused/StockPhotonic  
-**Current Version:** v6.1 / Industry Correlation Engine
+**Current Version:** v6.2 / Portfolio Exposure Prototype
 **Status:** Current main uses a smaller credible static dataset: 60 real companies and 117 curated connections. Immediate work should stay focused on user-facing product intelligence, graph exploration, source coverage, and reviewable industry-group foundations.
 
 ---
@@ -22,7 +22,10 @@
 - The graph container now includes subtle visible-node, visible-edge, layout, Focus Mode, threshold, and Orbit status overlay stats
 - The default dashboard derives top hubs, strongest connections, sector distribution, industry-group distribution, trust summary, and exploration chips from the loaded static dataset
 - The default dashboard now includes Top Industry Correlations derived from existing loaded graph edges only
+- Portfolio Exposure Prototype accepts pasted tickers, normalizes them to uppercase, highlights matched holdings plus first-degree connected nodes/edges, and renders edge-derived exposure summaries
+- Portfolio input is static/client-only, in-memory only, and is never stored
 - Selected-node sidebar context can summarize the selected node's derived industry group correlation, connected adjacent groups, strongest adjacent group, and cross-group bridge status
+- Selected-node sidebar badges show when a node is in the portfolio or directly portfolio-adjacent, including the portfolio tickers that connect to adjacent nodes
 - Basic force-directed graph rendering
 - Validation scripts help reject placeholder companies, fake tickers, duplicate edges, generic labels, and malformed source URLs
 
@@ -156,6 +159,18 @@ This polish layer is also implemented entirely in `index.html` and uses the exis
 - Top Industry Correlations are derived from existing visible or loaded edges and filter through the existing industry-group filter behavior.
 - Exploration chips apply existing sector or derived industry-group filters, then fit the graph.
 - No data files, scripts, schema fields, source URLs, or new relationship claims were added.
+
+### Portfolio Exposure Prototype
+
+This feature is implemented entirely in `index.html` on top of the existing loaded `data/companies.json` and `data/connections.json` files.
+
+- Users can paste comma-, space-, or newline-separated tickers.
+- Tickers are normalized to uppercase and compared only against the current loaded company dataset.
+- Unknown tickers are ignored for graph analysis and shown as not found.
+- Portfolio state is not persisted and does not use local storage, backend storage, authentication, APIs, or uploaded files.
+- Graph highlighting is derived from existing edges only: direct holdings, first-degree connected nodes, and edges touching matched holdings.
+- Dashboard summary stats are derived from existing graph edges only, including matched count, not-found tickers, first-degree exposure count, top connected hubs, exposed sectors, exposed industry groups, and strongest portfolio-connected edge.
+- No portfolio data files, data schema changes, source URLs, factual relationship claims, or script changes were added.
 
 2. **Continue data credibility and source coverage**
    - Add edge-level source URLs for high-impact relationships when defensible sources are available

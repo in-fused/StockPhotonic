@@ -2,7 +2,7 @@
 
 **Vision**: The most insightful, beautiful, and trustworthy visualization of corporate interconnections for serious personal investors and their trusted circle.
 
-**Current Version**: v6.0 / Immersive Default Experience + Ambient Orbit Mode (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
+**Current Version**: v6.2 / Portfolio Exposure Prototype (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
 
 ---
 
@@ -16,7 +16,7 @@
 - [x] Retire the generated 300-company / 600-connection placeholder dataset after it proved useful for graph stress testing but failed the data credibility bar.
 - [ ] Add provenance UI: Hover/click edge shows source, confidence, verified date, notes.
 - [x] Add "Last Updated" badge + "Data Quality" score (e.g., 94% of edges have confidence ≥4).
-- [ ] Implement basic Portfolio Exposure calculator in the existing HTML (text input for tickers → highlights connected nodes + simple risk score).
+- [x] Implement basic Portfolio Exposure calculator in the existing HTML (text input for tickers -> highlights portfolio holdings, first-degree connected nodes, and connected edges).
 - [ ] Create `DATA_SOURCES.md` with full attribution and update instructions.
 - [ ] Update `README.md` with screenshots, quick start, and vision.
 - [ ] Tag v1.0 on GitHub.
@@ -63,6 +63,13 @@
 - The Industry Correlation Engine derives cross-industry-group pair rankings from the current static graph only. It uses existing edge count, average strength, high-confidence edge count, involved tickers, and dominant connection type; it does not create claims, data records, source URLs, or relationships.
 - The graph overlay reports visible nodes, visible edges, current layout mode, Focus Mode, active threshold, and Orbit status when active.
 - No data files, schema fields, source URLs, or factual relationship claims were added by this feature.
+
+**Portfolio Exposure Prototype**:
+- Static/client-only feature implemented in `index.html`.
+- Users can paste comma-, space-, or newline-separated tickers; inputs are normalized to uppercase, analyzed in memory, and never stored.
+- Matched holdings, first-degree exposure, top connected hubs, exposed sectors, exposed industry groups, and strongest portfolio-connected edge are all derived from the currently loaded companies and connections only.
+- The prototype does not add portfolio data files, backend storage, authentication, APIs, schema fields, source URLs, or new factual relationships.
+- Sector filters, industry-group filters, search, Focus Mode, Signal Threshold, layout modes, graph clustering, Industry Correlation Engine, and Orbit Mode remain independent graph controls.
 
 ---
 

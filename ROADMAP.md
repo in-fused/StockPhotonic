@@ -2,7 +2,7 @@
 
 **Vision**: The most insightful, beautiful, and trustworthy visualization of corporate interconnections for serious personal investors and their trusted circle.
 
-**Current Version**: v5.6 / Phase 2 Provenance Visibility (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
+**Current Version**: v5.7 / Phase 2.1 Edge-Level Source URLs (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
 
 ---
 
@@ -54,7 +54,7 @@
 - [x] Replace generic connection labels such as `Supply relationship`.
 - [x] Keep the dataset small enough to manually review: 60 real companies and 117 curated edges.
 - [x] Strengthen `scripts/validate_data.py` to fail duplicate tickers, synthetic ticker suffixes, placeholder names, and generic labels.
-- [ ] Add edge-level source URLs for the highest-impact supply, partnership, and investment relationships.
+- [ ] Add edge-level source URLs for the highest-impact supply, partnership, and investment relationships. _(in progress: Phase 2.1)_
 - [x] Add provenance UI so users can inspect confidence, verified date, and source summary from the graph.
 - [ ] Review top AI/semiconductor, healthcare/PBM, payments, and Berkshire edges before expanding the node count.
 

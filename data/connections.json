@@ -7,6 +7,9 @@
     "label": "HBM memory exposure for AI accelerators",
     "confidence": 5,
     "provenance": "Company disclosures and public investor materials",
+    "source_urls": [
+      "https://investors.micron.com/news-releases/news-release-details/micron-high-volume-production-hbm4-designed-nvidia-vera-rubin"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -37,6 +40,9 @@
     "label": "Azure AI infrastructure accelerator ecosystem",
     "confidence": 5,
     "provenance": "Public filings and company partnership announcements",
+    "source_urls": [
+      "https://nvidianews.nvidia.com/news/microsoft-nvidia-generative-ai-enterprises"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -77,6 +83,9 @@
     "label": "OCI GPU cloud infrastructure partnership",
     "confidence": 4,
     "provenance": "Public filings and company partnership announcements",
+    "source_urls": [
+      "https://nvidianews.nvidia.com/news/oracle-nvidia-speed-ai-adoption"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -117,6 +126,9 @@
     "label": "Cloud AI accelerator deployment partnership",
     "confidence": 4,
     "provenance": "Public filings and company partnership announcements",
+    "source_urls": [
+      "https://www.amd.com/en/newsroom/press-releases/2024-5-21-amd-instinct-mi300x-accelerators-power-microsoft-a.html"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -287,6 +299,9 @@
     "label": "Apple silicon foundry manufacturing dependency",
     "confidence": 5,
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source_urls": [
+      "https://www.apple.com/newsroom/2023/11/apple-announces-expanded-partnership-with-amkor-for-silicon-packaging/"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -687,6 +702,9 @@
     "label": "Berkshire public equity stake exposure",
     "confidence": 5,
     "provenance": "Public filings and company investor materials",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -697,6 +715,9 @@
     "label": "Berkshire public equity stake exposure",
     "confidence": 5,
     "provenance": "Public filings and company investor materials",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -707,6 +728,9 @@
     "label": "Berkshire public equity stake exposure",
     "confidence": 5,
     "provenance": "Public filings and company investor materials",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -717,6 +741,9 @@
     "label": "Berkshire public equity stake exposure",
     "confidence": 5,
     "provenance": "Public filings and company investor materials",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
     "verified_date": "2026-04-29"
   },
   {
@@ -727,6 +754,9 @@
     "label": "Berkshire public equity stake exposure",
     "confidence": 5,
     "provenance": "Public filings and company investor materials",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
     "verified_date": "2026-04-29"
   },
   {

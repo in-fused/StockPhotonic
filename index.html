@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PHOTONIC NEXUS - Real Core Dataset - Phase 2</title>
+    <title>PHOTONIC NEXUS - Real Core Dataset - Phase 2.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -90,6 +90,20 @@
             color: #ffffff;
         }
 
+        .source-link {
+            max-width: 7.5rem;
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(0, 249, 255, 0.07);
+            color: rgba(165, 243, 252, 0.82);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+        }
+
+        .source-link:hover {
+            border-color: rgba(0, 249, 255, 0.42);
+            background: rgba(0, 249, 255, 0.13);
+            color: #ffffff;
+        }
+
         .confidence-badge {
             border: 1px solid rgba(255, 255, 255, 0.12);
             background: rgba(255, 255, 255, 0.06);
@@ -139,7 +153,7 @@
                     </div>
                     <div>
                         <div class="font-display text-3xl font-semibold neon-text">PHOTONIC NEXUS</div>
-                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">REAL CORE DATASET - US MARKETS - 2026 - PHASE 2</div>
+                        <div class="text-[10px] text-cyan-400 -mt-1 tracking-[3px] font-mono">REAL CORE DATASET - US MARKETS - 2026 - PHASE 2.1</div>
                     </div>
                 </div>
             </div>
@@ -877,8 +891,9 @@
             const confidence = Number(item.link.confidence) || 0;
             const confidenceClass = getConfidenceClass(confidence);
             const verifiedDate = formatVerifiedDate(item.link.verified_date);
+            const sourceLinks = renderConnectionSourceLinks(item.link.source_urls);
             return `
-                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left block hover:bg-white/10 transition">
+                <div onclick="selectConnectionRow(event, ${Number(item.node.id)})" onkeydown="handleConnectionRowKeydown(event, ${Number(item.node.id)})" role="button" tabindex="0" class="connection-row w-full rounded-2xl p-3 text-left block hover:bg-white/10 transition cursor-pointer">
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0">
                             <div class="connection-title text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')}</div>
@@ -895,11 +910,42 @@
                         <span class="text-[10px] text-white/42 font-mono">VERIFIED ${escapeHtml(verifiedDate)}</span>
                     </div>
                     <div class="mt-2 text-[11px] leading-relaxed text-white/50">${escapeHtml(item.link.provenance || 'No provenance summary available.')}</div>
+                    ${sourceLinks}
                     <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
                         <div class="h-full rounded-full" style="width:${strengthPercent}%; background:${color}; box-shadow:0 0 10px ${color};"></div>
                     </div>
-                </button>
+                </div>
             `;
+        }
+
+        function renderConnectionSourceLinks(sourceUrls) {
+            const urls = Array.isArray(sourceUrls)
+                ? sourceUrls.map(url => String(url).trim()).filter(url => /^https?:\/\//i.test(url))
+                : [];
+            if (!urls.length) return '';
+
+            return `
+                <div class="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
+                    <span class="text-white/38 font-mono uppercase tracking-[1.5px]">Sources:</span>
+                    ${urls.map((url, index) => `
+                        <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(url)}" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" class="source-link inline-flex items-center rounded-full px-2 py-0.5 font-mono truncate">
+                            Source ${index + 1}
+                        </a>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function selectConnectionRow(event, id) {
+            if (event.target.closest('a')) return;
+            selectNodeById(id);
+        }
+
+        function handleConnectionRowKeydown(event, id) {
+            if (event.target.closest('a')) return;
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            selectNodeById(id);
         }
 
         function selectNodeById(id) {

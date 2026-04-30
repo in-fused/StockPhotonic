@@ -31,6 +31,7 @@ ALLOWED_TYPES = {
 }
 
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+URL_PATTERN = re.compile(r"^https?://\S+$", re.IGNORECASE)
 PLACEHOLDER_NAME_PATTERN = re.compile(r"\bCompany\s+\d+\b", re.IGNORECASE)
 SYNTHETIC_TICKER_PATTERN = re.compile(r"\d{2,}$")
 GENERIC_LABELS = {
@@ -138,6 +139,7 @@ def validate() -> int:
         provenance = connection.get("provenance")
         verified_date = connection.get("verified_date")
         connection_label = connection.get("label")
+        source_urls = connection.get("source_urls")
 
         valid_source = isinstance(source, int) and not isinstance(source, bool)
         valid_target = isinstance(target, int) and not isinstance(target, bool)
@@ -182,6 +184,25 @@ def validate() -> int:
 
         if not isinstance(verified_date, str) or not DATE_PATTERN.match(verified_date):
             errors.append(f"{label}: verified_date must be present as YYYY-MM-DD.")
+
+        has_source_urls = False
+        if "source_urls" in connection:
+            if not isinstance(source_urls, list):
+                errors.append(f"{label}: source_urls must be a list when present.")
+            else:
+                has_source_urls = len(source_urls) > 0
+                for url_index, source_url in enumerate(source_urls):
+                    if not isinstance(source_url, str) or not URL_PATTERN.match(source_url.strip()):
+                        errors.append(
+                            f"{label}: source_urls[{url_index}] must be a valid URL "
+                            "string starting with http:// or https://."
+                        )
+
+        if isinstance(confidence, int) and not isinstance(confidence, bool):
+            if confidence >= 4 and not has_source_urls:
+                warnings.append(
+                    f"{label}: confidence {confidence} but no source_urls present."
+                )
 
         if not isinstance(connection_label, str) or not connection_label.strip():
             errors.append(f"{label}: label must be present and non-empty.")

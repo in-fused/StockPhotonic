@@ -2,7 +2,7 @@
 
 **Date:** April 29, 2026  
 **Repo:** https://github.com/in-fused/StockPhotonic  
-**Current Version:** v5.9 / Graph Focus Mode + Signal Clarity System
+**Current Version:** v6.0 / Immersive Default Experience + Ambient Orbit Mode
 **Status:** Current main uses a smaller credible static dataset: 60 real companies and 117 curated connections. Immediate work should stay focused on user-facing product intelligence, graph exploration, source coverage, and reviewable industry-group foundations.
 
 ---
@@ -16,6 +16,11 @@
 - Industry group is derived at runtime in `index.html` from existing company fields and used for filtering, graph highlighting, and sidebar intelligence
 - Graph Focus Mode + Signal Clarity System isolates selected first-degree networks, filters weaker edges by stored strength, and summarizes visible signal quality in the sidebar
 - Industry Group + signal threshold above 0.3 creates a cleaner subgraph by hiding below-threshold edges and zero-edge nodes
+- First load now fits the graph, starts Ambient Orbit Mode by default, and shows a derived intelligence dashboard when no node is selected
+- Orbit Mode uses a Canvas camera-offset drift only; it does not mutate node coordinates and stops on user interaction
+- Wheel zoom is more responsive while staying cursor-centered and respecting the existing min/max scale limits
+- The graph container now includes subtle visible-node, visible-edge, layout, Focus Mode, threshold, and Orbit status overlay stats
+- The default dashboard derives top hubs, strongest connections, sector distribution, industry-group distribution, trust summary, and exploration chips from the loaded static dataset
 - Basic force-directed graph rendering
 - Validation scripts help reject placeholder companies, fake tickers, duplicate edges, generic labels, and malformed source URLs
 
@@ -126,6 +131,18 @@ This system is implemented entirely in `index.html` on top of the existing `data
 - Industry Group + threshold above 0.3 acts as an automatic declutter state for a clean visible subgraph.
 - Sidebar Signal Clarity reports active threshold, visible connection count, strongest visible connection, and weakest visible connection.
 - No data files, schema fields, source URLs, or factual relationship claims were added by this feature.
+
+### Immersive Default Experience + Ambient Orbit Mode
+
+This polish layer is also implemented entirely in `index.html` and uses the existing static JSON files only.
+
+- First load fits the graph immediately, starts Ambient Orbit Mode, and shows the no-selection intelligence dashboard.
+- Orbit Mode gently drifts the Canvas camera offset for an immersive graph feel. It is not 3D and does not persistently alter node positions.
+- Orbit stops on pointer down, wheel zoom, node click, search jump, pan/drag, filters, threshold changes, reset, and fit actions. The Orbit toggle turns it back on or off.
+- Wheel zoom now uses bounded direct cursor-centered scaling for a faster feel while preserving `MIN_SCALE` and `MAX_SCALE`.
+- The default dashboard derives top hubs, strongest connections, sector mix, industry-group mix, and dataset trust summary from currently loaded data.
+- Exploration chips apply existing sector or derived industry-group filters, then fit the graph.
+- No data files, scripts, schema fields, source URLs, or new relationship claims were added.
 
 2. **Continue data credibility and source coverage**
    - Add edge-level source URLs for high-impact relationships when defensible sources are available

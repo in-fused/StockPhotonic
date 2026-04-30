@@ -213,6 +213,40 @@
             background: rgba(0, 249, 255, 0.055);
         }
 
+        .graph-overlay-stats {
+            position: absolute;
+            left: 1rem;
+            bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            max-width: calc(100% - 2rem);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .graph-stat-pill {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(3, 7, 18, 0.74);
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.08);
+            backdrop-filter: blur(14px);
+        }
+
+        .dashboard-chip {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(0, 249, 255, 0.065);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .dashboard-chip:hover,
+        .dashboard-chip:focus-visible {
+            border-color: rgba(0, 249, 255, 0.52);
+            background: rgba(0, 249, 255, 0.14);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 249, 255, 0.13);
+            outline: none;
+        }
+
         @media (max-width: 768px) {
             .page-shell {
                 padding-left: 1rem;
@@ -304,6 +338,11 @@
                 <span>Focus Mode</span>
             </button>
 
+            <button id="orbit-toggle" onclick="toggleOrbitMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                <i class="fa-solid fa-circle-notch"></i>
+                <span>Orbit</span>
+            </button>
+
             <div class="signal-control rounded-3xl px-4 py-2 min-w-[240px]">
                 <label for="signal-threshold" class="flex items-center justify-between gap-3 text-[10px] font-mono tracking-[1.3px] text-cyan-100/75">
                     <span>Signal Strength Threshold</span>
@@ -338,15 +377,18 @@
             <div class="lg:col-span-8">
                 <div class="glass rounded-3xl p-3 graph-container relative overflow-hidden" style="height: 680px;">
                     <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
+                    <div id="graph-overlay-stats" class="graph-overlay-stats" aria-live="polite"></div>
                 </div>
             </div>
 
             <div class="lg:col-span-4">
                 <div id="sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full hidden"></div>
-                <div id="empty-sidebar" class="glass rounded-3xl p-8 border border-white/10 h-full flex flex-col items-center justify-center text-center min-h-[320px]">
-                    <i class="fa-solid fa-project-diagram text-5xl text-white/20 mb-4"></i>
-                    <div class="font-semibold text-white/60">Click any node to explore</div>
-                    <div class="text-xs text-white/35 mt-2 max-w-xs">Drag empty space to pan. Drag a node to reposition it. Wheel or pinch to zoom.</div>
+                <div id="empty-sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full min-h-[320px] overflow-y-auto">
+                    <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
+                        <i class="fa-solid fa-project-diagram text-5xl text-white/20 mb-4"></i>
+                        <div class="font-semibold text-white/60">Loading graph intelligence</div>
+                        <div class="text-xs text-white/35 mt-2 max-w-xs">The default dashboard is derived from the static dataset.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -368,7 +410,8 @@
         const LABEL_TICKER_SCALE = 0.42;
         const LABEL_FULL_SCALE = 1.05;
         const FRAME_MARGIN = 150;
-        const VIEW_ANIMATION_MS = 170;
+        const WHEEL_ZOOM_SENSITIVITY = 0.0021;
+        const WHEEL_DELTA_LIMIT = 180;
         const FIT_ANIMATION_MS = 260;
         const PULSE_DURATION_MS = 900;
         const SEARCH_RESULT_LIMIT = 5;
@@ -381,6 +424,11 @@
         const LAYOUT_MODE_HUB = 'hub';
         const SIGNAL_DECLUTTER_THRESHOLD = 0.3;
         const FOCUS_MODE_TRANSITION_MS = 520;
+        const ORBIT_RADIUS_RATIO = 0.035;
+        const ORBIT_MIN_RADIUS = 14;
+        const ORBIT_MAX_RADIUS = 34;
+        const ORBIT_RAMP_MS = 2800;
+        const ORBIT_ANGULAR_SPEED = (Math.PI * 2) / 52000;
         const INDUSTRY_GROUP_RULES = [
             {
                 group: 'PBM / Pharmacy Benefits',
@@ -508,6 +556,36 @@
                 keywords: ['machinery', 'industrial equipment', 'industrial automation', 'construction machinery', 'agricultural']
             }
         ];
+        const EXPLORATION_CHIPS = [
+            {
+                key: 'ai-infrastructure',
+                label: 'AI Infrastructure',
+                sector: 'AI / Semiconductors'
+            },
+            {
+                key: 'healthcare-pbm',
+                label: 'Healthcare / PBM',
+                sector: 'Healthcare / Pharma / PBM',
+                industryGroup: 'PBM / Pharmacy Benefits'
+            },
+            {
+                key: 'payments',
+                label: 'Payments',
+                sector: 'Payments / Financial Infrastructure',
+                industryGroup: 'Payments Networks'
+            },
+            {
+                key: 'energy-industrials',
+                label: 'Energy / Industrials',
+                sector: 'Energy / Industrials'
+            },
+            {
+                key: 'cloud-infrastructure',
+                label: 'Cloud Infrastructure',
+                sector: 'Cloud / Big Tech',
+                industryGroup: 'Cloud Infrastructure'
+            }
+        ];
         const HUB_CENTER = { x: 0, y: 0 };
         const HUB_RING_GAP = 150;
         const HUB_FIRST_RING_RADIUS = 230;
@@ -542,6 +620,10 @@
         let recentNodeIds = [];
         let layoutMode = LAYOUT_MODE_SECTOR;
         let hubLayoutPositions = new Map();
+        let orbitEnabled = false;
+        let orbitStartedAt = 0;
+        let orbitPhase = -Math.PI / 2;
+        let currentOrbitOffset = { x: 0, y: 0 };
 
         let offsetX = 0;
         let offsetY = 0;
@@ -594,12 +676,15 @@
                 buildIndustryGroupFilter();
                 updateFocusModeControl();
                 updateSignalThresholdControl();
+                updateOrbitModeControl();
                 initGraphData();
                 resizeCanvas();
-                fitGraph();
+                fitGraph(false, { keepOrbit: true });
+                showDefaultDashboard();
                 setupCanvasInteractions();
                 setupSearchInteractions();
                 updateSearchMatches();
+                setOrbitMode(true, { preserveView: false, restart: true });
                 document.getElementById('view-status').innerText = 'READY';
                 console.log(`Loaded ${companies.length} companies + ${connections.length} connections`);
             } catch (error) {
@@ -790,7 +875,7 @@
             const canvas = document.getElementById('graph-canvas');
             window.addEventListener('resize', () => {
                 resizeCanvas();
-                fitGraph(false);
+                fitGraph(false, { keepOrbit: true });
             });
 
             canvas.addEventListener('wheel', onWheelZoom, { passive: false });
@@ -807,6 +892,7 @@
             if (event.button !== 0 && event.pointerType === 'mouse') return;
 
             const canvas = document.getElementById('graph-canvas');
+            stopOrbitForInteraction();
             const screen = getEventPoint(event);
             const node = findNodeAt(screen.x, screen.y);
             cancelViewAnimation();
@@ -926,13 +1012,23 @@
 
         function onWheelZoom(event) {
             event.preventDefault();
+            stopOrbitForInteraction();
             const point = getEventPoint(event);
             const before = screenToWorld(point.x, point.y);
-            const zoomFactor = Math.exp(-event.deltaY * 0.0012);
+            const delta = normalizeWheelDelta(event);
+            const zoomFactor = Math.exp(-delta * WHEEL_ZOOM_SENSITIVITY);
             const nextScale = clamp(scale * zoomFactor, MIN_SCALE, MAX_SCALE);
             const nextOffsetX = point.x - before.x * nextScale;
             const nextOffsetY = point.y - before.y * nextScale;
-            animateView(nextScale, nextOffsetX, nextOffsetY, VIEW_ANIMATION_MS);
+            setView(nextScale, nextOffsetX, nextOffsetY);
+            requestDraw();
+        }
+
+        function normalizeWheelDelta(event) {
+            let delta = Number(event.deltaY) || 0;
+            if (event.deltaMode === 1) delta *= 16;
+            if (event.deltaMode === 2) delta *= Math.max(canvasHeight, 1);
+            return clamp(delta, -WHEEL_DELTA_LIMIT, WHEEL_DELTA_LIMIT);
         }
 
         function resizeCanvas() {
@@ -956,6 +1052,7 @@
             const canvas = document.getElementById('graph-canvas');
             const now = performance.now();
             const ctx = canvas.getContext('2d');
+            currentOrbitOffset = getOrbitOffset(now);
             ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
@@ -971,7 +1068,7 @@
             frameNodes.forEach(node => drawNode(ctx, node, timestamp));
             drawLabels(ctx, frameNodes);
 
-            if (now < pulseUntil || now < highlightedNodeUntil || now < focusTransitionUntil) requestDraw();
+            if (orbitEnabled || now < pulseUntil || now < highlightedNodeUntil || now < focusTransitionUntil) requestDraw();
         }
 
         function drawBackground(ctx) {
@@ -1216,6 +1313,7 @@
         }
 
         function selectNode(node) {
+            stopOrbitForInteraction();
             ensureIndustryGroupFilterAllowsNode(node);
             selectedNode = node;
             focusNeighborIds = new Set();
@@ -1237,6 +1335,7 @@
         }
 
         function clearSelection(refit = true) {
+            stopOrbitForInteraction();
             const wasHubActive = isHubLayoutActive();
             const wasFocusModeActive = isFocusModeActive();
             selectedNode = null;
@@ -1244,10 +1343,284 @@
             focusLinkKeys = new Set();
             focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
             refreshVisibleGraph();
-            document.getElementById('sidebar').classList.add('hidden');
-            document.getElementById('empty-sidebar').classList.remove('hidden');
+            showDefaultDashboard();
             if (refit && (wasHubActive || wasFocusModeActive)) fitGraph();
             requestDraw();
+        }
+
+        function showDefaultDashboard() {
+            const sidebar = document.getElementById('sidebar');
+            const empty = document.getElementById('empty-sidebar');
+            if (sidebar) sidebar.classList.add('hidden');
+            if (!empty) return;
+
+            empty.classList.remove('hidden');
+            renderDefaultDashboard();
+        }
+
+        function renderDefaultDashboard() {
+            const empty = document.getElementById('empty-sidebar');
+            if (!empty) return;
+
+            if (!nodes.length) {
+                empty.innerHTML = `
+                    <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
+                        <i class="fa-solid fa-project-diagram text-5xl text-white/20 mb-4"></i>
+                        <div class="font-semibold text-white/60">Loading graph intelligence</div>
+                        <div class="text-xs text-white/35 mt-2 max-w-xs">The dashboard is derived from the static dataset.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const stats = getDefaultDashboardStats();
+            empty.innerHTML = `
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <div>
+                        <div class="text-xs text-cyan-300/80 font-mono tracking-[2px]">${stats.contextLabel}</div>
+                        <h2 class="font-display text-3xl text-white mt-1">Nexus Intelligence</h2>
+                        <div class="text-sm text-white/55 mt-1">Derived from the current static company and connection dataset.</div>
+                    </div>
+                    <button onclick="fitGraph()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70" title="Fit graph">
+                        <i class="fa-solid fa-compress"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 mb-5">
+                    <div class="summary-tile rounded-2xl p-3">
+                        <div class="text-[10px] text-white/40 font-mono">VISIBLE NODES</div>
+                        <div class="font-display text-xl text-white">${stats.visibleNodeCount}</div>
+                    </div>
+                    <div class="summary-tile rounded-2xl p-3">
+                        <div class="text-[10px] text-white/40 font-mono">VISIBLE EDGES</div>
+                        <div class="font-display text-xl text-white">${stats.visibleEdgeCount}</div>
+                    </div>
+                    <div class="summary-tile rounded-2xl p-3">
+                        <div class="text-[10px] text-white/40 font-mono">CONF >=4</div>
+                        <div class="font-display text-xl text-white">${stats.trust.highConfidencePercent}%</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Suggested Exploration</div>
+                    <div class="flex flex-wrap gap-2">
+                        ${renderExplorationChips()}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Top Hub Companies</div>
+                    <div class="space-y-2">
+                        ${renderDashboardHubList(stats.topHubs)}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Strongest Connections</div>
+                    <div class="space-y-2">
+                        ${renderDashboardConnectionList(stats.strongestConnections)}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Sector Distribution</div>
+                    <div class="space-y-2">
+                        ${renderDashboardDistribution(stats.sectorDistribution, stats.visibleNodeCount, '#67e8f9', 'rgba(0, 249, 255, 0.45)')}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Industry Group Distribution</div>
+                    <div class="space-y-2">
+                        ${renderDashboardDistribution(stats.industryGroupDistribution, stats.visibleNodeCount, '#f0abfc', 'rgba(255, 0, 170, 0.40)')}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Dataset Trust Summary</div>
+                    ${renderDashboardTrustSummary(stats.trust)}
+                </div>
+            `;
+        }
+
+        function getDefaultDashboardStats() {
+            const activeContext = Boolean(currentSector || currentIndustryGroup || currentSearch || signalStrengthThreshold > 0);
+            const nodesForStats = visibleNodes.length || activeContext ? visibleNodes : nodes;
+            const linksForStats = visibleLinks.length || activeContext ? visibleLinks : links;
+            const topHubs = [...nodesForStats]
+                .map(node => ({ node, degree: getDashboardNodeDegree(node) }))
+                .sort((a, b) => b.degree - a.degree || ((a.node.rank || 9999) - (b.node.rank || 9999)) || String(a.node.ticker || '').localeCompare(String(b.node.ticker || '')))
+                .slice(0, 5);
+            const strongestConnections = [...linksForStats]
+                .sort((a, b) => b.strength - a.strength || String(a.source.ticker || '').localeCompare(String(b.source.ticker || '')))
+                .slice(0, 5);
+
+            return {
+                contextLabel: activeContext ? 'VISIBLE GRAPH' : 'STATIC DATASET',
+                visibleNodeCount: visibleNodes.length,
+                visibleEdgeCount: visibleLinks.length,
+                topHubs,
+                strongestConnections,
+                sectorDistribution: getCompanyDistribution(nodesForStats, node => node.sector || 'Other').slice(0, 6),
+                industryGroupDistribution: getCompanyDistribution(nodesForStats, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 6),
+                trust: getDatasetTrustMetrics()
+            };
+        }
+
+        function getDashboardNodeDegree(node) {
+            if (!node) return 0;
+            if (visibleEdgeCountByNodeId.has(node.id)) return visibleEdgeCountByNodeId.get(node.id);
+            return node.degree || degreeById.get(node.id) || 0;
+        }
+
+        function getCompanyDistribution(items, getLabel) {
+            const counts = new Map();
+            items.forEach(item => {
+                const label = getLabel(item) || 'Other';
+                counts.set(label, (counts.get(label) || 0) + 1);
+            });
+            return [...counts.entries()]
+                .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
+        }
+
+        function renderExplorationChips() {
+            return EXPLORATION_CHIPS.map(chip => `
+                <button onclick="applyExplorationChip('${escapeHtml(chip.key)}')" class="dashboard-chip rounded-full px-3 py-1.5 text-xs text-cyan-100/78 font-mono">
+                    ${escapeHtml(chip.label)}
+                </button>
+            `).join('');
+        }
+
+        function renderDashboardHubList(items) {
+            if (!items.length) return '<div class="text-sm text-white/35">No visible hub companies.</div>';
+
+            return items.map((item, index) => `
+                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0 flex items-center gap-2">
+                            <span class="shrink-0 px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/45 font-mono">#${index + 1}</span>
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')}</div>
+                                <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="font-display text-lg text-white">${item.degree}</div>
+                            <div class="text-[10px] text-cyan-200/58 font-mono">DEGREE</div>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function renderDashboardConnectionList(items) {
+            if (!items.length) return '<div class="text-sm text-white/35">No visible connections at this threshold.</div>';
+
+            return items.map((link, index) => {
+                const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
+                const strengthPercent = Math.round(link.strength * 100);
+                return `
+                    <div class="connection-row ${index === 0 ? 'top-connection top-connection-1' : ''} rounded-2xl p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-sm font-semibold text-white/90 truncate">${escapeHtml(link.source.ticker || '')} <span class="text-white/35">to</span> ${escapeHtml(link.target.ticker || '')}</div>
+                                <div class="text-xs text-white/50 leading-snug mt-1">${escapeHtml(link.label || 'Curated connection')}</div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="text-sm font-mono" style="color:${color}">${strengthPercent}%</div>
+                                <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(link.type || 'link'))}</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+                            <div class="h-full rounded-full" style="width:${strengthPercent}%; background:${color}; box-shadow:0 0 10px ${color};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDashboardDistribution(entries, total, color, shadowColor) {
+            if (!entries.length) return '<div class="text-sm text-white/35">No visible companies.</div>';
+            const maxCount = Math.max(...entries.map(([, count]) => count), 1);
+
+            return entries.map(([label, count]) => {
+                const width = Math.max(8, Math.round((count / maxCount) * 100));
+                const percent = total ? Math.round((count / total) * 100) : 0;
+                return `
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <div class="flex items-center justify-between gap-3 text-xs">
+                            <span class="text-white/75 truncate">${count} ${escapeHtml(label)}</span>
+                            <span class="text-white/38 font-mono shrink-0">${percent}%</span>
+                        </div>
+                        <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
+                            <div class="h-full rounded-full" style="width:${width}%; background:${color}; box-shadow:0 0 10px ${shadowColor};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDashboardTrustSummary(metrics) {
+            return `
+                <div class="trust-panel rounded-2xl p-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <div class="text-[10px] text-white/40 font-mono">COMPANIES</div>
+                            <div class="font-display text-xl text-white">${metrics.companyCount}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-white/40 font-mono">EDGES</div>
+                            <div class="font-display text-xl text-white">${metrics.connectionCount}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-white/40 font-mono">CONF >=4</div>
+                            <div class="font-display text-xl text-white">${metrics.highConfidencePercent}%</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-white/40 font-mono">LATEST VERIFIED</div>
+                            <div class="font-display text-xl text-white">${escapeHtml(formatVerifiedDate(metrics.latestVerifiedDate))}</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-white/10 text-[10px] text-cyan-100/58 font-mono tracking-[1.2px]">STATIC DATASET ONLY</div>
+                </div>
+            `;
+        }
+
+        function applyExplorationChip(key) {
+            const chip = EXPLORATION_CHIPS.find(item => item.key === key);
+            if (!chip) return;
+
+            stopOrbitForInteraction();
+            selectedNode = null;
+            focusNeighborIds = new Set();
+            focusLinkKeys = new Set();
+            highlightedNodeId = null;
+            currentSearch = '';
+
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) searchInput.value = '';
+
+            currentSector = getExistingSelectValue('sector-filter', chip.sector) || '';
+            currentIndustryGroup = getExistingSelectValue('industry-group-filter', chip.industryGroup) || '';
+
+            const sectorFilter = document.getElementById('sector-filter');
+            const industryGroupFilter = document.getElementById('industry-group-filter');
+            if (sectorFilter) sectorFilter.value = currentSector;
+            if (industryGroupFilter) industryGroupFilter.value = currentIndustryGroup;
+
+            refreshVisibleGraph();
+            updateSearchMatches();
+            closeSearchPanel();
+            showDefaultDashboard();
+            fitGraph();
+            requestDraw();
+        }
+
+        function getExistingSelectValue(id, value) {
+            if (!value) return '';
+            const select = document.getElementById(id);
+            if (!select) return '';
+            return [...select.options].some(option => option.value === value) ? value : '';
         }
 
         function showNodeDetails(node) {
@@ -1834,6 +2207,7 @@
         }
 
         function setLayoutMode(mode) {
+            stopOrbitForInteraction();
             layoutMode = mode === LAYOUT_MODE_HUB ? LAYOUT_MODE_HUB : LAYOUT_MODE_SECTOR;
             const select = document.getElementById('layout-mode');
             if (select && select.value !== layoutMode) select.value = layoutMode;
@@ -1847,6 +2221,7 @@
         }
 
         function setFocusModeEnabled(enabled) {
+            stopOrbitForInteraction();
             const nextValue = Boolean(enabled);
             if (focusModeEnabled === nextValue) return;
 
@@ -1872,6 +2247,7 @@
         }
 
         function setSignalStrengthThreshold(value) {
+            stopOrbitForInteraction();
             const nextValue = clamp(Number(value) || 0, 0, 1);
             if (Math.abs(signalStrengthThreshold - nextValue) < 0.001) return;
 
@@ -1892,6 +2268,7 @@
         }
 
         function filterGraph() {
+            stopOrbitForInteraction();
             currentSector = document.getElementById('sector-filter').value;
             currentIndustryGroup = document.getElementById('industry-group-filter').value;
             currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
@@ -1904,6 +2281,7 @@
         }
 
         function resetAll() {
+            stopOrbitForInteraction();
             currentSector = '';
             currentIndustryGroup = '';
             currentSearch = '';
@@ -2126,6 +2504,7 @@
 
         function jumpToSearchNode(node) {
             if (!node) return;
+            stopOrbitForInteraction();
             ensureNodeVisibleForJump(node);
             selectNode(node);
             highlightSearchNode(node);
@@ -2212,7 +2591,8 @@
             return nodeById.get(id);
         }
 
-        function fitGraph(animate = true) {
+        function fitGraph(animate = true, options = {}) {
+            if (!options.keepOrbit) stopOrbitForInteraction();
             if (!visibleNodes.length) refreshVisibleGraph();
             const fitNodes = getFitNodes();
             if (!fitNodes.length) return;
@@ -2280,6 +2660,29 @@
 
             visibleNodeIds = new Set(visibleNodes.map(node => node.id));
             rebuildLayoutPositions();
+            updateGraphOverlayStats();
+            if (!selectedNode) renderDefaultDashboard();
+        }
+
+        function updateGraphOverlayStats() {
+            const overlay = document.getElementById('graph-overlay-stats');
+            if (!overlay) return;
+
+            const modeLabel = isHubLayoutActive() ? 'Hub Layout' : 'Sector Layout';
+            const items = [
+                `${visibleNodes.length} Visible Nodes`,
+                `${visibleLinks.length} Visible Edges`,
+                modeLabel
+            ];
+            if (isFocusModeActive()) items.push('Focus Mode');
+            if (signalStrengthThreshold > 0) items.push(`Threshold ${signalStrengthThreshold.toFixed(2)}`);
+            if (orbitEnabled) items.push('Orbit On');
+
+            overlay.innerHTML = items.map(item => `
+                <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/75 font-mono tracking-[1.1px]">
+                    ${escapeHtml(item)}
+                </span>
+            `).join('');
         }
 
         function syncSelectionAfterVisibilityChange() {
@@ -2425,6 +2828,67 @@
             return Math.max(3.5, node.radius * Math.sqrt(scale));
         }
 
+        function toggleOrbitMode() {
+            setOrbitMode(!orbitEnabled, { preserveView: orbitEnabled, restart: true });
+        }
+
+        function setOrbitMode(enabled, options = {}) {
+            const nextValue = Boolean(enabled);
+            if (nextValue === orbitEnabled && !options.restart) {
+                updateOrbitModeControl();
+                updateGraphOverlayStats();
+                return;
+            }
+
+            if (nextValue) {
+                orbitEnabled = true;
+                orbitStartedAt = performance.now();
+                currentOrbitOffset = { x: 0, y: 0 };
+            } else {
+                if (orbitEnabled && options.preserveView !== false) {
+                    const offset = getOrbitOffset(performance.now());
+                    offsetX += offset.x;
+                    offsetY += offset.y;
+                }
+                orbitEnabled = false;
+                currentOrbitOffset = { x: 0, y: 0 };
+            }
+
+            updateOrbitModeControl();
+            updateGraphOverlayStats();
+            requestDraw();
+        }
+
+        function stopOrbitForInteraction() {
+            if (!orbitEnabled) return;
+            setOrbitMode(false, { preserveView: true });
+        }
+
+        function updateOrbitModeControl() {
+            const toggle = document.getElementById('orbit-toggle');
+            if (!toggle) return;
+
+            toggle.setAttribute('aria-pressed', orbitEnabled ? 'true' : 'false');
+            toggle.classList.toggle('is-active', orbitEnabled);
+            toggle.title = orbitEnabled
+                ? 'Orbit on: ambient camera drift stops on interaction.'
+                : 'Orbit off: ambient camera drift is paused.';
+        }
+
+        function getOrbitOffset(now = performance.now()) {
+            if (!orbitEnabled) return { x: 0, y: 0 };
+            const elapsed = Math.max(0, now - orbitStartedAt);
+            const baseRadius = Math.min(canvasWidth, canvasHeight) * ORBIT_RADIUS_RATIO;
+            const radius = clamp(baseRadius || ORBIT_MIN_RADIUS, ORBIT_MIN_RADIUS, ORBIT_MAX_RADIUS);
+            const ramp = clamp(elapsed / ORBIT_RAMP_MS, 0, 1);
+            const easedRamp = 1 - Math.pow(1 - ramp, 3);
+            const angle = orbitPhase + elapsed * ORBIT_ANGULAR_SPEED;
+            return {
+                x: Math.cos(angle) * radius * easedRamp,
+                y: Math.sin(angle) * radius * 0.72 * easedRamp
+            };
+        }
+
         function setView(nextScale, nextOffsetX, nextOffsetY) {
             cancelViewAnimation();
             scale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
@@ -2520,16 +2984,18 @@
         }
 
         function screenToWorld(x, y) {
+            const orbit = orbitEnabled ? currentOrbitOffset : { x: 0, y: 0 };
             return {
-                x: (x - offsetX) / scale,
-                y: (y - offsetY) / scale
+                x: (x - offsetX - orbit.x) / scale,
+                y: (y - offsetY - orbit.y) / scale
             };
         }
 
         function worldToScreen(x, y) {
+            const orbit = orbitEnabled ? currentOrbitOffset : { x: 0, y: 0 };
             return {
-                x: x * scale + offsetX,
-                y: y * scale + offsetY
+                x: x * scale + offsetX + orbit.x,
+                y: y * scale + offsetY + orbit.y
             };
         }
 

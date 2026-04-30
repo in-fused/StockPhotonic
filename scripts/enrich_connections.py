@@ -231,6 +231,47 @@ def normalize_source_urls(value: Any) -> list[str]:
     return urls
 
 
+def parse_non_negative_int(value: str) -> int:
+    try:
+        limit = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("--limit must be an integer.") from error
+
+    if limit < 0:
+        raise argparse.ArgumentTypeError("--limit must be 0 or greater.")
+    return limit
+
+
+def parse_strength_filter(value: str) -> float:
+    try:
+        strength = float(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("--min-strength must be a number.") from error
+
+    if not 0 <= strength <= 1:
+        raise argparse.ArgumentTypeError("--min-strength must be from 0 to 1.")
+    return strength
+
+
+def parse_type_filter(value: str) -> set[str]:
+    connection_types = {
+        connection_type.strip().lower()
+        for connection_type in value.split(",")
+        if connection_type.strip()
+    }
+    if not connection_types:
+        raise argparse.ArgumentTypeError("--types must include at least one type.")
+
+    unknown_types = sorted(connection_types - validate_data.ALLOWED_TYPES)
+    if unknown_types:
+        allowed_types = ", ".join(sorted(validate_data.ALLOWED_TYPES))
+        raise argparse.ArgumentTypeError(
+            f"Unknown type(s): {', '.join(unknown_types)}. Allowed: {allowed_types}."
+        )
+
+    return connection_types
+
+
 def normalize_connection(
     raw_connection: Any,
     ticker_to_id: dict[str, int],
@@ -327,25 +368,103 @@ def validate_merged_connections(connections: list[dict[str, Any]]) -> None:
             temp_path.unlink(missing_ok=True)
 
 
-def prepare_connections() -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
+def generate_signal_inputs() -> tuple[list[dict[str, Any]], list[str]]:
+    import generate_signals
+
+    try:
+        return generate_signals.generate_signals(generate_signals.RAW_INPUTS), []
+    except Exception:
+        signals: list[dict[str, Any]] = []
+        skipped: list[str] = []
+        for index, raw_input in enumerate(generate_signals.RAW_INPUTS):
+            try:
+                signals.extend(generate_signals.generate_signals([raw_input]))
+            except Exception as error:
+                skipped.append(f"Signal input {index}: parsing failed: {error}")
+
+        return signals, skipped
+
+
+def signal_label(signal: Any, index: int) -> str:
+    if not isinstance(signal, dict):
+        return f"Signal {index}"
+
+    source_ticker = signal.get("source_ticker", "?")
+    target_ticker = signal.get("target_ticker", "?")
+    connection_type = signal.get("type", "?")
+    return f"Signal {index} ({source_ticker} -> {target_ticker}, {connection_type})"
+
+
+def apply_signal_controls(
+    signals: list[dict[str, Any]],
+    *,
+    limit: int | None,
+    min_strength: float | None,
+    allowed_types: set[str] | None,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    limited_signals = signals[:limit] if limit is not None else signals
+    processed: list[dict[str, Any]] = []
+    skipped: list[str] = []
+
+    for index, signal in enumerate(limited_signals):
+        label = signal_label(signal, index)
+        if min_strength is not None:
+            strength = signal.get("strength") if isinstance(signal, dict) else None
+            if not is_number(strength):
+                skipped.append(f"{label}: skipped by --min-strength; strength is invalid.")
+                continue
+            if float(strength) < min_strength:
+                skipped.append(
+                    f"{label}: skipped by --min-strength {min_strength} "
+                    f"(strength {float(strength)})."
+                )
+                continue
+
+        if allowed_types is not None:
+            connection_type = signal.get("type") if isinstance(signal, dict) else None
+            if not isinstance(connection_type, str):
+                skipped.append(f"{label}: skipped by --types; type is invalid.")
+                continue
+            normalized_type = connection_type.strip().lower()
+            if normalized_type not in allowed_types:
+                skipped.append(
+                    f"{label}: skipped by --types "
+                    f"({normalized_type or 'blank'} not allowed)."
+                )
+                continue
+
+        processed.append(signal)
+
+    return processed, skipped
+
+
+def prepare_connections(
+    raw_connections: list[dict[str, Any]],
+    *,
+    skip_invalid: bool,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str], list[str]]:
     companies = load_json(COMPANIES_PATH)
     connections = load_json(CONNECTIONS_PATH)
     ticker_to_id = build_ticker_map(companies)
     known_keys = existing_connection_keys(connections)
 
     additions: list[dict[str, Any]] = []
-    skipped: list[str] = []
+    duplicate_skips: list[str] = []
+    invalid_skips: list[str] = []
     today = date.today().isoformat()
 
-    for index, raw_connection in enumerate(NEW_CONNECTIONS):
+    for index, raw_connection in enumerate(raw_connections):
         try:
             connection = normalize_connection(raw_connection, ticker_to_id, today)
         except ValueError as error:
+            if skip_invalid:
+                invalid_skips.append(f"Signal {index}: skipped during ingestion: {error}")
+                continue
             raise ValueError(f"New connection {index}: {error}") from error
 
         key = connection_key(connection)
         if key in known_keys:
-            skipped.append(
+            duplicate_skips.append(
                 f"{raw_connection['source_ticker']} -> {raw_connection['target_ticker']} "
                 f"({connection['type']}): duplicate"
             )
@@ -354,12 +473,30 @@ def prepare_connections() -> tuple[list[dict[str, Any]], list[dict[str, Any]], l
         known_keys.add(key)
         additions.append(connection)
 
-    return connections, additions, skipped
+    return connections, additions, duplicate_skips, invalid_skips
 
 
-def print_summary(additions: list[dict[str, Any]], skipped: list[str], dry_run: bool) -> None:
-    action = "Would add" if dry_run else "Added"
-    print(f"{action} {len(additions)} connection(s).")
+def print_summary(
+    additions: list[dict[str, Any]],
+    duplicate_skips: list[str],
+    other_skips: list[str],
+    dry_run: bool,
+    *,
+    validation_result: str,
+    total_signals_generated: int | None,
+    signals_processed: int | None,
+) -> None:
+    if total_signals_generated is not None:
+        print(f"Total signals generated: {total_signals_generated}")
+    if signals_processed is not None:
+        print(f"Signals processed: {signals_processed}")
+
+    if dry_run:
+        print(f"Connections added: 0 (dry run would add {len(additions)})")
+    else:
+        print(f"Connections added: {len(additions)}")
+    print(f"Duplicates skipped: {len(duplicate_skips)}")
+    print(f"Validation result: {validation_result}")
 
     for connection in additions:
         print(
@@ -369,9 +506,14 @@ def print_summary(additions: list[dict[str, Any]], skipped: list[str], dry_run: 
             f"{connection['label']}"
         )
 
-    if skipped:
-        print(f"Skipped {len(skipped)} duplicate connection(s).")
-        for skipped_connection in skipped:
+    if duplicate_skips:
+        print(f"Skipped duplicate connection(s):")
+        for skipped_connection in duplicate_skips:
+            print(f"- {skipped_connection}")
+
+    if other_skips:
+        print(f"Skipped other signal(s):")
+        for skipped_connection in other_skips:
             print(f"- {skipped_connection}")
 
     if dry_run:
@@ -387,15 +529,69 @@ def main() -> int:
         action="store_true",
         help="Print additions without saving data/connections.json.",
     )
+    parser.add_argument(
+        "--from-signals",
+        action="store_true",
+        help="Generate connection candidates from simulated external signal inputs.",
+    )
+    parser.add_argument(
+        "--limit",
+        type=parse_non_negative_int,
+        help="Only process the first N generated signals.",
+    )
+    parser.add_argument(
+        "--min-strength",
+        type=parse_strength_filter,
+        help="Only process signals with strength greater than or equal to X.",
+    )
+    parser.add_argument(
+        "--types",
+        type=parse_type_filter,
+        help="Comma-separated allowed connection types, such as supply,partnership.",
+    )
     args = parser.parse_args()
 
     try:
-        connections, additions, skipped = prepare_connections()
+        raw_connections = NEW_CONNECTIONS
+        total_signals_generated: int | None = None
+        signals_processed: int | None = None
+        skipped: list[str] = []
+
+        if args.from_signals:
+            raw_connections, skipped = generate_signal_inputs()
+            total_signals_generated = len(raw_connections)
+
+        if args.from_signals:
+            raw_connections, control_skips = apply_signal_controls(
+                raw_connections,
+                limit=args.limit,
+                min_strength=args.min_strength,
+                allowed_types=args.types,
+            )
+            skipped.extend(control_skips)
+            signals_processed = len(raw_connections)
+
+        connections, additions, duplicate_skips, invalid_skips = prepare_connections(
+            raw_connections,
+            skip_invalid=args.from_signals,
+        )
+        skipped.extend(invalid_skips)
+
+        validation_result = "not run (no new connections)"
         if additions:
             validate_merged_connections([*connections, *additions])
+            validation_result = "passed"
             if not args.dry_run:
                 save_json(CONNECTIONS_PATH, [*connections, *additions])
-        print_summary(additions, skipped, args.dry_run)
+        print_summary(
+            additions,
+            duplicate_skips,
+            skipped,
+            args.dry_run,
+            validation_result=validation_result,
+            total_signals_generated=total_signals_generated,
+            signals_processed=signals_processed,
+        )
         return 0
     except ValueError as error:
         print(f"ERROR: {error}", file=sys.stderr)

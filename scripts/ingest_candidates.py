@@ -19,7 +19,7 @@ import re
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from build_source_registry import (
     PRODUCTION_RELATIONSHIP_TYPES,
@@ -51,6 +51,13 @@ REQUIRED_TICKER_UNIVERSE_FIELDS: tuple[str, ...] = (
     "review_status",
 )
 SUPPORTED_TICKER_ASSET_TYPES = {"public_company"}
+
+
+class TickerUniverseReport(NamedTuple):
+    duplicate_with_production: int
+    duplicate_within_candidate: int
+    source_type_counts: Counter[str]
+    exchange_counts: Counter[str]
 
 
 def load_json(path: Path) -> Any:
@@ -531,6 +538,60 @@ def validate_official_ticker_universe(
     return valid_candidates, errors
 
 
+def breakdown_value(value: Any, *, normalize_lower: bool = False) -> str:
+    if not isinstance(value, str) or not value.strip():
+        return "<missing>"
+
+    normalized = value.strip()
+    if normalize_lower:
+        return normalized.lower()
+    return normalized
+
+
+def build_ticker_universe_report(
+    candidates: list[dict[str, Any]],
+    production_tickers: set[str],
+) -> TickerUniverseReport:
+    source_type_counts: Counter[str] = Counter()
+    exchange_counts: Counter[str] = Counter()
+    seen_tickers: Counter[str] = Counter()
+    duplicate_with_production = 0
+
+    for candidate in candidates:
+        source_type_counts[
+            breakdown_value(candidate.get("source_type"), normalize_lower=True)
+        ] += 1
+        exchange_counts[breakdown_value(candidate.get("exchange"))] += 1
+
+        ticker = candidate.get("ticker")
+        if isinstance(ticker, str) and ticker.strip():
+            normalized_ticker = ticker.strip().upper()
+            seen_tickers[normalized_ticker] += 1
+            if normalized_ticker in production_tickers:
+                duplicate_with_production += 1
+
+    duplicate_within_candidate = sum(
+        count - 1 for count in seen_tickers.values() if count > 1
+    )
+
+    return TickerUniverseReport(
+        duplicate_with_production=duplicate_with_production,
+        duplicate_within_candidate=duplicate_within_candidate,
+        source_type_counts=source_type_counts,
+        exchange_counts=exchange_counts,
+    )
+
+
+def print_breakdown(title: str, counts: Counter[str]) -> None:
+    print(f"{title}:")
+    if not counts:
+        print("- none")
+        return
+
+    for label, count in sorted(counts.items()):
+        print(f"- {label}: {count}")
+
+
 def print_summary(
     *,
     candidate_count: int,
@@ -538,6 +599,7 @@ def print_summary(
     validation_errors: list[str],
     ticker_to_id: dict[str, int],
     show_previews: bool,
+    summary_only: bool,
 ) -> None:
     print("StockPhotonic candidate ingestion dry run")
     print(f"Candidates loaded: {candidate_count}")
@@ -545,7 +607,7 @@ def print_summary(
     print(f"Rejected candidates: {len(validation_errors)}")
     print("Production writes: 0")
 
-    if validation_errors:
+    if validation_errors and not summary_only:
         print("\nRejected")
         for error in validation_errors:
             print(f"- {error}")
@@ -569,15 +631,22 @@ def print_ticker_universe_summary(
     candidate_count: int,
     valid_candidates: list[dict[str, Any]],
     validation_errors: list[str],
+    report: TickerUniverseReport,
+    summary_only: bool,
 ) -> None:
-    print("StockPhotonic official ticker universe candidate validation")
-    print(f"Candidates loaded: {candidate_count}")
+    print("StockPhotonic candidate universe validation dry run")
+    print("Candidate kind: official ticker universe")
+    print(f"Total candidates loaded: {candidate_count}")
     print(f"Valid ticker candidates: {len(valid_candidates)}")
     print(f"Validation errors: {len(validation_errors)}")
+    print(f"Duplicate with production: {report.duplicate_with_production}")
+    print(f"Duplicate within candidate: {report.duplicate_within_candidate}")
+    print_breakdown("Source type breakdown", report.source_type_counts)
+    print_breakdown("Exchange breakdown", report.exchange_counts)
     print("Production writes: 0")
     print("Promotion previews: disabled")
 
-    if validation_errors:
+    if validation_errors and not summary_only:
         print("\nRejected")
         for error in validation_errors:
             print(f"- {error}")
@@ -606,6 +675,11 @@ def main() -> int:
         default="auto",
         help="Candidate input kind. Auto-detects official_ticker_universe.json.",
     )
+    parser.add_argument(
+        "--summary-only",
+        action="store_true",
+        help="Show aggregate validation summary without per-record rejected detail.",
+    )
     args = parser.parse_args()
 
     try:
@@ -621,10 +695,13 @@ def main() -> int:
                 candidates,
                 production_tickers,
             )
+            report = build_ticker_universe_report(candidates, production_tickers)
             print_ticker_universe_summary(
                 candidate_count=len(candidates),
                 valid_candidates=valid_candidates,
                 validation_errors=validation_errors,
+                report=report,
+                summary_only=args.summary_only,
             )
             return 1 if validation_errors else 0
 
@@ -642,6 +719,7 @@ def main() -> int:
             validation_errors=validation_errors,
             ticker_to_id=ticker_to_id,
             show_previews=args.show_previews,
+            summary_only=args.summary_only,
         )
         return 1 if validation_errors else 0
     except ValueError as error:

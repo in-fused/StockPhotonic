@@ -111,6 +111,13 @@ Add a ticker universe from official or exchange-sourced listings in candidate fo
 
 Production promotion from this file requires source validation, duplicate checks, manual review, production validation, and an explicit future writer phase. The current candidate ingestion support validates the file as a dry run only.
 
+Dry-run validation commands:
+
+```bash
+python scripts/ingest_candidates.py --candidates data/candidates/official_ticker_universe.json
+python scripts/ingest_candidates.py --candidates data/candidates/official_ticker_universe.json --summary-only
+```
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

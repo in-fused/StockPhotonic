@@ -108,6 +108,7 @@ Current scripts:
 - `scripts/generate_signals.py` converts raw text/source inputs into structured candidate signals with tickers, relationship type, label, strength, `source_meta`, and `signal_score`.
 - `scripts/enrich_connections.py` safely converts vetted candidate signals into dataset connection records, supports dry runs and filtering, rejects duplicates, and validates the merged result before writing.
 - `scripts/validate_data.py` validates the static JSON dataset and computes expected confidence from structural evidence, with optional `signal_score` adjustment when present.
+- `scripts/sec_fetch_cache.py` is a read-only SEC fetch/cache helper for future source-backed extraction work. It does not create candidates, does not extract relationships, and does not modify production graph data.
 
 Important distinction:
 
@@ -154,6 +155,15 @@ python scripts/enrich_connections.py --from-signals --dry-run --min-strength 0.7
 python scripts/validate_data.py
 python scripts/validate_data.py --strict-confidence
 ```
+
+SEC cache helper commands:
+
+```bash
+python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.email@example.com" --dry-run
+python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.email@example.com"
+```
+
+The SEC cache helper requires an explicit identifying `--user-agent`. Use `--dry-run` first to confirm the exact SEC URL and deterministic cache path. Cached responses are written under `data/cache/sec/` by default and should not be committed unless a future reviewed phase explicitly approves the cached artifact. Running the helper is opt-in only; validation and app loading do not fetch SEC data.
 
 CLI concepts:
 

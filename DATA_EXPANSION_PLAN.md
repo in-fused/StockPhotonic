@@ -118,6 +118,24 @@ python scripts/ingest_candidates.py --candidates data/candidates/official_ticker
 python scripts/ingest_candidates.py --candidates data/candidates/official_ticker_universe.json --summary-only
 ```
 
+### Phase D5: SEC Fetch Cache Foundation
+
+`scripts/sec_fetch_cache.py` provides a read-only SEC fetch/cache foundation for future source-backed extraction. It is opt-in infrastructure only: it does not create candidate records, does not extract or promote relationships, and does not write `data/companies.json` or `data/connections.json`.
+
+Use dry run first:
+
+```bash
+python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.email@example.com" --dry-run
+```
+
+Fetch only when the exact SEC submissions endpoint and cache path are acceptable:
+
+```bash
+python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.email@example.com"
+```
+
+The helper requires an explicit identifying `--user-agent`, avoids refetching an existing cache file unless `--force-refresh` is passed, and writes cached SEC responses under `data/cache/sec/` by default. Cached SEC responses should not be committed unless a future reviewed phase explicitly approves them.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

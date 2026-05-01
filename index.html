@@ -421,6 +421,10 @@
     <script src="js/intelligence/clusters.js"></script>
     <script src="js/intelligence/industryCorrelations.js"></script>
     <script src="js/intelligence/portfolioNexus.js"></script>
+    <script src="js/ui/dashboard.js"></script>
+    <script src="js/ui/sidebar.js"></script>
+    <script src="js/ui/search.js"></script>
+    <script src="js/ui/controls.js"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -458,6 +462,22 @@
             throw new Error('StockPhotonic portfolio nexus module failed to load');
         }
 
+        if (!window.StockPhotonicUI?.dashboard) {
+            throw new Error('StockPhotonic dashboard module failed to load');
+        }
+
+        if (!window.StockPhotonicUI?.sidebar) {
+            throw new Error('StockPhotonic sidebar module failed to load');
+        }
+
+        if (!window.StockPhotonicUI?.search) {
+            throw new Error('StockPhotonic search module failed to load');
+        }
+
+        if (!window.StockPhotonicUI?.controls) {
+            throw new Error('StockPhotonic controls module failed to load');
+        }
+
         const StockPhotonicUtils = window.StockPhotonicUtils || {};
         const {
             viewport: graphViewport,
@@ -470,6 +490,12 @@
             industryCorrelations: intelligenceIndustryCorrelations,
             portfolioNexus: intelligencePortfolioNexus
         } = window.StockPhotonicIntelligence;
+        const {
+            dashboard: uiDashboard,
+            sidebar: uiSidebar,
+            search: uiSearch,
+            controls: uiControls
+        } = window.StockPhotonicUI;
         const {
             clamp,
             hashNumber,
@@ -744,25 +770,86 @@
         ================================ */
 
         function buildSectorFilter() {
-            const select = document.getElementById('sector-filter');
-            const sectors = [...new Set(companies.map(company => company.sector).filter(Boolean))].sort();
-            select.innerHTML = '<option value="">All Sectors</option>' + sectors
-                .map(sector => `<option value="${escapeHtml(sector)}">${escapeHtml(sector)}</option>`)
-                .join('');
+            uiControls.buildSectorFilter({
+                select: document.getElementById('sector-filter'),
+                companies,
+                escapeHtml
+            });
         }
 
         function buildIndustryGroupFilter() {
-            const select = document.getElementById('industry-group-filter');
-            if (!select) return;
-
-            const groups = [...new Set(companies.map(getCompanyIndustryGroup).filter(Boolean))].sort();
-            select.innerHTML = '<option value="">All Industry Groups</option>' + groups
-                .map(group => `<option value="${escapeHtml(group)}">${escapeHtml(group)}</option>`)
-                .join('');
+            uiControls.buildIndustryGroupFilter({
+                select: document.getElementById('industry-group-filter'),
+                companies,
+                getCompanyIndustryGroup,
+                escapeHtml
+            });
         }
-
         function getCompanyIndustryGroup(company) {
             return company?.industryGroup || deriveIndustryGroup(company, INDUSTRY_GROUP_RULES);
+        }
+
+        function getDashboardRenderContext(overrides = {}) {
+            return {
+                currentSector,
+                currentIndustryGroup,
+                currentSearch,
+                signalStrengthThreshold,
+                visibleNodes,
+                nodes,
+                visibleLinks,
+                links,
+                visibleEdgeCountByNodeId,
+                degreeById,
+                layoutMode,
+                selectedNode,
+                LAYOUT_MODE_NEXUS,
+                LAYOUT_MODE_HUB,
+                EDGE_COLORS,
+                DEFAULT_EDGE_COLOR,
+                EXPLORATION_CHIPS,
+                escapeHtml,
+                escapeInlineJsString,
+                formatConnectionType,
+                formatVerifiedDate,
+                getCompanyIndustryGroup,
+                getIndustryGroupCorrelations,
+                getPortfolioExposureSummary,
+                getDatasetTrustMetrics,
+                companies,
+                connections,
+                renderPortfolioExposureSection,
+                ...overrides
+            };
+        }
+
+        function getSidebarRenderContext(overrides = {}) {
+            return {
+                EDGE_COLORS,
+                DEFAULT_EDGE_COLOR,
+                CLUSTER_SECTION_LIMIT,
+                escapeHtml,
+                formatNumber,
+                formatConnectionType,
+                getConfidenceClass,
+                formatVerifiedDate,
+                getValidSourceUrls,
+                getSourceHost,
+                getConnectionStrength,
+                getNexusSummary,
+                isNexusLayoutActive,
+                getSharedNeighborTickerList,
+                getCorrelationAdjacentGroup,
+                ...overrides
+            };
+        }
+
+        function getSearchRenderContext(overrides = {}) {
+            return {
+                escapeHtml,
+                getCompanyIndustryGroup,
+                ...overrides
+            };
         }
 
         function getClusterIntelligenceContext() {
@@ -1226,222 +1313,36 @@
 
         function renderDefaultDashboard() {
             const empty = document.getElementById('empty-sidebar');
-            if (!empty) return;
-
-            if (!nodes.length) {
-                empty.innerHTML = `
-                    <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
-                        <i class="fa-solid fa-project-diagram text-5xl text-white/20 mb-4"></i>
-                        <div class="font-semibold text-white/60">Loading graph intelligence</div>
-                        <div class="text-xs text-white/35 mt-2 max-w-xs">The dashboard is derived from the static dataset.</div>
-                    </div>
-                `;
-                return;
-            }
-
-            const stats = getDefaultDashboardStats();
-            empty.innerHTML = `
-                <div class="flex items-start justify-between gap-4 mb-5">
-                    <div>
-                        <div class="text-xs text-cyan-300/80 font-mono tracking-[2px]">${stats.contextLabel}</div>
-                        <h2 class="font-display text-3xl text-white mt-1">Nexus Intelligence</h2>
-                        <div class="text-sm text-white/55 mt-1">Derived from the current static company and connection dataset.</div>
-                    </div>
-                    <button onclick="fitGraph()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70" title="Fit graph">
-                        <i class="fa-solid fa-compress"></i>
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 mb-5">
-                    <div class="summary-tile rounded-2xl p-3">
-                        <div class="text-[10px] text-white/40 font-mono">VISIBLE NODES</div>
-                        <div class="font-display text-xl text-white">${stats.visibleNodeCount}</div>
-                    </div>
-                    <div class="summary-tile rounded-2xl p-3">
-                        <div class="text-[10px] text-white/40 font-mono">VISIBLE EDGES</div>
-                        <div class="font-display text-xl text-white">${stats.visibleEdgeCount}</div>
-                    </div>
-                    <div class="summary-tile rounded-2xl p-3">
-                        <div class="text-[10px] text-white/40 font-mono">CONF >=4</div>
-                        <div class="font-display text-xl text-white">${stats.trust.highConfidencePercent}%</div>
-                    </div>
-                </div>
-
-                ${renderLayoutHelperSection()}
-                ${renderPortfolioExposureSection(stats.portfolioExposure)}
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Suggested Exploration</div>
-                    <div class="flex flex-wrap gap-2">
-                        ${renderExplorationChips()}
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Top Hub Companies</div>
-                    <div class="space-y-2">
-                        ${renderDashboardHubList(stats.topHubs)}
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Strongest Connections</div>
-                    <div class="space-y-2">
-                        ${renderDashboardConnectionList(stats.strongestConnections)}
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Top Industry Correlations</div>
-                    <div class="space-y-2">
-                        ${renderDashboardIndustryCorrelationList(stats.topIndustryCorrelations)}
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Sector Distribution</div>
-                    <div class="space-y-2">
-                        ${renderDashboardDistribution(stats.sectorDistribution, stats.visibleNodeCount, '#67e8f9', 'rgba(0, 249, 255, 0.45)')}
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Industry Group Distribution</div>
-                    <div class="space-y-2">
-                        ${renderDashboardDistribution(stats.industryGroupDistribution, stats.visibleNodeCount, '#f0abfc', 'rgba(255, 0, 170, 0.40)')}
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Dataset Trust Summary</div>
-                    ${renderDashboardTrustSummary(stats.trust)}
-                </div>
-            `;
+            uiDashboard.renderDefaultDashboard(getDashboardRenderContext({ empty }));
         }
 
         function renderLayoutHelperSection() {
-            if (layoutMode === LAYOUT_MODE_NEXUS && !selectedNode) {
-                return `
-                    <div class="sidebar-section">
-                        <div class="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-3 text-sm text-cyan-50/72">
-                            Select a company to activate Nexus View.
-                        </div>
-                    </div>
-                `;
-            }
-
-            if (layoutMode === LAYOUT_MODE_HUB && !selectedNode) {
-                return `
-                    <div class="sidebar-section">
-                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/52">
-                            Select a company to center its direct network in Hub Layout.
-                        </div>
-                    </div>
-                `;
-            }
-
-            return '';
+            return uiDashboard.renderLayoutHelperSection(getDashboardRenderContext());
         }
 
         function getDefaultDashboardStats() {
-            const activeContext = Boolean(currentSector || currentIndustryGroup || currentSearch || signalStrengthThreshold > 0);
-            const nodesForStats = visibleNodes.length || activeContext ? visibleNodes : nodes;
-            const linksForStats = visibleLinks.length || activeContext ? visibleLinks : links;
-            const topHubs = [...nodesForStats]
-                .map(node => ({ node, degree: getDashboardNodeDegree(node) }))
-                .sort((a, b) => b.degree - a.degree || ((a.node.rank || 9999) - (b.node.rank || 9999)) || String(a.node.ticker || '').localeCompare(String(b.node.ticker || '')))
-                .slice(0, 5);
-            const strongestConnections = [...linksForStats]
-                .sort((a, b) => b.strength - a.strength || String(a.source.ticker || '').localeCompare(String(b.source.ticker || '')))
-                .slice(0, 5);
-            const topIndustryCorrelations = getIndustryGroupCorrelations(linksForStats).slice(0, 5);
-
-            return {
-                contextLabel: activeContext ? 'VISIBLE GRAPH' : 'STATIC DATASET',
-                visibleNodeCount: visibleNodes.length,
-                visibleEdgeCount: visibleLinks.length,
-                topHubs,
-                strongestConnections,
-                topIndustryCorrelations,
-                sectorDistribution: getCompanyDistribution(nodesForStats, node => node.sector || 'Other').slice(0, 6),
-                industryGroupDistribution: getCompanyDistribution(nodesForStats, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 6),
-                portfolioExposure: getPortfolioExposureSummary(),
-                trust: getDatasetTrustMetrics(companies, connections)
-            };
+            return uiDashboard.getDefaultDashboardStats(getDashboardRenderContext());
         }
 
         function getDashboardNodeDegree(node) {
-            if (!node) return 0;
-            if (visibleEdgeCountByNodeId.has(node.id)) return visibleEdgeCountByNodeId.get(node.id);
-            return node.degree || degreeById.get(node.id) || 0;
+            return uiDashboard.getDashboardNodeDegree(node, getDashboardRenderContext());
         }
 
         function getCompanyDistribution(items, getLabel) {
-            const counts = new Map();
-            items.forEach(item => {
-                const label = getLabel(item) || 'Other';
-                counts.set(label, (counts.get(label) || 0) + 1);
-            });
-            return [...counts.entries()]
-                .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
+            return uiDashboard.getCompanyDistribution(items, getLabel);
         }
 
         function renderExplorationChips() {
-            return EXPLORATION_CHIPS.map(chip => `
-                <button onclick="applyExplorationChip('${escapeHtml(chip.key)}')" class="dashboard-chip rounded-full px-3 py-1.5 text-xs text-cyan-100/78 font-mono">
-                    ${escapeHtml(chip.label)}
-                </button>
-            `).join('');
+            return uiDashboard.renderExplorationChips(getDashboardRenderContext());
         }
 
         function renderDashboardHubList(items) {
-            if (!items.length) return '<div class="text-sm text-white/35">No visible hub companies.</div>';
-
-            return items.map((item, index) => `
-                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex items-center gap-2">
-                            <span class="shrink-0 px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/45 font-mono">#${index + 1}</span>
-                            <div class="min-w-0">
-                                <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')}</div>
-                                <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
-                            </div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="font-display text-lg text-white">${item.degree}</div>
-                            <div class="text-[10px] text-cyan-200/58 font-mono">DEGREE</div>
-                        </div>
-                    </div>
-                </button>
-            `).join('');
+            return uiDashboard.renderDashboardHubList(items, getDashboardRenderContext());
         }
 
         function renderDashboardConnectionList(items) {
-            if (!items.length) return '<div class="text-sm text-white/35">No visible connections at this threshold.</div>';
-
-            return items.map((link, index) => {
-                const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
-                const strengthPercent = Math.round(link.strength * 100);
-                return `
-                    <div class="connection-row ${index === 0 ? 'top-connection top-connection-1' : ''} rounded-2xl p-3">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <div class="text-sm font-semibold text-white/90 truncate">${escapeHtml(link.source.ticker || '')} <span class="text-white/35">to</span> ${escapeHtml(link.target.ticker || '')}</div>
-                                <div class="text-xs text-white/50 leading-snug mt-1">${escapeHtml(link.label || 'Curated connection')}</div>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <div class="text-sm font-mono" style="color:${color}">${strengthPercent}%</div>
-                                <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(link.type || 'link'))}</div>
-                            </div>
-                        </div>
-                        <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                            <div class="h-full rounded-full" style="width:${strengthPercent}%; background:${color}; box-shadow:0 0 10px ${color};"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            return uiDashboard.renderDashboardConnectionList(items, getDashboardRenderContext());
         }
-
         /* ==============================
            PORTFOLIO INTELLIGENCE
         ================================ */
@@ -1471,210 +1372,36 @@
         }
 
         function renderPortfolioExposureSection(summary) {
-            if (!summary?.active) {
-                return `
-                    <div class="sidebar-section">
-                        <div class="sidebar-section-title">Portfolio Exposure</div>
-                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/40">No active portfolio analysis.</div>
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Portfolio Exposure</div>
-                    <div class="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-300/10 p-3 mb-3">
-                        <div class="flex items-start justify-between gap-3">
-                            <div>
-                                <div class="text-[10px] text-fuchsia-100/65 font-mono tracking-[1.3px]">PORTFOLIO NEXUS SCORE</div>
-                                <div class="font-display text-3xl text-white">${summary.nexus.portfolioNexusScore}</div>
-                            </div>
-                            <div class="text-right text-[10px] text-white/42 font-mono leading-snug max-w-[150px]">DERIVED FROM CURRENT STATIC GRAPH ONLY</div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="summary-tile rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">MATCHED HOLDINGS</div>
-                            <div class="font-display text-2xl text-white">${summary.matchedCount}</div>
-                        </div>
-                        <div class="summary-tile rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">1ST-DEGREE EXPOSURE</div>
-                            <div class="font-display text-2xl text-white">${summary.firstDegreeExposureCount}</div>
-                        </div>
-                    </div>
-                    ${renderPortfolioUnmatchedTickers(summary.unmatchedTickers)}
-                    <div class="mt-4">
-                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP NEXUS COMPANY</div>
-                        <div class="mt-2">${renderPortfolioTopNexus(summary.nexus.topNexusCompany)}</div>
-                    </div>
-                    <div class="mt-4">
-                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">REPEATED EXPOSURE</div>
-                        <div class="mt-2 space-y-2">${renderPortfolioRepeatedExposure(summary.nexus.repeatedExposureNodes.slice(0, 5))}</div>
-                    </div>
-                    <div class="mt-4">
-                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">HIDDEN CLUSTER TOUCHPOINTS</div>
-                        <div class="mt-2 space-y-2">${renderPortfolioClusterTouchpoints(summary.nexus.portfolioClusterTouchpoints)}</div>
-                    </div>
-                    <div class="mt-4">
-                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP SECTORS EXPOSED</div>
-                        <div class="mt-2 space-y-2">${renderPortfolioDistribution(summary.topSectors, '#facc15', 'rgba(250, 204, 21, 0.42)')}</div>
-                    </div>
-                    <div class="mt-4">
-                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP INDUSTRY GROUPS EXPOSED</div>
-                        <div class="mt-2 space-y-2">${renderPortfolioDistribution(summary.topIndustryGroups, '#67e8f9', 'rgba(0, 249, 255, 0.42)')}</div>
-                    </div>
-                    <div class="mt-4">
-                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">STRONGEST PORTFOLIO-CONNECTED EDGE</div>
-                        <div class="mt-2">${renderPortfolioStrongestEdge(summary.nexus.strongestPortfolioEdge || summary.strongestEdge)}</div>
-                    </div>
-                </div>
-            `;
+            return uiSidebar.renderPortfolioExposureSection(summary, getSidebarRenderContext());
         }
 
         function renderPortfolioUnmatchedTickers(tickers) {
-            if (!tickers?.length) return '';
-            return `
-                <div class="mt-3 rounded-2xl border border-orange-300/20 bg-orange-300/10 p-3">
-                    <div class="text-[10px] text-orange-100/70 font-mono tracking-[1.2px]">NOT FOUND</div>
-                    <div class="mt-1 text-sm text-white/70">${escapeHtml(tickers.join(', '))}</div>
-                </div>
-            `;
+            return uiSidebar.renderPortfolioUnmatchedTickers(tickers, getSidebarRenderContext());
         }
 
         function renderPortfolioTopNexus(item) {
-            if (!item) return '<div class="text-sm text-white/35">No non-portfolio nexus company found in the current dataset.</div>';
-            return `
-                <button onclick="selectPortfolioNexusNode(${Number(item.node.id)})" class="connection-row top-connection top-connection-1 w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="flex items-baseline gap-2">
-                                <span class="text-sm font-semibold text-white/95">${escapeHtml(item.node.ticker || '')}</span>
-                                <span class="text-xs text-white/48 truncate">${escapeHtml(item.node.name || '')}</span>
-                            </div>
-                            <div class="mt-1 text-xs text-fuchsia-100/68 leading-snug">
-                                Connected to ${escapeHtml(item.connectedPortfolioTickers.join(', ') || 'portfolio holdings')}
-                            </div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="font-display text-xl text-white">${item.score}</div>
-                            <div class="text-[10px] text-fuchsia-100/58 font-mono">${Math.round(item.avgStrength * 100)}% AVG</div>
-                        </div>
-                    </div>
-                </button>
-            `;
+            return uiSidebar.renderPortfolioTopNexus(item, getSidebarRenderContext());
         }
 
         function renderPortfolioRepeatedExposure(items) {
-            if (!items.length) return '<div class="text-sm text-white/35">No company is connected to multiple matched holdings in this dataset.</div>';
-
-            return items.map(item => `
-                <button onclick="selectPortfolioNexusNode(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="text-sm font-semibold text-white/90 truncate">
-                                ${escapeHtml(item.node.ticker || '')}
-                                <span class="text-white/35">- connected to</span>
-                                ${escapeHtml(item.connectedPortfolioTickers.join(', '))}
-                            </div>
-                            <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-sm font-mono text-emerald-200">${Math.round(item.avgStrength * 100)}%</div>
-                            <div class="text-[10px] text-white/38">AVG</div>
-                        </div>
-                    </div>
-                </button>
-            `).join('');
+            return uiSidebar.renderPortfolioRepeatedExposure(items, getSidebarRenderContext());
         }
 
         function renderPortfolioClusterTouchpoints(items) {
-            if (!items.length) return '<div class="text-sm text-white/35">No meaningful hidden clusters touched by the current portfolio.</div>';
-
-            return items.map(item => `
-                <button onclick="selectPortfolioNexusNode(${Number(item.center.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="text-sm font-semibold text-white/90 truncate">${escapeHtml(item.center.ticker || '')} cluster</div>
-                            <div class="text-xs text-white/48 truncate">
-                                Touches ${item.touchedCount} portfolio-adjacent node${item.touchedCount === 1 ? '' : 's'}
-                            </div>
-                            <div class="mt-1 text-[11px] text-cyan-100/55 truncate">
-                                ${escapeHtml(item.topMembers.map(node => node.ticker || '').filter(Boolean).join(', ') || 'Static graph cluster')}
-                            </div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-sm font-mono text-cyan-200">${Math.round(item.avgStrength * 100)}%</div>
-                            <div class="text-[10px] text-white/38">AVG</div>
-                        </div>
-                    </div>
-                </button>
-            `).join('');
+            return uiSidebar.renderPortfolioClusterTouchpoints(items, getSidebarRenderContext());
         }
 
         function renderPortfolioHubList(items) {
-            if (!items.length) return '<div class="text-sm text-white/35">No portfolio-connected hubs in the current dataset.</div>';
-
-            return items.map((item, index) => `
-                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex items-center gap-2">
-                            <span class="shrink-0 px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/45 font-mono">#${index + 1}</span>
-                            <div class="min-w-0">
-                                <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')}</div>
-                                <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
-                            </div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="font-display text-lg text-white">${item.portfolioEdgeCount}</div>
-                            <div class="text-[10px] text-cyan-200/58 font-mono">LINKS</div>
-                        </div>
-                    </div>
-                </button>
-            `).join('');
+            return uiSidebar.renderPortfolioHubList(items, getSidebarRenderContext());
         }
 
         function renderPortfolioDistribution(entries, color, shadowColor) {
-            if (!entries.length) return '<div class="text-sm text-white/35">No edge-derived exposure.</div>';
-            const total = entries.reduce((sum, [, count]) => sum + count, 0);
-            const maxCount = Math.max(...entries.map(([, count]) => count), 1);
-
-            return entries.map(([label, count]) => {
-                const width = Math.max(8, Math.round((count / maxCount) * 100));
-                const percent = total ? Math.round((count / total) * 100) : 0;
-                return `
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <div class="flex items-center justify-between gap-3 text-xs">
-                            <span class="text-white/75 truncate">${count} ${escapeHtml(label)}</span>
-                            <span class="text-white/38 font-mono shrink-0">${percent}%</span>
-                        </div>
-                        <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                            <div class="h-full rounded-full" style="width:${width}%; background:${color}; box-shadow:0 0 10px ${shadowColor};"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            return uiSidebar.renderPortfolioDistribution(entries, color, shadowColor, getSidebarRenderContext());
         }
 
         function renderPortfolioStrongestEdge(link) {
-            if (!link) return '<div class="text-sm text-white/35">No portfolio-connected edge found.</div>';
-            const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
-            const strengthPercent = Math.round(getConnectionStrength(link) * 100);
-            return `
-                <div class="connection-row top-connection top-connection-1 rounded-2xl p-3">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="text-sm font-semibold text-white/90 truncate">${escapeHtml(link.source.ticker || '')} <span class="text-white/35">to</span> ${escapeHtml(link.target.ticker || '')}</div>
-                            <div class="text-xs text-white/50 leading-snug mt-1">${escapeHtml(link.label || 'Curated connection')}</div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-sm font-mono" style="color:${color}">${strengthPercent}%</div>
-                            <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(link.type || 'link'))}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            return uiSidebar.renderPortfolioStrongestEdge(link, getSidebarRenderContext());
         }
-
         /* ==============================
            INDUSTRY CORRELATION
         ================================ */
@@ -1688,76 +1415,16 @@
         }
 
         function renderDashboardIndustryCorrelationList(items) {
-            if (!items.length) return '<div class="text-sm text-white/35">No cross-industry correlations in the current graph view.</div>';
-
-            return items.map((item, index) => {
-                const sampleTickers = item.involvedTickers.slice(0, 5).join(', ');
-                const topClass = index === 0 ? 'top-connection top-connection-1' : '';
-                return `
-                    <button onclick="applyIndustryCorrelationFilter('${escapeInlineJsString(item.groupA)}', '${escapeInlineJsString(item.groupB)}')" class="connection-row ${topClass} w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
-                        <div class="flex items-start justify-between gap-3">
-                            <div class="min-w-0">
-                                <div class="text-sm font-semibold text-white/90 leading-snug">${escapeHtml(item.groupA)} <span class="text-cyan-200/70">&harr;</span> ${escapeHtml(item.groupB)}</div>
-                                <div class="text-xs text-white/48 mt-1">${item.edgeCount} edge${item.edgeCount === 1 ? '' : 's'} · ${item.averageStrengthPercent}% avg · ${escapeHtml(formatConnectionType(item.dominantConnectionType))}</div>
-                                <div class="text-[11px] text-white/58 mt-2 truncate">${escapeHtml(sampleTickers || 'No ticker sample')}</div>
-                            </div>
-                            <div class="text-right shrink-0">
-                                <div class="font-display text-lg text-white">${item.highConfidenceEdgeCount}</div>
-                                <div class="text-[10px] text-emerald-200/62 font-mono">CONF >=4</div>
-                            </div>
-                        </div>
-                    </button>
-                `;
-            }).join('');
+            return uiDashboard.renderDashboardIndustryCorrelationList(items, getDashboardRenderContext());
         }
 
         function renderDashboardDistribution(entries, total, color, shadowColor) {
-            if (!entries.length) return '<div class="text-sm text-white/35">No visible companies.</div>';
-            const maxCount = Math.max(...entries.map(([, count]) => count), 1);
-
-            return entries.map(([label, count]) => {
-                const width = Math.max(8, Math.round((count / maxCount) * 100));
-                const percent = total ? Math.round((count / total) * 100) : 0;
-                return `
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <div class="flex items-center justify-between gap-3 text-xs">
-                            <span class="text-white/75 truncate">${count} ${escapeHtml(label)}</span>
-                            <span class="text-white/38 font-mono shrink-0">${percent}%</span>
-                        </div>
-                        <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                            <div class="h-full rounded-full" style="width:${width}%; background:${color}; box-shadow:0 0 10px ${shadowColor};"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            return uiDashboard.renderDashboardDistribution(entries, total, color, shadowColor, getDashboardRenderContext());
         }
 
         function renderDashboardTrustSummary(metrics) {
-            return `
-                <div class="trust-panel rounded-2xl p-4">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <div class="text-[10px] text-white/40 font-mono">COMPANIES</div>
-                            <div class="font-display text-xl text-white">${metrics.companyCount}</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-white/40 font-mono">EDGES</div>
-                            <div class="font-display text-xl text-white">${metrics.connectionCount}</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-white/40 font-mono">CONF >=4</div>
-                            <div class="font-display text-xl text-white">${metrics.highConfidencePercent}%</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-white/40 font-mono">LATEST VERIFIED</div>
-                            <div class="font-display text-xl text-white">${escapeHtml(formatVerifiedDate(metrics.latestVerifiedDate))}</div>
-                        </div>
-                    </div>
-                    <div class="mt-3 pt-3 border-t border-white/10 text-[10px] text-cyan-100/58 font-mono tracking-[1.2px]">STATIC DATASET ONLY</div>
-                </div>
-            `;
+            return uiDashboard.renderDashboardTrustSummary(metrics, getDashboardRenderContext());
         }
-
         function applyExplorationChip(key) {
             const chip = EXPLORATION_CHIPS.find(item => item.key === key);
             if (!chip) return;
@@ -1886,36 +1553,7 @@
         }
 
         function renderNodePortfolioBadges(context) {
-            if (!context?.inPortfolio && !context?.adjacent) return '';
-
-            const badges = [];
-            if (context.inPortfolio) {
-                badges.push('<span class="px-2.5 py-1 rounded-full border border-yellow-300/35 bg-yellow-300/10 text-yellow-100 text-[10px] font-mono tracking-[1.2px]">IN PORTFOLIO</span>');
-            }
-            if (context.isTopNexus || context.isRepeatedExposure) {
-                badges.push('<span class="px-2.5 py-1 rounded-full border border-fuchsia-300/35 bg-fuchsia-300/10 text-fuchsia-100 text-[10px] font-mono tracking-[1.2px]">PORTFOLIO NEXUS</span>');
-            }
-            if (context.adjacent) {
-                badges.push('<span class="px-2.5 py-1 rounded-full border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 text-[10px] font-mono tracking-[1.2px]">PORTFOLIO-ADJACENT</span>');
-            }
-
-            const connectedLine = context.connectedTickers?.length
-                ? `<div class="mt-2 text-xs text-cyan-100/68">Connected to portfolio via ${escapeHtml(context.connectedTickers.join(', '))}</div>`
-                : '';
-            const nexusLine = (context.isTopNexus || context.isRepeatedExposure)
-                ? `<div class="mt-2 rounded-2xl border border-fuchsia-300/15 bg-fuchsia-300/10 p-3 text-xs text-white/70">
-                    <div><span class="text-white/38 font-mono">AVG PORTFOLIO EDGE</span> <span class="text-fuchsia-100">${Math.round(context.avgPortfolioStrength * 100)}%</span></div>
-                    <div class="mt-1"><span class="text-white/38 font-mono">RELATIONSHIPS</span> ${escapeHtml(context.relationshipTypes.map(formatConnectionType).join(', ') || 'Curated link')}</div>
-                </div>`
-                : '';
-
-            return `
-                <div class="mt-3">
-                    <div class="flex flex-wrap gap-2">${badges.join('')}</div>
-                    ${connectedLine}
-                    ${nexusLine}
-                </div>
-            `;
+            return uiSidebar.renderNodePortfolioBadges(context, getSidebarRenderContext());
         }
 
         function showNodeDetails(node) {
@@ -1937,311 +1575,57 @@
             const hiddenRelationships = getHiddenRelationships(node.id);
             const portfolioContext = getPortfolioContextForNode(node);
 
-            sidebar.innerHTML = `
-                <div class="flex items-start justify-between gap-4 mb-5">
-                    <div>
-                        <div class="text-xs text-cyan-300/80 font-mono tracking-[2px]">${escapeHtml(node.sector || 'UNKNOWN')}</div>
-                        <h2 class="font-display text-3xl text-white mt-1">${escapeHtml(node.ticker || '')}</h2>
-                        <div class="text-sm text-white/60 mt-1">${escapeHtml(node.name || '')}</div>
-                        ${renderNodePortfolioBadges(portfolioContext)}
-                    </div>
-                    <button onclick="clearSelection()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-3 gap-3 mb-5">
-                    <div class="rounded-2xl bg-white/5 border border-white/10 p-3">
-                        <div class="text-[10px] text-white/40 font-mono">RANK</div>
-                        <div class="font-display text-xl text-white">#${escapeHtml(node.rank || '-')}</div>
-                    </div>
-                    <div class="rounded-2xl bg-white/5 border border-white/10 p-3">
-                        <div class="text-[10px] text-white/40 font-mono">CAP</div>
-                        <div class="font-display text-xl text-white">$${formatNumber(node.market_cap || 0)}T</div>
-                    </div>
-                    <div class="rounded-2xl bg-white/5 border border-white/10 p-3">
-                        <div class="text-[10px] text-white/40 font-mono">DEGREE</div>
-                        <div class="font-display text-xl text-white">${connectionsForNode.length}</div>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Network Summary</div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="summary-tile rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">TOTAL CONNECTIONS</div>
-                            <div class="font-display text-2xl text-white">${networkSummary.degree}</div>
-                        </div>
-                        <div class="summary-tile rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">AVG STRENGTH</div>
-                            <div class="font-display text-2xl text-white">${networkSummary.avgStrengthPercent}%</div>
-                        </div>
-                        <div class="summary-tile rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">CONF >=4</div>
-                            <div class="font-display text-2xl text-white">${networkSummary.highConfidencePercent}%</div>
-                        </div>
-                        <div class="summary-tile rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">COMMON TYPE</div>
-                            <div class="text-sm text-white font-semibold truncate">${escapeHtml(formatConnectionType(networkSummary.mostCommonType))}</div>
-                        </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2 mt-3">
-                        ${renderConnectionTypeMix(networkSummary.typeCounts)}
-                    </div>
-                </div>
-
-                ${renderNexusViewSection(node)}
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Signal Clarity</div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="summary-tile rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">ACTIVE THRESHOLD</div>
-                            <div class="font-display text-2xl text-white">${signalClarity.thresholdLabel}</div>
-                        </div>
-                        <div class="summary-tile rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">VISIBLE CONNECTIONS</div>
-                            <div class="font-display text-2xl text-white">${signalClarity.visibleCount}</div>
-                        </div>
-                    </div>
-                    <div class="mt-3 space-y-2">
-                        ${renderSignalClarityConnection('Strongest connection', signalClarity.strongest)}
-                        ${renderSignalClarityConnection('Weakest visible connection', signalClarity.weakest)}
-                    </div>
-                </div>
-
-                ${renderRelatedClusterSection(relatedCluster, node)}
-                ${renderSharedExposureSection(sharedExposure)}
-                ${renderHiddenRelationshipsSection(hiddenRelationships)}
-                ${renderIndustryCorrelationContextSection(industryCorrelationContext)}
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Sector + Industry Context</div>
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-3">
-                        <div>
-                            <div class="text-[10px] text-white/38 font-mono">SECTOR</div>
-                            <div class="text-sm text-white/82">${escapeHtml(node.sector || 'Unknown')}</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-white/38 font-mono">INDUSTRY</div>
-                            <div class="text-sm text-white/82 leading-snug">${escapeHtml(node.industry || 'Unknown')}</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-white/38 font-mono">DERIVED INDUSTRY GROUP</div>
-                            <div class="text-sm text-cyan-100/90 leading-snug">${escapeHtml(industryGroup)}</div>
-                        </div>
-                    </div>
-                    <div class="mt-3 space-y-2">
-                        ${renderSectorDistribution(sectorCounts, networkSummary.degree)}
-                    </div>
-                    <div class="mt-4">
-                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">CONNECTED INDUSTRY GROUP DISTRIBUTION</div>
-                        <div class="mt-2 space-y-2">
-                            ${renderIndustryGroupDistribution(industryGroupStats, networkSummary.degree)}
-                        </div>
-                    </div>
-                    <div class="mt-4 grid grid-cols-1 xl:grid-cols-2 gap-3">
-                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
-                            <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP BY COUNT</div>
-                            <div class="mt-2 space-y-2">${renderTopIndustryGroupsByCount(industryGroupStats)}</div>
-                        </div>
-                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
-                            <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP AVG STRENGTH</div>
-                            <div class="mt-2 space-y-2">${renderTopIndustryGroupsByAverageStrength(industryGroupStats)}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Why This Node Matters</div>
-                    <div class="why-panel rounded-2xl p-4">
-                        <div class="text-sm text-white/88 leading-relaxed">${escapeHtml(whyThisNodeMatters)}</div>
-                        <div class="mt-3 flex flex-wrap gap-2 text-[10px] font-mono">
-                            <span class="px-2 py-1 rounded-full bg-black/25 border border-white/10 text-cyan-200/80">DEGREE ${networkSummary.degree}</span>
-                            <span class="px-2 py-1 rounded-full bg-black/25 border border-white/10 text-fuchsia-200/80">${escapeHtml(formatConnectionType(networkSummary.mostCommonType))}</span>
-                            <span class="px-2 py-1 rounded-full bg-black/25 border border-white/10 text-emerald-200/80">${sectorCounts.length} SECTORS</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="sidebar-section-title mb-0">Connected Companies</div>
-                        <button onclick="fitGraph()" class="focus-button px-3 py-1 rounded-full border border-white/15 text-xs text-white/65">FIT VIEW</button>
-                    </div>
-                    <div class="space-y-2 max-h-[440px] overflow-y-auto pr-1">
-                        ${topConnections.map((item, index) => renderConnectionRow(item, index)).join('') || '<div class="text-sm text-white/35">No connected companies in current dataset.</div>'}
-                    </div>
-                </div>
-
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Sources</div>
-                    ${renderNodeSources(nodeSources)}
-                </div>
-            `;
-            sidebar.classList.remove('hidden');
-            empty.classList.add('hidden');
+            uiSidebar.showNodeDetails(getSidebarRenderContext({
+                sidebar,
+                empty,
+                node,
+                connectionsForNode,
+                topConnections,
+                networkSummary,
+                sectorCounts,
+                industryGroup,
+                industryGroupStats,
+                industryCorrelationContext,
+                nodeSources,
+                whyThisNodeMatters,
+                signalClarity,
+                relatedCluster,
+                sharedExposure,
+                hiddenRelationships,
+                portfolioContext
+            }));
         }
 
         function renderNexusViewSection(node) {
-            if (!isNexusLayoutActive() || !node) return '';
-
-            const summary = getNexusSummary(node);
-            const groups = ['supply', 'partner', 'competitive', 'capital'];
-            return `
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Nexus View</div>
-                    <div class="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-3 mb-3 text-xs text-cyan-50/62 leading-relaxed">
-                        Counts are grouped from visible direct edges by relationship type only.
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        ${groups.map(groupKey => renderNexusSummaryTile(summary.groups[groupKey])).join('')}
-                    </div>
-                </div>
-            `;
+            return uiSidebar.renderNexusViewSection(node, getSidebarRenderContext());
         }
 
         function renderNexusSummaryTile(group) {
-            const strongest = group.strongest;
-            const strengthText = strongest ? `${Math.round(getConnectionStrength(strongest.link) * 100)}% edge` : 'No visible edge';
-            const tickerText = strongest ? `${strongest.node.ticker || strongest.node.name || 'Company'}` : 'None';
-            const relationshipText = strongest
-                ? `${formatConnectionType(strongest.link.type || 'link')}: ${strongest.link.label || 'Loaded direct edge'}`
-                : 'No strongest relationship at current filters';
-            return `
-                <div class="summary-tile rounded-2xl p-3">
-                    <div class="text-[10px] text-white/40 font-mono">${escapeHtml(group.shortLabel.toUpperCase())}</div>
-                    <div class="font-display text-2xl text-white">${group.count}</div>
-                    <div class="mt-1 text-xs text-white/70 truncate">${escapeHtml(tickerText)}</div>
-                    <div class="text-[10px] text-cyan-100/55 font-mono">${escapeHtml(strengthText)}</div>
-                    <div class="mt-1 text-[11px] text-white/45 leading-snug line-clamp-2">${escapeHtml(relationshipText)}</div>
-                </div>
-            `;
+            return uiSidebar.renderNexusSummaryTile(group, getSidebarRenderContext());
         }
 
         function renderRelatedClusterSection(cluster, selectedNodeForCluster) {
-            const clusterItems = (cluster?.clusterItems || [])
-                .filter(item => item.node.id !== selectedNodeForCluster.id)
-                .slice(0, CLUSTER_SECTION_LIMIT);
-            if (!clusterItems.length) return '';
-
-            const clusterStrengthPercent = Math.round((cluster.clusterStrength || 0) * 100);
-            const clusterSize = Math.max(0, (cluster.clusterNodes || []).length - 1);
-            return `
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Related Cluster</div>
-                    <div class="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-3 mb-3">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <div class="text-[10px] text-white/38 font-mono">CLUSTER NODES</div>
-                                <div class="font-display text-2xl text-white">${clusterSize}</div>
-                            </div>
-                            <div>
-                                <div class="text-[10px] text-white/38 font-mono">STRENGTH</div>
-                                <div class="font-display text-2xl text-white">${clusterStrengthPercent}%</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        ${clusterItems.map((item, index) => renderClusterNodeRow(item, index)).join('')}
-                    </div>
-                </div>
-            `;
+            return uiSidebar.renderRelatedClusterSection(cluster, selectedNodeForCluster, getSidebarRenderContext());
         }
 
         function renderClusterNodeRow(item, index) {
-            const roleLabel = item.role === 'direct-shared' ? 'Direct + shared' : item.role === 'direct' ? 'Direct edge' : 'Shared overlap';
-            const strengthPercent = Math.round((item.avgStrength || item.score || 0) * 100);
-            return `
-                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex items-start gap-2">
-                            <span class="shrink-0 mt-0.5 px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/45 font-mono">#${index + 1}</span>
-                            <div class="min-w-0">
-                                <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')}</div>
-                                <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
-                            </div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-sm font-mono text-cyan-200">${strengthPercent}%</div>
-                            <div class="text-[10px] text-white/42">${escapeHtml(roleLabel)}</div>
-                        </div>
-                    </div>
-                </button>
-            `;
+            return uiSidebar.renderClusterNodeRow(item, index, getSidebarRenderContext());
         }
 
         function renderSharedExposureSection(sharedExposure) {
-            const items = (sharedExposure || [])
-                .filter(item => item.count > 0)
-                .slice(0, CLUSTER_SECTION_LIMIT);
-            if (!items.length) return '';
-
-            return `
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Shared Exposure</div>
-                    <div class="space-y-2">
-                        ${items.map(item => renderSharedExposureRow(item)).join('')}
-                    </div>
-                </div>
-            `;
+            return uiSidebar.renderSharedExposureSection(sharedExposure, getSidebarRenderContext());
         }
 
         function renderSharedExposureRow(item) {
-            const avgStrengthPercent = Math.round((item.avgStrength || 0) * 100);
-            const viaTickers = getSharedNeighborTickerList(item, 3);
-            const relationshipLabel = item.directlyConnected ? 'Direct + shared neighbors' : 'Indirect shared neighbors';
-            return `
-                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')} <span class="text-white/42 font-normal">${escapeHtml(item.node.name || '')}</span></div>
-                            <div class="text-xs text-white/52 mt-1 leading-snug">Overlap through ${escapeHtml(viaTickers || 'shared neighbors')}</div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-sm font-mono text-fuchsia-100">${item.count}</div>
-                            <div class="text-[10px] text-white/42">OVERLAP</div>
-                        </div>
-                    </div>
-                    <div class="mt-2 flex items-center justify-between gap-3 text-[10px] font-mono">
-                        <span class="text-cyan-100/68">${escapeHtml(relationshipLabel)}</span>
-                        <span class="text-white/55">${avgStrengthPercent}% AVG STRENGTH</span>
-                    </div>
-                </button>
-            `;
+            return uiSidebar.renderSharedExposureRow(item, getSidebarRenderContext());
         }
 
         function renderHiddenRelationshipsSection(hiddenRelationships) {
-            if (!hiddenRelationships?.length) return '';
-
-            return `
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Hidden Relationships</div>
-                    <div class="space-y-2">
-                        ${hiddenRelationships.map(item => renderHiddenRelationshipRow(item)).join('')}
-                    </div>
-                </div>
-            `;
+            return uiSidebar.renderHiddenRelationshipsSection(hiddenRelationships, getSidebarRenderContext());
         }
 
         function renderHiddenRelationshipRow(item) {
-            const avgStrengthPercent = Math.round((item.avgStrength || 0) * 100);
-            const viaTickers = getSharedNeighborTickerList(item, 3);
-            return `
-                <button onclick="selectNodeById(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')} <span class="text-white/42 font-normal">${escapeHtml(item.node.name || '')}</span></div>
-                            <div class="text-xs text-white/60 mt-1 leading-snug">Indirect exposure through ${escapeHtml(viaTickers || 'shared neighbors')}</div>
-                            <div class="text-[10px] text-cyan-100/58 font-mono mt-2">COMMON-NEIGHBOR SIGNAL ONLY</div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-sm font-mono text-cyan-200">${item.count}</div>
-                            <div class="text-[10px] text-white/42">${avgStrengthPercent}% AVG</div>
-                        </div>
-                    </div>
-                </button>
-            `;
+            return uiSidebar.renderHiddenRelationshipRow(item, getSidebarRenderContext());
         }
 
         function getSharedNeighborTickerList(item, limit = 3) {
@@ -2249,64 +1633,12 @@
         }
 
         function renderConnectionRow(item, index = 0) {
-            const color = EDGE_COLORS[item.link.type] || DEFAULT_EDGE_COLOR;
-            const strengthPercent = Math.round(item.link.strength * 100);
-            const confidence = Number(item.link.confidence) || 0;
-            const confidenceClass = getConfidenceClass(confidence);
-            const verifiedDate = formatVerifiedDate(item.link.verified_date);
-            const sourceUrls = getValidSourceUrls(item.link.source_urls);
-            const sourceLinks = renderConnectionSourceLinks(item.link.source_urls);
-            const rank = index + 1;
-            const topClass = rank <= 3 ? `top-connection top-connection-${rank}` : '';
-            const sourceLabel = sourceUrls.length === 1 ? '1 SOURCE' : `${sourceUrls.length} SOURCES`;
-            return `
-                <div onclick="selectConnectionRow(event, ${Number(item.node.id)})" onkeydown="handleConnectionRowKeydown(event, ${Number(item.node.id)})" role="button" tabindex="0" class="connection-row ${topClass} w-full rounded-2xl p-3 text-left block hover:bg-white/10 transition cursor-pointer">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0 flex items-start gap-2">
-                            <span class="shrink-0 mt-0.5 px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/45 font-mono">#${rank}</span>
-                            <div class="min-w-0">
-                                <div class="connection-title text-sm font-semibold text-white/90">${escapeHtml(item.node.ticker || '')}</div>
-                                <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
-                            </div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-[10px] font-mono" style="color:${color}">${escapeHtml(formatConnectionType(item.link.type || 'link'))}</div>
-                            <div class="text-xs text-white/55">${strengthPercent}%</div>
-                        </div>
-                    </div>
-                    <div class="mt-2 text-xs text-white/70 leading-snug">${escapeHtml(item.link.label || 'Curated connection')}</div>
-                    <div class="mt-2 flex flex-wrap items-center gap-2">
-                        <span class="confidence-badge ${confidenceClass} px-2 py-0.5 rounded-full text-[10px] font-mono">CONF ${confidence}/5</span>
-                        <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-cyan-200/78 font-mono">
-                            <i class="fa-solid ${sourceUrls.length ? 'fa-link' : 'fa-link-slash'} mr-1"></i>${sourceLabel}
-                        </span>
-                        <span class="text-[10px] text-white/42 font-mono">VERIFIED ${escapeHtml(verifiedDate)}</span>
-                    </div>
-                    <div class="mt-2 text-[11px] leading-relaxed text-white/50">${escapeHtml(item.link.provenance || 'No provenance summary available.')}</div>
-                    ${sourceLinks}
-                    <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                        <div class="h-full rounded-full" style="width:${strengthPercent}%; background:${color}; box-shadow:0 0 10px ${color};"></div>
-                    </div>
-                </div>
-            `;
+            return uiSidebar.renderConnectionRow(item, index, getSidebarRenderContext());
         }
 
         function renderConnectionSourceLinks(sourceUrls) {
-            const urls = getValidSourceUrls(sourceUrls);
-            if (!urls.length) return '';
-
-            return `
-                <div class="mt-2 flex flex-wrap items-center gap-1.5 text-[10px]">
-                    <span class="text-white/38 font-mono uppercase tracking-[1.5px]">Sources:</span>
-                    ${urls.map((url, index) => `
-                        <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(url)}" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" class="source-link inline-flex items-center rounded-full px-2 py-0.5 font-mono truncate">
-                            Source ${index + 1}
-                        </a>
-                    `).join('')}
-                </div>
-            `;
+            return uiSidebar.renderConnectionSourceLinks(sourceUrls, getSidebarRenderContext());
         }
-
         function getSignalClaritySummary(node) {
             const visibleConnections = getVisibleConnectionsForNode(node);
             const strongest = visibleConnections[0] || null;
@@ -2331,36 +1663,8 @@
         }
 
         function renderSignalClarityConnection(label, item) {
-            if (!item) {
-                return `
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <div class="text-[10px] text-white/38 font-mono tracking-[1.2px]">${escapeHtml(label)}</div>
-                        <div class="mt-1 text-sm text-white/35">No visible connection at this threshold.</div>
-                    </div>
-                `;
-            }
-
-            const color = EDGE_COLORS[item.link.type] || DEFAULT_EDGE_COLOR;
-            const strengthPercent = Math.round(item.link.strength * 100);
-            return `
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <div class="text-[10px] text-white/38 font-mono tracking-[1.2px]">${escapeHtml(label)}</div>
-                            <div class="mt-1 text-sm text-white/88 font-semibold truncate">${escapeHtml(item.node.ticker || '')} <span class="text-white/45 font-normal">${escapeHtml(item.node.name || '')}</span></div>
-                        </div>
-                        <div class="text-right shrink-0">
-                            <div class="text-sm font-mono" style="color:${color}">${strengthPercent}%</div>
-                            <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(item.link.type || 'link'))}</div>
-                        </div>
-                    </div>
-                    <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                        <div class="h-full rounded-full" style="width:${strengthPercent}%; background:${color}; box-shadow:0 0 12px ${color};"></div>
-                    </div>
-                </div>
-            `;
+            return uiSidebar.renderSignalClarityConnection(label, item, getSidebarRenderContext());
         }
-
         function getNodeNetworkSummary(connectionsForNode) {
             const degree = connectionsForNode.length;
             const totalStrength = connectionsForNode.reduce((sum, item) => sum + clamp(Number(item.link.strength) || 0, 0, 1), 0);
@@ -2438,48 +1742,15 @@
         }
 
         function renderIndustryGroupDistribution(groupStats, degree) {
-            if (!groupStats.length) return '<div class="text-sm text-white/35">No connected industry groups found.</div>';
-            const maxCount = Math.max(...groupStats.map(item => item.count), 1);
-
-            return groupStats.map(item => {
-                const width = Math.max(8, Math.round((item.count / maxCount) * 100));
-                const percent = degree ? Math.round((item.count / degree) * 100) : 0;
-                return `
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <div class="flex items-center justify-between gap-3 text-xs">
-                            <span class="text-white/75 truncate">${item.count} ${escapeHtml(item.group)}</span>
-                            <span class="text-white/38 font-mono shrink-0">${percent}%</span>
-                        </div>
-                        <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                            <div class="h-full rounded-full bg-fuchsia-300/75" style="width:${width}%; box-shadow:0 0 10px rgba(255, 0, 170, 0.42);"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            return uiSidebar.renderIndustryGroupDistribution(groupStats, degree, getSidebarRenderContext());
         }
 
         function renderTopIndustryGroupsByCount(groupStats) {
-            const topGroups = [...groupStats].sort(sortIndustryGroupStatsByCount).slice(0, 3);
-            if (!topGroups.length) return '<div class="text-xs text-white/35">No connected groups.</div>';
-
-            return topGroups.map(item => `
-                <div class="flex items-center justify-between gap-2 text-xs">
-                    <span class="text-white/72 truncate">${escapeHtml(item.group)}</span>
-                    <span class="font-mono text-cyan-200/75 shrink-0">${item.count}</span>
-                </div>
-            `).join('');
+            return uiSidebar.renderTopIndustryGroupsByCount(groupStats, getSidebarRenderContext());
         }
 
         function renderTopIndustryGroupsByAverageStrength(groupStats) {
-            const topGroups = [...groupStats].sort(sortIndustryGroupStatsByAverageStrength).slice(0, 3);
-            if (!topGroups.length) return '<div class="text-xs text-white/35">No connected groups.</div>';
-
-            return topGroups.map(item => `
-                <div class="flex items-center justify-between gap-2 text-xs">
-                    <span class="text-white/72 truncate">${escapeHtml(item.group)}</span>
-                    <span class="font-mono text-fuchsia-100/75 shrink-0">${item.avgStrengthPercent}%</span>
-                </div>
-            `).join('');
+            return uiSidebar.renderTopIndustryGroupsByAverageStrength(groupStats, getSidebarRenderContext());
         }
 
         function getIndustryCorrelationContextForNode(node) {
@@ -2491,78 +1762,16 @@
         }
 
         function renderIndustryCorrelationContextSection(context) {
-            if (!context?.topCorrelation || !context.strongestAdjacentGroup || context.connectedIndustryGroupCount < 1) return '';
-
-            const top = context.topCorrelation;
-            const topAdjacentGroup = getCorrelationAdjacentGroup(top, context.nodeGroup);
-            const bridgeLabel = context.crossGroupBridge ? 'Cross-group bridge' : 'Primarily group-local';
-            return `
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Industry Correlation Context</div>
-                    <div class="industry-insight-panel rounded-2xl p-3">
-                        <div class="text-xs text-white/44">Top group correlation</div>
-                        <div class="mt-1 text-sm text-white/88 leading-snug">${escapeHtml(context.nodeGroup)} <span class="text-cyan-200/75">&harr;</span> ${escapeHtml(topAdjacentGroup)}</div>
-                        <div class="mt-3 grid grid-cols-2 gap-3">
-                            <div>
-                                <div class="text-[10px] text-white/38 font-mono">CONNECTED GROUPS</div>
-                                <div class="font-display text-xl text-white">${context.connectedIndustryGroupCount}</div>
-                            </div>
-                            <div>
-                                <div class="text-[10px] text-white/38 font-mono">TOP EDGES</div>
-                                <div class="font-display text-xl text-white">${top.edgeCount}</div>
-                            </div>
-                        </div>
-                        <div class="mt-3 space-y-2 text-xs">
-                            <div class="flex items-start justify-between gap-3">
-                                <span class="text-white/42">Strongest adjacent group</span>
-                                <span class="text-white/82 text-right">${escapeHtml(context.strongestAdjacentGroup)} ${context.strongestAveragePercent}%</span>
-                            </div>
-                            <div class="flex items-start justify-between gap-3">
-                                <span class="text-white/42">Dominant type</span>
-                                <span class="text-white/82 text-right">${escapeHtml(formatConnectionType(top.dominantConnectionType))}</span>
-                            </div>
-                        </div>
-                        <div class="mt-3 pt-3 border-t border-white/10 font-mono text-[10px] tracking-[1.2px] ${context.crossGroupBridge ? 'text-emerald-200/80' : 'text-white/42'}">
-                            ${escapeHtml(bridgeLabel)}
-                        </div>
-                    </div>
-                </div>
-            `;
+            return uiSidebar.renderIndustryCorrelationContextSection(context, getSidebarRenderContext());
         }
 
         function renderConnectionTypeMix(typeCounts) {
-            const entries = Object.entries(typeCounts)
-                .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
-            if (!entries.length) return '<span class="text-sm text-white/35">No linked companies found.</span>';
-
-            return entries.map(([type, count]) => `
-                <span class="px-3 py-1 rounded-full text-xs border border-white/10 bg-white/5" style="color:${EDGE_COLORS[type] || DEFAULT_EDGE_COLOR}">
-                    ${escapeHtml(formatConnectionType(type))} ${count}
-                </span>
-            `).join('');
+            return uiSidebar.renderConnectionTypeMix(typeCounts, getSidebarRenderContext());
         }
 
         function renderSectorDistribution(sectorCounts, degree) {
-            if (!sectorCounts.length) return '<div class="text-sm text-white/35">No connected sectors found.</div>';
-            const maxCount = Math.max(...sectorCounts.map(([, count]) => count), 1);
-
-            return sectorCounts.map(([sector, count]) => {
-                const width = Math.max(8, Math.round((count / maxCount) * 100));
-                const percent = degree ? Math.round((count / degree) * 100) : 0;
-                return `
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <div class="flex items-center justify-between gap-3 text-xs">
-                            <span class="text-white/75 truncate">${count} ${escapeHtml(sector)}</span>
-                            <span class="text-white/38 font-mono shrink-0">${percent}%</span>
-                        </div>
-                        <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
-                            <div class="h-full rounded-full bg-cyan-300/75" style="width:${width}%; box-shadow:0 0 10px rgba(0, 249, 255, 0.45);"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            return uiSidebar.renderSectorDistribution(sectorCounts, degree, getSidebarRenderContext());
         }
-
         function getNodeImportanceSummary(node, summary, sectorCounts) {
             const sectorNames = sectorCounts.map(([sector]) => sector).filter(Boolean);
             const sectorDiversity = sectorNames.length;
@@ -2618,26 +1827,8 @@
         }
 
         function renderNodeSources(sourceItems) {
-            if (!sourceItems.length) {
-                return '<div class="text-sm text-white/35">No public source links attached to this node.</div>';
-            }
-
-            const visibleSources = sourceItems.slice(0, 6);
-            const hiddenCount = sourceItems.length - visibleSources.length;
-            return `
-                <div class="space-y-2">
-                    ${visibleSources.map(item => `
-                        <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="source-link node-source-link w-full inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs">
-                            <i class="fa-solid fa-arrow-up-right-from-square shrink-0"></i>
-                            <span class="truncate">${escapeHtml(getSourceHost(item.url))}</span>
-                            <span class="text-white/35 shrink-0">${escapeHtml(item.ticker)}</span>
-                        </a>
-                    `).join('')}
-                    ${hiddenCount > 0 ? `<div class="text-[11px] text-white/38 font-mono">+${hiddenCount} MORE SOURCES IN CONNECTION ROWS</div>` : ''}
-                </div>
-            `;
+            return uiSidebar.renderNodeSources(sourceItems, getSidebarRenderContext());
         }
-
         function getValidSourceUrls(sourceUrls) {
             return Array.isArray(sourceUrls)
                 ? sourceUrls.map(url => String(url).trim()).filter(url => /^https?:\/\//i.test(url))
@@ -2710,16 +1901,11 @@
         }
 
         function updateFocusModeControl() {
-            const toggle = document.getElementById('focus-mode-toggle');
-            if (!toggle) return;
-
-            toggle.setAttribute('aria-pressed', focusModeEnabled ? 'true' : 'false');
-            toggle.classList.toggle('is-active', focusModeEnabled);
-            toggle.title = focusModeEnabled
-                ? 'Focus Mode on: selecting a node isolates its first-degree network.'
-                : 'Focus Mode off: selected nodes keep the broader graph context.';
+            uiControls.updateFocusModeControl({
+                toggle: document.getElementById('focus-mode-toggle'),
+                focusModeEnabled
+            });
         }
-
         function setSignalStrengthThreshold(value) {
             stopOrbitForInteraction();
             const nextValue = clamp(Number(value) || 0, 0, 1);
@@ -2735,12 +1921,12 @@
         }
 
         function updateSignalThresholdControl() {
-            const slider = document.getElementById('signal-threshold');
-            const value = document.getElementById('signal-threshold-value');
-            if (slider && Number(slider.value) !== signalStrengthThreshold) slider.value = String(signalStrengthThreshold);
-            if (value) value.innerText = signalStrengthThreshold.toFixed(2);
+            uiControls.updateSignalThresholdControl({
+                slider: document.getElementById('signal-threshold'),
+                value: document.getElementById('signal-threshold-value'),
+                signalStrengthThreshold
+            });
         }
-
         function filterGraph() {
             stopOrbitForInteraction();
             currentSector = document.getElementById('sector-filter').value;
@@ -2844,21 +2030,13 @@
         }
 
         function updatePortfolioPanel() {
-            const matchCount = document.getElementById('portfolio-match-count');
-            const notFound = document.getElementById('portfolio-not-found-note');
-            if (matchCount) matchCount.innerText = `${matchedPortfolioNodes.length} MATCHED`;
-            if (!notFound) return;
-
-            if (!unmatchedPortfolioTickers.length) {
-                notFound.innerText = '';
-                return;
-            }
-
-            const visibleTickers = unmatchedPortfolioTickers.slice(0, 4).join(', ');
-            const hiddenCount = unmatchedPortfolioTickers.length - 4;
-            notFound.innerText = `NOT FOUND: ${visibleTickers}${hiddenCount > 0 ? ` +${hiddenCount}` : ''}`;
+            uiControls.updatePortfolioPanel({
+                matchCount: document.getElementById('portfolio-match-count'),
+                notFound: document.getElementById('portfolio-not-found-note'),
+                matchedPortfolioNodes,
+                unmatchedPortfolioTickers
+            });
         }
-
         function isPortfolioAnalysisActive() {
             return intelligencePortfolioNexus.isPortfolioAnalysisActive(getPortfolioNexusIntelligenceContext());
         }
@@ -3008,62 +2186,35 @@
         }
 
         function clampSearchHighlight(count) {
-            if (!count) {
-                highlightedSearchIndex = -1;
-                return;
-            }
-            highlightedSearchIndex = highlightedSearchIndex < 0 ? 0 : clamp(highlightedSearchIndex, 0, count - 1);
+            highlightedSearchIndex = uiSearch.clampSearchHighlight({
+                count,
+                highlightedSearchIndex,
+                clamp
+            });
         }
-
         function renderSearchPanel() {
             const panel = document.getElementById('search-panel');
-            if (!panel) return;
-
             const nodesForPanel = getSearchPanelNodes();
-            if (!searchPanelOpen || (!currentSearch && !nodesForPanel.length)) {
-                panel.classList.add('hidden');
-                panel.innerHTML = '';
-                return;
-            }
-
-            const heading = currentSearch ? 'MATCHES' : 'RECENT NODES';
-            const emptyState = currentSearch && !nodesForPanel.length
-                ? '<div class="px-4 py-4 text-sm text-white/45">No company matches this search.</div>'
-                : '';
-            const resultRows = nodesForPanel
-                .map((node, index) => renderSearchResult(node, index))
-                .join('');
-
-            panel.innerHTML = `
-                <div class="px-3 pt-2 pb-1 text-[10px] text-cyan-200/70 font-mono tracking-[2px]">${heading}</div>
-                <div class="space-y-1">${resultRows || emptyState}</div>
-            `;
-            panel.classList.remove('hidden');
+            uiSearch.renderSearchPanel(getSearchRenderContext({
+                panel,
+                searchPanelOpen,
+                currentSearch,
+                nodesForPanel,
+                highlightedSearchIndex
+            }));
         }
-
         function renderSearchResult(node, index) {
-            const activeClass = index === highlightedSearchIndex ? ' is-active' : '';
-            return `
-                <button type="button"
-                        data-search-node-id="${escapeHtml(node.id)}"
-                        data-search-index="${index}"
-                        class="search-result${activeClass} w-full rounded-2xl border border-white/10 px-3 py-2 text-left flex items-center justify-between gap-3">
-                    <div class="min-w-0">
-                        <div class="flex items-baseline gap-2">
-                            <span class="font-display text-white text-sm">${escapeHtml(node.ticker || '')}</span>
-                            <span class="text-xs text-white/62 truncate">${escapeHtml(node.name || '')}</span>
-                        </div>
-                        <div class="text-[11px] text-cyan-200/58 mt-0.5 truncate">${escapeHtml(node.sector || 'Unknown Sector')} / ${escapeHtml(getCompanyIndustryGroup(node))}</div>
-                    </div>
-                    <i class="fa-solid fa-location-crosshairs text-cyan-300/70 shrink-0"></i>
-                </button>
-            `;
+            return uiSearch.renderSearchResult(node, index, getSearchRenderContext({
+                highlightedSearchIndex
+            }));
         }
-
         function getSearchPanelNodes() {
-            return currentSearch ? searchMatches : getRecentNodes();
+            return uiSearch.getSearchPanelNodes({
+                currentSearch,
+                searchMatches,
+                getRecentNodes
+            });
         }
-
         function handleSearchKeydown(event) {
             if (event.key === 'Escape') {
                 closeSearchPanel();
@@ -3269,27 +2420,19 @@
         }
 
         function updateGraphOverlayStats() {
-            const overlay = document.getElementById('graph-overlay-stats');
-            if (!overlay) return;
-
-            const modeLabel = getLayoutModeLabel();
-            const items = [
-                `${visibleNodes.length} Visible Nodes`,
-                `${visibleLinks.length} Visible Edges`,
-                modeLabel
-            ];
-            if (isFocusModeActive()) items.push('Focus Mode');
-            if (signalStrengthThreshold > 0) items.push(`Threshold ${signalStrengthThreshold.toFixed(2)}`);
-            if (isPortfolioAnalysisActive()) items.push(`Portfolio ${matchedPortfolioNodes.length}`);
-            if (orbitEnabled) items.push('Orbit On');
-
-            overlay.innerHTML = items.map(item => `
-                <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/75 font-mono tracking-[1.1px]">
-                    ${escapeHtml(item)}
-                </span>
-            `).join('');
+            uiControls.updateGraphOverlayStats({
+                overlay: document.getElementById('graph-overlay-stats'),
+                visibleNodes,
+                visibleLinks,
+                getLayoutModeLabel,
+                isFocusModeActive,
+                signalStrengthThreshold,
+                isPortfolioAnalysisActive,
+                matchedPortfolioNodes,
+                orbitEnabled,
+                escapeHtml
+            });
         }
-
         function syncSelectionAfterVisibilityChange() {
             if (!selectedNode) return false;
             if (!visibleNodeIds.has(selectedNode.id) || isNodeDimmedByIndustryGroup(selectedNode)) {
@@ -3505,16 +2648,11 @@
         }
 
         function updateOrbitModeControl() {
-            const toggle = document.getElementById('orbit-toggle');
-            if (!toggle) return;
-
-            toggle.setAttribute('aria-pressed', orbitEnabled ? 'true' : 'false');
-            toggle.classList.toggle('is-active', orbitEnabled);
-            toggle.title = orbitEnabled
-                ? 'Orbit on: ambient camera drift stops on interaction.'
-                : 'Orbit off: ambient camera drift is paused.';
+            uiControls.updateOrbitModeControl({
+                toggle: document.getElementById('orbit-toggle'),
+                orbitEnabled
+            });
         }
-
         function getOrbitOffset(now = performance.now()) {
             return graphViewport.getOrbitOffset({
                 enabled: orbitEnabled,
@@ -3622,13 +2760,12 @@
         }
 
         function updateDatasetTrustPanel() {
-            const metrics = getDatasetTrustMetrics(companies, connections);
-            document.getElementById('trust-company-count').innerText = `${metrics.companyCount} COMPANIES`;
-            document.getElementById('trust-connection-count').innerText = `${metrics.connectionCount} EDGES`;
-            document.getElementById('trust-high-confidence').innerText = `${metrics.highConfidencePercent}% CONF >=4`;
-            document.getElementById('trust-latest-date').innerText = `VERIFIED ${formatVerifiedDate(metrics.latestVerifiedDate)}`;
+            uiControls.updateDatasetTrustPanel({
+                document,
+                metrics: getDatasetTrustMetrics(companies, connections),
+                formatVerifiedDate
+            });
         }
-
         function roundedRect(ctx, x, y, width, height, radius) {
             graphRender.roundedRect(ctx, x, y, width, height, radius);
         }

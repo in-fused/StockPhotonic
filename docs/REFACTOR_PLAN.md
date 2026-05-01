@@ -86,6 +86,8 @@ Status: completed. Cluster, industry-correlation, and portfolio nexus calculatio
 
 Move sidebar, dashboard, search, and controls into `/js/ui/`. Preserve inline-triggered behavior until a reviewed event-binding replacement is ready.
 
+Status: completed. Dashboard, sidebar, search panel, and control rendering helpers now live in `/js/ui/` while `index.html` retains app state, event handlers, selection flow, filter/search state, graph calls, and lifecycle orchestration.
+
 ## Manual Smoke Test Checklist
 
 - App loads without white screen

@@ -184,6 +184,8 @@ Expansion principles:
 
 `data/candidates/official_ticker_universe.json` is a review-only staging file for future public-company candidates. The app must not load it yet, and candidate validation must not promote it into `data/companies.json`.
 
+The file currently contains a tiny reviewable official ticker sample set used only to validate the candidate-only flow. It is not production coverage and does not create graph nodes, graph edges, app-loaded data, or relationship claims.
+
 Any future record in this file should start with `review_status: "pending"` and include ticker, company name, exchange, public-company asset type, source type, source tier, source URL, and capture date. Official exchange or listing-venue records should use `source_type: "official_exchange_listing"` with the registry-defined tier. This is candidate-company metadata only: it can stage the ticker universe, but it does not prove business relationships and cannot create production edges. Promotion to production requires source validation, duplicate checks against existing companies, manual review, normal production validation, and a separate future writer phase.
 
 Recommended sequence:

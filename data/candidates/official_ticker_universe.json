@@ -32,5 +32,94 @@
       "review_status": "pending"
     }
   },
-  "candidates": []
+  "candidates": [
+    {
+      "ticker": "ADBE",
+      "name": "Adobe Inc.",
+      "exchange": "Nasdaq",
+      "asset_type": "public_company",
+      "source_type": "official_exchange_listing",
+      "source_tier": 1,
+      "source_url": "https://www.nasdaq.com/market-activity/stocks/adbe",
+      "capture_date": "2026-05-01",
+      "review_status": "pending"
+    },
+    {
+      "ticker": "NFLX",
+      "name": "Netflix, Inc.",
+      "exchange": "Nasdaq",
+      "asset_type": "public_company",
+      "source_type": "official_exchange_listing",
+      "source_tier": 1,
+      "source_url": "https://www.nasdaq.com/market-activity/stocks/nflx",
+      "capture_date": "2026-05-01",
+      "review_status": "pending"
+    },
+    {
+      "ticker": "CSCO",
+      "name": "Cisco Systems, Inc.",
+      "exchange": "Nasdaq",
+      "asset_type": "public_company",
+      "source_type": "official_exchange_listing",
+      "source_tier": 1,
+      "source_url": "https://www.nasdaq.com/market-activity/stocks/csco",
+      "capture_date": "2026-05-01",
+      "review_status": "pending"
+    },
+    {
+      "ticker": "TXN",
+      "name": "Texas Instruments Incorporated",
+      "exchange": "Nasdaq",
+      "asset_type": "public_company",
+      "source_type": "official_exchange_listing",
+      "source_tier": 1,
+      "source_url": "https://www.nasdaq.com/market-activity/stocks/txn",
+      "capture_date": "2026-05-01",
+      "review_status": "pending"
+    },
+    {
+      "ticker": "PEP",
+      "name": "PepsiCo, Inc.",
+      "exchange": "Nasdaq",
+      "asset_type": "public_company",
+      "source_type": "official_exchange_listing",
+      "source_tier": 1,
+      "source_url": "https://www.nasdaq.com/market-activity/stocks/pep",
+      "capture_date": "2026-05-01",
+      "review_status": "pending"
+    },
+    {
+      "ticker": "INTU",
+      "name": "Intuit Inc.",
+      "exchange": "Nasdaq",
+      "asset_type": "public_company",
+      "source_type": "official_exchange_listing",
+      "source_tier": 1,
+      "source_url": "https://www.nasdaq.com/market-activity/stocks/intu",
+      "capture_date": "2026-05-01",
+      "review_status": "pending"
+    },
+    {
+      "ticker": "ADP",
+      "name": "Automatic Data Processing, Inc.",
+      "exchange": "Nasdaq",
+      "asset_type": "public_company",
+      "source_type": "official_exchange_listing",
+      "source_tier": 1,
+      "source_url": "https://www.nasdaq.com/market-activity/stocks/adp",
+      "capture_date": "2026-05-01",
+      "review_status": "pending"
+    },
+    {
+      "ticker": "CMCSA",
+      "name": "Comcast Corporation",
+      "exchange": "Nasdaq",
+      "asset_type": "public_company",
+      "source_type": "official_exchange_listing",
+      "source_tier": 1,
+      "source_url": "https://www.nasdaq.com/market-activity/stocks/cmcsa",
+      "capture_date": "2026-05-01",
+      "review_status": "pending"
+    }
+  ]
 }

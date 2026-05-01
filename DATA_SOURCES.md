@@ -110,6 +110,7 @@ Current scripts:
 - `scripts/validate_data.py` validates the static JSON dataset and computes expected confidence from structural evidence, with optional `signal_score` adjustment when present.
 - `scripts/sec_fetch_cache.py` is a read-only SEC fetch/cache helper for future source-backed extraction work. It can resolve `--ticker` only from the candidate-only CIK mapping reference, never by inventing mappings. It does not create candidates, does not extract relationships, and does not modify production graph data.
 - `scripts/sec_submissions_inspect.py` is a read-only inspector for cached SEC submissions JSON files. It reads local cache files only, makes no network calls, creates no candidates, extracts no relationships, and writes no production graph data.
+- `scripts/sec_filing_plan.py` is a read-only filing-download plan generator for cached SEC submissions JSON files. It reads local cache files only, makes no network calls, downloads no filing documents, creates no relationship candidates, and writes no production graph data. Optional output is a review/planning artifact only under `data/candidates/plans/`.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -177,6 +178,15 @@ python scripts/sec_submissions_inspect.py --cache-file data/cache/sec/submission
 
 The submissions inspector reads local cached SEC submissions JSON only. It makes no network calls, creates no candidate records, extracts no relationships, and writes no production graph data. Use it to see available forms, filing dates, accession numbers, primary documents, and report dates before a future parser phase decides which cached filings are worth parsing.
 
+SEC filing plan generator commands:
+
+```bash
+python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10
+python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K --json
+```
+
+The filing plan generator reads local cached SEC submissions JSON only and prints planned SEC archive URLs for review. It does not download filing documents, create relationship candidates, extract relationships, or write production graph data. If `--output` is used, the path must be under `data/candidates/plans/`; that output is a planning artifact only, not a candidate record.
+
 Local provisioner commands:
 
 ```bash
@@ -195,6 +205,7 @@ SEC cache hygiene:
 - Cache files are raw source artifacts, not candidate records and not production graph data.
 - Do not commit cached responses unless a future reviewed phase explicitly approves the specific artifacts.
 - Use `scripts/sec_submissions_inspect.py` for local read-only filing inventory checks before parser work.
+- Use `scripts/sec_filing_plan.py` for local read-only filing-download planning before any filing fetcher exists.
 - Future extraction phases should read cached source files and emit reviewed candidate JSON separately before any production-data writer exists.
 
 CLI concepts:

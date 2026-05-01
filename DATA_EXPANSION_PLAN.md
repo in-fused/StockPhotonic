@@ -171,6 +171,19 @@ python scripts/sec_submissions_inspect.py --cache-file data/cache/sec/submission
 
 The inspector reports CIK, company name, tickers, recent filing count, form breakdown, latest filing date, and recent filing metadata such as form, filing date, accession number, primary document, and report date when present. It is an inventory tool only; parser selection, candidate creation, and production writes remain separate future phases.
 
+### Phase D11: SEC Filing Download Plan Generator
+
+`scripts/sec_filing_plan.py` is a read-only planning tool for cached SEC submissions JSON files. It selects recent filings by form type and prints deterministic SEC archive URLs for review without downloading filing documents, creating relationship candidates, extracting relationships, or writing production graph data.
+
+Default usage writes nothing:
+
+```bash
+python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10
+python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K --json
+```
+
+Optional `--output` writes only a plan artifact under `data/candidates/plans/` and refuses paths outside that directory. Plan artifacts are review/planning records only; they are not candidate records and do not authorize filing downloads or production writes.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

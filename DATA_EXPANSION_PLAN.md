@@ -227,6 +227,19 @@ python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/00
 
 The report aggregator makes no network calls, creates no candidate records, writes no production graph data, and reports safety counters for `network_calls`, `candidate_records_created`, and `production_writes`. It is a review and prioritization tool only; candidate extraction and production writes remain separate future phases.
 
+### Phase D16: SEC Signal Candidate Preview Generator
+
+`scripts/sec_signal_candidates_preview.py` is a preview-only converter from read-only SEC signal report snippets to relationship candidate-shaped objects. It accepts one or more cached filing documents under `data/cache/sec/filings/`, reuses the safe signal report path, reads optional sibling metadata sidecars, and prints preview objects to stdout only.
+
+Default usage writes nothing:
+
+```bash
+python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm
+python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000 --json
+```
+
+Preview objects include metadata-derived `source_ticker`, `filing_date`, and `accession_number` when available, `target_ticker: null`, a signal-derived `relationship_type`, `source_type: "sec_filing"`, `source_tier: 1`, `confidence_hint`, `evidence_snippet`, and `review_status: "preview_only"`. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; the generator makes no network calls, writes no candidate files, and writes no production graph data.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

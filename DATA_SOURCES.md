@@ -115,6 +115,7 @@ Current scripts:
 - `scripts/sec_filing_inspect.py` is a read-only inspector for downloaded SEC filing cache documents. It reads local cache files and optional metadata sidecars only, makes no network calls, creates no candidates, and writes no production graph data.
 - `scripts/sec_filing_signals.py` is a read-only extractor for one downloaded SEC filing cache document. It reads local cache files only, extracts deterministic relationship signal snippets, creates no candidates, and writes no production graph data.
 - `scripts/sec_signal_report.py` is a read-only aggregator for one or more downloaded SEC filing cache documents. It reads local cache files and optional sibling metadata sidecars only, aggregates signal counts, ranks snippets for review, makes no network calls, creates no candidates, and writes no production graph data.
+- `scripts/sec_signal_candidates_preview.py` is a preview-only converter from SEC signal report snippets to relationship candidate-shaped objects. It reads local cached filing documents and optional sibling metadata sidecars only, prints preview objects to stdout, writes no candidate files, makes no network calls, and writes no production graph data.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -216,6 +217,15 @@ python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/00
 ```
 
 The signal report aggregator reads one or more local downloaded filing documents under `data/cache/sec/filings/` and optional sibling `metadata.json` sidecars. It aggregates total relationship signals by type, ranks the strongest snippets by `confidence_hint`, keyword frequency, and filing-date recency when metadata is available, and prints only to stdout. Safety counters report `network_calls: 0`, `candidate_records_created: 0`, and `production_writes: 0`; candidate creation and production writes remain separate future phases.
+
+SEC signal candidate preview commands:
+
+```bash
+python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm
+python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000 --json
+```
+
+The candidate preview generator reuses the read-only SEC signal report path and converts ranked snippets into preview-only relationship candidate objects with `source_type: "sec_filing"`, `source_tier: 1`, `target_ticker: null`, metadata-derived `source_ticker` / `filing_date` / `accession_number` when available, and `review_status: "preview_only"`. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; it does not create candidate files and does not change production data.
 
 Local provisioner commands:
 

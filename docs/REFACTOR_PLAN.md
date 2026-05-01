@@ -44,6 +44,8 @@ Each phase must preserve current behavior, stay independently reviewable, and av
 
 Move constants and static config tables into `/js/core/config.js`. Keep names and values unchanged. Verify no runtime order changes.
 
+Status: completed. Constants and static config tables now live in `/js/core/config.js` and are exposed through `window.StockPhotonicConfig`.
+
 ### Phase R2: Extract Pure Utility Functions
 
 Move pure formatting, math, escaping, and geometry helpers into `/js/utils/`. Do not move functions that read or mutate app state in this phase.

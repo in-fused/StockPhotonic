@@ -247,6 +247,100 @@
             outline: none;
         }
 
+        .source-workbench {
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.07), rgba(255, 0, 170, 0.04)),
+                rgba(6, 8, 18, 0.88);
+            box-shadow: 0 0 42px rgba(0, 249, 255, 0.08);
+        }
+
+        .source-workbench-panel {
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .source-workbench-label {
+            color: rgba(165, 243, 252, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .source-workbench-pill {
+            border: 1px solid rgba(0, 249, 255, 0.22);
+            background: rgba(0, 249, 255, 0.07);
+            color: rgba(207, 250, 254, 0.88);
+        }
+
+        .source-workbench-warning {
+            border: 1px solid rgba(255, 215, 0, 0.22);
+            background: rgba(255, 215, 0, 0.075);
+            color: rgba(254, 240, 138, 0.88);
+        }
+
+        .pipeline-flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            align-items: center;
+        }
+
+        .pipeline-step {
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background: rgba(0, 0, 0, 0.28);
+            color: rgba(224, 242, 254, 0.86);
+        }
+
+        .pipeline-arrow {
+            color: rgba(255, 255, 255, 0.35);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.72rem;
+        }
+
+        .source-command {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.34);
+        }
+
+        .source-command-copy {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(0, 249, 255, 0.07);
+            color: rgba(165, 243, 252, 0.88);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+        }
+
+        .source-command-copy:hover,
+        .source-command-copy:focus-visible {
+            border-color: rgba(0, 249, 255, 0.48);
+            background: rgba(0, 249, 255, 0.13);
+            color: #ffffff;
+            outline: none;
+        }
+
+        .source-candidate-table {
+            min-width: 860px;
+        }
+
+        .source-candidate-table th {
+            color: rgba(165, 243, 252, 0.82);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.64rem;
+            font-weight: 500;
+            letter-spacing: 1.2px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .source-candidate-table td {
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.72rem;
+            line-height: 1.45;
+            vertical-align: top;
+        }
+
         @media (max-width: 768px) {
             .page-shell {
                 padding-left: 1rem;
@@ -407,6 +501,193 @@
                 </div>
             </div>
         </div>
+
+        <section id="source-intelligence-workbench" class="source-workbench rounded-3xl p-6 md:p-7 mb-10" aria-labelledby="source-workbench-title">
+            <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5">
+                <div>
+                    <div class="source-workbench-label mb-2">Local Pipeline Guide / Candidate Review Area</div>
+                    <h2 id="source-workbench-title" class="font-display text-3xl md:text-4xl font-semibold">Source Intelligence Workbench</h2>
+                    <p class="text-sm md:text-base text-white/64 mt-2 max-w-4xl">
+                        Read-only visibility for the SEC ingestion pipeline. This workbench explains local scripts, candidate-only files, and review boundaries; it is not production graph data and not live backend automation yet.
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap gap-2 xl:justify-end">
+                    <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">READ ONLY</span>
+                    <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">LOCAL TERMINAL COMMANDS</span>
+                    <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NOT GRAPH DATA</span>
+                    <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NO BROWSER SCRIPT RUNNER</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-6">
+                <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
+                    <div class="source-workbench-label mb-3">Pipeline Status</div>
+                    <p class="text-sm text-white/62 mb-4">
+                        The current path moves from source lookup and cache planning into review-only candidate files. Production validation, review, and promotion are future phases.
+                    </p>
+                    <div class="pipeline-flow" aria-label="SEC ingestion pipeline status">
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">SEC lookup/cache</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">filing plan</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">filing fetch</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">filing inspect</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">signal extraction</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">signal report</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">candidate preview</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">candidate file writer</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">future validation/review/promotion</span>
+                    </div>
+                </div>
+
+                <div class="xl:col-span-5 source-workbench-panel rounded-2xl p-5">
+                    <div class="source-workbench-label mb-3">Candidate Files</div>
+                    <div class="space-y-2 font-mono text-xs text-cyan-50/78">
+                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/official_ticker_universe.json</div>
+                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/cik_mappings.json</div>
+                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_relationship_candidates.json</div>
+                    </div>
+                    <p class="text-sm text-white/58 mt-4">
+                        These files are candidate-only staging artifacts. They are not loaded into the production graph, not promoted, and do not create app nodes or edges.
+                    </p>
+                </div>
+            </div>
+
+            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+                    <div>
+                        <div class="source-workbench-label mb-2">Local Command Guide</div>
+                        <p class="text-sm text-white/60">Run these manually from a local terminal. The browser only displays and copies commands.</p>
+                    </div>
+                    <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
+                        Replace the SEC user-agent with your real contact details.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58">Provision summary</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-1', this)" aria-label="Copy provision summary command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-1">python scripts/provision_data.py --summary-only</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58">SEC lookup/cache dry run</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-2', this)" aria-label="Copy SEC cache dry run command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-2">python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Your Name your.email@example.com" --dry-run</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3 lg:col-span-2">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58">Create a filing plan artifact</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-3', this)" aria-label="Copy filing plan command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10 --output data/candidates/plans/aapl_recent_filings.json</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58">Preview plan-listed filing fetches</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy filing fetch command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-4">python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58">Inspect a cached filing</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-5', this)" aria-label="Copy filing inspect command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-5">python scripts/sec_filing_inspect.py --file data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --search "supplier"</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58">Build a signal report</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-6', this)" aria-label="Copy signal report command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-6">python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58">Preview candidate-shaped records</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-7', this)" aria-label="Copy candidate preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-7">python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --json</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3 lg:col-span-2">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58">Write review-only candidate file</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-8', this)" aria-label="Copy candidate writer command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-8">python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-5">
+                <div class="xl:col-span-5 source-workbench-panel rounded-2xl p-5">
+                    <div class="source-workbench-label mb-3">Safety Notes</div>
+                    <ul class="space-y-2 text-sm text-white/62">
+                        <li class="flex gap-2"><i class="fa-solid fa-terminal text-cyan-200/70 mt-0.5"></i><span>Commands must be run locally in a terminal; the browser cannot run these Python scripts.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-ban text-yellow-200/70 mt-0.5"></i><span>This phase adds no backend, no SEC browser network calls, and no frontend script execution bridge.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-database text-fuchsia-200/70 mt-0.5"></i><span>Candidate files are review-only and do not change production graph data.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-shield-halved text-emerald-200/70 mt-0.5"></i><span>No production graph data changes happen until a future reviewed promotion phase.</span></li>
+                    </ul>
+                </div>
+
+                <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                        <div>
+                            <div class="source-workbench-label mb-2">Candidate Review Snapshot</div>
+                            <p class="text-sm text-white/58">
+                                Read-only preview of <span class="font-mono text-cyan-50/78">data/candidates/sec_relationship_candidates.json</span>. Records shown here are not graph nodes or edges.
+                            </p>
+                        </div>
+                        <div id="source-candidate-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING CANDIDATES</div>
+                    </div>
+                    <div id="source-candidate-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                        No SEC relationship candidates are present yet. Use the local preview and writer commands above to create review-only candidate records when cached filings are available.
+                    </div>
+                    <div id="source-candidate-table-wrap" class="hidden overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+                        <table class="source-candidate-table w-full border-collapse">
+                            <thead>
+                                <tr>
+                                    <th class="px-3 py-2">Source</th>
+                                    <th class="px-3 py-2">Target</th>
+                                    <th class="px-3 py-2">Type</th>
+                                    <th class="px-3 py-2">Confidence</th>
+                                    <th class="px-3 py-2">Filing Date</th>
+                                    <th class="px-3 py-2">Review</th>
+                                    <th class="px-3 py-2">Evidence</th>
+                                </tr>
+                            </thead>
+                            <tbody id="source-candidate-rows"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
+                <div class="source-workbench-label mb-3">Future Automation</div>
+                <p class="text-sm text-white/62">
+                    Future phases may add a local backend command runner, admin-only controls, a hosted worker/job queue, or API-backed ingestion. This phase does not implement those capabilities.
+                </p>
+            </div>
+        </section>
     </div>
 
     <script src="js/core/config.js"></script>
@@ -2812,6 +3093,129 @@
                 formatVerifiedDate
             });
         }
+
+        function setCopyButtonState(button, label) {
+            if (!button) return;
+            button.innerHTML = `<i class="fa-regular fa-copy mr-1"></i>${label}`;
+        }
+
+        function fallbackCopyText(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            let copied = false;
+            try {
+                copied = document.execCommand('copy');
+            } catch (error) {
+                copied = false;
+            }
+            textarea.remove();
+            return copied;
+        }
+
+        async function copyWorkbenchCommand(commandId, button) {
+            const commandNode = document.getElementById(commandId);
+            const command = commandNode?.innerText?.trim() || '';
+            if (!command) return;
+
+            try {
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(command);
+                } else if (!fallbackCopyText(command)) {
+                    throw new Error('Clipboard copy unavailable');
+                }
+                setCopyButtonState(button, 'COPIED');
+            } catch (error) {
+                if (fallbackCopyText(command)) {
+                    setCopyButtonState(button, 'COPIED');
+                } else {
+                    setCopyButtonState(button, 'SELECT');
+                }
+            }
+
+            window.setTimeout(() => setCopyButtonState(button, 'COPY'), 1200);
+        }
+
+        function setSourceCandidateStatus(label, tone = 'info') {
+            const status = document.getElementById('source-candidate-status');
+            if (!status) return;
+
+            status.innerText = label;
+            status.classList.toggle('text-yellow-100/70', tone === 'warning');
+            status.classList.toggle('border-yellow-300/20', tone === 'warning');
+            status.classList.toggle('bg-yellow-300/10', tone === 'warning');
+            status.classList.toggle('text-cyan-100/70', tone !== 'warning');
+            status.classList.toggle('border-cyan-300/20', tone !== 'warning');
+            status.classList.toggle('bg-cyan-300/10', tone !== 'warning');
+        }
+
+        function formatCandidateCell(value) {
+            if (value === null || value === undefined || value === '') return '-';
+            return String(value);
+        }
+
+        function formatEvidenceSnippet(value) {
+            const text = formatCandidateCell(value);
+            return text.length > 280 ? `${text.slice(0, 277)}...` : text;
+        }
+
+        function renderSourceCandidatePreview(candidates) {
+            const empty = document.getElementById('source-candidate-empty');
+            const tableWrap = document.getElementById('source-candidate-table-wrap');
+            const rows = document.getElementById('source-candidate-rows');
+            if (!empty || !tableWrap || !rows) return;
+
+            if (!candidates.length) {
+                rows.innerHTML = '';
+                tableWrap.classList.add('hidden');
+                empty.classList.remove('hidden');
+                setSourceCandidateStatus('0 CANDIDATES');
+                return;
+            }
+
+            rows.innerHTML = candidates.map(candidate => `
+                <tr>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(candidate.source_ticker))}</td>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(candidate.target_ticker))}</td>
+                    <td class="px-3 py-2">${escapeHtml(formatCandidateCell(candidate.relationship_type))}</td>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(candidate.confidence_hint))}</td>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(candidate.filing_date))}</td>
+                    <td class="px-3 py-2">${escapeHtml(formatCandidateCell(candidate.review_status))}</td>
+                    <td class="px-3 py-2">${escapeHtml(formatEvidenceSnippet(candidate.evidence_snippet))}</td>
+                </tr>
+            `).join('');
+
+            empty.classList.add('hidden');
+            tableWrap.classList.remove('hidden');
+            setSourceCandidateStatus(`${candidates.length} CANDIDATE${candidates.length === 1 ? '' : 'S'}`);
+        }
+
+        async function loadSourceCandidatePreview() {
+            try {
+                const response = await fetch(`data/candidates/sec_relationship_candidates.json?v=${CACHE_BUST}`);
+                if (!response.ok) throw new Error('Candidate file fetch failed');
+                const payload = await response.json();
+                const candidates = Array.isArray(payload)
+                    ? payload
+                    : Array.isArray(payload?.candidates) ? payload.candidates : [];
+                renderSourceCandidatePreview(candidates);
+            } catch (error) {
+                console.warn('Candidate preview unavailable', error);
+                const empty = document.getElementById('source-candidate-empty');
+                const tableWrap = document.getElementById('source-candidate-table-wrap');
+                if (tableWrap) tableWrap.classList.add('hidden');
+                if (empty) {
+                    empty.innerText = 'Candidate file could not be loaded from the static server. Run the app from a static server and keep candidate review local-only.';
+                    empty.classList.remove('hidden');
+                }
+                setSourceCandidateStatus('CANDIDATE FILE UNAVAILABLE', 'warning');
+            }
+        }
+
         function roundedRect(ctx, x, y, width, height, radius) {
             graphRender.roundedRect(ctx, x, y, width, height, radius);
         }
@@ -2820,6 +3224,7 @@
             return graphRender.truncateLabel(ctx, text, maxWidth);
         }
 
+        loadSourceCandidatePreview();
         loadData();
     </script>
 </body>

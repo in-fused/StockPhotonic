@@ -103,6 +103,8 @@ The current pipeline is intentionally staged so raw source evidence is separated
 RAW INPUT -> scripts/generate_signals.py -> signal_score/source_meta -> scripts/enrich_connections.py -> scripts/validate_data.py -> data/connections.json
 ```
 
+The V1 Source Intelligence Workbench makes the local SEC pipeline and candidate review path visible inside the static app. It is a guide and read-only review surface only: it does not run local scripts from the browser, fetch SEC data from the browser, promote candidates, or modify production graph data.
+
 Current scripts:
 
 - `scripts/generate_signals.py` converts raw text/source inputs into structured candidate signals with tickers, relationship type, label, strength, `source_meta`, and `signal_score`.

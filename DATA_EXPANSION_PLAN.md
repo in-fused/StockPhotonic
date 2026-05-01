@@ -8,6 +8,14 @@ This plan is strategy only. It does not authorize writing new companies to `data
 
 ---
 
+## Phase V1: Source Intelligence Workbench
+
+V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It explains the SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path and makes the candidate-only file locations visible to non-technical users.
+
+The workbench is read-only. It does not run scripts from the browser, fetch SEC data from the browser, add backend/server code, promote candidates, create production nodes or edges, or modify `data/companies.json` or `data/connections.json`. Any displayed candidate records remain review-only and must not be treated as graph data until a future reviewed promotion phase exists.
+
+---
+
 ## SEC-First Source Strategy
 
 SEC EDGAR should be the primary trusted source layer for durable company and relationship records. StockPhotonic should prioritize official filings and structured SEC data before third-party mirrors, vendor APIs, scraped datasets, or generated signals.

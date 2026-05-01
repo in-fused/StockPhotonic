@@ -136,6 +136,14 @@ python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.
 
 The helper requires an explicit identifying `--user-agent`, avoids refetching an existing cache file unless `--force-refresh` is passed, and writes cached SEC responses under `data/cache/sec/` by default. Cached SEC responses should not be committed unless a future reviewed phase explicitly approves them.
 
+Cache review workflow:
+
+- `data/cache/sec/` is local cache space for raw SEC source artifacts.
+- Cached SEC responses are ignored by default and should stay out of commits during normal development.
+- Raw cache files are not candidates and are not production data.
+- Future extraction phases should read cached source files and emit candidate JSON separately, with review status and source metadata, before any production graph write is considered.
+- A future reviewed phase may explicitly approve committing selected cache artifacts if the project needs durable fixtures or auditable source snapshots.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

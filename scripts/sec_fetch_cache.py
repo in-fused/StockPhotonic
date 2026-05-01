@@ -153,6 +153,8 @@ def print_status(status, url, cache_path, extra=None):
     print(f"status: {status}")
     print(f"url: {url}")
     print(f"cache_path: {cache_path}")
+    print("production_data: unchanged")
+    print("cache_artifact: local raw SEC response; ignored by default; do not commit unless a future reviewed phase approves it")
     if extra:
         for key, value in extra.items():
             print(f"{key}: {value}")

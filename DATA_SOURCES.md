@@ -165,6 +165,14 @@ python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.
 
 The SEC cache helper requires an explicit identifying `--user-agent`. Use `--dry-run` first to confirm the exact SEC URL and deterministic cache path. Cached responses are written under `data/cache/sec/` by default and should not be committed unless a future reviewed phase explicitly approves the cached artifact. Running the helper is opt-in only; validation and app loading do not fetch SEC data.
 
+SEC cache hygiene:
+
+- `data/cache/sec/` is local cache space for fetched SEC source responses.
+- Cached SEC responses are ignored by default so raw fetch artifacts are not accidentally committed.
+- Cache files are raw source artifacts, not candidate records and not production graph data.
+- Do not commit cached responses unless a future reviewed phase explicitly approves the specific artifacts.
+- Future extraction phases should read cached source files and emit reviewed candidate JSON separately before any production-data writer exists.
+
 CLI concepts:
 
 - `--from-signals` tells `enrich_connections.py` to use generated candidate signals instead of the static `NEW_CONNECTIONS` list.

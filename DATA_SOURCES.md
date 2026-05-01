@@ -113,6 +113,8 @@ Current scripts:
 - `scripts/sec_filing_plan.py` is a read-only filing-download plan generator for cached SEC submissions JSON files. It reads local cache files only, makes no network calls, downloads no filing documents, creates no relationship candidates, and writes no production graph data. Optional output is a review/planning artifact only under `data/candidates/plans/`.
 - `scripts/sec_filing_fetch.py` is an opt-in SEC filing fetcher for reviewed plan artifacts under `data/candidates/plans/`. It makes no network calls by default, downloads only plan-listed SEC archive URLs when `--allow-network` and `--user-agent` are provided, writes raw cache artifacts only under `data/cache/sec/filings/`, and creates no candidates or production graph data.
 - `scripts/sec_filing_inspect.py` is a read-only inspector for downloaded SEC filing cache documents. It reads local cache files and optional metadata sidecars only, makes no network calls, creates no candidates, and writes no production graph data.
+- `scripts/sec_filing_signals.py` is a read-only extractor for one downloaded SEC filing cache document. It reads local cache files only, extracts deterministic relationship signal snippets, creates no candidates, and writes no production graph data.
+- `scripts/sec_signal_report.py` is a read-only aggregator for one or more downloaded SEC filing cache documents. It reads local cache files and optional sibling metadata sidecars only, aggregates signal counts, ranks snippets for review, makes no network calls, creates no candidates, and writes no production graph data.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -206,6 +208,15 @@ python scripts/sec_filing_inspect.py --file data/cache/sec/filings/0000320193/00
 
 The filing cache inspector reads one local downloaded filing document and an optional metadata sidecar, including sibling `metadata.json` when present. It makes no network calls, creates no candidates, extracts no relationships, and writes no production graph data. Use it to preview filing contents, metadata, content type, and simple search snippets before future parser phases decide which cached filings are worth parsing.
 
+SEC filing signal report commands:
+
+```bash
+python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm
+python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000 --json
+```
+
+The signal report aggregator reads one or more local downloaded filing documents under `data/cache/sec/filings/` and optional sibling `metadata.json` sidecars. It aggregates total relationship signals by type, ranks the strongest snippets by `confidence_hint`, keyword frequency, and filing-date recency when metadata is available, and prints only to stdout. Safety counters report `network_calls: 0`, `candidate_records_created: 0`, and `production_writes: 0`; candidate creation and production writes remain separate future phases.
+
 Local provisioner commands:
 
 ```bash
@@ -226,6 +237,7 @@ SEC cache hygiene:
 - Use `scripts/sec_submissions_inspect.py` for local read-only filing inventory checks before parser work.
 - Use `scripts/sec_filing_plan.py` for local read-only filing-download planning, then `scripts/sec_filing_fetch.py` only after the plan artifact is reviewed.
 - Use `scripts/sec_filing_inspect.py` for local read-only downloaded filing previews before parser work.
+- Use `scripts/sec_signal_report.py` for local read-only signal aggregation across downloaded filing previews before any candidate extraction or production writer is considered.
 - Future extraction phases should read cached source files and emit reviewed candidate JSON separately before any production-data writer exists.
 
 CLI concepts:

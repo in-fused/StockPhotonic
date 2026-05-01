@@ -214,6 +214,19 @@ python scripts/sec_filing_inspect.py --file data/cache/sec/filings/0000320193/00
 
 The inspector reports file size, cache-root status, detected text/HTML/XML-ish content type, selected metadata fields, bounded content preview, optional search snippets, and safety counters. It is a cache preview tool only; candidate creation and production writes remain separate future phases.
 
+### Phase D15: SEC Filing Signal Report Aggregator
+
+`scripts/sec_signal_report.py` is a read-only report tool for one or more downloaded SEC filing cache documents under `data/cache/sec/filings/`. It reuses the existing deterministic filing signal extractor, reads optional sibling metadata sidecars for filing-date recency, aggregates total signals by type, ranks the strongest snippets by `confidence_hint`, keyword frequency, and recency when available, and prints the report to stdout only.
+
+Default usage writes nothing:
+
+```bash
+python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm
+python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000 --json
+```
+
+The report aggregator makes no network calls, creates no candidate records, writes no production graph data, and reports safety counters for `network_calls`, `candidate_records_created`, and `production_writes`. It is a review and prioritization tool only; candidate extraction and production writes remain separate future phases.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

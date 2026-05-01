@@ -2,7 +2,7 @@
 
 **Date:** April 29, 2026  
 **Repo:** https://github.com/in-fused/StockPhotonic  
-**Current Version:** v6.2 / Portfolio Exposure Prototype
+**Current Version:** v6.3 / Company Nexus View
 **Status:** Current main uses a smaller credible static dataset: 60 real companies and 117 curated connections. Immediate work should stay focused on user-facing product intelligence, graph exploration, source coverage, and reviewable industry-group foundations.
 
 ---
@@ -22,6 +22,13 @@
 - The graph container now includes subtle visible-node, visible-edge, layout, Focus Mode, threshold, and Orbit status overlay stats
 - The default dashboard derives top hubs, strongest connections, sector distribution, industry-group distribution, trust summary, and exploration chips from the loaded static dataset
 - The default dashboard now includes Top Industry Correlations derived from existing loaded graph edges only
+- Layout selector now supports Sector Layout, Hub Layout, and Company Nexus View
+- Sector Layout remains the default macro graph layout
+- Hub Layout centers a selected company and arranges visible first-degree neighbors around it
+- Company Nexus View is an SPLC-inspired relationship layout, but Bloomberg is not mentioned in the UI
+- Nexus View places the selected company in the center and groups direct connected nodes by existing relationship type: Supply-side, Partner/ecosystem, Competitor/peer, Capital/ownership, and Other direct links
+- Nexus View is derived only from existing graph edges and does not add supplier/customer direction, revenue exposure, cost exposure, fake claims, or new source records
+- True 3D / sphere / globe rotation remains future-only. Current Orbit Mode is still ambient 2D Canvas drift
 - Portfolio Exposure Prototype accepts pasted tickers, normalizes them to uppercase, highlights matched holdings plus first-degree connected nodes/edges, and renders edge-derived exposure summaries
 - Portfolio input is static/client-only, in-memory only, and is never stored
 - Selected-node sidebar context can summarize the selected node's derived industry group correlation, connected adjacent groups, strongest adjacent group, and cross-group bridge status
@@ -76,9 +83,10 @@ This now has a transitional static-app foundation, but normalized product data r
 ### 3D / Sphere Exploration Mode (Planning Only)
 
 - Future visual upgrade; do not implement in the current static-app layer.
-- Goal: true globe-like or sphere-like rotation with manual drag orbit.
+- Goal: true globe-like or sphere-like rotation with manual right-click or drag orbit, real spherical projection, and 360-style exploration.
 - Current Orbit Mode is ambient 2D Canvas camera drift only.
 - Future implementation may use Canvas pseudo-3D projection or Three.js/WebGL after the current graph and data credibility layers are stable.
+- True 3D / sphere / globe-like rotation is not implemented yet.
 
 ---
 
@@ -220,7 +228,7 @@ This system is implemented entirely in `index.html` on top of the existing `data
 This polish layer is also implemented entirely in `index.html` and uses the existing static JSON files only.
 
 - First load fits the graph immediately, starts Ambient Orbit Mode, and shows the no-selection intelligence dashboard.
-- Orbit Mode gently drifts the Canvas camera offset for an immersive graph feel. It is not 3D and does not persistently alter node positions.
+- Orbit Mode gently drifts the Canvas camera offset for an immersive graph feel. It is ambient 2D drift only, not 3D, and does not persistently alter node positions.
 - Orbit stops on pointer down, wheel zoom, node click, search jump, pan/drag, filters, threshold changes, reset, and fit actions. The Orbit toggle turns it back on or off.
 - Wheel zoom now uses bounded direct cursor-centered scaling for a faster feel while preserving `MIN_SCALE` and `MAX_SCALE`.
 - The default dashboard derives top hubs, strongest connections, sector mix, industry-group mix, and dataset trust summary from currently loaded data.

@@ -2,7 +2,7 @@
 
 **Vision**: The most insightful, beautiful, and trustworthy visualization of corporate interconnections for serious personal investors and their trusted circle.
 
-**Current Version**: v6.2 / Portfolio Exposure Prototype (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
+**Current Version**: v6.3 / Company Nexus View (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
 
 ---
 
@@ -44,6 +44,7 @@
 - [x] Add Graph Focus Mode + Signal Clarity System to reduce visual noise and increase decision clarity using only existing company and connection data.
 - [x] Add a signal strength threshold slider that filters weaker edges and prunes zero-edge nodes when the threshold creates a cleaner subgraph.
 - [x] Add Signal Clarity sidebar summary for active threshold, visible connection count, strongest visible connection, and weakest visible connection.
+- [x] Add Company Nexus View and repair layout selector behavior so Sector, Hub, and Nexus modes are meaningfully distinct.
 - [x] Keep details in the existing sidebar/panel and include connected companies when data allows.
 - [ ] Keep the app static-host friendly and avoid framework migration in this phase.
 
@@ -63,6 +64,15 @@
 - The Industry Correlation Engine derives cross-industry-group pair rankings from the current static graph only. It uses existing edge count, average strength, high-confidence edge count, involved tickers, and dominant connection type; it does not create claims, data records, source URLs, or relationships.
 - The graph overlay reports visible nodes, visible edges, current layout mode, Focus Mode, active threshold, and Orbit status when active.
 - No data files, schema fields, source URLs, or factual relationship claims were added by this feature.
+
+**Layout Modes + Company Nexus View**:
+- Layout selector now supports Sector Layout, Hub Layout, and Company Nexus View.
+- Sector Layout remains the default macro graph layout.
+- Hub Layout centers a selected company and arranges visible first-degree neighbors around it.
+- Company Nexus View is an SPLC-inspired relationship layout, but Bloomberg is not mentioned in the UI.
+- Nexus View places the selected company in the center and groups direct connected nodes by existing relationship type: Supply-side, Partner/ecosystem, Competitor/peer, Capital/ownership, and Other direct links.
+- Nexus View is derived only from existing graph edges and does not add supplier/customer direction, revenue exposure, cost exposure, fake claims, or new source records.
+- True 3D / sphere / globe rotation remains future-only. Current Orbit Mode is still ambient 2D Canvas drift.
 
 **Portfolio Exposure Prototype**:
 - Static/client-only feature implemented in `index.html`.
@@ -229,9 +239,10 @@ Users understand not just direct connections, but which companies move together 
 ### 3D / Sphere Exploration Mode (Planning Only)
 
 - Future visual upgrade, not part of the current implementation.
-- Goal: true globe-like or sphere-like rotation with manual drag orbit.
+- Goal: true globe-like or sphere-like rotation with manual right-click or drag orbit, real spherical projection, and 360-style exploration.
 - Current Orbit Mode is ambient 2D Canvas camera drift only.
 - Future implementation may use Canvas pseudo-3D projection or Three.js/WebGL.
+- True 3D / sphere / globe-like rotation is not implemented yet.
 - Do not implement until the current static Canvas graph, derived intelligence, and data credibility layers remain stable.
 
 ---

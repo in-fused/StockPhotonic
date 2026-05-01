@@ -331,6 +331,7 @@
             <select id="layout-mode" onchange="setLayoutMode(this.value)" class="bg-black/40 border border-cyan-400/25 text-white text-sm rounded-3xl px-4 py-3 outline-none">
                 <option value="sector">Sector Layout</option>
                 <option value="hub">Hub Layout</option>
+                <option value="nexus">Company Nexus View</option>
             </select>
 
             <button id="focus-mode-toggle" onclick="toggleFocusMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
@@ -436,6 +437,7 @@
         const SEARCH_HIGHLIGHT_MS = 1400;
         const LAYOUT_MODE_SECTOR = 'sector';
         const LAYOUT_MODE_HUB = 'hub';
+        const LAYOUT_MODE_NEXUS = 'nexus';
         const SIGNAL_DECLUTTER_THRESHOLD = 0.3;
         const FOCUS_MODE_TRANSITION_MS = 520;
         const CLUSTER_MIN_STRENGTH = 0.35;
@@ -609,6 +611,39 @@
         const HUB_CENTER = { x: 0, y: 0 };
         const HUB_RING_GAP = 150;
         const HUB_FIRST_RING_RADIUS = 230;
+        const NEXUS_CENTER = { x: 0, y: 0 };
+        const NEXUS_AXIS_DISTANCE = 360;
+        const NEXUS_AXIS_SPREAD = 640;
+        const NEXUS_OUTER_RING_RADIUS = 560;
+        const NEXUS_LABEL_DISTANCE = 470;
+        const NEXUS_GROUP_SEQUENCE = ['supply', 'partner', 'competitive', 'capital', 'other'];
+        const NEXUS_GROUPS = {
+            supply: {
+                label: 'Suppliers / Supply',
+                shortLabel: 'Supply-side',
+                types: ['supply', 'supplier_customer']
+            },
+            partner: {
+                label: 'Partners / Ecosystem',
+                shortLabel: 'Partner/ecosystem',
+                types: ['partnership', 'ecosystem']
+            },
+            competitive: {
+                label: 'Competitors / Peers',
+                shortLabel: 'Competitor/peer',
+                types: ['competitor', 'peer']
+            },
+            capital: {
+                label: 'Capital / Ownership',
+                shortLabel: 'Capital/ownership',
+                types: ['investment', 'ownership', 'institutional_ownership', 'shared_holder']
+            },
+            other: {
+                label: 'Other Direct Links',
+                shortLabel: 'Other direct links',
+                types: []
+            }
+        };
 
         let companies = [];
         let connections = [];
@@ -648,6 +683,7 @@
         let portfolioConnectionsByNodeId = new Map();
         let layoutMode = LAYOUT_MODE_SECTOR;
         let hubLayoutPositions = new Map();
+        let nexusLayoutPositions = new Map();
         let orbitEnabled = false;
         let orbitStartedAt = 0;
         let orbitPhase = -Math.PI / 2;
@@ -1089,6 +1125,7 @@
 
             drawBackground(ctx);
             updateScreenCache();
+            drawNexusQuadrantLabels(ctx);
             const frameNodes = visibleNodes.filter(isNodeInFrame);
             const frameLinks = visibleLinks.filter(shouldDrawLink);
 
@@ -1116,6 +1153,44 @@
             gradient.addColorStop(1, 'rgba(5, 5, 8, 0)');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        }
+
+        function drawNexusQuadrantLabels(ctx) {
+            if (!isNexusLayoutActive() || !selectedNode) return;
+
+            const summary = getNexusSummary(selectedNode);
+            const labels = [
+                { key: 'supply', x: -NEXUS_LABEL_DISTANCE, y: -NEXUS_AXIS_SPREAD * 0.42, align: 'center' },
+                { key: 'partner', x: NEXUS_LABEL_DISTANCE, y: -NEXUS_AXIS_SPREAD * 0.42, align: 'center' },
+                { key: 'competitive', x: 0, y: -NEXUS_LABEL_DISTANCE, align: 'center' },
+                { key: 'capital', x: 0, y: NEXUS_LABEL_DISTANCE, align: 'center' }
+            ];
+
+            labels.forEach(label => {
+                const group = summary.groups[label.key];
+                if (!group || group.count <= 0) return;
+                const point = worldToScreen(label.x, label.y);
+                if (point.x < -120 || point.x > canvasWidth + 120 || point.y < -80 || point.y > canvasHeight + 80) return;
+
+                const text = `${group.label} ${group.count}`;
+                ctx.save();
+                ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+                ctx.textAlign = label.align;
+                ctx.textBaseline = 'middle';
+                const width = ctx.measureText(text).width;
+                const x = point.x - width / 2;
+                const y = point.y - 12;
+                ctx.globalAlpha = 0.72;
+                ctx.fillStyle = 'rgba(3, 7, 18, 0.56)';
+                ctx.strokeStyle = 'rgba(103, 232, 249, 0.20)';
+                ctx.lineWidth = 1;
+                roundedRect(ctx, x - 9, y, width + 18, 24, 10);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(207, 250, 254, 0.72)';
+                ctx.fillText(text, point.x, y + 12);
+                ctx.restore();
+            });
         }
 
         function drawLink(ctx, link) {
@@ -1421,7 +1496,7 @@
             showNodeDetails(node);
             recordRecentNode(node);
             triggerPulse(PULSE_DURATION_MS);
-            if (isFocusModeActive() || isHubLayoutActive()) {
+            if (isFocusModeActive() || isHubLayoutActive() || isNexusLayoutActive()) {
                 fitGraph();
             } else {
                 requestDraw();
@@ -1431,6 +1506,7 @@
         function clearSelection(refit = true) {
             stopOrbitForInteraction();
             const wasHubActive = isHubLayoutActive();
+            const wasNexusActive = isNexusLayoutActive();
             const wasFocusModeActive = isFocusModeActive();
             selectedNode = null;
             focusNeighborIds = new Set();
@@ -1439,7 +1515,7 @@
             focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
             refreshVisibleGraph();
             showDefaultDashboard();
-            if (refit && (wasHubActive || wasFocusModeActive)) fitGraph();
+            if (refit && (wasHubActive || wasNexusActive || wasFocusModeActive)) fitGraph();
             requestDraw();
         }
 
@@ -1496,6 +1572,7 @@
                     </div>
                 </div>
 
+                ${renderLayoutHelperSection()}
                 ${renderPortfolioExposureSection(stats.portfolioExposure)}
 
                 <div class="sidebar-section">
@@ -1545,6 +1622,30 @@
                     ${renderDashboardTrustSummary(stats.trust)}
                 </div>
             `;
+        }
+
+        function renderLayoutHelperSection() {
+            if (layoutMode === LAYOUT_MODE_NEXUS && !selectedNode) {
+                return `
+                    <div class="sidebar-section">
+                        <div class="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-3 text-sm text-cyan-50/72">
+                            Select a company to activate Nexus View.
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (layoutMode === LAYOUT_MODE_HUB && !selectedNode) {
+                return `
+                    <div class="sidebar-section">
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/52">
+                            Select a company to center its direct network in Hub Layout.
+                        </div>
+                    </div>
+                `;
+            }
+
+            return '';
         }
 
         function getDefaultDashboardStats() {
@@ -2342,6 +2443,8 @@
                     </div>
                 </div>
 
+                ${renderNexusViewSection(node)}
+
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">Signal Clarity</div>
                     <div class="grid grid-cols-2 gap-3">
@@ -2431,6 +2534,42 @@
             `;
             sidebar.classList.remove('hidden');
             empty.classList.add('hidden');
+        }
+
+        function renderNexusViewSection(node) {
+            if (!isNexusLayoutActive() || !node) return '';
+
+            const summary = getNexusSummary(node);
+            const groups = ['supply', 'partner', 'competitive', 'capital'];
+            return `
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Nexus View</div>
+                    <div class="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-3 mb-3 text-xs text-cyan-50/62 leading-relaxed">
+                        Counts are grouped from visible direct edges by relationship type only.
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        ${groups.map(groupKey => renderNexusSummaryTile(summary.groups[groupKey])).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderNexusSummaryTile(group) {
+            const strongest = group.strongest;
+            const strengthText = strongest ? `${Math.round(getConnectionStrength(strongest.link) * 100)}% edge` : 'No visible edge';
+            const tickerText = strongest ? `${strongest.node.ticker || strongest.node.name || 'Company'}` : 'None';
+            const relationshipText = strongest
+                ? `${formatConnectionType(strongest.link.type || 'link')}: ${strongest.link.label || 'Loaded direct edge'}`
+                : 'No strongest relationship at current filters';
+            return `
+                <div class="summary-tile rounded-2xl p-3">
+                    <div class="text-[10px] text-white/40 font-mono">${escapeHtml(group.shortLabel.toUpperCase())}</div>
+                    <div class="font-display text-2xl text-white">${group.count}</div>
+                    <div class="mt-1 text-xs text-white/70 truncate">${escapeHtml(tickerText)}</div>
+                    <div class="text-[10px] text-cyan-100/55 font-mono">${escapeHtml(strengthText)}</div>
+                    <div class="mt-1 text-[11px] text-white/45 leading-snug line-clamp-2">${escapeHtml(relationshipText)}</div>
+                </div>
+            `;
         }
 
         function renderRelatedClusterSection(cluster, selectedNodeForCluster) {
@@ -3038,12 +3177,21 @@
 
         function setLayoutMode(mode) {
             stopOrbitForInteraction();
-            layoutMode = mode === LAYOUT_MODE_HUB ? LAYOUT_MODE_HUB : LAYOUT_MODE_SECTOR;
+            layoutMode = getValidLayoutMode(mode);
             const select = document.getElementById('layout-mode');
             if (select && select.value !== layoutMode) select.value = layoutMode;
             rebuildLayoutPositions();
+            updateGraphOverlayStats();
+            if (selectedNode) showNodeDetails(selectedNode);
+            else showDefaultDashboard();
             fitGraph();
             requestDraw();
+        }
+
+        function getValidLayoutMode(mode) {
+            if (mode === LAYOUT_MODE_HUB) return LAYOUT_MODE_HUB;
+            if (mode === LAYOUT_MODE_NEXUS) return LAYOUT_MODE_NEXUS;
+            return LAYOUT_MODE_SECTOR;
         }
 
         function toggleFocusMode() {
@@ -3460,7 +3608,11 @@
             ensureNodeVisibleForJump(node);
             selectNode(node);
             highlightSearchNode(node);
-            centerGraphOnNode(node);
+            if (isHubLayoutActive() || isNexusLayoutActive()) {
+                fitGraph();
+            } else {
+                centerGraphOnNode(node);
+            }
             closeSearchPanel();
             const input = document.getElementById('search-input');
             if (input) input.blur();
@@ -3559,7 +3711,7 @@
                 };
             }, { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
 
-            const padding = isHubLayoutActive() ? 150 : selectedNode ? 120 : 70;
+            const padding = isNexusLayoutActive() ? 190 : isHubLayoutActive() ? 150 : selectedNode ? 120 : 70;
             const width = Math.max(1, bounds.maxX - bounds.minX);
             const height = Math.max(1, bounds.maxY - bounds.minY);
             const nextScale = clamp(Math.min(
@@ -3625,7 +3777,7 @@
             const overlay = document.getElementById('graph-overlay-stats');
             if (!overlay) return;
 
-            const modeLabel = isHubLayoutActive() ? 'Hub Layout' : 'Sector Layout';
+            const modeLabel = getLayoutModeLabel();
             const items = [
                 `${visibleNodes.length} Visible Nodes`,
                 `${visibleLinks.length} Visible Edges`,
@@ -3683,7 +3835,24 @@
             return layoutMode === LAYOUT_MODE_HUB && selectedNode && visibleNodeIds.has(selectedNode.id);
         }
 
+        function isNexusLayoutActive() {
+            return layoutMode === LAYOUT_MODE_NEXUS && selectedNode && visibleNodeIds.has(selectedNode.id);
+        }
+
+        function getLayoutModeLabel() {
+            if (layoutMode === LAYOUT_MODE_NEXUS) {
+                return isNexusLayoutActive() ? 'Company Nexus View' : 'Nexus View: Select Company';
+            }
+            if (layoutMode === LAYOUT_MODE_HUB) {
+                return isHubLayoutActive() ? 'Hub Layout' : 'Hub Layout: Select Company';
+            }
+            return 'Sector Layout';
+        }
+
         function getNodeLayoutPosition(node) {
+            if (isNexusLayoutActive() && nexusLayoutPositions.has(node.id)) {
+                return nexusLayoutPositions.get(node.id);
+            }
             if (isHubLayoutActive() && hubLayoutPositions.has(node.id)) {
                 return hubLayoutPositions.get(node.id);
             }
@@ -3691,6 +3860,10 @@
         }
 
         function setNodeLayoutPosition(node, x, y) {
+            if (isNexusLayoutActive()) {
+                nexusLayoutPositions.set(node.id, { x, y });
+                return;
+            }
             if (isHubLayoutActive()) {
                 hubLayoutPositions.set(node.id, { x, y });
                 return;
@@ -3701,9 +3874,11 @@
         }
 
         function getFitNodes() {
-            const baseNodes = isHubLayoutActive()
-                ? visibleNodes.filter(node => selectedNode.id === node.id || focusNeighborIds.has(node.id))
-                : visibleNodes;
+            const baseNodes = isNexusLayoutActive()
+                ? visibleNodes.filter(node => nexusLayoutPositions.has(node.id))
+                : isHubLayoutActive()
+                    ? visibleNodes.filter(node => hubLayoutPositions.has(node.id))
+                    : visibleNodes;
             if (!isPortfolioAnalysisActive()) return baseNodes;
 
             const fitNodeById = new Map(baseNodes.map(node => [node.id, node]));
@@ -3715,6 +3890,11 @@
 
         function rebuildLayoutPositions() {
             hubLayoutPositions = new Map();
+            nexusLayoutPositions = new Map();
+            if (isNexusLayoutActive()) {
+                rebuildNexusLayoutPositions();
+                return;
+            }
             if (!isHubLayoutActive()) return;
 
             hubLayoutPositions.set(selectedNode.id, { ...HUB_CENTER });
@@ -3746,6 +3926,134 @@
                 index += capacity;
                 ring += 1;
             }
+        }
+
+        function rebuildNexusLayoutPositions() {
+            nexusLayoutPositions.set(selectedNode.id, { ...NEXUS_CENTER });
+
+            const layoutGroups = getNexusLayoutGroups(selectedNode);
+            placeNexusLinearGroup(layoutGroups.supply, 'left');
+            placeNexusLinearGroup(layoutGroups.partner, 'right');
+            placeNexusLinearGroup(layoutGroups.competitive, 'top');
+            placeNexusLinearGroup(layoutGroups.capital, 'bottom');
+            placeNexusOuterRing(layoutGroups.other);
+        }
+
+        function placeNexusLinearGroup(items, side) {
+            const count = items.length;
+            if (!count) return;
+
+            const spread = Math.min(NEXUS_AXIS_SPREAD, Math.max(0, (count - 1) * 94));
+            items.forEach((item, index) => {
+                const t = count === 1 ? 0 : (index / (count - 1)) - 0.5;
+                const secondary = t * spread;
+                const stagger = count > 1 ? (index % 2 === 0 ? -18 : 18) : 0;
+                let x = 0;
+                let y = 0;
+
+                if (side === 'left') {
+                    x = -NEXUS_AXIS_DISTANCE + stagger;
+                    y = secondary;
+                } else if (side === 'right') {
+                    x = NEXUS_AXIS_DISTANCE + stagger;
+                    y = secondary;
+                } else if (side === 'top') {
+                    x = secondary;
+                    y = -NEXUS_AXIS_DISTANCE + stagger;
+                } else {
+                    x = secondary;
+                    y = NEXUS_AXIS_DISTANCE + stagger;
+                }
+
+                nexusLayoutPositions.set(item.node.id, { x, y });
+            });
+        }
+
+        function placeNexusOuterRing(items) {
+            const count = items.length;
+            if (!count) return;
+
+            items.forEach((item, index) => {
+                const angle = (index / count) * Math.PI * 2 - Math.PI / 4;
+                nexusLayoutPositions.set(item.node.id, {
+                    x: Math.cos(angle) * NEXUS_OUTER_RING_RADIUS,
+                    y: Math.sin(angle) * NEXUS_OUTER_RING_RADIUS * 0.82
+                });
+            });
+        }
+
+        function getNexusLayoutGroups(node) {
+            const summary = getNexusSummary(node);
+            const assignedByNodeId = new Map();
+
+            NEXUS_GROUP_SEQUENCE.forEach(groupKey => {
+                summary.groups[groupKey].items.forEach(item => {
+                    const existing = assignedByNodeId.get(item.node.id);
+                    if (existing && getConnectionStrength(existing.link) >= getConnectionStrength(item.link)) return;
+                    assignedByNodeId.set(item.node.id, { ...item, groupKey });
+                });
+            });
+
+            const groups = createEmptyNexusGroups();
+            [...assignedByNodeId.values()]
+                .sort(sortNexusItems)
+                .forEach(item => groups[item.groupKey].items.push(item));
+
+            return Object.fromEntries(
+                Object.entries(groups).map(([key, group]) => [key, group.items])
+            );
+        }
+
+        function getNexusSummary(node) {
+            const groups = createEmptyNexusGroups();
+            if (!node) return { groups, total: 0 };
+
+            (adjacencyById.get(node.id) || [])
+                .filter(item => visibleNodeIds.has(item.node.id) && visibleLinkKeys.has(item.link.key))
+                .forEach(item => {
+                    const groupKey = getNexusGroupKeyForType(item.link.type);
+                    groups[groupKey].items.push(item);
+                });
+
+            let total = 0;
+            NEXUS_GROUP_SEQUENCE.forEach(groupKey => {
+                const group = groups[groupKey];
+                group.items.sort(sortNexusItems);
+                group.count = group.items.length;
+                group.strongest = group.items[0] || null;
+                total += group.count;
+            });
+
+            return { groups, total };
+        }
+
+        function createEmptyNexusGroups() {
+            return Object.fromEntries(NEXUS_GROUP_SEQUENCE.map(groupKey => [
+                groupKey,
+                {
+                    key: groupKey,
+                    label: NEXUS_GROUPS[groupKey].label,
+                    shortLabel: NEXUS_GROUPS[groupKey].shortLabel,
+                    items: [],
+                    count: 0,
+                    strongest: null
+                }
+            ]));
+        }
+
+        function getNexusGroupKeyForType(type) {
+            const normalized = String(type || '').toLowerCase();
+            const match = NEXUS_GROUP_SEQUENCE.find(groupKey =>
+                groupKey !== 'other' && NEXUS_GROUPS[groupKey].types.includes(normalized)
+            );
+            return match || 'other';
+        }
+
+        function sortNexusItems(a, b) {
+            return getConnectionStrength(b.link) - getConnectionStrength(a.link) ||
+                (b.node.degree - a.node.degree) ||
+                ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
+                String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''));
         }
 
         function updateScreenCache() {

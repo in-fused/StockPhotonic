@@ -109,6 +109,7 @@ Current scripts:
 - `scripts/enrich_connections.py` safely converts vetted candidate signals into dataset connection records, supports dry runs and filtering, rejects duplicates, and validates the merged result before writing.
 - `scripts/validate_data.py` validates the static JSON dataset and computes expected confidence from structural evidence, with optional `signal_score` adjustment when present.
 - `scripts/sec_fetch_cache.py` is a read-only SEC fetch/cache helper for future source-backed extraction work. It can resolve `--ticker` only from the candidate-only CIK mapping reference, never by inventing mappings. It does not create candidates, does not extract relationships, and does not modify production graph data.
+- `scripts/sec_submissions_inspect.py` is a read-only inspector for cached SEC submissions JSON files. It reads local cache files only, makes no network calls, creates no candidates, extracts no relationships, and writes no production graph data.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -168,6 +169,14 @@ python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Your Name your.ema
 
 The SEC cache helper requires an explicit identifying `--user-agent`. Use `--dry-run` first to confirm the exact SEC URL and deterministic cache path. `--ticker` lookup is allowed only through `data/candidates/cik_mappings.json` records with `review_status: "pending"` or `review_status: "approved_for_fetch"`; if a ticker is missing, the helper must fail clearly rather than guess a CIK. Cached responses are written under `data/cache/sec/` by default and should not be committed unless a future reviewed phase explicitly approves the cached artifact. Running the helper is opt-in only; validation and app loading do not fetch SEC data.
 
+SEC submissions inspector command:
+
+```bash
+python scripts/sec_submissions_inspect.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10
+```
+
+The submissions inspector reads local cached SEC submissions JSON only. It makes no network calls, creates no candidate records, extracts no relationships, and writes no production graph data. Use it to see available forms, filing dates, accession numbers, primary documents, and report dates before a future parser phase decides which cached filings are worth parsing.
+
 Local provisioner commands:
 
 ```bash
@@ -185,6 +194,7 @@ SEC cache hygiene:
 - Cached SEC responses are ignored by default so raw fetch artifacts are not accidentally committed.
 - Cache files are raw source artifacts, not candidate records and not production graph data.
 - Do not commit cached responses unless a future reviewed phase explicitly approves the specific artifacts.
+- Use `scripts/sec_submissions_inspect.py` for local read-only filing inventory checks before parser work.
 - Future extraction phases should read cached source files and emit reviewed candidate JSON separately before any production-data writer exists.
 
 CLI concepts:

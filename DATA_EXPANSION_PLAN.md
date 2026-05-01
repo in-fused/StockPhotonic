@@ -159,6 +159,18 @@ python scripts/provision_data.py --ticker AAPL --allow-network --user-agent "You
 
 In default mode, the provisioner validates `data/candidates/official_ticker_universe.json` and `data/candidates/cik_mappings.json`, previews SEC cache targets through `scripts/sec_fetch_cache.py --dry-run`, and reports production writes as zero. Network-enabled cache fetches require explicit `--allow-network` and an identifying `--user-agent`, and are limited to CIK mappings with `review_status: "approved_for_fetch"`. Scheduling or automated refresh behavior remains a future phase after manual dry-run safety is proven.
 
+### Phase D10: SEC Submissions Cache Inspector
+
+`scripts/sec_submissions_inspect.py` is a read-only inspector for cached SEC submissions JSON files under `data/cache/sec/`. It performs no network calls, creates no candidates, extracts no relationships, and writes no production graph data.
+
+Use it to identify available filings for future parser phases:
+
+```bash
+python scripts/sec_submissions_inspect.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10
+```
+
+The inspector reports CIK, company name, tickers, recent filing count, form breakdown, latest filing date, and recent filing metadata such as form, filing date, accession number, primary document, and report date when present. It is an inventory tool only; parser selection, candidate creation, and production writes remain separate future phases.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

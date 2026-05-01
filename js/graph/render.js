@@ -434,6 +434,8 @@
     function getOrbitRenderFrame(context, orbit) {
         const ramp = getFiniteNumber(orbit?.ramp, 0);
         const active = context.orbitEnabled && ramp > 0;
+        const easedRamp = active ? context.clamp(ramp, 0, 1) : 0;
+        const depthRamp = easedRamp * easedRamp * (3 - 2 * easedRamp);
         return {
             active,
             centerX: context.canvasWidth * 0.5,
@@ -443,21 +445,24 @@
             phaseCos: active ? getFiniteNumber(orbit?.phaseCos, 1) : 1,
             phaseSin: active ? getFiniteNumber(orbit?.phaseSin, 0) : 0,
             verticalPhaseSin: active ? getFiniteNumber(orbit?.verticalPhaseSin, 0) : 0,
-            ramp: active ? context.clamp(ramp, 0, 1) : 0
+            ramp: easedRamp,
+            depthRamp
         };
     }
 
     function getPseudoDepth(context, normalizedX, normalizedY, orbitFrame) {
+        const depthRamp = getFiniteNumber(orbitFrame.depthRamp, orbitFrame.ramp);
         return context.clamp(
-            (normalizedX * orbitFrame.phaseCos * 0.82 + normalizedY * orbitFrame.phaseSin * 0.28) * orbitFrame.ramp,
+            (normalizedX * orbitFrame.phaseCos * 0.82 + normalizedY * orbitFrame.phaseSin * 0.28) * depthRamp,
             -1,
             1
         );
     }
 
     function getOrbitParallaxY(normalizedX, pseudoDepth, orbitFrame) {
+        const depthRamp = getFiniteNumber(orbitFrame.depthRamp, orbitFrame.ramp);
         return clampFinite(
-            pseudoDepth * ORBIT_DEPTH_Y_OFFSET + normalizedX * orbitFrame.verticalPhaseSin * ORBIT_PARALLAX_Y_OFFSET * orbitFrame.ramp,
+            pseudoDepth * ORBIT_DEPTH_Y_OFFSET + normalizedX * orbitFrame.verticalPhaseSin * ORBIT_PARALLAX_Y_OFFSET * depthRamp,
             -ORBIT_MAX_PARALLAX_Y,
             ORBIT_MAX_PARALLAX_Y
         );

@@ -32,9 +32,15 @@
         const elapsed = Math.max(0, now - startedAt);
         const baseRadius = Math.min(canvasWidth, canvasHeight) * radiusRatio;
         const radius = clamp(baseRadius || minRadius, minRadius, maxRadius);
-        const ramp = clamp(elapsed / rampMs, 0, 1);
+        const safeRampMs = Math.max(1, rampMs || 1);
+        const ramp = clamp(elapsed / safeRampMs, 0, 1);
         const easedRamp = 1 - Math.pow(1 - ramp, 3);
-        const angle = phase + elapsed * angularSpeed;
+        const rampCubed = ramp * ramp * ramp;
+        const rampFourth = rampCubed * ramp;
+        const easedElapsed = ramp < 1
+            ? safeRampMs * (rampCubed - rampFourth * 0.5)
+            : elapsed - safeRampMs * 0.5;
+        const angle = phase + easedElapsed * angularSpeed;
         const phaseCos = Math.cos(angle);
         const phaseSin = Math.sin(angle);
         const verticalPhaseSin = Math.sin(angle * 0.7);

@@ -569,6 +569,12 @@
             NEXUS_GROUPS
         } = window.StockPhotonicConfig;
 
+        const ORBIT_PHASE_TAU = Math.PI * 2;
+        const ORBIT_DRAG_PHASE_SCALE = 0.00012;
+        const ORBIT_DRAG_VERTICAL_PHASE_SCALE = 0.000035;
+        const ORBIT_DRAG_MAX_PHASE_STEP = 0.012;
+        const ORBIT_DRAG_SPEED_REFERENCE = 1.2;
+
         /* ==============================
            APP STATE
         ================================ */
@@ -639,6 +645,8 @@
             startScreen: { x: 0, y: 0 },
             lastScreen: { x: 0, y: 0 },
             nodeStart: { x: 0, y: 0 },
+            lastMoveAt: 0,
+            orbitInfluenceEnabled: false,
             moved: false
         };
 
@@ -1061,6 +1069,7 @@
             if (event.button !== 0 && event.pointerType === 'mouse') return;
 
             const canvas = document.getElementById('graph-canvas');
+            const wasOrbiting = orbitEnabled;
             stopOrbitForInteraction();
             const screen = getEventPoint(event);
             const node = findNodeAt(screen.x, screen.y);
@@ -1076,6 +1085,8 @@
             pointerState.startScreen = screen;
             pointerState.lastScreen = screen;
             pointerState.nodeStart = node ? getNodeLayoutPosition(node) : { x: 0, y: 0 };
+            pointerState.lastMoveAt = performance.now();
+            pointerState.orbitInfluenceEnabled = wasOrbiting;
             pointerState.moved = false;
 
             canvas.setPointerCapture(event.pointerId);
@@ -1086,6 +1097,7 @@
 
         function onPointerMove(event) {
             const screen = getEventPoint(event);
+            const frameNow = performance.now();
 
             if (!pointerState.active || pointerState.pointerId !== event.pointerId) {
                 const nextHover = findNodeAt(screen.x, screen.y);
@@ -1123,12 +1135,16 @@
             } else if (pointerState.mode === 'canvas-pan') {
                 // Canvas pan: dragging empty space shifts the viewport only. It does
                 // not alter selection, focus, or any node positions.
-                offsetX += screen.x - pointerState.lastScreen.x;
-                offsetY += screen.y - pointerState.lastScreen.y;
+                const dx = screen.x - pointerState.lastScreen.x;
+                const dy = screen.y - pointerState.lastScreen.y;
+                offsetX += dx;
+                offsetY += dy;
+                applyOrbitDragInfluence(dx, dy, frameNow - pointerState.lastMoveAt);
                 requestDraw();
             }
 
             pointerState.lastScreen = screen;
+            pointerState.lastMoveAt = frameNow;
             event.preventDefault();
         }
 
@@ -1151,6 +1167,7 @@
             pointerState.pointerId = null;
             pointerState.mode = 'idle';
             pointerState.node = null;
+            pointerState.orbitInfluenceEnabled = false;
             if (canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
                 canvas.releasePointerCapture(event.pointerId);
             }
@@ -1165,6 +1182,7 @@
             pointerState.pointerId = null;
             pointerState.mode = 'idle';
             pointerState.node = null;
+            pointerState.orbitInfluenceEnabled = false;
             const canvas = document.getElementById('graph-canvas');
             if (event && canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
                 canvas.releasePointerCapture(event.pointerId);
@@ -2617,6 +2635,7 @@
 
         function setOrbitMode(enabled, options = {}) {
             const nextValue = Boolean(enabled);
+            const now = performance.now();
             if (nextValue === orbitEnabled && !options.restart) {
                 updateOrbitModeControl();
                 updateGraphOverlayStats();
@@ -2625,11 +2644,12 @@
 
             if (nextValue) {
                 orbitEnabled = true;
-                orbitStartedAt = performance.now();
+                orbitStartedAt = now;
                 currentOrbitOffset = { x: 0, y: 0 };
             } else {
+                const offset = orbitEnabled ? getOrbitOffset(now) : null;
+                preserveOrbitPhase(offset);
                 if (orbitEnabled && options.preserveView !== false) {
-                    const offset = getOrbitOffset(performance.now());
                     offsetX += offset.x;
                     offsetY += offset.y;
                 }
@@ -2645,6 +2665,32 @@
         function stopOrbitForInteraction() {
             if (!orbitEnabled) return;
             setOrbitMode(false, { preserveView: true });
+        }
+
+        function preserveOrbitPhase(offset) {
+            if (!Number.isFinite(offset?.phase)) return;
+            orbitPhase = normalizeOrbitPhase(offset.phase);
+        }
+
+        function applyOrbitDragInfluence(dx, dy, elapsedMs) {
+            if (!pointerState.orbitInfluenceEnabled) return;
+            const distance = Math.hypot(dx, dy);
+            if (distance <= 0) return;
+            const speed = distance / Math.max(16, elapsedMs || 16);
+            const speedScale = clamp(speed / ORBIT_DRAG_SPEED_REFERENCE, 0.15, 1);
+            const phaseDelta = clamp(
+                (dx * ORBIT_DRAG_PHASE_SCALE + dy * ORBIT_DRAG_VERTICAL_PHASE_SCALE) * speedScale,
+                -ORBIT_DRAG_MAX_PHASE_STEP,
+                ORBIT_DRAG_MAX_PHASE_STEP
+            );
+            orbitPhase = normalizeOrbitPhase(orbitPhase + phaseDelta);
+        }
+
+        function normalizeOrbitPhase(phase) {
+            const wrapped = phase % ORBIT_PHASE_TAU;
+            if (wrapped > Math.PI) return wrapped - ORBIT_PHASE_TAU;
+            if (wrapped < -Math.PI) return wrapped + ORBIT_PHASE_TAU;
+            return wrapped;
         }
 
         function updateOrbitModeControl() {

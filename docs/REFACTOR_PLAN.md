@@ -68,6 +68,8 @@ Status: completed. Viewport transforms, view animation adapters, orbit offset ma
 
 Move sector, hub, and Company Nexus View layout logic into `/js/graph/layouts.js`. Preserve current selected-node behavior and layout fallback behavior.
 
+Status: completed. Layout mode validation, active-mode checks, fit-node selection, hub positioning, and Company Nexus View grouping/positioning now live in `/js/graph/layouts.js` while `index.html` retains app state and UI wrappers.
+
 ### Phase R6: Extract Graph Rendering
 
 Move draw scheduling and canvas rendering into `/js/graph/render.js`. Preserve current draw order, label decisions, opacity, colors, and orbit rendering behavior.

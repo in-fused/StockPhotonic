@@ -103,7 +103,7 @@ Create a registry of allowed source types, source tiers, fetch rules, required m
 
 ### Phase B: Official Ticker Universe
 
-Add a ticker universe from official or exchange-sourced listings in candidate form first. Do not write the full universe directly into `data/companies.json`.
+Add a ticker universe from official or exchange-sourced listings in candidate form first. Use `official_exchange_listing` for official exchange or listing-venue source records. This source type is candidate-company metadata only; it can stage public-company tickers but does not prove relationships and cannot create production edges. Do not write the full universe directly into `data/companies.json`.
 
 ### Phase D1: Official Ticker Universe Candidate Foundation
 

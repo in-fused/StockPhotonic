@@ -425,6 +425,8 @@ def validate_official_ticker_candidate(
         source_type_key = ""
     else:
         source_type_key = source_type.strip().lower()
+        if source_type_key not in SOURCE_REGISTRY:
+            errors.append(f"source_type {source_type_key!r} is not allowed.")
 
     source_tier = candidate.get("source_tier")
     if not isinstance(source_tier, int) or isinstance(source_tier, bool):

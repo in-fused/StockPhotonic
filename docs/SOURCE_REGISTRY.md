@@ -85,6 +85,8 @@ Candidate ticker-universe records, when present, must include:
 
 `asset_type` should be `public_company` until another asset type has explicit schema and validation support. `review_status` starts as `pending`. Future production promotion requires source validation, duplicate checks, manual review, production validation, and an explicit writer phase that does not exist yet.
 
+`official_exchange_listing` is the dedicated source type for official exchange or listing-venue ticker universe staging. It is candidate-company metadata only: it can support public-company discovery, but it does not prove a business relationship and cannot create production edges.
+
 ---
 
 ## Allowed Source Types
@@ -128,6 +130,15 @@ Candidate ticker-universe records, when present, must include:
 - `description`: SEC 13F data used for institutional ownership and shared-holder candidate layers.
 - `allowed relationship types`: `institutional_ownership`, `shared_holder`, `ownership`, `investment`, `holdings_exposure`
 - `required metadata`: `source_url`, `filing_type`, `filing_date`, `capture_date`, `extraction_text`, `confidence_candidate`, `signal_score`, `review_status`
+
+### `official_exchange_listing`
+
+- `source_type`: `official_exchange_listing`
+- `tier`: 1
+- `description`: Official exchange or listing-venue data used only to stage public-company ticker universe candidates.
+- `allowed relationship types`: none; this source type is not relationship evidence
+- `required metadata`: `ticker`, `name`, `exchange`, `asset_type`, `source_url`, `capture_date`, `review_status`
+- `production promotion`: candidate company promotion only in a future explicit writer phase after duplicate checks and manual review; never production edge promotion
 
 ### `unknown`
 

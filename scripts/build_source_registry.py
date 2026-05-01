@@ -210,6 +210,24 @@ SOURCE_REGISTRY: dict[str, dict[str, Any]] = {
             "review_status",
         ],
     },
+    "official_exchange_listing": {
+        "source_type": "official_exchange_listing",
+        "tier": 1,
+        "description": (
+            "Official exchange or listing-venue data used only to stage "
+            "public-company ticker universe candidates."
+        ),
+        "allowed_relationship_types": [],
+        "required_metadata": [
+            "ticker",
+            "name",
+            "exchange",
+            "asset_type",
+            "source_url",
+            "capture_date",
+            "review_status",
+        ],
+    },
     "unknown": {
         "source_type": "unknown",
         "tier": 3,

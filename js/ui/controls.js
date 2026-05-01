@@ -40,11 +40,13 @@
         const { toggle, orbitEnabled } = context;
         if (!toggle) return;
 
+        const label = toggle.querySelector('span');
         toggle.setAttribute('aria-pressed', orbitEnabled ? 'true' : 'false');
         toggle.classList.toggle('is-active', orbitEnabled);
+        if (label) label.innerText = orbitEnabled ? 'Orbit Active' : 'Resume Orbit';
         toggle.title = orbitEnabled
             ? 'Orbit on: ambient camera drift stops on interaction.'
-            : 'Orbit off: ambient camera drift is paused.';
+            : 'Orbit off: click to resume ambient camera drift.';
     }
 
     function updatePortfolioPanel(context) {
@@ -94,7 +96,7 @@
         if (isFocusModeActive()) items.push('Focus Mode');
         if (signalStrengthThreshold > 0) items.push(`Threshold ${signalStrengthThreshold.toFixed(2)}`);
         if (isPortfolioAnalysisActive()) items.push(`Portfolio ${matchedPortfolioNodes.length}`);
-        if (orbitEnabled) items.push('Orbit On');
+        if (orbitEnabled) items.push('Orbit Active');
 
         overlay.innerHTML = items.map(item => `
                 <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/75 font-mono tracking-[1.1px]">

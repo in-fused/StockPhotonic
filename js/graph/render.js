@@ -2,6 +2,9 @@
     const ORBIT_DEPTH_SCALE = 0.09;
     const ORBIT_DEPTH_Y_OFFSET = 5.5;
     const ORBIT_PARALLAX_Y_OFFSET = 4.5;
+    const ORBIT_MIN_DEPTH_MULTIPLIER = 0.9;
+    const ORBIT_MAX_DEPTH_MULTIPLIER = 1.12;
+    const ORBIT_MAX_PARALLAX_Y = 12;
 
     function resizeCanvas(context) {
         const canvas = context.getCanvas();
@@ -429,17 +432,18 @@
     }
 
     function getOrbitRenderFrame(context, orbit) {
-        const active = context.orbitEnabled && orbit && orbit.ramp > 0;
+        const ramp = getFiniteNumber(orbit?.ramp, 0);
+        const active = context.orbitEnabled && ramp > 0;
         return {
             active,
             centerX: context.canvasWidth * 0.5,
             centerY: context.canvasHeight * 0.5,
             invHalfWidth: 1 / Math.max(1, context.canvasWidth * 0.5),
             invHalfHeight: 1 / Math.max(1, context.canvasHeight * 0.5),
-            phaseCos: active ? orbit.phaseCos : 1,
-            phaseSin: active ? orbit.phaseSin : 0,
-            verticalPhaseSin: active ? orbit.verticalPhaseSin : 0,
-            ramp: active ? orbit.ramp : 0
+            phaseCos: active ? getFiniteNumber(orbit?.phaseCos, 1) : 1,
+            phaseSin: active ? getFiniteNumber(orbit?.phaseSin, 0) : 0,
+            verticalPhaseSin: active ? getFiniteNumber(orbit?.verticalPhaseSin, 0) : 0,
+            ramp: active ? context.clamp(ramp, 0, 1) : 0
         };
     }
 
@@ -452,7 +456,11 @@
     }
 
     function getOrbitParallaxY(normalizedX, pseudoDepth, orbitFrame) {
-        return pseudoDepth * ORBIT_DEPTH_Y_OFFSET + normalizedX * orbitFrame.verticalPhaseSin * ORBIT_PARALLAX_Y_OFFSET * orbitFrame.ramp;
+        return clampFinite(
+            pseudoDepth * ORBIT_DEPTH_Y_OFFSET + normalizedX * orbitFrame.verticalPhaseSin * ORBIT_PARALLAX_Y_OFFSET * orbitFrame.ramp,
+            -ORBIT_MAX_PARALLAX_Y,
+            ORBIT_MAX_PARALLAX_Y
+        );
     }
 
     function updateScreenCache(context, orbitFrame = null) {
@@ -468,7 +476,11 @@
                 const normalizedY = context.clamp((point.y - frame.centerY) * frame.invHalfHeight, -1, 1);
                 pseudoDepth = getPseudoDepth(context, normalizedX, normalizedY, frame);
                 point.y += getOrbitParallaxY(normalizedX, pseudoDepth, frame);
-                radius *= 1 + pseudoDepth * ORBIT_DEPTH_SCALE;
+                radius *= context.clamp(
+                    1 + pseudoDepth * ORBIT_DEPTH_SCALE,
+                    ORBIT_MIN_DEPTH_MULTIPLIER,
+                    ORBIT_MAX_DEPTH_MULTIPLIER
+                );
             }
 
             node._screenX = point.x;
@@ -514,6 +526,14 @@
 
     function getScreenNodeRadius(context, node) {
         return context.graphViewport.getScreenNodeRadius(node, context.scale);
+    }
+
+    function getFiniteNumber(value, fallback) {
+        return Number.isFinite(value) ? value : fallback;
+    }
+
+    function clampFinite(value, min, max) {
+        return Math.max(min, Math.min(max, Number.isFinite(value) ? value : 0));
     }
 
     function roundedRect(ctx, x, y, width, height, radius) {

@@ -202,6 +202,18 @@ python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_fili
 
 Network-enabled fetches require both `--allow-network` and an identifying `--user-agent`, validate the approved plan shape, enforce SEC archive host/path checks, skip existing cache files unless `--force-refresh` is passed, and write only raw filing cache artifacts plus metadata sidecars under `data/cache/sec/filings/`. Downloaded filings are not candidate records and not production data; future parser phases should read the cache and emit candidate JSON separately.
 
+### Phase D13: SEC Filing Cache Inspector
+
+`scripts/sec_filing_inspect.py` is a read-only inspector for one downloaded SEC filing cache document under `data/cache/sec/filings/`. It reads local cache files and optional metadata sidecars only, performs no network calls, creates no candidates, extracts no relationships, and writes no production graph data.
+
+Use it to preview filing contents before parser phases:
+
+```bash
+python scripts/sec_filing_inspect.py --file data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --search "supplier"
+```
+
+The inspector reports file size, cache-root status, detected text/HTML/XML-ish content type, selected metadata fields, bounded content preview, optional search snippets, and safety counters. It is a cache preview tool only; candidate creation and production writes remain separate future phases.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

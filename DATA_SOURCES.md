@@ -219,7 +219,7 @@ Any future record in this file should start with `review_status: "pending"` and 
 
 `data/candidates/cik_mappings.json` is a candidate/reference-only ticker-to-CIK mapping file for future SEC fetch/cache workflows. It is not loaded by the app, does not create company candidates, does not create production nodes or edges, and does not write to `data/companies.json` or `data/connections.json`.
 
-The file starts empty by design. Future mappings must be source-backed and reviewed, with ticker, CIK, registered source type, source tier, source URL, capture date, and `review_status` of `pending` or `approved_for_fetch`. Duplicate tickers and duplicate CIKs are rejected by validation.
+The file contains a tiny reviewable sample set for dry-run ticker lookup testing only. These mappings do not create companies, edges, candidates, app-loaded records, or production graph records. Future mappings must be source-backed and reviewed, with ticker, CIK, registered source type, source tier, source URL, capture date, and `review_status` of `pending` or `approved_for_fetch`. Duplicate tickers and duplicate CIKs are rejected by validation.
 
 Validate the CIK mapping reference dry run with:
 

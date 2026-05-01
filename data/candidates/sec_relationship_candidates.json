@@ -1,0 +1,51 @@
+{
+  "metadata": {
+    "description": "Review-only SEC relationship candidate staging file. Records are generated from cached filing signal previews and must not be loaded by the app or promoted directly into production graph data.",
+    "status": "candidate_only",
+    "production_write_allowed": false,
+    "app_load_allowed": false,
+    "source_policy_notes": [
+      "Read cached SEC filing documents only; do not perform network calls.",
+      "Keep records pending review until a human confirms source and target tickers, relationship type, and evidence.",
+      "Do not create production nodes, production edges, or writes to data/companies.json or data/connections.json from this file."
+    ],
+    "source_requirements": [
+      "source_ticker",
+      "target_ticker",
+      "relationship_type",
+      "source_type",
+      "source_tier",
+      "confidence_hint",
+      "evidence_snippet",
+      "filing_date",
+      "accession_number",
+      "review_status"
+    ],
+    "candidate_schema_example": {
+      "source_ticker": "SOURCE_PUBLIC_TICKER",
+      "target_ticker": null,
+      "relationship_type": "supplier_customer",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "confidence_hint": 0.88,
+      "evidence_snippet": "Concise filing text snippet supporting manual review.",
+      "filing_date": "YYYY-MM-DD",
+      "accession_number": "0000000000-00-000000",
+      "review_status": "pending_review"
+    }
+  },
+  "source_preview": {
+    "preview_type": "sec_signal_candidate_preview",
+    "expected_cache_root": "data/cache/sec/filings",
+    "input_files": 0,
+    "limit_chars_per_file": null,
+    "scanned_characters": 0,
+    "total_signals": 0
+  },
+  "candidate_count": 0,
+  "candidates": [],
+  "safety": {
+    "network_calls": 0,
+    "production_writes": 0
+  }
+}

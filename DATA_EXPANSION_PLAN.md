@@ -240,6 +240,25 @@ python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0
 
 Preview objects include metadata-derived `source_ticker`, `filing_date`, and `accession_number` when available, `target_ticker: null`, a signal-derived `relationship_type`, `source_type: "sec_filing"`, `source_tier: 1`, `confidence_hint`, `evidence_snippet`, and `review_status: "preview_only"`. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; the generator makes no network calls, writes no candidate files, and writes no production graph data.
 
+### Phase D17: SEC Signal Candidate File Writer
+
+`scripts/sec_signal_candidates_write.py` is the explicit review-gated writer for SEC signal candidate previews. It accepts one or more cached filing documents under `data/cache/sec/filings/`, reuses the safe preview path, and writes no data by default. Default mode prints only the would-be candidate records to stdout.
+
+Dry-run preview before writing:
+
+```bash
+python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm
+python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000
+```
+
+Write only after the preview is acceptable:
+
+```bash
+python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force
+```
+
+The writer saves only `data/candidates/sec_relationship_candidates.json`, refuses to overwrite an existing candidate file unless `--force` is passed, and records candidates with `review_status: "pending_review"`. The candidate file is review-only metadata and candidate records: it includes `status: "candidate_only"`, `production_write_allowed: false`, `app_load_allowed: false`, and safety counters for `network_calls: 0` and `production_writes: 0`. It must not create production nodes, create production edges, modify `data/companies.json`, modify `data/connections.json`, or change app/UI/rendering behavior.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

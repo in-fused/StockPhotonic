@@ -116,6 +116,7 @@ Current scripts:
 - `scripts/sec_filing_signals.py` is a read-only extractor for one downloaded SEC filing cache document. It reads local cache files only, extracts deterministic relationship signal snippets, creates no candidates, and writes no production graph data.
 - `scripts/sec_signal_report.py` is a read-only aggregator for one or more downloaded SEC filing cache documents. It reads local cache files and optional sibling metadata sidecars only, aggregates signal counts, ranks snippets for review, makes no network calls, creates no candidates, and writes no production graph data.
 - `scripts/sec_signal_candidates_preview.py` is a preview-only converter from SEC signal report snippets to relationship candidate-shaped objects. It reads local cached filing documents and optional sibling metadata sidecars only, prints preview objects to stdout, writes no candidate files, makes no network calls, and writes no production graph data.
+- `scripts/sec_signal_candidates_write.py` is an explicit review-gated writer for SEC signal candidate previews. Default mode prints would-be candidate records to stdout only. It writes only `data/candidates/sec_relationship_candidates.json` when `--write` is passed, refuses to overwrite without `--force`, makes no network calls, and writes no production graph data.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -227,6 +228,16 @@ python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0
 
 The candidate preview generator reuses the read-only SEC signal report path and converts ranked snippets into preview-only relationship candidate objects with `source_type: "sec_filing"`, `source_tier: 1`, `target_ticker: null`, metadata-derived `source_ticker` / `filing_date` / `accession_number` when available, and `review_status: "preview_only"`. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; it does not create candidate files and does not change production data.
 
+SEC signal candidate writer commands:
+
+```bash
+python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm
+python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000
+python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force
+```
+
+The candidate writer reuses the safe preview path, converts preview records to review-only records with `review_status: "pending_review"`, and writes only `data/candidates/sec_relationship_candidates.json` when `--write` is explicit. Because the committed candidate file is itself review-only, overwriting it requires `--force`. The file metadata keeps `status: "candidate_only"`, `production_write_allowed: false`, and `app_load_allowed: false`; safety counters keep `network_calls: 0` and `production_writes: 0`. This writer does not modify `data/companies.json`, `data/connections.json`, UI files, rendering code, or production scripts.
+
 Local provisioner commands:
 
 ```bash
@@ -248,7 +259,8 @@ SEC cache hygiene:
 - Use `scripts/sec_filing_plan.py` for local read-only filing-download planning, then `scripts/sec_filing_fetch.py` only after the plan artifact is reviewed.
 - Use `scripts/sec_filing_inspect.py` for local read-only downloaded filing previews before parser work.
 - Use `scripts/sec_signal_report.py` for local read-only signal aggregation across downloaded filing previews before any candidate extraction or production writer is considered.
-- Future extraction phases should read cached source files and emit reviewed candidate JSON separately before any production-data writer exists.
+- Use `scripts/sec_signal_candidates_write.py` only for explicit `--write` creation of review-only SEC relationship candidates after previewing cached filings.
+- Future production-write phases must stay separate from SEC candidate file creation and require manual review before touching production graph data.
 
 CLI concepts:
 

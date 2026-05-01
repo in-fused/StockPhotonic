@@ -414,6 +414,8 @@
     <script src="js/utils/formatting.js"></script>
     <script src="js/utils/dom.js"></script>
     <script src="js/core/data.js"></script>
+    <script src="js/graph/viewport.js"></script>
+    <script src="js/graph/interactions.js"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -427,7 +429,15 @@
             throw new Error('StockPhotonicData failed to load');
         }
 
+        if (!window.StockPhotonicGraph?.viewport || !window.StockPhotonicGraph?.interactions) {
+            throw new Error('StockPhotonic graph modules failed to load');
+        }
+
         const StockPhotonicUtils = window.StockPhotonicUtils || {};
+        const {
+            viewport: graphViewport,
+            interactions: graphInteractions
+        } = window.StockPhotonicGraph;
         const {
             clamp,
             hashNumber,
@@ -573,6 +583,24 @@
             nodeStart: { x: 0, y: 0 },
             moved: false
         };
+
+        const viewController = graphViewport.createViewController({
+            getScale: () => scale,
+            setScale: value => { scale = value; },
+            getOffsetX: () => offsetX,
+            setOffsetX: value => { offsetX = value; },
+            getOffsetY: () => offsetY,
+            setOffsetY: value => { offsetY = value; },
+            getAnimationHandle: () => viewAnimationHandle,
+            setAnimationHandle: value => { viewAnimationHandle = value; },
+            requestDraw,
+            minScale: MIN_SCALE,
+            maxScale: MAX_SCALE,
+            clamp,
+            requestAnimationFrame: window.requestAnimationFrame.bind(window),
+            cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
+            now: () => performance.now()
+        });
 
         /* ==============================
            DATA LOADING
@@ -776,19 +804,20 @@
 
         function setupCanvasInteractions() {
             const canvas = document.getElementById('graph-canvas');
-            window.addEventListener('resize', () => {
-                resizeCanvas();
-                fitGraph(false, { keepOrbit: true });
+            graphInteractions.bindCanvasInteractions({
+                canvas,
+                windowTarget: window,
+                onResize: () => {
+                    resizeCanvas();
+                    fitGraph(false, { keepOrbit: true });
+                },
+                onWheel: onWheelZoom,
+                onPointerDown,
+                onPointerMove,
+                onPointerUp,
+                onPointerCancel,
+                onPointerLeave
             });
-
-            canvas.addEventListener('wheel', onWheelZoom, { passive: false });
-            canvas.addEventListener('pointerdown', onPointerDown);
-            canvas.addEventListener('pointermove', onPointerMove);
-            canvas.addEventListener('pointerup', onPointerUp);
-            canvas.addEventListener('pointercancel', onPointerCancel);
-            canvas.addEventListener('lostpointercapture', onPointerCancel);
-            canvas.addEventListener('pointerleave', onPointerLeave);
-            canvas.addEventListener('contextmenu', event => event.preventDefault());
         }
 
         function onPointerDown(event) {
@@ -928,10 +957,11 @@
         }
 
         function normalizeWheelDelta(event) {
-            let delta = Number(event.deltaY) || 0;
-            if (event.deltaMode === 1) delta *= 16;
-            if (event.deltaMode === 2) delta *= Math.max(canvasHeight, 1);
-            return clamp(delta, -WHEEL_DELTA_LIMIT, WHEEL_DELTA_LIMIT);
+            return graphInteractions.normalizeWheelDelta(event, {
+                canvasHeight,
+                limit: WHEEL_DELTA_LIMIT,
+                clamp
+            });
         }
 
         /* ==============================
@@ -3904,33 +3934,24 @@
             const fitNodes = getFitNodes();
             if (!fitNodes.length) return;
 
-            const bounds = fitNodes.reduce((acc, node) => {
-                const position = getNodeLayoutPosition(node);
-                return {
-                    minX: Math.min(acc.minX, position.x - node.radius),
-                    maxX: Math.max(acc.maxX, position.x + node.radius),
-                    minY: Math.min(acc.minY, position.y - node.radius),
-                    maxY: Math.max(acc.maxY, position.y + node.radius)
-                };
-            }, { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
-
+            const bounds = graphViewport.getBoundsForNodes(fitNodes, getNodeLayoutPosition);
             const padding = isNexusLayoutActive() ? 190 : isHubLayoutActive() ? 150 : selectedNode ? 120 : 70;
-            const width = Math.max(1, bounds.maxX - bounds.minX);
-            const height = Math.max(1, bounds.maxY - bounds.minY);
-            const nextScale = clamp(Math.min(
-                (canvasWidth - padding * 2) / width,
-                (canvasHeight - padding * 2) / height
-            ), MIN_SCALE, MAX_SCALE);
-            const nextOffsetX = canvasWidth / 2 - ((bounds.minX + bounds.maxX) / 2) * nextScale;
-            const nextOffsetY = canvasHeight / 2 - ((bounds.minY + bounds.maxY) / 2) * nextScale;
+            const nextView = graphViewport.getFitView(bounds, {
+                canvasWidth,
+                canvasHeight,
+                padding,
+                minScale: MIN_SCALE,
+                maxScale: MAX_SCALE,
+                clamp
+            });
 
             if (!animate) {
-                setView(nextScale, nextOffsetX, nextOffsetY);
+                setView(nextView.scale, nextView.offsetX, nextView.offsetY);
                 requestDraw();
                 return;
             }
 
-            animateView(nextScale, nextOffsetX, nextOffsetY, FIT_ANIMATION_MS);
+            animateView(nextView.scale, nextView.offsetX, nextView.offsetY, FIT_ANIMATION_MS);
         }
 
         function refreshVisibleGraph() {
@@ -4270,11 +4291,12 @@
         }
 
         function isNodeInFrame(node) {
-            const radius = node._screenRadius || getScreenNodeRadius(node);
-            return node._screenX >= -FRAME_MARGIN - radius &&
-                node._screenX <= canvasWidth + FRAME_MARGIN + radius &&
-                node._screenY >= -FRAME_MARGIN - radius &&
-                node._screenY <= canvasHeight + FRAME_MARGIN + radius;
+            return graphViewport.isNodeInFrame(node, {
+                canvasWidth,
+                canvasHeight,
+                frameMargin: FRAME_MARGIN,
+                scale
+            });
         }
 
         function shouldDrawLink(link) {
@@ -4303,7 +4325,7 @@
         }
 
         function getScreenNodeRadius(node) {
-            return Math.max(3.5, node.radius * Math.sqrt(scale));
+            return graphViewport.getScreenNodeRadius(node, scale);
         }
 
         function toggleOrbitMode() {
@@ -4354,56 +4376,32 @@
         }
 
         function getOrbitOffset(now = performance.now()) {
-            if (!orbitEnabled) return { x: 0, y: 0 };
-            const elapsed = Math.max(0, now - orbitStartedAt);
-            const baseRadius = Math.min(canvasWidth, canvasHeight) * ORBIT_RADIUS_RATIO;
-            const radius = clamp(baseRadius || ORBIT_MIN_RADIUS, ORBIT_MIN_RADIUS, ORBIT_MAX_RADIUS);
-            const ramp = clamp(elapsed / ORBIT_RAMP_MS, 0, 1);
-            const easedRamp = 1 - Math.pow(1 - ramp, 3);
-            const angle = orbitPhase + elapsed * ORBIT_ANGULAR_SPEED;
-            return {
-                x: Math.cos(angle) * radius * easedRamp,
-                y: Math.sin(angle) * radius * 0.72 * easedRamp
-            };
+            return graphViewport.getOrbitOffset({
+                enabled: orbitEnabled,
+                now,
+                startedAt: orbitStartedAt,
+                phase: orbitPhase,
+                canvasWidth,
+                canvasHeight,
+                radiusRatio: ORBIT_RADIUS_RATIO,
+                minRadius: ORBIT_MIN_RADIUS,
+                maxRadius: ORBIT_MAX_RADIUS,
+                rampMs: ORBIT_RAMP_MS,
+                angularSpeed: ORBIT_ANGULAR_SPEED,
+                clamp
+            });
         }
 
         function setView(nextScale, nextOffsetX, nextOffsetY) {
-            cancelViewAnimation();
-            scale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
-            offsetX = nextOffsetX;
-            offsetY = nextOffsetY;
+            viewController.setView(nextScale, nextOffsetX, nextOffsetY);
         }
 
         function animateView(nextScale, nextOffsetX, nextOffsetY, duration) {
-            cancelViewAnimation();
-            const startScale = scale;
-            const startOffsetX = offsetX;
-            const startOffsetY = offsetY;
-            const startedAt = performance.now();
-            const safeDuration = Math.max(1, duration || 1);
-
-            const step = now => {
-                const t = clamp((now - startedAt) / safeDuration, 0, 1);
-                const eased = 1 - Math.pow(1 - t, 3);
-                scale = startScale + (nextScale - startScale) * eased;
-                offsetX = startOffsetX + (nextOffsetX - startOffsetX) * eased;
-                offsetY = startOffsetY + (nextOffsetY - startOffsetY) * eased;
-                requestDraw();
-
-                if (t < 1) {
-                    viewAnimationHandle = requestAnimationFrame(step);
-                } else {
-                    viewAnimationHandle = null;
-                }
-            };
-
-            viewAnimationHandle = requestAnimationFrame(step);
+            viewController.animateView(nextScale, nextOffsetX, nextOffsetY, duration);
         }
 
         function cancelViewAnimation() {
-            if (!viewAnimationHandle) return;
-            cancelAnimationFrame(viewAnimationHandle);
-            viewAnimationHandle = null;
+            viewController.cancelViewAnimation();
         }
 
         function triggerPulse(duration = PULSE_DURATION_MS) {
@@ -4448,45 +4446,34 @@
         }
 
         function findNodeAt(screenX, screenY) {
-            let closest = null;
-            let closestDistance = Infinity;
-
-            visibleNodes.forEach(node => {
-                const position = getNodeLayoutPosition(node);
-                const point = worldToScreen(position.x, position.y);
-                const hitRadius = Math.max(16, getScreenNodeRadius(node) + 10);
-                const distance = Math.hypot(point.x - screenX, point.y - screenY);
-                if (distance <= hitRadius && distance < closestDistance) {
-                    closest = node;
-                    closestDistance = distance;
-                }
+            return graphInteractions.findNodeAt(screenX, screenY, {
+                visibleNodes,
+                getNodeLayoutPosition,
+                worldToScreen,
+                getScreenNodeRadius
             });
-
-            return closest;
         }
 
         function getEventPoint(event) {
-            const rect = event.currentTarget.getBoundingClientRect();
-            return {
-                x: event.clientX - rect.left,
-                y: event.clientY - rect.top
-            };
+            return graphViewport.getEventPoint(event);
         }
 
         function screenToWorld(x, y) {
-            const orbit = orbitEnabled ? currentOrbitOffset : { x: 0, y: 0 };
-            return {
-                x: (x - offsetX - orbit.x) / scale,
-                y: (y - offsetY - orbit.y) / scale
-            };
+            return graphViewport.screenToWorld(x, y, {
+                offsetX,
+                offsetY,
+                scale,
+                orbitOffset: orbitEnabled ? currentOrbitOffset : null
+            });
         }
 
         function worldToScreen(x, y) {
-            const orbit = orbitEnabled ? currentOrbitOffset : { x: 0, y: 0 };
-            return {
-                x: x * scale + offsetX + orbit.x,
-                y: y * scale + offsetY + orbit.y
-            };
+            return graphViewport.worldToScreen(x, y, {
+                offsetX,
+                offsetY,
+                scale,
+                orbitOffset: orbitEnabled ? currentOrbitOffset : null
+            });
         }
 
         function getNodeRadius(company, degree) {

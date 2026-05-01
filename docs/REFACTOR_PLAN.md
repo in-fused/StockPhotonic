@@ -62,6 +62,8 @@ Status: completed. Dataset fetches, company normalization, degree/adjacency map 
 
 Move viewport transforms, fit/animation helpers, hit testing, pointer handlers, wheel zoom, and canvas event setup into `/js/graph/viewport.js` and `/js/graph/interactions.js`.
 
+Status: completed. Viewport transforms, view animation adapters, orbit offset math, fit/bounds helpers, event point calculation, wheel delta normalization, hit testing, and canvas event binding now live in `/js/graph/viewport.js` and `/js/graph/interactions.js` while `index.html` retains app state and pointer handler control.
+
 ### Phase R5: Extract Layout Mode Logic
 
 Move sector, hub, and Company Nexus View layout logic into `/js/graph/layouts.js`. Preserve current selected-node behavior and layout fallback behavior.

@@ -184,6 +184,24 @@ python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK000
 
 Optional `--output` writes only a plan artifact under `data/candidates/plans/` and refuses paths outside that directory. Plan artifacts are review/planning records only; they are not candidate records and do not authorize filing downloads or production writes.
 
+### Phase D12: SEC Filing Fetcher From Approved Plan
+
+`scripts/sec_filing_fetch.py` reads a reviewed filing download plan artifact from `data/candidates/plans/` and fetches only the listed SEC archive documents into `data/cache/sec/filings/`. It makes no network calls by default, creates no candidates, extracts no relationships, and writes no production graph data.
+
+Preview a reviewed plan without network access:
+
+```bash
+python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json
+```
+
+Fetch only after the exact plan-listed downloads are acceptable:
+
+```bash
+python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json --allow-network --user-agent "Your Name your.email@example.com"
+```
+
+Network-enabled fetches require both `--allow-network` and an identifying `--user-agent`, validate the approved plan shape, enforce SEC archive host/path checks, skip existing cache files unless `--force-refresh` is passed, and write only raw filing cache artifacts plus metadata sidecars under `data/cache/sec/filings/`. Downloaded filings are not candidate records and not production data; future parser phases should read the cache and emit candidate JSON separately.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

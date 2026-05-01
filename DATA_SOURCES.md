@@ -111,6 +111,7 @@ Current scripts:
 - `scripts/sec_fetch_cache.py` is a read-only SEC fetch/cache helper for future source-backed extraction work. It can resolve `--ticker` only from the candidate-only CIK mapping reference, never by inventing mappings. It does not create candidates, does not extract relationships, and does not modify production graph data.
 - `scripts/sec_submissions_inspect.py` is a read-only inspector for cached SEC submissions JSON files. It reads local cache files only, makes no network calls, creates no candidates, extracts no relationships, and writes no production graph data.
 - `scripts/sec_filing_plan.py` is a read-only filing-download plan generator for cached SEC submissions JSON files. It reads local cache files only, makes no network calls, downloads no filing documents, creates no relationship candidates, and writes no production graph data. Optional output is a review/planning artifact only under `data/candidates/plans/`.
+- `scripts/sec_filing_fetch.py` is an opt-in SEC filing fetcher for reviewed plan artifacts under `data/candidates/plans/`. It makes no network calls by default, downloads only plan-listed SEC archive URLs when `--allow-network` and `--user-agent` are provided, writes raw cache artifacts only under `data/cache/sec/filings/`, and creates no candidates or production graph data.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -187,6 +188,15 @@ python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK000
 
 The filing plan generator reads local cached SEC submissions JSON only and prints planned SEC archive URLs for review. It does not download filing documents, create relationship candidates, extract relationships, or write production graph data. If `--output` is used, the path must be under `data/candidates/plans/`; that output is a planning artifact only, not a candidate record.
 
+SEC filing fetcher commands:
+
+```bash
+python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json
+python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json --allow-network --user-agent "Your Name your.email@example.com"
+```
+
+The filing fetcher reads reviewed plan artifacts only. Without `--allow-network`, it prints planned downloads and performs no network calls. Network-enabled fetches also require an identifying `--user-agent`, validate SEC archive hosts, skip existing cache files unless `--force-refresh` is passed, and write raw downloaded filings plus metadata sidecars only under `data/cache/sec/filings/`. Downloaded filings are cache artifacts, not candidates and not production data; future parser phases should read cache and emit candidate JSON separately.
+
 Local provisioner commands:
 
 ```bash
@@ -205,7 +215,7 @@ SEC cache hygiene:
 - Cache files are raw source artifacts, not candidate records and not production graph data.
 - Do not commit cached responses unless a future reviewed phase explicitly approves the specific artifacts.
 - Use `scripts/sec_submissions_inspect.py` for local read-only filing inventory checks before parser work.
-- Use `scripts/sec_filing_plan.py` for local read-only filing-download planning before any filing fetcher exists.
+- Use `scripts/sec_filing_plan.py` for local read-only filing-download planning, then `scripts/sec_filing_fetch.py` only after the plan artifact is reviewed.
 - Future extraction phases should read cached source files and emit reviewed candidate JSON separately before any production-data writer exists.
 
 CLI concepts:

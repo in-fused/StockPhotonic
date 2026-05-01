@@ -681,6 +681,7 @@
         let portfolioAdjacentNodeIds = new Set();
         let portfolioEdgeKeys = new Set();
         let portfolioConnectionsByNodeId = new Map();
+        let portfolioNexusSummary = null;
         let layoutMode = LAYOUT_MODE_SECTOR;
         let hubLayoutPositions = new Map();
         let nexusLayoutPositions = new Map();
@@ -1280,25 +1281,36 @@
             const isSearchHighlighted = highlightedNodeId === node.id && performance.now() < highlightedNodeUntil;
             const isPortfolioHolding = isPortfolioAnalysisActive() && isPortfolioNode(node);
             const isPortfolioAdjacent = isPortfolioAnalysisActive() && isPortfolioAdjacentNode(node);
+            const isPortfolioTopNexus = isPortfolioAnalysisActive() && isPortfolioTopNexusNode(node);
+            const isPortfolioRepeatedExposure = isPortfolioAnalysisActive() && isPortfolioRepeatedExposureNode(node);
             const industryDimmed = isNodeDimmedByIndustryGroup(node);
             const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
             const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isCorrelationHintNode && !isPortfolioHolding && !isPortfolioAdjacent && !industryMatched;
             const isDimmed = focusDimmed || industryDimmed;
-            const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : isPortfolioAdjacent ? 0.88 : isCorrelationHintNode ? 0.78 : 1;
+            const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : isPortfolioTopNexus ? 0.96 : isPortfolioRepeatedExposure ? 0.92 : isPortfolioAdjacent ? 0.84 : isCorrelationHintNode ? 0.78 : 1;
             const color = node.color || '#00f9ff';
+            const portfolioHaloColor = isPortfolioHolding
+                ? '#ffd700'
+                : isPortfolioTopNexus
+                    ? '#f0abfc'
+                    : isPortfolioRepeatedExposure
+                        ? '#34d399'
+                        : isPortfolioAdjacent
+                            ? '#a5f3fc'
+                            : color;
 
             ctx.save();
             ctx.globalAlpha = alpha;
-            ctx.shadowBlur = isPortfolioHolding ? 38 : isSearchHighlighted ? 42 : isSelected ? 30 : isHovered ? 22 : isPortfolioAdjacent ? 20 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
-            ctx.shadowColor = isPortfolioHolding ? '#ffd700' : isPortfolioAdjacent ? '#a5f3fc' : color;
+            ctx.shadowBlur = isSelected ? 34 : isPortfolioHolding ? 38 : isSearchHighlighted ? 42 : isHovered ? 22 : isPortfolioTopNexus ? 32 : isPortfolioRepeatedExposure ? 24 : isPortfolioAdjacent ? 18 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
+            ctx.shadowColor = isSelected ? '#ffffff' : portfolioHaloColor;
 
             const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
-            glow.addColorStop(0, `${hexToRgba(isPortfolioHolding ? '#ffd700' : color, isPortfolioHolding ? 0.95 : isClusterNode ? 0.9 : isCorrelationHintNode ? 0.86 : 0.82)}`);
-            glow.addColorStop(0.38, `${hexToRgba(isPortfolioHolding ? '#ffd700' : color, isPortfolioHolding ? 0.38 : isClusterNode ? 0.32 : isCorrelationHintNode ? 0.3 : 0.24)}`);
+            glow.addColorStop(0, `${hexToRgba(portfolioHaloColor, isPortfolioHolding ? 0.95 : isPortfolioTopNexus ? 0.92 : isPortfolioRepeatedExposure ? 0.86 : isClusterNode ? 0.9 : isCorrelationHintNode ? 0.86 : 0.82)}`);
+            glow.addColorStop(0.38, `${hexToRgba(portfolioHaloColor, isPortfolioHolding ? 0.38 : isPortfolioTopNexus ? 0.34 : isPortfolioRepeatedExposure ? 0.26 : isClusterNode ? 0.32 : isCorrelationHintNode ? 0.3 : 0.24)}`);
             glow.addColorStop(1, `${hexToRgba(color, 0)}`);
             ctx.fillStyle = glow;
             ctx.beginPath();
-            ctx.arc(point.x, point.y, radius * (isPortfolioHolding ? 5.7 : isClusterNode ? 5.1 : 4.3), 0, Math.PI * 2);
+            ctx.arc(point.x, point.y, radius * (isPortfolioHolding ? 5.7 : isPortfolioTopNexus ? 5.35 : isPortfolioRepeatedExposure ? 4.85 : isClusterNode ? 5.1 : 4.3), 0, Math.PI * 2);
             ctx.fill();
 
             ctx.fillStyle = color;
@@ -1338,6 +1350,29 @@
                 ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.arc(point.x, point.y, radius * 3.35, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (isPortfolioTopNexus) {
+                ctx.globalAlpha = industryDimmed ? 0.18 : 0.68;
+                ctx.strokeStyle = '#f0abfc';
+                ctx.lineWidth = 1.8;
+                ctx.shadowBlur = 22;
+                ctx.shadowColor = '#f0abfc';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 2.35, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.globalAlpha = industryDimmed ? 0.12 : 0.28;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 3.05, 0, Math.PI * 2);
+                ctx.stroke();
+            } else if (isPortfolioRepeatedExposure) {
+                ctx.globalAlpha = industryDimmed ? 0.12 : 0.38;
+                ctx.strokeStyle = '#34d399';
+                ctx.lineWidth = 1.2;
+                ctx.shadowBlur = 16;
+                ctx.shadowColor = '#34d399';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * 2.15, 0, Math.PI * 2);
                 ctx.stroke();
             } else if (isPortfolioAdjacent) {
                 ctx.globalAlpha = industryDimmed ? 0.14 : 0.36;
@@ -1473,6 +1508,8 @@
             if (selectedNode && selectedNode.id === node.id) return 1000;
             if (hoveredNode && hoveredNode.id === node.id) return 900;
             if (isPortfolioNode(node)) return 780 + node.degree;
+            if (isPortfolioTopNexusNode(node)) return 720 + node.degree;
+            if (isPortfolioRepeatedExposureNode(node)) return 670 + node.degree;
             if (isPortfolioAdjacentNode(node)) return 620 + node.degree;
             if (focusNeighborIds.has(node.id)) return 500 + node.degree;
             if (selectedNode && activeClusterNodeIds.has(node.id) && !isFocusModeActive()) return 360 + node.degree;
@@ -1749,6 +1786,7 @@
 
         function getPortfolioExposureSummary() {
             const active = isPortfolioAnalysisActive();
+            const nexusSummary = getPortfolioNexusSummary();
             const matchedIds = new Set(matchedPortfolioNodes.map(node => node.id));
             const exposureNodeIds = new Set();
             const hubStatsByNodeId = new Map();
@@ -1800,10 +1838,183 @@
                 unmatchedTickers: unmatchedPortfolioTickers,
                 firstDegreeExposureCount: firstDegreeNodes.length,
                 topHubs,
-                topSectors: getCompanyDistribution(exposureNodes, node => node.sector || 'Other').slice(0, 5),
-                topIndustryGroups: getCompanyDistribution(exposureNodes, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 5),
-                strongestEdge
+                topSectors: nexusSummary.topExposedSectors?.length ? nexusSummary.topExposedSectors : getCompanyDistribution(exposureNodes, node => node.sector || 'Other').slice(0, 5),
+                topIndustryGroups: nexusSummary.topExposedIndustryGroups?.length ? nexusSummary.topExposedIndustryGroups : getCompanyDistribution(exposureNodes, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 5),
+                strongestEdge,
+                nexus: nexusSummary
             };
+        }
+
+        function getPortfolioNexusSummary() {
+            if (portfolioNexusSummary) return portfolioNexusSummary;
+            return createEmptyPortfolioNexusSummary();
+        }
+
+        function createEmptyPortfolioNexusSummary() {
+            return {
+                active: isPortfolioAnalysisActive(),
+                matchedHoldings: matchedPortfolioNodes,
+                unmatchedTickers: unmatchedPortfolioTickers,
+                totalAdjacentNodeCount: portfolioAdjacentNodeIds.size,
+                repeatedExposureNodes: [],
+                topNexusCompany: null,
+                topExposedSectors: [],
+                topExposedIndustryGroups: [],
+                strongestPortfolioEdge: null,
+                portfolioClusterTouchpoints: [],
+                portfolioNexusScore: 0,
+                nexusNodesById: new Map()
+            };
+        }
+
+        function computePortfolioNexusSummary() {
+            const summary = createEmptyPortfolioNexusSummary();
+            if (!isPortfolioAnalysisActive() || !matchedPortfolioNodes.length) return summary;
+
+            const matchedIds = new Set(matchedPortfolioNodes.map(node => node.id));
+            const nodeStats = [];
+            const edgeItemsByKey = new Map();
+            const adjacentNodes = [];
+
+            matchedPortfolioNodes.forEach(holding => {
+                (adjacencyById.get(holding.id) || []).forEach(item => {
+                    if (item.link?.key) edgeItemsByKey.set(item.link.key, item.link);
+                });
+            });
+
+            portfolioConnectionsByNodeId.forEach((connectionItems, nodeId) => {
+                const node = nodeById.get(nodeId);
+                if (!node || matchedIds.has(node.id) || !connectionItems.length) return;
+
+                adjacentNodes.push(node);
+                const holdingById = new Map();
+                const relationshipTypes = new Set();
+                let totalStrength = 0;
+                let highConfidenceCount = 0;
+
+                connectionItems.forEach(item => {
+                    if (item.holding) holdingById.set(item.holding.id, item.holding);
+                    relationshipTypes.add(item.link?.type || 'link');
+                    const strength = getConnectionStrength(item.link);
+                    totalStrength += strength;
+                    if ((Number(item.link?.confidence) || 0) >= 4) highConfidenceCount += 1;
+                });
+
+                const edgeCount = connectionItems.length;
+                const holdingCount = holdingById.size;
+                const avgStrength = edgeCount ? totalStrength / edgeCount : 0;
+                const highConfidenceShare = edgeCount ? highConfidenceCount / edgeCount : 0;
+                const holdingCoverage = matchedPortfolioNodes.length ? holdingCount / matchedPortfolioNodes.length : 0;
+                const degreeFactor = clamp((node.degree || degreeById.get(node.id) || 0) / 12, 0, 1);
+                const score = Math.round(clamp(
+                    (holdingCoverage * 0.48 + avgStrength * 0.30 + degreeFactor * 0.14 + highConfidenceShare * 0.08) * 100,
+                    0,
+                    100
+                ));
+                const connectedHoldings = [...holdingById.values()]
+                    .sort((a, b) => String(a.ticker || '').localeCompare(String(b.ticker || '')));
+
+                nodeStats.push({
+                    node,
+                    connectedHoldings,
+                    connectedPortfolioTickers: connectedHoldings.map(holding => holding.ticker || '').filter(Boolean),
+                    holdingCount,
+                    portfolioEdgeCount: edgeCount,
+                    avgStrength,
+                    relationshipTypes: [...relationshipTypes].sort((a, b) => String(a).localeCompare(String(b))),
+                    highConfidenceShare,
+                    score
+                });
+            });
+
+            nodeStats.sort(sortPortfolioNexusStats);
+            const repeatedExposureNodes = nodeStats
+                .filter(item => item.holdingCount >= 2)
+                .sort(sortPortfolioNexusStats);
+            const topNexusCompany = nodeStats[0] || null;
+            const strongestPortfolioEdge = [...edgeItemsByKey.values()]
+                .filter(Boolean)
+                .sort((a, b) =>
+                    getConnectionStrength(b) - getConnectionStrength(a) ||
+                    String(a.source?.ticker || '').localeCompare(String(b.source?.ticker || ''))
+                )[0] || null;
+            const topScore = topNexusCompany?.score || 0;
+            const repeatFactor = matchedPortfolioNodes.length > 1
+                ? clamp(repeatedExposureNodes.length / Math.max(1, matchedPortfolioNodes.length), 0, 1)
+                : 0;
+
+            summary.totalAdjacentNodeCount = adjacentNodes.length;
+            summary.repeatedExposureNodes = repeatedExposureNodes;
+            summary.topNexusCompany = topNexusCompany;
+            summary.topExposedSectors = getCompanyDistribution(adjacentNodes, node => node.sector || 'Other').slice(0, 5);
+            summary.topExposedIndustryGroups = getCompanyDistribution(adjacentNodes, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 5);
+            summary.strongestPortfolioEdge = strongestPortfolioEdge;
+            summary.portfolioClusterTouchpoints = getPortfolioClusterTouchpoints(nodeStats).slice(0, 3);
+            summary.portfolioNexusScore = Math.round(clamp(topScore * 0.72 + repeatFactor * 28, 0, 100));
+            summary.nexusNodesById = new Map(nodeStats.map(item => [item.node.id, item]));
+            return summary;
+        }
+
+        function sortPortfolioNexusStats(a, b) {
+            return b.score - a.score ||
+                b.holdingCount - a.holdingCount ||
+                b.avgStrength - a.avgStrength ||
+                (b.node.degree - a.node.degree) ||
+                ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
+                String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''));
+        }
+
+        function getPortfolioClusterTouchpoints(nodeStats) {
+            const footprintIds = new Set([
+                ...matchedPortfolioNodes.map(node => node.id),
+                ...portfolioAdjacentNodeIds
+            ]);
+            const centerCandidates = [
+                ...matchedPortfolioNodes,
+                ...nodeStats.slice(0, 8).map(item => item.node)
+            ].filter(Boolean);
+            const touchpointsByCenterId = new Map();
+
+            centerCandidates.forEach(center => {
+                if (touchpointsByCenterId.has(center.id)) return;
+                const cluster = getNodeCluster(center.id);
+                const touchedItems = (cluster.clusterItems || []).filter(item => footprintIds.has(item.node.id));
+                const touchedHoldingItems = touchedItems.filter(item => isPortfolioNode(item.node));
+                if ((cluster.clusterItems || []).length < 2 || touchedItems.length < 2) return;
+
+                const avgStrength = touchedItems.length
+                    ? touchedItems.reduce((sum, item) => sum + clamp(item.avgStrength || item.score || 0, 0, 1), 0) / touchedItems.length
+                    : 0;
+                const score = touchedItems.length * 0.35 +
+                    touchedHoldingItems.length * 0.65 +
+                    clamp(cluster.clusterStrength || 0, 0, 1) * 2 +
+                    avgStrength;
+
+                touchpointsByCenterId.set(center.id, {
+                    center,
+                    cluster,
+                    touchedCount: touchedItems.length,
+                    holdingCount: touchedHoldingItems.length,
+                    connectedPortfolioTickers: touchedHoldingItems
+                        .map(item => item.node.ticker || '')
+                        .filter(Boolean)
+                        .sort((a, b) => String(a).localeCompare(String(b))),
+                    avgStrength,
+                    score,
+                    topMembers: (cluster.clusterItems || [])
+                        .filter(item => item.node.id !== center.id)
+                        .slice(0, 4)
+                        .map(item => item.node)
+                });
+            });
+
+            return [...touchpointsByCenterId.values()]
+                .sort((a, b) =>
+                    b.score - a.score ||
+                    b.touchedCount - a.touchedCount ||
+                    b.holdingCount - a.holdingCount ||
+                    String(a.center.ticker || '').localeCompare(String(b.center.ticker || ''))
+                );
         }
 
         function renderPortfolioExposureSection(summary) {
@@ -1819,6 +2030,15 @@
             return `
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">Portfolio Exposure</div>
+                    <div class="rounded-2xl border border-fuchsia-300/20 bg-fuchsia-300/10 p-3 mb-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-[10px] text-fuchsia-100/65 font-mono tracking-[1.3px]">PORTFOLIO NEXUS SCORE</div>
+                                <div class="font-display text-3xl text-white">${summary.nexus.portfolioNexusScore}</div>
+                            </div>
+                            <div class="text-right text-[10px] text-white/42 font-mono leading-snug max-w-[150px]">DERIVED FROM CURRENT STATIC GRAPH ONLY</div>
+                        </div>
+                    </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="summary-tile rounded-2xl p-3">
                             <div class="text-[10px] text-white/40 font-mono">MATCHED HOLDINGS</div>
@@ -1831,8 +2051,16 @@
                     </div>
                     ${renderPortfolioUnmatchedTickers(summary.unmatchedTickers)}
                     <div class="mt-4">
-                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP CONNECTED HUBS</div>
-                        <div class="mt-2 space-y-2">${renderPortfolioHubList(summary.topHubs)}</div>
+                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP NEXUS COMPANY</div>
+                        <div class="mt-2">${renderPortfolioTopNexus(summary.nexus.topNexusCompany)}</div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">REPEATED EXPOSURE</div>
+                        <div class="mt-2 space-y-2">${renderPortfolioRepeatedExposure(summary.nexus.repeatedExposureNodes.slice(0, 5))}</div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">HIDDEN CLUSTER TOUCHPOINTS</div>
+                        <div class="mt-2 space-y-2">${renderPortfolioClusterTouchpoints(summary.nexus.portfolioClusterTouchpoints)}</div>
                     </div>
                     <div class="mt-4">
                         <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">TOP SECTORS EXPOSED</div>
@@ -1844,7 +2072,7 @@
                     </div>
                     <div class="mt-4">
                         <div class="text-[10px] text-white/38 font-mono tracking-[1.4px]">STRONGEST PORTFOLIO-CONNECTED EDGE</div>
-                        <div class="mt-2">${renderPortfolioStrongestEdge(summary.strongestEdge)}</div>
+                        <div class="mt-2">${renderPortfolioStrongestEdge(summary.nexus.strongestPortfolioEdge || summary.strongestEdge)}</div>
                     </div>
                 </div>
             `;
@@ -1858,6 +2086,76 @@
                     <div class="mt-1 text-sm text-white/70">${escapeHtml(tickers.join(', '))}</div>
                 </div>
             `;
+        }
+
+        function renderPortfolioTopNexus(item) {
+            if (!item) return '<div class="text-sm text-white/35">No non-portfolio nexus company found in the current dataset.</div>';
+            return `
+                <button onclick="selectPortfolioNexusNode(${Number(item.node.id)})" class="connection-row top-connection top-connection-1 w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="flex items-baseline gap-2">
+                                <span class="text-sm font-semibold text-white/95">${escapeHtml(item.node.ticker || '')}</span>
+                                <span class="text-xs text-white/48 truncate">${escapeHtml(item.node.name || '')}</span>
+                            </div>
+                            <div class="mt-1 text-xs text-fuchsia-100/68 leading-snug">
+                                Connected to ${escapeHtml(item.connectedPortfolioTickers.join(', ') || 'portfolio holdings')}
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="font-display text-xl text-white">${item.score}</div>
+                            <div class="text-[10px] text-fuchsia-100/58 font-mono">${Math.round(item.avgStrength * 100)}% AVG</div>
+                        </div>
+                    </div>
+                </button>
+            `;
+        }
+
+        function renderPortfolioRepeatedExposure(items) {
+            if (!items.length) return '<div class="text-sm text-white/35">No company is connected to multiple matched holdings in this dataset.</div>';
+
+            return items.map(item => `
+                <button onclick="selectPortfolioNexusNode(${Number(item.node.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-sm font-semibold text-white/90 truncate">
+                                ${escapeHtml(item.node.ticker || '')}
+                                <span class="text-white/35">- connected to</span>
+                                ${escapeHtml(item.connectedPortfolioTickers.join(', '))}
+                            </div>
+                            <div class="text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-sm font-mono text-emerald-200">${Math.round(item.avgStrength * 100)}%</div>
+                            <div class="text-[10px] text-white/38">AVG</div>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        function renderPortfolioClusterTouchpoints(items) {
+            if (!items.length) return '<div class="text-sm text-white/35">No meaningful hidden clusters touched by the current portfolio.</div>';
+
+            return items.map(item => `
+                <button onclick="selectPortfolioNexusNode(${Number(item.center.id)})" class="connection-row w-full rounded-2xl p-3 text-left hover:bg-white/10 transition">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-sm font-semibold text-white/90 truncate">${escapeHtml(item.center.ticker || '')} cluster</div>
+                            <div class="text-xs text-white/48 truncate">
+                                Touches ${item.touchedCount} portfolio-adjacent node${item.touchedCount === 1 ? '' : 's'}
+                            </div>
+                            <div class="mt-1 text-[11px] text-cyan-100/55 truncate">
+                                ${escapeHtml(item.topMembers.map(node => node.ticker || '').filter(Boolean).join(', ') || 'Static graph cluster')}
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-sm font-mono text-cyan-200">${Math.round(item.avgStrength * 100)}%</div>
+                            <div class="text-[10px] text-white/38">AVG</div>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
         }
 
         function renderPortfolioHubList(items) {
@@ -2332,19 +2630,29 @@
 
         function getPortfolioContextForNode(node) {
             if (!node || !isPortfolioAnalysisActive()) {
-                return { inPortfolio: false, adjacent: false, connectedTickers: [] };
+                return { inPortfolio: false, adjacent: false, connectedTickers: [], nexus: null };
             }
 
             const inPortfolio = isPortfolioNode(node);
-            const connectedTickers = getPortfolioConnectionItemsForNode(node)
+            const portfolioItems = getPortfolioConnectionItemsForNode(node);
+            const connectedTickers = portfolioItems
                 .map(item => item.holding?.ticker || '')
                 .filter(Boolean)
                 .sort((a, b) => String(a).localeCompare(String(b)));
+            const nexus = getPortfolioNexusSummary().nexusNodesById.get(node.id) || null;
+            const relationshipTypes = nexus?.relationshipTypes?.length
+                ? nexus.relationshipTypes
+                : [...new Set(portfolioItems.map(item => item.link?.type || 'link'))].sort((a, b) => String(a).localeCompare(String(b)));
 
             return {
                 inPortfolio,
                 adjacent: !inPortfolio && connectedTickers.length > 0,
-                connectedTickers
+                connectedTickers,
+                nexus,
+                isTopNexus: Boolean(nexus && isPortfolioTopNexusNode(node)),
+                isRepeatedExposure: Boolean(nexus && isPortfolioRepeatedExposureNode(node)),
+                avgPortfolioStrength: nexus?.avgStrength || 0,
+                relationshipTypes
             };
         }
 
@@ -2355,6 +2663,9 @@
             if (context.inPortfolio) {
                 badges.push('<span class="px-2.5 py-1 rounded-full border border-yellow-300/35 bg-yellow-300/10 text-yellow-100 text-[10px] font-mono tracking-[1.2px]">IN PORTFOLIO</span>');
             }
+            if (context.isTopNexus || context.isRepeatedExposure) {
+                badges.push('<span class="px-2.5 py-1 rounded-full border border-fuchsia-300/35 bg-fuchsia-300/10 text-fuchsia-100 text-[10px] font-mono tracking-[1.2px]">PORTFOLIO NEXUS</span>');
+            }
             if (context.adjacent) {
                 badges.push('<span class="px-2.5 py-1 rounded-full border border-cyan-300/30 bg-cyan-300/10 text-cyan-100 text-[10px] font-mono tracking-[1.2px]">PORTFOLIO-ADJACENT</span>');
             }
@@ -2362,11 +2673,18 @@
             const connectedLine = context.connectedTickers?.length
                 ? `<div class="mt-2 text-xs text-cyan-100/68">Connected to portfolio via ${escapeHtml(context.connectedTickers.join(', '))}</div>`
                 : '';
+            const nexusLine = (context.isTopNexus || context.isRepeatedExposure)
+                ? `<div class="mt-2 rounded-2xl border border-fuchsia-300/15 bg-fuchsia-300/10 p-3 text-xs text-white/70">
+                    <div><span class="text-white/38 font-mono">AVG PORTFOLIO EDGE</span> <span class="text-fuchsia-100">${Math.round(context.avgPortfolioStrength * 100)}%</span></div>
+                    <div class="mt-1"><span class="text-white/38 font-mono">RELATIONSHIPS</span> ${escapeHtml(context.relationshipTypes.map(formatConnectionType).join(', ') || 'Curated link')}</div>
+                </div>`
+                : '';
 
             return `
                 <div class="mt-3">
                     <div class="flex flex-wrap gap-2">${badges.join('')}</div>
                     ${connectedLine}
+                    ${nexusLine}
                 </div>
             `;
         }
@@ -3322,6 +3640,7 @@
             portfolioAdjacentNodeIds = new Set();
             portfolioEdgeKeys = new Set();
             portfolioConnectionsByNodeId = new Map();
+            portfolioNexusSummary = null;
         }
 
         function parsePortfolioTickers(value) {
@@ -3347,6 +3666,7 @@
             portfolioAdjacentNodeIds = new Set();
             portfolioEdgeKeys = new Set();
             portfolioConnectionsByNodeId = new Map();
+            portfolioNexusSummary = null;
 
             if (!isPortfolioAnalysisActive()) return;
 
@@ -3362,6 +3682,8 @@
                     portfolioConnectionsByNodeId.set(item.node.id, existing);
                 });
             });
+
+            portfolioNexusSummary = computePortfolioNexusSummary();
         }
 
         function updatePortfolioPanel() {
@@ -3392,6 +3714,16 @@
             return Boolean(node) && !isPortfolioNode(node) && portfolioAdjacentNodeIds.has(node.id);
         }
 
+        function isPortfolioTopNexusNode(node) {
+            if (!node || isPortfolioNode(node)) return false;
+            return getPortfolioNexusSummary().topNexusCompany?.node?.id === node.id;
+        }
+
+        function isPortfolioRepeatedExposureNode(node) {
+            if (!node || isPortfolioNode(node)) return false;
+            return getPortfolioNexusSummary().repeatedExposureNodes.some(item => item.node.id === node.id);
+        }
+
         function isPortfolioHighlightedNode(node) {
             return isPortfolioNode(node) || isPortfolioAdjacentNode(node);
         }
@@ -3399,6 +3731,16 @@
         function getPortfolioConnectionItemsForNode(node) {
             if (!node) return [];
             return portfolioConnectionsByNodeId.get(node.id) || [];
+        }
+
+        function selectPortfolioNexusNode(id) {
+            const node = nodeById.get(id);
+            if (!node) return;
+            ensureNodeVisibleForJump(node);
+            selectNode(node);
+            if (isNexusLayoutActive()) {
+                fitGraph();
+            }
         }
 
         function setupSearchInteractions() {

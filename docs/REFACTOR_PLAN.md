@@ -80,6 +80,8 @@ Status: completed. Canvas sizing, draw scheduling, draw order, graph primitives,
 
 Move clusters, industry correlations, and portfolio nexus logic into `/js/intelligence/`. Keep all calculations based only on the currently loaded static graph data.
 
+Status: completed. Cluster, industry-correlation, and portfolio nexus calculations now live in `/js/intelligence/` while `index.html` retains app state and UI wrappers.
+
 ### Phase R8: Extract UI Rendering
 
 Move sidebar, dashboard, search, and controls into `/js/ui/`. Preserve inline-triggered behavior until a reviewed event-binding replacement is ready.

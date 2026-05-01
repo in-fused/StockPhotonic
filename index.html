@@ -418,6 +418,9 @@
     <script src="js/graph/interactions.js"></script>
     <script src="js/graph/layouts.js"></script>
     <script src="js/graph/render.js"></script>
+    <script src="js/intelligence/clusters.js"></script>
+    <script src="js/intelligence/industryCorrelations.js"></script>
+    <script src="js/intelligence/portfolioNexus.js"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -443,6 +446,18 @@
             throw new Error('StockPhotonic render module failed to load');
         }
 
+        if (!window.StockPhotonicIntelligence?.clusters) {
+            throw new Error('StockPhotonic clusters module failed to load');
+        }
+
+        if (!window.StockPhotonicIntelligence?.industryCorrelations) {
+            throw new Error('StockPhotonic industry correlations module failed to load');
+        }
+
+        if (!window.StockPhotonicIntelligence?.portfolioNexus) {
+            throw new Error('StockPhotonic portfolio nexus module failed to load');
+        }
+
         const StockPhotonicUtils = window.StockPhotonicUtils || {};
         const {
             viewport: graphViewport,
@@ -450,6 +465,11 @@
             layouts: graphLayouts,
             render: graphRender
         } = window.StockPhotonicGraph;
+        const {
+            clusters: intelligenceClusters,
+            industryCorrelations: intelligenceIndustryCorrelations,
+            portfolioNexus: intelligencePortfolioNexus
+        } = window.StockPhotonicIntelligence;
         const {
             clamp,
             hashNumber,
@@ -743,6 +763,62 @@
 
         function getCompanyIndustryGroup(company) {
             return company?.industryGroup || deriveIndustryGroup(company, INDUSTRY_GROUP_RULES);
+        }
+
+        function getClusterIntelligenceContext() {
+            return {
+                nodeById,
+                adjacencyById,
+                graphIntelligenceCache,
+                clusterMinStrength: CLUSTER_MIN_STRENGTH,
+                clusterSharedConnectionMin: CLUSTER_SHARED_CONNECTION_MIN,
+                clusterSectionLimit: CLUSTER_SECTION_LIMIT,
+                getNodeFromDomId,
+                getConnectionStrength,
+                clamp
+            };
+        }
+
+        function getIndustryCorrelationIntelligenceContext() {
+            return {
+                links,
+                visibleLinks,
+                adjacencyById,
+                graphIntelligenceCache,
+                selectedNode,
+                focusNeighborIds,
+                activeClusterNodeIds,
+                highConfidenceEdgeMin: HIGH_CONFIDENCE_EDGE_MIN,
+                strongIndustryCorrelationMinEdgeCount: STRONG_INDUSTRY_CORRELATION_MIN_EDGE_COUNT,
+                strongIndustryCorrelationMinAvgStrength: STRONG_INDUSTRY_CORRELATION_MIN_AVG_STRENGTH,
+                getCompanyIndustryGroup,
+                getConnectionStrength,
+                getIndustryCorrelationContextForNode,
+                isFocusModeActive,
+                isNodeDimmedByIndustryGroup
+            };
+        }
+
+        function getPortfolioNexusIntelligenceContext() {
+            return {
+                nodeById,
+                degreeById,
+                adjacencyById,
+                portfolioTickerSet,
+                matchedPortfolioNodes,
+                unmatchedPortfolioTickers,
+                portfolioAdjacentNodeIds,
+                portfolioEdgeKeys,
+                portfolioConnectionsByNodeId,
+                portfolioNexusSummary,
+                getConnectionStrength,
+                getCompanyDistribution,
+                getCompanyIndustryGroup,
+                getNodeCluster,
+                isPortfolioAnalysisActive,
+                isPortfolioNode,
+                clamp
+            };
         }
 
         /* ==============================
@@ -1371,236 +1447,27 @@
         ================================ */
 
         function getPortfolioExposureSummary() {
-            const active = isPortfolioAnalysisActive();
-            const nexusSummary = getPortfolioNexusSummary();
-            const matchedIds = new Set(matchedPortfolioNodes.map(node => node.id));
-            const exposureNodeIds = new Set();
-            const hubStatsByNodeId = new Map();
-            const edgeItems = [];
-
-            matchedPortfolioNodes.forEach(holding => {
-                (adjacencyById.get(holding.id) || []).forEach(item => {
-                    exposureNodeIds.add(holding.id);
-                    exposureNodeIds.add(item.node.id);
-                    edgeItems.push(item.link);
-
-                    if (matchedIds.has(item.node.id)) return;
-                    const existing = hubStatsByNodeId.get(item.node.id) || {
-                        node: item.node,
-                        portfolioEdgeCount: 0,
-                        totalStrength: 0
-                    };
-                    existing.portfolioEdgeCount += 1;
-                    existing.totalStrength += getConnectionStrength(item.link);
-                    hubStatsByNodeId.set(item.node.id, existing);
-                });
-            });
-
-            const exposureNodes = [...exposureNodeIds]
-                .map(id => nodeById.get(id))
-                .filter(Boolean);
-            const firstDegreeNodes = [...portfolioAdjacentNodeIds]
-                .map(id => nodeById.get(id))
-                .filter(Boolean);
-            const topHubs = [...hubStatsByNodeId.values()]
-                .map(item => ({
-                    ...item,
-                    avgStrength: item.portfolioEdgeCount ? item.totalStrength / item.portfolioEdgeCount : 0
-                }))
-                .sort((a, b) =>
-                    b.portfolioEdgeCount - a.portfolioEdgeCount ||
-                    b.avgStrength - a.avgStrength ||
-                    (b.node.degree - a.node.degree) ||
-                    ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
-                    String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
-                )
-                .slice(0, 5);
-            const strongestEdge = edgeItems
-                .sort((a, b) => b.strength - a.strength || String(a.source.ticker || '').localeCompare(String(b.source.ticker || '')))[0] || null;
-
-            return {
-                active,
-                matchedCount: matchedPortfolioNodes.length,
-                unmatchedTickers: unmatchedPortfolioTickers,
-                firstDegreeExposureCount: firstDegreeNodes.length,
-                topHubs,
-                topSectors: nexusSummary.topExposedSectors?.length ? nexusSummary.topExposedSectors : getCompanyDistribution(exposureNodes, node => node.sector || 'Other').slice(0, 5),
-                topIndustryGroups: nexusSummary.topExposedIndustryGroups?.length ? nexusSummary.topExposedIndustryGroups : getCompanyDistribution(exposureNodes, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 5),
-                strongestEdge,
-                nexus: nexusSummary
-            };
+            return intelligencePortfolioNexus.getPortfolioExposureSummary(getPortfolioNexusIntelligenceContext());
         }
 
         function getPortfolioNexusSummary() {
-            if (portfolioNexusSummary) return portfolioNexusSummary;
-            return createEmptyPortfolioNexusSummary();
+            return intelligencePortfolioNexus.getPortfolioNexusSummary(getPortfolioNexusIntelligenceContext());
         }
 
         function createEmptyPortfolioNexusSummary() {
-            return {
-                active: isPortfolioAnalysisActive(),
-                matchedHoldings: matchedPortfolioNodes,
-                unmatchedTickers: unmatchedPortfolioTickers,
-                totalAdjacentNodeCount: portfolioAdjacentNodeIds.size,
-                repeatedExposureNodes: [],
-                topNexusCompany: null,
-                topExposedSectors: [],
-                topExposedIndustryGroups: [],
-                strongestPortfolioEdge: null,
-                portfolioClusterTouchpoints: [],
-                portfolioNexusScore: 0,
-                nexusNodesById: new Map()
-            };
+            return intelligencePortfolioNexus.createEmptyPortfolioNexusSummary(getPortfolioNexusIntelligenceContext());
         }
 
         function computePortfolioNexusSummary() {
-            const summary = createEmptyPortfolioNexusSummary();
-            if (!isPortfolioAnalysisActive() || !matchedPortfolioNodes.length) return summary;
-
-            const matchedIds = new Set(matchedPortfolioNodes.map(node => node.id));
-            const nodeStats = [];
-            const edgeItemsByKey = new Map();
-            const adjacentNodes = [];
-
-            matchedPortfolioNodes.forEach(holding => {
-                (adjacencyById.get(holding.id) || []).forEach(item => {
-                    if (item.link?.key) edgeItemsByKey.set(item.link.key, item.link);
-                });
-            });
-
-            portfolioConnectionsByNodeId.forEach((connectionItems, nodeId) => {
-                const node = nodeById.get(nodeId);
-                if (!node || matchedIds.has(node.id) || !connectionItems.length) return;
-
-                adjacentNodes.push(node);
-                const holdingById = new Map();
-                const relationshipTypes = new Set();
-                let totalStrength = 0;
-                let highConfidenceCount = 0;
-
-                connectionItems.forEach(item => {
-                    if (item.holding) holdingById.set(item.holding.id, item.holding);
-                    relationshipTypes.add(item.link?.type || 'link');
-                    const strength = getConnectionStrength(item.link);
-                    totalStrength += strength;
-                    if ((Number(item.link?.confidence) || 0) >= 4) highConfidenceCount += 1;
-                });
-
-                const edgeCount = connectionItems.length;
-                const holdingCount = holdingById.size;
-                const avgStrength = edgeCount ? totalStrength / edgeCount : 0;
-                const highConfidenceShare = edgeCount ? highConfidenceCount / edgeCount : 0;
-                const holdingCoverage = matchedPortfolioNodes.length ? holdingCount / matchedPortfolioNodes.length : 0;
-                const degreeFactor = clamp((node.degree || degreeById.get(node.id) || 0) / 12, 0, 1);
-                const score = Math.round(clamp(
-                    (holdingCoverage * 0.48 + avgStrength * 0.30 + degreeFactor * 0.14 + highConfidenceShare * 0.08) * 100,
-                    0,
-                    100
-                ));
-                const connectedHoldings = [...holdingById.values()]
-                    .sort((a, b) => String(a.ticker || '').localeCompare(String(b.ticker || '')));
-
-                nodeStats.push({
-                    node,
-                    connectedHoldings,
-                    connectedPortfolioTickers: connectedHoldings.map(holding => holding.ticker || '').filter(Boolean),
-                    holdingCount,
-                    portfolioEdgeCount: edgeCount,
-                    avgStrength,
-                    relationshipTypes: [...relationshipTypes].sort((a, b) => String(a).localeCompare(String(b))),
-                    highConfidenceShare,
-                    score
-                });
-            });
-
-            nodeStats.sort(sortPortfolioNexusStats);
-            const repeatedExposureNodes = nodeStats
-                .filter(item => item.holdingCount >= 2)
-                .sort(sortPortfolioNexusStats);
-            const topNexusCompany = nodeStats[0] || null;
-            const strongestPortfolioEdge = [...edgeItemsByKey.values()]
-                .filter(Boolean)
-                .sort((a, b) =>
-                    getConnectionStrength(b) - getConnectionStrength(a) ||
-                    String(a.source?.ticker || '').localeCompare(String(b.source?.ticker || ''))
-                )[0] || null;
-            const topScore = topNexusCompany?.score || 0;
-            const repeatFactor = matchedPortfolioNodes.length > 1
-                ? clamp(repeatedExposureNodes.length / Math.max(1, matchedPortfolioNodes.length), 0, 1)
-                : 0;
-
-            summary.totalAdjacentNodeCount = adjacentNodes.length;
-            summary.repeatedExposureNodes = repeatedExposureNodes;
-            summary.topNexusCompany = topNexusCompany;
-            summary.topExposedSectors = getCompanyDistribution(adjacentNodes, node => node.sector || 'Other').slice(0, 5);
-            summary.topExposedIndustryGroups = getCompanyDistribution(adjacentNodes, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 5);
-            summary.strongestPortfolioEdge = strongestPortfolioEdge;
-            summary.portfolioClusterTouchpoints = getPortfolioClusterTouchpoints(nodeStats).slice(0, 3);
-            summary.portfolioNexusScore = Math.round(clamp(topScore * 0.72 + repeatFactor * 28, 0, 100));
-            summary.nexusNodesById = new Map(nodeStats.map(item => [item.node.id, item]));
-            return summary;
+            return intelligencePortfolioNexus.computePortfolioNexusSummary(getPortfolioNexusIntelligenceContext());
         }
 
         function sortPortfolioNexusStats(a, b) {
-            return b.score - a.score ||
-                b.holdingCount - a.holdingCount ||
-                b.avgStrength - a.avgStrength ||
-                (b.node.degree - a.node.degree) ||
-                ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
-                String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''));
+            return intelligencePortfolioNexus.sortPortfolioNexusStats(a, b);
         }
 
         function getPortfolioClusterTouchpoints(nodeStats) {
-            const footprintIds = new Set([
-                ...matchedPortfolioNodes.map(node => node.id),
-                ...portfolioAdjacentNodeIds
-            ]);
-            const centerCandidates = [
-                ...matchedPortfolioNodes,
-                ...nodeStats.slice(0, 8).map(item => item.node)
-            ].filter(Boolean);
-            const touchpointsByCenterId = new Map();
-
-            centerCandidates.forEach(center => {
-                if (touchpointsByCenterId.has(center.id)) return;
-                const cluster = getNodeCluster(center.id);
-                const touchedItems = (cluster.clusterItems || []).filter(item => footprintIds.has(item.node.id));
-                const touchedHoldingItems = touchedItems.filter(item => isPortfolioNode(item.node));
-                if ((cluster.clusterItems || []).length < 2 || touchedItems.length < 2) return;
-
-                const avgStrength = touchedItems.length
-                    ? touchedItems.reduce((sum, item) => sum + clamp(item.avgStrength || item.score || 0, 0, 1), 0) / touchedItems.length
-                    : 0;
-                const score = touchedItems.length * 0.35 +
-                    touchedHoldingItems.length * 0.65 +
-                    clamp(cluster.clusterStrength || 0, 0, 1) * 2 +
-                    avgStrength;
-
-                touchpointsByCenterId.set(center.id, {
-                    center,
-                    cluster,
-                    touchedCount: touchedItems.length,
-                    holdingCount: touchedHoldingItems.length,
-                    connectedPortfolioTickers: touchedHoldingItems
-                        .map(item => item.node.ticker || '')
-                        .filter(Boolean)
-                        .sort((a, b) => String(a).localeCompare(String(b))),
-                    avgStrength,
-                    score,
-                    topMembers: (cluster.clusterItems || [])
-                        .filter(item => item.node.id !== center.id)
-                        .slice(0, 4)
-                        .map(item => item.node)
-                });
-            });
-
-            return [...touchpointsByCenterId.values()]
-                .sort((a, b) =>
-                    b.score - a.score ||
-                    b.touchedCount - a.touchedCount ||
-                    b.holdingCount - a.holdingCount ||
-                    String(a.center.ticker || '').localeCompare(String(b.center.ticker || ''))
-                );
+            return intelligencePortfolioNexus.getPortfolioClusterTouchpoints(nodeStats, getPortfolioNexusIntelligenceContext());
         }
 
         function renderPortfolioExposureSection(summary) {
@@ -1813,100 +1680,11 @@
         ================================ */
 
         function getIndustryGroupCorrelations(sourceLinks = null) {
-            const linksForCorrelation = Array.isArray(sourceLinks)
-                ? sourceLinks
-                : (visibleLinks.length ? visibleLinks : links);
-            const pairStats = new Map();
-            const sameGroupStats = new Map();
-
-            linksForCorrelation.forEach(link => {
-                if (!link?.source || !link?.target) return;
-
-                const sourceGroup = getCompanyIndustryGroup(link.source) || 'Other';
-                const targetGroup = getCompanyIndustryGroup(link.target) || 'Other';
-                const strength = getConnectionStrength(link);
-                const confidence = Number(link.confidence) || 0;
-                const type = link.type || 'link';
-
-                if (sourceGroup === targetGroup) {
-                    const sameGroup = sameGroupStats.get(sourceGroup) || {
-                        group: sourceGroup,
-                        edgeCount: 0,
-                        totalStrength: 0,
-                        highConfidenceEdgeCount: 0
-                    };
-                    sameGroup.edgeCount += 1;
-                    sameGroup.totalStrength += strength;
-                    if (confidence >= HIGH_CONFIDENCE_EDGE_MIN) sameGroup.highConfidenceEdgeCount += 1;
-                    sameGroupStats.set(sourceGroup, sameGroup);
-                    return;
-                }
-
-                const [groupA, groupB] = [sourceGroup, targetGroup].sort((a, b) => String(a).localeCompare(String(b)));
-                const key = `${groupA}::${groupB}`;
-                const existing = pairStats.get(key) || {
-                    key,
-                    groupA,
-                    groupB,
-                    edgeCount: 0,
-                    totalStrength: 0,
-                    highConfidenceEdgeCount: 0,
-                    typeCounts: new Map(),
-                    tickerCounts: new Map()
-                };
-
-                existing.edgeCount += 1;
-                existing.totalStrength += strength;
-                if (confidence >= HIGH_CONFIDENCE_EDGE_MIN) existing.highConfidenceEdgeCount += 1;
-                existing.typeCounts.set(type, (existing.typeCounts.get(type) || 0) + 1);
-                [link.source, link.target].forEach(node => {
-                    const ticker = node?.ticker || node?.name || '';
-                    if (ticker) existing.tickerCounts.set(ticker, (existing.tickerCounts.get(ticker) || 0) + 1);
-                });
-                pairStats.set(key, existing);
-            });
-
-            const correlations = [...pairStats.values()]
-                .map(item => {
-                    const averageStrength = item.edgeCount ? item.totalStrength / item.edgeCount : 0;
-                    const dominantConnectionType = [...item.typeCounts.entries()]
-                        .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))[0]?.[0] || 'link';
-                    const involvedTickers = [...item.tickerCounts.entries()]
-                        .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
-                        .map(([ticker]) => ticker);
-
-                    return {
-                        key: item.key,
-                        groupA: item.groupA,
-                        groupB: item.groupB,
-                        edgeCount: item.edgeCount,
-                        averageStrength,
-                        averageStrengthPercent: Math.round(averageStrength * 100),
-                        highConfidenceEdgeCount: item.highConfidenceEdgeCount,
-                        involvedTickers,
-                        dominantConnectionType
-                    };
-                })
-                .sort(sortIndustryCorrelations);
-
-            correlations.sameGroupCorrelations = [...sameGroupStats.values()]
-                .map(item => ({
-                    ...item,
-                    averageStrength: item.edgeCount ? item.totalStrength / item.edgeCount : 0,
-                    averageStrengthPercent: item.edgeCount ? Math.round((item.totalStrength / item.edgeCount) * 100) : 0
-                }))
-                .sort((a, b) => b.edgeCount - a.edgeCount || b.averageStrength - a.averageStrength || String(a.group).localeCompare(String(b.group)));
-            correlations.sameGroupEdgeCount = correlations.sameGroupCorrelations.reduce((sum, item) => sum + item.edgeCount, 0);
-
-            return correlations;
+            return intelligenceIndustryCorrelations.getIndustryGroupCorrelations(sourceLinks, getIndustryCorrelationIntelligenceContext());
         }
 
         function sortIndustryCorrelations(a, b) {
-            return b.edgeCount - a.edgeCount ||
-                b.averageStrength - a.averageStrength ||
-                b.highConfidenceEdgeCount - a.highConfidenceEdgeCount ||
-                String(a.groupA).localeCompare(String(b.groupA)) ||
-                String(a.groupB).localeCompare(String(b.groupB));
+            return intelligenceIndustryCorrelations.sortIndustryCorrelations(a, b);
         }
 
         function renderDashboardIndustryCorrelationList(items) {
@@ -2064,158 +1842,15 @@
         ================================ */
 
         function getSharedConnections(nodeId) {
-            const node = nodeById.get(nodeId) || getNodeFromDomId(nodeId);
-            if (!node) return [];
-
-            const cacheKey = `shared:${node.id}`;
-            if (graphIntelligenceCache.has(cacheKey)) return graphIntelligenceCache.get(cacheKey);
-
-            const selectedNeighbors = adjacencyById.get(node.id) || [];
-            const directNeighborIds = new Set(selectedNeighbors.map(item => item.node.id));
-            const candidates = new Map();
-
-            selectedNeighbors.forEach(selectedNeighborItem => {
-                const sharedNeighbor = selectedNeighborItem.node;
-                const selectedStrength = getConnectionStrength(selectedNeighborItem.link);
-
-                (adjacencyById.get(sharedNeighbor.id) || []).forEach(candidateItem => {
-                    const candidate = candidateItem.node;
-                    if (!candidate || candidate.id === node.id) return;
-
-                    const candidateStrength = getConnectionStrength(candidateItem.link);
-                    const pathStrength = (selectedStrength + candidateStrength) / 2;
-                    const existing = candidates.get(candidate.id) || {
-                        node: candidate,
-                        count: 0,
-                        totalStrength: 0,
-                        sharedNeighbors: [],
-                        sharedNeighborIds: new Set(),
-                        directlyConnected: directNeighborIds.has(candidate.id)
-                    };
-
-                    if (existing.sharedNeighborIds.has(sharedNeighbor.id)) return;
-
-                    existing.count += 1;
-                    existing.totalStrength += pathStrength;
-                    existing.sharedNeighborIds.add(sharedNeighbor.id);
-                    existing.sharedNeighbors.push({
-                        node: sharedNeighbor,
-                        strength: pathStrength,
-                        sourceStrength: selectedStrength,
-                        targetStrength: candidateStrength
-                    });
-                    candidates.set(candidate.id, existing);
-                });
-            });
-
-            const sharedConnections = [...candidates.values()]
-                .map(item => ({
-                    ...item,
-                    avgStrength: item.count ? item.totalStrength / item.count : 0,
-                    score: item.count * (item.count ? item.totalStrength / item.count : 0),
-                    sharedNeighbors: item.sharedNeighbors.sort((a, b) =>
-                        b.strength - a.strength ||
-                        String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
-                    )
-                }))
-                .sort((a, b) =>
-                    b.count - a.count ||
-                    b.avgStrength - a.avgStrength ||
-                    (b.node.degree - a.node.degree) ||
-                    ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
-                    String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
-                );
-
-            graphIntelligenceCache.set(cacheKey, sharedConnections);
-            return sharedConnections;
+            return intelligenceClusters.getSharedConnections(nodeId, getClusterIntelligenceContext());
         }
 
         function getNodeCluster(nodeId) {
-            const node = nodeById.get(nodeId) || getNodeFromDomId(nodeId);
-            if (!node) return { clusterNodes: [], clusterItems: [], clusterStrength: 0 };
-
-            const cacheKey = `cluster:${node.id}`;
-            if (graphIntelligenceCache.has(cacheKey)) return graphIntelligenceCache.get(cacheKey);
-
-            const clusterItemsById = new Map();
-            clusterItemsById.set(node.id, {
-                node,
-                role: 'selected',
-                count: 0,
-                avgStrength: 1,
-                score: 1,
-                directLink: null,
-                sharedNeighbors: []
-            });
-
-            (adjacencyById.get(node.id) || [])
-                .filter(item => getConnectionStrength(item.link) >= CLUSTER_MIN_STRENGTH)
-                .forEach(item => {
-                    const strength = getConnectionStrength(item.link);
-                    clusterItemsById.set(item.node.id, {
-                        node: item.node,
-                        role: 'direct',
-                        count: 1,
-                        avgStrength: strength,
-                        score: strength,
-                        directLink: item.link,
-                        sharedNeighbors: []
-                    });
-                });
-
-            getSharedConnections(node.id)
-                .filter(item => item.count >= CLUSTER_SHARED_CONNECTION_MIN && item.avgStrength >= CLUSTER_MIN_STRENGTH)
-                .forEach(item => {
-                    const existing = clusterItemsById.get(item.node.id);
-                    const supportScore = clamp(item.avgStrength * Math.min(1.35, 0.7 + item.count * 0.18), 0, 1);
-
-                    if (existing) {
-                        existing.count = Math.max(existing.count, item.count);
-                        existing.avgStrength = Math.max(existing.avgStrength, item.avgStrength);
-                        existing.score = Math.max(existing.score, supportScore);
-                        existing.sharedNeighbors = item.sharedNeighbors;
-                        if (existing.role !== 'selected') existing.role = existing.role === 'direct' ? 'direct-shared' : 'shared';
-                        return;
-                    }
-
-                    clusterItemsById.set(item.node.id, {
-                        node: item.node,
-                        role: 'shared',
-                        count: item.count,
-                        avgStrength: item.avgStrength,
-                        score: supportScore,
-                        directLink: null,
-                        sharedNeighbors: item.sharedNeighbors
-                    });
-                });
-
-            const clusterItems = [...clusterItemsById.values()].sort((a, b) => {
-                if (a.role === 'selected') return -1;
-                if (b.role === 'selected') return 1;
-                return b.score - a.score ||
-                    b.count - a.count ||
-                    (b.node.degree - a.node.degree) ||
-                    ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
-                    String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''));
-            });
-            const scoredItems = clusterItems.filter(item => item.role !== 'selected');
-            const clusterStrength = scoredItems.length
-                ? scoredItems.reduce((sum, item) => sum + clamp(item.score, 0, 1), 0) / scoredItems.length
-                : 0;
-            const cluster = {
-                clusterNodes: clusterItems.map(item => item.node),
-                clusterItems,
-                clusterStrength
-            };
-
-            graphIntelligenceCache.set(cacheKey, cluster);
-            return cluster;
+            return intelligenceClusters.getNodeCluster(nodeId, getClusterIntelligenceContext());
         }
 
         function getHiddenRelationships(nodeId) {
-            return getSharedConnections(nodeId)
-                .filter(item => !item.directlyConnected && item.count >= CLUSTER_SHARED_CONNECTION_MIN)
-                .slice(0, CLUSTER_SECTION_LIMIT);
+            return intelligenceClusters.getHiddenRelationships(nodeId, getClusterIntelligenceContext());
         }
 
         function getConnectionStrength(link) {
@@ -2610,11 +2245,7 @@
         }
 
         function getSharedNeighborTickerList(item, limit = 3) {
-            return (item.sharedNeighbors || [])
-                .slice(0, limit)
-                .map(shared => shared.node.ticker || shared.node.name || '')
-                .filter(Boolean)
-                .join(', ');
+            return intelligenceClusters.getSharedNeighborTickerList(item, limit);
         }
 
         function renderConnectionRow(item, index = 0) {
@@ -2852,54 +2483,11 @@
         }
 
         function getIndustryCorrelationContextForNode(node) {
-            if (!node) return null;
-
-            const cacheKey = `industry-correlation-context:${node.id}`;
-            if (graphIntelligenceCache.has(cacheKey)) return graphIntelligenceCache.get(cacheKey);
-
-            const nodeGroup = getCompanyIndustryGroup(node);
-            const correlations = getIndustryGroupCorrelations(links);
-            const groupCorrelations = correlations
-                .filter(item => item.groupA === nodeGroup || item.groupB === nodeGroup)
-                .sort(sortIndustryCorrelations);
-            if (!groupCorrelations.length) {
-                graphIntelligenceCache.set(cacheKey, null);
-                return null;
-            }
-
-            const strongestCorrelation = [...groupCorrelations]
-                .sort((a, b) => b.averageStrength - a.averageStrength || b.edgeCount - a.edgeCount || b.highConfidenceEdgeCount - a.highConfidenceEdgeCount)
-                [0];
-            const adjacentGroups = [...new Set(groupCorrelations.map(item => getCorrelationAdjacentGroup(item, nodeGroup)).filter(Boolean))]
-                .sort();
-            const directAdjacentGroups = new Set();
-            (adjacencyById.get(node.id) || []).forEach(item => {
-                const adjacentGroup = getCompanyIndustryGroup(item.node);
-                if (adjacentGroup && adjacentGroup !== nodeGroup) directAdjacentGroups.add(adjacentGroup);
-            });
-
-            const topCorrelation = groupCorrelations[0];
-            const context = {
-                nodeGroup,
-                topCorrelation,
-                connectedIndustryGroupCount: adjacentGroups.length,
-                strongestAdjacentGroup: getCorrelationAdjacentGroup(strongestCorrelation, nodeGroup),
-                strongestAveragePercent: strongestCorrelation?.averageStrengthPercent || 0,
-                crossGroupBridge: directAdjacentGroups.size >= 2,
-                isStrong: Boolean(topCorrelation) &&
-                    (topCorrelation.edgeCount >= STRONG_INDUSTRY_CORRELATION_MIN_EDGE_COUNT ||
-                        topCorrelation.averageStrength >= STRONG_INDUSTRY_CORRELATION_MIN_AVG_STRENGTH)
-            };
-
-            graphIntelligenceCache.set(cacheKey, context);
-            return context;
+            return intelligenceIndustryCorrelations.getIndustryCorrelationContextForNode(node, getIndustryCorrelationIntelligenceContext());
         }
 
         function getCorrelationAdjacentGroup(correlation, group) {
-            if (!correlation || !group) return '';
-            if (correlation.groupA === group) return correlation.groupB;
-            if (correlation.groupB === group) return correlation.groupA;
-            return '';
+            return intelligenceIndustryCorrelations.getCorrelationAdjacentGroup(correlation, group);
         }
 
         function renderIndustryCorrelationContextSection(context) {
@@ -3234,16 +2822,7 @@
         }
 
         function parsePortfolioTickers(value) {
-            const seen = new Set();
-            return String(value || '')
-                .split(/[\s,]+/)
-                .map(item => item.trim().toUpperCase())
-                .filter(Boolean)
-                .filter(item => {
-                    if (seen.has(item)) return false;
-                    seen.add(item);
-                    return true;
-                });
+            return intelligencePortfolioNexus.parsePortfolioTickers(value);
         }
 
         function getNodeByTickerMap() {
@@ -3260,19 +2839,7 @@
 
             if (!isPortfolioAnalysisActive()) return;
 
-            const holdingIds = new Set(matchedPortfolioNodes.map(node => node.id));
-            matchedPortfolioNodes.forEach(holding => {
-                (adjacencyById.get(holding.id) || []).forEach(item => {
-                    portfolioEdgeKeys.add(item.link.key);
-                    if (holdingIds.has(item.node.id)) return;
-
-                    portfolioAdjacentNodeIds.add(item.node.id);
-                    const existing = portfolioConnectionsByNodeId.get(item.node.id) || [];
-                    existing.push({ holding, link: item.link });
-                    portfolioConnectionsByNodeId.set(item.node.id, existing);
-                });
-            });
-
+            intelligencePortfolioNexus.recomputePortfolioExposure(getPortfolioNexusIntelligenceContext());
             portfolioNexusSummary = computePortfolioNexusSummary();
         }
 
@@ -3293,34 +2860,31 @@
         }
 
         function isPortfolioAnalysisActive() {
-            return portfolioTickerSet.size > 0;
+            return intelligencePortfolioNexus.isPortfolioAnalysisActive(getPortfolioNexusIntelligenceContext());
         }
 
         function isPortfolioNode(node) {
-            return Boolean(node) && matchedPortfolioNodes.some(item => item.id === node.id);
+            return intelligencePortfolioNexus.isPortfolioNode(node, getPortfolioNexusIntelligenceContext());
         }
 
         function isPortfolioAdjacentNode(node) {
-            return Boolean(node) && !isPortfolioNode(node) && portfolioAdjacentNodeIds.has(node.id);
+            return intelligencePortfolioNexus.isPortfolioAdjacentNode(node, getPortfolioNexusIntelligenceContext());
         }
 
         function isPortfolioTopNexusNode(node) {
-            if (!node || isPortfolioNode(node)) return false;
-            return getPortfolioNexusSummary().topNexusCompany?.node?.id === node.id;
+            return intelligencePortfolioNexus.isPortfolioTopNexusNode(node, getPortfolioNexusIntelligenceContext());
         }
 
         function isPortfolioRepeatedExposureNode(node) {
-            if (!node || isPortfolioNode(node)) return false;
-            return getPortfolioNexusSummary().repeatedExposureNodes.some(item => item.node.id === node.id);
+            return intelligencePortfolioNexus.isPortfolioRepeatedExposureNode(node, getPortfolioNexusIntelligenceContext());
         }
 
         function isPortfolioHighlightedNode(node) {
-            return isPortfolioNode(node) || isPortfolioAdjacentNode(node);
+            return intelligencePortfolioNexus.isPortfolioHighlightedNode(node, getPortfolioNexusIntelligenceContext());
         }
 
         function getPortfolioConnectionItemsForNode(node) {
-            if (!node) return [];
-            return portfolioConnectionsByNodeId.get(node.id) || [];
+            return intelligencePortfolioNexus.getPortfolioConnectionItemsForNode(node, getPortfolioNexusIntelligenceContext());
         }
 
         function selectPortfolioNexusNode(id) {
@@ -4010,15 +3574,7 @@
         }
 
         function isIndustryCorrelationHintNode(node) {
-            if (!node || !selectedNode || isFocusModeActive()) return false;
-            if (node.id === selectedNode.id) return false;
-            if (focusNeighborIds.has(node.id)) return false;
-            if (activeClusterNodeIds.has(node.id)) return false;
-            if (isNodeDimmedByIndustryGroup(node)) return false;
-
-            const context = getIndustryCorrelationContextForNode(selectedNode);
-            if (!context?.isStrong || !context.strongestAdjacentGroup) return false;
-            return getCompanyIndustryGroup(node) === context.strongestAdjacentGroup;
+            return intelligenceIndustryCorrelations.isIndustryCorrelationHintNode(node, getIndustryCorrelationIntelligenceContext());
         }
 
         function findNodeAt(screenX, screenY) {

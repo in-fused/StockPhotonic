@@ -7,6 +7,8 @@ requested SEC resource and stores the response in a deterministic cache file.
 
 import argparse
 import hashlib
+import json
+import re
 import sys
 import urllib.error
 import urllib.parse
@@ -15,15 +17,19 @@ from pathlib import Path
 
 
 DEFAULT_CACHE_DIR = Path("data/cache/sec")
+DEFAULT_CIK_MAPPING_PATH = Path("data/candidates/cik_mappings.json")
 SEC_SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik}.json"
 DEFAULT_TIMEOUT_SECONDS = 20
 ALLOWED_SEC_HOST_SUFFIX = ".sec.gov"
 ALLOWED_SEC_HOST = "sec.gov"
+TICKER_PATTERN = re.compile(r"^[A-Z][A-Z0-9]{0,4}([.-][A-Z])?$")
+DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+ALLOWED_CIK_MAPPING_REVIEW_STATUSES = {"pending", "approved_for_fetch"}
 
 
 def normalize_cik(raw_cik):
     """Return a zero-padded 10-digit CIK string."""
-    cik = raw_cik.strip().upper()
+    cik = str(raw_cik).strip().upper()
     if cik.startswith("CIK"):
         cik = cik[3:]
     if not cik.isdigit():
@@ -44,6 +50,114 @@ def normalize_sec_url(raw_url):
     if not parsed.path:
         raise ValueError("SEC URL must include a path.")
     return urllib.parse.urlunparse(parsed._replace(fragment=""))
+
+
+def normalize_ticker(raw_ticker):
+    """Return a validated uppercase ticker string."""
+    if not isinstance(raw_ticker, str) or not raw_ticker.strip():
+        raise ValueError("--ticker must be a non-empty uppercase ticker.")
+    ticker = raw_ticker.strip()
+    if ticker != ticker.upper() or not TICKER_PATTERN.match(ticker):
+        raise ValueError("--ticker must be uppercase and use a supported public ticker format.")
+    return ticker
+
+
+def load_cik_mapping_payload(mapping_path):
+    if not mapping_path.exists():
+        raise ValueError(f"CIK mapping file not found: {mapping_path}")
+
+    with mapping_path.open("r", encoding="utf-8") as file:
+        payload = json.load(file)
+
+    if not isinstance(payload, dict):
+        raise ValueError(f"{mapping_path} must contain a JSON object.")
+
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        raise ValueError(f"{mapping_path}: metadata must be an object.")
+    if metadata.get("status") != "candidate_only":
+        raise ValueError(f"{mapping_path}: metadata.status must be candidate_only.")
+    if metadata.get("production_write_allowed") is not False:
+        raise ValueError(f"{mapping_path}: metadata.production_write_allowed must be false.")
+    if metadata.get("app_load_allowed") is not False:
+        raise ValueError(f"{mapping_path}: metadata.app_load_allowed must be false.")
+
+    mappings = payload.get("mappings")
+    if not isinstance(mappings, list):
+        raise ValueError(f"{mapping_path}: mappings must be a JSON array.")
+
+    return mappings
+
+
+def validate_cik_mapping_source_metadata(mapping, index):
+    source_type = mapping.get("source_type")
+    if not isinstance(source_type, str) or not source_type.strip():
+        raise ValueError(f"CIK mapping {index}: source_type must be a non-empty string.")
+
+    source_tier = mapping.get("source_tier")
+    if not isinstance(source_tier, int) or isinstance(source_tier, bool):
+        raise ValueError(f"CIK mapping {index}: source_tier must be an integer.")
+    if source_tier not in {1, 2, 3}:
+        raise ValueError(f"CIK mapping {index}: source_tier must be 1, 2, or 3.")
+
+    source_url = mapping.get("source_url")
+    if not isinstance(source_url, str) or not source_url.strip():
+        raise ValueError(f"CIK mapping {index}: source_url is required.")
+    parsed_url = urllib.parse.urlparse(source_url.strip())
+    if parsed_url.scheme not in {"http", "https"} or not parsed_url.netloc:
+        raise ValueError(f"CIK mapping {index}: source_url must start with http:// or https://.")
+
+    capture_date = mapping.get("capture_date")
+    if not isinstance(capture_date, str) or not DATE_PATTERN.match(capture_date):
+        raise ValueError(f"CIK mapping {index}: capture_date must use YYYY-MM-DD format.")
+
+
+def resolve_cik_from_ticker(raw_ticker, mapping_path):
+    ticker = normalize_ticker(raw_ticker)
+    mappings = load_cik_mapping_payload(mapping_path)
+    matches = []
+    seen_tickers = set()
+    seen_ciks = set()
+
+    for index, mapping in enumerate(mappings):
+        if not isinstance(mapping, dict):
+            raise ValueError(f"CIK mapping {index}: record must be an object.")
+
+        review_status = mapping.get("review_status")
+        if review_status not in ALLOWED_CIK_MAPPING_REVIEW_STATUSES:
+            allowed = ", ".join(sorted(ALLOWED_CIK_MAPPING_REVIEW_STATUSES))
+            raise ValueError(f"CIK mapping {index}: review_status must be one of: {allowed}.")
+
+        mapping_ticker = mapping.get("ticker")
+        if not isinstance(mapping_ticker, str) or mapping_ticker.strip() != mapping_ticker:
+            raise ValueError(f"CIK mapping {index}: ticker must be an uppercase string.")
+        if mapping_ticker != mapping_ticker.upper() or not TICKER_PATTERN.match(mapping_ticker):
+            raise ValueError(f"CIK mapping {index}: ticker has an invalid format.")
+        if mapping_ticker in seen_tickers:
+            raise ValueError(f"CIK mapping {index}: duplicate ticker {mapping_ticker}.")
+        seen_tickers.add(mapping_ticker)
+
+        try:
+            cik = normalize_cik(mapping.get("cik"))
+        except ValueError as exc:
+            raise ValueError(f"CIK mapping {index}: {exc}") from exc
+        if cik in seen_ciks:
+            raise ValueError(f"CIK mapping {index}: duplicate CIK {cik}.")
+        seen_ciks.add(cik)
+
+        validate_cik_mapping_source_metadata(mapping, index)
+
+        if mapping_ticker == ticker:
+            matches.append((cik, review_status))
+
+    if not matches:
+        raise ValueError(
+            f"--ticker {ticker} has no source-backed candidate CIK mapping in {mapping_path}."
+        )
+    if len(matches) > 1:
+        raise ValueError(f"--ticker {ticker} has duplicate candidate CIK mappings in {mapping_path}.")
+
+    return matches[0][0]
 
 
 def cache_path_for_cik(cache_dir, cik):
@@ -86,9 +200,14 @@ def parse_args(argv):
     source_group.add_argument(
         "--ticker",
         help=(
-            "Reserved for a future ticker-to-CIK lookup. No mappings are invented; "
-            "use --cik or --url in this phase."
+            "Resolve an uppercase ticker through data/candidates/cik_mappings.json. "
+            "No ticker-to-CIK mappings are invented."
         ),
+    )
+    parser.add_argument(
+        "--cik-mappings",
+        default=str(DEFAULT_CIK_MAPPING_PATH),
+        help=f"Candidate-only ticker-to-CIK mapping file. Default: {DEFAULT_CIK_MAPPING_PATH}",
     )
     parser.add_argument(
         "--user-agent",
@@ -122,10 +241,10 @@ def parse_args(argv):
 def resolve_target(args):
     cache_dir = Path(args.cache_dir)
     if args.ticker:
-        raise ValueError(
-            "--ticker lookup is not implemented in this phase. "
-            "Use --cik or --url so the requested SEC resource is explicit."
-        )
+        mapping_path = Path(args.cik_mappings)
+        cik = resolve_cik_from_ticker(args.ticker, mapping_path)
+        url = SEC_SUBMISSIONS_URL.format(cik=cik)
+        return url, cache_path_for_cik(cache_dir, cik)
     if args.cik:
         cik = normalize_cik(args.cik)
         url = SEC_SUBMISSIONS_URL.format(cik=cik)

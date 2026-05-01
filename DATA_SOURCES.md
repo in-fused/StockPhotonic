@@ -108,7 +108,7 @@ Current scripts:
 - `scripts/generate_signals.py` converts raw text/source inputs into structured candidate signals with tickers, relationship type, label, strength, `source_meta`, and `signal_score`.
 - `scripts/enrich_connections.py` safely converts vetted candidate signals into dataset connection records, supports dry runs and filtering, rejects duplicates, and validates the merged result before writing.
 - `scripts/validate_data.py` validates the static JSON dataset and computes expected confidence from structural evidence, with optional `signal_score` adjustment when present.
-- `scripts/sec_fetch_cache.py` is a read-only SEC fetch/cache helper for future source-backed extraction work. It does not create candidates, does not extract relationships, and does not modify production graph data.
+- `scripts/sec_fetch_cache.py` is a read-only SEC fetch/cache helper for future source-backed extraction work. It can resolve `--ticker` only from the candidate-only CIK mapping reference, never by inventing mappings. It does not create candidates, does not extract relationships, and does not modify production graph data.
 
 Important distinction:
 
@@ -161,9 +161,11 @@ SEC cache helper commands:
 ```bash
 python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.email@example.com" --dry-run
 python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.email@example.com"
+# After a reviewed mapping exists in data/candidates/cik_mappings.json:
+python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Your Name your.email@example.com" --dry-run
 ```
 
-The SEC cache helper requires an explicit identifying `--user-agent`. Use `--dry-run` first to confirm the exact SEC URL and deterministic cache path. Cached responses are written under `data/cache/sec/` by default and should not be committed unless a future reviewed phase explicitly approves the cached artifact. Running the helper is opt-in only; validation and app loading do not fetch SEC data.
+The SEC cache helper requires an explicit identifying `--user-agent`. Use `--dry-run` first to confirm the exact SEC URL and deterministic cache path. `--ticker` lookup is allowed only through `data/candidates/cik_mappings.json` records with `review_status: "pending"` or `review_status: "approved_for_fetch"`; if a ticker is missing, the helper must fail clearly rather than guess a CIK. Cached responses are written under `data/cache/sec/` by default and should not be committed unless a future reviewed phase explicitly approves the cached artifact. Running the helper is opt-in only; validation and app loading do not fetch SEC data.
 
 SEC cache hygiene:
 
@@ -212,6 +214,21 @@ python scripts/ingest_candidates.py --candidates data/candidates/official_ticker
 ```
 
 Any future record in this file should start with `review_status: "pending"` and include ticker, company name, exchange, public-company asset type, source type, source tier, source URL, and capture date. Official exchange or listing-venue records should use `source_type: "official_exchange_listing"` with the registry-defined tier. This is candidate-company metadata only: it can stage the ticker universe, but it does not prove business relationships and cannot create production edges. Promotion to production requires source validation, duplicate checks against existing companies, manual review, normal production validation, and a separate future writer phase.
+
+### CIK Mapping Candidate File
+
+`data/candidates/cik_mappings.json` is a candidate/reference-only ticker-to-CIK mapping file for future SEC fetch/cache workflows. It is not loaded by the app, does not create company candidates, does not create production nodes or edges, and does not write to `data/companies.json` or `data/connections.json`.
+
+The file starts empty by design. Future mappings must be source-backed and reviewed, with ticker, CIK, registered source type, source tier, source URL, capture date, and `review_status` of `pending` or `approved_for_fetch`. Duplicate tickers and duplicate CIKs are rejected by validation.
+
+Validate the CIK mapping reference dry run with:
+
+```bash
+python scripts/ingest_candidates.py --candidates data/candidates/cik_mappings.json
+python scripts/ingest_candidates.py --candidates data/candidates/cik_mappings.json --summary-only
+```
+
+The SEC helper may use this file for `--ticker` lookup, but it must not invent mappings. Production promotion remains a separate future phase with explicit review and writer behavior.
 
 Recommended sequence:
 

@@ -35,6 +35,7 @@ CANDIDATE_CONNECTIONS_PATH = ROOT / "data" / "candidates" / "candidate_connectio
 OFFICIAL_TICKER_UNIVERSE_PATH = (
     ROOT / "data" / "candidates" / "official_ticker_universe.json"
 )
+CIK_MAPPINGS_PATH = ROOT / "data" / "candidates" / "cik_mappings.json"
 
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 TICKER_PATTERN = re.compile(r"^[A-Z][A-Z0-9]{0,4}([.-][A-Z])?$")
@@ -50,7 +51,17 @@ REQUIRED_TICKER_UNIVERSE_FIELDS: tuple[str, ...] = (
     "capture_date",
     "review_status",
 )
+REQUIRED_CIK_MAPPING_FIELDS: tuple[str, ...] = (
+    "ticker",
+    "cik",
+    "source_type",
+    "source_tier",
+    "source_url",
+    "capture_date",
+    "review_status",
+)
 SUPPORTED_TICKER_ASSET_TYPES = {"public_company"}
+ALLOWED_CIK_MAPPING_REVIEW_STATUSES = {"pending", "approved_for_fetch"}
 
 
 class TickerUniverseReport(NamedTuple):
@@ -58,6 +69,13 @@ class TickerUniverseReport(NamedTuple):
     duplicate_within_candidate: int
     source_type_counts: Counter[str]
     exchange_counts: Counter[str]
+
+
+class CikMappingReport(NamedTuple):
+    duplicate_tickers: int
+    duplicate_ciks: int
+    source_type_counts: Counter[str]
+    review_status_counts: Counter[str]
 
 
 def load_json(path: Path) -> Any:
@@ -102,11 +120,39 @@ def load_official_ticker_universe(
     return metadata, normalized_candidates
 
 
+def load_cik_mappings(
+    path: Path = CIK_MAPPINGS_PATH,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path} must contain a JSON object.")
+
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        raise ValueError(f"{path}: metadata must be an object.")
+
+    mappings = payload.get("mappings")
+    if not isinstance(mappings, list):
+        raise ValueError(f"{path}: mappings must be a JSON array.")
+
+    normalized_mappings: list[dict[str, Any]] = []
+    for index, mapping in enumerate(mappings):
+        if not isinstance(mapping, dict):
+            raise ValueError(f"CIK mapping {index}: record must be an object.")
+        normalized_mappings.append(mapping)
+
+    return metadata, normalized_mappings
+
+
 def detect_candidate_kind(path: Path) -> str:
+    if path.name == CIK_MAPPINGS_PATH.name:
+        return "cik-mappings"
     if path.name == OFFICIAL_TICKER_UNIVERSE_PATH.name:
         return "official-ticker-universe"
 
     payload = load_json(path)
+    if isinstance(payload, dict) and "mappings" in payload:
+        return "cik-mappings"
     if isinstance(payload, dict) and "candidates" in payload:
         return "official-ticker-universe"
     return "connections"
@@ -387,6 +433,34 @@ def validate_official_ticker_universe_metadata(
     return errors
 
 
+def validate_cik_mappings_metadata(metadata: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+
+    if metadata.get("status") != "candidate_only":
+        errors.append("metadata.status must be candidate_only.")
+    if metadata.get("production_write_allowed") is not False:
+        errors.append("metadata.production_write_allowed must be false.")
+    if metadata.get("app_load_allowed") is not False:
+        errors.append("metadata.app_load_allowed must be false.")
+
+    source_requirements = metadata.get("source_requirements")
+    if not isinstance(source_requirements, list) or not source_requirements:
+        errors.append("metadata.source_requirements must list required source fields.")
+    else:
+        missing_source_requirements = [
+            field for field in REQUIRED_CIK_MAPPING_FIELDS
+            if field not in source_requirements
+        ]
+        if missing_source_requirements:
+            errors.append(
+                "metadata.source_requirements must include: "
+                + ", ".join(missing_source_requirements)
+                + "."
+            )
+
+    return errors
+
+
 def validate_official_ticker_candidate(
     candidate: dict[str, Any],
     *,
@@ -469,6 +543,113 @@ def validate_official_ticker_candidate(
     ]
 
 
+def cik_mapping_label(mapping: dict[str, Any], index: int) -> str:
+    ticker = mapping.get("ticker", "?")
+    cik = mapping.get("cik", "?")
+    return f"CIK mapping {index} ({ticker}, {cik})"
+
+
+def normalize_cik_value(value: Any, field_name: str, errors: list[str]) -> str:
+    if isinstance(value, bool):
+        errors.append(f"{field_name} must be a string or integer CIK.")
+        return ""
+
+    if isinstance(value, int):
+        cik = str(value)
+    elif isinstance(value, str):
+        cik = value.strip().upper()
+        if cik.startswith("CIK"):
+            cik = cik[3:]
+    else:
+        errors.append(f"{field_name} must be a string or integer CIK.")
+        return ""
+
+    if not cik:
+        errors.append(f"{field_name} is required.")
+        return ""
+    if not cik.isdigit():
+        errors.append(f"{field_name} must contain digits only, optionally prefixed by CIK.")
+        return ""
+    if len(cik) > 10:
+        errors.append(f"{field_name} must be 10 digits or fewer before zero-padding.")
+        return ""
+    return cik.zfill(10)
+
+
+def validate_cik_mapping(
+    mapping: dict[str, Any],
+    *,
+    index: int,
+    seen_tickers: Counter[str],
+    seen_ciks: Counter[str],
+) -> list[str]:
+    errors: list[str] = []
+
+    missing_fields = [
+        field for field in REQUIRED_CIK_MAPPING_FIELDS
+        if field not in mapping
+    ]
+    if missing_fields:
+        errors.append(f"Missing required field(s): {', '.join(missing_fields)}.")
+
+    ticker = normalize_ticker(mapping.get("ticker"), "ticker", errors)
+    if ticker:
+        if isinstance(mapping.get("ticker"), str) and mapping["ticker"].strip() != ticker:
+            errors.append("ticker must be uppercase.")
+        seen_tickers[ticker] += 1
+        if seen_tickers[ticker] > 1:
+            errors.append("duplicate ticker found in CIK mapping candidate file.")
+
+    cik = normalize_cik_value(mapping.get("cik"), "cik", errors)
+    if cik:
+        seen_ciks[cik] += 1
+        if seen_ciks[cik] > 1:
+            errors.append("duplicate CIK found in CIK mapping candidate file.")
+
+    source_type = mapping.get("source_type")
+    if not isinstance(source_type, str) or not source_type.strip():
+        errors.append("source_type must be a non-empty string.")
+        source_type_key = ""
+    else:
+        source_type_key = source_type.strip().lower()
+        if source_type_key not in SOURCE_REGISTRY:
+            errors.append(f"source_type {source_type_key!r} is not allowed.")
+
+    source_tier = mapping.get("source_tier")
+    if not isinstance(source_tier, int) or isinstance(source_tier, bool):
+        errors.append("source_tier must be an integer.")
+    elif source_tier not in {1, 2, 3}:
+        errors.append("source_tier must be 1, 2, or 3.")
+    elif source_type_key in SOURCE_REGISTRY and source_tier != SOURCE_REGISTRY[source_type_key]["tier"]:
+        expected_tier = SOURCE_REGISTRY[source_type_key]["tier"]
+        errors.append(
+            f"source_tier {source_tier} does not match {source_type_key!r} tier {expected_tier}."
+        )
+
+    source_url = mapping.get("source_url")
+    if not isinstance(source_url, str) or not source_url.strip():
+        errors.append("source_url is required.")
+    elif not URL_PATTERN.match(source_url.strip()):
+        errors.append("source_url must start with http:// or https://.")
+
+    validate_date_or_empty(
+        mapping.get("capture_date"),
+        "capture_date",
+        errors,
+        required=True,
+    )
+
+    review_status = mapping.get("review_status")
+    if review_status not in ALLOWED_CIK_MAPPING_REVIEW_STATUSES:
+        allowed = ", ".join(sorted(ALLOWED_CIK_MAPPING_REVIEW_STATUSES))
+        errors.append(f"review_status must be one of: {allowed}.")
+
+    return [
+        f"{cik_mapping_label(mapping, index)}: {error}"
+        for error in errors
+    ]
+
+
 def promote_candidate_to_connection(
     candidate: dict[str, Any],
     ticker_to_id: dict[str, int],
@@ -538,6 +719,30 @@ def validate_official_ticker_universe(
     return valid_candidates, errors
 
 
+def validate_cik_mappings(
+    metadata: dict[str, Any],
+    mappings: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    valid_mappings: list[dict[str, Any]] = []
+    errors = validate_cik_mappings_metadata(metadata)
+    seen_tickers: Counter[str] = Counter()
+    seen_ciks: Counter[str] = Counter()
+
+    for index, mapping in enumerate(mappings):
+        mapping_errors = validate_cik_mapping(
+            mapping,
+            index=index,
+            seen_tickers=seen_tickers,
+            seen_ciks=seen_ciks,
+        )
+        if mapping_errors:
+            errors.extend(mapping_errors)
+        else:
+            valid_mappings.append(mapping)
+
+    return valid_mappings, errors
+
+
 def breakdown_value(value: Any, *, normalize_lower: bool = False) -> str:
     if not isinstance(value, str) or not value.strip():
         return "<missing>"
@@ -580,6 +785,46 @@ def build_ticker_universe_report(
         source_type_counts=source_type_counts,
         exchange_counts=exchange_counts,
     )
+
+
+def build_cik_mapping_report(mappings: list[dict[str, Any]]) -> CikMappingReport:
+    source_type_counts: Counter[str] = Counter()
+    review_status_counts: Counter[str] = Counter()
+    seen_tickers: Counter[str] = Counter()
+    seen_ciks: Counter[str] = Counter()
+
+    for mapping in mappings:
+        source_type_counts[
+            breakdown_value(mapping.get("source_type"), normalize_lower=True)
+        ] += 1
+        review_status_counts[breakdown_value(mapping.get("review_status"))] += 1
+
+        ticker = mapping.get("ticker")
+        if isinstance(ticker, str) and ticker.strip():
+            seen_tickers[ticker.strip().upper()] += 1
+
+        cik = normalize_cik_for_report(mapping.get("cik"))
+        if cik:
+            seen_ciks[cik] += 1
+
+    duplicate_tickers = sum(
+        count - 1 for count in seen_tickers.values() if count > 1
+    )
+    duplicate_ciks = sum(
+        count - 1 for count in seen_ciks.values() if count > 1
+    )
+
+    return CikMappingReport(
+        duplicate_tickers=duplicate_tickers,
+        duplicate_ciks=duplicate_ciks,
+        source_type_counts=source_type_counts,
+        review_status_counts=review_status_counts,
+    )
+
+
+def normalize_cik_for_report(value: Any) -> str:
+    errors: list[str] = []
+    return normalize_cik_value(value, "cik", errors) if value is not None else ""
 
 
 def print_breakdown(title: str, counts: Counter[str]) -> None:
@@ -654,6 +899,35 @@ def print_ticker_universe_summary(
     print("\nCandidate-only validation; production data files were not changed.")
 
 
+def print_cik_mapping_summary(
+    *,
+    mapping_count: int,
+    valid_mappings: list[dict[str, Any]],
+    validation_errors: list[str],
+    report: CikMappingReport,
+    summary_only: bool,
+) -> None:
+    print("StockPhotonic CIK mapping validation dry run")
+    print("Candidate kind: CIK mappings")
+    print(f"Total mappings loaded: {mapping_count}")
+    print(f"Valid CIK mappings: {len(valid_mappings)}")
+    print(f"Validation errors: {len(validation_errors)}")
+    print(f"Duplicate tickers: {report.duplicate_tickers}")
+    print(f"Duplicate CIKs: {report.duplicate_ciks}")
+    print_breakdown("Source type breakdown", report.source_type_counts)
+    print_breakdown("Review status breakdown", report.review_status_counts)
+    print("Production writes: 0")
+    print("Promotion previews: disabled")
+    print("SEC fetches: disabled")
+
+    if validation_errors and not summary_only:
+        print("\nRejected")
+        for error in validation_errors:
+            print(f"- {error}")
+
+    print("\nCandidate-only CIK reference validation; production data files were not changed.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate and dry-run StockPhotonic candidate ingestion."
@@ -671,7 +945,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--candidate-kind",
-        choices=("auto", "connections", "official-ticker-universe"),
+        choices=("auto", "connections", "official-ticker-universe", "cik-mappings"),
         default="auto",
         help="Candidate input kind. Auto-detects official_ticker_universe.json.",
     )
@@ -699,6 +973,19 @@ def main() -> int:
             print_ticker_universe_summary(
                 candidate_count=len(candidates),
                 valid_candidates=valid_candidates,
+                validation_errors=validation_errors,
+                report=report,
+                summary_only=args.summary_only,
+            )
+            return 1 if validation_errors else 0
+
+        if candidate_kind == "cik-mappings":
+            metadata, mappings = load_cik_mappings(args.candidates)
+            valid_mappings, validation_errors = validate_cik_mappings(metadata, mappings)
+            report = build_cik_mapping_report(mappings)
+            print_cik_mapping_summary(
+                mapping_count=len(mappings),
+                valid_mappings=valid_mappings,
                 validation_errors=validation_errors,
                 report=report,
                 summary_only=args.summary_only,

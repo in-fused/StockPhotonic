@@ -87,6 +87,22 @@ Candidate ticker-universe records, when present, must include:
 
 `official_exchange_listing` is the dedicated source type for official exchange or listing-venue ticker universe staging. It is candidate-company metadata only: it can support public-company discovery, but it does not prove a business relationship and cannot create production edges.
 
+## Candidate CIK Mapping Metadata
+
+`data/candidates/cik_mappings.json` stages future ticker-to-CIK lookup references for SEC fetch/cache workflows only. It must not be loaded by the app, and it must not directly write to `data/companies.json` or `data/connections.json`.
+
+Candidate CIK mapping records, when present, must include:
+
+- `ticker`
+- `cik`
+- `source_type`
+- `source_tier`
+- `source_url`
+- `capture_date`
+- `review_status`
+
+`ticker` must be uppercase. `cik` must be 10-digit zero-padded or normalizable to 10 digits. `source_type` must be registered, `source_tier` must match the registry tier, and `source_url` must be `http://` or `https://`. `review_status` must be `pending` or `approved_for_fetch`. The SEC helper may read only those candidate/reference mappings for explicit `--ticker` lookup, but it must not invent mappings or promote them to production data.
+
 ---
 
 ## Allowed Source Types

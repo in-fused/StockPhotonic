@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "description": "Candidate-only ticker-to-CIK mapping reference for future SEC fetch/cache workflows. This file is not loaded by the app and must not be promoted directly into production graph data.",
+    "status": "candidate_only",
+    "production_write_allowed": false,
+    "app_load_allowed": false,
+    "source_policy_notes": [
+      "Use only reviewable public sources for ticker-to-CIK mappings, preferably official SEC company metadata, SEC submissions, or other durable official public sources.",
+      "Do not add guessed CIKs, inferred ticker mappings, placeholder source URLs, unsourced records, company candidates, relationship candidates, production nodes, or production edges.",
+      "Keep CIK mappings as reference-only lookup records until source validation, duplicate checks, manual review, and an explicit future production phase are complete."
+    ],
+    "source_requirements": [
+      "ticker",
+      "cik",
+      "source_type",
+      "source_tier",
+      "source_url",
+      "capture_date",
+      "review_status"
+    ],
+    "candidate_schema_example": {
+      "ticker": "UPPERCASE_PUBLIC_TICKER",
+      "cik": "0000000000",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "Official source URL beginning with https://",
+      "capture_date": "YYYY-MM-DD",
+      "review_status": "pending"
+    }
+  },
+  "mappings": []
+}

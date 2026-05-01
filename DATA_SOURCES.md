@@ -109,6 +109,7 @@ Current scripts:
 - `scripts/enrich_connections.py` safely converts vetted candidate signals into dataset connection records, supports dry runs and filtering, rejects duplicates, and validates the merged result before writing.
 - `scripts/validate_data.py` validates the static JSON dataset and computes expected confidence from structural evidence, with optional `signal_score` adjustment when present.
 - `scripts/sec_fetch_cache.py` is a read-only SEC fetch/cache helper for future source-backed extraction work. It can resolve `--ticker` only from the candidate-only CIK mapping reference, never by inventing mappings. It does not create candidates, does not extract relationships, and does not modify production graph data.
+- `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
 
@@ -166,6 +167,17 @@ python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Your Name your.ema
 ```
 
 The SEC cache helper requires an explicit identifying `--user-agent`. Use `--dry-run` first to confirm the exact SEC URL and deterministic cache path. `--ticker` lookup is allowed only through `data/candidates/cik_mappings.json` records with `review_status: "pending"` or `review_status: "approved_for_fetch"`; if a ticker is missing, the helper must fail clearly rather than guess a CIK. Cached responses are written under `data/cache/sec/` by default and should not be committed unless a future reviewed phase explicitly approves the cached artifact. Running the helper is opt-in only; validation and app loading do not fetch SEC data.
+
+Local provisioner commands:
+
+```bash
+python scripts/provision_data.py
+python scripts/provision_data.py --summary-only
+python scripts/provision_data.py --ticker AAPL
+python scripts/provision_data.py --ticker AAPL --allow-network --user-agent "Your Name your.email@example.com"
+```
+
+The provisioner is manual and dry-run-first. By default it runs candidate validation, calls the SEC cache helper only with `--dry-run`, reports planned fetches, and keeps production writes at zero. It does not import app code, does not promote candidates, does not extract relationships, and does not write `data/companies.json` or `data/connections.json`. Scheduling and automation remain future phases after the local safety path is proven.
 
 SEC cache hygiene:
 

@@ -144,6 +144,21 @@ Cache review workflow:
 - Future extraction phases should read cached source files and emit candidate JSON separately, with review status and source metadata, before any production graph write is considered.
 - A future reviewed phase may explicitly approve committing selected cache artifacts if the project needs durable fixtures or auditable source snapshots.
 
+### Phase D9: Local Data Provisioner Dry-Run Orchestrator
+
+`scripts/provision_data.py` is a manual local provisioner for safe data-foundation checks. It coordinates candidate validation and SEC cache dry-run planning without importing app code, promoting candidates, extracting relationships, scheduling work, or writing production graph data.
+
+Default usage is dry-run-first:
+
+```bash
+python scripts/provision_data.py
+python scripts/provision_data.py --summary-only
+python scripts/provision_data.py --ticker AAPL
+python scripts/provision_data.py --ticker AAPL --allow-network --user-agent "Your Name your.email@example.com"
+```
+
+In default mode, the provisioner validates `data/candidates/official_ticker_universe.json` and `data/candidates/cik_mappings.json`, previews SEC cache targets through `scripts/sec_fetch_cache.py --dry-run`, and reports production writes as zero. Network-enabled cache fetches require explicit `--allow-network` and an identifying `--user-agent`, and are limited to CIK mappings with `review_status: "approved_for_fetch"`. Scheduling or automated refresh behavior remains a future phase after manual dry-run safety is proven.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

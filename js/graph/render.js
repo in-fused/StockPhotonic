@@ -1,4 +1,8 @@
 (function () {
+    const ORBIT_DEPTH_SCALE = 0.09;
+    const ORBIT_DEPTH_Y_OFFSET = 5.5;
+    const ORBIT_PARALLAX_Y_OFFSET = 4.5;
+
     function resizeCanvas(context) {
         const canvas = context.getCanvas();
         const rect = canvas.getBoundingClientRect();
@@ -24,12 +28,14 @@
         const canvas = context.getCanvas();
         const now = context.now();
         const ctx = canvas.getContext('2d');
-        context.setCurrentOrbitOffset(context.getOrbitOffset(now));
+        const orbit = context.getOrbitOffset(now);
+        const orbitFrame = getOrbitRenderFrame(context, orbit);
+        context.setCurrentOrbitOffset(orbit);
         ctx.setTransform(context.dpr, 0, 0, context.dpr, 0, 0);
         ctx.clearRect(0, 0, context.canvasWidth, context.canvasHeight);
 
         drawBackground(context, ctx);
-        updateScreenCache(context);
+        updateScreenCache(context, orbitFrame);
         drawNexusQuadrantLabels(context, ctx);
         const frameNodes = context.visibleNodes.filter(node => isNodeInFrame(context, node));
         const frameLinks = context.visibleLinks.filter(link => shouldDrawLink(context, link));
@@ -422,13 +428,53 @@
         return node.degree * 10 + Math.max(0, 320 - (node.rank || 320)) / 20;
     }
 
-    function updateScreenCache(context) {
+    function getOrbitRenderFrame(context, orbit) {
+        const active = context.orbitEnabled && orbit && orbit.ramp > 0;
+        return {
+            active,
+            centerX: context.canvasWidth * 0.5,
+            centerY: context.canvasHeight * 0.5,
+            invHalfWidth: 1 / Math.max(1, context.canvasWidth * 0.5),
+            invHalfHeight: 1 / Math.max(1, context.canvasHeight * 0.5),
+            phaseCos: active ? orbit.phaseCos : 1,
+            phaseSin: active ? orbit.phaseSin : 0,
+            verticalPhaseSin: active ? orbit.verticalPhaseSin : 0,
+            ramp: active ? orbit.ramp : 0
+        };
+    }
+
+    function getPseudoDepth(context, normalizedX, normalizedY, orbitFrame) {
+        return context.clamp(
+            (normalizedX * orbitFrame.phaseCos * 0.82 + normalizedY * orbitFrame.phaseSin * 0.28) * orbitFrame.ramp,
+            -1,
+            1
+        );
+    }
+
+    function getOrbitParallaxY(normalizedX, pseudoDepth, orbitFrame) {
+        return pseudoDepth * ORBIT_DEPTH_Y_OFFSET + normalizedX * orbitFrame.verticalPhaseSin * ORBIT_PARALLAX_Y_OFFSET * orbitFrame.ramp;
+    }
+
+    function updateScreenCache(context, orbitFrame = null) {
+        const frame = orbitFrame || getOrbitRenderFrame(context, null);
         context.visibleNodes.forEach(node => {
             const position = context.getNodeLayoutPosition(node);
             const point = context.worldToScreen(position.x, position.y);
+            let radius = getScreenNodeRadius(context, node);
+            let pseudoDepth = 0;
+
+            if (frame.active) {
+                const normalizedX = context.clamp((point.x - frame.centerX) * frame.invHalfWidth, -1, 1);
+                const normalizedY = context.clamp((point.y - frame.centerY) * frame.invHalfHeight, -1, 1);
+                pseudoDepth = getPseudoDepth(context, normalizedX, normalizedY, frame);
+                point.y += getOrbitParallaxY(normalizedX, pseudoDepth, frame);
+                radius *= 1 + pseudoDepth * ORBIT_DEPTH_SCALE;
+            }
+
             node._screenX = point.x;
             node._screenY = point.y;
-            node._screenRadius = getScreenNodeRadius(context, node);
+            node._screenRadius = radius;
+            node._pseudoDepth = pseudoDepth;
         });
     }
 
@@ -519,6 +565,9 @@
         shouldDrawLink,
         getWeakEdgeThreshold,
         getScreenNodeRadius,
+        getOrbitRenderFrame,
+        getPseudoDepth,
+        getOrbitParallaxY,
         roundedRect,
         truncateLabel
     };

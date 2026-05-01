@@ -1,6 +1,14 @@
 (function () {
     function getZeroOrbitOffset() {
-        return { x: 0, y: 0 };
+        return {
+            x: 0,
+            y: 0,
+            phase: 0,
+            phaseCos: 1,
+            phaseSin: 0,
+            verticalPhaseSin: 0,
+            ramp: 0
+        };
     }
 
     function getOrbitOffset(options) {
@@ -27,10 +35,18 @@
         const ramp = clamp(elapsed / rampMs, 0, 1);
         const easedRamp = 1 - Math.pow(1 - ramp, 3);
         const angle = phase + elapsed * angularSpeed;
+        const phaseCos = Math.cos(angle);
+        const phaseSin = Math.sin(angle);
+        const verticalPhaseSin = Math.sin(angle * 0.7);
 
         return {
-            x: Math.cos(angle) * radius * easedRamp,
-            y: Math.sin(angle) * radius * 0.72 * easedRamp
+            x: phaseCos * radius * easedRamp,
+            y: verticalPhaseSin * radius * 0.6 * easedRamp,
+            phase: angle,
+            phaseCos,
+            phaseSin,
+            verticalPhaseSin,
+            ramp: easedRamp
         };
     }
 

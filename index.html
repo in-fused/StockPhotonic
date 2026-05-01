@@ -410,10 +410,34 @@
     </div>
 
     <script src="js/core/config.js"></script>
+    <script src="js/utils/math.js"></script>
+    <script src="js/utils/formatting.js"></script>
+    <script src="js/utils/dom.js"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
         }
+
+        if (!window.StockPhotonicUtils) {
+            console.error('Utilities failed to load');
+        }
+
+        const StockPhotonicUtils = window.StockPhotonicUtils || {};
+        const {
+            clamp,
+            hashNumber,
+            hexToRgba
+        } = StockPhotonicUtils.math || {};
+        const {
+            formatVerifiedDate,
+            formatNumber,
+            getConfidenceClass,
+            formatConnectionType
+        } = StockPhotonicUtils.formatting || {};
+        const {
+            escapeHtml,
+            escapeInlineJsString
+        } = StockPhotonicUtils.dom || {};
 
         const {
             CACHE_BUST,
@@ -3330,12 +3354,6 @@
             }
         }
 
-        function formatConnectionType(type) {
-            const text = String(type || 'none').replace(/[_-]+/g, ' ').trim();
-            if (!text) return 'None';
-            return text.replace(/\b\w/g, char => char.toUpperCase());
-        }
-
         function selectConnectionRow(event, id) {
             if (event.target.closest('a')) return;
             selectNodeById(id);
@@ -4540,49 +4558,6 @@
             document.getElementById('trust-latest-date').innerText = `VERIFIED ${formatVerifiedDate(metrics.latestVerifiedDate)}`;
         }
 
-        function getConfidenceClass(confidence) {
-            if (confidence >= 4) return 'high';
-            if (confidence === 3) return 'medium';
-            return '';
-        }
-
-        function formatVerifiedDate(value) {
-            return typeof value === 'string' && value.trim() ? value.trim() : '-';
-        }
-
-        function formatNumber(value) {
-            return Number(value).toLocaleString(undefined, {
-                minimumFractionDigits: value >= 10 ? 1 : 2,
-                maximumFractionDigits: value >= 10 ? 1 : 2
-            });
-        }
-
-        function clamp(value, min, max) {
-            return Math.max(min, Math.min(max, value));
-        }
-
-        function hashNumber(value) {
-            const text = String(value);
-            let hash = 2166136261;
-            for (let i = 0; i < text.length; i++) {
-                hash ^= text.charCodeAt(i);
-                hash = Math.imul(hash, 16777619);
-            }
-            return Math.abs(hash >>> 0);
-        }
-
-        function hexToRgba(hex, alpha) {
-            const clean = String(hex || '#00f9ff').replace('#', '');
-            const value = clean.length === 3
-                ? clean.split('').map(char => char + char).join('')
-                : clean.padEnd(6, '0').slice(0, 6);
-            const num = parseInt(value, 16);
-            const r = (num >> 16) & 255;
-            const g = (num >> 8) & 255;
-            const b = num & 255;
-            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-
         function roundedRect(ctx, x, y, width, height, radius) {
             const r = Math.min(radius, width / 2, height / 2);
             ctx.beginPath();
@@ -4609,23 +4584,6 @@
                 }
             }
             return text.slice(0, low).trimEnd() + ellipsis;
-        }
-
-        function escapeHtml(value) {
-            return String(value)
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#039;');
-        }
-
-        function escapeInlineJsString(value) {
-            return escapeHtml(String(value)
-                .replaceAll('\\', '\\\\')
-                .replaceAll("'", "\\'")
-                .replaceAll('\r', ' ')
-                .replaceAll('\n', ' '));
         }
 
         loadData();

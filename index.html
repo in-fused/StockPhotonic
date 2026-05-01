@@ -417,6 +417,7 @@
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
     <script src="js/graph/layouts.js"></script>
+    <script src="js/graph/render.js"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -438,11 +439,16 @@
             throw new Error('StockPhotonic layout module failed to load');
         }
 
+        if (!window.StockPhotonicGraph?.render) {
+            throw new Error('StockPhotonic render module failed to load');
+        }
+
         const StockPhotonicUtils = window.StockPhotonicUtils || {};
         const {
             viewport: graphViewport,
             interactions: graphInteractions,
-            layouts: graphLayouts
+            layouts: graphLayouts,
+            render: graphRender
         } = window.StockPhotonicGraph;
         const {
             clamp,
@@ -607,6 +613,68 @@
             cancelAnimationFrame: window.cancelAnimationFrame.bind(window),
             now: () => performance.now()
         });
+
+        const renderContext = {
+            getCanvas: () => document.getElementById('graph-canvas'),
+            getDrawHandle: () => drawHandle,
+            setDrawHandle: value => { drawHandle = value; },
+            drawGraph: timestamp => drawGraph(timestamp),
+            requestDraw: () => requestDraw(),
+            requestAnimationFrame: window.requestAnimationFrame.bind(window),
+            devicePixelRatio: () => window.devicePixelRatio,
+            now: () => performance.now(),
+            setDpr: value => { dpr = value; },
+            setCanvasWidth: value => { canvasWidth = value; },
+            setCanvasHeight: value => { canvasHeight = value; },
+            setCurrentOrbitOffset: value => { currentOrbitOffset = value; },
+            get dpr() { return dpr; },
+            get canvasWidth() { return canvasWidth; },
+            get canvasHeight() { return canvasHeight; },
+            get scale() { return scale; },
+            get visibleNodes() { return visibleNodes; },
+            get visibleLinks() { return visibleLinks; },
+            get selectedNode() { return selectedNode; },
+            get hoveredNode() { return hoveredNode; },
+            get focusNeighborIds() { return focusNeighborIds; },
+            get focusLinkKeys() { return focusLinkKeys; },
+            get activeClusterNodeIds() { return activeClusterNodeIds; },
+            get topLabelIds() { return topLabelIds; },
+            get portfolioEdgeKeys() { return portfolioEdgeKeys; },
+            get signalStrengthThreshold() { return signalStrengthThreshold; },
+            get orbitEnabled() { return orbitEnabled; },
+            get pulseUntil() { return pulseUntil; },
+            get focusTransitionUntil() { return focusTransitionUntil; },
+            get highlightedNodeId() { return highlightedNodeId; },
+            get highlightedNodeUntil() { return highlightedNodeUntil; },
+            EDGE_COLORS,
+            DEFAULT_EDGE_COLOR,
+            FRAME_MARGIN,
+            LABEL_TICKER_SCALE,
+            LABEL_FULL_SCALE,
+            SEARCH_HIGHLIGHT_MS,
+            NEXUS_LABEL_DISTANCE,
+            NEXUS_AXIS_SPREAD,
+            graphViewport,
+            clamp,
+            hexToRgba,
+            getOrbitOffset,
+            worldToScreen,
+            getNodeLayoutPosition,
+            isNexusLayoutActive,
+            getNexusSummary,
+            isIndustryGroupFilterActive,
+            linkTouchesCurrentIndustryGroup,
+            isPortfolioAnalysisActive,
+            isPortfolioNode,
+            isPortfolioAdjacentNode,
+            isPortfolioTopNexusNode,
+            isPortfolioRepeatedExposureNode,
+            isPortfolioHighlightedNode,
+            isNodeDimmedByIndustryGroup,
+            nodeMatchesCurrentIndustryGroup,
+            isFocusModeActive,
+            isIndustryCorrelationHintNode
+        };
 
         /* ==============================
            DATA LOADING
@@ -975,420 +1043,55 @@
         ================================ */
 
         function resizeCanvas() {
-            const canvas = document.getElementById('graph-canvas');
-            const rect = canvas.getBoundingClientRect();
-            dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-            canvasWidth = Math.max(1, rect.width);
-            canvasHeight = Math.max(1, rect.height);
-            canvas.width = Math.floor(canvasWidth * dpr);
-            canvas.height = Math.floor(canvasHeight * dpr);
-            requestDraw();
+            graphRender.resizeCanvas(renderContext);
         }
 
         function requestDraw() {
-            if (drawHandle) return;
-            drawHandle = requestAnimationFrame(drawGraph);
+            graphRender.requestDraw(renderContext);
         }
 
         function drawGraph(timestamp = 0) {
-            drawHandle = null;
-            const canvas = document.getElementById('graph-canvas');
-            const now = performance.now();
-            const ctx = canvas.getContext('2d');
-            currentOrbitOffset = getOrbitOffset(now);
-            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-            drawBackground(ctx);
-            updateScreenCache();
-            drawNexusQuadrantLabels(ctx);
-            const frameNodes = visibleNodes.filter(isNodeInFrame);
-            const frameLinks = visibleLinks.filter(shouldDrawLink);
-
-            ctx.save();
-            frameLinks.forEach(link => drawLink(ctx, link));
-            ctx.restore();
-
-            frameNodes.forEach(node => drawNode(ctx, node, timestamp));
-            drawLabels(ctx, frameNodes);
-
-            if (orbitEnabled || now < pulseUntil || now < highlightedNodeUntil || now < focusTransitionUntil) requestDraw();
+            graphRender.drawGraph(renderContext, timestamp);
         }
 
         function drawBackground(ctx) {
-            const gradient = ctx.createRadialGradient(
-                canvasWidth * 0.5,
-                canvasHeight * 0.5,
-                20,
-                canvasWidth * 0.5,
-                canvasHeight * 0.5,
-                Math.max(canvasWidth, canvasHeight) * 0.78
-            );
-            gradient.addColorStop(0, 'rgba(0, 249, 255, 0.045)');
-            gradient.addColorStop(0.55, 'rgba(255, 0, 170, 0.025)');
-            gradient.addColorStop(1, 'rgba(5, 5, 8, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            graphRender.drawBackground(renderContext, ctx);
         }
 
         function drawNexusQuadrantLabels(ctx) {
-            if (!isNexusLayoutActive() || !selectedNode) return;
-
-            const summary = getNexusSummary(selectedNode);
-            const labels = [
-                { key: 'supply', x: -NEXUS_LABEL_DISTANCE, y: -NEXUS_AXIS_SPREAD * 0.42, align: 'center' },
-                { key: 'partner', x: NEXUS_LABEL_DISTANCE, y: -NEXUS_AXIS_SPREAD * 0.42, align: 'center' },
-                { key: 'competitive', x: 0, y: -NEXUS_LABEL_DISTANCE, align: 'center' },
-                { key: 'capital', x: 0, y: NEXUS_LABEL_DISTANCE, align: 'center' }
-            ];
-
-            labels.forEach(label => {
-                const group = summary.groups[label.key];
-                if (!group || group.count <= 0) return;
-                const point = worldToScreen(label.x, label.y);
-                if (point.x < -120 || point.x > canvasWidth + 120 || point.y < -80 || point.y > canvasHeight + 80) return;
-
-                const text = `${group.label} ${group.count}`;
-                ctx.save();
-                ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
-                ctx.textAlign = label.align;
-                ctx.textBaseline = 'middle';
-                const width = ctx.measureText(text).width;
-                const x = point.x - width / 2;
-                const y = point.y - 12;
-                ctx.globalAlpha = 0.72;
-                ctx.fillStyle = 'rgba(3, 7, 18, 0.56)';
-                ctx.strokeStyle = 'rgba(103, 232, 249, 0.20)';
-                ctx.lineWidth = 1;
-                roundedRect(ctx, x - 9, y, width + 18, 24, 10);
-                ctx.fill();
-                ctx.stroke();
-                ctx.fillStyle = 'rgba(207, 250, 254, 0.72)';
-                ctx.fillText(text, point.x, y + 12);
-                ctx.restore();
-            });
+            graphRender.drawNexusQuadrantLabels(renderContext, ctx);
         }
 
         function drawLink(ctx, link) {
-            const sourcePosition = getNodeLayoutPosition(link.source);
-            const targetPosition = getNodeLayoutPosition(link.target);
-            const sourceFallback = worldToScreen(sourcePosition.x, sourcePosition.y);
-            const targetFallback = worldToScreen(targetPosition.x, targetPosition.y);
-            const source = {
-                x: link.source._screenX ?? sourceFallback.x,
-                y: link.source._screenY ?? sourceFallback.y
-            };
-            const target = {
-                x: link.target._screenX ?? targetFallback.x,
-                y: link.target._screenY ?? targetFallback.y
-            };
-            const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
-            const isFocused = selectedNode && focusLinkKeys.has(link.key);
-            const isHoveredLink = hoveredNode && (hoveredNode.id === link.source.id || hoveredNode.id === link.target.id);
-            const hasFocus = Boolean(selectedNode);
-            const industryFilterActive = isIndustryGroupFilterActive();
-            const touchesIndustryGroup = industryFilterActive && linkTouchesCurrentIndustryGroup(link);
-            const isPortfolioLink = isPortfolioAnalysisActive() && portfolioEdgeKeys.has(link.key);
-
-            const strength = clamp(link.strength, 0.05, 1);
-            const isStrongSignal = strength >= 0.78;
-            let alpha = 0.01 + Math.pow(strength, 2.35) * 0.46;
-            let width = 0.22 + Math.pow(strength, 1.55) * 2.9;
-
-            if (hasFocus) {
-                alpha = isFocused ? 0.74 + strength * 0.22 : 0.01;
-                width = isFocused ? width + 1.25 : Math.max(0.25, width * 0.45);
-            }
-
-            if (touchesIndustryGroup && !isFocused) {
-                alpha = Math.max(alpha, 0.12 + Math.pow(strength, 1.8) * 0.28);
-                width = Math.max(width, 0.7 + strength * 1.2);
-            }
-
-            if (isHoveredLink) {
-                alpha = Math.max(alpha, 0.58 + strength * 0.28);
-                width += 0.9;
-            }
-
-            if (isStrongSignal && !hasFocus) {
-                alpha = Math.max(alpha, 0.42 + strength * 0.18);
-                width += 0.45;
-            }
-
-            if (isPortfolioLink) {
-                alpha = Math.max(alpha, 0.68 + strength * 0.24);
-                width = Math.max(width + 0.65, 1.35 + strength * 2.5);
-            }
-
-            ctx.globalAlpha = alpha;
-            ctx.strokeStyle = color;
-            ctx.lineWidth = width;
-            ctx.shadowBlur = isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
-            ctx.shadowColor = isPortfolioLink ? '#ffd700' : color;
-
-            const midX = (source.x + target.x) / 2;
-            const midY = (source.y + target.y) / 2;
-            const dx = target.x - source.x;
-            const dy = target.y - source.y;
-            const distance = Math.max(1, Math.hypot(dx, dy));
-            const curve = link.curveOffset * scale;
-            const controlX = midX + (-dy / distance) * curve;
-            const controlY = midY + (dx / distance) * curve;
-
-            ctx.beginPath();
-            ctx.moveTo(source.x, source.y);
-            ctx.quadraticCurveTo(controlX, controlY, target.x, target.y);
-            ctx.stroke();
-            ctx.globalAlpha = 1;
+            graphRender.drawLink(renderContext, ctx, link);
         }
 
         function drawNode(ctx, node, timestamp) {
-            if (!node) return;
-            const position = getNodeLayoutPosition(node);
-            const fallback = worldToScreen(position.x, position.y);
-            const point = { x: node._screenX ?? fallback.x, y: node._screenY ?? fallback.y };
-            const radius = node._screenRadius ?? getScreenNodeRadius(node);
-            const isSelected = selectedNode && selectedNode.id === node.id;
-            const isNeighbor = focusNeighborIds.has(node.id);
-            const isClusterNode = Boolean(selectedNode) && activeClusterNodeIds.has(node.id) && !isSelected;
-            const isCorrelationHintNode = isIndustryCorrelationHintNode(node);
-            const isHovered = hoveredNode && hoveredNode.id === node.id;
-            const isSearchHighlighted = highlightedNodeId === node.id && performance.now() < highlightedNodeUntil;
-            const isPortfolioHolding = isPortfolioAnalysisActive() && isPortfolioNode(node);
-            const isPortfolioAdjacent = isPortfolioAnalysisActive() && isPortfolioAdjacentNode(node);
-            const isPortfolioTopNexus = isPortfolioAnalysisActive() && isPortfolioTopNexusNode(node);
-            const isPortfolioRepeatedExposure = isPortfolioAnalysisActive() && isPortfolioRepeatedExposureNode(node);
-            const industryDimmed = isNodeDimmedByIndustryGroup(node);
-            const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
-            const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isCorrelationHintNode && !isPortfolioHolding && !isPortfolioAdjacent && !industryMatched;
-            const isDimmed = focusDimmed || industryDimmed;
-            const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : isPortfolioTopNexus ? 0.96 : isPortfolioRepeatedExposure ? 0.92 : isPortfolioAdjacent ? 0.84 : isCorrelationHintNode ? 0.78 : 1;
-            const color = node.color || '#00f9ff';
-            const portfolioHaloColor = isPortfolioHolding
-                ? '#ffd700'
-                : isPortfolioTopNexus
-                    ? '#f0abfc'
-                    : isPortfolioRepeatedExposure
-                        ? '#34d399'
-                        : isPortfolioAdjacent
-                            ? '#a5f3fc'
-                            : color;
-
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.shadowBlur = isSelected ? 34 : isPortfolioHolding ? 38 : isSearchHighlighted ? 42 : isHovered ? 22 : isPortfolioTopNexus ? 32 : isPortfolioRepeatedExposure ? 24 : isPortfolioAdjacent ? 18 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
-            ctx.shadowColor = isSelected ? '#ffffff' : portfolioHaloColor;
-
-            const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
-            glow.addColorStop(0, `${hexToRgba(portfolioHaloColor, isPortfolioHolding ? 0.95 : isPortfolioTopNexus ? 0.92 : isPortfolioRepeatedExposure ? 0.86 : isClusterNode ? 0.9 : isCorrelationHintNode ? 0.86 : 0.82)}`);
-            glow.addColorStop(0.38, `${hexToRgba(portfolioHaloColor, isPortfolioHolding ? 0.38 : isPortfolioTopNexus ? 0.34 : isPortfolioRepeatedExposure ? 0.26 : isClusterNode ? 0.32 : isCorrelationHintNode ? 0.3 : 0.24)}`);
-            glow.addColorStop(1, `${hexToRgba(color, 0)}`);
-            ctx.fillStyle = glow;
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, radius * (isPortfolioHolding ? 5.7 : isPortfolioTopNexus ? 5.35 : isPortfolioRepeatedExposure ? 4.85 : isClusterNode ? 5.1 : 4.3), 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = '#ffffff';
-            ctx.globalAlpha = isDimmed ? 0.28 : 0.86;
-            ctx.beginPath();
-            ctx.arc(point.x - radius * 0.28, point.y - radius * 0.28, Math.max(1.2, radius * 0.28), 0, Math.PI * 2);
-            ctx.fill();
-
-            if (isSearchHighlighted) {
-                const remaining = clamp((highlightedNodeUntil - performance.now()) / SEARCH_HIGHLIGHT_MS, 0, 1);
-                const sweep = 1 + (1 - remaining) * 0.48;
-                ctx.globalAlpha = 0.72 * remaining;
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2.4;
-                ctx.shadowBlur = 34;
-                ctx.shadowColor = '#00f9ff';
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * (2.45 + sweep), 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            if (isPortfolioHolding) {
-                ctx.globalAlpha = industryDimmed ? 0.28 : 0.9;
-                ctx.strokeStyle = '#ffd700';
-                ctx.lineWidth = 2.3;
-                ctx.shadowBlur = 26;
-                ctx.shadowColor = '#ffd700';
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 2.55, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.globalAlpha = industryDimmed ? 0.14 : 0.32;
-                ctx.lineWidth = 1.2;
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 3.35, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (isPortfolioTopNexus) {
-                ctx.globalAlpha = industryDimmed ? 0.18 : 0.68;
-                ctx.strokeStyle = '#f0abfc';
-                ctx.lineWidth = 1.8;
-                ctx.shadowBlur = 22;
-                ctx.shadowColor = '#f0abfc';
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 2.35, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.globalAlpha = industryDimmed ? 0.12 : 0.28;
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 3.05, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (isPortfolioRepeatedExposure) {
-                ctx.globalAlpha = industryDimmed ? 0.12 : 0.38;
-                ctx.strokeStyle = '#34d399';
-                ctx.lineWidth = 1.2;
-                ctx.shadowBlur = 16;
-                ctx.shadowColor = '#34d399';
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 2.15, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (isPortfolioAdjacent) {
-                ctx.globalAlpha = industryDimmed ? 0.14 : 0.36;
-                ctx.strokeStyle = '#a5f3fc';
-                ctx.lineWidth = 1.1;
-                ctx.shadowBlur = 16;
-                ctx.shadowColor = '#00f9ff';
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 1.9, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            if (isSelected || isHovered) {
-                const pulse = performance.now() < pulseUntil ? 1 + Math.sin(timestamp * 0.006) * 0.08 : 1;
-                ctx.globalAlpha = isSelected ? 0.9 : 0.55;
-                ctx.strokeStyle = isSelected ? '#ffffff' : color;
-                ctx.lineWidth = isSelected ? 2.2 : 1.4;
-                ctx.shadowBlur = isSelected ? 24 : 14;
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 2.05 * pulse, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (isNeighbor) {
-                ctx.globalAlpha = 0.55;
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 1.2;
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 1.65, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (isClusterNode) {
-                ctx.globalAlpha = 0.42;
-                ctx.strokeStyle = '#a5f3fc';
-                ctx.lineWidth = 1;
-                ctx.shadowBlur = 18;
-                ctx.shadowColor = '#00f9ff';
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 1.9, 0, Math.PI * 2);
-                ctx.stroke();
-            } else if (isCorrelationHintNode) {
-                ctx.globalAlpha = 0.24;
-                ctx.strokeStyle = '#f0abfc';
-                ctx.lineWidth = 0.9;
-                ctx.shadowBlur = 12;
-                ctx.shadowColor = '#ff00aa';
-                ctx.beginPath();
-                ctx.arc(point.x, point.y, radius * 1.55, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            ctx.restore();
+            graphRender.drawNode(renderContext, ctx, node, timestamp);
         }
 
         function drawLabels(ctx, frameNodes) {
-            const labelMode = getLabelMode();
-            if (labelMode === 'none') return;
-
-            const labels = [];
-            frameNodes.forEach(node => {
-                if (!node || !shouldDrawLabel(node, labelMode)) return;
-                labels.push(node);
-            });
-
-            labels
-                .sort((a, b) => labelPriority(b) - labelPriority(a))
-                .slice(0, getLabelLimit(labelMode))
-                .forEach(node => {
-                    const position = getNodeLayoutPosition(node);
-                    const fallback = worldToScreen(position.x, position.y);
-                    const point = { x: node._screenX ?? fallback.x, y: node._screenY ?? fallback.y };
-                    const isSelected = selectedNode && selectedNode.id === node.id;
-                    const isNeighbor = focusNeighborIds.has(node.id);
-                    const isClusterNode = Boolean(selectedNode) && activeClusterNodeIds.has(node.id) && !isSelected;
-                    const isHovered = hoveredNode && hoveredNode.id === node.id;
-                    const radius = node._screenRadius ?? getScreenNodeRadius(node);
-                    const rawLabel = getLabelText(node, labelMode);
-                    if (!rawLabel) return;
-                    const isPortfolioHolding = isPortfolioAnalysisActive() && isPortfolioNode(node);
-                    const isPortfolioAdjacent = isPortfolioAnalysisActive() && isPortfolioAdjacentNode(node);
-                    const industryDimmed = isNodeDimmedByIndustryGroup(node);
-                    const industryMatched = isIndustryGroupFilterActive() && nodeMatchesCurrentIndustryGroup(node);
-                    const focusDimmed = !isFocusModeActive() && selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isPortfolioHolding && !isPortfolioAdjacent && !industryMatched;
-                    const alpha = industryDimmed ? 0.18 : focusDimmed ? 0.25 : isPortfolioHolding ? 0.94 : isPortfolioAdjacent ? 0.82 : isClusterNode ? 0.86 : isNeighbor ? 0.82 : 0.72;
-
-                    ctx.save();
-                    const fontSize = labelMode === 'full' ? (isSelected ? 12 : 11) : (isSelected ? 12 : 10);
-                    ctx.font = `${fontSize}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
-                    const label = truncateLabel(ctx, rawLabel, labelMode === 'full' ? 220 : 82);
-                    const width = ctx.measureText(label).width;
-                    const x = point.x - width / 2;
-                    const y = point.y + radius + 14;
-                    ctx.globalAlpha = alpha;
-                    ctx.fillStyle = 'rgba(3, 7, 18, 0.76)';
-                    ctx.strokeStyle = isPortfolioHolding ? 'rgba(255, 215, 0, 0.62)' : isSelected || isHovered || isClusterNode || isPortfolioAdjacent ? 'rgba(0, 249, 255, 0.58)' : 'rgba(255, 255, 255, 0.12)';
-                    ctx.lineWidth = 1;
-                    roundedRect(ctx, x - 5, y - 11, width + 10, 16, 6);
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.fillStyle = isPortfolioHolding ? '#fff7ad' : isSelected ? '#ffffff' : node.color || '#dbeafe';
-                    ctx.globalAlpha = isSelected || isHovered ? 1 : alpha;
-                    ctx.fillText(label, x, y);
-                    ctx.restore();
-                });
+            graphRender.drawLabels(renderContext, ctx, frameNodes);
         }
 
         function getLabelMode() {
-            if (scale < LABEL_TICKER_SCALE) return 'none';
-            if (scale < LABEL_FULL_SCALE) return 'ticker';
-            return 'full';
+            return graphRender.getLabelMode(renderContext);
         }
 
         function getLabelText(node, labelMode) {
-            if (labelMode === 'full') return node.name || node.ticker || '';
-            return node.ticker || node.name || '';
+            return graphRender.getLabelText(renderContext, node, labelMode);
         }
 
         function getLabelLimit(labelMode) {
-            if (labelMode === 'full') return selectedNode ? 68 : 54;
-            return selectedNode ? 52 : 36;
+            return graphRender.getLabelLimit(renderContext, labelMode);
         }
 
         function shouldDrawLabel(node, labelMode) {
-            if (labelMode === 'none') return false;
-            if (selectedNode && selectedNode.id === node.id) return true;
-            if (hoveredNode && hoveredNode.id === node.id) return true;
-            if (isPortfolioAnalysisActive() && isPortfolioHighlightedNode(node)) return true;
-            if (selectedNode && focusNeighborIds.has(node.id)) return true;
-            if (selectedNode && activeClusterNodeIds.has(node.id) && !isFocusModeActive()) return true;
-            if (labelMode === 'full') return true;
-            if (scale > 0.68 && node.degree >= 2) return true;
-            return topLabelIds.has(node.id) || node.degree >= 6;
+            return graphRender.shouldDrawLabel(renderContext, node, labelMode);
         }
 
         function labelPriority(node) {
-            if (selectedNode && selectedNode.id === node.id) return 1000;
-            if (hoveredNode && hoveredNode.id === node.id) return 900;
-            if (isPortfolioNode(node)) return 780 + node.degree;
-            if (isPortfolioTopNexusNode(node)) return 720 + node.degree;
-            if (isPortfolioRepeatedExposureNode(node)) return 670 + node.degree;
-            if (isPortfolioAdjacentNode(node)) return 620 + node.degree;
-            if (focusNeighborIds.has(node.id)) return 500 + node.degree;
-            if (selectedNode && activeClusterNodeIds.has(node.id) && !isFocusModeActive()) return 360 + node.degree;
-            return node.degree * 10 + Math.max(0, 320 - (node.rank || 320)) / 20;
+            return graphRender.labelPriority(renderContext, node);
         }
 
         /* ==============================
@@ -4182,51 +3885,23 @@
         }
 
         function updateScreenCache() {
-            visibleNodes.forEach(node => {
-                const position = getNodeLayoutPosition(node);
-                const point = worldToScreen(position.x, position.y);
-                node._screenX = point.x;
-                node._screenY = point.y;
-                node._screenRadius = getScreenNodeRadius(node);
-            });
+            graphRender.updateScreenCache(renderContext);
         }
 
         function isNodeInFrame(node) {
-            return graphViewport.isNodeInFrame(node, {
-                canvasWidth,
-                canvasHeight,
-                frameMargin: FRAME_MARGIN,
-                scale
-            });
+            return graphRender.isNodeInFrame(renderContext, node);
         }
 
         function shouldDrawLink(link) {
-            const isFocused = selectedNode && focusLinkKeys.has(link.key);
-            const industryFilterActive = isIndustryGroupFilterActive();
-            const touchesIndustryGroup = industryFilterActive && linkTouchesCurrentIndustryGroup(link);
-            const isPortfolioLink = isPortfolioAnalysisActive() && portfolioEdgeKeys.has(link.key);
-            if (signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && !isPortfolioLink && link.strength < getWeakEdgeThreshold()) return false;
-
-            const sourceX = link.source._screenX;
-            const sourceY = link.source._screenY;
-            const targetX = link.target._screenX;
-            const targetY = link.target._screenY;
-            const minX = Math.min(sourceX, targetX) - FRAME_MARGIN;
-            const maxX = Math.max(sourceX, targetX) + FRAME_MARGIN;
-            const minY = Math.min(sourceY, targetY) - FRAME_MARGIN;
-            const maxY = Math.max(sourceY, targetY) + FRAME_MARGIN;
-            return maxX >= 0 && minX <= canvasWidth && maxY >= 0 && minY <= canvasHeight;
+            return graphRender.shouldDrawLink(renderContext, link);
         }
 
         function getWeakEdgeThreshold() {
-            if (scale < 0.3) return 0.42;
-            if (scale < 0.46) return 0.32;
-            if (scale < 0.62) return 0.2;
-            return 0;
+            return graphRender.getWeakEdgeThreshold(renderContext);
         }
 
         function getScreenNodeRadius(node) {
-            return graphViewport.getScreenNodeRadius(node, scale);
+            return graphRender.getScreenNodeRadius(renderContext, node);
         }
 
         function toggleOrbitMode() {
@@ -4399,31 +4074,11 @@
         }
 
         function roundedRect(ctx, x, y, width, height, radius) {
-            const r = Math.min(radius, width / 2, height / 2);
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + width, y, x + width, y + height, r);
-            ctx.arcTo(x + width, y + height, x, y + height, r);
-            ctx.arcTo(x, y + height, x, y, r);
-            ctx.arcTo(x, y, x + width, y, r);
-            ctx.closePath();
+            graphRender.roundedRect(ctx, x, y, width, height, radius);
         }
 
         function truncateLabel(ctx, text, maxWidth) {
-            if (ctx.measureText(text).width <= maxWidth) return text;
-            const ellipsis = '...';
-            let low = 0;
-            let high = text.length;
-            while (low < high) {
-                const mid = Math.ceil((low + high) / 2);
-                const candidate = text.slice(0, mid) + ellipsis;
-                if (ctx.measureText(candidate).width <= maxWidth) {
-                    low = mid;
-                } else {
-                    high = mid - 1;
-                }
-            }
-            return text.slice(0, low).trimEnd() + ellipsis;
+            return graphRender.truncateLabel(ctx, text, maxWidth);
         }
 
         loadData();

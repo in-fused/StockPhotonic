@@ -74,6 +74,8 @@ Status: completed. Layout mode validation, active-mode checks, fit-node selectio
 
 Move draw scheduling and canvas rendering into `/js/graph/render.js`. Preserve current draw order, label decisions, opacity, colors, and orbit rendering behavior.
 
+Status: completed. Canvas sizing, draw scheduling, draw order, graph primitives, labels, frame/link checks, and label helpers now live in `/js/graph/render.js` while `index.html` retains graph state and wrapper functions.
+
 ### Phase R7: Extract Intelligence Engines
 
 Move clusters, industry correlations, and portfolio nexus logic into `/js/intelligence/`. Keep all calculations based only on the currently loaded static graph data.

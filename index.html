@@ -413,6 +413,7 @@
     <script src="js/utils/math.js"></script>
     <script src="js/utils/formatting.js"></script>
     <script src="js/utils/dom.js"></script>
+    <script src="js/core/data.js"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -420,6 +421,10 @@
 
         if (!window.StockPhotonicUtils) {
             console.error('Utilities failed to load');
+        }
+
+        if (!window.StockPhotonicData) {
+            throw new Error('StockPhotonicData failed to load');
         }
 
         const StockPhotonicUtils = window.StockPhotonicUtils || {};
@@ -438,6 +443,13 @@
             escapeHtml,
             escapeInlineJsString
         } = StockPhotonicUtils.dom || {};
+        const {
+            loadDatasets,
+            deriveIndustryGroup,
+            createGraphIndex,
+            sumMarketCap,
+            getDatasetTrustMetrics
+        } = window.StockPhotonicData;
 
         const {
             CACHE_BUST,
@@ -568,20 +580,9 @@
 
         async function loadData() {
             try {
-                const [compRes, connRes] = await Promise.all([
-                    fetch(`data/companies.json?v=${CACHE_BUST}`),
-                    fetch(`data/connections.json?v=${CACHE_BUST}`)
-                ]);
-
-                if (!compRes.ok || !connRes.ok) {
-                    throw new Error('Dataset fetch failed');
-                }
-
-                companies = (await compRes.json()).map(company => ({
-                    ...company,
-                    industryGroup: deriveIndustryGroup(company)
-                }));
-                connections = await connRes.json();
+                const dataset = await loadDatasets(CACHE_BUST, INDUSTRY_GROUP_RULES);
+                companies = dataset.companies;
+                connections = dataset.connections;
 
                 document.getElementById('node-count').innerText = `${companies.length} NODES`;
                 document.getElementById('connection-count').innerText = `${connections.length} CONNECTIONS`;
@@ -638,28 +639,8 @@
                 .join('');
         }
 
-        function deriveIndustryGroup(company) {
-            if (!company) return 'Other';
-
-            const sector = String(company.sector || '').toLowerCase();
-            const descriptorText = [
-                company.industry,
-                company.name,
-                company.ticker
-            ].map(value => String(value || '').toLowerCase()).join(' ');
-
-            const matchedRule = INDUSTRY_GROUP_RULES.find(rule => {
-                const sectorMatches = !rule.sectorKeywords?.length ||
-                    rule.sectorKeywords.some(keyword => sector.includes(keyword));
-                const keywordMatches = rule.keywords.some(keyword => descriptorText.includes(keyword));
-                return sectorMatches && keywordMatches;
-            });
-
-            return matchedRule?.group || company.industry || 'Other';
-        }
-
         function getCompanyIndustryGroup(company) {
-            return company?.industryGroup || deriveIndustryGroup(company);
+            return company?.industryGroup || deriveIndustryGroup(company, INDUSTRY_GROUP_RULES);
         }
 
         /* ==============================
@@ -668,21 +649,11 @@
 
         function initGraphData() {
             nodeById = new Map();
-            degreeById = new Map();
-            adjacencyById = new Map();
+            const graphIndex = createGraphIndex(companies, connections);
+            degreeById = graphIndex.degreeById;
+            adjacencyById = graphIndex.adjacencyById;
             graphIntelligenceCache = new Map();
             activeClusterNodeIds = new Set();
-
-            companies.forEach(company => {
-                degreeById.set(company.id, 0);
-                adjacencyById.set(company.id, []);
-            });
-
-            connections.forEach(connection => {
-                if (!degreeById.has(connection.source) || !degreeById.has(connection.target)) return;
-                degreeById.set(connection.source, degreeById.get(connection.source) + 1);
-                degreeById.set(connection.target, degreeById.get(connection.target) + 1);
-            });
 
             const sectors = [...new Set(companies.map(company => company.sector || 'Other'))].sort();
             const sectorAnchors = new Map();
@@ -1580,7 +1551,7 @@
                 sectorDistribution: getCompanyDistribution(nodesForStats, node => node.sector || 'Other').slice(0, 6),
                 industryGroupDistribution: getCompanyDistribution(nodesForStats, node => getCompanyIndustryGroup(node) || 'Other').slice(0, 6),
                 portfolioExposure: getPortfolioExposureSummary(),
-                trust: getDatasetTrustMetrics()
+                trust: getDatasetTrustMetrics(companies, connections)
             };
         }
 
@@ -4531,27 +4502,8 @@
             return direction * magnitude;
         }
 
-        function sumMarketCap(items) {
-            return items.reduce((sum, item) => sum + (Number(item.market_cap) || 0), 0);
-        }
-
-        function getDatasetTrustMetrics() {
-            const highConfidenceCount = connections.filter(connection => Number(connection.confidence) >= 4).length;
-            const latestVerifiedDate = connections.reduce((latest, connection) => {
-                const date = typeof connection.verified_date === 'string' ? connection.verified_date : '';
-                return date > latest ? date : latest;
-            }, '');
-
-            return {
-                companyCount: companies.length,
-                connectionCount: connections.length,
-                highConfidencePercent: connections.length ? Math.round((highConfidenceCount / connections.length) * 100) : 0,
-                latestVerifiedDate
-            };
-        }
-
         function updateDatasetTrustPanel() {
-            const metrics = getDatasetTrustMetrics();
+            const metrics = getDatasetTrustMetrics(companies, connections);
             document.getElementById('trust-company-count').innerText = `${metrics.companyCount} COMPANIES`;
             document.getElementById('trust-connection-count').innerText = `${metrics.connectionCount} EDGES`;
             document.getElementById('trust-high-confidence').innerText = `${metrics.highConfidencePercent}% CONF >=4`;

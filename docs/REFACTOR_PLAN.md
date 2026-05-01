@@ -50,9 +50,13 @@ Status: completed. Constants and static config tables now live in `/js/core/conf
 
 Move pure formatting, math, escaping, and geometry helpers into `/js/utils/`. Do not move functions that read or mutate app state in this phase.
 
+Status: completed. Pure math, formatting, and escaping helpers now live in `/js/utils/` and are exposed through `window.StockPhotonicUtils`.
+
 ### Phase R3: Extract Data Loading and Normalization
 
 Move JSON fetches, data normalization, degree/adjacency construction, and related data maps into `/js/core/data.js`. Preserve the current static JSON paths and cache-bust behavior.
+
+Status: completed. Dataset fetches, company normalization, degree/adjacency map seeding, market-cap totals, and dataset trust metrics now live in `/js/core/data.js` and are exposed through `window.StockPhotonicData`.
 
 ### Phase R4: Extract Graph Viewport / Canvas Interaction Helpers
 

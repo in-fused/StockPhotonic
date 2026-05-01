@@ -410,6 +410,10 @@
     </div>
 
     <script>
+        /* ==============================
+           CONSTANTS
+        ================================ */
+
         const CACHE_BUST = Date.now();
         const EDGE_COLORS = {
             partnership: '#ff00aa',
@@ -645,6 +649,10 @@
             }
         };
 
+        /* ==============================
+           APP STATE
+        ================================ */
+
         let companies = [];
         let connections = [];
         let nodes = [];
@@ -714,6 +722,10 @@
             moved: false
         };
 
+        /* ==============================
+           DATA LOADING
+        ================================ */
+
         async function loadData() {
             try {
                 const [compRes, connRes] = await Promise.all([
@@ -764,6 +776,10 @@
             }
         }
 
+        /* ==============================
+           FILTERS
+        ================================ */
+
         function buildSectorFilter() {
             const select = document.getElementById('sector-filter');
             const sectors = [...new Set(companies.map(company => company.sector).filter(Boolean))].sort();
@@ -805,6 +821,10 @@
         function getCompanyIndustryGroup(company) {
             return company?.industryGroup || deriveIndustryGroup(company);
         }
+
+        /* ==============================
+           GRAPH INITIALIZATION
+        ================================ */
 
         function initGraphData() {
             nodeById = new Map();
@@ -938,6 +958,10 @@
                 }
             }
         }
+
+        /* ==============================
+           CANVAS INTERACTIONS
+        ================================ */
 
         function setupCanvasInteractions() {
             const canvas = document.getElementById('graph-canvas');
@@ -1098,6 +1122,10 @@
             if (event.deltaMode === 2) delta *= Math.max(canvasHeight, 1);
             return clamp(delta, -WHEEL_DELTA_LIMIT, WHEEL_DELTA_LIMIT);
         }
+
+        /* ==============================
+           GRAPH RENDERING
+        ================================ */
 
         function resizeCanvas() {
             const canvas = document.getElementById('graph-canvas');
@@ -1516,6 +1544,10 @@
             return node.degree * 10 + Math.max(0, 320 - (node.rank || 320)) / 20;
         }
 
+        /* ==============================
+           SIDEBAR RENDERING
+        ================================ */
+
         function selectNode(node) {
             stopOrbitForInteraction();
             ensureIndustryGroupFilterAllowsNode(node);
@@ -1783,6 +1815,10 @@
                 `;
             }).join('');
         }
+
+        /* ==============================
+           PORTFOLIO INTELLIGENCE
+        ================================ */
 
         function getPortfolioExposureSummary() {
             const active = isPortfolioAnalysisActive();
@@ -2222,6 +2258,10 @@
             `;
         }
 
+        /* ==============================
+           INDUSTRY CORRELATION
+        ================================ */
+
         function getIndustryGroupCorrelations(sourceLinks = null) {
             const linksForCorrelation = Array.isArray(sourceLinks)
                 ? sourceLinks
@@ -2468,6 +2508,10 @@
             if (!select) return '';
             return [...select.options].some(option => option.value === value) ? value : '';
         }
+
+        /* ==============================
+           GRAPH INTELLIGENCE / CLUSTERS
+        ================================ */
 
         function getSharedConnections(nodeId) {
             const node = nodeById.get(nodeId) || getNodeFromDomId(nodeId);
@@ -3493,6 +3537,10 @@
             if (node) selectNode(node);
         }
 
+        /* ==============================
+           LAYOUT MODES
+        ================================ */
+
         function setLayoutMode(mode) {
             stopOrbitForInteraction();
             layoutMode = getValidLayoutMode(mode);
@@ -3742,6 +3790,10 @@
                 fitGraph();
             }
         }
+
+        /* ==============================
+           SEARCH
+        ================================ */
 
         function setupSearchInteractions() {
             const input = document.getElementById('search-input');
@@ -4036,6 +4088,10 @@
             if (Number.isFinite(numericId) && nodeById.has(numericId)) return nodeById.get(numericId);
             return nodeById.get(id);
         }
+
+        /* ==============================
+           UTILITIES
+        ================================ */
 
         function fitGraph(animate = true, options = {}) {
             if (!options.keepOrbit) stopOrbitForInteraction();

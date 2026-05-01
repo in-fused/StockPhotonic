@@ -5,6 +5,8 @@
 **Current Version:** v6.3 / Company Nexus View
 **Status:** Current main uses a smaller credible static dataset: 60 real companies and 117 curated connections. Immediate work should stay focused on user-facing product intelligence, graph exploration, source coverage, and reviewable industry-group foundations.
 
+**Architecture Prep:** A future modular refactor is planned. The current prep phase only adds section markers in `index.html` and documents the migration path in `docs/REFACTOR_PLAN.md`; no behavior change is intended. Use xHigh reasoning for actual extraction phases.
+
 ---
 
 ## 1. Current State Summary

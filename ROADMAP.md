@@ -4,6 +4,8 @@
 
 **Current Version**: v6.3 / Company Nexus View (single-file Photonic Canvas app loading 60 real companies and 117 curated connections)
 
+**Architecture Prep Note**: A future modular refactor is planned, but the current phase only adds `index.html` section markers and `docs/REFACTOR_PLAN.md`. No behavior change is intended; actual JavaScript extraction phases should use xHigh reasoning and stay independently reviewable.
+
 ---
 
 ## Phase 0: Static Prototype Foundation (Completed Baseline – April 2026)

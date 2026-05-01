@@ -158,6 +158,7 @@ Users understand not just direct connections, but which companies move together 
   - Preserved the manual review requirement before any candidate becomes production data.
 - [ ] Phase A: Build a source registry and ingestion backlog with source tiers, relationship categories, required metadata, review status, and validation expectations.
 - [ ] Phase B: Add a ticker universe from official or exchange-sourced listings as candidate records, not direct production company writes.
+- [x] Phase D1: Add `data/candidates/official_ticker_universe.json` as a candidate-only ticker-universe foundation with dry-run validation support. This file is not loaded by the app and does not write production company or connection data.
 - [ ] Phase C: Add an SEC filings fetch/cache layer using official SEC APIs, fair-access request behavior, proper identifying `User-Agent`, retries/backoff, and local caching.
 - [ ] Phase D: Add EX-21 subsidiary extraction for candidate ownership records.
 - [ ] Phase E: Add a 13F ownership graph layer for institutional ownership and shared-holder exposure candidates.
@@ -181,7 +182,7 @@ Users understand not just direct connections, but which companies move together 
 
 **Deliverable**: You can build reviewed, source-backed candidate graph updates from SEC and official-source inputs. Friends can suggest connections that appear only after source capture, validation, and manual review.
 
-**Candidate Layer Rule**: `data/candidates/` is a staging area only. Candidate records can be loaded, validated, and previewed by scripts, but production data remains unchanged until a future reviewed writer is explicitly implemented. The intended flow is SEC-first source discovery -> candidate JSON -> dry-run validation -> manual review -> production validation -> durable write.
+**Candidate Layer Rule**: `data/candidates/` is a staging area only. Candidate records can be loaded, validated, and previewed by scripts, but production data remains unchanged until a future reviewed writer is explicitly implemented. The intended flow is SEC-first source discovery -> candidate JSON -> dry-run validation -> duplicate checks -> manual review -> production validation -> explicit future writer phase -> durable write.
 
 ---
 

@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "description": "Candidate-only staging file for future official public-company ticker coverage. This file is not loaded by the app and must not be promoted directly into production graph data.",
+    "status": "candidate_only",
+    "production_write_allowed": false,
+    "app_load_allowed": false,
+    "source_policy_notes": [
+      "Use only reviewable public sources such as official exchange listing data, SEC company data, company investor relations pages, or other durable official public sources.",
+      "Do not add guessed tickers, fake companies, inferred listings, placeholder source URLs, or unsourced records.",
+      "Keep ticker-universe records in candidate review until source validation, duplicate checks, manual review, production validation, and an explicit future writer phase are complete."
+    ],
+    "source_requirements": [
+      "ticker",
+      "name",
+      "exchange",
+      "asset_type",
+      "source_type",
+      "source_tier",
+      "source_url",
+      "capture_date",
+      "review_status"
+    ],
+    "candidate_schema_example": {
+      "ticker": "UPPERCASE_PUBLIC_TICKER",
+      "name": "Official public company legal or listing name",
+      "exchange": "Official exchange or listing venue",
+      "asset_type": "public_company",
+      "source_type": "official_exchange_listing",
+      "source_tier": 1,
+      "source_url": "Official source URL beginning with https://",
+      "capture_date": "YYYY-MM-DD",
+      "review_status": "pending"
+    }
+  },
+  "candidates": []
+}

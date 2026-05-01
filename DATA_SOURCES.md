@@ -1,6 +1,6 @@
 # StockPhotonic Data Sources & Provenance
 
-**Last Updated**: April 30, 2026
+**Last Updated**: May 1, 2026
 
 **Current Version**: v5.8 / Phase 2.2 Derived Industry-Group Intelligence Foundations
 
@@ -179,6 +179,12 @@ Expansion principles:
 - SEC access must respect fair-access expectations, including caching, backoff, rate discipline, and a proper identifying `User-Agent`.
 - SEC filings should be treated as the source of truth for durable relationship records when a filing directly supports the edge.
 - Large expansion work should begin in source registries, candidate files, or review queues instead of direct writes to `data/companies.json` or `data/connections.json`.
+
+### Official Ticker Universe Candidate File
+
+`data/candidates/official_ticker_universe.json` is a review-only staging file for future public-company candidates. The app must not load it yet, and candidate validation must not promote it into `data/companies.json`.
+
+Any future record in this file should start with `review_status: "pending"` and include ticker, company name, exchange, public-company asset type, source type, source tier, source URL, and capture date. Promotion to production requires source validation, duplicate checks against existing companies, manual review, normal production validation, and a separate future writer phase.
 
 Recommended sequence:
 

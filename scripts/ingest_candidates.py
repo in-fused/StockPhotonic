@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Validate and dry-run candidate connection promotion.
+Validate and dry-run candidate connection and ticker-universe inputs.
 
 Run from the repository root:
     python scripts/ingest_candidates.py
 
 This script never writes production data. It validates candidate records under
-data/candidates/ and prints a promotion preview for records that are eligible
-for future manual review.
+data/candidates/ and prints a promotion preview for connection records that are
+eligible for future manual review. Ticker-universe inputs are validation-only
+and cannot be promoted by this script.
 """
 
 from __future__ import annotations
@@ -31,10 +32,25 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPANIES_PATH = ROOT / "data" / "companies.json"
 CONNECTIONS_PATH = ROOT / "data" / "connections.json"
 CANDIDATE_CONNECTIONS_PATH = ROOT / "data" / "candidates" / "candidate_connections.json"
+OFFICIAL_TICKER_UNIVERSE_PATH = (
+    ROOT / "data" / "candidates" / "official_ticker_universe.json"
+)
 
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 TICKER_PATTERN = re.compile(r"^[A-Z][A-Z0-9]{0,4}([.-][A-Z])?$")
 URL_PATTERN = re.compile(r"^https?://\S+$", re.IGNORECASE)
+REQUIRED_TICKER_UNIVERSE_FIELDS: tuple[str, ...] = (
+    "ticker",
+    "name",
+    "exchange",
+    "asset_type",
+    "source_type",
+    "source_tier",
+    "source_url",
+    "capture_date",
+    "review_status",
+)
+SUPPORTED_TICKER_ASSET_TYPES = {"public_company"}
 
 
 def load_json(path: Path) -> Any:
@@ -53,6 +69,40 @@ def load_candidates(path: Path = CANDIDATE_CONNECTIONS_PATH) -> list[dict[str, A
             raise ValueError(f"Candidate {index}: record must be an object.")
         normalized_candidates.append(candidate)
     return normalized_candidates
+
+
+def load_official_ticker_universe(
+    path: Path = OFFICIAL_TICKER_UNIVERSE_PATH,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        raise ValueError(f"{path} must contain a JSON object.")
+
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        raise ValueError(f"{path}: metadata must be an object.")
+
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list):
+        raise ValueError(f"{path}: candidates must be a JSON array.")
+
+    normalized_candidates: list[dict[str, Any]] = []
+    for index, candidate in enumerate(candidates):
+        if not isinstance(candidate, dict):
+            raise ValueError(f"Ticker candidate {index}: record must be an object.")
+        normalized_candidates.append(candidate)
+
+    return metadata, normalized_candidates
+
+
+def detect_candidate_kind(path: Path) -> str:
+    if path.name == OFFICIAL_TICKER_UNIVERSE_PATH.name:
+        return "official-ticker-universe"
+
+    payload = load_json(path)
+    if isinstance(payload, dict) and "candidates" in payload:
+        return "official-ticker-universe"
+    return "connections"
 
 
 def build_company_ticker_map() -> dict[str, int]:
@@ -294,6 +344,122 @@ def validate_candidate(
     ]
 
 
+def ticker_candidate_label(candidate: dict[str, Any], index: int) -> str:
+    ticker = candidate.get("ticker", "?")
+    name = candidate.get("name", "?")
+    return f"Ticker candidate {index} ({ticker}, {name})"
+
+
+def validate_official_ticker_universe_metadata(
+    metadata: dict[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+
+    if metadata.get("status") != "candidate_only":
+        errors.append("metadata.status must be candidate_only.")
+    if metadata.get("production_write_allowed") is not False:
+        errors.append("metadata.production_write_allowed must be false.")
+    if metadata.get("app_load_allowed") is not False:
+        errors.append("metadata.app_load_allowed must be false.")
+
+    source_requirements = metadata.get("source_requirements")
+    if not isinstance(source_requirements, list) or not source_requirements:
+        errors.append("metadata.source_requirements must list required source fields.")
+    else:
+        missing_source_requirements = [
+            field for field in REQUIRED_TICKER_UNIVERSE_FIELDS
+            if field not in source_requirements
+        ]
+        if missing_source_requirements:
+            errors.append(
+                "metadata.source_requirements must include: "
+                + ", ".join(missing_source_requirements)
+                + "."
+            )
+
+    return errors
+
+
+def validate_official_ticker_candidate(
+    candidate: dict[str, Any],
+    *,
+    index: int,
+    production_tickers: set[str],
+    seen_tickers: Counter[str],
+) -> list[str]:
+    errors: list[str] = []
+
+    missing_fields = [
+        field for field in REQUIRED_TICKER_UNIVERSE_FIELDS
+        if field not in candidate
+    ]
+    if missing_fields:
+        errors.append(f"Missing required field(s): {', '.join(missing_fields)}.")
+
+    ticker = normalize_ticker(candidate.get("ticker"), "ticker", errors)
+    if ticker:
+        if isinstance(candidate.get("ticker"), str) and candidate["ticker"].strip() != ticker:
+            errors.append("ticker must be uppercase.")
+        seen_tickers[ticker] += 1
+        if seen_tickers[ticker] > 1:
+            errors.append("duplicate ticker found in official ticker universe candidate file.")
+        if ticker in production_tickers:
+            errors.append("ticker already exists in production companies.json.")
+
+    name = candidate.get("name")
+    if not isinstance(name, str) or not name.strip():
+        errors.append("name must be a non-empty string.")
+
+    exchange = candidate.get("exchange")
+    if not isinstance(exchange, str) or not exchange.strip():
+        errors.append("exchange must be a non-empty string.")
+
+    asset_type = candidate.get("asset_type")
+    if asset_type not in SUPPORTED_TICKER_ASSET_TYPES:
+        supported = ", ".join(sorted(SUPPORTED_TICKER_ASSET_TYPES))
+        errors.append(f"asset_type must be one of: {supported}.")
+
+    source_type = candidate.get("source_type")
+    if not isinstance(source_type, str) or not source_type.strip():
+        errors.append("source_type must be a non-empty string.")
+        source_type_key = ""
+    else:
+        source_type_key = source_type.strip().lower()
+
+    source_tier = candidate.get("source_tier")
+    if not isinstance(source_tier, int) or isinstance(source_tier, bool):
+        errors.append("source_tier must be an integer.")
+    elif source_tier not in {1, 2, 3}:
+        errors.append("source_tier must be 1, 2, or 3.")
+    elif source_type_key in SOURCE_REGISTRY and source_tier != SOURCE_REGISTRY[source_type_key]["tier"]:
+        expected_tier = SOURCE_REGISTRY[source_type_key]["tier"]
+        errors.append(
+            f"source_tier {source_tier} does not match {source_type_key!r} tier {expected_tier}."
+        )
+
+    source_url = candidate.get("source_url")
+    if not isinstance(source_url, str) or not source_url.strip():
+        errors.append("source_url is required.")
+    elif not URL_PATTERN.match(source_url.strip()):
+        errors.append("source_url must start with http:// or https://.")
+
+    validate_date_or_empty(
+        candidate.get("capture_date"),
+        "capture_date",
+        errors,
+        required=True,
+    )
+
+    review_status = candidate.get("review_status")
+    if review_status != "pending":
+        errors.append("review_status must be pending.")
+
+    return [
+        f"{ticker_candidate_label(candidate, index)}: {error}"
+        for error in errors
+    ]
+
+
 def promote_candidate_to_connection(
     candidate: dict[str, Any],
     ticker_to_id: dict[str, int],
@@ -339,6 +505,30 @@ def validate_candidates(
     return valid_candidates, errors
 
 
+def validate_official_ticker_universe(
+    metadata: dict[str, Any],
+    candidates: list[dict[str, Any]],
+    production_tickers: set[str],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    valid_candidates: list[dict[str, Any]] = []
+    errors = validate_official_ticker_universe_metadata(metadata)
+    seen_tickers: Counter[str] = Counter()
+
+    for index, candidate in enumerate(candidates):
+        candidate_errors = validate_official_ticker_candidate(
+            candidate,
+            index=index,
+            production_tickers=production_tickers,
+            seen_tickers=seen_tickers,
+        )
+        if candidate_errors:
+            errors.extend(candidate_errors)
+        else:
+            valid_candidates.append(candidate)
+
+    return valid_candidates, errors
+
+
 def print_summary(
     *,
     candidate_count: int,
@@ -372,6 +562,27 @@ def print_summary(
     print("\nDry run only; production data files were not changed.")
 
 
+def print_ticker_universe_summary(
+    *,
+    candidate_count: int,
+    valid_candidates: list[dict[str, Any]],
+    validation_errors: list[str],
+) -> None:
+    print("StockPhotonic official ticker universe candidate validation")
+    print(f"Candidates loaded: {candidate_count}")
+    print(f"Valid ticker candidates: {len(valid_candidates)}")
+    print(f"Validation errors: {len(validation_errors)}")
+    print("Production writes: 0")
+    print("Promotion previews: disabled")
+
+    if validation_errors:
+        print("\nRejected")
+        for error in validation_errors:
+            print(f"- {error}")
+
+    print("\nCandidate-only validation; production data files were not changed.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Validate and dry-run StockPhotonic candidate ingestion."
@@ -387,9 +598,34 @@ def main() -> int:
         action="store_true",
         help="Print promotion previews for valid candidates.",
     )
+    parser.add_argument(
+        "--candidate-kind",
+        choices=("auto", "connections", "official-ticker-universe"),
+        default="auto",
+        help="Candidate input kind. Auto-detects official_ticker_universe.json.",
+    )
     args = parser.parse_args()
 
     try:
+        candidate_kind = args.candidate_kind
+        if candidate_kind == "auto":
+            candidate_kind = detect_candidate_kind(args.candidates)
+
+        if candidate_kind == "official-ticker-universe":
+            metadata, candidates = load_official_ticker_universe(args.candidates)
+            production_tickers = set(build_company_ticker_map())
+            valid_candidates, validation_errors = validate_official_ticker_universe(
+                metadata,
+                candidates,
+                production_tickers,
+            )
+            print_ticker_universe_summary(
+                candidate_count=len(candidates),
+                valid_candidates=valid_candidates,
+                validation_errors=validation_errors,
+            )
+            return 1 if validation_errors else 0
+
         candidates = load_candidates(args.candidates)
         ticker_to_id = build_company_ticker_map()
         existing_keys = existing_relationship_keys(ticker_to_id)

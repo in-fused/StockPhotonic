@@ -1,6 +1,6 @@
 # StockPhotonic Source Registry
 
-**Last Updated**: April 30, 2026
+**Last Updated**: May 1, 2026
 
 This registry defines the allowed source types, source tiers, relationship categories, and metadata requirements for candidate ingestion. It is a review foundation only. Candidate records must not be treated as production graph data until they pass validation and manual review.
 
@@ -66,6 +66,24 @@ Every candidate connection must include:
 - `review_status`
 
 `review_status` starts as `pending`. Missing SEC-only fields such as `filing_type` may be an empty string only for non-SEC source types.
+
+## Candidate Company And Ticker Universe Metadata
+
+`data/candidates/official_ticker_universe.json` stages future real public-company candidates only. It must not be loaded by the app, and it must not directly write to `data/companies.json` or `data/connections.json`.
+
+Candidate ticker-universe records, when present, must include:
+
+- `ticker`
+- `name`
+- `exchange`
+- `asset_type`
+- `source_type`
+- `source_tier`
+- `source_url`
+- `capture_date`
+- `review_status`
+
+`asset_type` should be `public_company` until another asset type has explicit schema and validation support. `review_status` starts as `pending`. Future production promotion requires source validation, duplicate checks, manual review, production validation, and an explicit writer phase that does not exist yet.
 
 ---
 

@@ -1,6 +1,6 @@
 # StockPhotonic Data Expansion Plan
 
-**Last Updated**: April 30, 2026
+**Last Updated**: May 1, 2026
 
 **Purpose**: Prepare StockPhotonic for many more real US-listed companies and source-backed relationships without adding unverified companies, unsupported connections, or placeholder source records.
 
@@ -105,6 +105,12 @@ Create a registry of allowed source types, source tiers, fetch rules, required m
 
 Add a ticker universe from official or exchange-sourced listings in candidate form first. Do not write the full universe directly into `data/companies.json`.
 
+### Phase D1: Official Ticker Universe Candidate Foundation
+
+`data/candidates/official_ticker_universe.json` is the staging foundation for future broad public-company coverage. It is candidate-only, is not loaded by the app, and must not directly modify `data/companies.json` or `data/connections.json`.
+
+Production promotion from this file requires source validation, duplicate checks, manual review, production validation, and an explicit future writer phase. The current candidate ingestion support validates the file as a dry run only.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.
@@ -137,6 +143,7 @@ Required guardrails:
 - Third-party data must preserve original source attribution and must not obscure the underlying filing, disclosure, or registry.
 - Datasets must pass validation before commit.
 - Large expansions should start in candidate files or review queues, not directly in production data.
+- Broad market coverage begins with `data/candidates/official_ticker_universe.json`, but that file remains review/staging only until a future reviewed writer phase exists.
 - Manual review remains required before durable writes to `data/companies.json` or `data/connections.json`.
 - Never add fake companies, fake tickers, inferred connections, placeholder source URLs, or unsupported relationship labels.
 - Keep experimental layers separate from the core graph until schema, validation, and source requirements are settled.
@@ -160,4 +167,3 @@ Before an extracted relationship is eligible for manual review, it should includ
 - Reviewer status.
 
 Production records should only be created after a reviewer confirms the companies, relationship type, source support, and current validation rules.
-

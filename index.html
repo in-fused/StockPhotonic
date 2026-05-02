@@ -575,7 +575,7 @@
                         <div class="source-workbench-label mb-2">Local Pipeline Guide / Candidate Review Area</div>
                         <h2 id="source-workbench-title" class="font-display text-3xl md:text-4xl font-semibold">Source Intelligence Workbench</h2>
                         <p class="text-sm md:text-base text-white/64 mt-2 max-w-4xl">
-                            Read-only visibility for the SEC ingestion pipeline. This workbench explains local scripts, candidate-only files, and review boundaries; it is not production graph data and not live backend automation yet.
+                            Read-only visibility for the SEC ingestion pipeline. This workbench explains local scripts, scheduled preview plans, candidate-only files, and review boundaries; it is not production graph data and not live backend automation yet.
                         </p>
                     </div>
 
@@ -611,9 +611,11 @@
                 <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
                     <div class="source-workbench-label mb-3">Pipeline Status</div>
                     <p class="text-sm text-white/62 mb-4">
-                        The current path moves from source lookup and cache planning into review-only candidate files and promotion previews. Production review and promotion are future phases.
+                        The current path moves from scheduled preview planning into source lookup, review-only candidate files, promotion previews, and validation. Production review and promotion stay manual.
                     </p>
                     <div class="pipeline-flow" aria-label="SEC ingestion pipeline status">
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">scheduled preview</span>
+                        <span class="pipeline-arrow">-&gt;</span>
                         <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">SEC lookup/cache</span>
                         <span class="pipeline-arrow">-&gt;</span>
                         <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">filing plan</span>
@@ -641,6 +643,8 @@
                     <div class="space-y-2 font-mono text-xs text-cyan-50/78">
                         <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/official_ticker_universe.json</div>
                         <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/cik_mappings.json</div>
+                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_jobs.json</div>
+                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_schedule.json</div>
                         <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_relationship_candidates.json</div>
                     </div>
                     <p class="text-sm text-white/58 mt-4">
@@ -772,6 +776,36 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 </div>
             </div>
 
+            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+                    <div>
+                        <div class="source-workbench-label mb-2">Scheduled Run Preview</div>
+                        <p class="text-sm text-white/60">Preview the schedule, job command, candidate generation command, policy gate, validation, and optional commit plan without executing writes.</p>
+                    </div>
+                    <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
+                        Planning only; no automatic promotion.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">1.</span> Preview scheduled path and next command</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-10', this)" aria-label="Copy SEC scheduled run preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-10">python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Include candidate-only commit plan</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-11', this)" aria-label="Copy SEC scheduled run preview command with commit plan"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-11">python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview --include-commit-plan</code></pre>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-5">
                 <div class="xl:col-span-5 source-workbench-panel rounded-2xl p-5">
                     <div class="source-workbench-label mb-3">Safety Notes</div>
@@ -819,7 +853,7 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
             <div class="source-workbench-panel rounded-2xl p-5 mt-5">
                 <div class="source-workbench-label mb-3">Future Automation</div>
                 <p class="text-sm text-white/62">
-                    Future phases may add a local backend command runner, admin-only controls, a hosted worker/job queue, or API-backed ingestion. This phase does not implement those capabilities.
+                    The scheduled preview is a local planner only. Future phases may add a local backend command runner, admin-only controls, a hosted worker/job queue, or API-backed ingestion; this phase does not implement those capabilities.
                 </p>
             </div>
             </section>

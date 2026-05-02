@@ -1,0 +1,61 @@
+{
+  "metadata": {
+    "description": "Candidate-only local SEC scheduled-run plan. This file describes reviewed local preview cadence and safe command sequencing, but it is not loaded by the app and does not execute jobs.",
+    "status": "candidate_only",
+    "schedule_scope": "local_schedule_only",
+    "production_write_allowed": false,
+    "app_load_allowed": false,
+    "auto_execution_enabled": false,
+    "auto_promotion_enabled": false,
+    "default_mode": "dry-run/preview",
+    "source_policy_notes": [
+      "Schedules are local planning records only.",
+      "No browser, backend, hosted worker, or automatic job runner reads this file.",
+      "Network calls require a human to run a printed command with --allow-network and --user-agent.",
+      "Review-only candidate writes require a human to run a printed command with --write-candidates.",
+      "Production promotion remains manual and must not be triggered by this schedule."
+    ]
+  },
+  "schedules": [
+    {
+      "id": "weekly_mega_cap_core_preview",
+      "description": "Weekly local preview plan for the approved mega-cap SEC job.",
+      "job_id": "mega_cap_core",
+      "cadence": "weekly",
+      "timezone": "America/New_York",
+      "local_time": "09:00",
+      "review_status": "approved_for_local_preview",
+      "enabled": true,
+      "default_mode": "dry-run/preview",
+      "allow_network_default": false,
+      "write_candidates_default": false,
+      "production_write_allowed": false,
+      "auto_promotion_enabled": false,
+      "workflow": [
+        "scheduled run",
+        "job runner command",
+        "candidate generation",
+        "promotion preview",
+        "policy gate",
+        "validation command",
+        "optional commit plan"
+      ],
+      "validation_commands": [
+        "python scripts/validate_data.py",
+        "python scripts/validate_data.py --strict-confidence"
+      ],
+      "commit_plan": {
+        "enabled": false,
+        "candidate_only_paths": [
+          "data/candidates/sec_schedule.json",
+          "data/candidates/sec_relationship_candidates.json",
+          "data/candidates/run_logs/"
+        ],
+        "production_paths_excluded": [
+          "data/companies.json",
+          "data/connections.json"
+        ]
+      }
+    }
+  ]
+}

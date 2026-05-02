@@ -10,7 +10,7 @@ This plan is strategy only. It does not authorize writing new companies to `data
 
 ## Phase V1: Source Intelligence Workbench
 
-V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It recommends the one-command SEC pipeline runner, bulk local runner, and local job runner for dry-run-first work, summarizes the advanced manual SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path, and makes the candidate-only file locations visible to non-technical users.
+V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It recommends the one-command SEC pipeline runner, bulk local runner, local job runner, and scheduled-run preview for dry-run-first work, summarizes the advanced manual SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path, and makes the candidate-only file locations visible to non-technical users.
 
 The workbench is read-only. It does not run scripts from the browser, fetch SEC data from the browser, add backend/server code, promote candidates, create production nodes or edges, or modify `data/companies.json` or `data/connections.json`. Any displayed candidate records remain review-only and must not be treated as graph data unless an explicit reviewed promotion phase, such as Phase D24, runs outside the browser.
 
@@ -366,10 +366,30 @@ This phase is a gate, not automation execution. A candidate is only future-auto-
 The future automation path remains staged:
 
 ```text
-scheduled run -> candidates -> policy preview -> manual/auto promotion gate -> validation -> optional commit
+scheduled preview -> scheduled run -> candidates -> policy preview -> manual/auto promotion gate -> validation -> optional commit
 ```
 
 The policy file does not schedule runs, fetch SEC data, run in the browser, add backend/server code, load in the app, modify `data/companies.json`, modify `data/connections.json`, or make `--write` automatic.
+
+### Phase D29: SEC Scheduled Run Plan + Safe Auto-Promotion Dry Run
+
+`data/candidates/sec_schedule.json` defines a candidate-only local schedule plan for reviewed SEC job cadence. It is a planning artifact only: `production_write_allowed`, `app_load_allowed`, `auto_execution_enabled`, and `auto_promotion_enabled` stay false, and no browser, backend, hosted worker, or automatic runner reads it.
+
+`scripts/sec_scheduled_run_preview.py` reads the schedule plan, `data/candidates/sec_jobs.json`, and `data/candidates/sec_automation_policy.json`, then simulates the staged path without executing it:
+
+```text
+scheduled run -> job runner command -> candidate generation -> promotion preview -> policy gate -> validation command -> optional commit plan
+```
+
+Default usage is dry-run/preview first:
+
+```bash
+python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview
+python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview --json
+python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview --include-commit-plan
+```
+
+The scheduled preview prints exact terminal commands a human can run, classifies current candidate state as `ready_for_manual_promotion`, `future_auto_promotable_preview`, `manual_review_required`, or `blocked`, and includes a recommended next command. It may include `--allow-network` in printed job commands only when the preview is explicitly run with `--allow-network` and `--user-agent`; the planner itself still performs no network calls. It writes no candidate files, runs no git commands, does not auto-promote candidates, does not modify `data/companies.json`, and does not modify `data/connections.json`.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

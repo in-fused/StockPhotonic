@@ -2,7 +2,7 @@
 
 **Last Updated**: May 2, 2026
 
-**Current Version**: v5.15 / Phase D27 Expand CIK Mapping Coverage
+**Current Version**: v5.16 / Phase D28 SEC Automation Policy + Promotion Gate
 
 **Current Dataset**: 60 real US-listed public companies and 118 curated connections loaded from static JSON files:
 
@@ -122,8 +122,9 @@ Current scripts:
 - `scripts/sec_pipeline_run.py` is the local one-command SEC pipeline runner. It validates candidate references, delegates to the existing submissions fetch/inspect, filing plan/fetch, signal report, candidate preview, and optional candidate writer scripts, defaults to dry-run/preview mode, requires `--allow-network` plus `--user-agent` for SEC network calls, requires `--write-candidates` for review-only candidate output, and never writes production graph data.
 - `scripts/sec_bulk_pipeline_run.py` is the local bulk SEC pipeline runner. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, delegates each approved ticker to `scripts/sec_pipeline_run.py`, continues safely when a requested ticker has no mapping or no usable local filings, writes one combined review-only candidate file only when `--write-candidates` is explicit, and never writes production graph data.
 - `scripts/sec_job_run.py` is the local SEC job manifest runner. It reads `data/candidates/sec_jobs.json`, runs only jobs with `review_status: "approved_for_local_run"`, delegates to `scripts/sec_bulk_pipeline_run.py`, defaults to dry-run/preview mode, requires `--allow-network` plus `--user-agent` for network calls, requires `--write-candidates` for review-only candidate output, writes candidate/local audit logs under `data/candidates/run_logs/`, and never writes production graph data.
-- `scripts/sec_candidate_promotion_preview.py` is a read-only validator for review-only SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json`, `data/companies.json`, and `data/connections.json`, validates candidate-only metadata, classifies each candidate as promotable-preview or blocked, requires resolved target names and target-match confidence for candidate endpoints, prints proposed edge shapes only for safe previews, supports `--json`, makes no network calls, and writes no production graph data.
-- `scripts/sec_candidate_promote.py` is the explicit controlled production writer for validated SEC relationship candidates. It defaults to dry-run mode, requires `--write` for production graph changes, writes only `data/connections.json`, never modifies `data/companies.json`, maps candidate tickers to existing production company IDs, promotes only candidates with resolved targets, `target_match_confidence >= 0.85`, mapped `partnership` or `supply` type, evidence, filing date, valid strength, non-duplicate edge keys, and preserved SEC `source_urls` when available, and makes no network calls.
+- `data/candidates/sec_automation_policy.json` is a candidate-only SEC automation policy gate. It sets `status: "candidate_only"`, keeps `production_write_allowed`, `app_load_allowed`, and `auto_promotion_enabled` false, and defines preview-only classifications for future auto-promotable candidates, manual review, and blocked records. It does not execute automation, schedule jobs, load in the app, or authorize production writes.
+- `scripts/sec_candidate_promotion_preview.py` is a read-only validator for review-only SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json`, `data/candidates/sec_automation_policy.json` when present, `data/companies.json`, and `data/connections.json`, validates candidate-only metadata, keeps the existing promotable-preview or blocked classification, adds the policy gate classification, requires resolved target names and target-match confidence for candidate endpoints, prints proposed edge shapes only for safe previews, supports `--json`, makes no network calls, and writes no production graph data.
+- `scripts/sec_candidate_promote.py` is the explicit controlled production writer for validated SEC relationship candidates. It defaults to dry-run mode, includes the policy gate classification in dry-run output, requires `--write` for production graph changes, writes only `data/connections.json`, never modifies `data/companies.json`, maps candidate tickers to existing production company IDs, promotes only candidates with resolved targets, `target_match_confidence >= 0.85`, mapped `partnership` or `supply` type, evidence, filing date, valid strength, non-duplicate edge keys, and preserved SEC `source_urls` when available, and makes no network calls.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -279,12 +280,23 @@ SEC candidate promotion commands:
 python scripts/sec_candidate_promotion_preview.py
 python scripts/sec_candidate_promotion_preview.py --json
 python scripts/sec_candidate_promote.py
+python scripts/sec_candidate_promote.py --json
 python scripts/sec_candidate_promote.py --write
 ```
 
-The promotion preview validator reads only the review-only SEC candidate file and current production graph JSON. It blocks candidates with missing tickers, missing target names, low target-match confidence, missing production endpoints, duplicate existing edges, unsupported relationship types, missing evidence, or low confidence. For `supplier_customer` candidates, it maps to `partnership` only on `revenue from`, `licensing`, `search distribution`, or `payments from`, maps to `supply` only on `supplies`, `manufactures for`, or `component supplier`, and blocks otherwise. Promotable records are printed as proposed edge shapes only; production writes remain `0`.
+The promotion preview validator reads only the review-only SEC candidate file, the candidate-only automation policy when present, and current production graph JSON. It blocks candidates with missing tickers, missing target names, low target-match confidence, missing production endpoints, duplicate existing edges, unsupported relationship types, missing evidence, or low confidence. For `supplier_customer` candidates, it maps to `partnership` only on `revenue from`, `licensing`, `search distribution`, or `payments from`, maps to `supply` only on `supplies`, `manufactures for`, or `component supplier`, and blocks otherwise. Promotable records are printed as proposed edge shapes only; production writes remain `0`.
 
-The controlled promotion writer uses the same dry-run-first stance but can append validated edges to `data/connections.json` when `--write` is explicit. When a candidate carries SEC `archive_url` or `source_urls`, the promoted edge keeps those URLs in its `source_urls` array. Phase D24 promoted one SEC filing relationship from AAPL to GOOGL as a `partnership` edge for Google's licensing/search distribution relationship on Apple's platforms. The writer suppresses duplicate candidate edges during the same run and treats existing production edge keys as blockers on later runs.
+The automation policy is a gate, not automation execution. It classifies each candidate as `future_auto_promotable_preview`, `manual_review_required`, or `blocked`. Future auto-promotable previews require Tier 1 SEC filing evidence, a production source and target ticker, `target_match_confidence >= 0.92`, `confidence_hint >= 0.85`, a `partnership` or `supply` relationship, at least one SEC archive URL in `source_urls`, evidence text, filing date, and no existing production duplicate. Manual review remains required for lower target confidence, missing URLs, ambiguous relationships, multiple target matches, production-edge conflicts, or relationship categories outside the future auto gate. Blocking remains strict for missing endpoints, missing evidence, unsupported types, or generic supplier/customer/dependency language only.
+
+The controlled promotion writer uses the same dry-run-first stance and now reports the policy gate classification in dry-run and JSON output, but it can append validated edges to `data/connections.json` only when `--write` is explicit. When a candidate carries SEC `archive_url` or `source_urls`, the promoted edge keeps those URLs in its `source_urls` array. Phase D24 promoted one SEC filing relationship from AAPL to GOOGL as a `partnership` edge for Google's licensing/search distribution relationship on Apple's platforms. The writer suppresses duplicate candidate edges during the same run and treats existing production edge keys as blockers on later runs.
+
+Future automation path:
+
+```text
+scheduled run -> candidates -> policy preview -> manual/auto promotion gate -> validation -> optional commit
+```
+
+The policy gate is only one checkpoint in that future path. It does not make scheduled runs, production promotion, validation, commits, or browser execution automatic.
 
 Local provisioner commands:
 
@@ -308,7 +320,7 @@ SEC cache hygiene:
 - Use `scripts/sec_filing_inspect.py` for local read-only downloaded filing previews before parser work.
 - Use `scripts/sec_signal_report.py` for local read-only signal aggregation across downloaded filing previews before any candidate extraction or production writer is considered.
 - Use `scripts/sec_signal_candidates_write.py` only for explicit `--write` creation of review-only SEC relationship candidates after previewing cached filings.
-- Future production-write phases must stay separate from SEC candidate file creation and require manual review before touching production graph data.
+- Future production-write phases must stay separate from SEC candidate file creation and pass the automation policy gate, production validation, and an explicit manual or future reviewed auto-promotion gate before touching production graph data.
 
 CLI concepts:
 
@@ -319,7 +331,7 @@ CLI concepts:
 - `--types` filters generated signals to specific allowed connection types.
 - `--strict-confidence` makes validator confidence mismatches fail instead of reporting warnings.
 
-Current next priority: build toward reputable-source ingestion using SEC filings, company releases, official announcements, partner pages, and reputable news as raw inputs while keeping validation strict and dataset writes reviewable.
+Current next priority: build toward reputable-source ingestion using SEC filings, company releases, official announcements, partner pages, and reputable news as raw inputs while keeping validation strict, policy-gated, and dataset writes reviewable.
 
 ---
 

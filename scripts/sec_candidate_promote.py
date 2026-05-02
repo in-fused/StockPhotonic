@@ -21,6 +21,7 @@ sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CANDIDATE_PATH = ROOT / "data" / "candidates" / "sec_relationship_candidates.json"
+DEFAULT_POLICY_PATH = ROOT / "data" / "candidates" / "sec_automation_policy.json"
 DEFAULT_COMPANIES_PATH = ROOT / "data" / "companies.json"
 DEFAULT_CONNECTIONS_PATH = ROOT / "data" / "connections.json"
 
@@ -59,6 +60,66 @@ CLASSIFICATION_ORDER = (
     "duplicate_existing_edge",
     "duplicate_candidate_edge",
 )
+POLICY_CLASSIFICATION_ORDER = (
+    "future_auto_promotable_preview",
+    "manual_review_required",
+    "blocked",
+)
+DEFAULT_AUTOMATION_POLICY: dict[str, Any] = {
+    "metadata": {
+        "status": "candidate_only",
+        "production_write_allowed": False,
+        "app_load_allowed": False,
+        "auto_promotion_enabled": False,
+    },
+    "thresholds": {
+        "target_match_confidence_minimum": 0.92,
+        "confidence_hint_minimum": 0.85,
+        "source_tier_required": 1,
+    },
+    "source_requirements": {
+        "source_type_required": "sec_filing",
+        "source_urls_must_include_sec_archive_url": True,
+        "sec_archive_url_patterns": [
+            "sec.gov/Archives/edgar/data/",
+            "sec.gov/archives/edgar/data/",
+        ],
+    },
+    "relationship_rules": {
+        "future_auto_promotion_allowed_types": [
+            "partnership",
+            "supply",
+        ],
+        "current_production_allowed_types": [
+            "supply",
+            "partnership",
+            "ecosystem",
+            "competitor",
+            "investment",
+        ],
+        "ambiguous_types": [
+            "supplier_customer",
+            "supplier",
+            "customer",
+            "vendor",
+            "dependency",
+        ],
+        "generic_language_terms": [
+            "supplier",
+            "suppliers",
+            "customer",
+            "customers",
+            "vendor",
+            "vendors",
+            "business partner",
+            "business partners",
+            "depend",
+            "depends",
+            "dependency",
+            "dependencies",
+        ],
+    },
+}
 
 
 class PromotionError(Exception):
@@ -83,6 +144,15 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--candidates",
         default=str(DEFAULT_CANDIDATE_PATH),
         help="SEC relationship candidate file. Default: data/candidates/sec_relationship_candidates.json.",
+    )
+    parser.add_argument(
+        "--policy",
+        default=str(DEFAULT_POLICY_PATH),
+        help=(
+            "Candidate-only SEC automation policy gate file. "
+            "Default: data/candidates/sec_automation_policy.json. "
+            "If the file is absent, built-in safe defaults are used."
+        ),
     )
     parser.add_argument(
         "--companies",
@@ -172,6 +242,113 @@ def valid_date(value: Any) -> str | None:
     if date_value and DATE_PATTERN.match(date_value):
         return date_value
     return None
+
+
+def validate_automation_policy(payload: dict[str, Any]) -> None:
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        raise PromotionError("automation policy metadata must be an object.")
+    if metadata.get("status") != "candidate_only":
+        raise PromotionError("automation policy metadata.status must be candidate_only.")
+    if metadata.get("production_write_allowed") is not False:
+        raise PromotionError(
+            "automation policy metadata.production_write_allowed must be false."
+        )
+    if metadata.get("app_load_allowed") is not False:
+        raise PromotionError(
+            "automation policy metadata.app_load_allowed must be false."
+        )
+    if metadata.get("auto_promotion_enabled") is not False:
+        raise PromotionError(
+            "automation policy metadata.auto_promotion_enabled must be false."
+        )
+
+
+def load_automation_policy(path: Path) -> tuple[dict[str, Any], bool]:
+    if not path.exists():
+        return DEFAULT_AUTOMATION_POLICY, False
+
+    payload = load_json(path, "automation policy")
+    if not isinstance(payload, dict):
+        raise PromotionError("automation policy file must contain a JSON object.")
+    validate_automation_policy(payload)
+    return payload, True
+
+
+def policy_metadata(policy: dict[str, Any]) -> dict[str, Any]:
+    metadata = policy.get("metadata")
+    return metadata if isinstance(metadata, dict) else {}
+
+
+def policy_threshold(policy: dict[str, Any], key: str, default: float) -> float:
+    thresholds = policy.get("thresholds")
+    if not isinstance(thresholds, dict):
+        return default
+    value = thresholds.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return default
+    return float(value)
+
+
+def policy_required_source_tier(policy: dict[str, Any]) -> int:
+    thresholds = policy.get("thresholds")
+    if not isinstance(thresholds, dict):
+        return 1
+    value = thresholds.get("source_tier_required")
+    if isinstance(value, bool) or not isinstance(value, int):
+        return 1
+    return value
+
+
+def policy_source_type(policy: dict[str, Any]) -> str:
+    requirements = policy.get("source_requirements")
+    if not isinstance(requirements, dict):
+        return "sec_filing"
+    source_type = clean_string(requirements.get("source_type_required"))
+    return source_type.lower() if source_type else "sec_filing"
+
+
+def policy_string_list(
+    policy: dict[str, Any],
+    section_name: str,
+    key: str,
+    default: tuple[str, ...],
+) -> tuple[str, ...]:
+    section = policy.get(section_name)
+    if not isinstance(section, dict):
+        return default
+    values = section.get(key)
+    if not isinstance(values, list):
+        return default
+
+    normalized: list[str] = []
+    for value in values:
+        item = clean_string(value)
+        if item:
+            normalized.append(item.lower())
+    return tuple(normalized) or default
+
+
+def sec_archive_patterns(policy: dict[str, Any]) -> tuple[str, ...]:
+    requirements = policy.get("source_requirements")
+    if not isinstance(requirements, dict):
+        return (
+            "sec.gov/archives/edgar/data/",
+        )
+    values = requirements.get("sec_archive_url_patterns")
+    if not isinstance(values, list):
+        return (
+            "sec.gov/archives/edgar/data/",
+        )
+
+    patterns: list[str] = []
+    for value in values:
+        pattern = clean_string(value)
+        if pattern:
+            patterns.append(pattern.lower())
+    return tuple(patterns) or (
+        "sec.gov/archives/edgar/data/",
+    )
 
 
 def validate_candidate_metadata(payload: dict[str, Any]) -> None:
@@ -327,6 +504,276 @@ def archive_urls_from_candidate(candidate: dict[str, Any]) -> list[str]:
     return urls
 
 
+def source_urls_field(candidate: dict[str, Any]) -> list[str]:
+    source_urls = candidate.get("source_urls")
+    if not isinstance(source_urls, list):
+        return []
+
+    urls: list[str] = []
+    seen: set[str] = set()
+    for raw_url in source_urls:
+        if not isinstance(raw_url, str):
+            continue
+        url = raw_url.strip()
+        if not URL_PATTERN.match(url) or url in seen:
+            continue
+        seen.add(url)
+        urls.append(url)
+    return urls
+
+
+def has_sec_archive_source_url(
+    candidate: dict[str, Any],
+    policy: dict[str, Any],
+) -> bool:
+    patterns = sec_archive_patterns(policy)
+    for url in source_urls_field(candidate):
+        normalized_url = url.lower()
+        if any(pattern in normalized_url for pattern in patterns):
+            return True
+    return False
+
+
+def candidate_has_multiple_possible_targets(candidate: dict[str, Any]) -> bool:
+    boolean_fields = (
+        "multiple_possible_target_entities",
+        "multiple_possible_targets",
+    )
+    for field_name in boolean_fields:
+        if candidate.get(field_name) is True:
+            return True
+
+    list_fields = (
+        "possible_target_entities",
+        "possible_targets",
+        "target_candidates",
+        "target_options",
+        "target_match_candidates",
+    )
+    for field_name in list_fields:
+        value = candidate.get(field_name)
+        if isinstance(value, list) and len(value) > 1:
+            return True
+    return False
+
+
+def existing_pair_types(
+    existing_edge_keys: set[tuple[int, int, str]],
+    source_id: int,
+    target_id: int,
+) -> set[str]:
+    left = min(source_id, target_id)
+    right = max(source_id, target_id)
+    return {
+        connection_type
+        for edge_source, edge_target, connection_type in existing_edge_keys
+        if edge_source == left and edge_target == right
+    }
+
+
+def relationship_policy_sets(
+    policy: dict[str, Any],
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+    future_allowed = policy_string_list(
+        policy,
+        "relationship_rules",
+        "future_auto_promotion_allowed_types",
+        ("partnership", "supply"),
+    )
+    current_allowed = policy_string_list(
+        policy,
+        "relationship_rules",
+        "current_production_allowed_types",
+        (
+            "supply",
+            "partnership",
+            "ecosystem",
+            "competitor",
+            "investment",
+        ),
+    )
+    ambiguous_types = policy_string_list(
+        policy,
+        "relationship_rules",
+        "ambiguous_types",
+        (
+            "supplier_customer",
+            "supplier",
+            "customer",
+            "vendor",
+            "dependency",
+        ),
+    )
+    generic_terms = policy_string_list(
+        policy,
+        "relationship_rules",
+        "generic_language_terms",
+        (
+            "supplier",
+            "suppliers",
+            "customer",
+            "customers",
+            "vendor",
+            "vendors",
+            "business partner",
+            "business partners",
+            "depend",
+            "depends",
+            "dependency",
+            "dependencies",
+        ),
+    )
+    return future_allowed, current_allowed, ambiguous_types, generic_terms
+
+
+def evidence_has_specific_relationship_terms(evidence: str) -> bool:
+    return bool(term_hits(evidence, PARTNERSHIP_TERMS) or term_hits(evidence, SUPPLY_TERMS))
+
+
+def evidence_has_generic_terms(evidence: str, generic_terms: tuple[str, ...]) -> bool:
+    return bool(term_hits(evidence, generic_terms))
+
+
+def unique_policy_reasons(reasons: list[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for reason in reasons:
+        if reason not in seen:
+            seen.add(reason)
+            ordered.append(reason)
+    return ordered
+
+
+def classify_by_policy(
+    candidate: dict[str, Any],
+    *,
+    source_ticker: str | None,
+    target_ticker: str | None,
+    source_company: Company | None,
+    target_company: Company | None,
+    mapped_type: str | None,
+    duplicate_existing_edge: bool,
+    conflicting_existing_edge: bool,
+    duplicate_candidate_edge: bool,
+    policy: dict[str, Any],
+) -> dict[str, Any]:
+    blocked_reasons: list[str] = []
+    manual_reasons: list[str] = []
+
+    future_allowed, current_allowed, ambiguous_types, generic_terms = (
+        relationship_policy_sets(policy)
+    )
+    raw_type = clean_string(candidate.get("relationship_type"))
+    relationship_type = raw_type.lower() if raw_type else None
+    evidence = clean_string(candidate.get("evidence_snippet"))
+
+    if source_ticker is None:
+        blocked_reasons.append("source_ticker_missing")
+    elif source_company is None:
+        blocked_reasons.append("source_company_missing_from_production")
+
+    if target_ticker is None:
+        blocked_reasons.append("target_ticker_missing")
+    elif target_company is None:
+        blocked_reasons.append("target_company_missing_from_production")
+
+    if evidence is None:
+        blocked_reasons.append("evidence_missing")
+
+    unsupported_type = False
+    if relationship_type is None:
+        unsupported_type = True
+    elif (
+        relationship_type not in future_allowed
+        and relationship_type not in current_allowed
+        and relationship_type not in ambiguous_types
+    ):
+        unsupported_type = True
+    if unsupported_type:
+        blocked_reasons.append("unsupported_relationship_type")
+
+    if evidence and relationship_type in ambiguous_types:
+        if (
+            evidence_has_generic_terms(evidence, generic_terms)
+            and not evidence_has_specific_relationship_terms(evidence)
+        ):
+            blocked_reasons.append("generic_supplier_customer_dependency_language_only")
+
+    if blocked_reasons:
+        return {
+            "classification": "blocked",
+            "reasons": unique_policy_reasons(blocked_reasons),
+        }
+
+    target_threshold = policy_threshold(
+        policy,
+        "target_match_confidence_minimum",
+        0.92,
+    )
+    target_match_confidence = numeric_score(candidate.get("target_match_confidence"))
+    if target_match_confidence is None or target_match_confidence < target_threshold:
+        manual_reasons.append("target_match_confidence_below_policy_threshold")
+
+    source_urls = source_urls_field(candidate)
+    if not source_urls:
+        manual_reasons.append("source_urls_missing")
+    elif not has_sec_archive_source_url(candidate, policy):
+        manual_reasons.append("sec_archive_source_url_missing")
+
+    if relationship_type in ambiguous_types:
+        manual_reasons.append("relationship_type_ambiguous")
+
+    if candidate_has_multiple_possible_targets(candidate):
+        manual_reasons.append("multiple_possible_target_entities")
+
+    if duplicate_existing_edge or conflicting_existing_edge:
+        manual_reasons.append("candidate_conflicts_with_existing_production_edge")
+    if duplicate_candidate_edge:
+        manual_reasons.append("duplicate_candidate_edge")
+
+    if relationship_type not in future_allowed:
+        manual_reasons.append("relationship_category_not_currently_allowed")
+    elif mapped_type not in future_allowed:
+        manual_reasons.append("relationship_category_not_currently_allowed")
+
+    required_source_type = policy_source_type(policy)
+    source_type = clean_string(candidate.get("source_type"))
+    if source_type is None or source_type.lower() != required_source_type:
+        manual_reasons.append("source_type_not_sec_filing")
+
+    required_source_tier = policy_required_source_tier(policy)
+    source_tier = candidate.get("source_tier")
+    if (
+        isinstance(source_tier, bool)
+        or not isinstance(source_tier, int)
+        or source_tier != required_source_tier
+    ):
+        manual_reasons.append("source_tier_not_1")
+
+    if valid_date(candidate.get("filing_date")) is None:
+        manual_reasons.append("filing_date_missing")
+
+    confidence_threshold = policy_threshold(
+        policy,
+        "confidence_hint_minimum",
+        0.85,
+    )
+    confidence_hint = numeric_score(candidate.get("confidence_hint"))
+    if confidence_hint is None or confidence_hint < confidence_threshold:
+        manual_reasons.append("confidence_hint_below_policy_threshold")
+
+    if manual_reasons:
+        return {
+            "classification": "manual_review_required",
+            "reasons": unique_policy_reasons(manual_reasons),
+        }
+
+    return {
+        "classification": "future_auto_promotable_preview",
+        "reasons": [],
+    }
+
+
 def edge_label(connection_type: str) -> str:
     if connection_type == "partnership":
         return PARTNERSHIP_LABEL
@@ -377,6 +824,7 @@ def inspect_candidate(
     ticker_to_company: dict[str, Company],
     existing_edge_keys: set[tuple[int, int, str]],
     pending_edge_keys: set[tuple[int, int, str]],
+    policy: dict[str, Any],
 ) -> dict[str, Any]:
     reasons: list[str] = []
 
@@ -389,6 +837,9 @@ def inspect_candidate(
 
     source_company: Company | None = None
     target_company: Company | None = None
+    duplicate_existing_edge = False
+    conflicting_existing_edge = False
+    duplicate_candidate_edge = False
 
     if source_ticker is None:
         reasons.append("missing_source_ticker")
@@ -426,6 +877,11 @@ def inspect_candidate(
         if source_company.company_id == target_company.company_id:
             reasons.append("self_edge")
         elif mapped_type:
+            pair_types = existing_pair_types(
+                existing_edge_keys,
+                source_company.company_id,
+                target_company.company_id,
+            )
             candidate_edge_key = edge_key(
                 source_company.company_id,
                 target_company.company_id,
@@ -433,8 +889,12 @@ def inspect_candidate(
             )
             if candidate_edge_key in existing_edge_keys:
                 reasons.append("duplicate_existing_edge")
+                duplicate_existing_edge = True
             elif candidate_edge_key in pending_edge_keys:
                 reasons.append("duplicate_candidate_edge")
+                duplicate_candidate_edge = True
+            elif pair_types:
+                conflicting_existing_edge = True
 
     classifications = unique_reasons(reasons) if reasons else ["promotable"]
     proposed_edge = None
@@ -454,6 +914,18 @@ def inspect_candidate(
             confidence_hint=confidence_hint,
             filing_date=filing_date,
         )
+    policy_result = classify_by_policy(
+        candidate,
+        source_ticker=source_ticker,
+        target_ticker=target_ticker,
+        source_company=source_company,
+        target_company=target_company,
+        mapped_type=mapped_type,
+        duplicate_existing_edge=duplicate_existing_edge,
+        conflicting_existing_edge=conflicting_existing_edge,
+        duplicate_candidate_edge=duplicate_candidate_edge,
+        policy=policy,
+    )
 
     return {
         "index": index,
@@ -468,6 +940,8 @@ def inspect_candidate(
         "confidence_hint": confidence_hint,
         "filing_date": filing_date,
         "classifications": classifications,
+        "policy_classification": policy_result["classification"],
+        "policy_reasons": policy_result["reasons"],
         "edge_key": list(candidate_edge_key) if candidate_edge_key else None,
         "proposed_edge": proposed_edge,
     }
@@ -476,11 +950,13 @@ def inspect_candidate(
 def build_result(
     *,
     candidate_path: Path,
+    policy_path: Path,
     companies_path: Path,
     connections_path: Path,
     write: bool,
 ) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
     candidates = load_candidate_payload(candidate_path)
+    policy, policy_loaded = load_automation_policy(policy_path)
     ticker_to_company = build_company_map(load_json(companies_path, "companies"))
     connections = load_json(connections_path, "connections")
     existing_edge_keys = build_existing_edge_keys(connections)
@@ -495,6 +971,7 @@ def build_result(
             ticker_to_company=ticker_to_company,
             existing_edge_keys=existing_edge_keys,
             pending_edge_keys=pending_edge_keys,
+            policy=policy,
         )
         records.append(record)
         proposed_edge = record.get("proposed_edge")
@@ -509,8 +986,10 @@ def build_result(
             )
 
     classification_counts: Counter[str] = Counter()
+    policy_classification_counts: Counter[str] = Counter()
     for record in records:
         classification_counts.update(record["classifications"])
+        policy_classification_counts.update([record["policy_classification"]])
 
     duplicate_count = (
         classification_counts["duplicate_existing_edge"]
@@ -522,11 +1001,29 @@ def build_result(
         "promotable_edges": len(new_edges),
         "blocked_candidates": len(candidates) - len(new_edges),
         "duplicates_suppressed": duplicate_count,
+        "future_auto_promotable_previews": policy_classification_counts[
+            "future_auto_promotable_preview"
+        ],
+        "manual_review_required": policy_classification_counts[
+            "manual_review_required"
+        ],
+        "policy_blocked": policy_classification_counts["blocked"],
         "production_writes": len(new_edges) if write else 0,
     }
+    metadata = policy_metadata(policy)
     result = {
         "promotion_type": "sec_candidate_promote",
         "candidate_file": display_path(candidate_path),
+        "automation_policy": {
+            "policy_file": display_path(policy_path),
+            "policy_loaded": policy_loaded,
+            "metadata": {
+                "status": metadata.get("status"),
+                "production_write_allowed": metadata.get("production_write_allowed"),
+                "app_load_allowed": metadata.get("app_load_allowed"),
+                "auto_promotion_enabled": metadata.get("auto_promotion_enabled"),
+            },
+        },
         "production_files": {
             "companies": display_path(companies_path),
             "connections": display_path(connections_path),
@@ -535,6 +1032,10 @@ def build_result(
         "classification_counts": {
             classification: classification_counts[classification]
             for classification in CLASSIFICATION_ORDER
+        },
+        "policy_classification_counts": {
+            classification: policy_classification_counts[classification]
+            for classification in POLICY_CLASSIFICATION_ORDER
         },
         "records": records,
         "new_edges": new_edges,
@@ -582,13 +1083,30 @@ def print_human(result: dict[str, Any]) -> None:
     print("=======================")
     print(f"Mode: {summary['mode']}")
     print(f"Candidate file: {result['candidate_file']}")
+    print(f"Automation policy: {result['automation_policy']['policy_file']}")
+    print(
+        "Automation enabled: "
+        f"{result['automation_policy']['metadata']['auto_promotion_enabled']}"
+    )
     print(f"Production companies: {result['production_files']['companies']}")
     print(f"Production connections: {result['production_files']['connections']}")
     print(f"Total candidates: {summary['total_candidates']}")
     print(f"Promotable new edges: {summary['promotable_edges']}")
     print(f"Blocked candidates: {summary['blocked_candidates']}")
     print(f"Duplicates suppressed: {summary['duplicates_suppressed']}")
+    print(
+        "Future auto-promotable previews: "
+        f"{summary['future_auto_promotable_previews']}"
+    )
+    print(f"Manual review required: {summary['manual_review_required']}")
+    print(f"Policy blocked: {summary['policy_blocked']}")
     print(f"Production writes: {summary['production_writes']}")
+
+    print()
+    print("Policy gate counts")
+    print("------------------")
+    for classification, count in result["policy_classification_counts"].items():
+        print(f"- {classification}: {count}")
 
     print()
     print("New edges")
@@ -605,7 +1123,13 @@ def print_human(result: dict[str, Any]) -> None:
             f"{record['target_ticker']}({edge['target']}) "
             f"{edge['type']} strength={edge['strength']} "
             f"confidence={edge['confidence']} "
-            f"verified_date={edge['verified_date']}"
+            f"verified_date={edge['verified_date']} "
+            f"policy={record['policy_classification']}"
+            + (
+                f" ({', '.join(record['policy_reasons'])})"
+                if record["policy_reasons"]
+                else ""
+            )
         )
 
     print()
@@ -620,7 +1144,13 @@ def print_human(result: dict[str, Any]) -> None:
     for record in blocked:
         print(
             f"- candidate {record['index']}: "
-            f"{', '.join(record['classifications'])}"
+            f"{', '.join(record['classifications'])}; "
+            f"policy={record['policy_classification']}"
+            + (
+                f" ({', '.join(record['policy_reasons'])})"
+                if record["policy_reasons"]
+                else ""
+            )
         )
 
     print()
@@ -633,12 +1163,14 @@ def print_human(result: dict[str, Any]) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     candidate_path = resolve_path(args.candidates)
+    policy_path = resolve_path(args.policy)
     companies_path = resolve_path(args.companies)
     connections_path = resolve_path(args.connections)
 
     try:
         result, connections, new_edges = build_result(
             candidate_path=candidate_path,
+            policy_path=policy_path,
             companies_path=companies_path,
             connections_path=connections_path,
             write=args.write,

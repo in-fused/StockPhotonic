@@ -1,0 +1,131 @@
+{
+  "metadata": {
+    "description": "Candidate-only SEC automation policy gate for future promotion previews. This file classifies SEC relationship candidates but does not execute automation or authorize production writes.",
+    "status": "candidate_only",
+    "production_write_allowed": false,
+    "app_load_allowed": false,
+    "auto_promotion_enabled": false,
+    "policy_scope": "sec_candidate_promotion_gate",
+    "safe_to_commit": true,
+    "notes": [
+      "This policy is a gate for candidate previews only.",
+      "It does not load in the app, run from the browser, schedule jobs, fetch network resources, or write production graph data.",
+      "Production writes remain manual and require an explicit controlled writer invocation."
+    ]
+  },
+  "thresholds": {
+    "target_match_confidence_minimum": 0.92,
+    "confidence_hint_minimum": 0.85,
+    "source_tier_required": 1
+  },
+  "source_requirements": {
+    "source_type_required": "sec_filing",
+    "source_urls_must_include_sec_archive_url": true,
+    "sec_archive_url_patterns": [
+      "sec.gov/Archives/edgar/data/",
+      "sec.gov/archives/edgar/data/"
+    ],
+    "required_candidate_fields": [
+      "target_ticker",
+      "target_match_confidence",
+      "source_urls",
+      "evidence_snippet",
+      "filing_date",
+      "confidence_hint"
+    ]
+  },
+  "relationship_rules": {
+    "future_auto_promotion_allowed_types": [
+      "partnership",
+      "supply"
+    ],
+    "current_production_allowed_types": [
+      "supply",
+      "partnership",
+      "ecosystem",
+      "competitor",
+      "investment"
+    ],
+    "ambiguous_types": [
+      "supplier_customer",
+      "supplier",
+      "customer",
+      "vendor",
+      "dependency"
+    ],
+    "generic_language_terms": [
+      "supplier",
+      "suppliers",
+      "customer",
+      "customers",
+      "vendor",
+      "vendors",
+      "business partner",
+      "business partners",
+      "depend",
+      "depends",
+      "dependency",
+      "dependencies"
+    ]
+  },
+  "promotion_tiers": {
+    "eligible_for_future_auto_promotion": {
+      "output_classification": "future_auto_promotable_preview",
+      "all_required": [
+        "source_type == sec_filing",
+        "source_tier == 1",
+        "target_ticker exists",
+        "target_match_confidence >= 0.92",
+        "relationship_type is partnership or supply",
+        "source_urls contains at least one SEC archive URL",
+        "evidence_snippet exists",
+        "filing_date exists",
+        "candidate is not a duplicate existing edge",
+        "production source ticker exists",
+        "production target ticker exists",
+        "confidence_hint >= 0.85"
+      ]
+    },
+    "manual_review_required": {
+      "output_classification": "manual_review_required",
+      "if_any": [
+        "target_match_confidence < 0.92",
+        "source_urls missing",
+        "source_urls present without SEC archive URL",
+        "relationship_type ambiguous",
+        "multiple possible target entities",
+        "candidate conflicts with existing production edge",
+        "relationship category is not currently allowed for future auto promotion",
+        "filing_date missing",
+        "confidence_hint < 0.85",
+        "source_type or source_tier does not match the SEC Tier 1 policy"
+      ]
+    },
+    "blocked": {
+      "output_classification": "blocked",
+      "if_any": [
+        "target_ticker missing",
+        "target company missing from production",
+        "source company missing from production",
+        "evidence missing",
+        "unsupported relationship type",
+        "generic supplier/customer/dependency language only"
+      ]
+    }
+  },
+  "future_workflow": [
+    "scheduled run",
+    "candidate generation",
+    "policy preview",
+    "manual or future auto promotion gate",
+    "validation",
+    "optional commit"
+  ],
+  "safety": {
+    "network_calls": 0,
+    "candidate_only": true,
+    "production_writes": 0,
+    "companies_written": 0,
+    "connections_written": 0
+  }
+}

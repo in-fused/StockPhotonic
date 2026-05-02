@@ -291,7 +291,7 @@ Network calls require both `--allow-network` and an identifying `--user-agent`. 
 
 ### Phase D22: SEC Candidate Promotion Preview Validator
 
-`scripts/sec_candidate_promotion_preview.py` is a preview-only validator for review-only SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json` by default, validates the file's candidate-only metadata, checks candidate endpoints against `data/companies.json`, checks duplicate edge keys against `data/connections.json`, and prints which records could later become production edge shapes after manual review.
+`scripts/sec_candidate_promotion_preview.py` is a preview-only validator for review-only SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json` by default, reads the candidate-only `data/candidates/sec_automation_policy.json` gate when present, validates the file's candidate-only metadata, checks candidate endpoints against `data/companies.json`, checks duplicate edge keys against `data/connections.json`, and prints which records could later become production edge shapes after manual review.
 
 Default usage writes nothing:
 
@@ -300,7 +300,7 @@ python scripts/sec_candidate_promotion_preview.py
 python scripts/sec_candidate_promotion_preview.py --json
 ```
 
-The validator does not promote candidates, does not create production nodes or edges, does not modify `data/companies.json` or `data/connections.json`, performs no network calls, and adds no backend/server code. `supplier_customer` candidates remain blocked unless deterministic evidence terms map them clearly to the current production `supply` or `partnership` types.
+The validator does not promote candidates, does not create production nodes or edges, does not modify `data/companies.json` or `data/connections.json`, performs no network calls, and adds no backend/server code. `supplier_customer` candidates remain blocked unless deterministic evidence terms map them clearly to the current production `supply` or `partnership` types. Policy classifications are additional preview metadata and do not authorize production writes.
 
 ### Phase D23: High-Confidence SEC Candidate Filtering
 
@@ -321,7 +321,7 @@ python scripts/sec_candidate_promote.py
 python scripts/sec_candidate_promote.py --write
 ```
 
-Promotion is allowed only when the candidate has a resolved `target_ticker`, `target_match_confidence >= 0.85`, evidence text, a valid filing date, a valid `confidence_hint`, source and target tickers already present in `data/companies.json`, and a relationship type that maps deterministically to current production `partnership` or `supply`. The writer prevents existing production duplicates and duplicate candidate edges within the same run, performs no network calls, and never modifies `data/companies.json`.
+Promotion is allowed only when the candidate has a resolved `target_ticker`, `target_match_confidence >= 0.85`, evidence text, a valid filing date, a valid `confidence_hint`, source and target tickers already present in `data/companies.json`, and a relationship type that maps deterministically to current production `partnership` or `supply`. The writer prevents existing production duplicates and duplicate candidate edges within the same run, performs no network calls, never modifies `data/companies.json`, and keeps `--write` explicit and manual. Dry-run and JSON output can include the automation policy classification, but the policy does not make production writes automatic.
 
 Phase D24 promoted one AAPL -> GOOGL `partnership` edge for the SEC filing licensing/search distribution relationship. A post-write dry run reports the resolved AAPL -> GOOGL candidates as existing duplicates, so reruns do not add another edge.
 
@@ -357,6 +357,20 @@ The job runner reads only jobs with `review_status: "approved_for_local_run"`, r
 
 The added mappings remain candidate/reference-only records with `source_type: "sec_filing"`, `source_tier: 1`, SEC submissions URLs, capture dates, and `review_status: "approved_for_fetch"`. Candidate-only metadata remains unchanged: production writes are not allowed, app loading is not allowed, and duplicate ticker/CIK validation continues to gate the file before any local fetch workflow uses it.
 
+### Phase D28: SEC Automation Policy + Promotion Gate
+
+`data/candidates/sec_automation_policy.json` defines a candidate-only policy layer for future SEC relationship promotion decisions. It sets `status: "candidate_only"`, keeps `production_write_allowed`, `app_load_allowed`, and `auto_promotion_enabled` false, and classifies candidates as `future_auto_promotable_preview`, `manual_review_required`, or `blocked`.
+
+This phase is a gate, not automation execution. A candidate is only future-auto-promotable in preview when it is a Tier 1 `sec_filing` candidate with a production source and target ticker, `target_match_confidence >= 0.92`, `confidence_hint >= 0.85`, `relationship_type` of `partnership` or `supply`, at least one SEC archive URL in `source_urls`, evidence text, filing date, and no duplicate existing production edge. Lower confidence, missing URLs, ambiguous relationships, multiple possible target entities, existing production-edge conflicts, or relationship categories outside the gate require manual review. Missing production endpoints, missing evidence, unsupported types, or generic supplier/customer/dependency language only are blocked.
+
+The future automation path remains staged:
+
+```text
+scheduled run -> candidates -> policy preview -> manual/auto promotion gate -> validation -> optional commit
+```
+
+The policy file does not schedule runs, fetch SEC data, run in the browser, add backend/server code, load in the app, modify `data/companies.json`, modify `data/connections.json`, or make `--write` automatic.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.
@@ -389,6 +403,7 @@ Required guardrails:
 - Third-party data must preserve original source attribution and must not obscure the underlying filing, disclosure, or registry.
 - Datasets must pass validation before commit.
 - Large expansions should start in candidate files or review queues, not directly in production data.
+- Automation policy classifications are gates and review signals, not production-write authorization by themselves.
 - Broad market coverage begins with `data/candidates/official_ticker_universe.json`, but that file remains review/staging only until a future reviewed writer phase exists.
 - Manual review remains required before durable writes to `data/companies.json` or `data/connections.json`.
 - Never add fake companies, fake tickers, inferred connections, placeholder source URLs, or unsupported relationship labels.
@@ -412,4 +427,4 @@ Before an extracted relationship is eligible for manual review, it should includ
 - Confidence proposal.
 - Reviewer status.
 
-Production records should only be created after a reviewer confirms the companies, relationship type, source support, and current validation rules.
+Production records should only be created after a reviewer or future reviewed auto-promotion gate confirms the companies, relationship type, source support, policy classification, and current validation rules.

@@ -37,6 +37,24 @@
       "source_url": "https://data.sec.gov/submissions/CIK0000320193.json",
       "capture_date": "2026-05-01",
       "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MSFT",
+      "cik": "0000789019",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000789019.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NVDA",
+      "cik": "0001045810",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001045810.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
     }
   ]
 }

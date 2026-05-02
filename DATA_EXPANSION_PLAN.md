@@ -351,6 +351,12 @@ python scripts/sec_job_run.py --job-id mega_cap_core --allow-network --user-agen
 
 The job runner reads only jobs with `review_status: "approved_for_local_run"`, refuses unknown or unapproved jobs, refuses `--allow-network` without `--user-agent`, and refuses `--force` unless `--write-candidates` is present. It prints the exact delegated `scripts/sec_bulk_pipeline_run.py` command before running it. Each delegated run writes a local audit log under `data/candidates/run_logs/` with timestamp, job id, tickers, forms, limit, mode, candidate-writing yes/no, return code, and `production_writes: 0`. Run logs are candidate/local audit artifacts only and are not app-loaded data.
 
+### Phase D27: Expand CIK Mapping Coverage
+
+`data/candidates/cik_mappings.json` now includes approved SEC submissions endpoint mappings for AAPL, MSFT, and NVDA so bulk and job runners can process the current mega-cap core ticker set instead of skipping MSFT or NVDA as unmapped.
+
+The added mappings remain candidate/reference-only records with `source_type: "sec_filing"`, `source_tier: 1`, SEC submissions URLs, capture dates, and `review_status: "approved_for_fetch"`. Candidate-only metadata remains unchanged: production writes are not allowed, app loading is not allowed, and duplicate ticker/CIK validation continues to gate the file before any local fetch workflow uses it.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

@@ -10,7 +10,7 @@ This plan is strategy only. It does not authorize writing new companies to `data
 
 ## Phase V1: Source Intelligence Workbench
 
-V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It recommends the one-command SEC pipeline runner and bulk local runner for dry-run-first work, summarizes the advanced manual SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path, and makes the candidate-only file locations visible to non-technical users.
+V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It recommends the one-command SEC pipeline runner, bulk local runner, and local job runner for dry-run-first work, summarizes the advanced manual SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path, and makes the candidate-only file locations visible to non-technical users.
 
 The workbench is read-only. It does not run scripts from the browser, fetch SEC data from the browser, add backend/server code, promote candidates, create production nodes or edges, or modify `data/companies.json` or `data/connections.json`. Any displayed candidate records remain review-only and must not be treated as graph data unless an explicit reviewed promotion phase, such as Phase D24, runs outside the browser.
 
@@ -337,6 +337,19 @@ python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10
 ```
 
 Network calls require both `--allow-network` and an identifying `--user-agent`. Candidate file output requires `--write-candidates`; when enabled, the batch writes one combined review-only candidate file from successfully processed cached filings. Requested tickers with no mapping or no usable filings are skipped with an explicit summary reason. The runner reports requested, processed, skipped, and failed tickers, whether candidate files were written, and `production writes: 0`. It does not auto-promote candidates, does not modify `data/companies.json`, does not modify `data/connections.json`, does not add backend/server code, and does not run from the browser.
+
+### Phase D26: Local SEC Job Manifest + Run Log
+
+`data/candidates/sec_jobs.json` defines reviewed local SEC batch jobs, and `scripts/sec_job_run.py` runs one job by manifest id through the existing bulk runner. This phase is repeatable local orchestration only: it adds no backend/server code, adds no browser execution path, writes no production graph data, and does not promote candidates.
+
+Default usage is dry-run/preview first:
+
+```bash
+python scripts/sec_job_run.py --job-id mega_cap_core
+python scripts/sec_job_run.py --job-id mega_cap_core --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+```
+
+The job runner reads only jobs with `review_status: "approved_for_local_run"`, refuses unknown or unapproved jobs, refuses `--allow-network` without `--user-agent`, and refuses `--force` unless `--write-candidates` is present. It prints the exact delegated `scripts/sec_bulk_pipeline_run.py` command before running it. Each delegated run writes a local audit log under `data/candidates/run_logs/` with timestamp, job id, tickers, forms, limit, mode, candidate-writing yes/no, return code, and `production_writes: 0`. Run logs are candidate/local audit artifacts only and are not app-loaded data.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

@@ -742,6 +742,36 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 </div>
             </div>
 
+            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+                    <div>
+                        <div class="source-workbench-label mb-2">Local Job Runner</div>
+                        <p class="text-sm text-white/60">Run reviewed manifest jobs from the local terminal. Job logs are candidate/local audit artifacts only.</p>
+                    </div>
+                    <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
+                        Production writes remain zero.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">1.</span> Job dry-run and preview from local cache</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-8', this)" aria-label="Copy local SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-8">python scripts/sec_job_run.py --job-id mega_cap_core</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Job fetch and write review-only candidates</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-9', this)" aria-label="Copy local SEC job network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-9">python scripts/sec_job_run.py --job-id mega_cap_core --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-5">
                 <div class="xl:col-span-5 source-workbench-panel rounded-2xl p-5">
                     <div class="source-workbench-label mb-3">Safety Notes</div>

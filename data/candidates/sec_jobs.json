@@ -1,0 +1,25 @@
+{
+  "metadata": {
+    "description": "Local-only SEC batch job manifest for reviewed repeatable candidate ingestion runs. This file is not loaded by the app and must not promote or write production graph data.",
+    "status": "local_jobs_only",
+    "production_write_allowed": false,
+    "app_load_allowed": false,
+    "run_log_path": "data/candidates/run_logs/",
+    "source_policy_notes": [
+      "Jobs are local terminal orchestration only.",
+      "Network calls require explicit --allow-network and --user-agent at run time.",
+      "Candidate writes require explicit --write-candidates at run time.",
+      "Production promotion remains separate and must not be triggered by this manifest."
+    ]
+  },
+  "jobs": [
+    {
+      "id": "mega_cap_core",
+      "description": "Initial approved mega-cap SEC relationship scan",
+      "tickers": ["AAPL", "MSFT", "NVDA"],
+      "forms": ["10-K", "10-Q", "8-K"],
+      "limit": 10,
+      "review_status": "approved_for_local_run"
+    }
+  ]
+}

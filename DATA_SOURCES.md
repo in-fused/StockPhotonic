@@ -2,7 +2,7 @@
 
 **Last Updated**: May 2, 2026
 
-**Current Version**: v5.13 / Phase D25 Bulk SEC Pipeline Batch Runner
+**Current Version**: v5.14 / Phase D26 Local SEC Job Manifest + Run Log
 
 **Current Dataset**: 60 real US-listed public companies and 118 curated connections loaded from static JSON files:
 
@@ -121,6 +121,7 @@ Current scripts:
 - `scripts/sec_signal_candidates_write.py` is an explicit review-gated writer for SEC signal candidate previews. Default mode prints would-be candidate records to stdout only. It carries forward required preview entity-resolution fields plus SEC `archive_url` / `source_urls` metadata when available, writes only `data/candidates/sec_relationship_candidates.json` when `--write` is passed, refuses to overwrite without `--force`, makes no network calls, and writes no production graph data.
 - `scripts/sec_pipeline_run.py` is the local one-command SEC pipeline runner. It validates candidate references, delegates to the existing submissions fetch/inspect, filing plan/fetch, signal report, candidate preview, and optional candidate writer scripts, defaults to dry-run/preview mode, requires `--allow-network` plus `--user-agent` for SEC network calls, requires `--write-candidates` for review-only candidate output, and never writes production graph data.
 - `scripts/sec_bulk_pipeline_run.py` is the local bulk SEC pipeline runner. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, delegates each approved ticker to `scripts/sec_pipeline_run.py`, continues safely when a requested ticker has no mapping or no usable local filings, writes one combined review-only candidate file only when `--write-candidates` is explicit, and never writes production graph data.
+- `scripts/sec_job_run.py` is the local SEC job manifest runner. It reads `data/candidates/sec_jobs.json`, runs only jobs with `review_status: "approved_for_local_run"`, delegates to `scripts/sec_bulk_pipeline_run.py`, defaults to dry-run/preview mode, requires `--allow-network` plus `--user-agent` for network calls, requires `--write-candidates` for review-only candidate output, writes candidate/local audit logs under `data/candidates/run_logs/`, and never writes production graph data.
 - `scripts/sec_candidate_promotion_preview.py` is a read-only validator for review-only SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json`, `data/companies.json`, and `data/connections.json`, validates candidate-only metadata, classifies each candidate as promotable-preview or blocked, requires resolved target names and target-match confidence for candidate endpoints, prints proposed edge shapes only for safe previews, supports `--json`, makes no network calls, and writes no production graph data.
 - `scripts/sec_candidate_promote.py` is the explicit controlled production writer for validated SEC relationship candidates. It defaults to dry-run mode, requires `--write` for production graph changes, writes only `data/connections.json`, never modifies `data/companies.json`, maps candidate tickers to existing production company IDs, promotes only candidates with resolved targets, `target_match_confidence >= 0.85`, mapped `partnership` or `supply` type, evidence, filing date, valid strength, non-duplicate edge keys, and preserved SEC `source_urls` when available, and makes no network calls.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
@@ -189,6 +190,15 @@ python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10
 ```
 
 The bulk runner is the safe local workflow for multiple approved ticker/CIK mappings. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, and delegates each approved ticker to the single-ticker runner. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate file output requires `--write-candidates`; when enabled, the batch writes one combined `data/candidates/sec_relationship_candidates.json` from successfully processed cached filings. Tickers with no mapping or no usable filings are skipped with a summary reason. Production writes remain `0`; promotion stays in the separate promotion preview/promotion path.
+
+SEC local job runner commands:
+
+```bash
+python scripts/sec_job_run.py --job-id mega_cap_core
+python scripts/sec_job_run.py --job-id mega_cap_core --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+```
+
+The local job runner makes repeatable SEC batch ingestion runs addressable by reviewed manifest id. It reads `data/candidates/sec_jobs.json`, refuses unknown job ids, refuses jobs not marked `review_status: "approved_for_local_run"`, prints the exact delegated bulk-runner command, and writes one local run log under `data/candidates/run_logs/` for each delegated run. Default mode is dry-run/preview only. Network calls still require both `--allow-network` and an identifying `--user-agent`, review-only candidate file output still requires `--write-candidates`, and `--force` is refused unless candidate writing is enabled. Run logs are candidate/local audit artifacts only; they are not loaded by the app, do not promote candidates, and report `production_writes: 0`.
 
 Advanced manual SEC helper commands:
 
@@ -354,6 +364,10 @@ python scripts/ingest_candidates.py --candidates data/candidates/cik_mappings.js
 ```
 
 The SEC helper may use this file for `--ticker` lookup, but it must not invent mappings. Production promotion remains a separate future phase with explicit review and writer behavior.
+
+### Local SEC Job Manifest
+
+`data/candidates/sec_jobs.json` is a local-only SEC job manifest for repeatable batch orchestration. It is not loaded by the app, does not create production nodes or edges, and does not write to `data/companies.json` or `data/connections.json`. Jobs must be explicitly marked `review_status: "approved_for_local_run"` before `scripts/sec_job_run.py` will delegate them to the bulk runner. Job run logs under `data/candidates/run_logs/` are local audit artifacts only.
 
 Recommended sequence:
 

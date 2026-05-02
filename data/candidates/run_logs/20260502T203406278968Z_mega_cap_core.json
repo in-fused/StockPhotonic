@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "status": "local_run_log",
+    "production_write_allowed": false,
+    "app_load_allowed": false,
+    "audit_scope": "candidate_local_only"
+  },
+  "timestamp": "2026-05-02T20:34:06Z",
+  "job_id": "mega_cap_core",
+  "description": "Initial approved mega-cap SEC relationship scan",
+  "tickers": [
+    "AAPL",
+    "MSFT",
+    "NVDA"
+  ],
+  "forms": [
+    "10-K",
+    "10-Q",
+    "8-K"
+  ],
+  "limit": 10,
+  "mode": "dry-run/preview",
+  "candidate_writing": "no",
+  "delegated_command": "python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10",
+  "return_code": 0,
+  "production_writes": 0
+}

@@ -36,6 +36,31 @@ SIGNAL_RELATIONSHIP_TYPES = {
     "dependency": "supplier_customer",
     "partnership": "partnership",
 }
+MIN_TARGET_MATCH_CONFIDENCE = 0.85
+SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS = (
+    "revenue from",
+    "licensing",
+    "search distribution",
+    "payments from",
+)
+SUPPLIER_CUSTOMER_SUPPLY_TERMS = (
+    "supplies",
+    "manufactures for",
+    "component supplier",
+)
+GENERIC_RELATIONSHIP_NOISE_TERMS = (
+    "depends on",
+    "suppliers",
+    "customers",
+    "vendors",
+)
+GRAPH_WORTHY_SIGNAL_TERMS = (
+    *SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS,
+    *SUPPLIER_CUSTOMER_SUPPLY_TERMS,
+    "partnership",
+    "collaboration",
+    "strategic agreement",
+)
 ALIAS_FIELD_NAMES = (
     "aliases",
     "alias",
@@ -168,8 +193,31 @@ def source_ticker_from_metadata(metadata: dict[str, Any]) -> str | None:
     return ticker.upper() if ticker else None
 
 
-def relationship_type_for(signal_type: str) -> str:
-    return SIGNAL_RELATIONSHIP_TYPES.get(signal_type, "ecosystem")
+def relationship_term_hits(text: str, terms: tuple[str, ...]) -> list[str]:
+    text_lower = text.lower()
+    hits: list[str] = []
+    for term in terms:
+        if " " in term:
+            if term in text_lower:
+                hits.append(term)
+            continue
+        pattern = r"\b" + re.escape(term) + r"\b"
+        if re.search(pattern, text_lower):
+            hits.append(term)
+    return hits
+
+
+def relationship_type_for(signal_type: str, snippet_text: Any) -> str | None:
+    relationship_type = SIGNAL_RELATIONSHIP_TYPES.get(signal_type, "ecosystem")
+    if relationship_type != "supplier_customer":
+        return relationship_type
+
+    visible_text = visible_snippet_text(snippet_text)
+    if relationship_term_hits(visible_text, SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS):
+        return "partnership"
+    if relationship_term_hits(visible_text, SUPPLIER_CUSTOMER_SUPPLY_TERMS):
+        return "supply"
+    return None
 
 
 def visible_snippet_text(value: Any) -> str:
@@ -383,6 +431,15 @@ def extract_entity_mentions(snippet_text: Any) -> list[str]:
     return unique_ordered([mention for mention in mentions if mention])
 
 
+def numeric_score(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    score = float(value)
+    if not 0 <= score <= 1:
+        return None
+    return score
+
+
 def resolve_snippet_target(
     snippet_text: Any,
     source_ticker: str | None,
@@ -479,13 +536,57 @@ def preview_ranked_snippets(snippets: list[dict[str, Any]]) -> list[dict[str, An
     return [snippet for _, _, snippet in selected]
 
 
+def generic_relationship_noise_dominates(snippet_text: Any) -> bool:
+    visible_text = visible_snippet_text(snippet_text)
+    if not relationship_term_hits(visible_text, GENERIC_RELATIONSHIP_NOISE_TERMS):
+        return False
+    return not relationship_term_hits(visible_text, GRAPH_WORTHY_SIGNAL_TERMS)
+
+
+def candidate_has_required_resolution(candidate: dict[str, Any]) -> bool:
+    if clean_optional_string(candidate.get("target_ticker")) is None:
+        return False
+    if clean_optional_string(candidate.get("target_name")) is None:
+        return False
+    if clean_optional_string(candidate.get("target_match_method")) is None:
+        return False
+    if clean_optional_string(candidate.get("target_entity_mention")) is None:
+        return False
+    if not extract_entity_mentions(candidate.get("evidence_snippet")):
+        return False
+
+    confidence = numeric_score(candidate.get("target_match_confidence"))
+    return (
+        confidence is not None
+        and confidence >= MIN_TARGET_MATCH_CONFIDENCE
+    )
+
+
+def candidate_is_graph_worthy(
+    candidate: dict[str, Any],
+    snippet: dict[str, Any],
+) -> bool:
+    if xbrl_noise_metrics(snippet)["is_dominated"]:
+        return False
+    if generic_relationship_noise_dominates(candidate.get("evidence_snippet")):
+        return False
+    return candidate_has_required_resolution(candidate)
+
+
 def candidate_from_snippet(
     snippet: dict[str, Any],
     matcher: dict[str, list[dict[str, Any]]],
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
     metadata = snippet.get("metadata")
     metadata_fields = metadata if isinstance(metadata, dict) else {}
     source_ticker = source_ticker_from_metadata(metadata_fields)
+    relationship_type = relationship_type_for(
+        str(snippet.get("type", "")),
+        snippet.get("text_snippet"),
+    )
+    if relationship_type is None:
+        return None
+
     target_resolution = resolve_snippet_target(
         snippet.get("text_snippet"),
         source_ticker,
@@ -499,7 +600,7 @@ def candidate_from_snippet(
         "target_match_method": target_resolution["target_match_method"],
         "target_match_confidence": target_resolution["target_match_confidence"],
         "target_entity_mention": target_resolution["target_entity_mention"],
-        "relationship_type": relationship_type_for(str(snippet.get("type", ""))),
+        "relationship_type": relationship_type,
         "source_type": "sec_filing",
         "source_tier": 1,
         "confidence_hint": snippet.get("confidence_hint"),
@@ -511,6 +612,8 @@ def candidate_from_snippet(
     unresolved = target_resolution.get("unresolved_entity_mentions")
     if unresolved:
         candidate["unresolved_entity_mentions"] = unresolved
+    if not candidate_is_graph_worthy(candidate, snippet):
+        return None
     return candidate
 
 
@@ -518,10 +621,11 @@ def build_preview(raw_files: list[str], limit_chars: int | None) -> dict[str, An
     report = build_report(raw_files, limit_chars)
     matcher = build_company_matcher()
     ranked_snippets = preview_ranked_snippets(report["top_snippets"])
-    candidates = [
-        candidate_from_snippet(snippet, matcher)
-        for snippet in ranked_snippets
-    ]
+    candidates: list[dict[str, Any]] = []
+    for snippet in ranked_snippets:
+        candidate = candidate_from_snippet(snippet, matcher)
+        if candidate is not None:
+            candidates.append(candidate)
 
     return {
         "preview_type": "sec_signal_candidate_preview",

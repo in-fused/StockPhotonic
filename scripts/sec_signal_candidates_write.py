@@ -25,6 +25,10 @@ SAFETY_COUNTERS = {
 REQUIRED_CANDIDATE_FIELDS = (
     "source_ticker",
     "target_ticker",
+    "target_name",
+    "target_match_method",
+    "target_match_confidence",
+    "target_entity_mention",
     "relationship_type",
     "source_type",
     "source_tier",
@@ -35,12 +39,9 @@ REQUIRED_CANDIDATE_FIELDS = (
     "review_status",
 )
 OPTIONAL_CANDIDATE_FIELDS = (
-    "target_name",
-    "target_match_method",
-    "target_match_confidence",
-    "target_entity_mention",
     "unresolved_entity_mentions",
 )
+MIN_TARGET_MATCH_CONFIDENCE = 0.85
 
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
@@ -108,12 +109,12 @@ def metadata() -> dict[str, Any]:
         "source_requirements": list(REQUIRED_CANDIDATE_FIELDS),
         "candidate_schema_example": {
             "source_ticker": "SOURCE_PUBLIC_TICKER",
-            "target_ticker": None,
-            "target_name": None,
-            "target_match_method": None,
-            "target_match_confidence": None,
-            "target_entity_mention": None,
-            "relationship_type": "supplier_customer",
+            "target_ticker": "TARGET_PUBLIC_TICKER",
+            "target_name": "Resolved public company name",
+            "target_match_method": "company_name_exact",
+            "target_match_confidence": 0.98,
+            "target_entity_mention": "Resolved Company Inc.",
+            "relationship_type": "partnership",
             "source_type": "sec_filing",
             "source_tier": 1,
             "confidence_hint": 0.88,
@@ -129,6 +130,10 @@ def candidate_from_preview(preview_candidate: dict[str, Any]) -> dict[str, Any]:
     candidate = {
         "source_ticker": preview_candidate.get("source_ticker"),
         "target_ticker": preview_candidate.get("target_ticker"),
+        "target_name": preview_candidate.get("target_name"),
+        "target_match_method": preview_candidate.get("target_match_method"),
+        "target_match_confidence": preview_candidate.get("target_match_confidence"),
+        "target_entity_mention": preview_candidate.get("target_entity_mention"),
         "relationship_type": preview_candidate.get("relationship_type"),
         "source_type": preview_candidate.get("source_type"),
         "source_tier": preview_candidate.get("source_tier"),
@@ -142,6 +147,22 @@ def candidate_from_preview(preview_candidate: dict[str, Any]) -> dict[str, Any]:
         if field in preview_candidate:
             candidate[field] = preview_candidate.get(field)
     return candidate
+
+
+def clean_string(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None
+
+
+def numeric_score(value: Any) -> float | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    score = float(value)
+    if not 0 <= score <= 1:
+        return None
+    return score
 
 
 def build_candidate_payload(raw_files: list[str], limit_chars: int | None) -> dict[str, Any]:
@@ -206,6 +227,25 @@ def validate_payload(payload: dict[str, Any]) -> None:
         if candidate["review_status"] != "pending_review":
             raise CandidateWriteError(
                 f"candidate {index} review_status must be pending_review."
+            )
+        for field in (
+            "target_ticker",
+            "target_name",
+            "target_match_method",
+            "target_entity_mention",
+        ):
+            if clean_string(candidate.get(field)) is None:
+                raise CandidateWriteError(
+                    f"candidate {index} must include resolved {field}."
+                )
+        match_confidence = numeric_score(candidate.get("target_match_confidence"))
+        if (
+            match_confidence is None
+            or match_confidence < MIN_TARGET_MATCH_CONFIDENCE
+        ):
+            raise CandidateWriteError(
+                f"candidate {index} target_match_confidence must be >= "
+                f"{MIN_TARGET_MATCH_CONFIDENCE:.2f}."
             )
 
 

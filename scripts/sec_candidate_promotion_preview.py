@@ -33,43 +33,27 @@ ALLOWED_PRODUCTION_TYPES = {
     "investment",
 }
 LOW_CONFIDENCE_THRESHOLD = 0.70
+TARGET_MATCH_CONFIDENCE_THRESHOLD = 0.85
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 URL_PATTERN = re.compile(r"^https?://\S+$", re.IGNORECASE)
 
 SUPPLY_TERMS = (
-    "critical supplier",
-    "supply agreement",
-    "supplier",
-    "suppliers",
-    "vendor",
-    "vendors",
-    "procurement",
-    "customer",
-    "customers",
-    "client",
-    "clients",
-    "sales to",
-    "revenue from",
-    "depends on",
-    "dependent on",
-    "reliant on",
+    "supplies",
+    "manufactures for",
+    "component supplier",
 )
 PARTNERSHIP_TERMS = (
-    "strategic agreement",
-    "partnership",
-    "partner",
-    "partners",
-    "partnered",
-    "partnering",
-    "collaboration",
-    "collaborate",
-    "alliance",
-    "joint development",
+    "revenue from",
+    "licensing",
+    "search distribution",
+    "payments from",
 )
 CLASSIFICATION_ORDER = (
     "promotable_preview",
     "missing_source_ticker",
     "missing_target_ticker",
+    "missing_target_name",
+    "low_target_match_confidence",
     "source_not_in_production",
     "target_not_in_production",
     "duplicate_existing_edge",
@@ -287,10 +271,10 @@ def map_relationship_type(candidate: dict[str, Any]) -> tuple[str | None, str | 
     supply_hits = term_hits(evidence, SUPPLY_TERMS)
     partnership_hits = term_hits(evidence, PARTNERSHIP_TERMS)
 
-    if supply_hits and not partnership_hits:
-        return "supply", "supplier_customer:evidence_supply_terms"
-    if partnership_hits and not supply_hits:
+    if partnership_hits:
         return "partnership", "supplier_customer:evidence_partnership_terms"
+    if supply_hits:
+        return "supply", "supplier_customer:evidence_supply_terms"
     return None, None
 
 
@@ -431,6 +415,8 @@ def inspect_candidate(
     reasons: list[str] = []
     source_ticker = normalize_ticker(candidate.get("source_ticker"))
     target_ticker = normalize_ticker(candidate.get("target_ticker"))
+    target_name = clean_string(candidate.get("target_name"))
+    target_match_confidence = numeric_score(candidate.get("target_match_confidence"))
 
     source_company: Company | None = None
     target_company: Company | None = None
@@ -445,6 +431,13 @@ def inspect_candidate(
     if target_ticker is None:
         reasons.append("missing_target_ticker")
     else:
+        if target_name is None:
+            reasons.append("missing_target_name")
+        if (
+            target_match_confidence is None
+            or target_match_confidence < TARGET_MATCH_CONFIDENCE_THRESHOLD
+        ):
+            reasons.append("low_target_match_confidence")
         target_company = ticker_to_company.get(target_ticker)
         if target_company is None:
             reasons.append("target_not_in_production")

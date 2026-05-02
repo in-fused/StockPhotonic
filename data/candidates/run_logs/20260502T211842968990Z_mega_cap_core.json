@@ -1,0 +1,27 @@
+{
+  "metadata": {
+    "status": "local_run_log",
+    "production_write_allowed": false,
+    "app_load_allowed": false,
+    "audit_scope": "candidate_local_only"
+  },
+  "timestamp": "2026-05-02T21:18:42Z",
+  "job_id": "mega_cap_core",
+  "description": "Initial approved mega-cap SEC relationship scan",
+  "tickers": [
+    "AAPL",
+    "MSFT",
+    "NVDA"
+  ],
+  "forms": [
+    "10-K",
+    "10-Q",
+    "8-K"
+  ],
+  "limit": 10,
+  "mode": "network-enabled",
+  "candidate_writing": "yes",
+  "delegated_command": "python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent \"Taylor infusednft@gmail.com\" --write-candidates --force",
+  "return_code": 0,
+  "production_writes": 0
+}

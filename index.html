@@ -247,6 +247,32 @@
             outline: none;
         }
 
+        .app-view-tabs {
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(0, 0, 0, 0.26);
+        }
+
+        .app-view-tab {
+            min-height: 2.75rem;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.62);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .app-view-tab:hover,
+        .app-view-tab:focus-visible {
+            border-color: rgba(0, 249, 255, 0.32);
+            color: #ffffff;
+            outline: none;
+        }
+
+        .app-view-tab[aria-selected="true"] {
+            border-color: rgba(0, 249, 255, 0.52);
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.16), rgba(255, 0, 170, 0.10));
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 249, 255, 0.12);
+        }
+
         .source-workbench {
             border: 1px solid rgba(0, 249, 255, 0.16);
             background:
@@ -351,6 +377,15 @@
                 height: 62vh !important;
             }
 
+            .app-view-tabs {
+                width: 100%;
+            }
+
+            .app-view-tab {
+                flex: 1 1 100%;
+                justify-content: center;
+            }
+
             .connection-row {
                 border-radius: 1rem;
             }
@@ -404,121 +439,135 @@
             </div>
         </div>
 
-        <div class="glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10">
-            <div class="flex-1 min-w-[220px] relative">
-                <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-white/35"></i>
-                <input id="search-input" type="text" placeholder="Search ticker or company..."
-                       class="w-full bg-black/40 border border-white/20 focus:border-cyan-400 outline-none text-white placeholder:text-white/40 pl-11 py-3 rounded-3xl text-sm"
-                       autocomplete="off"
-                       oninput="filterGraph()">
-                <div id="search-panel" class="search-panel hidden absolute left-0 right-0 top-full mt-2 rounded-3xl p-2 z-50"></div>
-            </div>
-
-            <select id="sector-filter" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
-                <option value="">All Sectors</option>
-            </select>
-
-            <select id="industry-group-filter" aria-label="Industry Group" title="Industry Group" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
-                <option value="">All Industry Groups</option>
-            </select>
-
-            <select id="layout-mode" onchange="setLayoutMode(this.value)" class="bg-black/40 border border-cyan-400/25 text-white text-sm rounded-3xl px-4 py-3 outline-none">
-                <option value="sector">Sector Layout</option>
-                <option value="hub">Hub Layout</option>
-                <option value="nexus">Company Nexus View</option>
-            </select>
-
-            <button id="focus-mode-toggle" onclick="toggleFocusMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
-                <i class="fa-solid fa-bullseye"></i>
-                <span>Focus Mode</span>
+        <div class="app-view-tabs rounded-3xl p-1.5 mb-6 flex flex-wrap gap-1.5" role="tablist" aria-label="App views">
+            <button id="graph-intelligence-tab" type="button" class="app-view-tab rounded-3xl px-5 py-2.5 text-xs font-mono tracking-[1.3px] flex items-center gap-2" role="tab" aria-selected="true" aria-controls="graph-intelligence-view" onclick="setAppView('graph')">
+                <i class="fa-solid fa-project-diagram"></i>
+                <span>Graph Intelligence</span>
             </button>
-
-            <button id="orbit-toggle" onclick="toggleOrbitMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
-                <i class="fa-solid fa-circle-notch"></i>
-                <span>Orbit</span>
+            <button id="source-workbench-tab" type="button" class="app-view-tab rounded-3xl px-5 py-2.5 text-xs font-mono tracking-[1.3px] flex items-center gap-2" role="tab" aria-selected="false" aria-controls="source-workbench-view" onclick="setAppView('source')">
+                <i class="fa-solid fa-clipboard-list"></i>
+                <span>Source Workbench</span>
             </button>
-
-            <div class="signal-control rounded-3xl px-4 py-2 min-w-[240px]">
-                <label for="signal-threshold" class="flex items-center justify-between gap-3 text-[10px] font-mono tracking-[1.3px] text-cyan-100/75">
-                    <span>Signal Strength Threshold</span>
-                    <span id="signal-threshold-value" class="text-white/70 tabular-nums">0.00</span>
-                </label>
-                <input id="signal-threshold" type="range" min="0" max="1" step="0.05" value="0" oninput="setSignalStrengthThreshold(this.value)" class="signal-slider mt-2 w-full">
-            </div>
-
-            <div class="signal-control rounded-3xl px-4 py-3 min-w-[280px] max-w-[420px] flex-1">
-                <label for="portfolio-input" class="flex items-center justify-between gap-3 text-[10px] font-mono tracking-[1.3px] text-cyan-100/75">
-                    <span>Portfolio Exposure</span>
-                    <span id="portfolio-match-count" class="text-white/55 tabular-nums">0 MATCHED</span>
-                </label>
-                <textarea id="portfolio-input" rows="2" placeholder="NVDA, MSFT, AMZN"
-                          class="mt-2 w-full resize-none bg-black/35 border border-white/15 focus:border-cyan-400 outline-none text-white placeholder:text-white/35 px-3 py-2 rounded-2xl text-xs leading-5"></textarea>
-                <div class="mt-2 flex flex-wrap items-center gap-2">
-                    <button onclick="analyzePortfolioInput()" class="focus-button px-3 py-1.5 text-[10px] rounded-full border border-cyan-300/25 text-cyan-100/85 font-mono">ANALYZE PORTFOLIO</button>
-                    <button onclick="clearPortfolio()" class="focus-button px-3 py-1.5 text-[10px] rounded-full border border-white/15 text-white/60 font-mono">CLEAR</button>
-                    <span id="portfolio-not-found-note" class="text-[10px] text-orange-200/70 font-mono"></span>
-                </div>
-            </div>
-
-            <div class="lg:ml-auto flex flex-wrap items-center justify-end gap-2">
-                <div id="dataset-trust" class="trust-panel rounded-2xl px-3 py-2 text-xs text-white/65 min-w-[220px]">
-                    <div class="flex items-center gap-2 text-cyan-200 font-mono text-[10px] tracking-[1.5px]">
-                        <i class="fa-solid fa-shield-halved"></i>
-                        DATASET TRUST
-                    </div>
-                    <div class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[10px] leading-4">
-                        <span id="trust-company-count">0 COMPANIES</span>
-                        <span id="trust-connection-count">0 EDGES</span>
-                        <span id="trust-high-confidence">0% CONF >=4</span>
-                        <span id="trust-latest-date">VERIFIED -</span>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-x-px text-xs font-mono text-white/50">
-                    <div id="node-count" class="px-3 py-1 bg-white/5 rounded-l-3xl">0 NODES</div>
-                    <div id="connection-count" class="px-3 py-1 bg-white/5">0 CONNECTIONS</div>
-                    <div id="view-status" class="px-3 py-1 bg-emerald-400/10 text-emerald-400 rounded-r-3xl">READY</div>
-                </div>
-            </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-8">
-            <div class="lg:col-span-8">
-                <div class="glass rounded-3xl p-3 graph-container relative overflow-hidden" style="height: 680px;">
-                    <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
-                    <div id="graph-overlay-stats" class="graph-overlay-stats" aria-live="polite"></div>
+        <section id="graph-intelligence-view" role="tabpanel" aria-labelledby="graph-intelligence-tab">
+            <div class="glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10">
+                <div class="flex-1 min-w-[220px] relative">
+                    <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-white/35"></i>
+                    <input id="search-input" type="text" placeholder="Search ticker or company..."
+                           class="w-full bg-black/40 border border-white/20 focus:border-cyan-400 outline-none text-white placeholder:text-white/40 pl-11 py-3 rounded-3xl text-sm"
+                           autocomplete="off"
+                           oninput="filterGraph()">
+                    <div id="search-panel" class="search-panel hidden absolute left-0 right-0 top-full mt-2 rounded-3xl p-2 z-50"></div>
                 </div>
-            </div>
 
-            <div class="lg:col-span-4">
-                <div id="sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full hidden"></div>
-                <div id="empty-sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full min-h-[320px] overflow-y-auto">
-                    <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
-                        <i class="fa-solid fa-project-diagram text-5xl text-white/20 mb-4"></i>
-                        <div class="font-semibold text-white/60">Loading graph intelligence</div>
-                        <div class="text-xs text-white/35 mt-2 max-w-xs">The default dashboard is derived from the static dataset.</div>
+                <select id="sector-filter" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="">All Sectors</option>
+                </select>
+
+                <select id="industry-group-filter" aria-label="Industry Group" title="Industry Group" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="">All Industry Groups</option>
+                </select>
+
+                <select id="layout-mode" onchange="setLayoutMode(this.value)" class="bg-black/40 border border-cyan-400/25 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="sector">Sector Layout</option>
+                    <option value="hub">Hub Layout</option>
+                    <option value="nexus">Company Nexus View</option>
+                </select>
+
+                <button id="focus-mode-toggle" onclick="toggleFocusMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span>Focus Mode</span>
+                </button>
+
+                <button id="orbit-toggle" onclick="toggleOrbitMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-circle-notch"></i>
+                    <span>Orbit</span>
+                </button>
+
+                <div class="signal-control rounded-3xl px-4 py-2 min-w-[240px]">
+                    <label for="signal-threshold" class="flex items-center justify-between gap-3 text-[10px] font-mono tracking-[1.3px] text-cyan-100/75">
+                        <span>Signal Strength Threshold</span>
+                        <span id="signal-threshold-value" class="text-white/70 tabular-nums">0.00</span>
+                    </label>
+                    <input id="signal-threshold" type="range" min="0" max="1" step="0.05" value="0" oninput="setSignalStrengthThreshold(this.value)" class="signal-slider mt-2 w-full">
+                </div>
+
+                <div class="signal-control rounded-3xl px-4 py-3 min-w-[280px] max-w-[420px] flex-1">
+                    <label for="portfolio-input" class="flex items-center justify-between gap-3 text-[10px] font-mono tracking-[1.3px] text-cyan-100/75">
+                        <span>Portfolio Exposure</span>
+                        <span id="portfolio-match-count" class="text-white/55 tabular-nums">0 MATCHED</span>
+                    </label>
+                    <textarea id="portfolio-input" rows="2" placeholder="NVDA, MSFT, AMZN"
+                              class="mt-2 w-full resize-none bg-black/35 border border-white/15 focus:border-cyan-400 outline-none text-white placeholder:text-white/35 px-3 py-2 rounded-2xl text-xs leading-5"></textarea>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                        <button onclick="analyzePortfolioInput()" class="focus-button px-3 py-1.5 text-[10px] rounded-full border border-cyan-300/25 text-cyan-100/85 font-mono">ANALYZE PORTFOLIO</button>
+                        <button onclick="clearPortfolio()" class="focus-button px-3 py-1.5 text-[10px] rounded-full border border-white/15 text-white/60 font-mono">CLEAR</button>
+                        <span id="portfolio-not-found-note" class="text-[10px] text-orange-200/70 font-mono"></span>
+                    </div>
+                </div>
+
+                <div class="lg:ml-auto flex flex-wrap items-center justify-end gap-2">
+                    <div id="dataset-trust" class="trust-panel rounded-2xl px-3 py-2 text-xs text-white/65 min-w-[220px]">
+                        <div class="flex items-center gap-2 text-cyan-200 font-mono text-[10px] tracking-[1.5px]">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            DATASET TRUST
+                        </div>
+                        <div class="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 font-mono text-[10px] leading-4">
+                            <span id="trust-company-count">0 COMPANIES</span>
+                            <span id="trust-connection-count">0 EDGES</span>
+                            <span id="trust-high-confidence">0% CONF >=4</span>
+                            <span id="trust-latest-date">VERIFIED -</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-x-px text-xs font-mono text-white/50">
+                        <div id="node-count" class="px-3 py-1 bg-white/5 rounded-l-3xl">0 NODES</div>
+                        <div id="connection-count" class="px-3 py-1 bg-white/5">0 CONNECTIONS</div>
+                        <div id="view-status" class="px-3 py-1 bg-emerald-400/10 text-emerald-400 rounded-r-3xl">READY</div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <section id="source-intelligence-workbench" class="source-workbench rounded-3xl p-6 md:p-7 mb-10" aria-labelledby="source-workbench-title">
-            <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5">
-                <div>
-                    <div class="source-workbench-label mb-2">Local Pipeline Guide / Candidate Review Area</div>
-                    <h2 id="source-workbench-title" class="font-display text-3xl md:text-4xl font-semibold">Source Intelligence Workbench</h2>
-                    <p class="text-sm md:text-base text-white/64 mt-2 max-w-4xl">
-                        Read-only visibility for the SEC ingestion pipeline. This workbench explains local scripts, candidate-only files, and review boundaries; it is not production graph data and not live backend automation yet.
-                    </p>
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-8">
+                <div class="lg:col-span-8">
+                    <div class="glass rounded-3xl p-3 graph-container relative overflow-hidden" style="height: 680px;">
+                        <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
+                        <div id="graph-overlay-stats" class="graph-overlay-stats" aria-live="polite"></div>
+                    </div>
                 </div>
 
-                <div class="flex flex-wrap gap-2 xl:justify-end">
-                    <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">READ ONLY</span>
-                    <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">LOCAL TERMINAL COMMANDS</span>
-                    <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NOT GRAPH DATA</span>
-                    <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NO BROWSER SCRIPT RUNNER</span>
+                <div class="lg:col-span-4">
+                    <div id="sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full hidden"></div>
+                    <div id="empty-sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full min-h-[320px] overflow-y-auto">
+                        <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
+                            <i class="fa-solid fa-project-diagram text-5xl text-white/20 mb-4"></i>
+                            <div class="font-semibold text-white/60">Loading graph intelligence</div>
+                            <div class="text-xs text-white/35 mt-2 max-w-xs">The default dashboard is derived from the static dataset.</div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </section>
+
+        <section id="source-workbench-view" class="hidden pb-10" role="tabpanel" aria-labelledby="source-workbench-tab">
+            <section id="source-intelligence-workbench" class="source-workbench rounded-3xl p-6 md:p-7" aria-labelledby="source-workbench-title">
+                <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5">
+                    <div>
+                        <div class="source-workbench-label mb-2">Local Pipeline Guide / Candidate Review Area</div>
+                        <h2 id="source-workbench-title" class="font-display text-3xl md:text-4xl font-semibold">Source Intelligence Workbench</h2>
+                        <p class="text-sm md:text-base text-white/64 mt-2 max-w-4xl">
+                            Read-only visibility for the SEC ingestion pipeline. This workbench explains local scripts, candidate-only files, and review boundaries; it is not production graph data and not live backend automation yet.
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 xl:justify-end">
+                        <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">READ ONLY</span>
+                        <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">LOCAL TERMINAL COMMANDS</span>
+                        <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NOT GRAPH DATA</span>
+                        <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NO BROWSER SCRIPT RUNNER</span>
+                    </div>
+                </div>
 
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-6">
                 <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
@@ -687,6 +736,7 @@
                     Future phases may add a local backend command runner, admin-only controls, a hosted worker/job queue, or API-backed ingestion. This phase does not implement those capabilities.
                 </p>
             </div>
+            </section>
         </section>
     </div>
 
@@ -1010,6 +1060,26 @@
             isFocusModeActive,
             isIndustryCorrelationHintNode
         };
+
+        function setAppView(view) {
+            const isSourceView = view === 'source';
+            const graphView = document.getElementById('graph-intelligence-view');
+            const sourceView = document.getElementById('source-workbench-view');
+            const graphTab = document.getElementById('graph-intelligence-tab');
+            const sourceTab = document.getElementById('source-workbench-tab');
+
+            graphView?.classList.toggle('hidden', isSourceView);
+            sourceView?.classList.toggle('hidden', !isSourceView);
+            graphTab?.setAttribute('aria-selected', String(!isSourceView));
+            sourceTab?.setAttribute('aria-selected', String(isSourceView));
+
+            if (!isSourceView) {
+                window.requestAnimationFrame(() => {
+                    resizeCanvas();
+                    requestDraw();
+                });
+            }
+        }
 
         /* ==============================
            DATA LOADING

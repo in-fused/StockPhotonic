@@ -120,6 +120,7 @@ Current scripts:
 - `scripts/sec_signal_candidates_preview.py` is a preview-only converter from SEC signal report snippets to relationship candidate-shaped objects. It reads local cached filing documents, optional sibling metadata sidecars, and `data/companies.json` in read-only mode to resolve clear company/entity mentions already present in production. It prints preview objects to stdout, writes no candidate files, makes no network calls, writes no production graph data, and filters obvious XBRL metadata snippets out of preview ranking.
 - `scripts/sec_signal_candidates_write.py` is an explicit review-gated writer for SEC signal candidate previews. Default mode prints would-be candidate records to stdout only. It carries forward optional preview entity-resolution fields when present, writes only `data/candidates/sec_relationship_candidates.json` when `--write` is passed, refuses to overwrite without `--force`, makes no network calls, and writes no production graph data.
 - `scripts/sec_pipeline_run.py` is the local one-command SEC pipeline runner. It validates candidate references, delegates to the existing submissions fetch/inspect, filing plan/fetch, signal report, candidate preview, and optional candidate writer scripts, defaults to dry-run/preview mode, requires `--allow-network` plus `--user-agent` for SEC network calls, requires `--write-candidates` for review-only candidate output, and never writes production graph data.
+- `scripts/sec_candidate_promotion_preview.py` is a read-only validator for review-only SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json`, `data/companies.json`, and `data/connections.json`, validates candidate-only metadata, classifies each candidate as promotable-preview or blocked, prints proposed edge shapes only for safe previews, supports `--json`, makes no network calls, and writes no production graph data.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -250,6 +251,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 ```
 
 The candidate writer reuses the safe preview path, converts preview records to review-only records with `review_status: "pending_review"`, and writes only `data/candidates/sec_relationship_candidates.json` when `--write` is explicit. Because the committed candidate file is itself review-only, overwriting it requires `--force`. The file metadata keeps `status: "candidate_only"`, `production_write_allowed: false`, and `app_load_allowed: false`; safety counters keep `network_calls: 0` and `production_writes: 0`. This writer does not modify `data/companies.json`, `data/connections.json`, UI files, rendering code, or production scripts.
+
+SEC candidate promotion preview commands:
+
+```bash
+python scripts/sec_candidate_promotion_preview.py
+python scripts/sec_candidate_promotion_preview.py --json
+```
+
+The promotion preview validator reads only the review-only SEC candidate file and current production graph JSON. It blocks candidates with missing tickers, missing production endpoints, duplicate existing edges, unsupported relationship types, missing evidence, or low confidence. For `supplier_customer` candidates, it maps to `supply` or `partnership` only when deterministic evidence terms make the current production type clear. Promotable records are printed as proposed edge shapes only; production writes remain `0`.
 
 Local provisioner commands:
 

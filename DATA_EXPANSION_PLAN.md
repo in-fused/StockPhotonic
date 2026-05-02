@@ -289,6 +289,19 @@ python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 1
 
 Network calls require both `--allow-network` and an identifying `--user-agent`. Candidate file output requires `--write-candidates` and writes only `data/candidates/sec_relationship_candidates.json` through the existing review-only writer. The runner may create a temporary filing plan artifact solely to satisfy the existing filing fetcher's reviewed-plan input contract, then removes that temporary artifact before exit. It does not modify `data/companies.json`, does not modify `data/connections.json`, does not add production nodes or edges, does not add backend/server code, and does not run from the browser.
 
+### Phase D22: SEC Candidate Promotion Preview Validator
+
+`scripts/sec_candidate_promotion_preview.py` is a preview-only validator for review-only SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json` by default, validates the file's candidate-only metadata, checks candidate endpoints against `data/companies.json`, checks duplicate edge keys against `data/connections.json`, and prints which records could later become production edge shapes after manual review.
+
+Default usage writes nothing:
+
+```bash
+python scripts/sec_candidate_promotion_preview.py
+python scripts/sec_candidate_promotion_preview.py --json
+```
+
+The validator does not promote candidates, does not create production nodes or edges, does not modify `data/companies.json` or `data/connections.json`, performs no network calls, and adds no backend/server code. `supplier_customer` candidates remain blocked unless deterministic evidence terms map them clearly to the current production `supply` or `partnership` types.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

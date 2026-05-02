@@ -611,7 +611,7 @@
                 <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
                     <div class="source-workbench-label mb-3">Pipeline Status</div>
                     <p class="text-sm text-white/62 mb-4">
-                        The current path moves from source lookup and cache planning into review-only candidate files. Production validation, review, and promotion are future phases.
+                        The current path moves from source lookup and cache planning into review-only candidate files and promotion previews. Production review and promotion are future phases.
                     </p>
                     <div class="pipeline-flow" aria-label="SEC ingestion pipeline status">
                         <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">SEC lookup/cache</span>
@@ -629,6 +629,8 @@
                         <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">candidate preview</span>
                         <span class="pipeline-arrow">-&gt;</span>
                         <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">candidate file writer</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">promotion preview</span>
                         <span class="pipeline-arrow">-&gt;</span>
                         <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">future validation/review/promotion</span>
                     </div>
@@ -683,20 +685,29 @@
                         <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Taylor infusednft@gmail.com" --write-candidates --force</code></pre>
                     </div>
 
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Preview promotion eligibility only</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy SEC candidate promotion preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-4">python scripts/sec_candidate_promotion_preview.py</code></pre>
+                    </div>
+
                     <details class="source-command rounded-2xl p-3">
                         <summary class="cursor-pointer text-xs text-white/58">Advanced/manual workflow summary</summary>
                         <div class="flex items-center justify-between gap-3 mt-3 mb-2">
                             <span class="text-xs text-white/58">Use individual scripts only when inspecting an intermediate artifact.</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy advanced manual SEC workflow summary"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-5', this)" aria-label="Copy advanced manual SEC workflow summary"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-4">python scripts/ingest_candidates.py --candidates data/candidates/cik_mappings.json --candidate-kind cik-mappings --summary-only
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-5">python scripts/ingest_candidates.py --candidates data/candidates/cik_mappings.json --candidate-kind cik-mappings --summary-only
 python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Taylor infusednft@gmail.com" --dry-run
 python scripts/sec_submissions_inspect.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10
 python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10 --json
 python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json
 python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm
 python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --json
-python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force</code></pre>
+python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force
+python scripts/sec_candidate_promotion_preview.py</code></pre>
                     </details>
                 </div>
             </div>

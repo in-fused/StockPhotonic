@@ -15,7 +15,7 @@
   "jobs": [
     {
       "id": "mega_cap_core",
-      "description": "Initial approved mega-cap SEC relationship scan",
+      "description": "Starter approved mega-cap SEC relationship scan for current AAPL/MSFT/NVDA mappings",
       "tickers": ["AAPL", "MSFT", "NVDA"],
       "forms": ["10-K", "10-Q", "8-K"],
       "limit": 10,

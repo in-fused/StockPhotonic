@@ -175,15 +175,26 @@ python scripts/validate_data.py
 python scripts/validate_data.py --strict-confidence
 ```
 
-SEC one-command pipeline runner commands:
+Recommended SEC source workflow:
 
 ```bash
-python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10
-python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com"
-python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview --include-commit-plan
+python scripts/sec_job_run.py --job-id mega_cap_core
+python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+python scripts/sec_candidate_promotion_preview.py
+python scripts/sec_candidate_promote.py
+python scripts/validate_data.py
 ```
 
-The one-command runner is the recommended local workflow. Default mode is dry-run/preview only: it validates candidate references, dry-runs SEC submissions and filing-document fetches unless network access is explicitly enabled, runs signal reporting and candidate preview only from local cache files that exist, and reports production writes as zero. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate output requires `--write-candidates`; `--force` is passed only to the existing candidate writer and does not authorize production graph writes. The runner creates only a temporary filing-plan artifact needed by the existing filing fetcher and removes it before exit.
+The recommended visible path is:
+
+```text
+Scheduled Preview -> Local Job Runner -> Bulk Candidate Generation -> Promotion Preview -> Manual Promotion Dry Run -> Validation
+```
+
+The current reviewed starter job covers AAPL, MSFT, and NVDA through approved SEC CIK mappings. That set is only a starter batch for proving the local workflow; it is not the long-term company universe. Future scale work should add more approved CIK mappings and reviewed jobs before broader automated ingestion.
+
+The scheduled preview and job runner are the primary local orchestration surface. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate output requires `--write-candidates`; `--force` is passed only to the existing candidate writer and does not authorize production graph writes.
 
 SEC bulk local runner commands:
 
@@ -192,7 +203,7 @@ python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10
 python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
 ```
 
-The bulk runner is the safe local workflow for multiple approved ticker/CIK mappings. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, and delegates each approved ticker to the single-ticker runner. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate file output requires `--write-candidates`; when enabled, the batch writes one combined `data/candidates/sec_relationship_candidates.json` from successfully processed cached filings. Tickers with no mapping or no usable filings are skipped with a summary reason. Production writes remain `0`; promotion stays in the separate promotion preview/promotion path.
+The bulk runner is the safe local workflow for multiple approved ticker/CIK mappings. AAPL, MSFT, and NVDA are the current approved starter mappings, not the intended upper bound. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, and delegates each approved ticker to the single-ticker runner. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate file output requires `--write-candidates`; when enabled, the batch writes one combined `data/candidates/sec_relationship_candidates.json` from successfully processed cached filings. Tickers with no mapping or no usable filings are skipped with a summary reason. Production writes remain `0`; promotion stays in the separate promotion preview/promotion path.
 
 SEC local job runner commands:
 
@@ -201,7 +212,7 @@ python scripts/sec_job_run.py --job-id mega_cap_core
 python scripts/sec_job_run.py --job-id mega_cap_core --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
 ```
 
-The local job runner makes repeatable SEC batch ingestion runs addressable by reviewed manifest id. It reads `data/candidates/sec_jobs.json`, refuses unknown job ids, refuses jobs not marked `review_status: "approved_for_local_run"`, prints the exact delegated bulk-runner command, and writes one local run log under `data/candidates/run_logs/` for each delegated run. Default mode is dry-run/preview only. Network calls still require both `--allow-network` and an identifying `--user-agent`, review-only candidate file output still requires `--write-candidates`, and `--force` is refused unless candidate writing is enabled. Run logs are candidate/local audit artifacts only; they are not loaded by the app, do not promote candidates, and report `production_writes: 0`.
+The local job runner is the preferred repeatable execution path once mappings are reviewed. It makes SEC batch ingestion runs addressable by reviewed manifest id, reads `data/candidates/sec_jobs.json`, refuses unknown job ids, refuses jobs not marked `review_status: "approved_for_local_run"`, prints the exact delegated bulk-runner command, and writes one local run log under `data/candidates/run_logs/` for each delegated run. Default mode is dry-run/preview only. Network calls still require both `--allow-network` and an identifying `--user-agent`, review-only candidate file output still requires `--write-candidates`, and `--force` is refused unless candidate writing is enabled. Run logs are candidate/local audit artifacts only; they are not loaded by the app, do not promote candidates, and report `production_writes: 0`.
 
 SEC scheduled-run preview commands:
 
@@ -216,13 +227,16 @@ The scheduled-run preview reads the candidate-only local schedule, reviewed job 
 Advanced manual SEC helper commands:
 
 ```bash
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com"
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
 python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.email@example.com" --dry-run
 python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.email@example.com"
 # After a reviewed mapping exists in data/candidates/cik_mappings.json:
 python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Your Name your.email@example.com" --dry-run
 ```
 
-The SEC cache helper requires an explicit identifying `--user-agent`. Use `--dry-run` first to confirm the exact SEC URL and deterministic cache path. `--ticker` lookup is allowed only through `data/candidates/cik_mappings.json` records with `review_status: "pending"` or `review_status: "approved_for_fetch"`; if a ticker is missing, the helper must fail clearly rather than guess a CIK. Cached responses are written under `data/cache/sec/` by default and should not be committed unless a future reviewed phase explicitly approves the cached artifact. Running the helper is opt-in only; validation and app loading do not fetch SEC data.
+These commands are for advanced single-ticker debugging and intermediate artifact inspection, not the top-level recommended workflow. The SEC cache helper requires an explicit identifying `--user-agent`. Use `--dry-run` first to confirm the exact SEC URL and deterministic cache path. `--ticker` lookup is allowed only through `data/candidates/cik_mappings.json` records with `review_status: "pending"` or `review_status: "approved_for_fetch"`; if a ticker is missing, the helper must fail clearly rather than guess a CIK. Cached responses are written under `data/cache/sec/` by default and should not be committed unless a future reviewed phase explicitly approves the cached artifact. Running the helper is opt-in only; validation and app loading do not fetch SEC data.
 
 SEC submissions inspector command:
 
@@ -302,13 +316,27 @@ The automation policy is a gate, not automation execution. It classifies each ca
 
 The controlled promotion writer uses the same dry-run-first stance and now reports the policy gate classification in dry-run and JSON output, but it can append validated edges to `data/connections.json` only when `--write` is explicit. When a candidate carries SEC `archive_url` or `source_urls`, the promoted edge keeps those URLs in its `source_urls` array. Phase D24 promoted one SEC filing relationship from AAPL to GOOGL as a `partnership` edge for Google's licensing/search distribution relationship on Apple's platforms. The writer suppresses duplicate candidate edges during the same run and treats existing production edge keys as blockers on later runs.
 
+Scale roadmap:
+
+```text
+Current: AAPL/MSFT/NVDA approved SEC starter job
+Next: expand approved CIK mappings
+Then: sector batches / S&P-style batches
+Then: policy-gated promotion candidates
+Then: reviewed production graph writes
+```
+
 Future automation path:
 
 ```text
 scheduled preview -> scheduled run -> candidates -> policy preview -> manual/auto promotion gate -> validation -> optional commit
 ```
 
-The scheduled preview and policy gate are only checkpoints in that future path. They do not make scheduled runs, production promotion, validation, commits, or browser execution automatic.
+The scheduled preview and policy gate are only checkpoints in that future path. Realistic next automation options are a local scheduled task through Windows Task Scheduler, a local desktop agent later, or a hosted worker later. The safest current automation target is local scheduled preview plus candidate generation; manual promotion remains protected by promotion preview, policy classification, dry-run behavior, and validation. Current phases do not make scheduled runs, production promotion, validation, commits, or browser execution automatic.
+
+Graph UX roadmap:
+
+The SEC preview overlay is working. Larger graph UI work and a future 3D/globe orbit should wait until the data scale foundations are stable. Sidebar and canvas layout cleanup should happen before or alongside the first 3D prototype.
 
 Local provisioner commands:
 

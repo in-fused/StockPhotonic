@@ -355,7 +355,7 @@ The job runner reads only jobs with `review_status: "approved_for_local_run"`, r
 
 `data/candidates/cik_mappings.json` now includes approved SEC submissions endpoint mappings for AAPL, MSFT, and NVDA so bulk and job runners can process the current mega-cap core ticker set instead of skipping MSFT or NVDA as unmapped.
 
-The added mappings remain candidate/reference-only records with `source_type: "sec_filing"`, `source_tier: 1`, SEC submissions URLs, capture dates, and `review_status: "approved_for_fetch"`. Candidate-only metadata remains unchanged: production writes are not allowed, app loading is not allowed, and duplicate ticker/CIK validation continues to gate the file before any local fetch workflow uses it.
+The added mappings are starter approved mappings only, not the long-term company universe. Future scale work should add more reviewed CIK mappings and job manifests before broader automated ingestion. The mappings remain candidate/reference-only records with `source_type: "sec_filing"`, `source_tier: 1`, SEC submissions URLs, capture dates, and `review_status: "approved_for_fetch"`. Candidate-only metadata remains unchanged: production writes are not allowed, app loading is not allowed, and duplicate ticker/CIK validation continues to gate the file before any local fetch workflow uses it.
 
 ### Phase D28: SEC Automation Policy + Promotion Gate
 
@@ -390,6 +390,30 @@ python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_p
 ```
 
 The scheduled preview prints exact terminal commands a human can run, classifies current candidate state as `ready_for_manual_promotion`, `future_auto_promotable_preview`, `manual_review_required`, or `blocked`, and includes a recommended next command. It may include `--allow-network` in printed job commands only when the preview is explicitly run with `--allow-network` and `--user-agent`; the planner itself still performs no network calls. It writes no candidate files, runs no git commands, does not auto-promote candidates, does not modify `data/companies.json`, and does not modify `data/connections.json`.
+
+### Phase D30: Source Workbench Workflow Consolidation + Scale Prep
+
+The Source Workbench now presents the bulk/job/scheduled-run pipeline as the primary local workflow instead of leading with one-off single-ticker commands. The visible recommended sequence is:
+
+```text
+Scheduled Preview -> Local Job Runner -> Bulk Candidate Generation -> Promotion Preview -> Manual Promotion Dry Run -> Validation
+```
+
+Single-ticker `sec_pipeline_run.py` commands remain useful for debugging one ticker or inspecting intermediate artifacts, but they belong in the advanced path rather than the top-level recommendation. The approved AAPL/MSFT/NVDA job is framed as the current starter SEC batch only; future expansion should add reviewed CIK mappings and additional approved jobs before wider automated ingestion.
+
+Scale roadmap:
+
+```text
+Current: AAPL/MSFT/NVDA approved SEC starter job
+Next: expand approved CIK mappings
+Then: sector batches / S&P-style batches
+Then: policy-gated promotion candidates
+Then: reviewed production graph writes
+```
+
+Future automation should stay local and preview-first until the data path is proven. The safest next target is a local scheduled preview plus candidate generation, with manual promotion still protected by promotion preview, policy classification, dry-run behavior, and validation. Later options include Windows Task Scheduler, a local desktop agent, or a hosted worker.
+
+Graph UX scale work should follow the data scale foundation. The SEC preview overlay is working; larger graph UI cleanup and any 3D/globe orbit prototype should come after, or alongside, sidebar and canvas layout cleanup.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

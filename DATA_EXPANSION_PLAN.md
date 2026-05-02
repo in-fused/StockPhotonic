@@ -347,9 +347,11 @@ Default usage is dry-run/preview first:
 ```bash
 python scripts/sec_job_run.py --job-id mega_cap_core
 python scripts/sec_job_run.py --job-id mega_cap_core --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+python scripts/sec_job_run.py --job-id batch_1_multi_sector
+python scripts/sec_job_run.py --job-id batch_1_multi_sector --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
 ```
 
-The job runner reads only jobs with `review_status: "approved_for_local_run"`, refuses unknown or unapproved jobs, refuses `--allow-network` without `--user-agent`, and refuses `--force` unless `--write-candidates` is present. It prints the exact delegated `scripts/sec_bulk_pipeline_run.py` command before running it. Each delegated run writes a local audit log under `data/candidates/run_logs/` with timestamp, job id, tickers, forms, limit, mode, candidate-writing yes/no, return code, and `production_writes: 0`. Run logs are candidate/local audit artifacts only and are not app-loaded data.
+The job runner reads only jobs with `review_status: "approved_for_local_run"`, refuses unknown or unapproved jobs, refuses `--allow-network` without `--user-agent`, and refuses `--force` unless `--write-candidates` is present. It prints the exact delegated `scripts/sec_bulk_pipeline_run.py` command before running it. `mega_cap_core` remains the starter job; `batch_1_multi_sector` is the broader Batch 1 job using expanded approved CIK mapping coverage. Each delegated run writes a local audit log under `data/candidates/run_logs/` with timestamp, job id, tickers, forms, limit, mode, candidate-writing yes/no, return code, and `production_writes: 0`. Run logs are candidate/local audit artifacts only and are not app-loaded data.
 
 ### Phase D27: Expand CIK Mapping Coverage
 
@@ -404,7 +406,7 @@ Single-ticker `sec_pipeline_run.py` commands remain useful for debugging one tic
 Scale roadmap:
 
 ```text
-Current: AAPL/MSFT/NVDA approved SEC starter job plus Batch 1 multi-sector CIK mappings
+Current: AAPL/MSFT/NVDA starter job plus batch_1_multi_sector reviewed local job
 Next: sector job manifests / S&P-style batches
 Then: policy-gated promotion candidates
 Then: reviewed production graph writes
@@ -421,6 +423,12 @@ Graph UX scale work should follow the data scale foundation. The SEC preview ove
 This is candidate/reference-only expansion. It enables the bulk runner, and future reviewed job manifests, to process a broader cross-section of the US market graph without mapping skips for those tickers. It does not create production companies, production edges, app-loaded records, relationship candidates, or graph changes.
 
 The CIK mapping file still keeps `status: "candidate_only"`, `production_write_allowed: false`, and `app_load_allowed: false`. Each Batch 1 mapping uses `source_type: "sec_filing"`, `source_tier: 1`, a zero-padded SEC submissions CIK URL, a capture date, and `review_status: "approved_for_fetch"`. Duplicate ticker and duplicate CIK validation remain required before any fetch workflow uses the expanded mapping set.
+
+### Phase D32: Multi-Sector SEC Job Manifest
+
+`data/candidates/sec_jobs.json` now includes the reviewed `batch_1_multi_sector` job so the expanded Batch 1 approved CIK mapping coverage can be run by job id instead of manually pasting long ticker lists. `mega_cap_core` remains the starter job for AAPL, MSFT, and NVDA; `batch_1_multi_sector` is the broader Batch 1 job for AAPL, MSFT, NVDA, AMZN, GOOGL, META, AMD, INTC, AVGO, JPM, GS, BLK, XOM, CVX, UNH, LLY, GE, and CAT.
+
+Both manifest jobs remain local-only candidate orchestration. They require `review_status: "approved_for_local_run"`, delegate through the local bulk runner, and do not create production nodes, create production edges, promote candidates, load in the app, modify `data/companies.json`, or modify `data/connections.json`.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

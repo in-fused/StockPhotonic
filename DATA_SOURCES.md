@@ -2,7 +2,7 @@
 
 **Last Updated**: May 2, 2026
 
-**Current Version**: v5.18 / Phase D31 Approved SEC CIK Mapping Batch 1
+**Current Version**: v5.19 / Phase D32 Multi-Sector SEC Job Manifest
 
 **Current Dataset**: 60 real US-listed public companies and 118 curated connections loaded from static JSON files:
 
@@ -194,6 +194,8 @@ Scheduled Preview -> Local Job Runner -> Bulk Candidate Generation -> Promotion 
 
 The current reviewed starter job covers AAPL, MSFT, and NVDA, and Phase D31 expands the approved SEC CIK mapping reference beyond that starter set with a multi-sector Batch 1. This allows bulk SEC ingestion to address technology, semiconductors/hardware, financials, energy, healthcare, and industrial tickers without mapping skips when those tickers are requested. The expanded mappings remain candidate/reference-only; they do not create companies, edges, app-loaded records, or production graph data. Future scale work should add reviewed jobs and sector batches before broader automated ingestion.
 
+Phase D32 adds `batch_1_multi_sector` as the reviewed manifest job for the broader Batch 1 ticker set. `mega_cap_core` remains the starter job for initial local runs, while `batch_1_multi_sector` is the broader Batch 1 job for approved multi-sector mapping coverage. Both jobs remain local-only candidate orchestration; neither job promotes candidates, creates production graph data, or modifies `data/companies.json` or `data/connections.json`.
+
 The scheduled preview and job runner are the primary local orchestration surface. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate output requires `--write-candidates`; `--force` is passed only to the existing candidate writer and does not authorize production graph writes.
 
 SEC bulk local runner commands:
@@ -211,9 +213,11 @@ SEC local job runner commands:
 ```bash
 python scripts/sec_job_run.py --job-id mega_cap_core
 python scripts/sec_job_run.py --job-id mega_cap_core --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+python scripts/sec_job_run.py --job-id batch_1_multi_sector
+python scripts/sec_job_run.py --job-id batch_1_multi_sector --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
 ```
 
-The local job runner is the preferred repeatable execution path once mappings are reviewed. It makes SEC batch ingestion runs addressable by reviewed manifest id, reads `data/candidates/sec_jobs.json`, refuses unknown job ids, refuses jobs not marked `review_status: "approved_for_local_run"`, prints the exact delegated bulk-runner command, and writes one local run log under `data/candidates/run_logs/` for each delegated run. Default mode is dry-run/preview only. Network calls still require both `--allow-network` and an identifying `--user-agent`, review-only candidate file output still requires `--write-candidates`, and `--force` is refused unless candidate writing is enabled. Run logs are candidate/local audit artifacts only; they are not loaded by the app, do not promote candidates, and report `production_writes: 0`.
+The local job runner is the preferred repeatable execution path once mappings are reviewed. It makes SEC batch ingestion runs addressable by reviewed manifest id, reads `data/candidates/sec_jobs.json`, refuses unknown job ids, refuses jobs not marked `review_status: "approved_for_local_run"`, prints the exact delegated bulk-runner command, and writes one local run log under `data/candidates/run_logs/` for each delegated run. `mega_cap_core` remains the starter job; `batch_1_multi_sector` is the broader Batch 1 job that uses the expanded approved CIK mapping coverage. Default mode is dry-run/preview only. Network calls still require both `--allow-network` and an identifying `--user-agent`, review-only candidate file output still requires `--write-candidates`, and `--force` is refused unless candidate writing is enabled. Run logs are candidate/local audit artifacts only; they are not loaded by the app, do not promote candidates, and report `production_writes: 0`.
 
 SEC scheduled-run preview commands:
 
@@ -422,7 +426,7 @@ The SEC helper may use this file for `--ticker` lookup, but it must not invent m
 
 ### Local SEC Job Manifest
 
-`data/candidates/sec_jobs.json` is a local-only SEC job manifest for repeatable batch orchestration. It is not loaded by the app, does not create production nodes or edges, and does not write to `data/companies.json` or `data/connections.json`. Jobs must be explicitly marked `review_status: "approved_for_local_run"` before `scripts/sec_job_run.py` will delegate them to the bulk runner. Job run logs under `data/candidates/run_logs/` are local audit artifacts only.
+`data/candidates/sec_jobs.json` is a local-only SEC job manifest for repeatable batch orchestration. It is not loaded by the app, does not create production nodes or edges, and does not write to `data/companies.json` or `data/connections.json`. `mega_cap_core` remains the starter job, and `batch_1_multi_sector` is the broader Batch 1 job using the expanded approved CIK mappings. Jobs must be explicitly marked `review_status: "approved_for_local_run"` before `scripts/sec_job_run.py` will delegate them to the bulk runner. Job run logs under `data/candidates/run_logs/` are local audit artifacts only, and neither manifest job promotes production graph data.
 
 ### Local SEC Schedule Plan
 

@@ -679,7 +679,7 @@
                 </div>
 
                 <p class="text-sm text-white/58 mb-4">
-                    AAPL, MSFT, and NVDA are the current approved SEC starter mappings for the reviewed mega-cap job. They are not the long-term universe; future phases should add more reviewed CIK mappings and jobs before broader automated ingestion.
+                    AAPL, MSFT, and NVDA remain the starter SEC job. The broader Batch 1 multi-sector job uses the expanded approved CIK mappings and still stays local-only; neither job promotes production graph data.
                 </p>
 
                 <div class="grid grid-cols-1 gap-3">
@@ -805,10 +805,26 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
 
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Job fetch and write review-only candidates</span>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Starter job fetch and write review-only candidates</span>
                             <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-11', this)" aria-label="Copy local SEC job network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
                         <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-11">python scripts/sec_job_run.py --job-id mega_cap_core --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Batch 1 multi-sector dry-run and preview</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-14', this)" aria-label="Copy Batch 1 multi-sector SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-14">python scripts/sec_job_run.py --job-id batch_1_multi_sector</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Batch 1 fetch and write review-only candidates</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-15', this)" aria-label="Copy Batch 1 multi-sector SEC job network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-15">python scripts/sec_job_run.py --job-id batch_1_multi_sector --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
                     </div>
                 </div>
             </div>

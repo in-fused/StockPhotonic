@@ -20,6 +20,14 @@
       "forms": ["10-K", "10-Q", "8-K"],
       "limit": 10,
       "review_status": "approved_for_local_run"
+    },
+    {
+      "id": "batch_1_multi_sector",
+      "description": "Batch 1 multi-sector SEC relationship scan using approved CIK mappings",
+      "tickers": ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "AMD", "INTC", "AVGO", "JPM", "GS", "BLK", "XOM", "CVX", "UNH", "LLY", "GE", "CAT"],
+      "forms": ["10-K", "10-Q", "8-K"],
+      "limit": 10,
+      "review_status": "approved_for_local_run"
     }
   ]
 }

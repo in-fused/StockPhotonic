@@ -674,7 +674,7 @@
                             <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Network-enabled cache and filing fetch</span>
                             <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-2', this)" aria-label="Copy one-command SEC network workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-2">python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Taylor infusednft@gmail.com"</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-2">python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com"</code></pre>
                     </div>
 
                     <div class="source-command rounded-2xl p-3">
@@ -682,7 +682,7 @@
                             <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Write review-only candidate file</span>
                             <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-3', this)" aria-label="Copy one-command SEC candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Taylor infusednft@gmail.com" --write-candidates --force</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
                     </div>
 
                     <div class="source-command rounded-2xl p-3">
@@ -700,7 +700,7 @@
                             <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-5', this)" aria-label="Copy advanced manual SEC workflow summary"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
                         <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-5">python scripts/ingest_candidates.py --candidates data/candidates/cik_mappings.json --candidate-kind cik-mappings --summary-only
-python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Taylor infusednft@gmail.com" --dry-run
+python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Your Name your.email@example.com" --dry-run
 python scripts/sec_submissions_inspect.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10
 python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10 --json
 python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json
@@ -709,6 +709,36 @@ python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0
 python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force
 python scripts/sec_candidate_promotion_preview.py</code></pre>
                     </details>
+                </div>
+            </div>
+
+            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+                    <div>
+                        <div class="source-workbench-label mb-2">Bulk Local Runner</div>
+                        <p class="text-sm text-white/60">Use approved ticker/CIK mappings only. Candidate writing remains review-only and production promotion stays separate.</p>
+                    </div>
+                    <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
+                        Network and candidate writes require explicit flags.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-3">
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">1.</span> Bulk dry-run and preview from local cache</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-6', this)" aria-label="Copy bulk SEC dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-6">python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Bulk fetch and write review-only candidates</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-7', this)" aria-label="Copy bulk SEC network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-7">python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
+                    </div>
                 </div>
             </div>
 

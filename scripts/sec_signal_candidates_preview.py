@@ -120,6 +120,7 @@ TICKER_REFERENCE_PATTERN = re.compile(
     r"\b(?:NASDAQ|Nasdaq|NYSE|NYSEARCA|NYSE American|NasdaqGS)\s*[:\-]\s*"
     r"([A-Z][A-Z.]{0,5})\b"
 )
+URL_PATTERN = re.compile(r"^https?://\S+$", re.IGNORECASE)
 TAG_PATTERN = re.compile(r"<[^>]+>")
 XBRL_NOISE_MARKERS = (
     "xbrli:",
@@ -186,6 +187,37 @@ def clean_optional_string(value: Any) -> str | None:
         return None
     normalized = value.strip()
     return normalized or None
+
+
+def clean_source_url(value: Any) -> str | None:
+    url = clean_optional_string(value)
+    if url is None or URL_PATTERN.match(url) is None:
+        return None
+    return url
+
+
+def source_urls_from_metadata(metadata: dict[str, Any]) -> list[str]:
+    raw_urls: list[Any] = []
+    for field_name in ("archive_url", "source_url"):
+        raw_url = metadata.get(field_name)
+        if raw_url is not None:
+            raw_urls.append(raw_url)
+
+    source_urls = metadata.get("source_urls")
+    if isinstance(source_urls, list):
+        raw_urls.extend(source_urls)
+    elif source_urls is not None:
+        raw_urls.append(source_urls)
+
+    urls: list[str] = []
+    seen: set[str] = set()
+    for raw_url in raw_urls:
+        url = clean_source_url(raw_url)
+        if url is None or url in seen:
+            continue
+        seen.add(url)
+        urls.append(url)
+    return urls
 
 
 def source_ticker_from_metadata(metadata: dict[str, Any]) -> str | None:
@@ -580,6 +612,8 @@ def candidate_from_snippet(
     metadata = snippet.get("metadata")
     metadata_fields = metadata if isinstance(metadata, dict) else {}
     source_ticker = source_ticker_from_metadata(metadata_fields)
+    archive_url = clean_source_url(metadata_fields.get("archive_url"))
+    source_urls = source_urls_from_metadata(metadata_fields)
     relationship_type = relationship_type_for(
         str(snippet.get("type", "")),
         snippet.get("text_snippet"),
@@ -609,6 +643,10 @@ def candidate_from_snippet(
         "accession_number": clean_optional_string(metadata_fields.get("accession_number")),
         "review_status": "preview_only",
     }
+    if archive_url is not None:
+        candidate["archive_url"] = archive_url
+    if source_urls:
+        candidate["source_urls"] = source_urls
     unresolved = target_resolution.get("unresolved_entity_mentions")
     if unresolved:
         candidate["unresolved_entity_mentions"] = unresolved

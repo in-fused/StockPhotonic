@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,7 @@ CANDIDATE_OUTPUT_PATH = (
     PROJECT_ROOT / "data" / "candidates" / "sec_relationship_candidates.json"
 )
 EXPECTED_CACHE_ROOT_LABEL = "data/cache/sec/filings"
+URL_PATTERN = re.compile(r"^https?://\S+$", re.IGNORECASE)
 SAFETY_COUNTERS = {
     "network_calls": 0,
     "production_writes": 0,
@@ -39,6 +41,8 @@ REQUIRED_CANDIDATE_FIELDS = (
     "review_status",
 )
 OPTIONAL_CANDIDATE_FIELDS = (
+    "archive_url",
+    "source_urls",
     "unresolved_entity_mentions",
 )
 MIN_TARGET_MATCH_CONFIDENCE = 0.85
@@ -121,6 +125,10 @@ def metadata() -> dict[str, Any]:
             "evidence_snippet": "Concise filing text snippet supporting manual review.",
             "filing_date": "YYYY-MM-DD",
             "accession_number": "0000000000-00-000000",
+            "archive_url": "https://www.sec.gov/Archives/edgar/data/0000000000/000000000000000000/example.htm",
+            "source_urls": [
+                "https://www.sec.gov/Archives/edgar/data/0000000000/000000000000000000/example.htm"
+            ],
             "review_status": "pending_review",
         },
     }
@@ -156,6 +164,13 @@ def clean_string(value: Any) -> str | None:
     return normalized or None
 
 
+def clean_source_url(value: Any) -> str | None:
+    url = clean_string(value)
+    if url is None or URL_PATTERN.match(url) is None:
+        return None
+    return url
+
+
 def numeric_score(value: Any) -> float | None:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
@@ -163,6 +178,31 @@ def numeric_score(value: Any) -> float | None:
     if not 0 <= score <= 1:
         return None
     return score
+
+
+def validate_optional_urls(candidate: dict[str, Any], *, index: int) -> None:
+    if "archive_url" in candidate and clean_source_url(candidate.get("archive_url")) is None:
+        raise CandidateWriteError(
+            f"candidate {index} archive_url must be an http(s) URL when present."
+        )
+
+    if "source_urls" not in candidate:
+        return
+    source_urls = candidate.get("source_urls")
+    if not isinstance(source_urls, list):
+        raise CandidateWriteError(f"candidate {index} source_urls must be an array.")
+    seen: set[str] = set()
+    for url_index, raw_url in enumerate(source_urls, start=1):
+        url = clean_source_url(raw_url)
+        if url is None:
+            raise CandidateWriteError(
+                f"candidate {index} source_urls[{url_index}] must be an http(s) URL."
+            )
+        if url in seen:
+            raise CandidateWriteError(
+                f"candidate {index} source_urls must not contain duplicate URLs."
+            )
+        seen.add(url)
 
 
 def build_candidate_payload(raw_files: list[str], limit_chars: int | None) -> dict[str, Any]:
@@ -247,6 +287,7 @@ def validate_payload(payload: dict[str, Any]) -> None:
                 f"candidate {index} target_match_confidence must be >= "
                 f"{MIN_TARGET_MATCH_CONFIDENCE:.2f}."
             )
+        validate_optional_urls(candidate, index=index)
 
 
 def print_dry_run(candidates: list[dict[str, Any]]) -> None:

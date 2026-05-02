@@ -10,7 +10,7 @@ This plan is strategy only. It does not authorize writing new companies to `data
 
 ## Phase V1: Source Intelligence Workbench
 
-V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It recommends the one-command SEC pipeline runner for local dry-run-first work, summarizes the advanced manual SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path, and makes the candidate-only file locations visible to non-technical users.
+V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It recommends the one-command SEC pipeline runner and bulk local runner for dry-run-first work, summarizes the advanced manual SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path, and makes the candidate-only file locations visible to non-technical users.
 
 The workbench is read-only. It does not run scripts from the browser, fetch SEC data from the browser, add backend/server code, promote candidates, create production nodes or edges, or modify `data/companies.json` or `data/connections.json`. Any displayed candidate records remain review-only and must not be treated as graph data unless an explicit reviewed promotion phase, such as Phase D24, runs outside the browser.
 
@@ -325,6 +325,19 @@ Promotion is allowed only when the candidate has a resolved `target_ticker`, `ta
 
 Phase D24 promoted one AAPL -> GOOGL `partnership` edge for the SEC filing licensing/search distribution relationship. A post-write dry run reports the resolved AAPL -> GOOGL candidates as existing duplicates, so reruns do not add another edge.
 
+### Phase D25: Bulk SEC Pipeline Batch Runner
+
+`scripts/sec_bulk_pipeline_run.py` is a safe local batch wrapper for running multiple approved ticker/CIK mappings through the existing single-ticker SEC pipeline. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, and delegates each approved ticker to `scripts/sec_pipeline_run.py`.
+
+Default usage is dry-run/preview first:
+
+```bash
+python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10
+python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+```
+
+Network calls require both `--allow-network` and an identifying `--user-agent`. Candidate file output requires `--write-candidates`; when enabled, the batch writes one combined review-only candidate file from successfully processed cached filings. Requested tickers with no mapping or no usable filings are skipped with an explicit summary reason. The runner reports requested, processed, skipped, and failed tickers, whether candidate files were written, and `production writes: 0`. It does not auto-promote candidates, does not modify `data/companies.json`, does not modify `data/connections.json`, does not add backend/server code, and does not run from the browser.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.
@@ -373,7 +386,7 @@ Before an extracted relationship is eligible for manual review, it should includ
 - Proposed relationship category.
 - Source tier.
 - Form type or source type.
-- Source URL.
+- Source URL or source URLs, including direct SEC archive URLs when available.
 - Filing date or publication date.
 - Capture date.
 - Extracted evidence text or concise extraction note.

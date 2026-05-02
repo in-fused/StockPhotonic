@@ -498,6 +498,11 @@
                     <span>Orbit</span>
                 </button>
 
+                <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
+                    <i class="fa-solid fa-file-shield"></i>
+                    <span>SEC Preview On</span>
+                </button>
+
                 <div class="signal-control rounded-3xl px-4 py-2 min-w-[240px]">
                     <label for="signal-threshold" class="flex items-center justify-between gap-3 text-[10px] font-mono tracking-[1.3px] text-cyan-100/75">
                         <span>Signal Strength Threshold</span>
@@ -637,7 +642,7 @@
                         <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_relationship_candidates.json</div>
                     </div>
                     <p class="text-sm text-white/58 mt-4">
-                        These files are candidate-only staging artifacts. They are not loaded into the production graph, not promoted, and do not create app nodes or edges.
+                        These files are candidate-only staging artifacts. They are not promoted and do not create production nodes or edges; SEC graph visibility is preview-only.
                     </p>
                 </div>
             </div>
@@ -761,7 +766,7 @@
                         <div>
                             <div class="source-workbench-label mb-2">Candidate Review Snapshot</div>
                             <p class="text-sm text-white/58">
-                                Read-only preview of <span class="font-mono text-cyan-50/78">data/candidates/sec_relationship_candidates.json</span>. Records shown here are not graph nodes or edges.
+                                Read-only preview of <span class="font-mono text-cyan-50/78">data/candidates/sec_relationship_candidates.json</span>. Records may appear in the graph only as non-persistent SEC preview overlays.
                             </p>
                         </div>
                         <div id="source-candidate-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING CANDIDATES</div>
@@ -963,6 +968,10 @@
         const ORBIT_DRAG_VERTICAL_PHASE_SCALE = 0.000035;
         const ORBIT_DRAG_MAX_PHASE_STEP = 0.012;
         const ORBIT_DRAG_SPEED_REFERENCE = 1.2;
+        const SEC_PREVIEW_NODE_COLOR = '#67e8f9';
+        const SEC_PREVIEW_EDGE_COLOR = '#7dd3fc';
+        const SEC_PREVIEW_ENDPOINT_HALO = '#38bdf8';
+        const SEC_PREVIEW_EDGE_HIT_RADIUS = 12;
 
         /* ==============================
            APP STATE
@@ -983,6 +992,14 @@
         let visibleEdgeCountByNodeId = new Map();
         let graphIntelligenceCache = new Map();
         let activeClusterNodeIds = new Set();
+        let secPreviewEnabled = true;
+        let secPreviewCandidates = [];
+        let secPreviewNodes = [];
+        let secPreviewLinks = [];
+        let visibleSecPreviewNodes = [];
+        let visibleSecPreviewLinks = [];
+        let selectedSecPreviewNode = null;
+        let selectedSecPreviewLink = null;
 
         let selectedNode = null;
         let hoveredNode = null;
@@ -1162,6 +1179,7 @@
                 updateOrbitModeControl();
                 updatePortfolioPanel();
                 initGraphData();
+                await loadSecPreviewCandidateGraph();
                 resizeCanvas();
                 fitGraph(false, { keepOrbit: true });
                 showDefaultDashboard();
@@ -1180,6 +1198,170 @@
                     <div class="text-xs text-white/40 mt-2">Run from a static server so JSON fetches are allowed.</div>
                 `;
             }
+        }
+
+        async function loadSecPreviewCandidateGraph() {
+            try {
+                const response = await fetch(`data/candidates/sec_relationship_candidates.json?v=${CACHE_BUST}`);
+                if (!response.ok) throw new Error('SEC candidate file unavailable');
+                const payload = await response.json();
+                secPreviewCandidates = extractSecPreviewCandidates(payload);
+                buildSecPreviewGraph();
+            } catch (error) {
+                console.warn('SEC relationship preview unavailable', error);
+                secPreviewCandidates = [];
+                secPreviewNodes = [];
+                secPreviewLinks = [];
+                visibleSecPreviewNodes = [];
+                visibleSecPreviewLinks = [];
+            }
+
+            refreshSecPreviewVisibility();
+            updateSecPreviewControl();
+        }
+
+        function extractSecPreviewCandidates(payload) {
+            const records = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.candidates) ? payload.candidates : [];
+            return records.filter(candidate =>
+                normalizeCandidateTicker(candidate?.source_ticker) &&
+                normalizeCandidateTicker(candidate?.target_ticker)
+            );
+        }
+
+        function normalizeCandidateTicker(value) {
+            return String(value || '').trim().toUpperCase();
+        }
+
+        function buildSecPreviewGraph() {
+            const productionNodeByTicker = getNodeByTickerMap();
+            const previewNodeByTicker = new Map();
+            const previewLinks = [];
+
+            secPreviewCandidates.forEach((candidate, index) => {
+                const sourceTicker = normalizeCandidateTicker(candidate.source_ticker);
+                const targetTicker = normalizeCandidateTicker(candidate.target_ticker);
+                if (!sourceTicker || !targetTicker) return;
+
+                const source = productionNodeByTicker.get(sourceTicker) ||
+                    getOrCreateSecPreviewNode(sourceTicker, candidate, 'source', index, productionNodeByTicker, previewNodeByTicker);
+                const target = productionNodeByTicker.get(targetTicker) ||
+                    getOrCreateSecPreviewNode(targetTicker, candidate, 'target', index, productionNodeByTicker, previewNodeByTicker);
+                if (!source || !target) return;
+
+                const strength = getSecPreviewStrength(candidate);
+                previewLinks.push({
+                    key: `sec-preview-${sourceTicker}-${targetTicker}-${index}`,
+                    isSecPreviewLink: true,
+                    source,
+                    target,
+                    sourceTicker,
+                    targetTicker,
+                    type: candidate.relationship_type || 'sec_preview',
+                    label: `${sourceTicker} to ${targetTicker} SEC filing candidate`,
+                    strength,
+                    confidence: candidate.confidence_hint,
+                    evidence_snippet: candidate.evidence_snippet,
+                    source_label: 'SEC filing',
+                    candidate,
+                    curveOffset: getCurveOffset(source.id, target.id, `sec-${index}`)
+                });
+            });
+
+            secPreviewNodes = [...previewNodeByTicker.values()];
+            secPreviewNodes.forEach(node => {
+                node.degree = 0;
+                node.previewLinks = [];
+            });
+            previewLinks.forEach(link => {
+                [link.source, link.target].forEach(node => {
+                    if (!isSecPreviewNode(node)) return;
+                    node.degree += 1;
+                    node.previewLinks.push(link);
+                });
+            });
+            secPreviewLinks = previewLinks;
+        }
+
+        function getOrCreateSecPreviewNode(ticker, candidate, role, index, productionNodeByTicker, previewNodeByTicker) {
+            if (previewNodeByTicker.has(ticker)) return previewNodeByTicker.get(ticker);
+
+            const sourceTicker = normalizeCandidateTicker(candidate.source_ticker);
+            const targetTicker = normalizeCandidateTicker(candidate.target_ticker);
+            const oppositeTicker = role === 'source' ? targetTicker : sourceTicker;
+            const opposite = productionNodeByTicker.get(oppositeTicker) || previewNodeByTicker.get(oppositeTicker);
+            const seed = hashNumber(`${ticker}:${role}:${index}`);
+            const angle = ((seed % 360) / 360) * Math.PI * 2;
+            const distance = opposite ? 165 + (seed % 75) : 560 + (seed % 190);
+            const anchorX = opposite ? getNodeLayoutPosition(opposite).x : 0;
+            const anchorY = opposite ? getNodeLayoutPosition(opposite).y : 0;
+            const node = {
+                id: `sec-preview-node-${ticker}`,
+                isSecPreviewNode: true,
+                ticker,
+                name: `${ticker} SEC preview`,
+                sector: 'SEC Preview',
+                industry: 'Candidate relationship',
+                industryGroup: 'SEC Preview',
+                rank: '-',
+                market_cap: 0,
+                color: SEC_PREVIEW_NODE_COLOR,
+                radius: 7.5,
+                degree: 0,
+                previewLinks: [],
+                previewRole: role,
+                candidate,
+                x: anchorX + Math.cos(angle) * distance,
+                y: anchorY + Math.sin(angle) * distance * 0.82,
+                vx: 0,
+                vy: 0
+            };
+
+            previewNodeByTicker.set(ticker, node);
+            return node;
+        }
+
+        function getSecPreviewStrength(candidate) {
+            const confidence = Number(candidate?.confidence_hint);
+            if (Number.isFinite(confidence)) return clamp(confidence, 0.18, 0.82);
+            return 0.42;
+        }
+
+        function isSecPreviewNode(node) {
+            return Boolean(node?.isSecPreviewNode);
+        }
+
+        function isSecPreviewLink(link) {
+            return Boolean(link?.isSecPreviewLink);
+        }
+
+        function toggleSecPreviewRelationships() {
+            stopOrbitForInteraction();
+            secPreviewEnabled = !secPreviewEnabled;
+            if (!secPreviewEnabled && (selectedSecPreviewNode || selectedSecPreviewLink)) {
+                clearSelection(false);
+            } else {
+                refreshVisibleGraph();
+            }
+            updateSecPreviewControl();
+            requestDraw();
+        }
+
+        function updateSecPreviewControl() {
+            const toggle = document.getElementById('sec-preview-toggle');
+            if (!toggle) return;
+
+            const label = toggle.querySelector('span');
+            toggle.setAttribute('aria-pressed', secPreviewEnabled ? 'true' : 'false');
+            toggle.classList.toggle('is-active', secPreviewEnabled);
+            if (label) label.innerText = secPreviewEnabled ? 'SEC Preview On' : 'SEC Preview Off';
+
+            const visibleCount = secPreviewEnabled ? visibleSecPreviewLinks.length : 0;
+            const totalCount = secPreviewLinks.length;
+            toggle.title = totalCount
+                ? `${visibleCount} of ${totalCount} SEC preview relationship candidates visible`
+                : 'SEC preview relationship candidates unavailable or empty';
         }
 
         /* ==============================
@@ -1561,14 +1743,20 @@
             if (!pointerState.active || pointerState.pointerId !== event.pointerId) return;
 
             const canvas = document.getElementById('graph-canvas');
+            const screen = getEventPoint(event);
 
             // Click selection: only gestures that never crossed the drag threshold
             // are treated as clicks. Empty-space clicks clear focus.
             if (!pointerState.moved) {
                 if (pointerState.node) {
-                    selectNode(pointerState.node);
+                    selectGraphNode(pointerState.node);
                 } else {
-                    clearSelection();
+                    const previewLink = findSecPreviewLinkAt(screen.x, screen.y);
+                    if (previewLink) {
+                        selectSecPreviewEdge(previewLink.key);
+                    } else {
+                        clearSelection();
+                    }
                 }
             }
 
@@ -1642,6 +1830,172 @@
 
         function drawGraph(timestamp = 0) {
             graphRender.drawGraph(renderContext, timestamp);
+            drawSecPreviewLayer(timestamp);
+        }
+
+        function drawSecPreviewLayer(timestamp = 0) {
+            if (!secPreviewEnabled || (!visibleSecPreviewLinks.length && !visibleSecPreviewNodes.length)) return;
+
+            const canvas = document.getElementById('graph-canvas');
+            const ctx = canvas?.getContext('2d');
+            if (!ctx) return;
+
+            ctx.save();
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            visibleSecPreviewLinks.forEach(link => drawSecPreviewLink(ctx, link, timestamp));
+            drawSecPreviewEndpointHalos(ctx, timestamp);
+            visibleSecPreviewNodes.forEach(node => drawSecPreviewNode(ctx, node, timestamp));
+            ctx.restore();
+        }
+
+        function drawSecPreviewLink(ctx, link, timestamp = 0) {
+            const geometry = getSecPreviewLinkGeometry(link);
+            if (!geometry) return;
+
+            const isSelected = selectedSecPreviewLink?.key === link.key ||
+                selectedSecPreviewNode?.id === link.source.id ||
+                selectedSecPreviewNode?.id === link.target.id;
+            const pulse = isSelected ? 0.08 + Math.sin(timestamp * 0.006) * 0.04 : 0;
+            const strength = clamp(Number(link.strength) || 0.42, 0.12, 0.82);
+
+            ctx.save();
+            ctx.globalAlpha = isSelected ? 0.82 : 0.22 + strength * 0.22 + pulse;
+            ctx.strokeStyle = SEC_PREVIEW_EDGE_COLOR;
+            ctx.lineWidth = isSelected ? 2.2 : 1.15 + strength * 0.75;
+            ctx.setLineDash([8, 7]);
+            ctx.lineDashOffset = -((timestamp * 0.015) % 15);
+            ctx.shadowBlur = isSelected ? 24 : 12;
+            ctx.shadowColor = SEC_PREVIEW_EDGE_COLOR;
+            ctx.beginPath();
+            ctx.moveTo(geometry.source.x, geometry.source.y);
+            ctx.quadraticCurveTo(geometry.control.x, geometry.control.y, geometry.target.x, geometry.target.y);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawSecPreviewEndpointHalos(ctx, timestamp = 0) {
+            const endpoints = new Map();
+            visibleSecPreviewLinks.forEach(link => {
+                if (!isSecPreviewNode(link.source)) endpoints.set(link.source.id, link.source);
+                if (!isSecPreviewNode(link.target)) endpoints.set(link.target.id, link.target);
+            });
+
+            endpoints.forEach(node => {
+                const point = getSecPreviewScreenPoint(node);
+                if (!point) return;
+                const radius = (node._screenRadius ?? getScreenNodeRadius(node)) + 8;
+                const isSelected = selectedSecPreviewLink &&
+                    (selectedSecPreviewLink.source.id === node.id || selectedSecPreviewLink.target.id === node.id);
+                const pulse = isSelected ? 1 + Math.sin(timestamp * 0.006) * 0.06 : 1;
+
+                ctx.save();
+                ctx.globalAlpha = isSelected ? 0.58 : 0.26;
+                ctx.strokeStyle = SEC_PREVIEW_ENDPOINT_HALO;
+                ctx.lineWidth = isSelected ? 1.6 : 1.1;
+                ctx.setLineDash([5, 5]);
+                ctx.shadowBlur = isSelected ? 20 : 10;
+                ctx.shadowColor = SEC_PREVIEW_ENDPOINT_HALO;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * pulse, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            });
+        }
+
+        function drawSecPreviewNode(ctx, node, timestamp = 0) {
+            const point = getSecPreviewScreenPoint(node);
+            if (!point) return;
+
+            const radius = Math.max(5, getScreenNodeRadius(node));
+            const isSelected = selectedSecPreviewNode?.id === node.id;
+            const isHovered = hoveredNode?.id === node.id;
+            const pulse = isSelected || isHovered ? 1 + Math.sin(timestamp * 0.006) * 0.08 : 1;
+
+            ctx.save();
+            ctx.globalAlpha = isSelected ? 0.78 : isHovered ? 0.66 : 0.48;
+            ctx.shadowBlur = isSelected ? 28 : 18;
+            ctx.shadowColor = SEC_PREVIEW_NODE_COLOR;
+            const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.1);
+            glow.addColorStop(0, hexToRgba(SEC_PREVIEW_NODE_COLOR, isSelected ? 0.38 : 0.25));
+            glow.addColorStop(1, hexToRgba(SEC_PREVIEW_NODE_COLOR, 0));
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius * 4.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = hexToRgba(SEC_PREVIEW_NODE_COLOR, 0.34);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalAlpha = isSelected ? 0.92 : 0.62;
+            ctx.strokeStyle = SEC_PREVIEW_NODE_COLOR;
+            ctx.lineWidth = isSelected ? 2 : 1.35;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius * 1.9 * pulse, 0, Math.PI * 2);
+            ctx.stroke();
+
+            drawSecPreviewNodeLabel(ctx, node, point, radius, isSelected || isHovered);
+            ctx.restore();
+        }
+
+        function drawSecPreviewNodeLabel(ctx, node, point, radius, emphasized) {
+            const label = node.ticker || 'SEC';
+            ctx.save();
+            ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+            const width = ctx.measureText(label).width;
+            const x = point.x - width / 2;
+            const y = point.y + radius + 15;
+            ctx.globalAlpha = emphasized ? 0.88 : 0.54;
+            ctx.fillStyle = 'rgba(3, 7, 18, 0.72)';
+            ctx.strokeStyle = 'rgba(125, 211, 252, 0.44)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([]);
+            roundedRect(ctx, x - 5, y - 11, width + 10, 16, 6);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = SEC_PREVIEW_NODE_COLOR;
+            ctx.fillText(label, x, y);
+            ctx.restore();
+        }
+
+        function getSecPreviewLinkGeometry(link) {
+            if (!link) return null;
+            const source = getSecPreviewScreenPoint(link.source);
+            const target = getSecPreviewScreenPoint(link.target);
+            if (!source || !target) return null;
+
+            const midX = (source.x + target.x) / 2;
+            const midY = (source.y + target.y) / 2;
+            const dx = target.x - source.x;
+            const dy = target.y - source.y;
+            const distance = Math.max(1, Math.hypot(dx, dy));
+            const curve = (Number(link.curveOffset) || 22) * scale;
+            return {
+                source,
+                target,
+                control: {
+                    x: midX + (-dy / distance) * curve,
+                    y: midY + (dx / distance) * curve
+                }
+            };
+        }
+
+        function getSecPreviewScreenPoint(node) {
+            if (!node) return null;
+            if (!isSecPreviewNode(node) && Number.isFinite(node._screenX) && Number.isFinite(node._screenY)) {
+                return { x: node._screenX, y: node._screenY };
+            }
+
+            const position = getNodeLayoutPosition(node);
+            const point = worldToScreen(position.x, position.y);
+            if (isSecPreviewNode(node)) {
+                node._screenX = point.x;
+                node._screenY = point.y;
+                node._screenRadius = getScreenNodeRadius(node);
+            }
+            return point;
         }
 
         function drawBackground(ctx) {
@@ -1690,6 +2044,8 @@
 
         function selectNode(node) {
             stopOrbitForInteraction();
+            selectedSecPreviewNode = null;
+            selectedSecPreviewLink = null;
             ensureIndustryGroupFilterAllowsNode(node);
             selectedNode = node;
             focusNeighborIds = new Set();
@@ -1712,12 +2068,80 @@
             }
         }
 
+        function selectGraphNode(node) {
+            if (isSecPreviewNode(node)) {
+                selectSecPreviewNode(node);
+                return;
+            }
+            selectNode(node);
+        }
+
+        function selectSecPreviewNode(node) {
+            stopOrbitForInteraction();
+            selectedNode = null;
+            selectedSecPreviewNode = node;
+            selectedSecPreviewLink = null;
+            focusNeighborIds = new Set();
+            focusLinkKeys = new Set((node.previewLinks || []).map(link => link.key));
+            activeClusterNodeIds = new Set();
+            focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
+            refreshVisibleGraph();
+            showSecPreviewNodeDetails(node);
+            triggerPulse(PULSE_DURATION_MS);
+            requestDraw();
+        }
+
+        function selectSecPreviewEdge(keyOrLink) {
+            stopOrbitForInteraction();
+            const link = typeof keyOrLink === 'string'
+                ? secPreviewLinks.find(item => item.key === keyOrLink)
+                : keyOrLink;
+            if (!link) return;
+
+            selectedNode = null;
+            selectedSecPreviewNode = null;
+            selectedSecPreviewLink = link;
+            focusNeighborIds = new Set();
+            focusLinkKeys = new Set([link.key]);
+            activeClusterNodeIds = new Set();
+            focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
+            refreshVisibleGraph();
+            showSecPreviewEdgeDetails(link);
+            triggerPulse(PULSE_DURATION_MS);
+            requestDraw();
+        }
+
+        function showSecPreviewNodeDetails(node) {
+            const sidebar = document.getElementById('sidebar');
+            const empty = document.getElementById('empty-sidebar');
+            const previewLinks = (node.previewLinks || [])
+                .filter(link => visibleSecPreviewLinks.some(visible => visible.key === link.key));
+            uiSidebar.showSecPreviewNodeDetails(getSidebarRenderContext({
+                sidebar,
+                empty,
+                node,
+                previewLinks
+            }));
+        }
+
+        function showSecPreviewEdgeDetails(link) {
+            const sidebar = document.getElementById('sidebar');
+            const empty = document.getElementById('empty-sidebar');
+            uiSidebar.showSecPreviewEdgeDetails(getSidebarRenderContext({
+                sidebar,
+                empty,
+                link
+            }));
+        }
+
         function clearSelection(refit = true) {
             stopOrbitForInteraction();
             const wasHubActive = isHubLayoutActive();
             const wasNexusActive = isNexusLayoutActive();
             const wasFocusModeActive = isFocusModeActive();
             selectedNode = null;
+            selectedSecPreviewNode = null;
+            selectedSecPreviewLink = null;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
             activeClusterNodeIds = new Set();
@@ -1858,6 +2282,8 @@
 
             stopOrbitForInteraction();
             selectedNode = null;
+            selectedSecPreviewNode = null;
+            selectedSecPreviewLink = null;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
             activeClusterNodeIds = new Set();
@@ -1886,6 +2312,8 @@
         function applyIndustryCorrelationFilter(groupA, groupB) {
             stopOrbitForInteraction();
             selectedNode = null;
+            selectedSecPreviewNode = null;
+            selectedSecPreviewLink = null;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
             activeClusterNodeIds = new Set();
@@ -2001,6 +2429,7 @@
             const sharedExposure = getSharedConnections(node.id);
             const hiddenRelationships = getHiddenRelationships(node.id);
             const portfolioContext = getPortfolioContextForNode(node);
+            const secPreviewLinksForNode = getVisibleSecPreviewLinksForNode(node);
 
             uiSidebar.showNodeDetails(getSidebarRenderContext({
                 sidebar,
@@ -2019,8 +2448,16 @@
                 relatedCluster,
                 sharedExposure,
                 hiddenRelationships,
-                portfolioContext
+                portfolioContext,
+                secPreviewLinksForNode
             }));
+        }
+
+        function getVisibleSecPreviewLinksForNode(node) {
+            if (!node || !secPreviewEnabled) return [];
+            return visibleSecPreviewLinks.filter(link =>
+                link.source.id === node.id || link.target.id === node.id
+            );
         }
 
         function renderNexusViewSection(node) {
@@ -2299,6 +2736,8 @@
             rebuildLayoutPositions();
             updateGraphOverlayStats();
             if (selectedNode) showNodeDetails(selectedNode);
+            else if (selectedSecPreviewNode) showSecPreviewNodeDetails(selectedSecPreviewNode);
+            else if (selectedSecPreviewLink) showSecPreviewEdgeDetails(selectedSecPreviewLink);
             else showDefaultDashboard();
             fitGraph();
             requestDraw();
@@ -2322,6 +2761,8 @@
             updateFocusModeControl();
             refreshVisibleGraph();
             if (selectedNode) showNodeDetails(selectedNode);
+            else if (selectedSecPreviewNode) showSecPreviewNodeDetails(selectedSecPreviewNode);
+            else if (selectedSecPreviewLink) showSecPreviewEdgeDetails(selectedSecPreviewLink);
             triggerPulse(FOCUS_MODE_TRANSITION_MS);
             if (selectedNode) fitGraph();
             requestDraw();
@@ -2343,6 +2784,8 @@
             refreshVisibleGraph();
             const selectionCleared = syncSelectionAfterVisibilityChange();
             if (!selectionCleared && selectedNode) showNodeDetails(selectedNode);
+            if (!selectionCleared && selectedSecPreviewNode) showSecPreviewNodeDetails(selectedSecPreviewNode);
+            if (!selectionCleared && selectedSecPreviewLink) showSecPreviewEdgeDetails(selectedSecPreviewLink);
             triggerPulse(360);
             requestDraw();
         }
@@ -2375,6 +2818,7 @@
             layoutMode = LAYOUT_MODE_SECTOR;
             focusModeEnabled = false;
             signalStrengthThreshold = 0;
+            secPreviewEnabled = true;
             resetPortfolioState();
             document.getElementById('sector-filter').value = '';
             document.getElementById('industry-group-filter').value = '';
@@ -2384,6 +2828,7 @@
             if (portfolioInput) portfolioInput.value = '';
             updateFocusModeControl();
             updateSignalThresholdControl();
+            updateSecPreviewControl();
             updatePortfolioPanel();
             refreshVisibleGraph();
             updateSearchMatches();
@@ -2841,9 +3286,69 @@
             }
 
             visibleNodeIds = new Set(visibleNodes.map(node => node.id));
+            refreshSecPreviewVisibility();
             rebuildLayoutPositions();
             updateGraphOverlayStats();
-            if (!selectedNode) renderDefaultDashboard();
+            if (!selectedNode && !selectedSecPreviewNode && !selectedSecPreviewLink) renderDefaultDashboard();
+        }
+
+        function refreshSecPreviewVisibility() {
+            if (!secPreviewEnabled || !secPreviewLinks.length) {
+                visibleSecPreviewNodes = [];
+                visibleSecPreviewLinks = [];
+                return;
+            }
+
+            visibleSecPreviewLinks = secPreviewLinks
+                .filter(secPreviewLinkPassesBaseFilters)
+                .filter(secPreviewLinkPassesVisibleGraphFilters);
+
+            const visiblePreviewNodeIds = new Set();
+            visibleSecPreviewLinks.forEach(link => {
+                if (isSecPreviewNode(link.source)) visiblePreviewNodeIds.add(link.source.id);
+                if (isSecPreviewNode(link.target)) visiblePreviewNodeIds.add(link.target.id);
+            });
+            visibleSecPreviewNodes = secPreviewNodes.filter(node => visiblePreviewNodeIds.has(node.id));
+        }
+
+        function secPreviewLinkPassesBaseFilters(link) {
+            if (!link) return false;
+
+            if (selectedSecPreviewLink) return link.key === selectedSecPreviewLink.key;
+            if (selectedSecPreviewNode) {
+                return link.source.id === selectedSecPreviewNode.id || link.target.id === selectedSecPreviewNode.id;
+            }
+            if (isFocusModeActive() && selectedNode) {
+                return link.source.id === selectedNode.id || link.target.id === selectedNode.id;
+            }
+
+            return secPreviewEndpointPassesBaseFilters(link.source) &&
+                secPreviewEndpointPassesBaseFilters(link.target);
+        }
+
+        function secPreviewEndpointPassesBaseFilters(node) {
+            if (isSecPreviewNode(node)) return secPreviewNodePassesBaseFilters(node);
+            return visibleNodeIds.has(node.id);
+        }
+
+        function secPreviewNodePassesBaseFilters(node) {
+            if (!node) return false;
+            if (!currentSearch) return true;
+            return getSecPreviewNodeSearchText(node).includes(currentSearch);
+        }
+
+        function getSecPreviewNodeSearchText(node) {
+            const snippets = (node.previewLinks || [])
+                .map(link => link?.candidate?.evidence_snippet || '')
+                .join(' ');
+            return `${node.ticker || ''} ${node.name || ''} ${node.sector || ''} ${node.industry || ''} ${snippets}`.toLowerCase();
+        }
+
+        function secPreviewLinkPassesVisibleGraphFilters(link) {
+            if (!link) return false;
+            if (signalStrengthThreshold > 0 && link.strength < signalStrengthThreshold) return false;
+            if (isIndustryGroupFilterActive() && !linkTouchesCurrentIndustryGroup(link)) return false;
+            return true;
         }
 
         function updateGraphOverlayStats() {
@@ -2859,8 +3364,32 @@
                 orbitEnabled,
                 escapeHtml
             });
+            appendSecPreviewOverlayStats();
+            updateSecPreviewControl();
+        }
+
+        function appendSecPreviewOverlayStats() {
+            const overlay = document.getElementById('graph-overlay-stats');
+            if (!overlay || !secPreviewEnabled) return;
+
+            const total = secPreviewLinks.length;
+            if (!total) return;
+
+            overlay.insertAdjacentHTML('beforeend', `
+                <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/75 font-mono tracking-[1.1px] border border-cyan-300/20 bg-cyan-300/10">
+                    ${escapeHtml(String(visibleSecPreviewLinks.length))} SEC Preview Edges
+                </span>
+            `);
         }
         function syncSelectionAfterVisibilityChange() {
+            if (selectedSecPreviewNode && !visibleSecPreviewNodes.some(node => node.id === selectedSecPreviewNode.id)) {
+                clearSelection(false);
+                return true;
+            }
+            if (selectedSecPreviewLink && !visibleSecPreviewLinks.some(link => link.key === selectedSecPreviewLink.key)) {
+                clearSelection(false);
+                return true;
+            }
             if (!selectedNode) return false;
             if (!visibleNodeIds.has(selectedNode.id) || isNodeDimmedByIndustryGroup(selectedNode)) {
                 clearSelection(false);
@@ -2941,6 +3470,7 @@
         }
 
         function getNodeLayoutPosition(node) {
+            if (isSecPreviewNode(node)) return { x: node.x, y: node.y };
             return graphLayouts.getNodeLayoutPosition(node, {
                 ...getLayoutCalculationOptions(),
                 isHubActive: isHubLayoutActive(),
@@ -2949,6 +3479,11 @@
         }
 
         function setNodeLayoutPosition(node, x, y) {
+            if (isSecPreviewNode(node)) {
+                node.x = x;
+                node.y = y;
+                return;
+            }
             if (isNexusLayoutActive()) {
                 nexusLayoutPositions.set(node.id, { x, y });
                 return;
@@ -2963,11 +3498,13 @@
         }
 
         function getFitNodes() {
-            return graphLayouts.getFitNodes({
+            const fitNodes = graphLayouts.getFitNodes({
                 ...getLayoutCalculationOptions(),
                 isHubActive: isHubLayoutActive(),
                 isNexusActive: isNexusLayoutActive()
             });
+            if (!secPreviewEnabled || !visibleSecPreviewNodes.length) return fitNodes;
+            return [...fitNodes, ...visibleSecPreviewNodes];
         }
 
         function rebuildLayoutPositions() {
@@ -3171,12 +3708,69 @@
         }
 
         function findNodeAt(screenX, screenY) {
-            return graphInteractions.findNodeAt(screenX, screenY, {
+            const productionNode = graphInteractions.findNodeAt(screenX, screenY, {
                 visibleNodes,
                 getNodeLayoutPosition,
                 worldToScreen,
                 getScreenNodeRadius
             });
+            if (productionNode) return productionNode;
+
+            return graphInteractions.findNodeAt(screenX, screenY, {
+                visibleNodes: visibleSecPreviewNodes,
+                getNodeLayoutPosition,
+                worldToScreen,
+                getScreenNodeRadius
+            });
+        }
+
+        function findSecPreviewLinkAt(screenX, screenY) {
+            if (!secPreviewEnabled || !visibleSecPreviewLinks.length) return null;
+
+            let closest = null;
+            let closestDistance = Infinity;
+            visibleSecPreviewLinks.forEach(link => {
+                const geometry = getSecPreviewLinkGeometry(link);
+                if (!geometry) return;
+                const distance = getDistanceToQuadratic(screenX, screenY, geometry);
+                if (distance <= SEC_PREVIEW_EDGE_HIT_RADIUS && distance < closestDistance) {
+                    closest = link;
+                    closestDistance = distance;
+                }
+            });
+            return closest;
+        }
+
+        function getDistanceToQuadratic(screenX, screenY, geometry) {
+            let minDistance = Infinity;
+            let previous = geometry.source;
+            for (let index = 1; index <= 24; index++) {
+                const t = index / 24;
+                const point = getQuadraticPoint(geometry.source, geometry.control, geometry.target, t);
+                minDistance = Math.min(minDistance, getDistanceToSegment(screenX, screenY, previous, point));
+                previous = point;
+            }
+            return minDistance;
+        }
+
+        function getQuadraticPoint(source, control, target, t) {
+            const inverse = 1 - t;
+            return {
+                x: inverse * inverse * source.x + 2 * inverse * t * control.x + t * t * target.x,
+                y: inverse * inverse * source.y + 2 * inverse * t * control.y + t * t * target.y
+            };
+        }
+
+        function getDistanceToSegment(screenX, screenY, start, end) {
+            const dx = end.x - start.x;
+            const dy = end.y - start.y;
+            const lengthSquared = dx * dx + dy * dy;
+            if (!lengthSquared) return Math.hypot(screenX - start.x, screenY - start.y);
+
+            const t = clamp(((screenX - start.x) * dx + (screenY - start.y) * dy) / lengthSquared, 0, 1);
+            const x = start.x + dx * t;
+            const y = start.y + dy * t;
+            return Math.hypot(screenX - x, screenY - y);
         }
 
         function getEventPoint(event) {

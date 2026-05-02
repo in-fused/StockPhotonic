@@ -54,6 +54,7 @@
             sharedExposure,
             hiddenRelationships,
             portfolioContext,
+            secPreviewLinksForNode = [],
             escapeHtml,
             formatNumber,
             formatConnectionType
@@ -86,6 +87,8 @@
                         <div class="font-display text-xl text-white">${connectionsForNode.length}</div>
                     </div>
                 </div>
+
+                ${renderSecPreviewNodeOverlaySection(secPreviewLinksForNode, context)}
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">Network Summary</div>
@@ -841,8 +844,167 @@
             `;
     }
 
+    function renderSecPreviewNodeOverlaySection(links, context) {
+        if (!links?.length) return '';
+        const { escapeHtml } = context;
+        return `
+            <div class="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 mb-5">
+                <div class="text-[10px] text-cyan-100/85 font-mono tracking-[1.6px]">PREVIEW DATA (NOT VERIFIED)</div>
+                <div class="mt-1 text-xs text-white/58">source: SEC filing</div>
+                <div class="mt-3 space-y-2">
+                    ${links.slice(0, 3).map(link => renderSecPreviewRelationshipRow(link, context)).join('')}
+                </div>
+                ${links.length > 3 ? `<div class="mt-2 text-[11px] text-white/42 font-mono">+${escapeHtml(String(links.length - 3))} MORE SEC PREVIEW EDGES</div>` : ''}
+            </div>
+        `;
+    }
+
+    function showSecPreviewNodeDetails(context) {
+        const {
+            sidebar,
+            empty,
+            node,
+            previewLinks = [],
+            escapeHtml,
+            formatConnectionType
+        } = context;
+        if (!sidebar || !node) return;
+
+        const links = previewLinks.length ? previewLinks : (node.previewLinks || []);
+        const primary = links[0] || null;
+
+        sidebar.innerHTML = `
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <div class="text-[10px] text-cyan-200/85 font-mono tracking-[2px]">PREVIEW DATA (NOT VERIFIED)</div>
+                    <h2 class="font-display text-3xl text-white mt-1">${escapeHtml(node.ticker || '')}</h2>
+                    <div class="text-sm text-white/58 mt-1">${escapeHtml(node.name || 'SEC preview relationship candidate')}</div>
+                </div>
+                <button onclick="clearSelection()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="mt-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4">
+                <div class="text-[10px] font-mono text-cyan-100/80 tracking-[1.5px]">source: SEC filing</div>
+                <div class="mt-2 text-xs leading-relaxed text-white/62">
+                    This node exists only in the SEC preview rendering layer. It is not present in production graph data.
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Preview Evidence</div>
+                ${renderSecPreviewEvidence(primary, context)}
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Preview Relationships</div>
+                <div class="space-y-2">
+                    ${links.map(link => renderSecPreviewRelationshipRow(link, context)).join('') || '<div class="text-sm text-white/35">No visible preview relationships at this threshold.</div>'}
+                </div>
+            </div>
+        `;
+
+        if (empty) empty.classList.add('hidden');
+        sidebar.classList.remove('hidden');
+    }
+
+    function showSecPreviewEdgeDetails(context) {
+        const {
+            sidebar,
+            empty,
+            link,
+            escapeHtml,
+            formatConnectionType
+        } = context;
+        if (!sidebar || !link) return;
+
+        sidebar.innerHTML = `
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <div class="text-[10px] text-cyan-200/85 font-mono tracking-[2px]">PREVIEW DATA (NOT VERIFIED)</div>
+                    <h2 class="font-display text-2xl text-white mt-1">
+                        ${escapeHtml(link.sourceTicker || link.source?.ticker || '')}
+                        <span class="text-white/35">to</span>
+                        ${escapeHtml(link.targetTicker || link.target?.ticker || '')}
+                    </h2>
+                    <div class="text-sm text-white/58 mt-1">${escapeHtml(formatConnectionType(link.type || 'sec_preview'))}</div>
+                </div>
+                <button onclick="clearSelection()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="mt-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4">
+                <div class="grid grid-cols-1 gap-2 text-xs">
+                    <div><span class="text-white/38 font-mono">source:</span> <span class="text-cyan-100/82">SEC filing</span></div>
+                    <div><span class="text-white/38 font-mono">confidence_hint:</span> <span class="text-white/82">${escapeHtml(formatSecPreviewValue(link.candidate?.confidence_hint ?? link.confidence))}</span></div>
+                    <div><span class="text-white/38 font-mono">relationship_type:</span> <span class="text-white/82">${escapeHtml(formatConnectionType(link.type || 'sec_preview'))}</span></div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Evidence Snippet</div>
+                ${renderSecPreviewEvidence(link, context)}
+            </div>
+        `;
+
+        if (empty) empty.classList.add('hidden');
+        sidebar.classList.remove('hidden');
+    }
+
+    function renderSecPreviewRelationshipRow(link, context) {
+        const { escapeHtml, formatConnectionType } = context;
+        const otherTicker = escapeHtml(link.sourceTicker || link.source?.ticker || '') + ' to ' +
+            escapeHtml(link.targetTicker || link.target?.ticker || '');
+        return `
+            <div class="connection-row rounded-2xl p-3 border-cyan-300/20 bg-cyan-300/5">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="text-sm font-semibold text-white/88 truncate">${otherTicker}</div>
+                        <div class="mt-1 text-[10px] font-mono text-cyan-100/65">source: SEC filing</div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(link.type || 'sec_preview'))}</div>
+                        <div class="text-[10px] text-cyan-100/70 font-mono">confidence_hint ${escapeHtml(formatSecPreviewValue(link.candidate?.confidence_hint ?? link.confidence))}</div>
+                    </div>
+                </div>
+                <div class="mt-2 text-xs text-white/55 leading-relaxed">${escapeHtml(formatEvidenceSnippet(link.candidate?.evidence_snippet || link.evidence_snippet || 'No evidence snippet attached.'))}</div>
+            </div>
+        `;
+    }
+
+    function renderSecPreviewEvidence(link, context) {
+        const { escapeHtml } = context;
+        const candidate = link?.candidate || {};
+        const evidence = candidate.evidence_snippet || link?.evidence_snippet || 'No evidence snippet attached.';
+        return `
+            <div class="rounded-2xl border border-white/10 bg-black/25 p-3">
+                <div class="text-[10px] font-mono text-white/42 mb-2">evidence_snippet</div>
+                <div class="text-sm text-white/78 leading-relaxed">${escapeHtml(formatEvidenceSnippet(evidence))}</div>
+                <div class="mt-3 grid grid-cols-1 gap-1 text-[11px] text-white/48">
+                    <div><span class="font-mono text-white/36">source:</span> SEC filing</div>
+                    <div><span class="font-mono text-white/36">confidence_hint:</span> ${escapeHtml(formatSecPreviewValue(candidate.confidence_hint ?? link?.confidence))}</div>
+                    <div><span class="font-mono text-white/36">filing_date:</span> ${escapeHtml(formatSecPreviewValue(candidate.filing_date))}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function formatSecPreviewValue(value) {
+        if (value === null || value === undefined || value === '') return '-';
+        return String(value);
+    }
+
+    function formatEvidenceSnippet(value) {
+        const text = formatSecPreviewValue(value);
+        return text.length > 280 ? `${text.slice(0, 277)}...` : text;
+    }
+
     window.StockPhotonicUI.sidebar = {
         showNodeDetails,
+        showSecPreviewNodeDetails,
+        showSecPreviewEdgeDetails,
         renderNexusViewSection,
         renderNexusSummaryTile,
         renderRelatedClusterSection,

@@ -12,7 +12,7 @@ This plan is strategy only. It does not authorize writing new companies to `data
 
 V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It recommends the one-command SEC pipeline runner for local dry-run-first work, summarizes the advanced manual SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path, and makes the candidate-only file locations visible to non-technical users.
 
-The workbench is read-only. It does not run scripts from the browser, fetch SEC data from the browser, add backend/server code, promote candidates, create production nodes or edges, or modify `data/companies.json` or `data/connections.json`. Any displayed candidate records remain review-only and must not be treated as graph data until a future reviewed promotion phase exists.
+The workbench is read-only. It does not run scripts from the browser, fetch SEC data from the browser, add backend/server code, promote candidates, create production nodes or edges, or modify `data/companies.json` or `data/connections.json`. Any displayed candidate records remain review-only and must not be treated as graph data unless an explicit reviewed promotion phase, such as Phase D24, runs outside the browser.
 
 ---
 
@@ -309,6 +309,21 @@ The SEC candidate preview and writer now retain only graph-worthy relationship c
 `supplier_customer` signals are no longer carried forward as generic candidate types. They map to `partnership` only when evidence contains `revenue from`, `licensing`, `search distribution`, or `payments from`; they map to `supply` only when evidence contains `supplies`, `manufactures for`, or `component supplier`; otherwise they are discarded from candidate preview and blocked by promotion preview.
 
 This phase is still preview/review-only. It performs no network calls, does not auto-promote candidates, does not modify `data/companies.json`, does not modify `data/connections.json`, and does not write candidate files unless the explicit writer receives `--write`.
+
+### Phase D24: Controlled SEC Candidate Promotion To Graph
+
+`scripts/sec_candidate_promote.py` is the explicit production writer for validated SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json`, maps candidate source and target tickers to existing production company IDs, checks current `data/connections.json` for duplicate edge keys, and writes only `data/connections.json` when `--write` is passed.
+
+Default usage is dry-run-first:
+
+```bash
+python scripts/sec_candidate_promote.py
+python scripts/sec_candidate_promote.py --write
+```
+
+Promotion is allowed only when the candidate has a resolved `target_ticker`, `target_match_confidence >= 0.85`, evidence text, a valid filing date, a valid `confidence_hint`, source and target tickers already present in `data/companies.json`, and a relationship type that maps deterministically to current production `partnership` or `supply`. The writer prevents existing production duplicates and duplicate candidate edges within the same run, performs no network calls, and never modifies `data/companies.json`.
+
+Phase D24 promoted one AAPL -> GOOGL `partnership` edge for the SEC filing licensing/search distribution relationship. A post-write dry run reports the resolved AAPL -> GOOGL candidates as existing duplicates, so reruns do not add another edge.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

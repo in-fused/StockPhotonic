@@ -1288,5 +1288,16 @@
     "confidence": 3,
     "provenance": "Market structure / direct peer relationship",
     "verified_date": "2026-04-29"
+  },
+  {
+    "source": 21,
+    "target": 18,
+    "type": "partnership",
+    "strength": 0.86,
+    "label": "SEC filing relationship: licensing/search distribution",
+    "confidence": 4,
+    "provenance": "SEC filing",
+    "source_urls": [],
+    "verified_date": "2026-05-01"
   }
 ]

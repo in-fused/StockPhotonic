@@ -2,7 +2,7 @@
 
 **Last Updated**: May 2, 2026
 
-**Current Version**: v5.17 / Phase D29 SEC Scheduled Run Plan + Safe Auto-Promotion Dry Run
+**Current Version**: v5.18 / Phase D31 Approved SEC CIK Mapping Batch 1
 
 **Current Dataset**: 60 real US-listed public companies and 118 curated connections loaded from static JSON files:
 
@@ -192,7 +192,7 @@ The recommended visible path is:
 Scheduled Preview -> Local Job Runner -> Bulk Candidate Generation -> Promotion Preview -> Manual Promotion Dry Run -> Validation
 ```
 
-The current reviewed starter job covers AAPL, MSFT, and NVDA through approved SEC CIK mappings. That set is only a starter batch for proving the local workflow; it is not the long-term company universe. Future scale work should add more approved CIK mappings and reviewed jobs before broader automated ingestion.
+The current reviewed starter job covers AAPL, MSFT, and NVDA, and Phase D31 expands the approved SEC CIK mapping reference beyond that starter set with a multi-sector Batch 1. This allows bulk SEC ingestion to address technology, semiconductors/hardware, financials, energy, healthcare, and industrial tickers without mapping skips when those tickers are requested. The expanded mappings remain candidate/reference-only; they do not create companies, edges, app-loaded records, or production graph data. Future scale work should add reviewed jobs and sector batches before broader automated ingestion.
 
 The scheduled preview and job runner are the primary local orchestration surface. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate output requires `--write-candidates`; `--force` is passed only to the existing candidate writer and does not authorize production graph writes.
 
@@ -201,9 +201,10 @@ SEC bulk local runner commands:
 ```bash
 python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10
 python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA,AMZN,GOOGL,META,AMD,INTC,AVGO,JPM,GS,BLK,XOM,CVX,UNH,LLY,GE,CAT --forms 10-K,10-Q,8-K --limit 10
 ```
 
-The bulk runner is the safe local workflow for multiple approved ticker/CIK mappings. AAPL, MSFT, and NVDA are the current approved starter mappings, not the intended upper bound. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, and delegates each approved ticker to the single-ticker runner. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate file output requires `--write-candidates`; when enabled, the batch writes one combined `data/candidates/sec_relationship_candidates.json` from successfully processed cached filings. Tickers with no mapping or no usable filings are skipped with a summary reason. Production writes remain `0`; promotion stays in the separate promotion preview/promotion path.
+The bulk runner is the safe local workflow for multiple approved ticker/CIK mappings. AAPL, MSFT, and NVDA are the current reviewed starter job, and the Batch 1 CIK reference now extends approved mapping coverage across major companies in multiple sectors. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, and delegates each approved ticker to the single-ticker runner. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate file output requires `--write-candidates`; when enabled, the batch writes one combined `data/candidates/sec_relationship_candidates.json` from successfully processed cached filings. Tickers with no mapping or no usable filings are skipped with a summary reason. Production writes remain `0`; promotion stays in the separate promotion preview/promotion path.
 
 SEC local job runner commands:
 
@@ -406,7 +407,9 @@ Any future record in this file should start with `review_status: "pending"` and 
 
 `data/candidates/cik_mappings.json` is a candidate/reference-only ticker-to-CIK mapping file for future SEC fetch/cache workflows. It is not loaded by the app, does not create company candidates, does not create production nodes or edges, and does not write to `data/companies.json` or `data/connections.json`.
 
-The file contains a small reviewable SEC submissions mapping set for dry-run ticker lookup and local bulk/job runner testing. Phase D27 expands the approved fetch set to AAPL, MSFT, and NVDA so multi-ticker SEC pipeline runs can process the current mega-cap core without skipping mapped tickers. These mappings do not create companies, edges, candidates, app-loaded records, or production graph records. Future mappings must be source-backed and reviewed, with ticker, CIK, registered source type, source tier, source URL, capture date, and `review_status` of `pending` or `approved_for_fetch`. Duplicate tickers and duplicate CIKs are rejected by validation.
+The file contains a reviewable SEC submissions mapping set for dry-run ticker lookup and local bulk/job runner testing. Phase D27 expanded the approved fetch set to AAPL, MSFT, and NVDA so multi-ticker SEC pipeline runs could process the initial mega-cap core without skipping mapped tickers. Phase D31 adds Batch 1 approved mappings for AMZN, GOOGL, META, AMD, INTC, AVGO, JPM, GS, BLK, XOM, CVX, UNH, LLY, GE, and CAT, moving the mapping reference beyond the starter set and enabling multi-sector ingestion coverage.
+
+These mappings do not create companies, edges, candidates, app-loaded records, or production graph records. Future mappings must be source-backed and reviewed, with ticker, CIK, registered source type, source tier, source URL, capture date, and `review_status` of `pending` or `approved_for_fetch`. Duplicate tickers and duplicate CIKs are rejected by validation.
 
 Validate the CIK mapping reference dry run with:
 

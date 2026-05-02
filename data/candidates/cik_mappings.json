@@ -55,6 +55,141 @@
       "source_url": "https://data.sec.gov/submissions/CIK0001045810.json",
       "capture_date": "2026-05-02",
       "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AMZN",
+      "cik": "0001018724",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001018724.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GOOGL",
+      "cik": "0001652044",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001652044.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "META",
+      "cik": "0001326801",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001326801.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AMD",
+      "cik": "0000002488",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000002488.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "INTC",
+      "cik": "0000050863",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000050863.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AVGO",
+      "cik": "0001730168",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001730168.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "JPM",
+      "cik": "0000019617",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000019617.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GS",
+      "cik": "0000886982",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000886982.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BLK",
+      "cik": "0001364742",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001364742.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "XOM",
+      "cik": "0000034088",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000034088.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CVX",
+      "cik": "0000093410",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000093410.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "UNH",
+      "cik": "0000731766",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000731766.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LLY",
+      "cik": "0000059478",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000059478.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GE",
+      "cik": "0000040545",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000040545.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CAT",
+      "cik": "0000018230",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000018230.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
     }
   ]
 }

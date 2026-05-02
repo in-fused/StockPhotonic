@@ -399,14 +399,13 @@ The Source Workbench now presents the bulk/job/scheduled-run pipeline as the pri
 Scheduled Preview -> Local Job Runner -> Bulk Candidate Generation -> Promotion Preview -> Manual Promotion Dry Run -> Validation
 ```
 
-Single-ticker `sec_pipeline_run.py` commands remain useful for debugging one ticker or inspecting intermediate artifacts, but they belong in the advanced path rather than the top-level recommendation. The approved AAPL/MSFT/NVDA job is framed as the current starter SEC batch only; future expansion should add reviewed CIK mappings and additional approved jobs before wider automated ingestion.
+Single-ticker `sec_pipeline_run.py` commands remain useful for debugging one ticker or inspecting intermediate artifacts, but they belong in the advanced path rather than the top-level recommendation. The approved AAPL/MSFT/NVDA job is framed as the current starter SEC batch only; Phase D31 expands the approved CIK mapping reference beyond that starter set, and future expansion should add additional approved jobs before wider automated ingestion.
 
 Scale roadmap:
 
 ```text
-Current: AAPL/MSFT/NVDA approved SEC starter job
-Next: expand approved CIK mappings
-Then: sector batches / S&P-style batches
+Current: AAPL/MSFT/NVDA approved SEC starter job plus Batch 1 multi-sector CIK mappings
+Next: sector job manifests / S&P-style batches
 Then: policy-gated promotion candidates
 Then: reviewed production graph writes
 ```
@@ -414,6 +413,14 @@ Then: reviewed production graph writes
 Future automation should stay local and preview-first until the data path is proven. The safest next target is a local scheduled preview plus candidate generation, with manual promotion still protected by promotion preview, policy classification, dry-run behavior, and validation. Later options include Windows Task Scheduler, a local desktop agent, or a hosted worker.
 
 Graph UX scale work should follow the data scale foundation. The SEC preview overlay is working; larger graph UI cleanup and any 3D/globe orbit prototype should come after, or alongside, sidebar and canvas layout cleanup.
+
+### Phase D31: Approved SEC CIK Mapping Coverage Batch 1
+
+`data/candidates/cik_mappings.json` now moves beyond the initial AAPL/MSFT/NVDA starter set with approved SEC submissions endpoint mappings for a first multi-sector batch: AMZN, GOOGL, META, AMD, INTC, AVGO, JPM, GS, BLK, XOM, CVX, UNH, LLY, GE, and CAT.
+
+This is candidate/reference-only expansion. It enables the bulk runner, and future reviewed job manifests, to process a broader cross-section of the US market graph without mapping skips for those tickers. It does not create production companies, production edges, app-loaded records, relationship candidates, or graph changes.
+
+The CIK mapping file still keeps `status: "candidate_only"`, `production_write_allowed: false`, and `app_load_allowed: false`. Each Batch 1 mapping uses `source_type: "sec_filing"`, `source_tier: 1`, a zero-padded SEC submissions CIK URL, a capture date, and `review_status: "approved_for_fetch"`. Duplicate ticker and duplicate CIK validation remain required before any fetch workflow uses the expanded mapping set.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

@@ -1,6 +1,6 @@
 # StockPhotonic Data Expansion Plan
 
-**Last Updated**: May 1, 2026
+**Last Updated**: May 2, 2026
 
 **Purpose**: Prepare StockPhotonic for many more real US-listed companies and source-backed relationships without adding unverified companies, unsupported connections, or placeholder source records.
 
@@ -246,7 +246,7 @@ python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0
 python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000 --json
 ```
 
-Preview objects include metadata-derived `source_ticker`, `filing_date`, and `accession_number` when available, `target_ticker: null`, a signal-derived `relationship_type`, `source_type: "sec_filing"`, `source_tier: 1`, `confidence_hint`, `evidence_snippet`, and `review_status: "preview_only"`. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; the generator makes no network calls, writes no candidate files, and writes no production graph data.
+Preview objects include metadata-derived `source_ticker`, `filing_date`, and `accession_number` when available, a signal-derived `relationship_type`, `source_type: "sec_filing"`, `source_tier: 1`, `confidence_hint`, `evidence_snippet`, and `review_status: "preview_only"`. `target_ticker` remains `null` unless deterministic read-only entity resolution matches a production company. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; the generator makes no network calls, writes no candidate files, and writes no production graph data.
 
 ### Phase D17: SEC Signal Candidate File Writer
 
@@ -266,6 +266,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 ```
 
 The writer saves only `data/candidates/sec_relationship_candidates.json`, refuses to overwrite an existing candidate file unless `--force` is passed, and records candidates with `review_status: "pending_review"`. The candidate file is review-only metadata and candidate records: it includes `status: "candidate_only"`, `production_write_allowed: false`, `app_load_allowed: false`, and safety counters for `network_calls: 0` and `production_writes: 0`. It must not create production nodes, create production edges, modify `data/companies.json`, modify `data/connections.json`, or change app/UI/rendering behavior.
+
+### Phase D19: SEC Candidate Entity Resolution Preview
+
+The SEC signal candidate preview generator now extracts deterministic legal-entity mentions from evidence snippets, resolves clear matches against `data/companies.json` in read-only mode, and keeps XBRL unit/inline-tag metadata from dominating the preview ranking.
+
+The preview matcher uses production company names, tickers, and any alias fields already present in company records. It may also use small deterministic public aliases only when the corresponding production ticker already exists, such as resolving `Google LLC` evidence to the existing Alphabet/Google production ticker. Matched previews add `target_name`, `target_match_method`, `target_match_confidence`, and `target_entity_mention`; unmatched clear mentions may appear in `unresolved_entity_mentions`.
+
+This phase does not modify `data/companies.json`, does not modify `data/connections.json`, does not add production nodes or edges, performs no network calls, and does not write candidate files by default. The explicit writer remains review-gated behind `--write` and only carries forward optional preview-resolution fields when present.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

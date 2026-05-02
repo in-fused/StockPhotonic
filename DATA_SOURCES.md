@@ -1,8 +1,8 @@
 # StockPhotonic Data Sources & Provenance
 
-**Last Updated**: May 1, 2026
+**Last Updated**: May 2, 2026
 
-**Current Version**: v5.8 / Phase 2.2 Derived Industry-Group Intelligence Foundations
+**Current Version**: v5.9 / Phase D19 SEC Candidate Entity Resolution Preview
 
 **Current Dataset**: 60 real US-listed public companies and 117 curated connections loaded from static JSON files:
 
@@ -117,8 +117,8 @@ Current scripts:
 - `scripts/sec_filing_inspect.py` is a read-only inspector for downloaded SEC filing cache documents. It reads local cache files and optional metadata sidecars only, makes no network calls, creates no candidates, and writes no production graph data.
 - `scripts/sec_filing_signals.py` is a read-only extractor for one downloaded SEC filing cache document. It reads local cache files only, extracts deterministic relationship signal snippets, creates no candidates, and writes no production graph data.
 - `scripts/sec_signal_report.py` is a read-only aggregator for one or more downloaded SEC filing cache documents. It reads local cache files and optional sibling metadata sidecars only, aggregates signal counts, ranks snippets for review, makes no network calls, creates no candidates, and writes no production graph data.
-- `scripts/sec_signal_candidates_preview.py` is a preview-only converter from SEC signal report snippets to relationship candidate-shaped objects. It reads local cached filing documents and optional sibling metadata sidecars only, prints preview objects to stdout, writes no candidate files, makes no network calls, and writes no production graph data.
-- `scripts/sec_signal_candidates_write.py` is an explicit review-gated writer for SEC signal candidate previews. Default mode prints would-be candidate records to stdout only. It writes only `data/candidates/sec_relationship_candidates.json` when `--write` is passed, refuses to overwrite without `--force`, makes no network calls, and writes no production graph data.
+- `scripts/sec_signal_candidates_preview.py` is a preview-only converter from SEC signal report snippets to relationship candidate-shaped objects. It reads local cached filing documents, optional sibling metadata sidecars, and `data/companies.json` in read-only mode to resolve clear company/entity mentions already present in production. It prints preview objects to stdout, writes no candidate files, makes no network calls, writes no production graph data, and filters obvious XBRL metadata snippets out of preview ranking.
+- `scripts/sec_signal_candidates_write.py` is an explicit review-gated writer for SEC signal candidate previews. Default mode prints would-be candidate records to stdout only. It carries forward optional preview entity-resolution fields when present, writes only `data/candidates/sec_relationship_candidates.json` when `--write` is passed, refuses to overwrite without `--force`, makes no network calls, and writes no production graph data.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -228,7 +228,7 @@ python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0
 python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000 --json
 ```
 
-The candidate preview generator reuses the read-only SEC signal report path and converts ranked snippets into preview-only relationship candidate objects with `source_type: "sec_filing"`, `source_tier: 1`, `target_ticker: null`, metadata-derived `source_ticker` / `filing_date` / `accession_number` when available, and `review_status: "preview_only"`. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; it does not create candidate files and does not change production data.
+The candidate preview generator reuses the read-only SEC signal report path and converts ranked snippets into preview-only relationship candidate objects with `source_type: "sec_filing"`, `source_tier: 1`, metadata-derived `source_ticker` / `filing_date` / `accession_number` when available, and `review_status: "preview_only"`. It extracts deterministic legal-entity mentions from evidence snippets, resolves obvious matches against read-only production company names, tickers, aliases, and small built-in public aliases for already-present production tickers, and adds optional `target_name`, `target_match_method`, `target_match_confidence`, `target_entity_mention`, or `unresolved_entity_mentions` fields. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; it does not create candidate files and does not change production data.
 
 SEC signal candidate writer commands:
 

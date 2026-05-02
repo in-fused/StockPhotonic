@@ -34,6 +34,13 @@ REQUIRED_CANDIDATE_FIELDS = (
     "accession_number",
     "review_status",
 )
+OPTIONAL_CANDIDATE_FIELDS = (
+    "target_name",
+    "target_match_method",
+    "target_match_confidence",
+    "target_entity_mention",
+    "unresolved_entity_mentions",
+)
 
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
@@ -102,6 +109,10 @@ def metadata() -> dict[str, Any]:
         "candidate_schema_example": {
             "source_ticker": "SOURCE_PUBLIC_TICKER",
             "target_ticker": None,
+            "target_name": None,
+            "target_match_method": None,
+            "target_match_confidence": None,
+            "target_entity_mention": None,
             "relationship_type": "supplier_customer",
             "source_type": "sec_filing",
             "source_tier": 1,
@@ -115,7 +126,7 @@ def metadata() -> dict[str, Any]:
 
 
 def candidate_from_preview(preview_candidate: dict[str, Any]) -> dict[str, Any]:
-    return {
+    candidate = {
         "source_ticker": preview_candidate.get("source_ticker"),
         "target_ticker": preview_candidate.get("target_ticker"),
         "relationship_type": preview_candidate.get("relationship_type"),
@@ -127,6 +138,10 @@ def candidate_from_preview(preview_candidate: dict[str, Any]) -> dict[str, Any]:
         "accession_number": preview_candidate.get("accession_number"),
         "review_status": "pending_review",
     }
+    for field in OPTIONAL_CANDIDATE_FIELDS:
+        if field in preview_candidate:
+            candidate[field] = preview_candidate.get(field)
+    return candidate
 
 
 def build_candidate_payload(raw_files: list[str], limit_chars: int | None) -> dict[str, Any]:

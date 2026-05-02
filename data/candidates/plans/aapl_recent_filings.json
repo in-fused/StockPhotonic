@@ -1,0 +1,182 @@
+{
+  "filings": [
+    {
+      "accession_number": "0000320193-26-000013",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000013/aapl-20260328.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2026-05-01",
+      "form": "10-Q",
+      "planned_status": "pending_fetch",
+      "primary_document": "aapl-20260328.htm",
+      "report_date": "2026-03-28",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    },
+    {
+      "accession_number": "0000320193-26-000011",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000011/aapl-20260430.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2026-04-30",
+      "form": "8-K",
+      "planned_status": "pending_fetch",
+      "primary_document": "aapl-20260430.htm",
+      "report_date": "2026-04-30",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    },
+    {
+      "accession_number": "0001140361-26-015711",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126015711/ef20071035_8k.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2026-04-20",
+      "form": "8-K",
+      "planned_status": "pending_fetch",
+      "primary_document": "ef20071035_8k.htm",
+      "report_date": "2026-04-17",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    },
+    {
+      "accession_number": "0001140361-26-006577",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126006577/ef20060722_8k.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2026-02-24",
+      "form": "8-K",
+      "planned_status": "pending_fetch",
+      "primary_document": "ef20060722_8k.htm",
+      "report_date": "2026-02-24",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    },
+    {
+      "accession_number": "0000320193-26-000006",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000006/aapl-20251227.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2026-01-30",
+      "form": "10-Q",
+      "planned_status": "pending_fetch",
+      "primary_document": "aapl-20251227.htm",
+      "report_date": "2025-12-27",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    },
+    {
+      "accession_number": "0000320193-26-000005",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000005/aapl-20260129.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2026-01-29",
+      "form": "8-K",
+      "planned_status": "pending_fetch",
+      "primary_document": "aapl-20260129.htm",
+      "report_date": "2026-01-29",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    },
+    {
+      "accession_number": "0001140361-26-000199",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126000199/ef20060722_8k.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2026-01-02",
+      "form": "8-K",
+      "planned_status": "pending_fetch",
+      "primary_document": "ef20060722_8k.htm",
+      "report_date": "2025-12-30",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    },
+    {
+      "accession_number": "0001140361-25-044561",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000114036125044561/ef20060722_8k.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2025-12-05",
+      "form": "8-K",
+      "planned_status": "pending_fetch",
+      "primary_document": "ef20060722_8k.htm",
+      "report_date": "2025-12-04",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    },
+    {
+      "accession_number": "0000320193-25-000079",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2025-10-31",
+      "form": "10-K",
+      "planned_status": "pending_fetch",
+      "primary_document": "aapl-20250927.htm",
+      "report_date": "2025-09-27",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    },
+    {
+      "accession_number": "0000320193-25-000077",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000077/aapl-20251030.htm",
+      "cik": "0000320193",
+      "company_name": "Apple Inc.",
+      "filing_date": "2025-10-30",
+      "form": "8-K",
+      "planned_status": "pending_fetch",
+      "primary_document": "aapl-20251030.htm",
+      "report_date": "2025-10-30",
+      "source_tier": 1,
+      "source_type": "sec_filing",
+      "ticker": "AAPL"
+    }
+  ],
+  "metadata": {
+    "cache_file": "data\\cache\\sec\\submissions_CIK0000320193.json",
+    "cik": "0000320193",
+    "company_name": "Apple Inc.",
+    "forms": [
+      "10-K",
+      "10-Q",
+      "8-K"
+    ],
+    "limit": 10,
+    "matching_recent_filing_count": 152,
+    "output_requested": true,
+    "plan_artifact_only": true,
+    "plan_type": "sec_filing_download_plan",
+    "planned_filing_count": 10,
+    "recent_field_lengths": {
+      "accessionNumber": 1004,
+      "filingDate": 1004,
+      "form": 1004,
+      "primaryDocument": 1004,
+      "reportDate": 1004
+    },
+    "recent_filing_count": 1004,
+    "safety": {
+      "candidate_records_created": 0,
+      "candidate_writes": 0,
+      "filing_downloads": 0,
+      "network_calls": 0,
+      "production_companies_written": 0,
+      "production_connections_written": 0,
+      "production_graph_writes": 0
+    },
+    "ticker_label": "AAPL",
+    "tickers": [
+      "AAPL"
+    ]
+  },
+  "warnings": []
+}

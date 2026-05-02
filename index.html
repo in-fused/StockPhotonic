@@ -140,8 +140,8 @@
 
         .sidebar-section {
             border-top: 1px solid rgba(255, 255, 255, 0.08);
-            padding-top: 1.25rem;
-            margin-top: 1.25rem;
+            padding-top: 1rem;
+            margin-top: 1rem;
         }
 
         .sidebar-section-title {
@@ -149,7 +149,20 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.68rem;
             letter-spacing: 1.6px;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.65rem;
+        }
+
+        @media (min-width: 1024px) {
+            #sidebar,
+            #empty-sidebar {
+                position: sticky;
+                top: 6.75rem;
+                height: auto;
+                max-height: calc(100vh - 7.75rem);
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                scrollbar-gutter: stable;
+            }
         }
 
         .summary-tile {
@@ -569,7 +582,27 @@
                     </div>
                 </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-6">
+                <div class="source-workbench-panel rounded-2xl p-5 mt-6">
+                    <div class="source-workbench-label mb-3">How to Run This Locally</div>
+                    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+                        <div class="xl:col-span-7">
+                            <p class="text-sm text-white/62">
+                                Open PowerShell, then <span class="font-mono text-cyan-50/82">cd</span> into the repo root folder before running any command. The repo root is the folder that contains <span class="font-mono text-cyan-50/82">index.html</span>, <span class="font-mono text-cyan-50/82">data/</span>, and <span class="font-mono text-cyan-50/82">scripts/</span>.
+                            </p>
+                            <p class="text-sm text-white/62 mt-3">
+                                Run commands one at a time. Replace the SEC user-agent value with a real contact string before using network-enabled SEC commands.
+                            </p>
+                        </div>
+                        <div class="xl:col-span-5 rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-4">
+                            <div class="text-xs font-mono tracking-[1.2px] text-yellow-100/80 mb-2">SEC USER-AGENT</div>
+                            <p class="text-sm text-yellow-50/72">
+                                The SEC user-agent is not an account and it does not email you. It identifies the script politely to the SEC. Example: <span class="font-mono text-yellow-50">"Taylor infusednft@gmail.com"</span>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-5">
                 <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
                     <div class="source-workbench-label mb-3">Pipeline Status</div>
                     <p class="text-sm text-white/62 mb-4">
@@ -612,77 +645,101 @@
             <div class="source-workbench-panel rounded-2xl p-5 mt-5">
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
                     <div>
-                        <div class="source-workbench-label mb-2">Local Command Guide</div>
-                        <p class="text-sm text-white/60">Run these manually from a local terminal. The browser only displays and copies commands.</p>
+                        <div class="source-workbench-label mb-2">Numbered Local Workflow</div>
+                        <p class="text-sm text-white/60">Run these manually from PowerShell in the repo root. The browser only displays and copies commands.</p>
                     </div>
                     <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
-                        Replace the SEC user-agent with your real contact details.
+                        Replace the example SEC user-agent with your real contact string.
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 gap-3">
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58">Provision summary</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-1', this)" aria-label="Copy provision summary command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">1.</span> Validate local pipeline</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-1', this)" aria-label="Copy validate local pipeline command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
                         <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-1">python scripts/provision_data.py --summary-only</code></pre>
                     </div>
 
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58">SEC lookup/cache dry run</span>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Dry-run SEC submissions fetch</span>
                             <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-2', this)" aria-label="Copy SEC cache dry run command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-2">python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Your Name your.email@example.com" --dry-run</code></pre>
-                    </div>
-
-                    <div class="source-command rounded-2xl p-3 lg:col-span-2">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58">Create a filing plan artifact</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-3', this)" aria-label="Copy filing plan command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                        </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10 --output data/candidates/plans/aapl_recent_filings.json</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-2">python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Taylor infusednft@gmail.com" --dry-run</code></pre>
                     </div>
 
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58">Preview plan-listed filing fetches</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy filing fetch command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Fetch SEC submissions cache</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-3', this)" aria-label="Copy SEC submissions fetch command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-4">python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Taylor infusednft@gmail.com"</code></pre>
                     </div>
 
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58">Inspect a cached filing</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-5', this)" aria-label="Copy filing inspect command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Inspect submissions cache</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy submissions inspect command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-5">python scripts/sec_filing_inspect.py --file data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --search "supplier"</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-4">python scripts/sec_submissions_inspect.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10</code></pre>
                     </div>
 
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58">Build a signal report</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-6', this)" aria-label="Copy signal report command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">5.</span> Create filing plan</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-5', this)" aria-label="Copy filing plan command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-6">python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-5">python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10 --output data/candidates/plans/aapl_recent_filings.json</code></pre>
                     </div>
 
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58">Preview candidate-shaped records</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-7', this)" aria-label="Copy candidate preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">6.</span> Preview filing fetch</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-6', this)" aria-label="Copy filing fetch preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-7">python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --json</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-6">python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json</code></pre>
                     </div>
 
-                    <div class="source-command rounded-2xl p-3 lg:col-span-2">
+                    <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58">Write review-only candidate file</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-8', this)" aria-label="Copy candidate writer command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">7.</span> Fetch filing documents</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-7', this)" aria-label="Copy filing document fetch command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-8">python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-7">python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json --allow-network --user-agent "Taylor infusednft@gmail.com"</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">8.</span> Inspect cached filing</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-8', this)" aria-label="Copy filing inspect command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-8">python scripts/sec_filing_inspect.py --file data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --search "supplier"</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">9.</span> Build signal report</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-9', this)" aria-label="Copy signal report command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-9">python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">10.</span> Preview candidate-shaped records</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-10', this)" aria-label="Copy candidate preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-10">python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --json</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">11.</span> Write review-only candidate file</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-11', this)" aria-label="Copy candidate writer command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-11">python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force</code></pre>
                     </div>
                 </div>
             </div>
@@ -691,10 +748,11 @@
                 <div class="xl:col-span-5 source-workbench-panel rounded-2xl p-5">
                     <div class="source-workbench-label mb-3">Safety Notes</div>
                     <ul class="space-y-2 text-sm text-white/62">
-                        <li class="flex gap-2"><i class="fa-solid fa-terminal text-cyan-200/70 mt-0.5"></i><span>Commands must be run locally in a terminal; the browser cannot run these Python scripts.</span></li>
-                        <li class="flex gap-2"><i class="fa-solid fa-ban text-yellow-200/70 mt-0.5"></i><span>This phase adds no backend, no SEC browser network calls, and no frontend script execution bridge.</span></li>
-                        <li class="flex gap-2"><i class="fa-solid fa-database text-fuchsia-200/70 mt-0.5"></i><span>Candidate files are review-only and do not change production graph data.</span></li>
-                        <li class="flex gap-2"><i class="fa-solid fa-shield-halved text-emerald-200/70 mt-0.5"></i><span>No production graph data changes happen until a future reviewed promotion phase.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-ban text-yellow-200/70 mt-0.5"></i><span>No backend is added yet.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-globe text-cyan-200/70 mt-0.5"></i><span>The browser does not call SEC directly.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-terminal text-cyan-200/70 mt-0.5"></i><span>The browser does not run local Python scripts.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-database text-fuchsia-200/70 mt-0.5"></i><span>Candidate files are review-only.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-shield-halved text-emerald-200/70 mt-0.5"></i><span>Production graph data is unchanged until a future reviewed promotion phase.</span></li>
                     </ul>
                 </div>
 

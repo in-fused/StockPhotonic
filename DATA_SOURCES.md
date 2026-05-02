@@ -2,7 +2,7 @@
 
 **Last Updated**: May 2, 2026
 
-**Current Version**: v5.9 / Phase D19 SEC Candidate Entity Resolution Preview
+**Current Version**: v5.10 / Phase D21 One-Command SEC Pipeline Runner
 
 **Current Dataset**: 60 real US-listed public companies and 117 curated connections loaded from static JSON files:
 
@@ -119,6 +119,7 @@ Current scripts:
 - `scripts/sec_signal_report.py` is a read-only aggregator for one or more downloaded SEC filing cache documents. It reads local cache files and optional sibling metadata sidecars only, aggregates signal counts, ranks snippets for review, makes no network calls, creates no candidates, and writes no production graph data.
 - `scripts/sec_signal_candidates_preview.py` is a preview-only converter from SEC signal report snippets to relationship candidate-shaped objects. It reads local cached filing documents, optional sibling metadata sidecars, and `data/companies.json` in read-only mode to resolve clear company/entity mentions already present in production. It prints preview objects to stdout, writes no candidate files, makes no network calls, writes no production graph data, and filters obvious XBRL metadata snippets out of preview ranking.
 - `scripts/sec_signal_candidates_write.py` is an explicit review-gated writer for SEC signal candidate previews. Default mode prints would-be candidate records to stdout only. It carries forward optional preview entity-resolution fields when present, writes only `data/candidates/sec_relationship_candidates.json` when `--write` is passed, refuses to overwrite without `--force`, makes no network calls, and writes no production graph data.
+- `scripts/sec_pipeline_run.py` is the local one-command SEC pipeline runner. It validates candidate references, delegates to the existing submissions fetch/inspect, filing plan/fetch, signal report, candidate preview, and optional candidate writer scripts, defaults to dry-run/preview mode, requires `--allow-network` plus `--user-agent` for SEC network calls, requires `--write-candidates` for review-only candidate output, and never writes production graph data.
 - `scripts/provision_data.py` is a manual local data-foundation orchestrator. It validates candidate files, previews SEC cache fetches in dry-run mode, and does not import, promote, or write production graph data.
 
 Important distinction:
@@ -167,7 +168,17 @@ python scripts/validate_data.py
 python scripts/validate_data.py --strict-confidence
 ```
 
-SEC cache helper commands:
+SEC one-command pipeline runner commands:
+
+```bash
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com"
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+```
+
+The one-command runner is the recommended local workflow. Default mode is dry-run/preview only: it validates candidate references, dry-runs SEC submissions and filing-document fetches unless network access is explicitly enabled, runs signal reporting and candidate preview only from local cache files that exist, and reports production writes as zero. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate output requires `--write-candidates`; `--force` is passed only to the existing candidate writer and does not authorize production graph writes. The runner creates only a temporary filing-plan artifact needed by the existing filing fetcher and removes it before exit.
+
+Advanced manual SEC helper commands:
 
 ```bash
 python scripts/sec_fetch_cache.py --cik 0000320193 --user-agent "Your Name your.email@example.com" --dry-run

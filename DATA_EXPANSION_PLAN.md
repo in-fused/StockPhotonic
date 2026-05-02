@@ -10,7 +10,7 @@ This plan is strategy only. It does not authorize writing new companies to `data
 
 ## Phase V1: Source Intelligence Workbench
 
-V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It explains the SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path and makes the candidate-only file locations visible to non-technical users.
+V1 adds an in-app Source Intelligence Workbench for product visibility and local command guidance. It recommends the one-command SEC pipeline runner for local dry-run-first work, summarizes the advanced manual SEC lookup/cache -> filing plan -> filing fetch -> filing inspect -> signal report -> candidate preview -> candidate writer path, and makes the candidate-only file locations visible to non-technical users.
 
 The workbench is read-only. It does not run scripts from the browser, fetch SEC data from the browser, add backend/server code, promote candidates, create production nodes or edges, or modify `data/companies.json` or `data/connections.json`. Any displayed candidate records remain review-only and must not be treated as graph data until a future reviewed promotion phase exists.
 
@@ -274,6 +274,20 @@ The SEC signal candidate preview generator now extracts deterministic legal-enti
 The preview matcher uses production company names, tickers, and any alias fields already present in company records. It may also use small deterministic public aliases only when the corresponding production ticker already exists, such as resolving `Google LLC` evidence to the existing Alphabet/Google production ticker. Matched previews add `target_name`, `target_match_method`, `target_match_confidence`, and `target_entity_mention`; unmatched clear mentions may appear in `unresolved_entity_mentions`.
 
 This phase does not modify `data/companies.json`, does not modify `data/connections.json`, does not add production nodes or edges, performs no network calls, and does not write candidate files by default. The explicit writer remains review-gated behind `--write` and only carries forward optional preview-resolution fields when present.
+
+### Phase D21: One-Command SEC Pipeline Runner
+
+`scripts/sec_pipeline_run.py` is a safe local orchestrator for running the existing SEC workflow for one ticker through candidate preview and optional review-only candidate writing. It delegates to the existing validation, submissions fetch/inspect, filing plan/fetch, signal report, candidate preview, and candidate writer scripts instead of duplicating SEC parsing logic.
+
+Default usage is dry-run/preview first:
+
+```bash
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com"
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+```
+
+Network calls require both `--allow-network` and an identifying `--user-agent`. Candidate file output requires `--write-candidates` and writes only `data/candidates/sec_relationship_candidates.json` through the existing review-only writer. The runner may create a temporary filing plan artifact solely to satisfy the existing filing fetcher's reviewed-plan input contract, then removes that temporary artifact before exit. It does not modify `data/companies.json`, does not modify `data/connections.json`, does not add production nodes or edges, does not add backend/server code, and does not run from the browser.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

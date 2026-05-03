@@ -619,10 +619,13 @@
             .graph3d-toolbar .focus-button {
                 flex: 1 1 calc(50% - 0.4rem);
                 justify-content: center;
+                min-width: 0;
                 min-height: 2.75rem;
                 padding-left: 0.85rem;
                 padding-right: 0.85rem;
                 font-size: 0.75rem;
+                white-space: normal;
+                text-align: center;
             }
 
             .graph3d-stat-overlay {
@@ -880,6 +883,14 @@
                         <button id="graph3d-fit-button" type="button" onclick="fitGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Fit 3D network">
                             <i class="fa-solid fa-compress"></i>
                             <span>FIT</span>
+                        </button>
+                        <button id="graph3d-focus-selected-button" type="button" onclick="focusGraph3DSelection()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Focus selected 3D node or relationship">
+                            <i class="fa-solid fa-crosshairs"></i>
+                            <span>Focus Selected</span>
+                        </button>
+                        <button id="graph3d-clear-selection-button" type="button" onclick="clearGraph3DSelection()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Clear 3D selection without moving the camera">
+                            <i class="fa-solid fa-eraser"></i>
+                            <span>Clear Selection</span>
                         </button>
                         <button id="graph3d-reset-button" type="button" onclick="resetGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset 3D camera and selection">
                             <i class="fa-solid fa-rotate-left"></i>
@@ -1631,6 +1642,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function fitGraph3DCamera() {
             getGraph3DView()?.fitCamera();
+        }
+
+        function focusGraph3DSelection() {
+            getGraph3DView()?.focusSelection();
+        }
+
+        function clearGraph3DSelection() {
+            getGraph3DView()?.clearSelection();
         }
 
         /* ==============================

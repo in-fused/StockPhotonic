@@ -8,6 +8,7 @@
     const TAU = Math.PI * 2;
     const EDGE_HOVER_THRESHOLD = 11;
     const TOUCH_EDGE_HOVER_THRESHOLD = 22;
+    const FOCUS_ANIMATION_MS = 620;
 
     function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
@@ -161,6 +162,7 @@
                 radius: 210,
                 target: { x: 0, y: 0, z: 0 }
             };
+            this.cameraTransition = null;
             this.fitRadius = 210;
 
             this.drag = {
@@ -625,6 +627,7 @@
             this.animationFrame = null;
             if (!this.active || !this.renderer || !this.scene || !this.camera) return;
 
+            this.updateCameraTransition(timestamp);
             if (this.autoRotateEnabled && !this.drag.active) {
                 this.cameraState.theta += 0.0015;
             }
@@ -659,8 +662,39 @@
             this.camera.lookAt(new THREE.Vector3(state.target.x, state.target.y, state.target.z));
         }
 
+        updateCameraTransition(timestamp) {
+            const transition = this.cameraTransition;
+            if (!transition) return;
+            const progress = clamp((timestamp - transition.startedAt) / transition.duration, 0, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            this.cameraState.target = {
+                x: transition.fromTarget.x + (transition.toTarget.x - transition.fromTarget.x) * eased,
+                y: transition.fromTarget.y + (transition.toTarget.y - transition.fromTarget.y) * eased,
+                z: transition.fromTarget.z + (transition.toTarget.z - transition.fromTarget.z) * eased
+            };
+            this.cameraState.radius = transition.fromRadius + (transition.toRadius - transition.fromRadius) * eased;
+            if (progress >= 1) this.cameraTransition = null;
+        }
+
+        animateCameraTo(target, radius, duration = FOCUS_ANIMATION_MS) {
+            this.cameraTransition = {
+                startedAt: performance.now(),
+                duration,
+                fromTarget: { ...this.cameraState.target },
+                toTarget: {
+                    x: target.x,
+                    y: target.y,
+                    z: target.z
+                },
+                fromRadius: this.cameraState.radius,
+                toRadius: clamp(radius, 58, 360)
+            };
+            this.start();
+        }
+
         onPointerDown(event) {
             if (event.pointerType === 'mouse' && event.button !== 0 && event.button !== 2) return;
+            this.cameraTransition = null;
             this.drag.active = true;
             this.drag.pointerId = event.pointerId;
             this.drag.button = event.button;
@@ -740,6 +774,7 @@
 
         onWheel(event) {
             event.preventDefault();
+            this.cameraTransition = null;
             const nextRadius = this.cameraState.radius * Math.exp(clamp(event.deltaY, -180, 180) * 0.0018);
             this.cameraState.radius = clamp(nextRadius, 38, 720);
         }
@@ -931,25 +966,7 @@
                 return;
             }
             if (!this.selectedRecord && !this.selectedEdgeRecord) {
-                const secCount = this.linkRecords.filter(link => link.secBacked).length;
-                this.details.innerHTML = `
-                    <div class="source-workbench-label mb-3">3D Network Guide</div>
-                    <div class="font-display text-2xl text-white">Explore the production graph</div>
-                    <p class="mt-2 text-sm leading-6 text-white/62">Rotate, zoom, and select companies without changing filters or underlying graph intelligence.</p>
-                    <div class="mt-5 space-y-3">
-                        ${this.renderGuideRow('fa-arrows-rotate', 'Rotate', 'Drag across the canvas to orbit the network.')}
-                        ${this.renderGuideRow('fa-magnifying-glass-plus', 'Zoom', 'Use the mouse wheel or trackpad pinch to move closer or farther away.')}
-                        ${this.renderGuideRow('fa-hand-pointer', 'Select', 'Hover or tap a company or relationship; nodes take priority when the pointer is directly over them.')}
-                        ${this.renderGuideRow('fa-file-shield', 'SEC emphasis', 'Gold dashed edges mark relationships backed by SEC evidence when emphasis is on.')}
-                        ${this.renderGuideRow('fa-tags', 'Labels', 'The labels toggle shows or hides priority tickers plus hovered and selected nodes or relationship endpoints.')}
-                    </div>
-                    <div class="mt-5 grid grid-cols-2 gap-3">
-                        ${this.renderMetric('Nodes', this.nodeRecords.length)}
-                        ${this.renderMetric('Edges', this.linkRecords.length)}
-                        ${this.renderMetric('SEC edges', secCount)}
-                        ${this.renderMetric('Labels', this.labelsEnabled ? 'On' : 'Off')}
-                    </div>
-                `;
+                this.renderGuideDetails();
                 return;
             }
             if (this.selectedEdgeRecord) {
@@ -992,6 +1009,33 @@
                     <div class="space-y-2">
                         ${top.length ? top.map(item => this.renderRelationshipRow(item)).join('') : '<div class="text-sm text-white/42">No production relationships.</div>'}
                     </div>
+                </div>
+            `;
+        }
+
+        renderGuideDetails(hint = '') {
+            if (!this.details) return;
+            const secCount = this.linkRecords.filter(link => link.secBacked).length;
+            const hintMarkup = hint
+                ? `<div class="mb-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm leading-5 text-cyan-50/78">${this.escapeHtml(hint)}</div>`
+                : '';
+            this.details.innerHTML = `
+                <div class="source-workbench-label mb-3">3D Network Guide</div>
+                ${hintMarkup}
+                <div class="font-display text-2xl text-white">Explore the production graph</div>
+                <p class="mt-2 text-sm leading-6 text-white/62">Rotate, zoom, and select companies without changing filters or underlying graph intelligence.</p>
+                <div class="mt-5 space-y-3">
+                    ${this.renderGuideRow('fa-arrows-rotate', 'Rotate', 'Drag across the canvas to orbit the network.')}
+                    ${this.renderGuideRow('fa-magnifying-glass-plus', 'Zoom', 'Use the mouse wheel or trackpad pinch to move closer or farther away.')}
+                    ${this.renderGuideRow('fa-hand-pointer', 'Select', 'Hover or tap a company or relationship; nodes take priority when the pointer is directly over them.')}
+                    ${this.renderGuideRow('fa-file-shield', 'SEC emphasis', 'Gold dashed edges mark relationships backed by SEC evidence when emphasis is on.')}
+                    ${this.renderGuideRow('fa-tags', 'Labels', 'The labels toggle shows or hides priority tickers plus hovered and selected nodes or relationship endpoints.')}
+                </div>
+                <div class="mt-5 grid grid-cols-2 gap-3">
+                    ${this.renderMetric('Nodes', this.nodeRecords.length)}
+                    ${this.renderMetric('Edges', this.linkRecords.length)}
+                    ${this.renderMetric('SEC edges', secCount)}
+                    ${this.renderMetric('Labels', this.labelsEnabled ? 'On' : 'Off')}
                 </div>
             `;
         }
@@ -1198,7 +1242,50 @@
             this.setAutoRotateEnabled(!this.autoRotateEnabled);
         }
 
+        focusSelection() {
+            if (!this.nodeRecords.length && !this.linkRecords.length) {
+                this.renderDetails();
+                return;
+            }
+            if (this.selectedRecord) {
+                this.focusNodeRecord(this.selectedRecord);
+                return;
+            }
+            if (this.selectedEdgeRecord) {
+                this.focusEdgeRecord(this.selectedEdgeRecord);
+                return;
+            }
+            this.renderGuideDetails('Select a company or relationship first, then use Focus Selected.');
+        }
+
+        focusNodeRecord(record) {
+            if (!record?.position) return;
+            this.animateCameraTo(record.position, this.getNodeFocusRadius(record));
+        }
+
+        focusEdgeRecord(record) {
+            if (!record?.source?.position || !record?.target?.position) return;
+            const midpoint = record.source.position.clone().add(record.target.position).multiplyScalar(0.5);
+            const endpointDistance = record.source.position.distanceTo(record.target.position);
+            const radius = clamp(endpointDistance * 1.45 + 58, 96, 260);
+            this.animateCameraTo(midpoint, radius);
+        }
+
+        getNodeFocusRadius(record) {
+            const distances = this.linkRecords
+                .filter(link => link.source === record || link.target === record)
+                .map(link => {
+                    const other = link.source === record ? link.target : link.source;
+                    return other?.position ? record.position.distanceTo(other.position) : 0;
+                })
+                .filter(distance => distance > 0)
+                .sort((a, b) => a - b);
+            const nearbyDistance = distances.length ? distances[Math.min(distances.length - 1, 5)] : 0;
+            return clamp(Math.max(88, nearbyDistance * 1.65, record.radius * 24), 88, 190);
+        }
+
         clearSelection(renderDetails = true) {
+            this.cameraTransition = null;
             this.selectedRecord = null;
             this.hoveredRecord = null;
             this.selectedEdgeRecord = null;
@@ -1212,11 +1299,13 @@
         }
 
         resetView() {
+            this.cameraTransition = null;
             this.resetCamera(false);
             this.clearSelection(true);
         }
 
         resetCamera(renderDetails = true) {
+            this.cameraTransition = null;
             this.cameraState.theta = -0.72;
             this.cameraState.phi = 1.08;
             this.cameraState.radius = this.fitRadius || 210;
@@ -1225,6 +1314,7 @@
         }
 
         fitCamera() {
+            this.cameraTransition = null;
             this.cameraState.target = { x: 0, y: 0, z: 0 };
             this.cameraState.radius = clamp(this.fitRadius * 0.92, 110, 420);
         }

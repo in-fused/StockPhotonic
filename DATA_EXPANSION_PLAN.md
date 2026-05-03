@@ -1,6 +1,6 @@
 # StockPhotonic Data Expansion Plan
 
-**Last Updated**: May 2, 2026
+**Last Updated**: May 3, 2026
 
 **Purpose**: Prepare StockPhotonic for many more real US-listed companies and source-backed relationships without adding unverified companies, unsupported connections, or placeholder source records.
 
@@ -291,7 +291,7 @@ Network calls require both `--allow-network` and an identifying `--user-agent`. 
 
 ### Phase D22: SEC Candidate Promotion Preview Validator
 
-`scripts/sec_candidate_promotion_preview.py` is a preview-only validator for review-only SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json` by default, reads the candidate-only `data/candidates/sec_automation_policy.json` gate when present, validates the file's candidate-only metadata, checks candidate endpoints against `data/companies.json`, checks duplicate edge keys against `data/connections.json`, and prints which records could later become production edge shapes after manual review.
+`scripts/sec_candidate_promotion_preview.py` is a preview-only validator for review-only SEC relationship candidates. It reads `data/candidates/sec_relationship_candidates.json` by default, reads the candidate-only `data/candidates/sec_automation_policy.json` gate when present, validates the file's candidate-only metadata, checks candidate endpoints against `data/companies.json`, checks duplicate edge keys against `data/connections.json`, deduplicates same-pair candidates to the strongest retained record, and prints which unique records could later become production edge shapes after manual review.
 
 Default usage writes nothing:
 
@@ -300,13 +300,13 @@ python scripts/sec_candidate_promotion_preview.py
 python scripts/sec_candidate_promotion_preview.py --json
 ```
 
-The validator does not promote candidates, does not create production nodes or edges, does not modify `data/companies.json` or `data/connections.json`, performs no network calls, and adds no backend/server code. `supplier_customer` candidates remain blocked unless deterministic evidence terms map them clearly to the current production `supply` or `partnership` types. Policy classifications are additional preview metadata and do not authorize production writes.
+The validator does not promote candidates, does not create production nodes or edges, does not modify `data/companies.json` or `data/connections.json`, performs no network calls, and adds no backend/server code. `supplier_customer` candidates remain blocked unless deterministic evidence terms map them clearly to the current production `supply` or `partnership` types, and share issuance or ownership evidence maps to `investment`. Policy classifications are additional preview metadata and do not authorize production writes.
 
 ### Phase D23: High-Confidence SEC Candidate Filtering
 
 The SEC candidate preview and writer retain only graph-worthy relationship candidates, with different thresholds by stage. Preview records are discarded when the target ticker is unresolved, the target name is missing, the preview target match confidence is below `0.75`, evidence lacks a resolvable named entity, or the snippet is dominated by generic depends-on/suppliers/customers/vendors language, internal-operations phrasing, accounting-only phrases such as `revenue from contracts`, or XBRL artifacts. The writer persists only candidates that remain at `target_match_confidence >= 0.85`.
 
-`supplier_customer` signals are no longer carried forward as generic candidate types. They map to `partnership` only when evidence contains `revenue from`, `licensing`, `search distribution`, or `payments from`; they map to `supply` only when evidence contains `supplies`, `manufactures for`, or `component supplier`; otherwise they are discarded from candidate preview and blocked by promotion preview.
+`supplier_customer` signals are no longer carried forward as generic candidate types. They map to `partnership` only when evidence contains licensing, revenue, search-distribution, or payment terms; they map to `supply` only when evidence contains supply, manufacturing, sourced-components, or component-supplier terms; otherwise they are discarded from candidate preview and blocked by promotion preview. Investment-specific evidence such as share issuance, common-stock sale, equity investment, cash purchase price, or ownership stake maps to `investment` before broader partnership/supplier labels are accepted.
 
 This phase is still preview/review-only. It performs no network calls, does not auto-promote candidates, does not modify `data/companies.json`, does not modify `data/connections.json`, and does not write candidate files unless the explicit writer receives `--write`.
 
@@ -321,7 +321,7 @@ python scripts/sec_candidate_promote.py
 python scripts/sec_candidate_promote.py --write
 ```
 
-Promotion is allowed only when the candidate has a resolved `target_ticker`, `target_match_confidence >= 0.85`, evidence text, a valid filing date, a valid `confidence_hint`, source and target tickers already present in `data/companies.json`, and a relationship type that maps deterministically to current production `partnership` or `supply`. The writer prevents existing production duplicates and duplicate candidate edges within the same run, performs no network calls, never modifies `data/companies.json`, and keeps `--write` explicit and manual. Dry-run and JSON output can include the automation policy classification, but the policy does not make production writes automatic.
+Promotion is allowed only when the candidate has a resolved `target_ticker`, `target_match_confidence >= 0.85`, evidence text, a valid filing date, a valid `confidence_hint`, source and target tickers already present in `data/companies.json`, and a relationship type that maps deterministically to current production `partnership`, `supply`, or `investment`. The writer prevents existing production duplicates, suppresses weaker duplicate candidates for the same source/target pair within the same run, performs no network calls, never modifies `data/companies.json`, and keeps `--write` explicit and manual. Dry-run and JSON output can include the automation policy classification, but the policy does not make production writes automatic.
 
 Phase D24 promoted one AAPL -> GOOGL `partnership` edge for the SEC filing licensing/search distribution relationship. A post-write dry run reports the resolved AAPL -> GOOGL candidates as existing duplicates, so reruns do not add another edge.
 
@@ -457,6 +457,14 @@ Batch jobs can take several minutes when filings need to be fetched or scanned. 
 `scripts/sec_signal_candidates_preview.py` now converts those high-signal snippets before falling back to generic signal snippets, upgrades entity detection for legal names, known public aliases, and multi-word company names, and binds target resolution to the explicit relationship phrase. Preview can surface `target_match_confidence >= 0.75`, but it remains preview-only, capped per source ticker and overall, and filters `depends on`, `our customers`, `our suppliers`, internal operations language, accounting-only phrases such as `revenue from contracts`, unresolved snippets, and XBRL-dominated artifacts.
 
 `scripts/sec_signal_candidates_write.py` keeps the stricter `target_match_confidence >= 0.85` floor before any review-only candidate file write. This phase performs no network calls, creates no production nodes or edges, does not modify `data/companies.json`, and does not modify `data/connections.json`.
+
+### Phase D36: Candidate Deduplication + Relationship Type Normalization
+
+`scripts/sec_candidate_promotion_preview.py` and `scripts/sec_candidate_promote.py` now normalize relationship types before final promotion eligibility. `supplier_customer` candidates become `partnership` only for licensing, revenue, search-distribution, or payment evidence; they become `supply` only for manufacturing, supply, sourced-components, or component-supplier evidence. Share issuance, common-stock sale, equity investment, cash purchase price, or ownership-stake language maps to `investment`, including cases where the raw candidate label was a broader `partnership` or `agreement with` signal.
+
+Both scripts now deduplicate same source/target candidate pairs after endpoint validation and type normalization. The strongest candidate is retained using promotability, policy gate result, confidence hint, target-match confidence, source URL support, and original order as tie-breakers. Suppressed duplicates are reported separately, and the kept record carries merged source URL and signal/type metadata when duplicate signals contributed evidence. Promotion preview and dry-run promotion therefore show only unique proposed edges, while existing production duplicates remain blocked.
+
+This phase writes no production graph data. `scripts/sec_candidate_promotion_preview.py` remains read-only, and `scripts/sec_candidate_promote.py` still writes `data/connections.json` only when `--write` is explicit.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

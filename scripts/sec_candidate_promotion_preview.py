@@ -40,7 +40,12 @@ URL_PATTERN = re.compile(r"^https?://\S+$", re.IGNORECASE)
 
 SUPPLY_TERMS = (
     "supplies",
+    "supplied by",
+    "supply agreement",
+    "manufacturing",
+    "manufactured by",
     "manufactures for",
+    "components sourced from",
     "component supplier",
 )
 PARTNERSHIP_TERMS = (
@@ -48,6 +53,24 @@ PARTNERSHIP_TERMS = (
     "licensing",
     "search distribution",
     "payments from",
+    "strategic partnership",
+    "partnership with",
+    "collaboration with",
+    "joint venture with",
+)
+INVESTMENT_TERMS = (
+    "investment in",
+    "invested in",
+    "ownership stake",
+    "equity investment",
+    "issue and sell",
+    "issuance and sale",
+    "issued and sold",
+    "shares of our common stock",
+    "cash purchase price",
+    "aggregate cash purchase price",
+    "purchased shares",
+    "ownership interest",
 )
 CLASSIFICATION_ORDER = (
     "promotable_preview",
@@ -58,6 +81,7 @@ CLASSIFICATION_ORDER = (
     "source_not_in_production",
     "target_not_in_production",
     "duplicate_existing_edge",
+    "duplicate_candidate_edge",
     "unsupported_relationship_type",
     "missing_evidence",
     "low_confidence",
@@ -440,13 +464,17 @@ def map_relationship_type(candidate: dict[str, Any]) -> tuple[str | None, str | 
         return None, None
 
     relationship_type = raw_type.lower()
+    evidence = clean_string(candidate.get("evidence_snippet")) or ""
+    investment_hits = term_hits(evidence, INVESTMENT_TERMS)
+    if investment_hits:
+        return "investment", "evidence_investment_terms"
+
     if relationship_type in ALLOWED_PRODUCTION_TYPES:
         return relationship_type, f"direct:{relationship_type}"
 
     if relationship_type != "supplier_customer":
         return None, None
 
-    evidence = clean_string(candidate.get("evidence_snippet")) or ""
     supply_hits = term_hits(evidence, SUPPLY_TERMS)
     partnership_hits = term_hits(evidence, PARTNERSHIP_TERMS)
 
@@ -603,7 +631,11 @@ def relationship_policy_sets(
 
 
 def evidence_has_specific_relationship_terms(evidence: str) -> bool:
-    return bool(term_hits(evidence, PARTNERSHIP_TERMS) or term_hits(evidence, SUPPLY_TERMS))
+    return bool(
+        term_hits(evidence, PARTNERSHIP_TERMS)
+        or term_hits(evidence, SUPPLY_TERMS)
+        or term_hits(evidence, INVESTMENT_TERMS)
+    )
 
 
 def evidence_has_generic_terms(evidence: str, generic_terms: tuple[str, ...]) -> bool:
@@ -947,16 +979,161 @@ def inspect_candidate(
         "index": index,
         "source_ticker": source_ticker,
         "target_ticker": target_ticker,
+        "source_company_id": source_company.company_id if source_company else None,
+        "target_company_id": target_company.company_id if target_company else None,
         "relationship_type": clean_string(candidate.get("relationship_type")),
+        "relationship_signal": clean_string(candidate.get("relationship_signal")),
         "mapped_production_type": mapped_type,
         "mapping_rule": mapping_rule,
+        "target_match_confidence": target_match_confidence,
         "classifications": classifications,
         "evidence_missing_fields": evidence_missing,
         "confidence_hint": confidence_hint,
+        "source_urls": source_urls_from_candidate(candidate),
         "policy_classification": policy_result["classification"],
         "policy_reasons": policy_result["reasons"],
         "proposed_edge": proposed_edge,
     }
+
+
+def candidate_pair_key(record: dict[str, Any]) -> tuple[Any, ...] | None:
+    source_id = record.get("source_company_id")
+    target_id = record.get("target_company_id")
+    if (
+        isinstance(source_id, int)
+        and not isinstance(source_id, bool)
+        and isinstance(target_id, int)
+        and not isinstance(target_id, bool)
+    ):
+        return ("company_ids", min(source_id, target_id), max(source_id, target_id))
+
+    source_ticker = clean_string(record.get("source_ticker"))
+    target_ticker = clean_string(record.get("target_ticker"))
+    if source_ticker and target_ticker:
+        return ("tickers", *sorted((source_ticker.upper(), target_ticker.upper())))
+    return None
+
+
+def policy_rank(classification: str) -> int:
+    if classification == "future_auto_promotable_preview":
+        return 3
+    if classification == "manual_review_required":
+        return 2
+    if classification == "blocked":
+        return 1
+    return 0
+
+
+def dedupe_score(record: dict[str, Any]) -> tuple[int, int, float, float, int, int]:
+    classifications = record.get("classifications")
+    is_promotable = 1 if classifications == ["promotable_preview"] else 0
+    confidence_hint = record.get("confidence_hint")
+    target_match_confidence = record.get("target_match_confidence")
+    source_urls = record.get("source_urls")
+    return (
+        is_promotable,
+        policy_rank(str(record.get("policy_classification") or "")),
+        confidence_hint if isinstance(confidence_hint, (int, float)) else -1.0,
+        target_match_confidence
+        if isinstance(target_match_confidence, (int, float))
+        else -1.0,
+        len(source_urls) if isinstance(source_urls, list) else 0,
+        -int(record.get("index") or 0),
+    )
+
+
+def unique_strings(values: list[Any]) -> list[str]:
+    seen: set[str] = set()
+    unique: list[str] = []
+    for value in values:
+        item = clean_string(value)
+        if item and item not in seen:
+            seen.add(item)
+            unique.append(item)
+    return unique
+
+
+def merge_duplicate_group(
+    winner: dict[str, Any],
+    group: list[dict[str, Any]],
+) -> dict[str, Any]:
+    if len(group) == 1:
+        return winner
+
+    candidate_indices = [int(record["index"]) for record in group]
+    suppressed_indices = [
+        int(record["index"]) for record in group if record is not winner
+    ]
+    merged_source_urls = unique_strings(
+        [
+            url
+            for record in group
+            for url in (record.get("source_urls") or [])
+        ]
+    )
+    winner["deduplication"] = {
+        "status": "kept_strongest_candidate_pair",
+        "candidate_indices": sorted(candidate_indices),
+        "suppressed_candidate_indices": sorted(suppressed_indices),
+        "duplicate_candidates_suppressed": len(suppressed_indices),
+        "merged_relationship_types": unique_strings(
+            [record.get("relationship_type") for record in group]
+        ),
+        "merged_production_types": unique_strings(
+            [record.get("mapped_production_type") for record in group]
+        ),
+        "merged_relationship_signals": unique_strings(
+            [record.get("relationship_signal") for record in group]
+        ),
+    }
+
+    proposed_edge = winner.get("proposed_edge")
+    if isinstance(proposed_edge, dict) and merged_source_urls:
+        proposed_edge["source_urls"] = merged_source_urls
+        proposed_edge["confidence"] = proposed_confidence(proposed_edge)
+    return winner
+
+
+def deduplicate_records(
+    records: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    grouped: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
+    ungrouped: list[dict[str, Any]] = []
+    for record in records:
+        key = candidate_pair_key(record)
+        if key is None:
+            ungrouped.append(record)
+        else:
+            grouped.setdefault(key, []).append(record)
+
+    unique_records = [*ungrouped]
+    suppressed_records: list[dict[str, Any]] = []
+    for group in grouped.values():
+        winner = max(group, key=dedupe_score)
+        unique_records.append(merge_duplicate_group(winner, group))
+        for record in group:
+            if record is winner:
+                continue
+            suppressed_records.append(
+                {
+                    "index": record["index"],
+                    "source_ticker": record.get("source_ticker"),
+                    "target_ticker": record.get("target_ticker"),
+                    "relationship_type": record.get("relationship_type"),
+                    "mapped_production_type": record.get("mapped_production_type"),
+                    "mapping_rule": record.get("mapping_rule"),
+                    "confidence_hint": record.get("confidence_hint"),
+                    "classifications": ["duplicate_candidate_edge"],
+                    "policy_classification": "manual_review_required",
+                    "policy_reasons": ["duplicate_candidate_edge"],
+                    "kept_candidate_index": winner["index"],
+                    "suppression_reason": "weaker_duplicate_candidate_pair",
+                }
+            )
+
+    unique_records.sort(key=lambda record: int(record.get("index") or 0))
+    suppressed_records.sort(key=lambda record: int(record.get("index") or 0))
+    return unique_records, suppressed_records
 
 
 def build_preview(
@@ -973,7 +1150,7 @@ def build_preview(
         load_json(connections_path, "connections")
     )
 
-    records = [
+    inspected_records = [
         inspect_candidate(
             candidate,
             index=index,
@@ -983,20 +1160,29 @@ def build_preview(
         )
         for index, candidate in enumerate(candidates, start=1)
     ]
+    records, suppressed_duplicate_records = deduplicate_records(inspected_records)
 
     classification_counts: Counter[str] = Counter()
     policy_classification_counts: Counter[str] = Counter()
     for record in records:
         classification_counts.update(record["classifications"])
         policy_classification_counts.update([record["policy_classification"]])
+    classification_counts.update(
+        ["duplicate_candidate_edge"] * len(suppressed_duplicate_records)
+    )
 
     promotable_count = classification_counts["promotable_preview"]
-    duplicate_count = classification_counts["duplicate_existing_edge"]
+    duplicate_count = (
+        classification_counts["duplicate_existing_edge"]
+        + classification_counts["duplicate_candidate_edge"]
+    )
     summary = {
         "total_candidates": len(candidates),
+        "unique_candidate_pairs": len(records),
         "promotable_previews": promotable_count,
         "blocked_count": len(candidates) - promotable_count,
         "duplicate_count": duplicate_count,
+        "candidate_duplicates_suppressed": len(suppressed_duplicate_records),
         "future_auto_promotable_previews": policy_classification_counts[
             "future_auto_promotable_preview"
         ],
@@ -1035,6 +1221,7 @@ def build_preview(
             for classification in POLICY_CLASSIFICATION_ORDER
         },
         "records": records,
+        "suppressed_duplicate_candidates": suppressed_duplicate_records,
         "safety": {
             "network_calls": 0,
             "production_writes": 0,
@@ -1055,9 +1242,14 @@ def print_human(preview: dict[str, Any]) -> None:
     print(f"Production companies read: {preview['production_files_read']['companies']}")
     print(f"Production connections read: {preview['production_files_read']['connections']}")
     print(f"Total candidates: {summary['total_candidates']}")
+    print(f"Unique candidate pairs: {summary['unique_candidate_pairs']}")
     print(f"Promotable previews: {summary['promotable_previews']}")
     print(f"Blocked count: {summary['blocked_count']}")
     print(f"Duplicate count: {summary['duplicate_count']}")
+    print(
+        "Candidate duplicates suppressed: "
+        f"{summary['candidate_duplicates_suppressed']}"
+    )
     print(
         "Future auto-promotable previews: "
         f"{summary['future_auto_promotable_previews']}"
@@ -1119,6 +1311,21 @@ def print_human(preview: dict[str, Any]) -> None:
                 if record["policy_reasons"]
                 else ""
             )
+        )
+
+    print()
+    print("Suppressed duplicate candidates")
+    print("-------------------------------")
+    suppressed_records = preview["suppressed_duplicate_candidates"]
+    if not suppressed_records:
+        print("none")
+    for record in suppressed_records:
+        print(
+            f"- candidate {record['index']}: "
+            f"{record['source_ticker']} -> {record['target_ticker']} "
+            f"{record['mapped_production_type']} "
+            f"confidence={record['confidence_hint']} "
+            f"kept=candidate {record['kept_candidate_index']}"
         )
 
     print()

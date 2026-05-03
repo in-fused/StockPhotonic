@@ -394,6 +394,11 @@
             background: rgba(0, 0, 0, 0.34);
         }
 
+        .source-command-secondary {
+            border-color: rgba(255, 255, 255, 0.055);
+            background: rgba(0, 0, 0, 0.22);
+        }
+
         .source-command-copy {
             border: 1px solid rgba(0, 249, 255, 0.18);
             background: rgba(0, 249, 255, 0.07);
@@ -1000,7 +1005,7 @@
                     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
                         <div>
                             <div class="source-workbench-label mb-2">Recommended Workflow</div>
-                            <p class="text-sm text-white/62">This is the main local path for running the SEC source pipeline safely.</p>
+                            <p class="text-sm text-white/62">This is the bulk-first local path for generating SEC candidates safely.</p>
                         </div>
                         <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
                             Browser displays commands only.
@@ -1010,7 +1015,7 @@
                     <div class="pipeline-flow mb-5" aria-label="Primary SEC source workflow">
                         <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Scheduled Preview</span>
                         <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Job Runner</span>
+                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Reviewed Job Plan</span>
                         <span class="pipeline-arrow">-&gt;</span>
                         <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Bulk Candidate Generation</span>
                         <span class="pipeline-arrow">-&gt;</span>
@@ -1032,62 +1037,58 @@
 
                         <div class="source-command rounded-2xl p-3">
                             <div class="flex items-center justify-between gap-3 mb-2">
-                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Job Runner - Starter</span>
-                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-2', this)" aria-label="Copy starter SEC job command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Bulk Candidate Generation</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-2', this)" aria-label="Copy bulk SEC candidate generation command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                             </div>
-                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-2">python scripts/sec_job_run.py --job-id mega_cap_core</code></pre>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-2">python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA,AMZN,GOOGL,META,AMD,INTC,AVGO,JPM,GS,BLK,XOM,CVX,UNH,LLY,GE,CAT --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Name User@Email.com" --write-candidates --force</code></pre>
+                            <p class="mt-2 text-xs text-white/54">
+                                Preferred candidate generation path. Use tickers from the approved ticker/CIK universe or reviewed jobs; output remains candidate-only, and promotion still requires preview, manual promotion, and validation.
+                            </p>
                         </div>
 
                         <div class="source-command rounded-2xl p-3">
                             <div class="flex items-center justify-between gap-3 mb-2">
-                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Job Runner - Batch</span>
-                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-3', this)" aria-label="Copy batch SEC job command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Promotion Preview</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-3', this)" aria-label="Copy SEC candidate promotion preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                             </div>
-                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_job_run.py --job-id batch_1_multi_sector</code></pre>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_candidate_promotion_preview.py</code></pre>
                         </div>
 
                         <div class="source-command rounded-2xl p-3">
                             <div class="flex items-center justify-between gap-3 mb-2">
-                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Bulk Candidate Generation</span>
-                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy bulk SEC candidate generation command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Manual Promotion</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy SEC candidate manual promotion command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                             </div>
-                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-4">python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Name User@Email.com" --write-candidates --force</code></pre>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-4">python scripts/sec_candidate_promote.py</code></pre>
                         </div>
 
                         <div class="source-command rounded-2xl p-3">
                             <div class="flex items-center justify-between gap-3 mb-2">
-                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">5.</span> Promotion Preview</span>
-                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-5', this)" aria-label="Copy SEC candidate promotion preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">5.</span> Validation</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-5', this)" aria-label="Copy production data validation command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                             </div>
-                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-5">python scripts/sec_candidate_promotion_preview.py</code></pre>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-5">python scripts/validate_data.py</code></pre>
                         </div>
 
-                        <div class="source-command rounded-2xl p-3">
-                            <div class="flex items-center justify-between gap-3 mb-2">
-                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">6.</span> Manual Promotion</span>
-                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-6', this)" aria-label="Copy SEC candidate manual promotion command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                            </div>
-                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-6">python scripts/sec_candidate_promote.py</code></pre>
-                        </div>
-
-                        <div class="source-command rounded-2xl p-3">
-                            <div class="flex items-center justify-between gap-3 mb-2">
-                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">7.</span> Validation</span>
-                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-7', this)" aria-label="Copy production data validation command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                            </div>
-                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-7">python scripts/validate_data.py</code></pre>
-                        </div>
-
-                        <details class="source-command rounded-2xl p-3">
-                            <summary class="cursor-pointer text-xs text-white/58">Advanced Debugging</summary>
+                        <details class="source-command source-command-secondary rounded-2xl p-3">
+                            <summary class="cursor-pointer text-xs text-white/52">Reviewed Job Runner Options</summary>
                             <div class="flex items-center justify-between gap-3 mt-3 mb-2">
-                                <span class="text-xs text-white/58">Use these only for single-ticker inspection or intermediate SEC artifacts.</span>
-                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-8', this)" aria-label="Copy advanced SEC debugging commands"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                                <span class="text-xs text-white/50">Optional reviewed manifest execution. Use when you want the manifest to delegate a reviewed bulk run instead of entering tickers directly.</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-6', this)" aria-label="Copy reviewed SEC job runner commands"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                             </div>
-                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-8">python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/70"><code id="workbench-command-6">python scripts/sec_job_run.py --job-id mega_cap_core
+python scripts/sec_job_run.py --job-id batch_1_multi_sector</code></pre>
+                        </details>
+
+                        <details class="source-command source-command-secondary rounded-2xl p-3">
+                            <summary class="cursor-pointer text-xs text-white/46">Advanced Debugging</summary>
+                            <div class="flex items-center justify-between gap-3 mt-3 mb-2">
+                                <span class="text-xs text-white/46">Single-ticker inspection and low-level SEC artifact commands only.</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-7', this)" aria-label="Copy advanced SEC debugging commands"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/62"><code id="workbench-command-7">python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10
 python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Name User@Email.com"
 python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Name User@Email.com" --write-candidates --force
-python scripts/ingest_candidates.py --candidates data/candidates/cik_mappings.json --candidate-kind cik-mappings --summary-only
 python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Name User@Email.com" --dry-run
 python scripts/sec_submissions_inspect.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10
 python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10 --json
@@ -1108,9 +1109,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     </div>
 
                     <div class="source-workbench-panel rounded-2xl p-5">
-                        <div class="source-workbench-label mb-2">Job Runner</div>
+                        <div class="source-workbench-label mb-2">Reviewed Job Runner</div>
                         <p class="text-sm text-white/60">
-                            Runs reviewed manifest jobs such as <span class="font-mono text-cyan-50/78">mega_cap_core</span> or <span class="font-mono text-cyan-50/78">batch_1_multi_sector</span>. A job limit means filings reviewed per ticker.
+                            Optional manifest path for reviewed jobs such as <span class="font-mono text-cyan-50/78">mega_cap_core</span> or <span class="font-mono text-cyan-50/78">batch_1_multi_sector</span>. It delegates reviewed bulk runs; the main path remains bulk candidate generation.
                         </p>
                     </div>
 

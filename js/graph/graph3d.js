@@ -154,6 +154,7 @@
             this.labelsEnabled = true;
             this.secEmphasisEnabled = true;
             this.autoRotateEnabled = false;
+            this.neighborhoodModeEnabled = false;
             this.selectedRecord = null;
             this.hoveredRecord = null;
             this.selectedEdgeRecord = null;
@@ -756,8 +757,13 @@
                 labelIds.add(this.hoveredEdgeRecord.source.id);
                 labelIds.add(this.hoveredEdgeRecord.target.id);
             }
+            if (this.neighborhoodModeEnabled && this.selectedRecord) {
+                this.getDirectNeighborSummaries(this.selectedRecord).slice(0, 5).forEach(item => {
+                    labelIds.add(item.other.id);
+                });
+            }
 
-            [...labelIds].slice(0, LABEL_LIMIT + 2).forEach(id => {
+            [...labelIds].slice(0, LABEL_LIMIT + 7).forEach(id => {
                 const record = this.nodeRecordById.get(id);
                 if (!record?.position) return;
                 this.addLabel(record);
@@ -776,16 +782,18 @@
         addLabel(record) {
             const THREE = this.THREE;
             const activeEdgeEndpoint = this.isEndpointOfEdge(record, this.selectedEdgeRecord);
-            const color = record.id === this.selectedRecord?.id || activeEdgeEndpoint ? '#ffffff' : record.node.color || CYAN;
+            const activeNeighbor = this.neighborhoodModeEnabled && this.selectedRecord && this.areConnected(record, this.selectedRecord);
+            const activeLabel = record.id === this.selectedRecord?.id || activeEdgeEndpoint || activeNeighbor;
+            const color = activeLabel ? '#ffffff' : record.node.color || CYAN;
             const label = createLabelTexture(THREE, record.node.ticker || record.node.name || '', color);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
                 map: label.texture,
                 transparent: true,
-                opacity: record.id === this.selectedRecord?.id || activeEdgeEndpoint ? 0.98 : 0.78,
+                opacity: activeLabel ? 0.98 : 0.78,
                 depthWrite: false
             }));
             sprite.position.copy(record.position).add(new THREE.Vector3(0, record.radius + 4.4, 0));
-            const scale = record.id === this.selectedRecord?.id || activeEdgeEndpoint ? 18 : 14;
+            const scale = activeLabel ? 18 : 14;
             sprite.scale.set((label.width / label.height) * scale, scale, 1);
             this.labelGroup.add(sprite);
         }
@@ -1034,17 +1042,28 @@
 
         updateNodeEmphasis() {
             this.nodeRecords.forEach(record => {
+                const nodeNeighborhoodActive = this.neighborhoodModeEnabled && this.selectedRecord;
+                const selectedNode = record === this.selectedRecord;
+                const directNeighbor = nodeNeighborhoodActive && this.areConnected(record, this.selectedRecord);
+                const edgeEndpoint = this.isEndpointOfEdge(record, this.selectedEdgeRecord);
+                const hoveredEdgeEndpoint = this.isEndpointOfEdge(record, this.hoveredEdgeRecord);
                 const active =
-                    record === this.selectedRecord ||
+                    selectedNode ||
+                    directNeighbor ||
                     record === this.hoveredRecord ||
-                    this.isEndpointOfEdge(record, this.selectedEdgeRecord) ||
-                    this.isEndpointOfEdge(record, this.hoveredEdgeRecord);
-                const dimmedByNode = this.selectedRecord && record !== this.selectedRecord && !this.areConnected(record, this.selectedRecord);
+                    edgeEndpoint ||
+                    hoveredEdgeEndpoint;
+                const dimmedByNode = nodeNeighborhoodActive && !selectedNode && !directNeighbor;
                 const dimmedByEdge = this.selectedEdgeRecord && !this.isEndpointOfEdge(record, this.selectedEdgeRecord);
                 const dimmed = dimmedByNode || dimmedByEdge;
                 if (record.mesh?.material) {
                     record.mesh.material.opacity = active ? 1 : dimmed ? 0.35 : 0.88;
-                    record.mesh.scale.setScalar(record.radius * (active ? 1.22 : 1));
+                    const scaleBoost = selectedNode || edgeEndpoint
+                        ? 1.22
+                        : directNeighbor || record === this.hoveredRecord || hoveredEdgeEndpoint
+                            ? 1.12
+                            : 1;
+                    record.mesh.scale.setScalar(record.radius * scaleBoost);
                 }
                 if (record.glow?.material) {
                     record.glow.material.opacity = active ? 0.58 : dimmed ? 0.12 : 0.31;
@@ -1056,13 +1075,23 @@
             this.linkRecords.forEach(record => {
                 const selected = record === this.selectedEdgeRecord;
                 const hovered = record === this.hoveredEdgeRecord;
-                const incidentToSelectedNode = this.selectedRecord && (record.source === this.selectedRecord || record.target === this.selectedRecord);
-                const dimmedByNode = this.selectedRecord && !incidentToSelectedNode;
+                const nodeNeighborhoodActive = this.neighborhoodModeEnabled && this.selectedRecord;
+                const incidentToSelectedNode = nodeNeighborhoodActive && (record.source === this.selectedRecord || record.target === this.selectedRecord);
+                const dimmedByNode = nodeNeighborhoodActive && !incidentToSelectedNode;
                 const dimmedByEdge = this.selectedEdgeRecord && !selected;
                 const secMode = record.secBacked && this.secEmphasisEnabled;
                 const color = record.secBacked && (selected || secMode) ? GOLD : record.color;
                 const baseOpacity = secMode ? 0.86 : 0.18 + record.strength * 0.36;
-                const opacity = selected ? 1 : hovered ? 0.72 : (dimmedByNode || dimmedByEdge) ? (secMode ? 0.14 : 0.055) : baseOpacity;
+                const neighborhoodOpacity = secMode ? 0.9 : Math.max(baseOpacity, 0.46 + record.strength * 0.34);
+                const opacity = selected
+                    ? 1
+                    : hovered
+                        ? 0.72
+                        : (dimmedByNode || dimmedByEdge)
+                            ? (secMode ? 0.14 : 0.055)
+                            : incidentToSelectedNode
+                                ? neighborhoodOpacity
+                                : baseOpacity;
 
                 if (record.line?.material) {
                     record.line.material.color.set(color);
@@ -1070,7 +1099,17 @@
                 }
                 if (record.glow?.material) {
                     record.glow.material.color.set(color);
-                    record.glow.material.opacity = selected ? (record.secBacked ? 0.62 : 0.44) : hovered ? 0.24 : secMode ? 0.22 : 0;
+                    record.glow.material.opacity = selected
+                        ? (record.secBacked ? 0.62 : 0.44)
+                        : hovered
+                            ? 0.24
+                            : dimmedByNode
+                                ? (secMode ? 0.04 : 0)
+                                : incidentToSelectedNode
+                                    ? (record.secBacked ? 0.32 : 0.18)
+                                    : secMode
+                                        ? 0.22
+                                        : 0;
                 }
             });
         }
@@ -1148,8 +1187,13 @@
 
             const record = this.selectedRecord;
             const connections = this.getConnectionsForRecord(record);
+            const directNeighbors = this.getDirectNeighborSummaries(record);
             const secCount = connections.filter(item => item.linkRecord.secBacked).length;
-            const top = connections.slice(0, 5);
+            const top = this.neighborhoodModeEnabled ? directNeighbors.slice(0, 5) : connections.slice(0, 5);
+            const strongest = directNeighbors[0] || null;
+            const neighborhoodSummary = this.neighborhoodModeEnabled
+                ? this.renderNeighborhoodSummary(directNeighbors, secCount, strongest)
+                : '';
             this.details.innerHTML = `
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
@@ -1173,10 +1217,11 @@
                     ${this.renderMetric('Connections', connections.length)}
                     ${this.renderMetric('SEC edges', secCount)}
                 </div>
+                ${neighborhoodSummary}
                 <div class="sidebar-section">
                     <div class="flex items-center justify-between gap-3 mb-3">
-                        <div class="sidebar-section-title mb-0">Top Relationships</div>
-                        <div class="text-[11px] text-white/48">${this.escapeHtml(connections.length)} total</div>
+                        <div class="sidebar-section-title mb-0">${this.neighborhoodModeEnabled ? 'Top Direct Neighbors' : 'Top Relationships'}</div>
+                        <div class="text-[11px] text-white/48">${this.escapeHtml(this.neighborhoodModeEnabled ? directNeighbors.length : connections.length)} total</div>
                     </div>
                     <div class="space-y-2">
                         ${top.length ? top.map(item => this.renderRelationshipRow(item)).join('') : '<div class="text-sm text-white/42">No production relationships.</div>'}
@@ -1202,12 +1247,34 @@
                     ${this.renderGuideRow('fa-hand-pointer', 'Select', 'Hover or tap a company or relationship; nodes take priority when the pointer is directly over them.')}
                     ${this.renderGuideRow('fa-file-shield', 'SEC emphasis', 'Gold dashed edges mark relationships backed by SEC evidence when emphasis is on.')}
                     ${this.renderGuideRow('fa-tags', 'Labels', 'The labels toggle shows or hides priority tickers plus hovered and selected nodes or relationship endpoints.')}
+                    ${this.renderGuideRow('fa-diagram-project', 'Neighborhood Mode', 'When enabled, selecting a company emphasizes its direct neighbors without changing 2D graph state.')}
                 </div>
                 <div class="mt-5 grid grid-cols-2 gap-3">
                     ${this.renderMetric('Nodes', this.nodeRecords.length)}
                     ${this.renderMetric('Edges', this.linkRecords.length)}
                     ${this.renderMetric('SEC edges', secCount)}
-                    ${this.renderMetric('Labels', this.labelsEnabled ? 'On' : 'Off')}
+                    ${this.renderMetric('Neighborhood', this.neighborhoodModeEnabled ? 'On' : 'Off')}
+                </div>
+            `;
+        }
+
+        renderNeighborhoodSummary(directNeighbors, secCount, strongest) {
+            const strongestLabel = strongest
+                ? `${strongest.other.node.ticker || strongest.other.node.name || 'Neighbor'} - ${Math.round(strongest.linkRecord.strength * 100)}%`
+                : 'None';
+            const relationship = strongest ? this.getRelationshipLabel(strongest.linkRecord) : 'No direct relationships';
+            return `
+                <div class="mt-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.065] p-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="source-workbench-label mb-0">Neighborhood Mode</div>
+                        <span class="rounded-full border border-cyan-200/20 bg-cyan-200/10 px-2 py-0.5 text-[10px] font-mono text-cyan-50/78">ON</span>
+                    </div>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        ${this.renderCompactMetric('Direct neighbors', directNeighbors.length)}
+                        ${this.renderCompactMetric('SEC neighbor edges', secCount)}
+                        ${this.renderCompactMetric('Strongest', strongestLabel)}
+                    </div>
+                    <div class="mt-2 text-[12px] leading-5 text-cyan-50/62">${this.escapeHtml(relationship)}</div>
                 </div>
             `;
         }
@@ -1318,6 +1385,15 @@
             `;
         }
 
+        renderCompactMetric(label, value) {
+            return `
+                <div class="rounded-xl border border-white/10 bg-black/20 p-2">
+                    <div class="text-[9px] text-white/42 font-mono uppercase leading-4">${this.escapeHtml(label)}</div>
+                    <div class="mt-0.5 text-sm font-semibold text-white/88 truncate">${this.escapeHtml(value)}</div>
+                </div>
+            `;
+        }
+
         renderRelationshipRow(item) {
             const link = item.linkRecord.link;
             const other = item.other.node;
@@ -1382,6 +1458,25 @@
                 );
         }
 
+        getDirectNeighborSummaries(record) {
+            const byNeighbor = new Map();
+            this.getConnectionsForRecord(record).forEach(item => {
+                const existing = byNeighbor.get(item.other.id);
+                if (
+                    !existing ||
+                    item.linkRecord.strength > existing.linkRecord.strength ||
+                    (item.linkRecord.strength === existing.linkRecord.strength && item.linkRecord.secBacked && !existing.linkRecord.secBacked)
+                ) {
+                    byNeighbor.set(item.other.id, item);
+                }
+            });
+            return [...byNeighbor.values()].sort((a, b) =>
+                b.linkRecord.strength - a.linkRecord.strength ||
+                Number(b.linkRecord.secBacked) - Number(a.linkRecord.secBacked) ||
+                String(a.other.node.ticker || '').localeCompare(String(b.other.node.ticker || ''))
+            );
+        }
+
         setLabelsEnabled(value) {
             this.labelsEnabled = Boolean(value);
             this.refreshLabels();
@@ -1412,6 +1507,19 @@
 
         toggleAutoRotate() {
             this.setAutoRotateEnabled(!this.autoRotateEnabled);
+        }
+
+        setNeighborhoodModeEnabled(value) {
+            this.neighborhoodModeEnabled = Boolean(value);
+            this.refreshLabels();
+            this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
+            this.syncControls();
+            this.renderDetails();
+        }
+
+        toggleNeighborhoodMode() {
+            this.setNeighborhoodModeEnabled(!this.neighborhoodModeEnabled);
         }
 
         focusSelection() {
@@ -1495,6 +1603,7 @@
             this.syncToggle(this.controls.labels, this.labelsEnabled, this.labelsEnabled ? 'Labels On' : 'Labels Off');
             this.syncToggle(this.controls.sec, this.secEmphasisEnabled, this.secEmphasisEnabled ? 'SEC Emphasis On' : 'SEC Emphasis Off');
             this.syncToggle(this.controls.autoRotate, this.autoRotateEnabled, this.autoRotateEnabled ? 'Auto-Rotate On' : 'Auto-Rotate Off');
+            this.syncToggle(this.controls.neighborhood, this.neighborhoodModeEnabled, this.neighborhoodModeEnabled ? 'Neighborhood On' : 'Neighborhood Mode');
         }
 
         syncToggle(button, active, label) {

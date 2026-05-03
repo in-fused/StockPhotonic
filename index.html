@@ -472,10 +472,11 @@
         .graph3d-toolbar {
             border: 1px solid rgba(255, 255, 255, 0.10);
             background: rgba(0, 0, 0, 0.24);
+            max-width: 100%;
         }
 
         .graph3d-header-actions {
-            width: min(100%, 58rem);
+            width: min(100%, 64rem);
             align-items: stretch;
         }
 
@@ -1010,6 +1011,10 @@
                             <button id="graph3d-auto-rotate-toggle" type="button" onclick="toggleGraph3DAutoRotate()" aria-pressed="false" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Toggle auto-rotate">
                                 <i class="fa-solid fa-circle-notch"></i>
                                 <span>Auto-Rotate Off</span>
+                            </button>
+                            <button id="graph3d-neighborhood-toggle" type="button" onclick="toggleGraph3DNeighborhoodMode()" aria-pressed="false" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle selected-node neighborhood emphasis">
+                                <i class="fa-solid fa-diagram-project"></i>
+                                <span>Neighborhood Mode</span>
                             </button>
                             <button id="graph3d-fit-button" type="button" onclick="fitGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Fit 3D network">
                                 <i class="fa-solid fa-compress"></i>
@@ -1707,6 +1712,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     labels: document.getElementById('graph3d-labels-toggle'),
                     sec: document.getElementById('graph3d-sec-toggle'),
                     autoRotate: document.getElementById('graph3d-auto-rotate-toggle'),
+                    neighborhood: document.getElementById('graph3d-neighborhood-toggle'),
                     searchInput: document.getElementById('graph3d-search-input'),
                     searchResults: document.getElementById('graph3d-search-results')
                 },
@@ -1768,6 +1774,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function toggleGraph3DAutoRotate() {
             getGraph3DView()?.toggleAutoRotate();
+        }
+
+        function toggleGraph3DNeighborhoodMode() {
+            getGraph3DView()?.toggleNeighborhoodMode();
         }
 
         function resetGraph3DCamera() {

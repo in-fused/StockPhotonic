@@ -52,10 +52,95 @@
     "input_files": 180,
     "limit_chars_per_file": null,
     "scanned_characters": 159500608,
-    "total_signals": 2875
+    "total_signals": 3109
   },
-  "candidate_count": 0,
-  "candidates": [],
+  "candidate_count": 4,
+  "candidates": [
+    {
+      "source_ticker": "INTC",
+      "target_ticker": "NVDA",
+      "target_name": "NVIDIA Corporation",
+      "target_match_method": "common_public_alias_exact",
+      "target_match_confidence": 0.92,
+      "target_entity_mention": "NVIDIA",
+      "relationship_type": "partnership",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "confidence_hint": 0.94,
+      "evidence_snippet": "...ient and data center platforms, including our next generation client CPU code named Panther Lake, which is designed to combine improved power efficiency and performance to support next-generation AI-enabled workloads at the edge. We also announced a strategic partnership with NVIDIA to co-develop custom client and data center products combining our x86 CPU technologies with NVIDIA's AI and accelerated computing capabilities. The collaboration is intended to jointly develop multiple generations of products for hyperscale, enterprise and c...",
+      "filing_date": "2026-01-23",
+      "accession_number": "0000050863-26-000011",
+      "review_status": "pending_review",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm",
+      "source_urls": [
+        "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm"
+      ],
+      "relationship_signal": "partnership with"
+    },
+    {
+      "source_ticker": "NVDA",
+      "target_ticker": "MSFT",
+      "target_name": "Microsoft Corporation",
+      "target_match_method": "common_public_alias_exact",
+      "target_match_confidence": 0.92,
+      "target_entity_mention": "Microsoft",
+      "relationship_type": "partnership",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "confidence_hint": 0.93,
+      "evidence_snippet": "...han expected tax rates, changes in tax laws, and other tax-related factors. \u2022 Our business is exposed to the burden and risks associated with litigation, investigations, and regulatory proceedings. \u2022 Delaware law, provisions in our governing documents and our agreement with Microsoft could delay or prevent a change in control. 13 Table of Contents Risk Factors Risks Related to Our Industry and Markets Failure to meet the evolving needs of our industry and markets may adversely impact our financial results. Our accelerated computing platfo...",
+      "filing_date": "2026-02-25",
+      "accession_number": "0001045810-26-000021",
+      "review_status": "pending_review",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm",
+      "source_urls": [
+        "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
+      ],
+      "relationship_signal": "agreement with"
+    },
+    {
+      "source_ticker": "INTC",
+      "target_ticker": "NVDA",
+      "target_name": "NVIDIA Corporation",
+      "target_match_method": "common_public_alias_exact",
+      "target_match_confidence": 0.92,
+      "target_entity_mention": "NVIDIA",
+      "relationship_type": "partnership",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "confidence_hint": 0.93,
+      "evidence_snippet": "...o SoftBank Group 87 million shares of our common stock at $23.00 per share, representing an aggregate cash purchase price of $2.0 billion. The issuance and sale of the shares was completed on September 26, 2025; and \u25aa on September 15, 2025, we entered into an agreement with NVIDIA to issue and sell to NVIDIA 215 million shares of our common stock at $23.28 per share for an aggregate cash purchase price of $5.0 billion. The issuance and sale of the shares was completed on December 26, 2025. Altera Divestiture On April 14, 2025, we signe...",
+      "filing_date": "2026-01-23",
+      "accession_number": "0000050863-26-000011",
+      "review_status": "pending_review",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm",
+      "source_urls": [
+        "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm"
+      ],
+      "relationship_signal": "agreement with"
+    },
+    {
+      "source_ticker": "AAPL",
+      "target_ticker": "GOOGL",
+      "target_name": "Alphabet Inc.",
+      "target_match_method": "common_public_alias_exact",
+      "target_match_confidence": 0.92,
+      "target_entity_mention": "Google LLC",
+      "relationship_type": "supplier_customer",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "confidence_hint": 0.92,
+      "evidence_snippet": "...companies, could materially adversely affect the Company\u2019s commercial relationships with those business partners and materially adversely affect the Company\u2019s business, results of operations, financial condition and stock price. For example, the Company earns revenue from licensing arrangements with Google LLC (\u201cGoogle\u201d) and other companies to offer their search services on the Company\u2019s platforms and applications, and certain of these arrangements are currently subject to government investigations and legal proceedings. On August 5, 202...",
+      "filing_date": "2026-05-01",
+      "accession_number": "0000320193-26-000013",
+      "review_status": "pending_review",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000013/aapl-20260328.htm",
+      "source_urls": [
+        "https://www.sec.gov/Archives/edgar/data/320193/000032019326000013/aapl-20260328.htm"
+      ],
+      "relationship_signal": "revenue from"
+    }
+  ],
   "safety": {
     "network_calls": 0,
     "production_writes": 0

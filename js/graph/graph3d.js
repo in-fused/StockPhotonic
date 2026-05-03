@@ -6,6 +6,8 @@
     const FALLBACK_EDGE = '#00f9ff';
     const LABEL_LIMIT = 16;
     const TAU = Math.PI * 2;
+    const EDGE_HOVER_THRESHOLD = 11;
+    const TOUCH_EDGE_HOVER_THRESHOLD = 22;
 
     function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
@@ -28,6 +30,20 @@
             hash = Math.imul(hash, 16777619);
         }
         return Math.abs(hash >>> 0);
+    }
+
+    function getValidSourceUrls(sourceUrls) {
+        return Array.isArray(sourceUrls)
+            ? sourceUrls.map(url => String(url).trim()).filter(url => /^https?:\/\//i.test(url))
+            : [];
+    }
+
+    function getSourceHost(url) {
+        try {
+            return new URL(url).hostname.replace(/^www\./, '');
+        } catch (error) {
+            return 'Source URL';
+        }
     }
 
     function createGlowTexture(THREE) {
@@ -136,6 +152,8 @@
             this.autoRotateEnabled = false;
             this.selectedRecord = null;
             this.hoveredRecord = null;
+            this.selectedEdgeRecord = null;
+            this.hoveredEdgeRecord = null;
 
             this.cameraState = {
                 theta: -0.72,
@@ -167,6 +185,8 @@
         }
 
         setData(payload = {}) {
+            const selectedNodeId = this.selectedRecord?.id || null;
+            const selectedEdgeKey = this.getLinkRecordKey(this.selectedEdgeRecord);
             this.nodes = Array.isArray(payload.nodes) ? payload.nodes : [];
             this.links = Array.isArray(payload.links) ? payload.links : [];
             this.edgeColors = payload.edgeColors || this.edgeColors;
@@ -177,6 +197,12 @@
             this.escapeHtml = payload.escapeHtml || this.escapeHtml;
 
             this.buildRecords();
+            this.selectedRecord = selectedNodeId ? this.nodeRecordById.get(selectedNodeId) || null : null;
+            this.selectedEdgeRecord = selectedEdgeKey
+                ? this.linkRecords.find(record => this.getLinkRecordKey(record) === selectedEdgeKey) || null
+                : null;
+            this.hoveredRecord = null;
+            this.hoveredEdgeRecord = null;
             if (this.initialized && !this.engineUnavailable) {
                 this.rebuildScene();
                 this.resetCamera(false);
@@ -345,7 +371,8 @@
                     strength,
                     color: this.edgeColors[link.type] || this.defaultEdgeColor,
                     secBacked: this.isSecBackedConnection(link),
-                    line: null
+                    line: null,
+                    glow: null
                 });
             });
 
@@ -381,6 +408,8 @@
             this.createEdges();
             this.createNodes();
             this.refreshLabels();
+            this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
             this.renderStats();
         }
 
@@ -485,20 +514,22 @@
                     });
                 const line = new THREE.Line(geometry, material);
                 if (secMode) line.computeLineDistances();
+                line.userData.graph3dEdgeRecord = record;
+                record.line = line;
                 this.edgeGroup.add(line);
 
-                if (secMode) {
-                    const glow = new THREE.Line(
-                        geometry.clone(),
-                        new THREE.LineBasicMaterial({
-                            color: GOLD,
-                            transparent: true,
-                            opacity: 0.22,
-                            blending: THREE.AdditiveBlending
-                        })
-                    );
-                    this.edgeGroup.add(glow);
-                }
+                const glow = new THREE.Line(
+                    geometry.clone(),
+                    new THREE.LineBasicMaterial({
+                        color,
+                        transparent: true,
+                        opacity: secMode ? 0.22 : 0,
+                        blending: THREE.AdditiveBlending
+                    })
+                );
+                glow.userData.graph3dEdgeRecord = record;
+                record.glow = glow;
+                this.edgeGroup.add(glow);
             });
         }
 
@@ -543,6 +574,14 @@
             const labelIds = new Set(this.topLabelIds);
             if (this.selectedRecord) labelIds.add(this.selectedRecord.id);
             if (this.hoveredRecord) labelIds.add(this.hoveredRecord.id);
+            if (this.selectedEdgeRecord) {
+                labelIds.add(this.selectedEdgeRecord.source.id);
+                labelIds.add(this.selectedEdgeRecord.target.id);
+            }
+            if (this.hoveredEdgeRecord) {
+                labelIds.add(this.hoveredEdgeRecord.source.id);
+                labelIds.add(this.hoveredEdgeRecord.target.id);
+            }
 
             [...labelIds].slice(0, LABEL_LIMIT + 2).forEach(id => {
                 const record = this.nodeRecordById.get(id);
@@ -562,16 +601,17 @@
 
         addLabel(record) {
             const THREE = this.THREE;
-            const color = record.id === this.selectedRecord?.id ? '#ffffff' : record.node.color || CYAN;
+            const activeEdgeEndpoint = this.isEndpointOfEdge(record, this.selectedEdgeRecord);
+            const color = record.id === this.selectedRecord?.id || activeEdgeEndpoint ? '#ffffff' : record.node.color || CYAN;
             const label = createLabelTexture(THREE, record.node.ticker || record.node.name || '', color);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
                 map: label.texture,
                 transparent: true,
-                opacity: record.id === this.selectedRecord?.id ? 0.98 : 0.78,
+                opacity: record.id === this.selectedRecord?.id || activeEdgeEndpoint ? 0.98 : 0.78,
                 depthWrite: false
             }));
             sprite.position.copy(record.position).add(new THREE.Vector3(0, record.radius + 4.4, 0));
-            const scale = record.id === this.selectedRecord?.id ? 18 : 14;
+            const scale = record.id === this.selectedRecord?.id || activeEdgeEndpoint ? 18 : 14;
             sprite.scale.set((label.width / label.height) * scale, scale, 1);
             this.labelGroup.add(sprite);
         }
@@ -631,6 +671,7 @@
             this.drag.moved = false;
             this.canvas.setPointerCapture?.(event.pointerId);
             this.canvas.classList.add('is-dragging');
+            this.canvas.style.cursor = 'grabbing';
             event.preventDefault();
         }
 
@@ -648,14 +689,20 @@
                 return;
             }
 
-            const next = this.pickNode(event);
-            if (next !== this.hoveredRecord) {
-                this.hoveredRecord = next;
+            const nextNode = this.pickNode(event);
+            const nextEdge = nextNode ? null : this.pickEdge(event);
+            if (nextNode !== this.hoveredRecord || nextEdge !== this.hoveredEdgeRecord) {
+                this.hoveredRecord = nextNode;
+                this.hoveredEdgeRecord = nextEdge;
                 this.refreshLabels();
                 this.updateNodeEmphasis();
+                this.updateEdgeEmphasis();
             }
-            if (next) {
-                this.showTooltip(event, next);
+            this.canvas.style.cursor = nextNode || nextEdge ? 'pointer' : 'grab';
+            if (nextNode) {
+                this.showTooltip(event, nextNode, 'node');
+            } else if (nextEdge) {
+                this.showTooltip(event, nextEdge, 'edge');
             } else {
                 this.hideTooltip();
             }
@@ -664,21 +711,31 @@
         onPointerUp(event) {
             if (!this.drag.active || this.drag.pointerId !== event.pointerId) return;
             if (!this.drag.moved) {
-                this.selectRecord(this.pickNode(event));
+                const nodeRecord = this.pickNode(event);
+                this.selectRecord(nodeRecord || null);
+                if (!nodeRecord) this.selectEdgeRecord(this.pickEdge(event));
             }
             this.canvas.releasePointerCapture?.(event.pointerId);
             this.canvas.classList.remove('is-dragging');
+            this.canvas.style.cursor = 'grab';
             this.drag.active = false;
             this.drag.pointerId = null;
+            if (event.pointerType !== 'mouse') this.hideTooltip();
             event.preventDefault();
         }
 
         onPointerCancel(event) {
             if (this.drag.pointerId !== null) this.canvas.releasePointerCapture?.(this.drag.pointerId);
             this.canvas.classList.remove('is-dragging');
+            this.canvas.style.cursor = 'grab';
             this.drag.active = false;
             this.drag.pointerId = null;
-            if (event?.type === 'pointerleave') this.hideTooltip();
+            this.hoveredRecord = null;
+            this.hoveredEdgeRecord = null;
+            this.refreshLabels();
+            this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
+            this.hideTooltip();
         }
 
         onWheel(event) {
@@ -689,32 +746,124 @@
 
         pickNode(event) {
             if (!this.camera || !this.raycaster || !this.nodePickables.length) return null;
-            const rect = this.canvas.getBoundingClientRect();
-            const x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
-            const y = -(((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 - 1);
-            this.pointer.set(x, y);
+            this.updatePointerFromEvent(event);
             this.raycaster.setFromCamera(this.pointer, this.camera);
             const hit = this.raycaster.intersectObjects(this.nodePickables, false)[0];
             return hit?.object?.userData?.graph3dRecord || null;
         }
 
+        pickEdge(event) {
+            if (!this.camera || !this.linkRecords.length || !this.canvas) return null;
+            const rect = this.canvas.getBoundingClientRect();
+            const pointerX = event.clientX - rect.left;
+            const pointerY = event.clientY - rect.top;
+            const threshold = event.pointerType === 'touch' ? TOUCH_EDGE_HOVER_THRESHOLD : EDGE_HOVER_THRESHOLD;
+            let best = null;
+            let bestDistance = Infinity;
+
+            this.linkRecords.forEach(record => {
+                const source = this.projectRecordPosition(record.source, rect);
+                const target = this.projectRecordPosition(record.target, rect);
+                if (!source || !target) return;
+                const segmentLength = Math.hypot(target.x - source.x, target.y - source.y);
+                if (segmentLength < 4) return;
+                const distance = this.pointToSegmentDistance(pointerX, pointerY, source.x, source.y, target.x, target.y);
+                const priorityDistance = distance - record.strength * 1.8 - (record.secBacked ? 0.8 : 0);
+                if (distance <= threshold && priorityDistance < bestDistance) {
+                    best = record;
+                    bestDistance = priorityDistance;
+                }
+            });
+
+            return best;
+        }
+
+        updatePointerFromEvent(event) {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / Math.max(1, rect.width)) * 2 - 1;
+            const y = -(((event.clientY - rect.top) / Math.max(1, rect.height)) * 2 - 1);
+            this.pointer.set(x, y);
+            return rect;
+        }
+
+        projectRecordPosition(record, rect) {
+            if (!record?.position) return null;
+            const projected = record.position.clone().project(this.camera);
+            if (projected.z < -1 || projected.z > 1) return null;
+            return {
+                x: (projected.x * 0.5 + 0.5) * rect.width,
+                y: (-projected.y * 0.5 + 0.5) * rect.height
+            };
+        }
+
+        pointToSegmentDistance(px, py, ax, ay, bx, by) {
+            const dx = bx - ax;
+            const dy = by - ay;
+            const lengthSq = dx * dx + dy * dy;
+            if (!lengthSq) return Math.hypot(px - ax, py - ay);
+            const t = clamp(((px - ax) * dx + (py - ay) * dy) / lengthSq, 0, 1);
+            const x = ax + t * dx;
+            const y = ay + t * dy;
+            return Math.hypot(px - x, py - y);
+        }
+
         selectRecord(record) {
             this.selectedRecord = record || null;
+            this.selectedEdgeRecord = null;
             this.refreshLabels();
             this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
+            this.renderDetails();
+        }
+
+        selectEdgeRecord(record) {
+            this.selectedEdgeRecord = record || null;
+            this.selectedRecord = null;
+            this.refreshLabels();
+            this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
             this.renderDetails();
         }
 
         updateNodeEmphasis() {
             this.nodeRecords.forEach(record => {
-                const active = record === this.selectedRecord || record === this.hoveredRecord;
-                const dimmed = this.selectedRecord && record !== this.selectedRecord && !this.areConnected(record, this.selectedRecord);
+                const active =
+                    record === this.selectedRecord ||
+                    record === this.hoveredRecord ||
+                    this.isEndpointOfEdge(record, this.selectedEdgeRecord) ||
+                    this.isEndpointOfEdge(record, this.hoveredEdgeRecord);
+                const dimmedByNode = this.selectedRecord && record !== this.selectedRecord && !this.areConnected(record, this.selectedRecord);
+                const dimmedByEdge = this.selectedEdgeRecord && !this.isEndpointOfEdge(record, this.selectedEdgeRecord);
+                const dimmed = dimmedByNode || dimmedByEdge;
                 if (record.mesh?.material) {
                     record.mesh.material.opacity = active ? 1 : dimmed ? 0.35 : 0.88;
                     record.mesh.scale.setScalar(record.radius * (active ? 1.22 : 1));
                 }
                 if (record.glow?.material) {
                     record.glow.material.opacity = active ? 0.58 : dimmed ? 0.12 : 0.31;
+                }
+            });
+        }
+
+        updateEdgeEmphasis() {
+            this.linkRecords.forEach(record => {
+                const selected = record === this.selectedEdgeRecord;
+                const hovered = record === this.hoveredEdgeRecord;
+                const incidentToSelectedNode = this.selectedRecord && (record.source === this.selectedRecord || record.target === this.selectedRecord);
+                const dimmedByNode = this.selectedRecord && !incidentToSelectedNode;
+                const dimmedByEdge = this.selectedEdgeRecord && !selected;
+                const secMode = record.secBacked && this.secEmphasisEnabled;
+                const color = record.secBacked && (selected || secMode) ? GOLD : record.color;
+                const baseOpacity = secMode ? 0.86 : 0.18 + record.strength * 0.36;
+                const opacity = selected ? 1 : hovered ? 0.72 : (dimmedByNode || dimmedByEdge) ? (secMode ? 0.14 : 0.055) : baseOpacity;
+
+                if (record.line?.material) {
+                    record.line.material.color.set(color);
+                    record.line.material.opacity = opacity;
+                }
+                if (record.glow?.material) {
+                    record.glow.material.color.set(color);
+                    record.glow.material.opacity = selected ? (record.secBacked ? 0.62 : 0.44) : hovered ? 0.24 : secMode ? 0.22 : 0;
                 }
             });
         }
@@ -727,12 +876,32 @@
             );
         }
 
-        showTooltip(event, record) {
+        isEndpointOfEdge(record, edgeRecord) {
+            return Boolean(record && edgeRecord && (edgeRecord.source === record || edgeRecord.target === record));
+        }
+
+        showTooltip(event, record, type = 'node') {
             if (!this.tooltip) return;
-            this.tooltip.innerHTML = `
-                <div class="font-display text-sm text-white">${this.escapeHtml(record.node.ticker || '')}</div>
-                <div class="text-[11px] text-cyan-100/72">${this.escapeHtml(record.node.name || '')}</div>
-            `;
+            if (type === 'edge') {
+                const link = record.link || {};
+                const strength = Math.round(record.strength * 100);
+                const secBadge = record.secBacked
+                    ? '<span class="sec-edge-badge rounded-full px-2 py-0.5 text-[10px] font-mono">SEC</span>'
+                    : '';
+                this.tooltip.innerHTML = `
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="font-display text-sm text-white">${this.escapeHtml(record.source.node.ticker || '')} -> ${this.escapeHtml(record.target.node.ticker || '')}</div>
+                        ${secBadge}
+                    </div>
+                    <div class="mt-1 text-[11px] text-cyan-100/72">${this.escapeHtml(this.formatConnectionType(link.type || 'link'))}</div>
+                    <div class="mt-1 font-mono text-[10px] text-white/52">Strength ${this.escapeHtml(strength)}%</div>
+                `;
+            } else {
+                this.tooltip.innerHTML = `
+                    <div class="font-display text-sm text-white">${this.escapeHtml(record.node.ticker || '')}</div>
+                    <div class="text-[11px] text-cyan-100/72">${this.escapeHtml(record.node.name || '')}</div>
+                `;
+            }
             const stageRect = this.stage.getBoundingClientRect();
             this.tooltip.style.left = `${event.clientX - stageRect.left + 14}px`;
             this.tooltip.style.top = `${event.clientY - stageRect.top + 14}px`;
@@ -757,7 +926,11 @@
 
         renderDetails() {
             if (!this.details) return;
-            if (!this.selectedRecord) {
+            if (!this.nodeRecords.length && !this.linkRecords.length) {
+                this.renderFallbackDetails('3D data unavailable', 'No production network data is available for the 3D view.');
+                return;
+            }
+            if (!this.selectedRecord && !this.selectedEdgeRecord) {
                 const secCount = this.linkRecords.filter(link => link.secBacked).length;
                 this.details.innerHTML = `
                     <div class="source-workbench-label mb-3">3D Network Guide</div>
@@ -766,9 +939,9 @@
                     <div class="mt-5 space-y-3">
                         ${this.renderGuideRow('fa-arrows-rotate', 'Rotate', 'Drag across the canvas to orbit the network.')}
                         ${this.renderGuideRow('fa-magnifying-glass-plus', 'Zoom', 'Use the mouse wheel or trackpad pinch to move closer or farther away.')}
-                        ${this.renderGuideRow('fa-hand-pointer', 'Select', 'Hover for a quick ticker card; click a node to pin its relationship details here.')}
+                        ${this.renderGuideRow('fa-hand-pointer', 'Select', 'Hover or tap a company or relationship; nodes take priority when the pointer is directly over them.')}
                         ${this.renderGuideRow('fa-file-shield', 'SEC emphasis', 'Gold dashed edges mark relationships backed by SEC evidence when emphasis is on.')}
-                        ${this.renderGuideRow('fa-tags', 'Labels', 'The labels toggle shows or hides priority tickers plus hovered and selected nodes.')}
+                        ${this.renderGuideRow('fa-tags', 'Labels', 'The labels toggle shows or hides priority tickers plus hovered and selected nodes or relationship endpoints.')}
                     </div>
                     <div class="mt-5 grid grid-cols-2 gap-3">
                         ${this.renderMetric('Nodes', this.nodeRecords.length)}
@@ -777,6 +950,10 @@
                         ${this.renderMetric('Labels', this.labelsEnabled ? 'On' : 'Off')}
                     </div>
                 `;
+                return;
+            }
+            if (this.selectedEdgeRecord) {
+                this.renderSelectedEdgeDetails(this.selectedEdgeRecord);
                 return;
             }
 
@@ -815,6 +992,80 @@
                     <div class="space-y-2">
                         ${top.length ? top.map(item => this.renderRelationshipRow(item)).join('') : '<div class="text-sm text-white/42">No production relationships.</div>'}
                     </div>
+                </div>
+            `;
+        }
+
+        renderSelectedEdgeDetails(record) {
+            const link = record.link || {};
+            const source = record.source.node || {};
+            const target = record.target.node || {};
+            const strength = `${Math.round(record.strength * 100)}%`;
+            const confidence = link.confidence !== undefined && link.confidence !== null && String(link.confidence).trim() !== ''
+                ? String(link.confidence)
+                : '';
+            const relationship = this.getRelationshipLabel(record);
+            const type = this.formatConnectionType(link.type || 'link');
+            const sourceUrls = getValidSourceUrls(link.source_urls);
+            const sourceIndicator = this.getSourceUrlIndicator(sourceUrls);
+            const secBadge = record.secBacked
+                ? '<span class="sec-edge-badge rounded-full px-2.5 py-1 text-[10px] font-mono tracking-[1px]">SEC BACKED</span>'
+                : '';
+            const edgeColor = record.secBacked ? GOLD : record.color;
+
+            this.details.innerHTML = `
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="source-workbench-label mb-2">Selected Relationship</div>
+                        <div class="font-display text-2xl md:text-3xl text-white leading-tight">${this.escapeHtml(source.ticker || '')} -> ${this.escapeHtml(target.ticker || '')}</div>
+                        <div class="text-sm text-cyan-50/70 mt-2 leading-5">${this.escapeHtml(relationship)}</div>
+                    </div>
+                    <div class="shrink-0">${secBadge}</div>
+                </div>
+                <div class="mt-4 h-px" style="background:linear-gradient(90deg, ${this.escapeHtml(edgeColor)}, transparent); opacity:.72;"></div>
+                <div class="mt-5 grid grid-cols-1 gap-3">
+                    <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <div class="text-[10px] text-white/42 font-mono">SOURCE COMPANY</div>
+                        <div class="mt-1 font-display text-xl text-white">${this.escapeHtml(source.ticker || '')}</div>
+                        <div class="mt-1 text-sm leading-5 text-white/64">${this.escapeHtml(source.name || '')}</div>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <div class="text-[10px] text-white/42 font-mono">TARGET COMPANY</div>
+                        <div class="mt-1 font-display text-xl text-white">${this.escapeHtml(target.ticker || '')}</div>
+                        <div class="mt-1 text-sm leading-5 text-white/64">${this.escapeHtml(target.name || '')}</div>
+                    </div>
+                </div>
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    ${this.renderDetailField('RELATIONSHIP LABEL', relationship)}
+                    ${this.renderDetailField('RELATIONSHIP TYPE', type)}
+                    ${this.renderDetailField('STRENGTH', strength)}
+                    ${confidence ? this.renderDetailField('CONFIDENCE', confidence) : ''}
+                    ${sourceIndicator ? this.renderDetailField('SOURCE URL', sourceIndicator) : ''}
+                </div>
+                ${link.provenance ? `
+                    <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                        <div class="text-[10px] text-white/42 font-mono">PROVENANCE</div>
+                        <div class="mt-1 text-sm leading-5 text-white/76">${this.escapeHtml(link.provenance)}</div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        renderDetailField(label, value) {
+            return `
+                <div class="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                    <div class="text-[10px] text-white/42 font-mono">${this.escapeHtml(label)}</div>
+                    <div class="mt-1 text-sm leading-5 text-white/82">${this.escapeHtml(value)}</div>
+                </div>
+            `;
+        }
+
+        renderFallbackDetails(title, body) {
+            this.details.innerHTML = `
+                <div class="source-workbench-label mb-3">3D Network</div>
+                <div class="rounded-3xl border border-yellow-300/20 bg-yellow-300/10 p-4">
+                    <div class="font-display text-2xl text-white">${this.escapeHtml(title)}</div>
+                    <p class="text-sm leading-6 text-white/64 mt-2">${this.escapeHtml(body)}</p>
                 </div>
             `;
         }
@@ -879,6 +1130,29 @@
             `;
         }
 
+        getRelationshipLabel(record) {
+            const link = record?.link || {};
+            return link.label || link.provenance || this.formatConnectionType(link.type || 'link');
+        }
+
+        getSourceUrlIndicator(sourceUrls) {
+            if (!sourceUrls.length) return '';
+            const host = getSourceHost(sourceUrls[0]);
+            return sourceUrls.length > 1 ? `${host} +${sourceUrls.length - 1}` : host;
+        }
+
+        getLinkRecordKey(record) {
+            if (!record) return '';
+            const link = record.link || {};
+            return [
+                record.source?.id ?? link.source ?? '',
+                record.target?.id ?? link.target ?? '',
+                link.type || '',
+                link.label || '',
+                link.provenance || ''
+            ].join('|');
+        }
+
         getConnectionsForRecord(record) {
             return this.linkRecords
                 .filter(link => link.source === record || link.target === record)
@@ -922,6 +1196,24 @@
 
         toggleAutoRotate() {
             this.setAutoRotateEnabled(!this.autoRotateEnabled);
+        }
+
+        clearSelection(renderDetails = true) {
+            this.selectedRecord = null;
+            this.hoveredRecord = null;
+            this.selectedEdgeRecord = null;
+            this.hoveredEdgeRecord = null;
+            if (this.canvas) this.canvas.style.cursor = 'grab';
+            this.refreshLabels();
+            this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
+            this.hideTooltip();
+            if (renderDetails) this.renderDetails();
+        }
+
+        resetView() {
+            this.resetCamera(false);
+            this.clearSelection(true);
         }
 
         resetCamera(renderDetails = true) {

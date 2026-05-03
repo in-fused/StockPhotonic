@@ -881,7 +881,7 @@
                             <i class="fa-solid fa-compress"></i>
                             <span>FIT</span>
                         </button>
-                        <button id="graph3d-reset-button" type="button" onclick="resetGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset 3D camera">
+                        <button id="graph3d-reset-button" type="button" onclick="resetGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset 3D camera and selection">
                             <i class="fa-solid fa-rotate-left"></i>
                             <span>RESET</span>
                         </button>
@@ -908,7 +908,7 @@
                                 </div>
                                 <div class="graph3d-legend-row">
                                     <span class="graph3d-legend-mark graph3d-legend-edge"></span>
-                                    <span>Edges are curated production relationships between companies.</span>
+                                    <span>Edges are curated production relationships; hover or tap them for relationship context.</span>
                                 </div>
                                 <div class="graph3d-legend-row">
                                     <span class="graph3d-legend-mark graph3d-legend-sec"></span>
@@ -916,7 +916,7 @@
                                 </div>
                                 <div class="graph3d-legend-row">
                                     <span class="graph3d-legend-mark graph3d-legend-label"></span>
-                                    <span>Labels show priority tickers, plus hovered or selected companies.</span>
+                                    <span>Labels show priority tickers, plus hovered or selected companies and relationship endpoints.</span>
                                 </div>
                             </div>
                         </div>
@@ -1626,7 +1626,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function resetGraph3DCamera() {
-            getGraph3DView()?.resetCamera();
+            getGraph3DView()?.resetView();
         }
 
         function fitGraph3DCamera() {
@@ -3546,7 +3546,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             closeSearchPanel();
             clearSelection(false);
             fitGraph();
-            graph3dView?.resetCamera();
+            graph3dView?.resetView();
         }
 
         function analyzePortfolioInput() {

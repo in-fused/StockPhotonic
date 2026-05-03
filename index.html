@@ -679,7 +679,10 @@
                 </div>
 
                 <p class="text-sm text-white/58 mb-4">
-                    AAPL, MSFT, and NVDA remain the starter SEC job. The broader Batch 1 multi-sector job uses the expanded approved CIK mappings and still stays local-only; neither job promotes production graph data.
+                    AAPL, MSFT, and NVDA remain the starter SEC job. Batch 1 now has standard, fast, and deep multi-sector job IDs using the same approved 18-ticker mapping set; each job stays local-only and never promotes production graph data.
+                </p>
+                <p class="text-sm text-white/58 mb-4">
+                    In these commands, <span class="font-mono text-cyan-50/78">limit</span> means filings reviewed per ticker after form filtering. It is not a cap on relationships found; deeper limits may take longer and do more SEC/cache work when network access is enabled.
                 </p>
 
                 <div class="grid grid-cols-1 gap-3">
@@ -787,10 +790,10 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
                     <div>
                         <div class="source-workbench-label mb-2">Local Job Runner</div>
-                        <p class="text-sm text-white/60">Run reviewed manifest jobs from the local terminal. Job logs are candidate/local audit artifacts only.</p>
+                        <p class="text-sm text-white/60">Run reviewed manifest jobs from the local terminal. Fast and standard Batch 1 review 10 filings per ticker; deep reviews 25 filings per ticker. Relationship candidates and production promotion stay separate.</p>
                     </div>
                     <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
-                        Production writes remain zero.
+                        Limit is filings per ticker.
                     </div>
                 </div>
 
@@ -805,26 +808,42 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
 
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Starter job fetch and write review-only candidates</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-11', this)" aria-label="Copy local SEC job network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Standard/default Batch 1 dry-run</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-11', this)" aria-label="Copy standard Batch 1 multi-sector SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-11">python scripts/sec_job_run.py --job-id mega_cap_core --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-11">python scripts/sec_job_run.py --job-id batch_1_multi_sector</code></pre>
                     </div>
 
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Batch 1 multi-sector dry-run and preview</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-14', this)" aria-label="Copy Batch 1 multi-sector SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Fast Batch 1 dry-run</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-14', this)" aria-label="Copy fast Batch 1 multi-sector SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-14">python scripts/sec_job_run.py --job-id batch_1_multi_sector</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-14">python scripts/sec_job_run.py --job-id batch_1_multi_sector_fast</code></pre>
                     </div>
 
                     <div class="source-command rounded-2xl p-3">
                         <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Batch 1 fetch and write review-only candidates</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-15', this)" aria-label="Copy Batch 1 multi-sector SEC job network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Deep Batch 1 dry-run</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-15', this)" aria-label="Copy deep Batch 1 multi-sector SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-15">python scripts/sec_job_run.py --job-id batch_1_multi_sector --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-15">python scripts/sec_job_run.py --job-id batch_1_multi_sector_deep</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">5.</span> Fast Batch 1 fetch and write review-only candidates</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-16', this)" aria-label="Copy fast Batch 1 multi-sector SEC job network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-16">python scripts/sec_job_run.py --job-id batch_1_multi_sector_fast --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
+                    </div>
+
+                    <div class="source-command rounded-2xl p-3">
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">6.</span> Deep Batch 1 fetch and write review-only candidates</span>
+                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-17', this)" aria-label="Copy deep Batch 1 multi-sector SEC job network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        </div>
+                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-17">python scripts/sec_job_run.py --job-id batch_1_multi_sector_deep --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
                     </div>
                 </div>
             </div>
@@ -864,11 +883,11 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm text-white/62">
                     <div class="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3">
                         <div class="font-mono text-[10px] text-cyan-100/70 mb-1">CURRENT</div>
-                        <div>AAPL/MSFT/NVDA approved SEC starter job</div>
+                        <div>Starter job plus standard/fast/deep Batch 1 jobs</div>
                     </div>
                     <div class="rounded-2xl border border-white/10 bg-black/25 p-3">
                         <div class="font-mono text-[10px] text-white/45 mb-1">NEXT</div>
-                        <div>Expand approved CIK mappings</div>
+                        <div>More approved mappings and reviewed job batches</div>
                     </div>
                     <div class="rounded-2xl border border-white/10 bg-black/25 p-3">
                         <div class="font-mono text-[10px] text-white/45 mb-1">THEN</div>
@@ -893,6 +912,7 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                         <li class="flex gap-2"><i class="fa-solid fa-globe text-cyan-200/70 mt-0.5"></i><span>The browser does not call SEC directly.</span></li>
                         <li class="flex gap-2"><i class="fa-solid fa-terminal text-cyan-200/70 mt-0.5"></i><span>The browser does not run local Python scripts.</span></li>
                         <li class="flex gap-2"><i class="fa-solid fa-database text-fuchsia-200/70 mt-0.5"></i><span>Candidate files are review-only.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-list-check text-cyan-200/70 mt-0.5"></i><span>Broader coverage comes from more approved mappings and jobs, not unsafe production writes.</span></li>
                         <li class="flex gap-2"><i class="fa-solid fa-shield-halved text-emerald-200/70 mt-0.5"></i><span>Production graph data is unchanged until a future reviewed promotion phase.</span></li>
                     </ul>
                 </div>

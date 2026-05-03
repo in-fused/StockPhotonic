@@ -9,6 +9,7 @@
     const EDGE_HOVER_THRESHOLD = 11;
     const TOUCH_EDGE_HOVER_THRESHOLD = 22;
     const FOCUS_ANIMATION_MS = 620;
+    const SEARCH_RESULT_LIMIT = 6;
 
     function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
@@ -114,6 +115,8 @@
             this.details = options.details;
             this.stats = options.stats;
             this.controls = options.controls || {};
+            this.searchInput = this.controls.searchInput || null;
+            this.searchResults = this.controls.searchResults || null;
             this.edgeColors = options.edgeColors || {};
             this.defaultEdgeColor = options.defaultEdgeColor || FALLBACK_EDGE;
             this.getCompanyIndustryGroup = options.getCompanyIndustryGroup || (node => node?.industryGroup || node?.industry || 'Other');
@@ -155,6 +158,9 @@
             this.hoveredRecord = null;
             this.selectedEdgeRecord = null;
             this.hoveredEdgeRecord = null;
+            this.searchMatches = [];
+            this.searchActiveIndex = -1;
+            this.searchOpen = false;
 
             this.cameraState = {
                 theta: -0.72,
@@ -183,7 +189,13 @@
             this.onPointerUp = this.onPointerUp.bind(this);
             this.onPointerCancel = this.onPointerCancel.bind(this);
             this.onWheel = this.onWheel.bind(this);
+            this.onSearchInput = this.onSearchInput.bind(this);
+            this.onSearchFocus = this.onSearchFocus.bind(this);
+            this.onSearchKeyDown = this.onSearchKeyDown.bind(this);
+            this.onSearchResultPointerDown = this.onSearchResultPointerDown.bind(this);
+            this.onDocumentPointerDown = this.onDocumentPointerDown.bind(this);
             this.onContextMenu = event => event.preventDefault();
+            this.bindSearchEvents();
         }
 
         setData(payload = {}) {
@@ -205,6 +217,7 @@
                 : null;
             this.hoveredRecord = null;
             this.hoveredEdgeRecord = null;
+            this.updateSearchResults();
             if (this.initialized && !this.engineUnavailable) {
                 this.rebuildScene();
                 this.resetCamera(false);
@@ -338,6 +351,165 @@
                 this.resizeObserver = new ResizeObserver(this.resize);
                 this.resizeObserver.observe(this.stage);
             }
+        }
+
+        bindSearchEvents() {
+            if (!this.searchInput || !this.searchResults) return;
+            this.searchInput.addEventListener('input', this.onSearchInput);
+            this.searchInput.addEventListener('focus', this.onSearchFocus);
+            this.searchInput.addEventListener('keydown', this.onSearchKeyDown);
+            this.searchResults.addEventListener('pointerdown', this.onSearchResultPointerDown);
+            document.addEventListener('pointerdown', this.onDocumentPointerDown);
+        }
+
+        onSearchInput() {
+            this.updateSearchResults();
+        }
+
+        onSearchFocus() {
+            this.updateSearchResults();
+        }
+
+        onSearchKeyDown(event) {
+            const key = event.key;
+            if (key === 'Escape') {
+                this.closeSearchResults();
+                event.preventDefault();
+                return;
+            }
+            if (key === 'Enter') {
+                const record = this.searchMatches[this.searchActiveIndex] || this.searchMatches[0] || null;
+                if (record) this.selectSearchRecord(record);
+                event.preventDefault();
+                return;
+            }
+            if (key !== 'ArrowDown' && key !== 'ArrowUp') return;
+
+            if (!this.searchOpen) this.updateSearchResults();
+            if (!this.searchMatches.length) return;
+            const direction = key === 'ArrowDown' ? 1 : -1;
+            const nextIndex = this.searchActiveIndex < 0
+                ? (direction > 0 ? 0 : this.searchMatches.length - 1)
+                : (this.searchActiveIndex + direction + this.searchMatches.length) % this.searchMatches.length;
+            this.setSearchActiveIndex(nextIndex);
+            event.preventDefault();
+        }
+
+        onSearchResultPointerDown(event) {
+            const option = event.target.closest('[data-graph3d-node-id]');
+            if (!option) return;
+            const record = this.nodeRecordById.get(option.getAttribute('data-graph3d-node-id'));
+            if (!record) return;
+            event.preventDefault();
+            this.selectSearchRecord(record);
+        }
+
+        onDocumentPointerDown(event) {
+            if (!this.searchOpen) return;
+            if (event.target === this.searchInput || this.searchResults?.contains(event.target)) return;
+            this.closeSearchResults();
+        }
+
+        updateSearchResults() {
+            if (!this.searchInput || !this.searchResults) return;
+            const query = this.searchInput.value.trim();
+            if (!query) {
+                this.searchMatches = [];
+                this.searchActiveIndex = -1;
+                this.closeSearchResults();
+                return;
+            }
+
+            this.searchMatches = this.findSearchMatches(query);
+            this.searchActiveIndex = this.searchMatches.length ? 0 : -1;
+            this.renderSearchResults(query);
+        }
+
+        findSearchMatches(query) {
+            const normalizedQuery = query.trim().toLowerCase();
+            const tickerQuery = query.trim().toUpperCase();
+            if (!normalizedQuery) return [];
+
+            return this.nodeRecords
+                .map(record => {
+                    const ticker = String(record.node.ticker || '').trim().toUpperCase();
+                    const name = String(record.node.name || '').trim().toLowerCase();
+                    let rank = Infinity;
+                    if (ticker === tickerQuery) rank = 0;
+                    else if (ticker.startsWith(tickerQuery)) rank = 1;
+                    else if (name.startsWith(normalizedQuery)) rank = 2;
+                    else if (name.includes(normalizedQuery)) rank = 3;
+                    else if (ticker.includes(tickerQuery)) rank = 4;
+                    if (rank === Infinity) return null;
+                    return { record, rank };
+                })
+                .filter(Boolean)
+                .sort((a, b) =>
+                    a.rank - b.rank ||
+                    (Number(a.record.node.rank) || 9999) - (Number(b.record.node.rank) || 9999) ||
+                    String(a.record.node.ticker || '').localeCompare(String(b.record.node.ticker || ''))
+                )
+                .slice(0, SEARCH_RESULT_LIMIT)
+                .map(item => item.record);
+        }
+
+        renderSearchResults(query) {
+            if (!this.searchInput || !this.searchResults) return;
+            this.searchOpen = true;
+            this.searchInput.setAttribute('aria-expanded', 'true');
+            this.searchInput.setAttribute('aria-activedescendant', this.searchActiveIndex >= 0 ? `graph3d-search-option-${this.searchActiveIndex}` : '');
+            this.searchResults.classList.remove('hidden');
+
+            if (!this.searchMatches.length) {
+                this.searchResults.innerHTML = `<div class="graph3d-search-empty" role="status">No 3D matches for "${escapeHtml(query)}".</div>`;
+                return;
+            }
+
+            this.searchResults.innerHTML = this.searchMatches.map((record, index) => this.renderSearchOption(record, index)).join('');
+        }
+
+        renderSearchOption(record, index) {
+            const ticker = record.node.ticker || record.id || '';
+            const name = record.node.name || 'Unknown company';
+            const meta = record.node.sector || this.getCompanyIndustryGroup(record.node) || 'Production node';
+            const active = index === this.searchActiveIndex;
+            return `
+                <button id="graph3d-search-option-${index}" type="button" class="graph3d-search-option rounded-2xl${active ? ' is-active' : ''}" role="option" aria-selected="${active ? 'true' : 'false'}" data-graph3d-node-id="${escapeHtml(record.id)}">
+                    <span class="graph3d-search-ticker rounded-full">${escapeHtml(ticker)}</span>
+                    <span class="graph3d-search-copy">
+                        <span class="graph3d-search-name">${escapeHtml(name)}</span>
+                        <span class="graph3d-search-meta">${escapeHtml(meta)}</span>
+                    </span>
+                </button>
+            `;
+        }
+
+        setSearchActiveIndex(index) {
+            if (!this.searchMatches.length) return;
+            this.searchActiveIndex = clamp(index, 0, this.searchMatches.length - 1);
+            this.renderSearchResults(this.searchInput?.value || '');
+        }
+
+        closeSearchResults() {
+            this.searchOpen = false;
+            this.searchActiveIndex = -1;
+            if (this.searchResults) {
+                this.searchResults.classList.add('hidden');
+                this.searchResults.innerHTML = '';
+            }
+            if (this.searchInput) {
+                this.searchInput.setAttribute('aria-expanded', 'false');
+                this.searchInput.removeAttribute('aria-activedescendant');
+            }
+        }
+
+        selectSearchRecord(record) {
+            if (!record) return;
+            this.selectRecord(record);
+            this.focusNodeRecord(record);
+            if (this.searchInput) this.searchInput.value = record.node.ticker || record.node.name || '';
+            this.closeSearchResults();
+            this.searchInput?.blur();
         }
 
         buildRecords() {

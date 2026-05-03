@@ -474,6 +474,115 @@
             background: rgba(0, 0, 0, 0.24);
         }
 
+        .graph3d-header-actions {
+            width: min(100%, 58rem);
+            align-items: stretch;
+        }
+
+        .graph3d-search {
+            position: relative;
+            z-index: 12;
+            width: min(20rem, 100%);
+        }
+
+        .graph3d-search-input {
+            width: 100%;
+            min-height: 2.75rem;
+            border: 1px solid rgba(0, 249, 255, 0.20);
+            background: rgba(3, 7, 18, 0.64);
+            color: rgba(255, 255, 255, 0.94);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 0 24px rgba(0, 249, 255, 0.08);
+            outline: none;
+            padding: 0.72rem 2.35rem 0.72rem 2.65rem;
+            font-size: 0.82rem;
+            line-height: 1.2;
+        }
+
+        .graph3d-search-input::placeholder {
+            color: rgba(207, 250, 254, 0.42);
+        }
+
+        .graph3d-search-input:focus {
+            border-color: rgba(0, 249, 255, 0.46);
+            box-shadow: 0 0 0 2px rgba(0, 249, 255, 0.12), 0 0 26px rgba(0, 249, 255, 0.12);
+        }
+
+        .graph3d-search-results {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 0.45rem);
+            max-height: 18rem;
+            overflow-y: auto;
+            border: 1px solid rgba(0, 249, 255, 0.20);
+            background: rgba(3, 7, 18, 0.94);
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.36), 0 0 28px rgba(0, 249, 255, 0.12);
+            backdrop-filter: blur(16px);
+            padding: 0.35rem;
+        }
+
+        .graph3d-search-option {
+            width: 100%;
+            min-height: 3rem;
+            border: 1px solid transparent;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.88);
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            padding: 0.62rem 0.72rem;
+        }
+
+        .graph3d-search-option.is-active,
+        .graph3d-search-option:hover {
+            border-color: rgba(0, 249, 255, 0.26);
+            background: rgba(0, 249, 255, 0.11);
+        }
+
+        .graph3d-search-ticker {
+            flex: 0 0 auto;
+            min-width: 3.15rem;
+            border: 1px solid rgba(0, 249, 255, 0.24);
+            background: rgba(0, 249, 255, 0.10);
+            color: #ffffff;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            line-height: 1;
+            padding: 0.42rem 0.5rem;
+            text-align: center;
+        }
+
+        .graph3d-search-copy {
+            min-width: 0;
+            display: block;
+        }
+
+        .graph3d-search-name,
+        .graph3d-search-meta {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .graph3d-search-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .graph3d-search-meta,
+        .graph3d-search-empty {
+            color: rgba(207, 250, 254, 0.54);
+            font-size: 0.72rem;
+            line-height: 1.35;
+        }
+
+        .graph3d-search-empty {
+            padding: 0.75rem 0.85rem;
+        }
+
         .graph3d-stat-overlay {
             position: absolute;
             left: 1rem;
@@ -614,6 +723,20 @@
                 width: 100%;
                 border-radius: 1.35rem;
                 padding: 0.45rem;
+            }
+
+            .graph3d-header-actions,
+            .graph3d-search {
+                width: 100%;
+            }
+
+            .graph3d-search-results {
+                max-width: 100%;
+                max-height: 15rem;
+            }
+
+            .graph3d-search-option {
+                border-radius: 1rem;
             }
 
             .graph3d-toolbar .focus-button {
@@ -867,35 +990,44 @@
                         <h2 id="network-3d-title" class="font-display text-3xl md:text-4xl font-semibold">3D Network</h2>
                     </div>
 
-                    <div class="graph3d-toolbar rounded-3xl p-1.5 flex flex-wrap gap-1.5">
-                        <button id="graph3d-labels-toggle" type="button" onclick="toggleGraph3DLabels()" aria-pressed="true" class="focus-button is-active px-4 py-2.5 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle 3D labels">
-                            <i class="fa-solid fa-tags"></i>
-                            <span>Labels On</span>
-                        </button>
-                        <button id="graph3d-sec-toggle" type="button" onclick="toggleGraph3DSecEmphasis()" aria-pressed="true" class="focus-button is-active px-4 py-2.5 text-xs rounded-3xl border border-yellow-300/25 flex items-center gap-x-2" title="Toggle SEC-backed edge emphasis">
-                            <i class="fa-solid fa-file-shield"></i>
-                            <span>SEC Emphasis On</span>
-                        </button>
-                        <button id="graph3d-auto-rotate-toggle" type="button" onclick="toggleGraph3DAutoRotate()" aria-pressed="false" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Toggle auto-rotate">
-                            <i class="fa-solid fa-circle-notch"></i>
-                            <span>Auto-Rotate Off</span>
-                        </button>
-                        <button id="graph3d-fit-button" type="button" onclick="fitGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Fit 3D network">
-                            <i class="fa-solid fa-compress"></i>
-                            <span>FIT</span>
-                        </button>
-                        <button id="graph3d-focus-selected-button" type="button" onclick="focusGraph3DSelection()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Focus selected 3D node or relationship">
-                            <i class="fa-solid fa-crosshairs"></i>
-                            <span>Focus Selected</span>
-                        </button>
-                        <button id="graph3d-clear-selection-button" type="button" onclick="clearGraph3DSelection()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Clear 3D selection without moving the camera">
-                            <i class="fa-solid fa-eraser"></i>
-                            <span>Clear Selection</span>
-                        </button>
-                        <button id="graph3d-reset-button" type="button" onclick="resetGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset 3D camera and selection">
-                            <i class="fa-solid fa-rotate-left"></i>
-                            <span>RESET</span>
-                        </button>
+                    <div class="graph3d-header-actions flex flex-col md:flex-row md:items-start md:justify-end gap-3">
+                        <div class="graph3d-search">
+                            <label class="sr-only" for="graph3d-search-input">Search 3D network by ticker or company</label>
+                            <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-cyan-100/45 pointer-events-none"></i>
+                            <input id="graph3d-search-input" type="text" class="graph3d-search-input rounded-3xl font-mono" placeholder="Jump to ticker or company..." autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="graph3d-search-results">
+                            <div id="graph3d-search-results" class="graph3d-search-results hidden rounded-2xl" role="listbox" aria-label="3D network search results"></div>
+                        </div>
+
+                        <div class="graph3d-toolbar rounded-3xl p-1.5 flex flex-wrap gap-1.5">
+                            <button id="graph3d-labels-toggle" type="button" onclick="toggleGraph3DLabels()" aria-pressed="true" class="focus-button is-active px-4 py-2.5 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle 3D labels">
+                                <i class="fa-solid fa-tags"></i>
+                                <span>Labels On</span>
+                            </button>
+                            <button id="graph3d-sec-toggle" type="button" onclick="toggleGraph3DSecEmphasis()" aria-pressed="true" class="focus-button is-active px-4 py-2.5 text-xs rounded-3xl border border-yellow-300/25 flex items-center gap-x-2" title="Toggle SEC-backed edge emphasis">
+                                <i class="fa-solid fa-file-shield"></i>
+                                <span>SEC Emphasis On</span>
+                            </button>
+                            <button id="graph3d-auto-rotate-toggle" type="button" onclick="toggleGraph3DAutoRotate()" aria-pressed="false" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Toggle auto-rotate">
+                                <i class="fa-solid fa-circle-notch"></i>
+                                <span>Auto-Rotate Off</span>
+                            </button>
+                            <button id="graph3d-fit-button" type="button" onclick="fitGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Fit 3D network">
+                                <i class="fa-solid fa-compress"></i>
+                                <span>FIT</span>
+                            </button>
+                            <button id="graph3d-focus-selected-button" type="button" onclick="focusGraph3DSelection()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Focus selected 3D node or relationship">
+                                <i class="fa-solid fa-crosshairs"></i>
+                                <span>Focus Selected</span>
+                            </button>
+                            <button id="graph3d-clear-selection-button" type="button" onclick="clearGraph3DSelection()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Clear 3D selection without moving the camera">
+                                <i class="fa-solid fa-eraser"></i>
+                                <span>Clear Selection</span>
+                            </button>
+                            <button id="graph3d-reset-button" type="button" onclick="resetGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset 3D camera and selection">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>RESET</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1574,7 +1706,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 controls: {
                     labels: document.getElementById('graph3d-labels-toggle'),
                     sec: document.getElementById('graph3d-sec-toggle'),
-                    autoRotate: document.getElementById('graph3d-auto-rotate-toggle')
+                    autoRotate: document.getElementById('graph3d-auto-rotate-toggle'),
+                    searchInput: document.getElementById('graph3d-search-input'),
+                    searchResults: document.getElementById('graph3d-search-results')
                 },
                 edgeColors: EDGE_COLORS,
                 defaultEdgeColor: DEFAULT_EDGE_COLOR,

@@ -8,6 +8,7 @@ import html
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -35,8 +36,11 @@ SIGNAL_RELATIONSHIP_TYPES = {
     "customer": "supplier_customer",
     "dependency": "supplier_customer",
     "partnership": "partnership",
+    "investment": "investment",
 }
-MIN_TARGET_MATCH_CONFIDENCE = 0.85
+MIN_TARGET_MATCH_CONFIDENCE = 0.75
+MAX_PREVIEW_CANDIDATES_TOTAL = 75
+MAX_PREVIEW_CANDIDATES_PER_SOURCE_TICKER = 5
 SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS = (
     "revenue from",
     "licensing",
@@ -50,16 +54,43 @@ SUPPLIER_CUSTOMER_SUPPLY_TERMS = (
 )
 GENERIC_RELATIONSHIP_NOISE_TERMS = (
     "depends on",
+    "depending on",
+    "our customers",
+    "our suppliers",
+    "our vendors",
     "suppliers",
     "customers",
     "vendors",
+)
+ACCOUNTING_RELATIONSHIP_NOISE_TERMS = (
+    "revenue from contracts",
+    "revenues from contracts",
+    "revenue recognized",
+    "contract assets",
+    "contract liabilities",
+    "remaining performance obligations",
+)
+INTERNAL_OPERATIONS_NOISE_TERMS = (
+    "internal operations",
+    "business operations",
+    "operating results",
+    "results of operations",
 )
 GRAPH_WORTHY_SIGNAL_TERMS = (
     *SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS,
     *SUPPLIER_CUSTOMER_SUPPLY_TERMS,
     "partnership",
+    "partnership with",
     "collaboration",
+    "collaboration with",
+    "agreement with",
+    "joint venture with",
     "strategic agreement",
+    "manufactured by",
+    "components sourced from",
+    "accounted for",
+    "investment in",
+    "ownership stake in",
 )
 ALIAS_FIELD_NAMES = (
     "aliases",
@@ -71,9 +102,46 @@ ALIAS_FIELD_NAMES = (
     "aka",
 )
 COMMON_PUBLIC_ALIASES_BY_TICKER = {
+    "NVDA": ("NVIDIA", "Nvidia", "NVIDIA Corp.", "NVIDIA Corporation"),
+    "AMD": ("AMD", "Advanced Micro Devices"),
+    "INTC": ("Intel", "Intel Corp.", "Intel Corporation"),
+    "AVGO": ("Broadcom", "Broadcom Inc.", "VMware"),
+    "QCOM": ("Qualcomm", "QUALCOMM"),
+    "MU": ("Micron", "Micron Technology"),
+    "TSM": (
+        "TSMC",
+        "Taiwan Semiconductor",
+        "Taiwan Semiconductor Manufacturing",
+        "Taiwan Semiconductor Manufacturing Company",
+    ),
+    "ASML": ("ASML", "ASML Holding"),
+    "ARM": ("Arm", "Arm Holdings"),
+    "AMAT": ("Applied Materials",),
+    "LRCX": ("Lam Research",),
+    "KLAC": ("KLA", "KLA Corporation"),
+    "MRVL": ("Marvell", "Marvell Technology"),
+    "MSFT": ("Microsoft", "Microsoft Corp.", "Microsoft Corporation"),
     "GOOGL": ("Google", "Google LLC", "Google Inc.", "Google, Inc."),
     "GOOG": ("Google", "Google LLC", "Google Inc.", "Google, Inc."),
-    "META": ("Facebook", "Facebook Inc.", "Facebook, Inc."),
+    "AMZN": ("Amazon", "Amazon.com", "Amazon.com, Inc.", "Amazon Web Services", "AWS"),
+    "META": ("Meta", "Facebook", "Facebook Inc.", "Facebook, Inc.", "Meta Platforms"),
+    "AAPL": ("Apple", "Apple Inc."),
+    "ORCL": ("Oracle", "Oracle Corporation"),
+    "CRM": ("Salesforce", "Salesforce.com"),
+    "SNOW": ("Snowflake",),
+    "NOW": ("ServiceNow",),
+    "PANW": ("Palo Alto Networks",),
+    "V": ("Visa", "Visa Inc."),
+    "MA": ("Mastercard",),
+    "JPM": ("JPMorgan", "JPMorgan Chase"),
+    "GS": ("Goldman Sachs",),
+    "BLK": ("BlackRock",),
+    "XOM": ("ExxonMobil", "Exxon Mobil"),
+    "CVX": ("Chevron",),
+    "UNH": ("UnitedHealth", "UnitedHealth Group", "UnitedHealthcare", "Optum"),
+    "LLY": ("Eli Lilly", "Lilly"),
+    "GE": ("GE Aerospace", "General Electric"),
+    "CAT": ("Caterpillar",),
 }
 LEGAL_SUFFIXES = (
     "Corporation",
@@ -120,6 +188,12 @@ TICKER_REFERENCE_PATTERN = re.compile(
     r"\b(?:NASDAQ|Nasdaq|NYSE|NYSEARCA|NYSE American|NasdaqGS)\s*[:\-]\s*"
     r"([A-Z][A-Z.]{0,5})\b"
 )
+CAPITALIZED_ENTITY_PATTERN = re.compile(
+    r"\b("
+    r"(?:[A-Z][A-Za-z0-9&.'-]*|[A-Z]{2,})"
+    r"(?:\s+(?:&|and|of|the|[A-Z][A-Za-z0-9&.'-]*|[A-Z]{2,})){1,7}"
+    r")\b"
+)
 URL_PATTERN = re.compile(r"^https?://\S+$", re.IGNORECASE)
 TAG_PATTERN = re.compile(r"<[^>]+>")
 XBRL_NOISE_MARKERS = (
@@ -147,6 +221,34 @@ XBRL_PROSE_STOP_WORDS = {
     "unitnumerator",
     "unitref",
     "xbrli",
+}
+GENERIC_ENTITY_MENTION_KEYS = {
+    "a company",
+    "a customer",
+    "a single customer",
+    "a supplier",
+    "a third party",
+    "business",
+    "companies",
+    "company",
+    "contract",
+    "contracts",
+    "customer",
+    "customer a",
+    "customer b",
+    "customer c",
+    "customers",
+    "our customers",
+    "our suppliers",
+    "our vendors",
+    "products",
+    "services",
+    "supplier",
+    "suppliers",
+    "the company",
+    "third party",
+    "vendor",
+    "vendors",
 }
 
 
@@ -272,6 +374,41 @@ def base_match_key(value: str) -> str:
     return " ".join(parts)
 
 
+def base_display_name(value: str) -> str:
+    display = html.unescape(value).strip(" ,.;:")
+    display = re.sub(
+        r"\s*,\s*(?:"
+        r"Corporation|Corp\.?|Incorporated|Inc\.?|LLC|L\.L\.C\.|"
+        r"Limited|Ltd\.?|PLC|plc|N\.V\.|S\.A\.|AG|SE|Company|Co\.?"
+        r")$",
+        "",
+        display,
+        flags=re.IGNORECASE,
+    )
+    display = re.sub(
+        r"\s+(?:"
+        r"Corporation|Corp\.?|Incorporated|Inc\.?|LLC|L\.L\.C\.|"
+        r"Limited|Ltd\.?|PLC|plc|N\.V\.|S\.A\.|AG|SE|Company|Co\.?"
+        r")$",
+        "",
+        display,
+        flags=re.IGNORECASE,
+    )
+    return display.strip(" ,.;:&")
+
+
+def entity_mention_looks_generic(value: str) -> bool:
+    key = normalize_match_key(value)
+    if not key or key in GENERIC_ENTITY_MENTION_KEYS:
+        return True
+    words = key.split()
+    if words[:1] in (["customer"], ["supplier"], ["vendor"]):
+        return True
+    if words[-1:] in (["customer"], ["supplier"], ["vendor"]):
+        return len(words) <= 2
+    return False
+
+
 def company_alias_values(company: dict[str, Any]) -> list[str]:
     aliases: list[str] = []
     for field_name in ALIAS_FIELD_NAMES:
@@ -333,6 +470,8 @@ def add_matcher_entry(
     *,
     method: str,
     confidence: float,
+    surface: str | None = None,
+    surface_kind: str = "name",
 ) -> None:
     if not key:
         return
@@ -342,6 +481,8 @@ def add_matcher_entry(
             "name": company["name"],
             "method": method,
             "confidence": confidence,
+            "surface": surface or company["name"],
+            "surface_kind": surface_kind,
         }
     )
 
@@ -359,13 +500,16 @@ def build_company_matcher() -> dict[str, list[dict[str, Any]]]:
             company,
             method="company_name_exact",
             confidence=0.98,
+            surface=name,
         )
+        base_name = base_display_name(name)
         add_matcher_entry(
             matcher,
             base_match_key(name),
             company,
             method="company_name_base",
             confidence=0.9,
+            surface=base_name,
         )
         add_matcher_entry(
             matcher,
@@ -373,6 +517,8 @@ def build_company_matcher() -> dict[str, list[dict[str, Any]]]:
             company,
             method="ticker_exact",
             confidence=0.98,
+            surface=company["ticker"],
+            surface_kind="ticker",
         )
 
         aliases = json.loads(company["_aliases"])
@@ -383,13 +529,16 @@ def build_company_matcher() -> dict[str, list[dict[str, Any]]]:
                 company,
                 method="company_alias_exact",
                 confidence=0.95,
+                surface=alias,
             )
+            base_alias = base_display_name(alias)
             add_matcher_entry(
                 matcher,
                 base_match_key(alias),
                 company,
                 method="company_alias_base",
                 confidence=0.9,
+                surface=base_alias,
             )
 
     for ticker, aliases in COMMON_PUBLIC_ALIASES_BY_TICKER.items():
@@ -403,13 +552,18 @@ def build_company_matcher() -> dict[str, list[dict[str, Any]]]:
                 company,
                 method="common_public_alias_exact",
                 confidence=0.92,
+                surface=alias,
+                surface_kind="common_alias",
             )
+            base_alias = base_display_name(alias)
             add_matcher_entry(
                 matcher,
                 base_match_key(alias),
                 company,
                 method="common_public_alias_base",
                 confidence=0.88,
+                surface=base_alias,
+                surface_kind="common_alias",
             )
 
     return matcher
@@ -456,11 +610,55 @@ def unique_ordered(values: list[str]) -> list[str]:
     return ordered
 
 
-def extract_entity_mentions(snippet_text: Any) -> list[str]:
+def matcher_surface_mentions(
+    text: str,
+    matcher: dict[str, list[dict[str, Any]]],
+) -> list[str]:
+    mentions: list[str] = []
+    seen_surfaces: set[str] = set()
+    for entries in matcher.values():
+        for entry in entries:
+            surface = clean_optional_string(entry.get("surface"))
+            if surface is None:
+                continue
+            if entry.get("surface_kind") == "ticker":
+                continue
+            key = normalize_match_key(surface)
+            if len(key) < 4 or key in seen_surfaces:
+                continue
+            if entity_mention_looks_generic(surface):
+                continue
+            seen_surfaces.add(key)
+            escaped = re.escape(surface).replace(r"\ ", r"\s+")
+            pattern = re.compile(
+                rf"(?<![A-Za-z0-9]){escaped}(?![A-Za-z0-9])",
+                re.IGNORECASE,
+            )
+            if pattern.search(text):
+                mentions.append(surface)
+    return mentions
+
+
+def extract_entity_mentions(
+    snippet_text: Any,
+    matcher: dict[str, list[dict[str, Any]]] | None = None,
+) -> list[str]:
     text = visible_snippet_text(snippet_text)
     mentions = [match.group(1).strip(" ,.;:") for match in ENTITY_NAME_PATTERN.finditer(text)]
     mentions.extend(match.group(1).strip() for match in TICKER_REFERENCE_PATTERN.finditer(text))
-    return unique_ordered([mention for mention in mentions if mention])
+    mentions.extend(
+        match.group(1).strip(" ,.;:")
+        for match in CAPITALIZED_ENTITY_PATTERN.finditer(text)
+    )
+    if matcher is not None:
+        mentions.extend(matcher_surface_mentions(text, matcher))
+    return unique_ordered(
+        [
+            mention
+            for mention in mentions
+            if mention and not entity_mention_looks_generic(mention)
+        ]
+    )
 
 
 def numeric_score(value: Any) -> float | None:
@@ -476,8 +674,16 @@ def resolve_snippet_target(
     snippet_text: Any,
     source_ticker: str | None,
     matcher: dict[str, list[dict[str, Any]]],
+    *,
+    preferred_mention: str | None = None,
+    preferred_only: bool = False,
 ) -> dict[str, Any]:
-    mentions = extract_entity_mentions(snippet_text)
+    mentions: list[str] = []
+    if preferred_mention and not entity_mention_looks_generic(preferred_mention):
+        mentions.append(preferred_mention)
+    if not preferred_only:
+        mentions.extend(extract_entity_mentions(snippet_text, matcher))
+    mentions = unique_ordered(mentions)
     matches: list[tuple[int, str, dict[str, Any]]] = []
     unresolved: list[str] = []
 
@@ -511,6 +717,104 @@ def resolve_snippet_target(
         "target_entity_mention": None,
         "unresolved_entity_mentions": unresolved,
     }
+
+
+def mention_regex(mention: str) -> str:
+    return re.escape(mention).replace(r"\ ", r"\s+")
+
+
+def relationship_evidence_for_mention(text: str, mention: str) -> dict[str, str] | None:
+    mention_pattern = mention_regex(mention)
+    checks: tuple[tuple[str, str, str], ...] = (
+        (
+            "partnership",
+            "agreement with",
+            rf"\bagreement\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "partnership",
+            "partnership with",
+            rf"\bpartnerships?\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "partnership",
+            "collaboration with",
+            rf"\bcollaboration\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "partnership",
+            "joint venture with",
+            rf"\bjoint\s+venture\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "supply",
+            "supplies",
+            rf"(?<![A-Za-z0-9]){mention_pattern}\s+supplies\b",
+        ),
+        (
+            "supply",
+            "manufactured by",
+            rf"\bmanufactured\s+by\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "supply",
+            "components sourced from",
+            rf"\bcomponents\s+sourced\s+from\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "supplier_customer",
+            "revenue from",
+            rf"\brevenue\s+from\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "supplier_customer",
+            "accounted for revenue",
+            rf"(?<![A-Za-z0-9]){mention_pattern}\s+accounted\s+for\s+"
+            r"(?:approximately\s+|about\s+)?(?:\d+(?:\.\d+)?%|[A-Za-z-]+\s+percent)"
+            r"\s+of\s+(?:net\s+)?revenue\b",
+        ),
+        (
+            "investment",
+            "investment in",
+            rf"\binvestment\s+in\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "investment",
+            "ownership stake in",
+            rf"\bownership\s+stake\s+in\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+    )
+
+    for relationship_type, signal, pattern in checks:
+        if re.search(pattern, text, re.IGNORECASE):
+            return {
+                "relationship_type": relationship_type,
+                "relationship_signal": signal,
+                "target_entity_mention_hint": mention,
+            }
+    return None
+
+
+def relationship_evidence_for(
+    snippet: dict[str, Any],
+    matcher: dict[str, list[dict[str, Any]]],
+) -> dict[str, str] | None:
+    hint_type = clean_optional_string(snippet.get("relationship_type_hint"))
+    hint_target = clean_optional_string(snippet.get("target_entity_mention_hint"))
+    hint_signal = clean_optional_string(snippet.get("relationship_signal"))
+    if hint_type and hint_target and not entity_mention_looks_generic(hint_target):
+        return {
+            "relationship_type": hint_type,
+            "relationship_signal": hint_signal or str(snippet.get("keyword") or ""),
+            "target_entity_mention_hint": hint_target,
+        }
+
+    text = visible_snippet_text(snippet.get("text_snippet"))
+    for mention in extract_entity_mentions(text, matcher):
+        evidence = relationship_evidence_for_mention(text, mention)
+        if evidence is not None:
+            return evidence
+    return None
 
 
 def xbrl_noise_metrics(snippet: dict[str, Any]) -> dict[str, Any]:
@@ -570,8 +874,13 @@ def preview_ranked_snippets(snippets: list[dict[str, Any]]) -> list[dict[str, An
 
 def generic_relationship_noise_dominates(snippet_text: Any) -> bool:
     visible_text = visible_snippet_text(snippet_text)
+    if relationship_term_hits(visible_text, ACCOUNTING_RELATIONSHIP_NOISE_TERMS):
+        return True
     if not relationship_term_hits(visible_text, GENERIC_RELATIONSHIP_NOISE_TERMS):
-        return False
+        return bool(
+            relationship_term_hits(visible_text, INTERNAL_OPERATIONS_NOISE_TERMS)
+            and not relationship_term_hits(visible_text, GRAPH_WORTHY_SIGNAL_TERMS)
+        )
     return not relationship_term_hits(visible_text, GRAPH_WORTHY_SIGNAL_TERMS)
 
 
@@ -583,8 +892,6 @@ def candidate_has_required_resolution(candidate: dict[str, Any]) -> bool:
     if clean_optional_string(candidate.get("target_match_method")) is None:
         return False
     if clean_optional_string(candidate.get("target_entity_mention")) is None:
-        return False
-    if not extract_entity_mentions(candidate.get("evidence_snippet")):
         return False
 
     confidence = numeric_score(candidate.get("target_match_confidence"))
@@ -614,17 +921,16 @@ def candidate_from_snippet(
     source_ticker = source_ticker_from_metadata(metadata_fields)
     archive_url = clean_source_url(metadata_fields.get("archive_url"))
     source_urls = source_urls_from_metadata(metadata_fields)
-    relationship_type = relationship_type_for(
-        str(snippet.get("type", "")),
-        snippet.get("text_snippet"),
-    )
-    if relationship_type is None:
+    relationship_evidence = relationship_evidence_for(snippet, matcher)
+    if relationship_evidence is None:
         return None
 
     target_resolution = resolve_snippet_target(
         snippet.get("text_snippet"),
         source_ticker,
         matcher,
+        preferred_mention=relationship_evidence.get("target_entity_mention_hint"),
+        preferred_only=clean_optional_string(snippet.get("target_entity_mention_hint")) is not None,
     )
 
     candidate = {
@@ -634,7 +940,8 @@ def candidate_from_snippet(
         "target_match_method": target_resolution["target_match_method"],
         "target_match_confidence": target_resolution["target_match_confidence"],
         "target_entity_mention": target_resolution["target_entity_mention"],
-        "relationship_type": relationship_type,
+        "relationship_type": relationship_evidence["relationship_type"],
+        "relationship_signal": relationship_evidence["relationship_signal"],
         "source_type": "sec_filing",
         "source_tier": 1,
         "confidence_hint": snippet.get("confidence_hint"),
@@ -658,12 +965,39 @@ def candidate_from_snippet(
 def build_preview(raw_files: list[str], limit_chars: int | None) -> dict[str, Any]:
     report = build_report(raw_files, limit_chars)
     matcher = build_company_matcher()
-    ranked_snippets = preview_ranked_snippets(report["top_snippets"])
+    source_snippets = report.get("candidate_snippets")
+    if not isinstance(source_snippets, list) or not source_snippets:
+        source_snippets = report["top_snippets"]
+    ranked_snippets = preview_ranked_snippets(source_snippets)
     candidates: list[dict[str, Any]] = []
+    candidates_by_source: Counter[str] = Counter()
+    seen_candidate_keys: set[tuple[str, str, str, str]] = set()
     for snippet in ranked_snippets:
         candidate = candidate_from_snippet(snippet, matcher)
         if candidate is not None:
+            source_ticker = str(candidate.get("source_ticker") or "")
+            target_ticker = str(candidate.get("target_ticker") or "")
+            relationship_type = str(candidate.get("relationship_type") or "")
+            relationship_signal = str(candidate.get("relationship_signal") or "")
+            key = (
+                source_ticker,
+                target_ticker,
+                relationship_type,
+                relationship_signal,
+            )
+            if key in seen_candidate_keys:
+                continue
+            if (
+                source_ticker
+                and candidates_by_source[source_ticker]
+                >= MAX_PREVIEW_CANDIDATES_PER_SOURCE_TICKER
+            ):
+                continue
+            seen_candidate_keys.add(key)
+            candidates_by_source[source_ticker] += 1
             candidates.append(candidate)
+            if len(candidates) >= MAX_PREVIEW_CANDIDATES_TOTAL:
+                break
 
     return {
         "preview_type": "sec_signal_candidate_preview",
@@ -672,6 +1006,7 @@ def build_preview(raw_files: list[str], limit_chars: int | None) -> dict[str, An
         "limit_chars_per_file": report["limit_chars_per_file"],
         "scanned_characters": report["scanned_characters"],
         "total_signals": report["total_signals"],
+        "candidate_snippets_reviewed": len(ranked_snippets),
         "preview_candidate_count": len(candidates),
         "preview_candidates": candidates,
         "safety": dict(SAFETY_COUNTERS),
@@ -687,6 +1022,7 @@ def print_human(preview: dict[str, Any]) -> None:
     print(f"Limit chars per file: {limit_chars if limit_chars is not None else 'none'}")
     print(f"Scanned characters: {preview['scanned_characters']}")
     print(f"Total source signals: {preview['total_signals']}")
+    print(f"Candidate snippets reviewed: {preview['candidate_snippets_reviewed']}")
     print(f"Preview candidates: {preview['preview_candidate_count']}")
 
     print()

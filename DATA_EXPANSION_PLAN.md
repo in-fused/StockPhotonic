@@ -246,7 +246,7 @@ python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0
 python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000 --json
 ```
 
-Preview objects include metadata-derived `source_ticker`, `filing_date`, and `accession_number` when available, a signal-derived `relationship_type`, `source_type: "sec_filing"`, `source_tier: 1`, `confidence_hint`, `evidence_snippet`, and `review_status: "preview_only"`. The preview now keeps only records with deterministic entity resolution to a production company: `target_ticker`, `target_name`, `target_entity_mention`, and `target_match_confidence >= 0.85` must all be present. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; the generator makes no network calls, writes no candidate files, and writes no production graph data.
+Preview objects include metadata-derived `source_ticker`, `filing_date`, and `accession_number` when available, a signal-derived `relationship_type`, `relationship_signal`, `source_type: "sec_filing"`, `source_tier: 1`, `confidence_hint`, `evidence_snippet`, and `review_status: "preview_only"`. The preview keeps only records with deterministic entity resolution to a production company: `target_ticker`, `target_name`, `target_entity_mention`, and preview-only `target_match_confidence >= 0.75` must all be present. Preview output is capped per source ticker and overall to keep Batch 1 reviewable. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; the generator makes no network calls, writes no candidate files, and writes no production graph data.
 
 ### Phase D17: SEC Signal Candidate File Writer
 
@@ -265,7 +265,7 @@ Write only after the preview is acceptable:
 python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force
 ```
 
-The writer saves only `data/candidates/sec_relationship_candidates.json`, refuses to overwrite an existing candidate file unless `--force` is passed, records candidates with `review_status: "pending_review"`, and validates that every candidate has resolved target fields with `target_match_confidence >= 0.85`. The candidate file is review-only metadata and candidate records: it includes `status: "candidate_only"`, `production_write_allowed: false`, `app_load_allowed: false`, and safety counters for `network_calls: 0` and `production_writes: 0`. It must not create production nodes, create production edges, modify `data/companies.json`, modify `data/connections.json`, or change app/UI/rendering behavior.
+The writer saves only `data/candidates/sec_relationship_candidates.json`, refuses to overwrite an existing candidate file unless `--force` is passed, records candidates with `review_status: "pending_review"`, and persists only preview candidates that have resolved target fields with `target_match_confidence >= 0.85`. This keeps the preview threshold lower for inspection while preserving the stricter candidate-file and promotion-grade floor. The candidate file is review-only metadata and candidate records: it includes `status: "candidate_only"`, `production_write_allowed: false`, `app_load_allowed: false`, and safety counters for `network_calls: 0` and `production_writes: 0`. It must not create production nodes, create production edges, modify `data/companies.json`, modify `data/connections.json`, or change app/UI/rendering behavior.
 
 ### Phase D19: SEC Candidate Entity Resolution Preview
 
@@ -304,7 +304,7 @@ The validator does not promote candidates, does not create production nodes or e
 
 ### Phase D23: High-Confidence SEC Candidate Filtering
 
-The SEC candidate preview and writer now retain only graph-worthy relationship candidates. Candidate records are discarded when the target ticker is unresolved, the target name is missing, the target match confidence is below `0.85`, entity extraction fails, evidence lacks a resolvable named entity, or the snippet is dominated by generic depends-on/suppliers/customers/vendors language or XBRL artifacts.
+The SEC candidate preview and writer retain only graph-worthy relationship candidates, with different thresholds by stage. Preview records are discarded when the target ticker is unresolved, the target name is missing, the preview target match confidence is below `0.75`, evidence lacks a resolvable named entity, or the snippet is dominated by generic depends-on/suppliers/customers/vendors language, internal-operations phrasing, accounting-only phrases such as `revenue from contracts`, or XBRL artifacts. The writer persists only candidates that remain at `target_match_confidence >= 0.85`.
 
 `supplier_customer` signals are no longer carried forward as generic candidate types. They map to `partnership` only when evidence contains `revenue from`, `licensing`, `search distribution`, or `payments from`; they map to `supply` only when evidence contains `supplies`, `manufactures for`, or `component supplier`; otherwise they are discarded from candidate preview and blocked by promotion preview.
 
@@ -449,6 +449,14 @@ The expansion path remains reviewed and staged: add more approved ticker/CIK map
 When `--write-candidates --force` is passed to the local job runner, the delegated bulk runner preserves those flags and now passes candidate-writing mode through to each ticker-level `scripts/sec_pipeline_run.py` invocation. Network access is still gated by `--allow-network` plus `--user-agent`; review-only candidate writes still require `--write-candidates`; promotion remains a separate reviewed path.
 
 Batch jobs can take several minutes when filings need to be fetched or scanned. A healthy Fast Batch 1 run should visibly advance ticker by ticker and end with `production writes: 0`.
+
+### Phase D35: High-Signal Relationship Extraction Upgrade
+
+`scripts/sec_signal_report.py` now adds a candidate-focused snippet lane in addition to the human review top snippets. This lane prioritizes explicit company relationship patterns including `agreement with [Company]`, `partnership with [Company]`, `collaboration with [Company]`, `joint venture with [Company]`, `[Company] supplies`, `manufactured by [Company]`, `components sourced from [Company]`, `revenue from [Company]`, `[Company] accounted for X% of revenue`, `investment in [Company]`, and `ownership stake in [Company]`.
+
+`scripts/sec_signal_candidates_preview.py` now converts those high-signal snippets before falling back to generic signal snippets, upgrades entity detection for legal names, known public aliases, and multi-word company names, and binds target resolution to the explicit relationship phrase. Preview can surface `target_match_confidence >= 0.75`, but it remains preview-only, capped per source ticker and overall, and filters `depends on`, `our customers`, `our suppliers`, internal operations language, accounting-only phrases such as `revenue from contracts`, unresolved snippets, and XBRL-dominated artifacts.
+
+`scripts/sec_signal_candidates_write.py` keeps the stricter `target_match_confidence >= 0.85` floor before any review-only candidate file write. This phase performs no network calls, creates no production nodes or edges, does not modify `data/companies.json`, and does not modify `data/connections.json`.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

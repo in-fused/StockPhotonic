@@ -44,6 +44,7 @@ OPTIONAL_CANDIDATE_FIELDS = (
     "archive_url",
     "source_urls",
     "unresolved_entity_mentions",
+    "relationship_signal",
 )
 MIN_TARGET_MATCH_CONFIDENCE = 0.85
 
@@ -157,6 +158,14 @@ def candidate_from_preview(preview_candidate: dict[str, Any]) -> dict[str, Any]:
     return candidate
 
 
+def preview_candidate_meets_write_threshold(preview_candidate: dict[str, Any]) -> bool:
+    match_confidence = numeric_score(preview_candidate.get("target_match_confidence"))
+    return (
+        match_confidence is not None
+        and match_confidence >= MIN_TARGET_MATCH_CONFIDENCE
+    )
+
+
 def clean_string(value: Any) -> str | None:
     if not isinstance(value, str):
         return None
@@ -210,6 +219,7 @@ def build_candidate_payload(raw_files: list[str], limit_chars: int | None) -> di
     candidates = [
         candidate_from_preview(candidate)
         for candidate in preview["preview_candidates"]
+        if preview_candidate_meets_write_threshold(candidate)
     ]
 
     return {

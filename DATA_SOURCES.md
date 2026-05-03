@@ -2,7 +2,7 @@
 
 **Last Updated**: May 2, 2026
 
-**Current Version**: v5.20 / Phase D33 Job Scope Controls + Batch 1 Runtime Guidance
+**Current Version**: v5.21 / Phase D35 High-Signal Relationship Extraction Upgrade
 
 **Current Dataset**: 60 real US-listed public companies and 118 curated connections loaded from static JSON files:
 
@@ -290,7 +290,7 @@ python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/00
 python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000 --json
 ```
 
-The signal report aggregator reads one or more local downloaded filing documents under `data/cache/sec/filings/` and optional sibling `metadata.json` sidecars. It aggregates total relationship signals by type, ranks the strongest snippets by `confidence_hint`, keyword frequency, and filing-date recency when metadata is available, and prints only to stdout. Safety counters report `network_calls: 0`, `candidate_records_created: 0`, and `production_writes: 0`; candidate creation and production writes remain separate future phases.
+The signal report aggregator reads one or more local downloaded filing documents under `data/cache/sec/filings/` and optional sibling `metadata.json` sidecars. It aggregates total relationship signals by type, ranks the strongest snippets by `confidence_hint`, keyword frequency, and filing-date recency when metadata is available, and now also exposes bounded `candidate_snippets` for high-signal relationship conversion. Those candidate snippets prioritize explicit patterns such as `agreement with [Company]`, `partnership with [Company]`, `manufactured by [Company]`, `revenue from [Company]`, `[Company] accounted for X% of revenue`, `investment in [Company]`, and `ownership stake in [Company]`. It prints only to stdout. Safety counters report `network_calls: 0`, `candidate_records_created: 0`, and `production_writes: 0`; candidate creation and production writes remain separate future phases.
 
 SEC signal candidate preview commands:
 
@@ -299,7 +299,7 @@ python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0
 python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --limit-chars 50000 --json
 ```
 
-The candidate preview generator reuses the read-only SEC signal report path and converts ranked snippets into preview-only relationship candidate objects with `source_type: "sec_filing"`, `source_tier: 1`, metadata-derived `source_ticker` / `filing_date` / `accession_number` / `archive_url` / `source_urls` when available, and `review_status: "preview_only"`. It extracts deterministic legal-entity mentions from evidence snippets, resolves obvious matches against read-only production company names, tickers, aliases, and small built-in public aliases for already-present production tickers, and retains only candidates with `target_ticker`, `target_name`, `target_entity_mention`, and `target_match_confidence >= 0.85`. Generic depends-on/suppliers/customers/vendors snippets, unresolved snippets, and XBRL-dominated artifacts are filtered out. `supplier_customer` signals are kept only when high-precision evidence maps them to `supply` or `partnership`. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; it does not create candidate files and does not change production data.
+The candidate preview generator reuses the read-only SEC signal report path and converts candidate-ranked snippets into preview-only relationship candidate objects with `source_type: "sec_filing"`, `source_tier: 1`, metadata-derived `source_ticker` / `filing_date` / `accession_number` / `archive_url` / `source_urls` when available, and `review_status: "preview_only"`. It extracts deterministic legal-entity mentions, known public aliases, and multi-word company names from evidence snippets; resolves obvious matches against read-only production company names, tickers, aliases, and built-in public aliases for already-present production tickers; and retains preview candidates with `target_ticker`, `target_name`, `target_entity_mention`, and `target_match_confidence >= 0.75`. It binds target resolution to explicit relationship evidence and filters generic `depends on`, `our customers`, `our suppliers`, internal-operations language, accounting phrases such as `revenue from contracts`, unresolved snippets, and XBRL-dominated artifacts. Preview output is capped per source ticker and overall to keep Batch 1 small and reviewable. Safety counters report `network_calls: 0`, `candidate_files_written: 0`, and `production_writes: 0`; it does not create candidate files and does not change production data.
 
 SEC signal candidate writer commands:
 
@@ -309,7 +309,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force
 ```
 
-The candidate writer reuses the safe preview path, converts preview records to review-only records with `review_status: "pending_review"`, and writes only `data/candidates/sec_relationship_candidates.json` when `--write` is explicit. Because the committed candidate file is itself review-only, overwriting it requires `--force`. The writer validates resolved target fields and `target_match_confidence >= 0.85` before any explicit candidate-file write, and preserves valid SEC `archive_url` / `source_urls` values so the later promotion path can attach direct SEC URLs to promoted edges. The file metadata keeps `status: "candidate_only"`, `production_write_allowed: false`, and `app_load_allowed: false`; safety counters keep `network_calls: 0` and `production_writes: 0`. This writer does not modify `data/companies.json`, `data/connections.json`, UI files, rendering code, or production scripts.
+The candidate writer reuses the safe preview path, converts eligible preview records to review-only records with `review_status: "pending_review"`, and writes only `data/candidates/sec_relationship_candidates.json` when `--write` is explicit. Because the committed candidate file is itself review-only, overwriting it requires `--force`. Preview can surface `target_match_confidence >= 0.75`, but the writer persists only candidates that still meet the stricter `target_match_confidence >= 0.85` floor and validates those resolved target fields before any explicit candidate-file write. It preserves valid SEC `archive_url` / `source_urls` values and relationship-signal metadata so the later promotion path can attach direct SEC URLs to promoted edges. The file metadata keeps `status: "candidate_only"`, `production_write_allowed: false`, and `app_load_allowed: false`; safety counters keep `network_calls: 0` and `production_writes: 0`. This writer does not modify `data/companies.json`, `data/connections.json`, UI files, rendering code, or production scripts.
 
 SEC candidate promotion commands:
 

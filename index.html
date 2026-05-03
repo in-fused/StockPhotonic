@@ -684,6 +684,9 @@
                 <p class="text-sm text-white/58 mb-4">
                     In these commands, <span class="font-mono text-cyan-50/78">limit</span> means filings reviewed per ticker after form filtering. It is not a cap on relationships found; deeper limits may take longer and do more SEC/cache work when network access is enabled.
                 </p>
+                <p class="text-sm text-white/58 mb-4">
+                    Batch jobs can take several minutes. A healthy run should print ticker-by-ticker progress with index, ticker, mode, limit, candidate-write state, and final candidate counts when available.
+                </p>
 
                 <div class="grid grid-cols-1 gap-3">
                     <div class="source-command rounded-2xl p-3">
@@ -790,7 +793,7 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
                     <div>
                         <div class="source-workbench-label mb-2">Local Job Runner</div>
-                        <p class="text-sm text-white/60">Run reviewed manifest jobs from the local terminal. Fast and standard Batch 1 review 10 filings per ticker; deep reviews 25 filings per ticker. Relationship candidates and production promotion stay separate.</p>
+                        <p class="text-sm text-white/60">Run reviewed manifest jobs from the local terminal. Fast and standard Batch 1 review 10 filings per ticker; deep reviews 25 filings per ticker. Runs may take several minutes but should show ticker-by-ticker progress. Relationship candidates and production promotion stay separate.</p>
                     </div>
                     <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
                         Limit is filings per ticker.

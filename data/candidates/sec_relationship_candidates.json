@@ -49,54 +49,13 @@
   "source_preview": {
     "preview_type": "sec_signal_candidate_preview",
     "expected_cache_root": "data/cache/sec/filings",
-    "input_files": 10,
+    "input_files": 180,
     "limit_chars_per_file": null,
-    "scanned_characters": 3590123,
-    "total_signals": 89
+    "scanned_characters": 159500608,
+    "total_signals": 2875
   },
-  "candidate_count": 2,
-  "candidates": [
-    {
-      "source_ticker": "AAPL",
-      "target_ticker": "GOOGL",
-      "target_name": "Alphabet Inc.",
-      "target_match_method": "common_public_alias_exact",
-      "target_match_confidence": 0.92,
-      "target_entity_mention": "Google LLC",
-      "relationship_type": "partnership",
-      "source_type": "sec_filing",
-      "source_tier": 1,
-      "confidence_hint": 0.86,
-      "evidence_snippet": "...th those business partners and materially adversely affect the Company&#8217;s business, results of operations, financial condition and stock price. For example, the Company earns revenue from licensing arrangements with Google LLC (&#8220;Google&#8221;) and other companies to offer their search services on the Company&#8217;s platforms and applications, and certain of...",
-      "filing_date": "2026-05-01",
-      "accession_number": "0000320193-26-000013",
-      "review_status": "pending_review",
-      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000013/aapl-20260328.htm",
-      "source_urls": [
-        "https://www.sec.gov/Archives/edgar/data/320193/000032019326000013/aapl-20260328.htm"
-      ]
-    },
-    {
-      "source_ticker": "AAPL",
-      "target_ticker": "GOOGL",
-      "target_name": "Alphabet Inc.",
-      "target_match_method": "common_public_alias_exact",
-      "target_match_confidence": 0.92,
-      "target_entity_mention": "Google LLC",
-      "relationship_type": "partnership",
-      "source_type": "sec_filing",
-      "source_tier": 1,
-      "confidence_hint": 0.86,
-      "evidence_snippet": "...th those business partners and materially adversely affect the Company&#8217;s business, results of operations, financial condition and stock price. For example, the Company earns revenue from licensing arrangements with Google LLC (&#8220;Google&#8221;) and other companies to offer their search services on the Company&#8217;s platforms and applications, and certain of...",
-      "filing_date": "2025-10-31",
-      "accession_number": "0000320193-25-000079",
-      "review_status": "pending_review",
-      "archive_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
-      "source_urls": [
-        "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
-      ]
-    }
-  ],
+  "candidate_count": 0,
+  "candidates": [],
   "safety": {
     "network_calls": 0,
     "production_writes": 0

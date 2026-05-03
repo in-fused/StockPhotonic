@@ -60,6 +60,7 @@ class PipelineSummary:
     filings_fetched: int = 0
     filings_cache_hit: int = 0
     cached_filings_available: int = 0
+    raw_signals: int = 0
     candidate_previews_generated: int = 0
     candidate_file_written: bool = False
     production_writes: int = 0
@@ -193,6 +194,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 def subprocess_environment() -> dict[str, str]:
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONUNBUFFERED"] = "1"
     return env
 
 
@@ -546,6 +548,7 @@ def print_final_summary(summary: PipelineSummary) -> None:
         f"{summary.filings_fetched}/{summary.filings_cache_hit}"
     )
     print(f"cached filings available for preview: {summary.cached_filings_available}")
+    print(f"raw signals: {summary.raw_signals}")
     print(f"candidate previews generated: {summary.candidate_previews_generated}")
     print(
         "candidate file written: "
@@ -602,7 +605,8 @@ def run_pipeline(args: argparse.Namespace, summary: PipelineSummary) -> Pipeline
             )
 
         print_step(6, "run signal report")
-        run_signal_report(args, cached_files)
+        report = run_signal_report(args, cached_files)
+        summary.raw_signals = int(report.get("total_signals") or 0)
 
         print_step(7, "run candidate preview")
         preview = run_candidate_preview(args, cached_files)

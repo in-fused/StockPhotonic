@@ -14,9 +14,11 @@ import os
 import re
 import subprocess
 import sys
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from queue import Queue
 from typing import Any
 
 
@@ -239,6 +241,7 @@ def assert_production_data_unchanged(initial_hashes: dict[Path, str]) -> None:
 def subprocess_environment() -> dict[str, str]:
     env = os.environ.copy()
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    env["PYTHONUNBUFFERED"] = "1"
     return env
 
 
@@ -281,28 +284,73 @@ def delegated_command(args: argparse.Namespace, job: SecJob) -> list[str]:
     return command
 
 
-def print_completed_process(result: subprocess.CompletedProcess[str]) -> None:
-    stdout = result.stdout.rstrip()
-    stderr = result.stderr.rstrip()
-    if stdout:
-        print(stdout)
-    if stderr:
-        print(stderr, file=sys.stderr)
+def read_process_stream(
+    stream_name: str,
+    stream: Any,
+    output_queue: Queue[tuple[str, str | None]],
+) -> None:
+    try:
+        for line in stream:
+            output_queue.put((stream_name, line))
+    finally:
+        output_queue.put((stream_name, None))
 
 
 def run_delegated_command(command: list[str]) -> subprocess.CompletedProcess[str]:
-    print(f"Delegated command: {display_command(command)}")
-    result = subprocess.run(
+    print(f"Delegated command: {display_command(command)}", flush=True)
+    process = subprocess.Popen(
         command,
         cwd=ROOT,
         env=subprocess_environment(),
         text=True,
+        bufsize=1,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        check=False,
     )
-    print_completed_process(result)
-    return result
+    if process.stdout is None or process.stderr is None:
+        raise SecJobRunError("could not open delegated command output streams.")
+
+    output_queue: Queue[tuple[str, str | None]] = Queue()
+    threads = [
+        threading.Thread(
+            target=read_process_stream,
+            args=("stdout", process.stdout, output_queue),
+            daemon=True,
+        ),
+        threading.Thread(
+            target=read_process_stream,
+            args=("stderr", process.stderr, output_queue),
+            daemon=True,
+        ),
+    ]
+    for thread in threads:
+        thread.start()
+
+    stdout_lines: list[str] = []
+    stderr_lines: list[str] = []
+    open_streams = len(threads)
+    while open_streams:
+        stream_name, line = output_queue.get()
+        if line is None:
+            open_streams -= 1
+            continue
+        if stream_name == "stdout":
+            stdout_lines.append(line)
+            print(line, end="", flush=True)
+        else:
+            stderr_lines.append(line)
+            print(line, end="", file=sys.stderr, flush=True)
+
+    returncode = process.wait()
+    for thread in threads:
+        thread.join()
+
+    return subprocess.CompletedProcess(
+        command,
+        returncode,
+        "".join(stdout_lines),
+        "".join(stderr_lines),
+    )
 
 
 def write_run_log(
@@ -356,6 +404,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Job: {job.id}")
         print(f"Mode: {'network-enabled' if args.allow_network else 'dry-run/preview'}")
         print("Candidate file writing: " + ("enabled" if args.write_candidates else "disabled"))
+        print(f"Tickers requested: {len(job.tickers)} ({', '.join(job.tickers)})")
+        print(f"Forms: {', '.join(job.forms)}")
+        print(f"Limit per ticker: {job.limit}")
         print("Production writes: 0")
         print(f"Job manifest: {SEC_JOBS_PATH.relative_to(ROOT)}")
 

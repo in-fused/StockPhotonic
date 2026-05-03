@@ -198,6 +198,8 @@ Phase D33 keeps `batch_1_multi_sector` as the standard/default Batch 1 manifest 
 
 Across SEC job and bulk runner commands, `limit` means filings reviewed per ticker after form filtering. It is not a cap on relationships found or candidate records surfaced. Higher limits can improve filing coverage but may take longer and may trigger more SEC network/cache work when `--allow-network` is enabled.
 
+SEC batch and job runs can take several minutes, especially when network fetches or larger cached filings are involved. The local job runner streams the delegated bulk runner output, and the bulk runner prints ticker-by-ticker progress with index/total, ticker symbol, mode, limit, candidate-write state, and final per-ticker candidate preview counts when available.
+
 The scheduled preview and job runner are the primary local orchestration surface. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate output requires `--write-candidates`; `--force` is passed only to the existing candidate writer and does not authorize production graph writes.
 
 SEC bulk local runner commands:
@@ -208,7 +210,7 @@ python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10
 python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA,AMZN,GOOGL,META,AMD,INTC,AVGO,JPM,GS,BLK,XOM,CVX,UNH,LLY,GE,CAT --forms 10-K,10-Q,8-K --limit 10
 ```
 
-The bulk runner is the safe local workflow for multiple approved ticker/CIK mappings. AAPL, MSFT, and NVDA are the current reviewed starter job, and the Batch 1 CIK reference now extends approved mapping coverage across major companies in multiple sectors. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, and delegates each approved ticker to the single-ticker runner. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate file output requires `--write-candidates`; when enabled, the batch writes one combined `data/candidates/sec_relationship_candidates.json` from successfully processed cached filings. Tickers with no mapping or no usable filings are skipped with a summary reason. Production writes remain `0`; promotion stays in the separate promotion preview/promotion path.
+The bulk runner is the safe local workflow for multiple approved ticker/CIK mappings. AAPL, MSFT, and NVDA are the current reviewed starter job, and the Batch 1 CIK reference now extends approved mapping coverage across major companies in multiple sectors. It reads `data/candidates/cik_mappings.json`, processes only requested tickers with `review_status: "approved_for_fetch"`, and delegates each approved ticker to the single-ticker runner. Default mode is dry-run/preview only. Network calls require both `--allow-network` and an identifying `--user-agent`. Review-only candidate file output requires `--write-candidates`; when enabled, candidate-writing mode is preserved into each ticker-level runner and the batch writes one combined `data/candidates/sec_relationship_candidates.json` from successfully processed cached filings. Tickers with no mapping or no usable filings are skipped with a summary reason. Production writes remain `0`; promotion stays in the separate promotion preview/promotion path.
 
 SEC local job runner commands:
 

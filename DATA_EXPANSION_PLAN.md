@@ -442,6 +442,14 @@ The Source Workbench now exposes copyable fast and deep Batch 1 dry-run commands
 
 The expansion path remains reviewed and staged: add more approved ticker/CIK mappings, then add more reviewed job manifests, then run candidate generation and promotion previews, then consider production writes only through the separate reviewed promotion path. This phase does not create production nodes, create production edges, modify `data/companies.json`, modify `data/connections.json`, add backend/server code, or run network calls.
 
+### Phase D34: SEC Batch Runtime Visibility + Candidate Write Propagation
+
+`scripts/sec_job_run.py` now streams delegated bulk-runner output so reviewed manifest jobs show live progress instead of appearing frozen. `scripts/sec_bulk_pipeline_run.py` prints ticker-by-ticker progress with current index/total, ticker symbol, mode, limit, candidate-write state, and final per-ticker candidate preview counts when available. The end-of-run summary includes requested, processed, skipped, and failed tickers plus aggregate filing, signal, candidate, candidate-file, and production-write counters.
+
+When `--write-candidates --force` is passed to the local job runner, the delegated bulk runner preserves those flags and now passes candidate-writing mode through to each ticker-level `scripts/sec_pipeline_run.py` invocation. Network access is still gated by `--allow-network` plus `--user-agent`; review-only candidate writes still require `--write-candidates`; promotion remains a separate reviewed path.
+
+Batch jobs can take several minutes when filings need to be fetched or scanned. A healthy Fast Batch 1 run should visibly advance ticker by ticker and end with `production writes: 0`.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

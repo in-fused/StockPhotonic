@@ -321,7 +321,7 @@ python scripts/sec_candidate_promote.py
 python scripts/sec_candidate_promote.py --write
 ```
 
-Promotion is allowed only when the candidate has a resolved `target_ticker`, `target_match_confidence >= 0.85`, evidence text, a valid filing date, a valid `confidence_hint`, source and target tickers already present in `data/companies.json`, and a relationship type that maps deterministically to current production `partnership`, `supply`, or `investment`. The writer prevents existing production duplicates, suppresses weaker duplicate candidates for the same source/target pair within the same run, performs no network calls, never modifies `data/companies.json`, and keeps `--write` explicit and manual. Dry-run and JSON output can include the automation policy classification, but the policy does not make production writes automatic.
+Promotion is allowed only when the candidate has a resolved `target_ticker`, `target_match_confidence >= 0.85`, evidence text, a valid filing date, a valid `confidence_hint`, source and target tickers already present in `data/companies.json`, and a relationship type that maps deterministically to current production `partnership`, `supply`, or `investment`. The writer prevents existing production duplicates, suppresses weaker duplicate candidates for the same normalized production edge key within the same run, performs no network calls, never modifies `data/companies.json`, and keeps `--write` explicit and manual. Dry-run and JSON output can include the automation policy classification, but the policy does not make production writes automatic.
 
 Phase D24 promoted one AAPL -> GOOGL `partnership` edge for the SEC filing licensing/search distribution relationship. A post-write dry run reports the resolved AAPL -> GOOGL candidates as existing duplicates, so reruns do not add another edge.
 
@@ -465,6 +465,14 @@ Batch jobs can take several minutes when filings need to be fetched or scanned. 
 Both scripts now deduplicate same source/target candidate pairs after endpoint validation and type normalization. The strongest candidate is retained using promotability, policy gate result, confidence hint, target-match confidence, source URL support, and original order as tie-breakers. Suppressed duplicates are reported separately, and the kept record carries merged source URL and signal/type metadata when duplicate signals contributed evidence. Promotion preview and dry-run promotion therefore show only unique proposed edges, while existing production duplicates remain blocked.
 
 This phase writes no production graph data. `scripts/sec_candidate_promotion_preview.py` remains read-only, and `scripts/sec_candidate_promote.py` still writes `data/connections.json` only when `--write` is explicit.
+
+### Phase D37: First Multi-Company SEC Graph Promotion
+
+`scripts/sec_candidate_promote.py` now deduplicates production promotion candidates by normalized edge key after endpoint validation and relationship type normalization. This keeps exact duplicate source/target/type edges blocked while allowing distinct validated relationship categories, such as `partnership` and `investment`, to coexist for the same company pair when supported by separate SEC evidence.
+
+The first multi-company SEC promotion appended three source-backed production edges to `data/connections.json`: INTC-NVDA `partnership`, NVDA-MSFT `partnership`, and INTC-NVDA `investment`. Each promoted edge preserves the SEC archive URL in `source_urls`, uses `provenance: "SEC filing"`, carries a filing-date `verified_date`, and maps to existing production company IDs only. The prior AAPL-GOOGL candidate stayed blocked as an existing production duplicate.
+
+Post-promotion validation reports 60 companies and 121 connections with no validation errors and no duplicate edge keys. A follow-up dry run of the promotion writer reports zero promotable edges, confirming the D37 write is idempotent after promotion. This phase does not create production companies, does not run network calls, and does not modify app/UI behavior.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

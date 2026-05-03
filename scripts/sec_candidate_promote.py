@@ -984,21 +984,32 @@ def inspect_candidate(
     }
 
 
-def candidate_pair_key(record: dict[str, Any]) -> tuple[Any, ...] | None:
+def candidate_dedupe_key(record: dict[str, Any]) -> tuple[Any, ...] | None:
     source_id = record.get("source_company_id")
     target_id = record.get("target_company_id")
+    mapped_type = clean_string(record.get("mapped_production_type"))
     if (
         isinstance(source_id, int)
         and not isinstance(source_id, bool)
         and isinstance(target_id, int)
         and not isinstance(target_id, bool)
     ):
+        if mapped_type:
+            return (
+                "company_edge",
+                min(source_id, target_id),
+                max(source_id, target_id),
+                mapped_type.lower(),
+            )
         return ("company_ids", min(source_id, target_id), max(source_id, target_id))
 
     source_ticker = clean_string(record.get("source_ticker"))
     target_ticker = clean_string(record.get("target_ticker"))
     if source_ticker and target_ticker:
-        return ("tickers", *sorted((source_ticker.upper(), target_ticker.upper())))
+        sorted_tickers = sorted((source_ticker.upper(), target_ticker.upper()))
+        if mapped_type:
+            return ("ticker_edge", *sorted_tickers, mapped_type.lower())
+        return ("tickers", *sorted_tickers)
     return None
 
 
@@ -1060,7 +1071,7 @@ def merge_duplicate_group(
         ]
     )
     winner["deduplication"] = {
-        "status": "kept_strongest_candidate_pair",
+        "status": "kept_strongest_candidate_edge",
         "candidate_indices": sorted(candidate_indices),
         "suppressed_candidate_indices": sorted(suppressed_indices),
         "duplicate_candidates_suppressed": len(suppressed_indices),
@@ -1088,7 +1099,7 @@ def deduplicate_records(
     grouped: dict[tuple[Any, ...], list[dict[str, Any]]] = {}
     ungrouped: list[dict[str, Any]] = []
     for record in records:
-        key = candidate_pair_key(record)
+        key = candidate_dedupe_key(record)
         if key is None:
             ungrouped.append(record)
         else:
@@ -1115,7 +1126,7 @@ def deduplicate_records(
                     "policy_classification": "manual_review_required",
                     "policy_reasons": ["duplicate_candidate_edge"],
                     "kept_candidate_index": winner["index"],
-                    "suppression_reason": "weaker_duplicate_candidate_pair",
+                    "suppression_reason": "weaker_duplicate_candidate_edge",
                 }
             )
 
@@ -1171,7 +1182,7 @@ def build_result(
     summary = {
         "mode": "write" if write else "dry-run",
         "total_candidates": len(candidates),
-        "unique_candidate_pairs": len(records),
+        "unique_candidate_edges": len(records),
         "promotable_edges": len(new_edges),
         "blocked_candidates": len(candidates) - len(new_edges),
         "duplicates_suppressed": duplicate_count,
@@ -1267,7 +1278,7 @@ def print_human(result: dict[str, Any]) -> None:
     print(f"Production companies: {result['production_files']['companies']}")
     print(f"Production connections: {result['production_files']['connections']}")
     print(f"Total candidates: {summary['total_candidates']}")
-    print(f"Unique candidate pairs: {summary['unique_candidate_pairs']}")
+    print(f"Unique candidate edges: {summary['unique_candidate_edges']}")
     print(f"Promotable new edges: {summary['promotable_edges']}")
     print(f"Blocked candidates: {summary['blocked_candidates']}")
     print(f"Duplicates suppressed: {summary['duplicates_suppressed']}")

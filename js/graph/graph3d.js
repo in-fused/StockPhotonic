@@ -748,10 +748,10 @@
             const secCount = this.linkRecords.filter(link => link.secBacked).length;
             const sectors = new Set(this.nodeRecords.map(record => record.node.sector || 'Other')).size;
             this.stats.innerHTML = `
-                <span class="graph3d-stat-pill rounded-full px-2.5 py-1">${this.nodeRecords.length} NODES</span>
-                <span class="graph3d-stat-pill rounded-full px-2.5 py-1">${this.linkRecords.length} EDGES</span>
-                <span class="graph3d-stat-pill rounded-full px-2.5 py-1">${sectors} SECTORS</span>
-                <span class="graph3d-stat-pill rounded-full px-2.5 py-1">${secCount} SEC EDGES</span>
+                ${this.renderStatPill('Nodes', this.nodeRecords.length)}
+                ${this.renderStatPill('Edges', this.linkRecords.length)}
+                ${this.renderStatPill('Sectors', sectors)}
+                ${this.renderStatPill('SEC edges', secCount)}
             `;
         }
 
@@ -760,12 +760,20 @@
             if (!this.selectedRecord) {
                 const secCount = this.linkRecords.filter(link => link.secBacked).length;
                 this.details.innerHTML = `
-                    <div class="source-workbench-label mb-3">3D Network</div>
-                    <div class="font-display text-2xl text-white">Production Graph</div>
-                    <div class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="source-workbench-label mb-3">3D Network Guide</div>
+                    <div class="font-display text-2xl text-white">Explore the production graph</div>
+                    <p class="mt-2 text-sm leading-6 text-white/62">Rotate, zoom, and select companies without changing filters or underlying graph intelligence.</p>
+                    <div class="mt-5 space-y-3">
+                        ${this.renderGuideRow('fa-arrows-rotate', 'Rotate', 'Drag across the canvas to orbit the network.')}
+                        ${this.renderGuideRow('fa-magnifying-glass-plus', 'Zoom', 'Use the mouse wheel or trackpad pinch to move closer or farther away.')}
+                        ${this.renderGuideRow('fa-hand-pointer', 'Select', 'Hover for a quick ticker card; click a node to pin its relationship details here.')}
+                        ${this.renderGuideRow('fa-file-shield', 'SEC emphasis', 'Gold dashed edges mark relationships backed by SEC evidence when emphasis is on.')}
+                        ${this.renderGuideRow('fa-tags', 'Labels', 'The labels toggle shows or hides priority tickers plus hovered and selected nodes.')}
+                    </div>
+                    <div class="mt-5 grid grid-cols-2 gap-3">
                         ${this.renderMetric('Nodes', this.nodeRecords.length)}
                         ${this.renderMetric('Edges', this.linkRecords.length)}
-                        ${this.renderMetric('SEC backed', secCount)}
+                        ${this.renderMetric('SEC edges', secCount)}
                         ${this.renderMetric('Labels', this.labelsEnabled ? 'On' : 'Off')}
                     </div>
                 `;
@@ -778,25 +786,57 @@
             const top = connections.slice(0, 5);
             this.details.innerHTML = `
                 <div class="flex items-start justify-between gap-3">
-                    <div>
+                    <div class="min-w-0">
                         <div class="source-workbench-label mb-2">Selected Node</div>
-                        <div class="font-display text-3xl text-white">${this.escapeHtml(record.node.ticker || '')}</div>
-                        <div class="text-sm text-white/62 mt-1">${this.escapeHtml(record.node.name || '')}</div>
+                        <div class="font-display text-4xl text-white leading-none">${this.escapeHtml(record.node.ticker || '')}</div>
+                        <div class="text-base text-cyan-50/78 mt-2 leading-6">${this.escapeHtml(record.node.name || '')}</div>
                     </div>
                     <div class="w-4 h-4 rounded-full mt-2" style="background:${this.escapeHtml(record.node.color || CYAN)}; box-shadow:0 0 18px ${this.escapeHtml(record.node.color || CYAN)};"></div>
                 </div>
-                <div class="mt-4 space-y-2 text-sm text-white/66">
-                    <div><span class="text-white/38 font-mono text-[10px] tracking-[1.2px]">SECTOR</span> ${this.escapeHtml(record.node.sector || 'Other')}</div>
-                    <div><span class="text-white/38 font-mono text-[10px] tracking-[1.2px]">INDUSTRY GROUP</span> ${this.escapeHtml(this.getCompanyIndustryGroup(record.node) || 'Other')}</div>
+                <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <div class="text-[10px] text-white/42 font-mono">SECTOR</div>
+                        <div class="mt-1 text-sm leading-5 text-white/82">${this.escapeHtml(record.node.sector || 'Other')}</div>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <div class="text-[10px] text-white/42 font-mono">INDUSTRY GROUP</div>
+                        <div class="mt-1 text-sm leading-5 text-white/82">${this.escapeHtml(this.getCompanyIndustryGroup(record.node) || 'Other')}</div>
+                    </div>
                 </div>
                 <div class="mt-4 grid grid-cols-2 gap-3">
                     ${this.renderMetric('Connections', connections.length)}
-                    ${this.renderMetric('SEC backed', secCount)}
+                    ${this.renderMetric('SEC edges', secCount)}
                 </div>
                 <div class="sidebar-section">
-                    <div class="sidebar-section-title">Top Relationships</div>
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <div class="sidebar-section-title mb-0">Top Relationships</div>
+                        <div class="text-[11px] text-white/48">${this.escapeHtml(connections.length)} total</div>
+                    </div>
                     <div class="space-y-2">
                         ${top.length ? top.map(item => this.renderRelationshipRow(item)).join('') : '<div class="text-sm text-white/42">No production relationships.</div>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        renderStatPill(label, value) {
+            return `
+                <span class="graph3d-stat-pill rounded-full px-3 py-1.5">
+                    <span class="graph3d-stat-value">${this.escapeHtml(value)}</span>
+                    <span class="graph3d-stat-label">${this.escapeHtml(label)}</span>
+                </span>
+            `;
+        }
+
+        renderGuideRow(icon, title, body) {
+            return `
+                <div class="rounded-2xl border border-white/10 bg-black/20 p-3 flex gap-3">
+                    <div class="w-8 h-8 rounded-2xl bg-cyan-300/10 border border-cyan-200/15 text-cyan-100/82 flex items-center justify-center shrink-0">
+                        <i class="fa-solid ${this.escapeHtml(icon)} text-xs"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-semibold text-white/88">${this.escapeHtml(title)}</div>
+                        <div class="text-sm leading-5 text-white/58 mt-0.5">${this.escapeHtml(body)}</div>
                     </div>
                 </div>
             `;
@@ -805,7 +845,7 @@
         renderMetric(label, value) {
             return `
                 <div class="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
-                    <div class="text-[10px] text-white/38 font-mono tracking-[1.2px]">${this.escapeHtml(label)}</div>
+                    <div class="text-[10px] text-white/42 font-mono">${this.escapeHtml(label)}</div>
                     <div class="font-display text-xl text-white mt-1">${this.escapeHtml(value)}</div>
                 </div>
             `;
@@ -817,16 +857,22 @@
             const color = item.linkRecord.secBacked ? GOLD : item.linkRecord.color;
             const strength = Math.round(item.linkRecord.strength * 100);
             const secBadge = item.linkRecord.secBacked
-                ? '<span class="sec-edge-badge rounded-full px-2 py-0.5 text-[9px] font-mono">SEC</span>'
+                ? '<span class="sec-edge-badge rounded-full px-2 py-0.5 text-[10px] font-mono">SEC</span>'
                 : '';
+            const rowClass = item.linkRecord.secBacked ? 'connection-row sec-backed-connection-row rounded-2xl p-3' : 'connection-row rounded-2xl p-3';
+            const relationship = link.label || this.formatConnectionType(link.type);
             return `
-                <div class="connection-row rounded-2xl p-3">
-                    <div class="flex items-center justify-between gap-2">
+                <div class="${rowClass}">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0">
-                            <div class="text-sm font-semibold text-white/90 truncate">${this.escapeHtml(other.ticker || '')} <span class="text-white/42 font-normal">${this.escapeHtml(other.name || '')}</span></div>
-                            <div class="text-[11px] text-white/50 mt-1 truncate">${this.escapeHtml(link.label || this.formatConnectionType(link.type))}</div>
+                            <div class="connection-title text-sm font-semibold text-white/92 truncate">${this.escapeHtml(other.ticker || '')}</div>
+                            <div class="text-[12px] text-white/58 mt-0.5 truncate">${this.escapeHtml(other.name || '')}</div>
+                            <div class="text-[12px] text-cyan-50/58 mt-2 leading-5">${this.escapeHtml(relationship)}</div>
                         </div>
-                        <div class="flex items-center gap-2 shrink-0">${secBadge}<span class="font-mono text-[10px] text-white/45">${strength}%</span></div>
+                        <div class="flex flex-col items-end gap-1.5 shrink-0">
+                            ${secBadge}
+                            <span class="font-mono text-[11px] text-white/54">${strength}%</span>
+                        </div>
                     </div>
                     <div class="mt-2 h-px" style="background:linear-gradient(90deg, ${this.escapeHtml(color)}, transparent); opacity:.58;"></div>
                 </div>
@@ -861,6 +907,7 @@
             this.secEmphasisEnabled = Boolean(value);
             if (this.initialized && !this.engineUnavailable) this.rebuildScene();
             this.syncControls();
+            this.renderDetails();
         }
 
         toggleSecEmphasis() {
@@ -908,8 +955,10 @@
             if (this.details) {
                 this.details.innerHTML = `
                     <div class="source-workbench-label mb-3">3D Network</div>
-                    <div class="font-display text-2xl text-white">3D engine unavailable</div>
-                    <p class="text-sm text-white/58 mt-3">Three.js did not load from the CDN.</p>
+                    <div class="rounded-3xl border border-yellow-300/20 bg-yellow-300/10 p-4">
+                        <div class="font-display text-2xl text-white">3D engine unavailable</div>
+                        <p class="text-sm leading-6 text-white/64 mt-2">Three.js did not load from the CDN. The production 2D graph and Source Workbench remain available.</p>
+                    </div>
                 `;
             }
         }

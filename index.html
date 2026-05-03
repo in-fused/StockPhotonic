@@ -440,6 +440,7 @@
         }
 
         #graph3d-stage {
+            height: min(74vh, 760px);
             min-height: 680px;
             border: 1px solid rgba(0, 249, 255, 0.12);
             background:
@@ -454,7 +455,6 @@
             display: block;
             width: 100%;
             height: 100%;
-            min-height: 680px;
             touch-action: none;
             user-select: none;
             cursor: grab;
@@ -482,14 +482,30 @@
         }
 
         .graph3d-stat-pill {
-            border: 1px solid rgba(0, 249, 255, 0.18);
-            background: rgba(3, 7, 18, 0.72);
-            color: rgba(207, 250, 254, 0.82);
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.38rem;
+            border: 1px solid rgba(0, 249, 255, 0.30);
+            background: rgba(3, 7, 18, 0.84);
+            color: rgba(236, 254, 255, 0.94);
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 0.62rem;
-            letter-spacing: 1.1px;
-            box-shadow: 0 0 18px rgba(0, 249, 255, 0.08);
+            font-size: 0.72rem;
+            letter-spacing: 0;
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.13);
             backdrop-filter: blur(14px);
+        }
+
+        .graph3d-stat-value {
+            font-family: 'Space Grotesk', Inter, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #ffffff;
+        }
+
+        .graph3d-stat-label {
+            color: rgba(207, 250, 254, 0.74);
+            line-height: 1;
         }
 
         .graph3d-tooltip {
@@ -508,6 +524,67 @@
             background: rgba(255, 255, 255, 0.035);
         }
 
+        .graph3d-legend {
+            border: 1px solid rgba(0, 249, 255, 0.14);
+            background: rgba(3, 7, 18, 0.42);
+        }
+
+        .graph3d-legend-row {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            color: rgba(226, 232, 240, 0.72);
+            font-size: 0.82rem;
+            line-height: 1.35;
+        }
+
+        .graph3d-legend-mark {
+            position: relative;
+            flex: 0 0 auto;
+            width: 1.85rem;
+            height: 1rem;
+        }
+
+        .graph3d-legend-node::before {
+            content: "";
+            position: absolute;
+            left: 0.45rem;
+            top: 0.12rem;
+            width: 0.78rem;
+            height: 0.78rem;
+            border-radius: 999px;
+            background: #00f9ff;
+            box-shadow: 0 0 16px rgba(0, 249, 255, 0.75);
+        }
+
+        .graph3d-legend-edge::before,
+        .graph3d-legend-sec::before,
+        .graph3d-legend-label::before {
+            content: "";
+            position: absolute;
+            left: 0.1rem;
+            right: 0.1rem;
+            top: 0.48rem;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(0, 249, 255, 0.92), rgba(255, 0, 170, 0.58));
+            box-shadow: 0 0 10px rgba(0, 249, 255, 0.3);
+        }
+
+        .graph3d-legend-sec::before {
+            height: 3px;
+            background: repeating-linear-gradient(90deg, #ffd700 0 7px, rgba(255, 215, 0, 0.12) 7px 11px);
+            box-shadow: 0 0 14px rgba(255, 215, 0, 0.42);
+        }
+
+        .graph3d-legend-label::before {
+            top: 0.2rem;
+            height: 0.74rem;
+            border: 1px solid rgba(255, 255, 255, 0.54);
+            border-radius: 0.32rem;
+            background: rgba(3, 7, 18, 0.8);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.12);
+        }
+
         @media (max-width: 768px) {
             .page-shell {
                 padding-left: 1rem;
@@ -520,7 +597,48 @@
 
             #graph3d-stage,
             #graph3d-canvas {
-                min-height: 62vh;
+                height: clamp(420px, 66vh, 560px);
+                min-height: 420px;
+            }
+
+            .graph3d-workbench {
+                padding: 1rem;
+            }
+
+            .graph3d-toolbar {
+                width: 100%;
+                border-radius: 1.35rem;
+                padding: 0.45rem;
+            }
+
+            .graph3d-toolbar .focus-button {
+                flex: 1 1 calc(50% - 0.4rem);
+                justify-content: center;
+                min-height: 2.75rem;
+                padding-left: 0.85rem;
+                padding-right: 0.85rem;
+                font-size: 0.75rem;
+            }
+
+            .graph3d-stat-overlay {
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: 0.75rem;
+                max-width: none;
+                gap: 0.35rem;
+            }
+
+            .graph3d-stat-pill {
+                padding: 0.42rem 0.6rem;
+                font-size: 0.68rem;
+            }
+
+            .graph3d-stat-value {
+                font-size: 0.86rem;
+            }
+
+            .graph3d-detail-panel {
+                min-height: 0;
             }
 
             .app-view-tabs {
@@ -534,6 +652,25 @@
 
             .connection-row {
                 border-radius: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #graph3d-stage,
+            #graph3d-canvas {
+                height: clamp(380px, 62vh, 500px);
+                min-height: 380px;
+            }
+
+            .graph3d-toolbar .focus-button {
+                flex-basis: 100%;
+            }
+
+            .graph3d-stat-overlay {
+                position: static;
+                padding: 0.75rem;
+                background: rgba(3, 7, 18, 0.48);
+                border-top: 1px solid rgba(255, 255, 255, 0.08);
             }
         }
     </style>
@@ -755,8 +892,29 @@
                         </div>
                     </div>
 
-                    <div class="xl:col-span-4">
+                    <div class="xl:col-span-4 flex flex-col gap-4">
                         <div id="graph3d-details" class="graph3d-detail-panel rounded-3xl p-5 h-full min-h-[320px] overflow-y-auto"></div>
+                        <div class="graph3d-legend rounded-3xl p-4" aria-label="3D network legend">
+                            <div class="source-workbench-label mb-3">3D Legend</div>
+                            <div class="space-y-2.5">
+                                <div class="graph3d-legend-row">
+                                    <span class="graph3d-legend-mark graph3d-legend-node"></span>
+                                    <span>Nodes are companies sized by market presence and relationship density.</span>
+                                </div>
+                                <div class="graph3d-legend-row">
+                                    <span class="graph3d-legend-mark graph3d-legend-edge"></span>
+                                    <span>Edges are curated production relationships between companies.</span>
+                                </div>
+                                <div class="graph3d-legend-row">
+                                    <span class="graph3d-legend-mark graph3d-legend-sec"></span>
+                                    <span>Gold dashed edges have SEC-backed evidence when emphasis is on.</span>
+                                </div>
+                                <div class="graph3d-legend-row">
+                                    <span class="graph3d-legend-mark graph3d-legend-label"></span>
+                                    <span>Labels show priority tickers, plus hovered or selected companies.</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1447,8 +1605,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!details) return;
             details.innerHTML = `
                 <div class="source-workbench-label mb-3">3D Network</div>
-                <div class="font-display text-2xl text-white">${escapeHtml(message)}</div>
-                <p class="text-sm text-white/58 mt-3">The production 2D graph and Source Workbench remain available.</p>
+                <div class="rounded-3xl border border-yellow-300/20 bg-yellow-300/10 p-4">
+                    <div class="font-display text-2xl text-white">${escapeHtml(message)}</div>
+                    <p class="text-sm leading-6 text-white/64 mt-2">The 3D module could not initialize. The production 2D graph and Source Workbench remain available.</p>
+                </div>
             `;
         }
 

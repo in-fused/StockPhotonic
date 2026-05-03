@@ -336,6 +336,14 @@
             background: rgba(255, 255, 255, 0.035);
         }
 
+        .primary-workflow-panel {
+            border-color: rgba(0, 249, 255, 0.26);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.09), rgba(255, 0, 170, 0.045)),
+                rgba(0, 0, 0, 0.24);
+            box-shadow: 0 0 28px rgba(0, 249, 255, 0.08);
+        }
+
         .source-workbench-label {
             color: rgba(165, 243, 252, 0.84);
             font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -367,6 +375,12 @@
             border: 1px solid rgba(0, 249, 255, 0.16);
             background: rgba(0, 0, 0, 0.28);
             color: rgba(224, 242, 254, 0.86);
+        }
+
+        .primary-workflow-step {
+            border-color: rgba(0, 249, 255, 0.34);
+            background: rgba(0, 249, 255, 0.10);
+            color: #ffffff;
         }
 
         .pipeline-arrow {
@@ -755,7 +769,7 @@
                         <div class="source-workbench-label mb-2">Local Pipeline Guide / Candidate Review Area</div>
                         <h2 id="source-workbench-title" class="font-display text-3xl md:text-4xl font-semibold">Source Intelligence Workbench</h2>
                         <p class="text-sm md:text-base text-white/64 mt-2 max-w-4xl">
-                            Read-only visibility for the SEC ingestion pipeline. This workbench explains local scripts, scheduled preview plans, candidate-only files, and review boundaries; it is not production graph data and not live backend automation yet.
+                            Read-only visibility for the SEC ingestion pipeline. This workbench shows the safe local workflow, scheduled preview plan, candidate-only files, and review boundaries; it is not production graph data and not live backend automation yet.
                         </p>
                     </div>
 
@@ -768,383 +782,231 @@
                 </div>
 
                 <div class="source-workbench-panel rounded-2xl p-5 mt-6">
-                    <div class="source-workbench-label mb-3">How to Run This Locally</div>
+                    <div class="source-workbench-label mb-3">How to Run Locally</div>
                     <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
                         <div class="xl:col-span-7">
                             <p class="text-sm text-white/62">
-                                Open PowerShell, then <span class="font-mono text-cyan-50/82">cd</span> into the repo root folder before running any command. The repo root is the folder that contains <span class="font-mono text-cyan-50/82">index.html</span>, <span class="font-mono text-cyan-50/82">data/</span>, and <span class="font-mono text-cyan-50/82">scripts/</span>.
-                            </p>
-                            <p class="text-sm text-white/62 mt-3">
-                                Run commands one at a time. Replace the SEC user-agent value with a real contact string before using network-enabled SEC commands.
+                                Open PowerShell, <span class="font-mono text-cyan-50/82">cd</span> to the repo root, then run one command at a time. The repo root contains <span class="font-mono text-cyan-50/82">index.html</span>, <span class="font-mono text-cyan-50/82">data/</span>, and <span class="font-mono text-cyan-50/82">scripts/</span>.
                             </p>
                         </div>
                         <div class="xl:col-span-5 rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-4">
                             <div class="text-xs font-mono tracking-[1.2px] text-yellow-100/80 mb-2">SEC USER-AGENT</div>
                             <p class="text-sm text-yellow-50/72">
-                                The SEC user-agent is not an account and it does not email you. It identifies the script politely to the SEC. Example: <span class="font-mono text-yellow-50">"Taylor infusednft@gmail.com"</span>.
+                                Network-enabled SEC commands need a real contact string. The user-agent is not an account and does not email you; it identifies the script politely to the SEC. Example: <span class="font-mono text-yellow-50">"Name User@Email.com"</span>.
                             </p>
                         </div>
                     </div>
                 </div>
 
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-5">
-                <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
-                    <div class="source-workbench-label mb-3">Pipeline Status</div>
-                    <p class="text-sm text-white/62 mb-4">
-                        The current path moves from scheduled preview planning into source lookup, review-only candidate files, promotion previews, and validation. Production review and promotion stay manual.
-                    </p>
-                    <div class="pipeline-flow" aria-label="SEC ingestion pipeline status">
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">scheduled preview</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">SEC lookup/cache</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">filing plan</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">filing fetch</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">filing inspect</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">signal extraction</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">signal report</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">candidate preview</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">candidate file writer</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">promotion preview</span>
-                        <span class="pipeline-arrow">-&gt;</span>
-                        <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">future validation/review/promotion</span>
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-5">
+                    <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
+                        <div class="source-workbench-label mb-3">Pipeline Overview</div>
+                        <p class="text-sm text-white/62 mb-4">
+                            The system turns reviewed SEC inputs into candidate files, then uses promotion preview, manual promotion, and validation before any production graph change.
+                        </p>
+                        <div class="pipeline-flow" aria-label="SEC ingestion pipeline overview">
+                            <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">schedule plan</span>
+                            <span class="pipeline-arrow">-&gt;</span>
+                            <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">reviewed job</span>
+                            <span class="pipeline-arrow">-&gt;</span>
+                            <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">SEC lookup/cache</span>
+                            <span class="pipeline-arrow">-&gt;</span>
+                            <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">filing plan/fetch</span>
+                            <span class="pipeline-arrow">-&gt;</span>
+                            <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">signal extraction</span>
+                            <span class="pipeline-arrow">-&gt;</span>
+                            <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">candidate files</span>
+                            <span class="pipeline-arrow">-&gt;</span>
+                            <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">promotion gate</span>
+                            <span class="pipeline-arrow">-&gt;</span>
+                            <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">validation</span>
+                        </div>
+                    </div>
+
+                    <div class="xl:col-span-5 source-workbench-panel rounded-2xl p-5">
+                        <div class="source-workbench-label mb-3">Candidate Files</div>
+                        <div class="space-y-2 font-mono text-xs text-cyan-50/78">
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/official_ticker_universe.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/cik_mappings.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_jobs.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_schedule.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_relationship_candidates.json</div>
+                        </div>
+                        <p class="text-sm text-white/58 mt-4">
+                            Candidate files are review-only staging artifacts. They do not create production nodes or edges, and SEC graph visibility remains preview-only.
+                        </p>
                     </div>
                 </div>
 
-                <div class="xl:col-span-5 source-workbench-panel rounded-2xl p-5">
-                    <div class="source-workbench-label mb-3">Candidate Files</div>
-                    <div class="space-y-2 font-mono text-xs text-cyan-50/78">
-                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/official_ticker_universe.json</div>
-                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/cik_mappings.json</div>
-                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_jobs.json</div>
-                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_schedule.json</div>
-                        <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_relationship_candidates.json</div>
-                    </div>
-                    <p class="text-sm text-white/58 mt-4">
-                        These files are candidate-only staging artifacts. They are not promoted and do not create production nodes or edges; SEC graph visibility is preview-only.
-                    </p>
-                </div>
-            </div>
-
-            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
-                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
-                    <div>
-                        <div class="source-workbench-label mb-2">Recommended Source Workflow</div>
-                        <p class="text-sm text-white/60">Use the scheduled preview, reviewed job manifest, and bulk candidate runner as the primary local path. The browser only displays and copies commands.</p>
-                    </div>
-                    <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
-                        Replace the example SEC user-agent with your real contact string.
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2 mb-4">
-                    <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">Scheduled Preview</span>
-                    <span class="pipeline-arrow">-&gt;</span>
-                    <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">Local Job Runner</span>
-                    <span class="pipeline-arrow">-&gt;</span>
-                    <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">Bulk Candidate Generation</span>
-                    <span class="pipeline-arrow">-&gt;</span>
-                    <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">Promotion Preview</span>
-                    <span class="pipeline-arrow">-&gt;</span>
-                    <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">Manual Promotion Dry Run</span>
-                    <span class="pipeline-arrow">-&gt;</span>
-                    <span class="pipeline-step rounded-full px-3 py-1.5 text-xs">Validation</span>
-                </div>
-
-                <p class="text-sm text-white/58 mb-4">
-                    AAPL, MSFT, and NVDA remain the starter SEC job. Batch 1 now has standard, fast, and deep multi-sector job IDs using the same approved 18-ticker mapping set; each job stays local-only and never promotes production graph data.
-                </p>
-                <p class="text-sm text-white/58 mb-4">
-                    In these commands, <span class="font-mono text-cyan-50/78">limit</span> means filings reviewed per ticker after form filtering. It is not a cap on relationships found; deeper limits may take longer and do more SEC/cache work when network access is enabled.
-                </p>
-                <p class="text-sm text-white/58 mb-4">
-                    Batch jobs can take several minutes. A healthy run should print ticker-by-ticker progress with index, ticker, mode, limit, candidate-write state, and final candidate counts when available.
-                </p>
-
-                <div class="grid grid-cols-1 gap-3">
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">1.</span> Scheduled Preview</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-1', this)" aria-label="Copy SEC scheduled run preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                <div class="source-workbench-panel primary-workflow-panel rounded-2xl p-5 mt-5">
+                    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
+                        <div>
+                            <div class="source-workbench-label mb-2">Recommended Workflow</div>
+                            <p class="text-sm text-white/62">This is the main local path for running the SEC source pipeline safely.</p>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-1">python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview --include-commit-plan</code></pre>
+                        <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
+                            Browser displays commands only.
+                        </div>
                     </div>
 
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Local Job Runner</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-2', this)" aria-label="Copy local SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                        </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-2">python scripts/sec_job_run.py --job-id mega_cap_core</code></pre>
+                    <div class="pipeline-flow mb-5" aria-label="Primary SEC source workflow">
+                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Scheduled Preview</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Job Runner</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Bulk Candidate Generation</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Promotion Preview</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Manual Promotion</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Validation</span>
                     </div>
 
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Bulk Candidate Generation</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-3', this)" aria-label="Copy bulk SEC candidate generation workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                    <div class="grid grid-cols-1 gap-3">
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">1.</span> Scheduled Preview</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-1', this)" aria-label="Copy SEC scheduled run preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-1">python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview --include-commit-plan</code></pre>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
-                    </div>
 
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Promotion Preview</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy SEC candidate promotion preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Job Runner - Starter</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-2', this)" aria-label="Copy starter SEC job command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-2">python scripts/sec_job_run.py --job-id mega_cap_core</code></pre>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-4">python scripts/sec_candidate_promotion_preview.py</code></pre>
-                    </div>
 
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">5.</span> Manual Promotion Dry Run</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-5', this)" aria-label="Copy SEC candidate manual promotion dry-run command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Job Runner - Batch</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-3', this)" aria-label="Copy batch SEC job command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_job_run.py --job-id batch_1_multi_sector</code></pre>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-5">python scripts/sec_candidate_promote.py</code></pre>
-                    </div>
 
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">6.</span> Validation</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-6', this)" aria-label="Copy production data validation command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Bulk Candidate Generation</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy bulk SEC candidate generation command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-4">python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Name User@Email.com" --write-candidates --force</code></pre>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-6">python scripts/validate_data.py</code></pre>
-                    </div>
 
-                    <details class="source-command rounded-2xl p-3">
-                        <summary class="cursor-pointer text-xs text-white/58">Advanced / Single-Ticker Debugging</summary>
-                        <div class="flex items-center justify-between gap-3 mt-3 mb-2">
-                            <span class="text-xs text-white/58">Use single-ticker or individual scripts only when debugging one ticker or inspecting an intermediate artifact.</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-7', this)" aria-label="Copy advanced single-ticker SEC debugging workflow summary"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">5.</span> Promotion Preview</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-5', this)" aria-label="Copy SEC candidate promotion preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-5">python scripts/sec_candidate_promotion_preview.py</code></pre>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-7">python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10
-python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com"
-python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force
+
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">6.</span> Manual Promotion</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-6', this)" aria-label="Copy SEC candidate manual promotion command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-6">python scripts/sec_candidate_promote.py</code></pre>
+                        </div>
+
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">7.</span> Validation</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-7', this)" aria-label="Copy production data validation command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-7">python scripts/validate_data.py</code></pre>
+                        </div>
+
+                        <details class="source-command rounded-2xl p-3">
+                            <summary class="cursor-pointer text-xs text-white/58">Advanced Debugging</summary>
+                            <div class="flex items-center justify-between gap-3 mt-3 mb-2">
+                                <span class="text-xs text-white/58">Use these only for single-ticker inspection or intermediate SEC artifacts.</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-8', this)" aria-label="Copy advanced SEC debugging commands"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-8">python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Name User@Email.com"
+python scripts/sec_pipeline_run.py --ticker AAPL --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Name User@Email.com" --write-candidates --force
 python scripts/ingest_candidates.py --candidates data/candidates/cik_mappings.json --candidate-kind cik-mappings --summary-only
-python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Your Name your.email@example.com" --dry-run
+python scripts/sec_fetch_cache.py --ticker AAPL --user-agent "Name User@Email.com" --dry-run
 python scripts/sec_submissions_inspect.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10
 python scripts/sec_filing_plan.py --cache-file data/cache/sec/submissions_CIK0000320193.json --forms 10-K,10-Q,8-K --limit 10 --json
 python scripts/sec_filing_fetch.py --plan data/candidates/plans/aapl_recent_filings.json
 python scripts/sec_signal_report.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm
 python scripts/sec_signal_candidates_preview.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --json
-python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force
-python scripts/sec_candidate_promotion_preview.py</code></pre>
-                    </details>
-                </div>
-            </div>
-
-            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
-                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
-                    <div>
-                        <div class="source-workbench-label mb-2">Bulk Local Runner</div>
-                        <p class="text-sm text-white/60">Use approved ticker/CIK mappings only. Candidate writing remains review-only and production promotion stays separate.</p>
-                    </div>
-                    <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
-                        Network and candidate writes require explicit flags.
+python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/0000320193/000032019323000106/aapl-20230930.htm --write --force</code></pre>
+                        </details>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-3">
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">1.</span> Bulk dry-run and preview from local cache</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-8', this)" aria-label="Copy bulk SEC dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                        </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-8">python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10</code></pre>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mt-5">
+                    <div class="source-workbench-panel rounded-2xl p-5">
+                        <div class="source-workbench-label mb-2">Scheduled Preview</div>
+                        <p class="text-sm text-white/60">
+                            Previews cadence, the next job command, candidate generation, policy gate, validation, and optional commit plan. It does not execute scheduled jobs.
+                        </p>
                     </div>
 
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Bulk fetch and write review-only candidates</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-9', this)" aria-label="Copy bulk SEC network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                        </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-9">python scripts/sec_bulk_pipeline_run.py --tickers AAPL,MSFT,NVDA --forms 10-K,10-Q,8-K --limit 10 --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
+                    <div class="source-workbench-panel rounded-2xl p-5">
+                        <div class="source-workbench-label mb-2">Job Runner</div>
+                        <p class="text-sm text-white/60">
+                            Runs reviewed manifest jobs such as <span class="font-mono text-cyan-50/78">mega_cap_core</span> or <span class="font-mono text-cyan-50/78">batch_1_multi_sector</span>. A job limit means filings reviewed per ticker.
+                        </p>
                     </div>
-                </div>
-            </div>
 
-            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
-                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
-                    <div>
-                        <div class="source-workbench-label mb-2">Local Job Runner</div>
-                        <p class="text-sm text-white/60">Run reviewed manifest jobs from the local terminal. Fast and standard Batch 1 review 10 filings per ticker; deep reviews 25 filings per ticker. Runs may take several minutes but should show ticker-by-ticker progress. Relationship candidates and production promotion stay separate.</p>
-                    </div>
-                    <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
-                        Limit is filings per ticker.
+                    <div class="source-workbench-panel rounded-2xl p-5">
+                        <div class="source-workbench-label mb-2">Bulk Runner</div>
+                        <p class="text-sm text-white/60">
+                            Generates review-only SEC relationship candidates from approved ticker/CIK mappings. Network access and candidate writes require explicit flags.
+                        </p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-3">
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">1.</span> Job dry-run and preview from local cache</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-10', this)" aria-label="Copy local SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                        </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-10">python scripts/sec_job_run.py --job-id mega_cap_core</code></pre>
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-5">
+                    <div class="xl:col-span-5 source-workbench-panel rounded-2xl p-5">
+                        <div class="source-workbench-label mb-3">Safety Notes</div>
+                        <ul class="space-y-2 text-sm text-white/62">
+                            <li class="flex gap-2"><i class="fa-solid fa-ban text-yellow-200/70 mt-0.5"></i><span>No backend or browser script runner is added.</span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-globe text-cyan-200/70 mt-0.5"></i><span>The browser does not call SEC directly.</span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-database text-fuchsia-200/70 mt-0.5"></i><span>Candidate files are review-only and not production graph data.</span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-list-check text-cyan-200/70 mt-0.5"></i><span>Broader coverage comes from approved mappings and reviewed jobs.</span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-shield-halved text-emerald-200/70 mt-0.5"></i><span>Production promotion stays manual, previewed, policy-gated, and validated.</span></li>
+                        </ul>
                     </div>
 
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Standard/default Batch 1 dry-run</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-11', this)" aria-label="Copy standard Batch 1 multi-sector SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                    <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
+                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                            <div>
+                                <div class="source-workbench-label mb-2">Candidate Review Snapshot</div>
+                                <p class="text-sm text-white/58">
+                                    Read-only preview of <span class="font-mono text-cyan-50/78">data/candidates/sec_relationship_candidates.json</span>. Records may appear only as non-persistent SEC preview overlays.
+                                </p>
+                            </div>
+                            <div id="source-candidate-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING CANDIDATES</div>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-11">python scripts/sec_job_run.py --job-id batch_1_multi_sector</code></pre>
-                    </div>
-
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3.</span> Fast Batch 1 dry-run</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-14', this)" aria-label="Copy fast Batch 1 multi-sector SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        <div id="source-candidate-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                            No SEC relationship candidates are present yet. Use the workflow commands above to create review-only candidate records when cached filings are available.
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-14">python scripts/sec_job_run.py --job-id batch_1_multi_sector_fast</code></pre>
-                    </div>
-
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Deep Batch 1 dry-run</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-15', this)" aria-label="Copy deep Batch 1 multi-sector SEC job dry-run workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                        <div id="source-candidate-table-wrap" class="hidden overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+                            <table class="source-candidate-table w-full border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th class="px-3 py-2">Source</th>
+                                        <th class="px-3 py-2">Target</th>
+                                        <th class="px-3 py-2">Type</th>
+                                        <th class="px-3 py-2">Confidence</th>
+                                        <th class="px-3 py-2">Filing Date</th>
+                                        <th class="px-3 py-2">Review</th>
+                                        <th class="px-3 py-2">Evidence</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="source-candidate-rows"></tbody>
+                            </table>
                         </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-15">python scripts/sec_job_run.py --job-id batch_1_multi_sector_deep</code></pre>
-                    </div>
-
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">5.</span> Fast Batch 1 fetch and write review-only candidates</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-16', this)" aria-label="Copy fast Batch 1 multi-sector SEC job network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                        </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-16">python scripts/sec_job_run.py --job-id batch_1_multi_sector_fast --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
-                    </div>
-
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">6.</span> Deep Batch 1 fetch and write review-only candidates</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-17', this)" aria-label="Copy deep Batch 1 multi-sector SEC job network candidate writer workflow"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                        </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-17">python scripts/sec_job_run.py --job-id batch_1_multi_sector_deep --allow-network --user-agent "Your Name your.email@example.com" --write-candidates --force</code></pre>
                     </div>
                 </div>
-            </div>
-
-            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
-                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
-                    <div>
-                        <div class="source-workbench-label mb-2">Scheduled Run Preview</div>
-                        <p class="text-sm text-white/60">Preview the schedule, job command, candidate generation command, policy gate, validation, and optional commit plan without executing writes.</p>
-                    </div>
-                    <div class="text-[10px] font-mono text-yellow-100/70 border border-yellow-300/20 bg-yellow-300/10 rounded-full px-3 py-1.5">
-                        Planning only; no automatic promotion.
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 gap-3">
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">1.</span> Preview scheduled path and next command</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-12', this)" aria-label="Copy SEC scheduled run preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                        </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-12">python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview</code></pre>
-                    </div>
-
-                    <div class="source-command rounded-2xl p-3">
-                        <div class="flex items-center justify-between gap-3 mb-2">
-                            <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">2.</span> Include candidate-only commit plan</span>
-                            <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-13', this)" aria-label="Copy SEC scheduled run preview command with commit plan"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
-                        </div>
-                        <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-13">python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview --include-commit-plan</code></pre>
-                    </div>
-                </div>
-            </div>
-
-            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
-                <div class="source-workbench-label mb-3">Scale Roadmap</div>
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm text-white/62">
-                    <div class="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3">
-                        <div class="font-mono text-[10px] text-cyan-100/70 mb-1">CURRENT</div>
-                        <div>Starter job plus standard/fast/deep Batch 1 jobs</div>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-black/25 p-3">
-                        <div class="font-mono text-[10px] text-white/45 mb-1">NEXT</div>
-                        <div>More approved mappings and reviewed job batches</div>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-black/25 p-3">
-                        <div class="font-mono text-[10px] text-white/45 mb-1">THEN</div>
-                        <div>Sector batches / S&amp;P-style batches</div>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-black/25 p-3">
-                        <div class="font-mono text-[10px] text-white/45 mb-1">THEN</div>
-                        <div>Policy-gated promotion candidates</div>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-black/25 p-3">
-                        <div class="font-mono text-[10px] text-white/45 mb-1">THEN</div>
-                        <div>Reviewed production graph writes</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-5">
-                <div class="xl:col-span-5 source-workbench-panel rounded-2xl p-5">
-                    <div class="source-workbench-label mb-3">Safety Notes</div>
-                    <ul class="space-y-2 text-sm text-white/62">
-                        <li class="flex gap-2"><i class="fa-solid fa-ban text-yellow-200/70 mt-0.5"></i><span>No backend is added yet.</span></li>
-                        <li class="flex gap-2"><i class="fa-solid fa-globe text-cyan-200/70 mt-0.5"></i><span>The browser does not call SEC directly.</span></li>
-                        <li class="flex gap-2"><i class="fa-solid fa-terminal text-cyan-200/70 mt-0.5"></i><span>The browser does not run local Python scripts.</span></li>
-                        <li class="flex gap-2"><i class="fa-solid fa-database text-fuchsia-200/70 mt-0.5"></i><span>Candidate files are review-only.</span></li>
-                        <li class="flex gap-2"><i class="fa-solid fa-list-check text-cyan-200/70 mt-0.5"></i><span>Broader coverage comes from more approved mappings and jobs, not unsafe production writes.</span></li>
-                        <li class="flex gap-2"><i class="fa-solid fa-shield-halved text-emerald-200/70 mt-0.5"></i><span>Production graph data is unchanged until a future reviewed promotion phase.</span></li>
-                    </ul>
-                </div>
-
-                <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
-                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
-                        <div>
-                            <div class="source-workbench-label mb-2">Candidate Review Snapshot</div>
-                            <p class="text-sm text-white/58">
-                                Read-only preview of <span class="font-mono text-cyan-50/78">data/candidates/sec_relationship_candidates.json</span>. Records may appear in the graph only as non-persistent SEC preview overlays.
-                            </p>
-                        </div>
-                        <div id="source-candidate-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING CANDIDATES</div>
-                    </div>
-                    <div id="source-candidate-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
-                        No SEC relationship candidates are present yet. Use the local preview and writer commands above to create review-only candidate records when cached filings are available.
-                    </div>
-                    <div id="source-candidate-table-wrap" class="hidden overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
-                        <table class="source-candidate-table w-full border-collapse">
-                            <thead>
-                                <tr>
-                                    <th class="px-3 py-2">Source</th>
-                                    <th class="px-3 py-2">Target</th>
-                                    <th class="px-3 py-2">Type</th>
-                                    <th class="px-3 py-2">Confidence</th>
-                                    <th class="px-3 py-2">Filing Date</th>
-                                    <th class="px-3 py-2">Review</th>
-                                    <th class="px-3 py-2">Evidence</th>
-                                </tr>
-                            </thead>
-                            <tbody id="source-candidate-rows"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
-                <div class="source-workbench-label mb-3">Future Automation</div>
-                <p class="text-sm text-white/62">
-                    The scheduled preview is a local planner only. Realistic next options are a local scheduled task through Windows Task Scheduler, a local desktop agent later, or a hosted worker after the local safety model is proven. The safest current automation target is local scheduled preview plus candidate generation, while manual promotion remains protected by preview, policy, dry-run, and validation checks.
-                </p>
-            </div>
-
-            <div class="source-workbench-panel rounded-2xl p-5 mt-5">
-                <div class="source-workbench-label mb-3">Graph UX Roadmap</div>
-                <p class="text-sm text-white/62">
-                    The SEC preview overlay is working. Larger graph UI work and a future 3D/globe orbit should come after the data scale foundations are stable. Sidebar and canvas layout cleanup should happen before or alongside the first 3D prototype.
-                </p>
-            </div>
             </section>
         </section>
     </div>

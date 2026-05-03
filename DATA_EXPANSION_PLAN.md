@@ -416,7 +416,7 @@ Then: reviewed production graph writes
 
 Future automation should stay local and preview-first until the data path is proven. Broader universe expansion should come from more source-backed mappings and reviewed job manifests, not from unsafe direct writes to production graph JSON. The safest next target is a local scheduled preview plus candidate generation, with manual promotion still protected by promotion preview, policy classification, dry-run behavior, and validation. Later options include Windows Task Scheduler, a local desktop agent, or a hosted worker.
 
-Graph UX scale work should follow the data scale foundation. The SEC preview overlay is working; larger graph UI cleanup and any 3D/globe orbit prototype should come after, or alongside, sidebar and canvas layout cleanup.
+Graph UX scale work should follow the data scale foundation. The SEC preview overlay is working; Phase D39 replaces the older sphere/globe concept with a 3D network and camera-orbit concept for visual exploration while keeping the 2D graph as the default view.
 
 ### Phase D31: Approved SEC CIK Mapping Coverage Batch 1
 
@@ -479,6 +479,12 @@ Post-promotion validation reports 60 companies and 121 connections with no valid
 Phase D38 improves visibility for SEC-backed edges that have already been promoted into production graph data. The app now detects production connections whose `provenance` is `SEC filing` or whose `source_urls` include `sec.gov`, then surfaces compact SEC badges, source links, trust counts, and a recent SEC promotions panel in the UI.
 
 This phase creates no new graph data, does not modify `data/companies.json` or `data/connections.json`, does not change the data schema, and does not alter graph physics, layout behavior, or node positioning logic. The existing SEC preview/candidate overlay remains a separate candidate-only surface.
+
+### Phase D39: 3D Graph View Prototype With Camera Orbit Controls
+
+Phase D39 adds a visual 3D exploration mode only. The new 3D Network tab renders the same production companies and production connections as glowing 3D nodes and colored edges, arranges sectors and industry groups around a visual central focal point, and adds camera orbit, zoom, reset, fit, label, SEC-emphasis, and auto-rotate controls.
+
+This phase does not change production data, does not modify `data/companies.json` or `data/connections.json`, does not promote or render preview-only SEC candidates in the initial 3D production view, does not add backend/server code, and does not replace the existing 2D graph. The default Graph Intelligence tab remains the production interaction surface while the 3D view remains a prototype exploration mode.
 
 ### Phase C: SEC Filings Fetch/Cache Layer
 

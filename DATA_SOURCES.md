@@ -2,7 +2,7 @@
 
 **Last Updated**: May 3, 2026
 
-**Current Version**: v5.24 / Phase D38 SEC-Promoted Edge UI Visibility
+**Current Version**: v5.25 / Phase D39 3D Network View Prototype
 
 **Current Dataset**: 60 real US-listed public companies and 121 curated connections loaded from static JSON files:
 
@@ -18,6 +18,8 @@
 The current app is a static Canvas prototype. It loads company and connection data directly from JSON in the browser. There is no backend, no live ingestion, and no automatic data refresh in the current app. The graph UI now surfaces edge provenance and available source links in selected-node connection rows, shows a compact dataset trust summary near the graph controls, and derives a runtime-only industry-group layer from existing company fields.
 
 Phase D38 is a UI-only visibility pass for already-promoted SEC-backed production edges. It detects existing production connections whose `provenance` is `SEC filing` or whose `source_urls` include `sec.gov`, adds compact badges/details and recent-promotion visibility, and does not create new graph data or change the JSON schema.
+
+Phase D39 adds a visual 3D exploration mode only. The new 3D Network tab renders the same production companies and production connections with a camera-orbit network view, uses a visual central focal point without adding a fake company record, and keeps preview-only SEC candidates out of the initial 3D production view. It does not change production data, does not replace the default 2D graph, and does not modify `data/companies.json` or `data/connections.json`.
 
 ### `data/companies.json`
 
@@ -349,7 +351,7 @@ The scheduled preview and policy gate are only checkpoints in that future path. 
 
 Graph UX roadmap:
 
-The SEC preview overlay is working. Larger graph UI work and a future 3D/globe orbit should wait until the data scale foundations are stable. Sidebar and canvas layout cleanup should happen before or alongside the first 3D prototype.
+The SEC preview overlay is working. Phase D39 replaces the older sphere/globe concept with a 3D network and camera-orbit concept for visual exploration. The existing 2D graph remains the default production view; the 3D Network tab is a prototype, not a replacement.
 
 Local provisioner commands:
 

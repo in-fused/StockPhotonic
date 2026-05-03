@@ -417,6 +417,83 @@
             vertical-align: top;
         }
 
+        .graph3d-workbench {
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.07), rgba(255, 0, 170, 0.04)),
+                rgba(6, 8, 18, 0.88);
+            box-shadow: 0 0 42px rgba(0, 249, 255, 0.08);
+        }
+
+        #graph3d-stage {
+            min-height: 680px;
+            border: 1px solid rgba(0, 249, 255, 0.12);
+            background:
+                linear-gradient(rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                radial-gradient(circle at center, rgba(0, 249, 255, 0.10), rgba(255, 0, 170, 0.035) 48%, rgba(5, 5, 8, 0.20) 72%);
+            background-size: 52px 52px, 52px 52px, 100% 100%;
+            box-shadow: inset 0 0 52px rgba(0, 249, 255, 0.08), 0 0 52px rgba(0, 249, 255, 0.07);
+        }
+
+        #graph3d-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 680px;
+            touch-action: none;
+            user-select: none;
+            cursor: grab;
+        }
+
+        #graph3d-canvas.is-dragging {
+            cursor: grabbing;
+        }
+
+        .graph3d-toolbar {
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(0, 0, 0, 0.24);
+        }
+
+        .graph3d-stat-overlay {
+            position: absolute;
+            left: 1rem;
+            bottom: 1rem;
+            z-index: 5;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            max-width: calc(100% - 2rem);
+            pointer-events: none;
+        }
+
+        .graph3d-stat-pill {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(3, 7, 18, 0.72);
+            color: rgba(207, 250, 254, 0.82);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            letter-spacing: 1.1px;
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.08);
+            backdrop-filter: blur(14px);
+        }
+
+        .graph3d-tooltip {
+            position: absolute;
+            z-index: 8;
+            max-width: min(16rem, calc(100% - 2rem));
+            border: 1px solid rgba(0, 249, 255, 0.22);
+            background: rgba(3, 7, 18, 0.82);
+            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.36), 0 0 24px rgba(0, 249, 255, 0.12);
+            backdrop-filter: blur(14px);
+            pointer-events: none;
+        }
+
+        .graph3d-detail-panel {
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
         @media (max-width: 768px) {
             .page-shell {
                 padding-left: 1rem;
@@ -425,6 +502,11 @@
 
             .graph-container {
                 height: 62vh !important;
+            }
+
+            #graph3d-stage,
+            #graph3d-canvas {
+                min-height: 62vh;
             }
 
             .app-view-tabs {
@@ -497,6 +579,10 @@
             <button id="source-workbench-tab" type="button" class="app-view-tab rounded-3xl px-5 py-2.5 text-xs font-mono tracking-[1.3px] flex items-center gap-2" role="tab" aria-selected="false" aria-controls="source-workbench-view" onclick="setAppView('source')">
                 <i class="fa-solid fa-clipboard-list"></i>
                 <span>Source Workbench</span>
+            </button>
+            <button id="network-3d-tab" type="button" class="app-view-tab rounded-3xl px-5 py-2.5 text-xs font-mono tracking-[1.3px] flex items-center gap-2" role="tab" aria-selected="false" aria-controls="network-3d-view" onclick="setAppView('graph3d')">
+                <i class="fa-solid fa-cube"></i>
+                <span>3D Network</span>
             </button>
         </div>
 
@@ -612,6 +698,54 @@
                     </div>
                 </div>
             </div>
+        </section>
+
+        <section id="network-3d-view" class="hidden pb-10" role="tabpanel" aria-labelledby="network-3d-tab">
+            <section class="graph3d-workbench rounded-3xl p-4 md:p-5" aria-labelledby="network-3d-title">
+                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-4">
+                    <div>
+                        <div class="source-workbench-label mb-2">Production Network Prototype</div>
+                        <h2 id="network-3d-title" class="font-display text-3xl md:text-4xl font-semibold">3D Network</h2>
+                    </div>
+
+                    <div class="graph3d-toolbar rounded-3xl p-1.5 flex flex-wrap gap-1.5">
+                        <button id="graph3d-labels-toggle" type="button" onclick="toggleGraph3DLabels()" aria-pressed="true" class="focus-button is-active px-4 py-2.5 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle 3D labels">
+                            <i class="fa-solid fa-tags"></i>
+                            <span>Labels On</span>
+                        </button>
+                        <button id="graph3d-sec-toggle" type="button" onclick="toggleGraph3DSecEmphasis()" aria-pressed="true" class="focus-button is-active px-4 py-2.5 text-xs rounded-3xl border border-yellow-300/25 flex items-center gap-x-2" title="Toggle SEC-backed edge emphasis">
+                            <i class="fa-solid fa-file-shield"></i>
+                            <span>SEC Emphasis On</span>
+                        </button>
+                        <button id="graph3d-auto-rotate-toggle" type="button" onclick="toggleGraph3DAutoRotate()" aria-pressed="false" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Toggle auto-rotate">
+                            <i class="fa-solid fa-circle-notch"></i>
+                            <span>Auto-Rotate Off</span>
+                        </button>
+                        <button id="graph3d-fit-button" type="button" onclick="fitGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Fit 3D network">
+                            <i class="fa-solid fa-compress"></i>
+                            <span>FIT</span>
+                        </button>
+                        <button id="graph3d-reset-button" type="button" onclick="resetGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset 3D camera">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>RESET</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+                    <div class="xl:col-span-8">
+                        <div id="graph3d-stage" class="relative overflow-hidden rounded-3xl">
+                            <canvas id="graph3d-canvas" aria-label="3D production network"></canvas>
+                            <div id="graph3d-stats" class="graph3d-stat-overlay" aria-live="polite"></div>
+                            <div id="graph3d-tooltip" class="graph3d-tooltip hidden rounded-2xl px-3 py-2"></div>
+                        </div>
+                    </div>
+
+                    <div class="xl:col-span-4">
+                        <div id="graph3d-details" class="graph3d-detail-panel rounded-3xl p-5 h-full min-h-[320px] overflow-y-auto"></div>
+                    </div>
+                </div>
+            </section>
         </section>
 
         <section id="source-workbench-view" class="hidden pb-10" role="tabpanel" aria-labelledby="source-workbench-tab">
@@ -1024,6 +1158,8 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
     <script src="js/graph/interactions.js"></script>
     <script src="js/graph/layouts.js"></script>
     <script src="js/graph/render.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+    <script src="js/graph/graph3d.js"></script>
     <script src="js/intelligence/clusters.js"></script>
     <script src="js/intelligence/industryCorrelations.js"></script>
     <script src="js/intelligence/portfolioNexus.js"></script>
@@ -1082,6 +1218,10 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
 
         if (!window.StockPhotonicUI?.controls) {
             throw new Error('StockPhotonic controls module failed to load');
+        }
+
+        if (!window.StockPhotonicGraph3D) {
+            console.warn('StockPhotonic 3D graph module unavailable');
         }
 
         const StockPhotonicUtils = window.StockPhotonicUtils || {};
@@ -1195,6 +1335,8 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
         let connections = [];
         let nodes = [];
         let links = [];
+        let currentAppView = 'graph';
+        let graph3dView = null;
         let nodeById = new Map();
         let degreeById = new Map();
         let adjacencyById = new Map();
@@ -1351,23 +1493,121 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
         };
 
         function setAppView(view) {
-            const isSourceView = view === 'source';
+            const nextView = view === 'source' || view === 'graph3d' ? view : 'graph';
+            const isSourceView = nextView === 'source';
+            const isGraph3DView = nextView === 'graph3d';
+            const isGraphView = nextView === 'graph';
             const graphView = document.getElementById('graph-intelligence-view');
             const sourceView = document.getElementById('source-workbench-view');
+            const network3DView = document.getElementById('network-3d-view');
             const graphTab = document.getElementById('graph-intelligence-tab');
             const sourceTab = document.getElementById('source-workbench-tab');
+            const network3DTab = document.getElementById('network-3d-tab');
 
-            graphView?.classList.toggle('hidden', isSourceView);
+            currentAppView = nextView;
+            graphView?.classList.toggle('hidden', !isGraphView);
             sourceView?.classList.toggle('hidden', !isSourceView);
-            graphTab?.setAttribute('aria-selected', String(!isSourceView));
+            network3DView?.classList.toggle('hidden', !isGraph3DView);
+            graphTab?.setAttribute('aria-selected', String(isGraphView));
             sourceTab?.setAttribute('aria-selected', String(isSourceView));
+            network3DTab?.setAttribute('aria-selected', String(isGraph3DView));
 
-            if (!isSourceView) {
+            if (isGraph3DView) {
+                window.requestAnimationFrame(() => activateGraph3DView());
+            } else {
+                deactivateGraph3DView();
+            }
+
+            if (isGraphView) {
                 window.requestAnimationFrame(() => {
                     resizeCanvas();
                     requestDraw();
                 });
             }
+        }
+
+        function getGraph3DView() {
+            if (graph3dView) return graph3dView;
+            if (!window.StockPhotonicGraph3D) {
+                renderGraph3DUnavailable('3D module unavailable');
+                return null;
+            }
+
+            graph3dView = window.StockPhotonicGraph3D.create({
+                canvas: document.getElementById('graph3d-canvas'),
+                stage: document.getElementById('graph3d-stage'),
+                tooltip: document.getElementById('graph3d-tooltip'),
+                details: document.getElementById('graph3d-details'),
+                stats: document.getElementById('graph3d-stats'),
+                controls: {
+                    labels: document.getElementById('graph3d-labels-toggle'),
+                    sec: document.getElementById('graph3d-sec-toggle'),
+                    autoRotate: document.getElementById('graph3d-auto-rotate-toggle')
+                },
+                edgeColors: EDGE_COLORS,
+                defaultEdgeColor: DEFAULT_EDGE_COLOR,
+                getCompanyIndustryGroup,
+                isSecBackedConnection,
+                formatConnectionType,
+                escapeHtml
+            });
+            syncGraph3DData();
+            return graph3dView;
+        }
+
+        function syncGraph3DData() {
+            if (!graph3dView) return;
+            graph3dView.setData({
+                nodes,
+                links,
+                edgeColors: EDGE_COLORS,
+                defaultEdgeColor: DEFAULT_EDGE_COLOR,
+                getCompanyIndustryGroup,
+                isSecBackedConnection,
+                formatConnectionType,
+                escapeHtml
+            });
+        }
+
+        function activateGraph3DView() {
+            const view = getGraph3DView();
+            if (!view) return;
+            syncGraph3DData();
+            view.activate();
+        }
+
+        function deactivateGraph3DView() {
+            graph3dView?.deactivate();
+        }
+
+        function renderGraph3DUnavailable(message) {
+            const details = document.getElementById('graph3d-details');
+            if (!details) return;
+            details.innerHTML = `
+                <div class="source-workbench-label mb-3">3D Network</div>
+                <div class="font-display text-2xl text-white">${escapeHtml(message)}</div>
+                <p class="text-sm text-white/58 mt-3">The production 2D graph and Source Workbench remain available.</p>
+            `;
+        }
+
+        function toggleGraph3DLabels() {
+            getGraph3DView()?.toggleLabels();
+        }
+
+        function toggleGraph3DSecEmphasis() {
+            getGraph3DView()?.toggleSecEmphasis();
+        }
+
+        function toggleGraph3DAutoRotate() {
+            getGraph3DView()?.toggleAutoRotate();
+        }
+
+        function resetGraph3DCamera() {
+            getGraph3DView()?.resetCamera();
+        }
+
+        function fitGraph3DCamera() {
+            getGraph3DView()?.fitCamera();
         }
 
         /* ==============================
@@ -1393,6 +1633,7 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 updateOrbitModeControl();
                 updatePortfolioPanel();
                 initGraphData();
+                syncGraph3DData();
                 await loadSecPreviewCandidateGraph();
                 resizeCanvas();
                 fitGraph(false, { keepOrbit: true });
@@ -3282,6 +3523,7 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
             closeSearchPanel();
             clearSelection(false);
             fitGraph();
+            graph3dView?.resetCamera();
         }
 
         function analyzePortfolioInput() {

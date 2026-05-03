@@ -474,6 +474,12 @@ The first multi-company SEC promotion appended three source-backed production ed
 
 Post-promotion validation reports 60 companies and 121 connections with no validation errors and no duplicate edge keys. A follow-up dry run of the promotion writer reports zero promotable edges, confirming the D37 write is idempotent after promotion. This phase does not create production companies, does not run network calls, and does not modify app/UI behavior.
 
+### Phase D38: SEC-Promoted Edge UI Visibility
+
+Phase D38 improves visibility for SEC-backed edges that have already been promoted into production graph data. The app now detects production connections whose `provenance` is `SEC filing` or whose `source_urls` include `sec.gov`, then surfaces compact SEC badges, source links, trust counts, and a recent SEC promotions panel in the UI.
+
+This phase creates no new graph data, does not modify `data/companies.json` or `data/connections.json`, does not change the data schema, and does not alter graph physics, layout behavior, or node positioning logic. The existing SEC preview/candidate overlay remains a separate candidate-only surface.
+
 ### Phase C: SEC Filings Fetch/Cache Layer
 
 Build a fair-access SEC fetch/cache layer with a proper identifying `User-Agent`, retry/backoff, local cache keys, and metadata capture.

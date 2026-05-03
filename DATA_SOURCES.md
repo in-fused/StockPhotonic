@@ -2,7 +2,7 @@
 
 **Last Updated**: May 3, 2026
 
-**Current Version**: v5.23 / Phase D37 First Multi-Company SEC Graph Promotion
+**Current Version**: v5.24 / Phase D38 SEC-Promoted Edge UI Visibility
 
 **Current Dataset**: 60 real US-listed public companies and 121 curated connections loaded from static JSON files:
 
@@ -16,6 +16,8 @@
 ## Current Dataset Reality
 
 The current app is a static Canvas prototype. It loads company and connection data directly from JSON in the browser. There is no backend, no live ingestion, and no automatic data refresh in the current app. The graph UI now surfaces edge provenance and available source links in selected-node connection rows, shows a compact dataset trust summary near the graph controls, and derives a runtime-only industry-group layer from existing company fields.
+
+Phase D38 is a UI-only visibility pass for already-promoted SEC-backed production edges. It detects existing production connections whose `provenance` is `SEC filing` or whose `source_urls` include `sec.gov`, adds compact badges/details and recent-promotion visibility, and does not create new graph data or change the JSON schema.
 
 ### `data/companies.json`
 

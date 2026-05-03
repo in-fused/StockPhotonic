@@ -199,6 +199,43 @@
             color: #ffffff;
         }
 
+        .sec-production-legend {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 6;
+            border: 1px solid rgba(251, 191, 36, 0.24);
+            background: rgba(3, 7, 18, 0.76);
+            box-shadow: 0 0 18px rgba(251, 191, 36, 0.08);
+            backdrop-filter: blur(14px);
+            pointer-events: none;
+        }
+
+        .sec-production-line-swatch {
+            width: 2.25rem;
+            height: 0;
+            border-top: 2px dotted rgba(251, 191, 36, 0.82);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.28);
+        }
+
+        .sec-edge-badge {
+            border: 1px solid rgba(251, 191, 36, 0.28);
+            background: rgba(251, 191, 36, 0.10);
+            color: rgba(254, 240, 138, 0.92);
+        }
+
+        .connection-row.sec-backed-connection-row {
+            border-color: rgba(251, 191, 36, 0.26);
+            background:
+                linear-gradient(135deg, rgba(251, 191, 36, 0.07), rgba(255, 255, 255, 0.035) 55%),
+                rgba(255, 255, 255, 0.035);
+        }
+
+        .sec-edge-detail {
+            border: 1px solid rgba(251, 191, 36, 0.18);
+            background: rgba(251, 191, 36, 0.065);
+        }
+
         .node-source-link {
             max-width: none;
         }
@@ -536,6 +573,8 @@
                             <span id="trust-connection-count">0 EDGES</span>
                             <span id="trust-high-confidence">0% CONF >=4</span>
                             <span id="trust-latest-date">VERIFIED -</span>
+                            <span id="trust-sec-backed">0 SEC EDGES</span>
+                            <span id="trust-source-url-count">0 SOURCED</span>
                         </div>
                     </div>
 
@@ -551,6 +590,13 @@
                 <div class="lg:col-span-8">
                     <div class="glass rounded-3xl p-3 graph-container relative overflow-hidden" style="height: 680px;">
                         <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
+                        <div id="sec-production-legend" class="sec-production-legend hidden rounded-2xl px-3 py-2 text-[10px] font-mono text-yellow-100/80 tracking-[1.1px]">
+                            <div class="flex items-center gap-2">
+                                <span class="sec-production-line-swatch"></span>
+                                <span>SEC-backed production edge</span>
+                            </div>
+                            <div id="sec-production-legend-count" class="mt-1 text-white/42">0 EDGES</div>
+                        </div>
                         <div id="graph-overlay-stats" class="graph-overlay-stats" aria-live="polite"></div>
                     </div>
                 </div>
@@ -1138,6 +1184,8 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
         const SEC_PREVIEW_EDGE_COLOR = '#7dd3fc';
         const SEC_PREVIEW_ENDPOINT_HALO = '#38bdf8';
         const SEC_PREVIEW_EDGE_HIT_RADIUS = 12;
+        const SEC_BACKED_EDGE_COLOR = '#fbbf24';
+        const RECENT_SEC_PROMOTION_LIMIT = 3;
 
         /* ==============================
            APP STATE
@@ -1580,7 +1628,7 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 getCompanyIndustryGroup,
                 getIndustryGroupCorrelations,
                 getPortfolioExposureSummary,
-                getDatasetTrustMetrics,
+                getDatasetTrustMetrics: getEnhancedDatasetTrustMetrics,
                 companies,
                 connections,
                 renderPortfolioExposureSection,
@@ -1600,6 +1648,8 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 formatVerifiedDate,
                 getValidSourceUrls,
                 getSourceHost,
+                isSecBackedConnection,
+                getSecSourceUrl,
                 getConnectionStrength,
                 getNexusSummary,
                 isNexusLayoutActive,
@@ -1996,7 +2046,75 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
 
         function drawGraph(timestamp = 0) {
             graphRender.drawGraph(renderContext, timestamp);
+            drawSecProductionLayer(timestamp);
             drawSecPreviewLayer(timestamp);
+        }
+
+        function drawSecProductionLayer(timestamp = 0) {
+            const secLinks = visibleLinks.filter(isSecBackedConnection);
+            if (!secLinks.length) return;
+
+            const canvas = document.getElementById('graph-canvas');
+            const ctx = canvas?.getContext('2d');
+            if (!ctx) return;
+
+            ctx.save();
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            secLinks.forEach(link => drawSecProductionLink(ctx, link, timestamp));
+            ctx.restore();
+        }
+
+        function drawSecProductionLink(ctx, link) {
+            const geometry = getProductionLinkScreenGeometry(link);
+            if (!geometry) return;
+
+            const strength = clamp(Number(link.strength) || 0.4, 0.05, 1);
+            const isFocused = selectedNode && focusLinkKeys.has(link.key);
+
+            ctx.save();
+            ctx.globalAlpha = isFocused ? 0.58 + strength * 0.12 : 0.13 + strength * 0.16;
+            ctx.strokeStyle = SEC_BACKED_EDGE_COLOR;
+            ctx.lineWidth = isFocused ? 1.45 + strength * 0.8 : 0.75 + strength * 0.55;
+            ctx.setLineDash([2, 6]);
+            ctx.shadowBlur = isFocused ? 18 : 9;
+            ctx.shadowColor = SEC_BACKED_EDGE_COLOR;
+            ctx.beginPath();
+            ctx.moveTo(geometry.source.x, geometry.source.y);
+            ctx.quadraticCurveTo(geometry.control.x, geometry.control.y, geometry.target.x, geometry.target.y);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function getProductionLinkScreenGeometry(link) {
+            if (!link?.source || !link?.target) return null;
+
+            const sourcePosition = getNodeLayoutPosition(link.source);
+            const targetPosition = getNodeLayoutPosition(link.target);
+            const sourceFallback = worldToScreen(sourcePosition.x, sourcePosition.y);
+            const targetFallback = worldToScreen(targetPosition.x, targetPosition.y);
+            const source = {
+                x: link.source._screenX ?? sourceFallback.x,
+                y: link.source._screenY ?? sourceFallback.y
+            };
+            const target = {
+                x: link.target._screenX ?? targetFallback.x,
+                y: link.target._screenY ?? targetFallback.y
+            };
+            const midX = (source.x + target.x) / 2;
+            const midY = (source.y + target.y) / 2;
+            const dx = target.x - source.x;
+            const dy = target.y - source.y;
+            const distance = Math.max(1, Math.hypot(dx, dy));
+            const curve = (Number(link.curveOffset) || 0) * scale;
+
+            return {
+                source,
+                target,
+                control: {
+                    x: midX + (-dy / distance) * curve,
+                    y: midY + (dx / distance) * curve
+                }
+            };
         }
 
         function drawSecPreviewLayer(timestamp = 0) {
@@ -2331,6 +2449,8 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
         function renderDefaultDashboard() {
             const empty = document.getElementById('empty-sidebar');
             uiDashboard.renderDefaultDashboard(getDashboardRenderContext({ empty }));
+            enhanceDashboardTrustSummary(empty);
+            injectRecentSecPromotionsPanel(empty);
         }
 
         function renderLayoutHelperSection() {
@@ -2617,6 +2737,7 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 portfolioContext,
                 secPreviewLinksForNode
             }));
+            enhanceSelectedNodeSecConnectionRows(topConnections);
         }
 
         function getVisibleSecPreviewLinksForNode(node) {
@@ -2865,11 +2986,171 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
                 : [];
         }
 
+        function isSecBackedConnection(connection) {
+            const provenance = String(connection?.provenance || '').trim().toLowerCase();
+            return provenance === 'sec filing' || getValidSourceUrls(connection?.source_urls).some(url => /sec\.gov/i.test(url));
+        }
+
+        function getSecSourceUrl(connection) {
+            const sourceUrls = getValidSourceUrls(connection?.source_urls);
+            return sourceUrls.find(url => /sec\.gov/i.test(url)) || (isSecBackedConnection(connection) ? sourceUrls[0] || '' : '');
+        }
+
         function getSourceHost(url) {
             try {
                 return new URL(url).hostname.replace(/^www\./, '');
             } catch (error) {
                 return 'Source link';
+            }
+        }
+
+        function getEnhancedDatasetTrustMetrics(sourceCompanies = companies, sourceConnections = connections) {
+            const baseMetrics = getDatasetTrustMetrics(sourceCompanies, sourceConnections);
+            const secBackedEdgeCount = sourceConnections.filter(isSecBackedConnection).length;
+            const sourceUrlEdgeCount = sourceConnections.filter(connection => getValidSourceUrls(connection.source_urls).length > 0).length;
+
+            return {
+                ...baseMetrics,
+                secBackedEdgeCount,
+                sourceUrlEdgeCount
+            };
+        }
+
+        function getRecentSecPromotions(limit = RECENT_SEC_PROMOTION_LIMIT) {
+            return connections
+                .map((connection, index) => ({
+                    connection,
+                    index,
+                    sourceNode: nodeById.get(connection.source) || companies.find(company => company.id === connection.source),
+                    targetNode: nodeById.get(connection.target) || companies.find(company => company.id === connection.target)
+                }))
+                .filter(item => isSecBackedConnection(item.connection))
+                .sort((a, b) => {
+                    const dateCompare = String(b.connection.verified_date || '').localeCompare(String(a.connection.verified_date || ''));
+                    if (dateCompare) return dateCompare;
+                    return b.index - a.index;
+                })
+                .slice(0, limit);
+        }
+
+        function enhanceSelectedNodeSecConnectionRows(topConnections) {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+
+            const rows = [...sidebar.querySelectorAll('[onclick^="selectConnectionRow"]')];
+            rows.forEach((row, index) => {
+                const item = topConnections[index];
+                if (!item?.link || !isSecBackedConnection(item.link)) return;
+
+                const sourceUrl = getSecSourceUrl(item.link);
+                const strengthPercent = Math.round(getConnectionStrength(item.link) * 100);
+                const confidence = Number(item.link.confidence) || 0;
+                const verifiedDate = formatVerifiedDate(item.link.verified_date);
+                const sourceLink = sourceUrl
+                    ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" class="source-link inline-flex items-center rounded-full px-2 py-0.5 font-mono truncate">SEC source</a>`
+                    : '<span class="text-white/36">No direct SEC link</span>';
+
+                row.classList.add('sec-backed-connection-row');
+                const title = row.querySelector('.connection-title');
+                if (title) {
+                    title.insertAdjacentHTML('afterend', `
+                        <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                            <span class="sec-edge-badge px-2 py-0.5 rounded-full text-[10px] font-mono tracking-[1px]">SEC BACKED</span>
+                        </div>
+                    `);
+                }
+
+                row.insertAdjacentHTML('beforeend', `
+                    <div class="sec-edge-detail mt-2 rounded-2xl p-2.5 text-[10px] leading-4 text-white/62">
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-1 font-mono">
+                            <div><span class="text-white/36">TYPE</span> ${escapeHtml(formatConnectionType(item.link.type || 'link'))}</div>
+                            <div><span class="text-white/36">STRENGTH</span> ${strengthPercent}%</div>
+                            <div><span class="text-white/36">CONF</span> ${confidence}/5</div>
+                            <div><span class="text-white/36">VERIFIED</span> ${escapeHtml(verifiedDate)}</div>
+                        </div>
+                        <div class="mt-2 flex items-center gap-1.5 font-mono">
+                            <span class="text-white/36 uppercase tracking-[1.2px]">SEC:</span>
+                            ${sourceLink}
+                        </div>
+                    </div>
+                `);
+            });
+        }
+
+        function renderRecentSecPromotionsPanel() {
+            const recentItems = getRecentSecPromotions(RECENT_SEC_PROMOTION_LIMIT);
+            const rows = recentItems.length
+                ? recentItems.map(item => {
+                    const sourceTicker = item.sourceNode?.ticker || item.connection.source || '?';
+                    const targetTicker = item.targetNode?.ticker || item.connection.target || '?';
+                    const confidence = Number(item.connection.confidence) || 0;
+                    const sourceUrl = getSecSourceUrl(item.connection);
+                    const sourceLink = sourceUrl
+                        ? `<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer" class="source-link inline-flex items-center rounded-full px-2 py-0.5 font-mono truncate">SEC</a>`
+                        : '<span class="text-white/32 font-mono">NO LINK</span>';
+
+                    return `
+                        <div class="rounded-2xl border border-white/10 bg-white/5 p-2.5">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="min-w-0">
+                                    <div class="text-xs text-white/90 font-semibold truncate">${escapeHtml(sourceTicker)} <span class="text-cyan-200/62">to</span> ${escapeHtml(targetTicker)}</div>
+                                    <div class="mt-1 text-[10px] text-white/45 font-mono">${escapeHtml(formatConnectionType(item.connection.type || 'link'))} &middot; CONF ${confidence}/5</div>
+                                </div>
+                                <div class="shrink-0">${sourceLink}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('')
+                : '<div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-white/38">No promoted SEC-backed production edges yet.</div>';
+
+            return `
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Recent SEC Promotions</div>
+                    <div class="space-y-2">${rows}</div>
+                </div>
+            `;
+        }
+
+        function injectRecentSecPromotionsPanel(container) {
+            if (!container || container.querySelector('[data-sec-promotions-panel="true"]')) return;
+
+            const panel = renderRecentSecPromotionsPanel().replace('<div class="sidebar-section">', '<div class="sidebar-section" data-sec-promotions-panel="true">');
+            const trustTitle = [...container.querySelectorAll('.sidebar-section-title')]
+                .find(element => element.textContent.trim().toLowerCase() === 'dataset trust summary');
+            const trustSection = trustTitle?.closest('.sidebar-section');
+
+            if (trustSection) {
+                trustSection.insertAdjacentHTML('beforebegin', panel);
+            } else {
+                container.insertAdjacentHTML('beforeend', panel);
+            }
+        }
+
+        function enhanceDashboardTrustSummary(container) {
+            if (!container) return;
+            const trustPanels = [...container.querySelectorAll('.trust-panel')];
+            const trustPanel = trustPanels[trustPanels.length - 1];
+            if (!trustPanel || trustPanel.querySelector('[data-sec-trust-extra="true"]')) return;
+
+            const metrics = getEnhancedDatasetTrustMetrics(companies, connections);
+            const footer = trustPanel.querySelector('.border-t');
+            const extra = `
+                <div data-sec-trust-extra="true" class="mt-3 grid grid-cols-2 gap-3">
+                    <div>
+                        <div class="text-[10px] text-white/40 font-mono">SEC EDGES</div>
+                        <div class="font-display text-xl text-white">${metrics.secBackedEdgeCount}</div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] text-white/40 font-mono">EDGES WITH SOURCES</div>
+                        <div class="font-display text-xl text-white">${metrics.sourceUrlEdgeCount}</div>
+                    </div>
+                </div>
+            `;
+
+            if (footer) {
+                footer.insertAdjacentHTML('beforebegin', extra);
+            } else {
+                trustPanel.insertAdjacentHTML('beforeend', extra);
             }
         }
 
@@ -3975,11 +4256,23 @@ python scripts/sec_candidate_promotion_preview.py</code></pre>
         }
 
         function updateDatasetTrustPanel() {
-            uiControls.updateDatasetTrustPanel({
-                document,
-                metrics: getDatasetTrustMetrics(companies, connections),
-                formatVerifiedDate
-            });
+            const metrics = getEnhancedDatasetTrustMetrics(companies, connections);
+            document.getElementById('trust-company-count').innerText = `${metrics.companyCount} COMPANIES`;
+            document.getElementById('trust-connection-count').innerText = `${metrics.connectionCount} EDGES`;
+            document.getElementById('trust-high-confidence').innerText = `${metrics.highConfidencePercent}% CONF >=4`;
+            document.getElementById('trust-latest-date').innerText = `VERIFIED ${formatVerifiedDate(metrics.latestVerifiedDate)}`;
+            document.getElementById('trust-sec-backed').innerText = `${metrics.secBackedEdgeCount} SEC EDGES`;
+            document.getElementById('trust-source-url-count').innerText = `${metrics.sourceUrlEdgeCount} SOURCED`;
+            updateSecProductionLegend(metrics.secBackedEdgeCount);
+        }
+
+        function updateSecProductionLegend(secBackedEdgeCount = getEnhancedDatasetTrustMetrics(companies, connections).secBackedEdgeCount) {
+            const legend = document.getElementById('sec-production-legend');
+            const count = document.getElementById('sec-production-legend-count');
+            if (!legend || !count) return;
+
+            legend.classList.toggle('hidden', secBackedEdgeCount <= 0);
+            count.innerText = `${secBackedEdgeCount} PRODUCTION EDGE${secBackedEdgeCount === 1 ? '' : 'S'}`;
         }
 
         function setCopyButtonState(button, label) {

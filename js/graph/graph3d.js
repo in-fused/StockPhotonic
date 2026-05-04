@@ -43,6 +43,10 @@
         return clamp(Number.isFinite(depth) ? depth : DEPTH_LEVEL_MIN, DEPTH_LEVEL_MIN, DEPTH_LEVEL_MAX);
     }
 
+    function normalizeFilterValue(value) {
+        return String(value ?? '').trim();
+    }
+
     function getValidSourceUrls(sourceUrls) {
         return Array.isArray(sourceUrls)
             ? sourceUrls.map(url => String(url).trim()).filter(url => /^https?:\/\//i.test(url))
@@ -126,6 +130,8 @@
             this.controls = options.controls || {};
             this.searchInput = this.controls.searchInput || null;
             this.searchResults = this.controls.searchResults || null;
+            this.sectorFilterSelect = this.controls.sectorFilter || null;
+            this.relationshipFilterSelect = this.controls.relationshipFilter || null;
             this.edgeColors = options.edgeColors || {};
             this.defaultEdgeColor = options.defaultEdgeColor || FALLBACK_EDGE;
             this.getCompanyIndustryGroup = options.getCompanyIndustryGroup || (node => node?.industryGroup || node?.industry || 'Other');
@@ -167,6 +173,8 @@
             this.autoRotateEnabled = false;
             this.neighborhoodModeEnabled = false;
             this.depthLevel = DEPTH_LEVEL_MIN;
+            this.activeSectorFilter = '';
+            this.activeRelationshipTypeFilter = '';
             this.selectedRecord = null;
             this.hoveredRecord = null;
             this.selectedEdgeRecord = null;
@@ -208,9 +216,12 @@
             this.onSearchResultPointerDown = this.onSearchResultPointerDown.bind(this);
             this.onDocumentPointerDown = this.onDocumentPointerDown.bind(this);
             this.onDepthControlChange = this.onDepthControlChange.bind(this);
+            this.onSectorFilterChange = this.onSectorFilterChange.bind(this);
+            this.onRelationshipFilterChange = this.onRelationshipFilterChange.bind(this);
             this.onContextMenu = event => event.preventDefault();
             this.bindSearchEvents();
             this.bindDepthControlEvents();
+            this.bindFilterControlEvents();
         }
 
         setData(payload = {}) {
@@ -233,6 +244,7 @@
             this.hoveredRecord = null;
             this.hoveredEdgeRecord = null;
             this.updateSearchResults();
+            this.syncControls();
             if (this.initialized && !this.engineUnavailable) {
                 this.rebuildScene();
                 this.resetCamera(false);
@@ -383,8 +395,21 @@
             depthSelect.addEventListener('change', this.onDepthControlChange);
         }
 
+        bindFilterControlEvents() {
+            this.sectorFilterSelect?.addEventListener('change', this.onSectorFilterChange);
+            this.relationshipFilterSelect?.addEventListener('change', this.onRelationshipFilterChange);
+        }
+
         onDepthControlChange(event) {
             this.setDepthLevel(event.target?.value);
+        }
+
+        onSectorFilterChange(event) {
+            this.setSectorFilter(event.target?.value);
+        }
+
+        onRelationshipFilterChange(event) {
+            this.setRelationshipTypeFilter(event.target?.value);
         }
 
         onSearchInput() {
@@ -613,6 +638,110 @@
                 )
                 .slice(0, LABEL_LIMIT)
                 .map(record => record.id));
+            this.syncFilterOptions();
+        }
+
+        syncFilterOptions() {
+            const sectors = [...new Set(this.nodeRecords.map(record => this.getNodeSectorValue(record)))].sort((a, b) => a.localeCompare(b));
+            const relationshipTypes = [...new Set(this.linkRecords.map(record => this.getLinkTypeValue(record.link)))].sort((a, b) =>
+                this.formatConnectionType(a).localeCompare(this.formatConnectionType(b))
+            );
+
+            if (this.activeSectorFilter && !sectors.includes(this.activeSectorFilter)) {
+                this.activeSectorFilter = '';
+            }
+            if (this.activeRelationshipTypeFilter && !relationshipTypes.includes(this.activeRelationshipTypeFilter)) {
+                this.activeRelationshipTypeFilter = '';
+            }
+
+            this.renderFilterSelectOptions(this.sectorFilterSelect, sectors, this.activeSectorFilter, value => value);
+            this.renderFilterSelectOptions(
+                this.relationshipFilterSelect,
+                relationshipTypes,
+                this.activeRelationshipTypeFilter,
+                value => this.formatConnectionType(value)
+            );
+        }
+
+        renderFilterSelectOptions(select, values, activeValue, formatLabel) {
+            if (!select) return;
+            select.innerHTML = '';
+            select.appendChild(new Option('All', ''));
+            values.forEach(value => {
+                select.appendChild(new Option(formatLabel(value), value));
+            });
+            select.value = values.includes(activeValue) ? activeValue : '';
+        }
+
+        getNodeSectorValue(record) {
+            return normalizeFilterValue(record?.node?.sector) || 'Other';
+        }
+
+        getLinkTypeValue(link) {
+            return normalizeFilterValue(link?.type) || 'link';
+        }
+
+        isSectorFilterActive() {
+            return Boolean(this.activeSectorFilter);
+        }
+
+        isRelationshipFilterActive() {
+            return Boolean(this.activeRelationshipTypeFilter);
+        }
+
+        areFiltersActive() {
+            return this.isSectorFilterActive() || this.isRelationshipFilterActive();
+        }
+
+        nodeMatchesSectorFilter(record) {
+            return !this.isSectorFilterActive() || this.getNodeSectorValue(record) === this.activeSectorFilter;
+        }
+
+        linkTouchesSectorFilter(record) {
+            return !this.isSectorFilterActive() ||
+                this.nodeMatchesSectorFilter(record.source) ||
+                this.nodeMatchesSectorFilter(record.target);
+        }
+
+        linkMatchesRelationshipFilter(record) {
+            return !this.isRelationshipFilterActive() || this.getLinkTypeValue(record?.link) === this.activeRelationshipTypeFilter;
+        }
+
+        nodeTouchesRelationshipFilter(record) {
+            return !this.isRelationshipFilterActive() ||
+                (this.adjacencyByRecord.get(record) || []).some(item => this.linkMatchesRelationshipFilter(item.linkRecord));
+        }
+
+        getNodeFilterState(record) {
+            const sectorActive = this.isSectorFilterActive();
+            const relationshipActive = this.isRelationshipFilterActive();
+            const sectorMatch = !sectorActive || this.nodeMatchesSectorFilter(record);
+            const relationshipMatch = !relationshipActive || this.nodeTouchesRelationshipFilter(record);
+            return {
+                active: sectorActive || relationshipActive,
+                sectorActive,
+                relationshipActive,
+                sectorMatch,
+                relationshipMatch,
+                matchesBoth: (sectorActive || relationshipActive) && sectorMatch && relationshipMatch,
+                dimmed: (sectorActive && !sectorMatch) || (relationshipActive && !relationshipMatch)
+            };
+        }
+
+        getEdgeFilterState(record) {
+            const sectorActive = this.isSectorFilterActive();
+            const relationshipActive = this.isRelationshipFilterActive();
+            const sectorMatch = !sectorActive || this.linkTouchesSectorFilter(record);
+            const relationshipMatch = !relationshipActive || this.linkMatchesRelationshipFilter(record);
+            return {
+                active: sectorActive || relationshipActive,
+                sectorActive,
+                relationshipActive,
+                sectorMatch,
+                relationshipMatch,
+                matchesBoth: (sectorActive || relationshipActive) && sectorMatch && relationshipMatch,
+                dimmed: (sectorActive && !sectorMatch) || (relationshipActive && !relationshipMatch)
+            };
         }
 
         rebuildScene() {
@@ -1107,28 +1236,38 @@
                 const expandedNeighbor = Number.isFinite(depth) && depth > 1;
                 const edgeEndpoint = this.isEndpointOfEdge(record, this.selectedEdgeRecord);
                 const hoveredEdgeEndpoint = this.isEndpointOfEdge(record, this.hoveredEdgeRecord);
+                const filterState = this.getNodeFilterState(record);
+                const filterMatch = filterState.active && !filterState.dimmed;
+                const filterBoth = this.isSectorFilterActive() && this.isRelationshipFilterActive() && filterState.matchesBoth;
                 const active =
                     selectedNode ||
                     directNeighbor ||
                     expandedNeighbor ||
                     record === this.hoveredRecord ||
                     edgeEndpoint ||
-                    hoveredEdgeEndpoint;
+                    hoveredEdgeEndpoint ||
+                    filterMatch;
                 const dimmedByNode = nodeNeighborhoodActive && !Number.isFinite(depth);
                 const dimmedByEdge = this.selectedEdgeRecord && !this.isEndpointOfEdge(record, this.selectedEdgeRecord);
+                const dimmedByFilter = filterState.dimmed;
                 const dimmed = dimmedByNode || dimmedByEdge;
+                const softDimmed = dimmed || dimmedByFilter;
                 const expandedNodeDimming = dimmedByNode && this.depthLevel > DEPTH_LEVEL_MIN;
                 if (record.mesh?.material) {
                     record.mesh.material.opacity = selectedNode || edgeEndpoint
                         ? 1
                         : directNeighbor || record === this.hoveredRecord || hoveredEdgeEndpoint
                             ? 0.96
-                            : depth === 2
+                            : filterBoth
+                                ? 0.94
+                                : filterMatch
+                                    ? 0.9
+                                    : depth === 2
                                 ? 0.72
                                 : depth === 3
                                 ? 0.52
-                                : dimmed
-                                        ? (expandedNodeDimming ? 0.18 : 0.35)
+                                : softDimmed
+                                        ? (expandedNodeDimming ? 0.18 : dimmedByFilter ? 0.26 : 0.35)
                                         : active
                                             ? 0.88
                                             : 0.88;
@@ -1136,11 +1275,15 @@
                         ? 1.22
                         : directNeighbor || record === this.hoveredRecord || hoveredEdgeEndpoint
                             ? 1.12
-                            : depth === 2
-                                ? 1.06
-                                : depth === 3
-                                    ? 1.02
-                                    : 1;
+                            : filterBoth
+                                ? 1.14
+                                : filterMatch
+                                    ? 1.08
+                                    : depth === 2
+                                        ? 1.06
+                                        : depth === 3
+                                            ? 1.02
+                                            : 1;
                     record.mesh.scale.setScalar(record.radius * scaleBoost);
                 }
                 if (record.glow?.material) {
@@ -1148,12 +1291,16 @@
                         ? 0.62
                         : directNeighbor || record === this.hoveredRecord || hoveredEdgeEndpoint
                             ? 0.48
-                            : depth === 2
+                            : filterBoth
+                                ? 0.5
+                                : filterMatch
+                                    ? 0.4
+                                    : depth === 2
                                 ? 0.28
                                 : depth === 3
                                 ? 0.16
-                                : dimmed
-                                        ? (expandedNodeDimming ? 0.07 : 0.12)
+                                : softDimmed
+                                        ? (expandedNodeDimming ? 0.07 : dimmedByFilter ? 0.08 : 0.12)
                                         : active
                                             ? 0.31
                                             : 0.31;
@@ -1170,19 +1317,46 @@
                 const edgeDepth = nodeNeighborhoodActive ? expansion.edgeDepths.get(record) : null;
                 const dimmedByNode = nodeNeighborhoodActive && !Number.isFinite(edgeDepth);
                 const dimmedByEdge = this.selectedEdgeRecord && !selected;
+                const filterState = this.getEdgeFilterState(record);
+                const dimmedByFilter = filterState.dimmed;
+                const filterMatch = filterState.active && !filterState.dimmed;
+                const filterBoth = this.isSectorFilterActive() && this.isRelationshipFilterActive() && filterState.matchesBoth;
+                const hardDimmed = dimmedByNode || dimmedByEdge || dimmedByFilter;
                 const secMode = record.secBacked && this.secEmphasisEnabled;
                 const color = secMode ? GOLD : record.color;
                 const baseOpacity = secMode ? 0.86 : 0.18 + record.strength * 0.36;
                 const neighborhoodOpacity = this.getDepthEdgeOpacity(record, edgeDepth, baseOpacity, secMode);
+                const filterOpacity = filterBoth
+                    ? (secMode ? 0.96 : Math.max(baseOpacity, 0.62 + record.strength * 0.28))
+                    : filterMatch
+                        ? (secMode ? 0.9 : Math.max(baseOpacity, 0.44 + record.strength * 0.24))
+                        : baseOpacity;
                 const opacity = selected
                     ? 1
                     : hovered
                         ? 0.72
-                        : (dimmedByNode || dimmedByEdge)
+                        : hardDimmed
                             ? (secMode ? 0.14 : 0.055)
                             : Number.isFinite(edgeDepth)
-                                ? neighborhoodOpacity
-                                : baseOpacity;
+                                ? Math.max(neighborhoodOpacity, filterOpacity)
+                                : filterMatch
+                                    ? filterOpacity
+                                    : baseOpacity;
+                const glowOpacity = selected
+                    ? (record.secBacked ? 0.62 : 0.44)
+                    : hovered
+                        ? 0.24
+                        : hardDimmed
+                            ? (secMode ? 0.04 : 0)
+                            : filterBoth
+                                ? (secMode ? 0.42 : 0.28)
+                                : filterMatch
+                                    ? (secMode ? 0.32 : 0.18)
+                                    : Number.isFinite(edgeDepth)
+                                        ? this.getDepthEdgeGlowOpacity(edgeDepth, secMode)
+                                        : secMode
+                                            ? 0.22
+                                            : 0;
 
                 if (record.line?.material) {
                     record.line.material.color.set(color);
@@ -1190,17 +1364,7 @@
                 }
                 if (record.glow?.material) {
                     record.glow.material.color.set(color);
-                    record.glow.material.opacity = selected
-                        ? (record.secBacked ? 0.62 : 0.44)
-                        : hovered
-                            ? 0.24
-                            : dimmedByNode
-                                ? (secMode ? 0.04 : 0)
-                                : Number.isFinite(edgeDepth)
-                                    ? this.getDepthEdgeGlowOpacity(edgeDepth, secMode)
-                                    : secMode
-                                        ? 0.22
-                                        : 0;
+                    record.glow.material.opacity = glowOpacity;
                 }
             });
         }
@@ -1447,6 +1611,7 @@
                     </div>
                     <div class="w-4 h-4 rounded-full mt-2" style="background:${this.escapeHtml(record.node.color || CYAN)}; box-shadow:0 0 18px ${this.escapeHtml(record.node.color || CYAN)};"></div>
                 </div>
+                ${this.renderFilterStatusLine()}
                 <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
                         <div class="text-[10px] text-white/42 font-mono">SECTOR</div>
@@ -1570,6 +1735,7 @@
                 ${hintMarkup}
                 <div class="font-display text-2xl text-white">Explore the production graph</div>
                 <p class="mt-2 text-sm leading-6 text-white/62">Rotate, zoom, and select companies without changing filters or underlying graph intelligence.</p>
+                ${this.renderFilterStatusLine()}
                 <div class="mt-5 space-y-3">
                     ${this.renderGuideRow('fa-arrows-rotate', 'Rotate', 'Drag across the canvas to orbit the network.')}
                     ${this.renderGuideRow('fa-magnifying-glass-plus', 'Zoom', 'Use the mouse wheel or trackpad pinch to move closer or farther away.')}
@@ -1660,6 +1826,7 @@
                     </div>
                     <div class="shrink-0">${secBadge}</div>
                 </div>
+                ${this.renderFilterStatusLine()}
                 <div class="mt-4 h-px" style="background:linear-gradient(90deg, ${this.escapeHtml(edgeColor)}, transparent); opacity:.72;"></div>
                 <div class="mt-5 grid grid-cols-1 gap-3">
                     <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
@@ -1763,6 +1930,23 @@
                 <div class="rounded-xl border border-white/10 bg-black/20 p-2">
                     <div class="text-[9px] text-white/42 font-mono uppercase leading-4">${this.escapeHtml(label)}</div>
                     <div class="mt-0.5 text-sm font-semibold text-white/88 truncate">${this.escapeHtml(value)}</div>
+                </div>
+            `;
+        }
+
+        renderFilterStatusLine() {
+            if (!this.areFiltersActive()) return '';
+            const sector = this.activeSectorFilter || 'All';
+            const relationship = this.activeRelationshipTypeFilter
+                ? this.formatConnectionType(this.activeRelationshipTypeFilter)
+                : 'All';
+            return `
+                <div class="mt-4 rounded-2xl border border-cyan-300/18 bg-cyan-300/[0.055] px-3 py-2">
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-5 text-cyan-50/78">
+                        <span class="font-mono uppercase text-cyan-100/64">3D filters</span>
+                        <span>Sector: <span class="text-white/88">${this.escapeHtml(sector)}</span></span>
+                        <span>Relationship: <span class="text-white/88">${this.escapeHtml(relationship)}</span></span>
+                    </div>
                 </div>
             `;
         }
@@ -1902,6 +2086,48 @@
             this.renderDetails();
         }
 
+        setSectorFilter(value) {
+            const nextValue = normalizeFilterValue(value);
+            if (nextValue === this.activeSectorFilter) {
+                this.syncControls();
+                return;
+            }
+            this.activeSectorFilter = nextValue;
+            this.refreshLabels();
+            this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
+            this.syncControls();
+            this.renderDetails();
+        }
+
+        setRelationshipTypeFilter(value) {
+            const nextValue = normalizeFilterValue(value);
+            if (nextValue === this.activeRelationshipTypeFilter) {
+                this.syncControls();
+                return;
+            }
+            this.activeRelationshipTypeFilter = nextValue;
+            this.refreshLabels();
+            this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
+            this.syncControls();
+            this.renderDetails();
+        }
+
+        clearFilters() {
+            if (!this.areFiltersActive()) {
+                this.syncControls();
+                return;
+            }
+            this.activeSectorFilter = '';
+            this.activeRelationshipTypeFilter = '';
+            this.refreshLabels();
+            this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
+            this.syncControls();
+            this.renderDetails();
+        }
+
         focusSelection() {
             if (!this.nodeRecords.length && !this.linkRecords.length) {
                 this.renderDetails();
@@ -1988,6 +2214,13 @@
             if (this.controls.depthSelect) {
                 this.controls.depthSelect.value = String(this.depthLevel);
             }
+            if (this.sectorFilterSelect) {
+                this.sectorFilterSelect.value = this.activeSectorFilter;
+            }
+            if (this.relationshipFilterSelect) {
+                this.relationshipFilterSelect.value = this.activeRelationshipTypeFilter;
+            }
+            this.syncToggle(this.controls.clearFilters, this.areFiltersActive(), 'Clear 3D Filters');
         }
 
         syncToggle(button, active, label) {

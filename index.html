@@ -475,28 +475,36 @@
             max-width: 100%;
         }
 
-        .graph3d-depth-control {
+        .graph3d-depth-control,
+        .graph3d-filter-control {
             min-height: 2.75rem;
             border: 1px solid rgba(0, 249, 255, 0.22);
             background: rgba(3, 7, 18, 0.58);
             color: rgba(255, 255, 255, 0.88);
         }
 
-        .graph3d-depth-control select {
+        .graph3d-filter-control {
+            max-width: 100%;
+        }
+
+        .graph3d-depth-control select,
+        .graph3d-filter-control select {
             min-width: 3.15rem;
+            max-width: 12rem;
             border: 1px solid rgba(0, 249, 255, 0.20);
             background: rgba(0, 249, 255, 0.10);
             color: #ffffff;
             outline: none;
         }
 
-        .graph3d-depth-control select:focus-visible {
+        .graph3d-depth-control select:focus-visible,
+        .graph3d-filter-control select:focus-visible {
             border-color: rgba(0, 249, 255, 0.58);
             box-shadow: 0 0 0 2px rgba(0, 249, 255, 0.14);
         }
 
         .graph3d-header-actions {
-            width: min(100%, 64rem);
+            width: min(100%, 78rem);
             align-items: stretch;
         }
 
@@ -790,9 +798,16 @@
                 text-align: center;
             }
 
-            .graph3d-depth-control {
+            .graph3d-depth-control,
+            .graph3d-filter-control {
                 flex: 1 1 calc(50% - 0.4rem);
                 justify-content: center;
+                min-width: 0;
+            }
+
+            .graph3d-filter-control select {
+                width: 100%;
+                max-width: none;
                 min-width: 0;
             }
 
@@ -842,7 +857,8 @@
                 flex-basis: 100%;
             }
 
-            .graph3d-depth-control {
+            .graph3d-depth-control,
+            .graph3d-filter-control {
                 flex-basis: 100%;
             }
 
@@ -1072,6 +1088,18 @@
                                     <option value="3">3</option>
                                 </select>
                             </label>
+                            <label class="graph3d-filter-control rounded-3xl px-3 py-2 text-xs flex items-center gap-x-2" title="Emphasize one sector in the 3D view only">
+                                <span class="font-mono text-cyan-50/72 whitespace-nowrap">Sector</span>
+                                <select id="graph3d-sector-filter" class="rounded-2xl px-2 py-1.5 font-mono text-xs" aria-label="3D sector filter">
+                                    <option value="" selected>All</option>
+                                </select>
+                            </label>
+                            <label class="graph3d-filter-control rounded-3xl px-3 py-2 text-xs flex items-center gap-x-2" title="Emphasize one relationship type in the 3D view only">
+                                <span class="font-mono text-cyan-50/72 whitespace-nowrap">Relationship</span>
+                                <select id="graph3d-relationship-filter" class="rounded-2xl px-2 py-1.5 font-mono text-xs" aria-label="3D relationship type filter">
+                                    <option value="" selected>All</option>
+                                </select>
+                            </label>
                             <button id="graph3d-fit-button" type="button" onclick="fitGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Fit 3D network">
                                 <i class="fa-solid fa-compress"></i>
                                 <span>FIT</span>
@@ -1083,6 +1111,10 @@
                             <button id="graph3d-clear-selection-button" type="button" onclick="clearGraph3DSelection()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Clear 3D selection without moving the camera">
                                 <i class="fa-solid fa-eraser"></i>
                                 <span>Clear Selection</span>
+                            </button>
+                            <button id="graph3d-clear-filters-button" type="button" onclick="clearGraph3DFilters()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Clear 3D-only filters">
+                                <i class="fa-solid fa-filter-circle-xmark"></i>
+                                <span>Clear 3D Filters</span>
                             </button>
                             <button id="graph3d-reset-button" type="button" onclick="resetGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset 3D camera and selection">
                                 <i class="fa-solid fa-rotate-left"></i>
@@ -1770,6 +1802,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     autoRotate: document.getElementById('graph3d-auto-rotate-toggle'),
                     neighborhood: document.getElementById('graph3d-neighborhood-toggle'),
                     depthSelect: document.getElementById('graph3d-depth-level'),
+                    sectorFilter: document.getElementById('graph3d-sector-filter'),
+                    relationshipFilter: document.getElementById('graph3d-relationship-filter'),
+                    clearFilters: document.getElementById('graph3d-clear-filters-button'),
                     searchInput: document.getElementById('graph3d-search-input'),
                     searchResults: document.getElementById('graph3d-search-results')
                 },
@@ -1855,6 +1890,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function clearGraph3DSelection() {
             getGraph3DView()?.clearSelection();
+        }
+
+        function clearGraph3DFilters() {
+            getGraph3DView()?.clearFilters();
         }
 
         /* ==============================

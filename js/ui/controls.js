@@ -36,17 +36,17 @@
         if (value) value.innerText = signalStrengthThreshold.toFixed(2);
     }
 
-    function updateOrbitModeControl(context) {
-        const { toggle, orbitEnabled } = context;
+    function updatePerspectiveModeControl(context) {
+        const { toggle, perspectiveEnabled } = context;
         if (!toggle) return;
 
         const label = toggle.querySelector('span');
-        toggle.setAttribute('aria-pressed', orbitEnabled ? 'true' : 'false');
-        toggle.classList.toggle('is-active', orbitEnabled);
-        if (label) label.innerText = orbitEnabled ? 'Orbit Active' : 'Resume Orbit';
-        toggle.title = orbitEnabled
-            ? 'Orbit on: ambient camera drift stops on interaction.'
-            : 'Orbit off: click to resume ambient camera drift.';
+        toggle.setAttribute('aria-pressed', perspectiveEnabled ? 'true' : 'false');
+        toggle.classList.toggle('is-active', perspectiveEnabled);
+        if (label) label.innerText = 'Perspective Mode';
+        toggle.title = perspectiveEnabled
+            ? 'Perspective Mode on: drag empty graph space to tilt or rotate.'
+            : 'Perspective Mode off: flat 2D graph rendering.';
     }
 
     function updatePortfolioPanel(context) {
@@ -82,7 +82,7 @@
             signalStrengthThreshold,
             isPortfolioAnalysisActive,
             matchedPortfolioNodes,
-            orbitEnabled,
+            perspectiveEnabled,
             escapeHtml
         } = context;
         if (!overlay) return;
@@ -96,7 +96,7 @@
         if (isFocusModeActive()) items.push('Focus Mode');
         if (signalStrengthThreshold > 0) items.push(`Threshold ${signalStrengthThreshold.toFixed(2)}`);
         if (isPortfolioAnalysisActive()) items.push(`Portfolio ${matchedPortfolioNodes.length}`);
-        if (orbitEnabled) items.push('Orbit Active');
+        if (perspectiveEnabled) items.push('Perspective Mode');
 
         overlay.innerHTML = items.map(item => `
                 <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/75 font-mono tracking-[1.1px]">
@@ -110,7 +110,7 @@
         buildIndustryGroupFilter,
         updateFocusModeControl,
         updateSignalThresholdControl,
-        updateOrbitModeControl,
+        updatePerspectiveModeControl,
         updatePortfolioPanel,
         updateDatasetTrustPanel,
         updateGraphOverlayStats

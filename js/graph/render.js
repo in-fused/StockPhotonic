@@ -132,6 +132,7 @@
 
         const strength = context.clamp(link.strength, 0.05, 1);
         const isStrongSignal = strength >= 0.78;
+        const perspectiveShade = getPerspectiveShade(context, link.source, link.target);
         let alpha = 0.01 + Math.pow(strength, 2.35) * 0.46;
         let width = 0.22 + Math.pow(strength, 1.55) * 2.9;
 
@@ -160,7 +161,7 @@
             width = Math.max(width + 0.65, 1.35 + strength * 2.5);
         }
 
-        ctx.globalAlpha = alpha;
+        ctx.globalAlpha = alpha * perspectiveShade;
         ctx.strokeStyle = color;
         ctx.lineWidth = width;
         ctx.shadowBlur = isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
@@ -202,7 +203,8 @@
         const industryMatched = context.isIndustryGroupFilterActive() && context.nodeMatchesCurrentIndustryGroup(node);
         const focusDimmed = !context.isFocusModeActive() && context.selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isCorrelationHintNode && !isPortfolioHolding && !isPortfolioAdjacent && !industryMatched;
         const isDimmed = focusDimmed || industryDimmed;
-        const alpha = industryDimmed ? 0.16 : focusDimmed ? 0.18 : isPortfolioTopNexus ? 0.96 : isPortfolioRepeatedExposure ? 0.92 : isPortfolioAdjacent ? 0.84 : isCorrelationHintNode ? 0.78 : 1;
+        const perspectiveShade = getPerspectiveShade(context, node);
+        const alpha = (industryDimmed ? 0.16 : focusDimmed ? 0.18 : isPortfolioTopNexus ? 0.96 : isPortfolioRepeatedExposure ? 0.92 : isPortfolioAdjacent ? 0.84 : isCorrelationHintNode ? 0.78 : 1) * perspectiveShade;
         const color = node.color || '#00f9ff';
         const portfolioHaloColor = isPortfolioHolding
             ? '#ffd700'
@@ -431,6 +433,12 @@
         return node.degree * 10 + Math.max(0, 320 - (node.rank || 320)) / 20;
     }
 
+    function getPerspectiveShade(context, ...nodes) {
+        if (!context.perspectiveEnabled) return 1;
+        const depth = nodes.reduce((sum, node) => sum + Math.max(0, getFiniteNumber(node?._pseudoDepth, 0)), 0) / Math.max(1, nodes.length);
+        return context.clamp(1 - depth * 0.18, 0.84, 1);
+    }
+
     function getOrbitRenderFrame(context, orbit) {
         const ramp = getFiniteNumber(orbit?.ramp, 0);
         const active = context.orbitEnabled && ramp > 0;
@@ -473,8 +481,8 @@
         context.visibleNodes.forEach(node => {
             const position = context.getNodeLayoutPosition(node);
             const point = context.worldToScreen(position.x, position.y);
-            let radius = getScreenNodeRadius(context, node);
-            let pseudoDepth = 0;
+            let radius = getScreenNodeRadius(context, node) * (point.perspectiveScale || 1);
+            let pseudoDepth = point.depthNormalized || 0;
 
             if (frame.active) {
                 const normalizedX = context.clamp((point.x - frame.centerX) * frame.invHalfWidth, -1, 1);
@@ -492,6 +500,7 @@
             node._screenY = point.y;
             node._screenRadius = radius;
             node._pseudoDepth = pseudoDepth;
+            node._perspectiveScale = point.perspectiveScale || 1;
         });
     }
 
@@ -585,6 +594,7 @@
         getLabelLimit,
         shouldDrawLabel,
         labelPriority,
+        getPerspectiveShade,
         updateScreenCache,
         isNodeInFrame,
         shouldDrawLink,

@@ -238,8 +238,6 @@
 
         #sidebar,
         #empty-sidebar,
-        .graph3d-detail-panel,
-        .graph3d-search-results,
         .fullscreen-hud,
         .fullscreen-panel {
             scrollbar-width: thin;
@@ -248,8 +246,6 @@
 
         #sidebar::-webkit-scrollbar,
         #empty-sidebar::-webkit-scrollbar,
-        .graph3d-detail-panel::-webkit-scrollbar,
-        .graph3d-search-results::-webkit-scrollbar,
         .fullscreen-hud::-webkit-scrollbar,
         .fullscreen-panel::-webkit-scrollbar {
             width: 8px;
@@ -258,8 +254,6 @@
 
         #sidebar::-webkit-scrollbar-track,
         #empty-sidebar::-webkit-scrollbar-track,
-        .graph3d-detail-panel::-webkit-scrollbar-track,
-        .graph3d-search-results::-webkit-scrollbar-track,
         .fullscreen-hud::-webkit-scrollbar-track,
         .fullscreen-panel::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.035);
@@ -268,21 +262,17 @@
 
         #sidebar::-webkit-scrollbar-thumb,
         #empty-sidebar::-webkit-scrollbar-thumb,
-        .graph3d-detail-panel::-webkit-scrollbar-thumb,
-        .graph3d-search-results::-webkit-scrollbar-thumb,
         .fullscreen-hud::-webkit-scrollbar-thumb,
         .fullscreen-panel::-webkit-scrollbar-thumb {
             background: linear-gradient(180deg, rgba(0, 249, 255, 0.44), rgba(255, 0, 170, 0.28));
             border-radius: 999px;
         }
 
-        body.graph-fullscreen-active,
-        body.graph3d-fullscreen-active {
+        body.graph-fullscreen-active {
             overflow: hidden;
         }
 
-        body.graph-fullscreen-active > header,
-        body.graph3d-fullscreen-active > header {
+        body.graph-fullscreen-active > header {
             display: none;
         }
 
@@ -324,26 +314,22 @@
             backdrop-filter: blur(18px);
         }
 
-        #graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-toggle,
-        #network-3d-view.is-graph3d-fullscreen .fullscreen-hud-toggle {
+        #graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-toggle {
             display: inline-flex;
         }
 
-        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .fullscreen-hud-restore,
-        #network-3d-view.is-graph3d-fullscreen.is-hud-hidden .fullscreen-hud-restore {
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .fullscreen-hud-restore {
             display: inline-flex;
         }
 
-        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-intelligence-controls,
-        #network-3d-view.is-graph3d-fullscreen.is-hud-hidden .graph3d-header-bar {
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-intelligence-controls {
             opacity: 0;
             pointer-events: none;
             transform: translateY(-0.75rem);
             visibility: hidden;
         }
 
-        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-sidebar-column,
-        #network-3d-view.is-graph3d-fullscreen.is-hud-hidden .graph3d-side-column {
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-sidebar-column {
             opacity: 0;
             pointer-events: none;
             transform: translateX(0.75rem);
@@ -351,8 +337,7 @@
         }
 
         #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-overlay-stats,
-        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .sec-production-legend,
-        #network-3d-view.is-graph3d-fullscreen.is-hud-hidden .graph3d-stat-overlay {
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .sec-production-legend {
             opacity: 0;
             pointer-events: none;
         }
@@ -365,8 +350,7 @@
             display: inline-flex;
         }
 
-        #graph-intelligence-view.is-graph-fullscreen,
-        #network-3d-view.is-graph3d-fullscreen {
+        #graph-intelligence-view.is-graph-fullscreen {
             position: fixed;
             inset: 0;
             z-index: 90;
@@ -381,8 +365,7 @@
                 rgba(5, 5, 8, 0.98);
         }
 
-        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls,
-        #network-3d-view.is-graph3d-fullscreen .graph3d-header-bar {
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls {
             position: absolute;
             top: 0.85rem;
             left: 0.85rem;
@@ -402,16 +385,14 @@
             align-items: center;
         }
 
-        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button,
-        #network-3d-view.is-graph3d-fullscreen .graph3d-toolbar .focus-button {
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button {
             min-height: 2.4rem;
             padding: 0.52rem 0.76rem;
             border-radius: 0.95rem;
         }
 
         #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls select,
-        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls input,
-        #network-3d-view.is-graph3d-fullscreen .graph3d-search-input {
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls input {
             min-height: 2.4rem;
             padding-top: 0.55rem;
             padding-bottom: 0.55rem;
@@ -424,34 +405,6 @@
             border-radius: 1rem;
             min-width: 14rem;
             background: rgba(0, 0, 0, 0.22);
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .graph3d-header-bar {
-            align-items: flex-start;
-            padding: 0.58rem;
-            gap: 0.65rem;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen #network-3d-title {
-            font-size: clamp(1.1rem, 1.5vw, 1.45rem);
-            line-height: 1.05;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .source-workbench-label {
-            margin-bottom: 0.25rem;
-            font-size: 0.58rem;
-            opacity: 0.68;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .graph3d-search {
-            width: min(18rem, 100%);
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .graph3d-toolbar {
-            gap: 0.35rem;
-            padding: 0.35rem;
-            border-radius: 1rem;
-            background: rgba(0, 0, 0, 0.18);
         }
 
         #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-layout {
@@ -509,78 +462,6 @@
             overflow-y: auto;
             border-radius: 1.25rem;
             padding: 1.15rem;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .graph3d-workbench {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            padding: 0;
-            border-radius: 1.25rem;
-            background: transparent;
-            border-color: transparent;
-            box-shadow: none;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .graph3d-body {
-            display: block;
-            height: 100%;
-            margin: 0;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .graph3d-stage-column {
-            height: 100%;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen #graph3d-stage {
-            height: calc(100dvh - 1.7rem);
-            min-height: 0;
-            border-radius: 1.25rem;
-            background:
-                radial-gradient(circle at 50% 50%, rgba(0, 249, 255, 0.13), rgba(255, 0, 170, 0.04) 48%, rgba(5, 5, 8, 0.34) 78%),
-                linear-gradient(rgba(0, 249, 255, 0.028) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 249, 255, 0.024) 1px, transparent 1px);
-            background-size: 100% 100%, 64px 64px, 64px 64px;
-            box-shadow: inset 0 0 98px rgba(0, 249, 255, 0.11), 0 0 86px rgba(0, 249, 255, 0.08);
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .graph3d-side-column {
-            position: absolute;
-            z-index: 22;
-            top: min(28vh, 15.75rem);
-            right: 1rem;
-            bottom: 1rem;
-            width: min(27rem, calc(100vw - 2rem));
-            gap: 0.75rem;
-            pointer-events: none;
-            transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen #graph3d-details,
-        #network-3d-view.is-graph3d-fullscreen .graph3d-legend {
-            pointer-events: auto;
-            border-radius: 1.25rem;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen #graph3d-details {
-            min-height: 0;
-            max-height: calc(100% - 8.5rem);
-            padding: 1.15rem;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .graph3d-legend {
-            max-height: 7.75rem;
-            overflow-y: auto;
-            padding: 0.85rem;
-            opacity: 0.68;
-            background:
-                linear-gradient(145deg, rgba(255, 255, 255, 0.035), rgba(0, 249, 255, 0.018)),
-                rgba(3, 7, 18, 0.54) !important;
-        }
-
-        #network-3d-view.is-graph3d-fullscreen .graph3d-legend-row {
-            font-size: 0.72rem;
-            gap: 0.5rem;
         }
 
         .node-source-link {
@@ -783,316 +664,6 @@
             vertical-align: top;
         }
 
-        .graph3d-workbench {
-            border: 1px solid rgba(0, 249, 255, 0.16);
-            background:
-                linear-gradient(135deg, rgba(0, 249, 255, 0.07), rgba(255, 0, 170, 0.04)),
-                rgba(6, 8, 18, 0.88);
-            box-shadow: 0 0 42px rgba(0, 249, 255, 0.08);
-        }
-
-        #graph3d-stage {
-            height: min(74vh, 760px);
-            min-height: 680px;
-            border: 1px solid rgba(0, 249, 255, 0.12);
-            background:
-                linear-gradient(rgba(0, 249, 255, 0.035) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 249, 255, 0.035) 1px, transparent 1px),
-                radial-gradient(circle at center, rgba(0, 249, 255, 0.10), rgba(255, 0, 170, 0.035) 48%, rgba(5, 5, 8, 0.20) 72%);
-            background-size: 52px 52px, 52px 52px, 100% 100%;
-            box-shadow: inset 0 0 52px rgba(0, 249, 255, 0.08), 0 0 52px rgba(0, 249, 255, 0.07);
-        }
-
-        #graph3d-canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-            touch-action: none;
-            user-select: none;
-            cursor: grab;
-        }
-
-        #graph3d-canvas.is-dragging {
-            cursor: grabbing;
-        }
-
-        .graph3d-toolbar {
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            background: rgba(0, 0, 0, 0.24);
-            max-width: 100%;
-        }
-
-        .graph3d-depth-control,
-        .graph3d-filter-control {
-            min-height: 2.75rem;
-            border: 1px solid rgba(0, 249, 255, 0.22);
-            background: rgba(3, 7, 18, 0.58);
-            color: rgba(255, 255, 255, 0.88);
-        }
-
-        .graph3d-filter-control {
-            max-width: 100%;
-        }
-
-        .graph3d-depth-control select,
-        .graph3d-filter-control select {
-            min-width: 3.15rem;
-            max-width: 12rem;
-            border: 1px solid rgba(0, 249, 255, 0.20);
-            background: rgba(0, 249, 255, 0.10);
-            color: #ffffff;
-            outline: none;
-        }
-
-        .graph3d-depth-control select:focus-visible,
-        .graph3d-filter-control select:focus-visible {
-            border-color: rgba(0, 249, 255, 0.58);
-            box-shadow: 0 0 0 2px rgba(0, 249, 255, 0.14);
-        }
-
-        .graph3d-header-actions {
-            width: min(100%, 78rem);
-            align-items: stretch;
-        }
-
-        .graph3d-search {
-            position: relative;
-            z-index: 12;
-            width: min(20rem, 100%);
-        }
-
-        .graph3d-search-input {
-            width: 100%;
-            min-height: 2.75rem;
-            border: 1px solid rgba(0, 249, 255, 0.20);
-            background: rgba(3, 7, 18, 0.64);
-            color: rgba(255, 255, 255, 0.94);
-            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03), 0 0 24px rgba(0, 249, 255, 0.08);
-            outline: none;
-            padding: 0.72rem 2.35rem 0.72rem 2.65rem;
-            font-size: 0.82rem;
-            line-height: 1.2;
-        }
-
-        .graph3d-search-input::placeholder {
-            color: rgba(207, 250, 254, 0.42);
-        }
-
-        .graph3d-search-input:focus {
-            border-color: rgba(0, 249, 255, 0.46);
-            box-shadow: 0 0 0 2px rgba(0, 249, 255, 0.12), 0 0 26px rgba(0, 249, 255, 0.12);
-        }
-
-        .graph3d-search-results {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: calc(100% + 0.45rem);
-            max-height: 18rem;
-            overflow-y: auto;
-            border: 1px solid rgba(0, 249, 255, 0.20);
-            background: rgba(3, 7, 18, 0.94);
-            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.36), 0 0 28px rgba(0, 249, 255, 0.12);
-            backdrop-filter: blur(16px);
-            padding: 0.35rem;
-        }
-
-        .graph3d-search-option {
-            width: 100%;
-            min-height: 3rem;
-            border: 1px solid transparent;
-            background: transparent;
-            color: rgba(255, 255, 255, 0.88);
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            padding: 0.62rem 0.72rem;
-        }
-
-        .graph3d-search-option.is-active,
-        .graph3d-search-option:hover {
-            border-color: rgba(0, 249, 255, 0.26);
-            background: rgba(0, 249, 255, 0.11);
-        }
-
-        .graph3d-search-ticker {
-            flex: 0 0 auto;
-            min-width: 3.15rem;
-            border: 1px solid rgba(0, 249, 255, 0.24);
-            background: rgba(0, 249, 255, 0.10);
-            color: #ffffff;
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 0.72rem;
-            font-weight: 700;
-            line-height: 1;
-            padding: 0.42rem 0.5rem;
-            text-align: center;
-        }
-
-        .graph3d-search-copy {
-            min-width: 0;
-            display: block;
-        }
-
-        .graph3d-search-name,
-        .graph3d-search-meta {
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .graph3d-search-name {
-            font-size: 0.82rem;
-            font-weight: 600;
-        }
-
-        .graph3d-search-meta,
-        .graph3d-search-empty {
-            color: rgba(207, 250, 254, 0.54);
-            font-size: 0.72rem;
-            line-height: 1.35;
-        }
-
-        .graph3d-search-empty {
-            padding: 0.75rem 0.85rem;
-        }
-
-        .graph3d-stat-overlay {
-            position: absolute;
-            left: 1rem;
-            bottom: 1rem;
-            z-index: 5;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.4rem;
-            max-width: calc(100% - 2rem);
-            pointer-events: none;
-        }
-
-        .graph3d-stat-pill {
-            display: inline-flex;
-            align-items: baseline;
-            gap: 0.38rem;
-            border: 1px solid rgba(0, 249, 255, 0.30);
-            background: rgba(3, 7, 18, 0.84);
-            color: rgba(236, 254, 255, 0.94);
-            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-            font-size: 0.72rem;
-            letter-spacing: 0;
-            box-shadow: 0 0 18px rgba(0, 249, 255, 0.13);
-            backdrop-filter: blur(14px);
-        }
-
-        .graph3d-stat-value {
-            font-family: 'Space Grotesk', Inter, sans-serif;
-            font-size: 0.95rem;
-            font-weight: 700;
-            line-height: 1;
-            color: #ffffff;
-        }
-
-        .graph3d-stat-label {
-            color: rgba(207, 250, 254, 0.74);
-            line-height: 1;
-        }
-
-        .graph3d-tooltip {
-            position: absolute;
-            z-index: 8;
-            max-width: min(16rem, calc(100% - 2rem));
-            border: 1px solid rgba(0, 249, 255, 0.22);
-            background: rgba(3, 7, 18, 0.82);
-            box-shadow: 0 18px 42px rgba(0, 0, 0, 0.36), 0 0 24px rgba(0, 249, 255, 0.12);
-            backdrop-filter: blur(14px);
-            pointer-events: none;
-        }
-
-        .graph3d-detail-panel {
-            border: 1px solid rgba(255, 255, 255, 0.09);
-            background: rgba(255, 255, 255, 0.035);
-        }
-
-        .graph3d-path-insight-row {
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        .graph3d-path-line {
-            overflow-wrap: anywhere;
-            word-break: normal;
-        }
-
-        .graph3d-path-meta {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0.35rem;
-            min-width: 0;
-        }
-
-        .graph3d-legend {
-            border: 1px solid rgba(0, 249, 255, 0.14);
-            background: rgba(3, 7, 18, 0.42);
-        }
-
-        .graph3d-legend-row {
-            display: flex;
-            align-items: center;
-            gap: 0.7rem;
-            color: rgba(226, 232, 240, 0.72);
-            font-size: 0.82rem;
-            line-height: 1.35;
-        }
-
-        .graph3d-legend-mark {
-            position: relative;
-            flex: 0 0 auto;
-            width: 1.85rem;
-            height: 1rem;
-        }
-
-        .graph3d-legend-node::before {
-            content: "";
-            position: absolute;
-            left: 0.45rem;
-            top: 0.12rem;
-            width: 0.78rem;
-            height: 0.78rem;
-            border-radius: 999px;
-            background: #00f9ff;
-            box-shadow: 0 0 16px rgba(0, 249, 255, 0.75);
-        }
-
-        .graph3d-legend-edge::before,
-        .graph3d-legend-sec::before,
-        .graph3d-legend-label::before {
-            content: "";
-            position: absolute;
-            left: 0.1rem;
-            right: 0.1rem;
-            top: 0.48rem;
-            height: 2px;
-            background: linear-gradient(90deg, rgba(0, 249, 255, 0.92), rgba(255, 0, 170, 0.58));
-            box-shadow: 0 0 10px rgba(0, 249, 255, 0.3);
-        }
-
-        .graph3d-legend-sec::before {
-            height: 3px;
-            background: repeating-linear-gradient(90deg, #ffd700 0 7px, rgba(255, 215, 0, 0.12) 7px 11px);
-            box-shadow: 0 0 14px rgba(255, 215, 0, 0.42);
-        }
-
-        .graph3d-legend-label::before {
-            top: 0.2rem;
-            height: 0.74rem;
-            border: 1px solid rgba(255, 255, 255, 0.54);
-            border-radius: 0.32rem;
-            background: rgba(3, 7, 18, 0.8);
-            box-shadow: 0 0 12px rgba(255, 255, 255, 0.12);
-        }
-
         @media (max-width: 768px) {
             .page-shell {
                 padding-left: 1rem;
@@ -1103,91 +674,13 @@
                 height: 62vh !important;
             }
 
-            #graph3d-stage,
-            #graph3d-canvas {
-                height: clamp(420px, 66vh, 560px);
-                min-height: 420px;
-            }
-
-            .graph3d-workbench {
-                padding: 1rem;
-            }
-
-            .graph3d-toolbar {
-                width: 100%;
-                border-radius: 1.35rem;
-                padding: 0.45rem;
-            }
-
-            .graph3d-header-actions,
-            .graph3d-search {
-                width: 100%;
-            }
-
-            .graph3d-search-results {
-                max-width: 100%;
-                max-height: 15rem;
-            }
-
-            .graph3d-search-option {
-                border-radius: 1rem;
-            }
-
-            .graph3d-toolbar .focus-button {
-                flex: 1 1 calc(50% - 0.4rem);
-                justify-content: center;
-                min-width: 0;
-                min-height: 2.75rem;
-                padding-left: 0.85rem;
-                padding-right: 0.85rem;
-                font-size: 0.75rem;
-                white-space: normal;
-                text-align: center;
-            }
-
-            .graph3d-depth-control,
-            .graph3d-filter-control {
-                flex: 1 1 calc(50% - 0.4rem);
-                justify-content: center;
-                min-width: 0;
-            }
-
-            .graph3d-filter-control select {
-                width: 100%;
-                max-width: none;
-                min-width: 0;
-            }
-
-            .graph3d-stat-overlay {
-                left: 0.75rem;
-                right: 0.75rem;
-                bottom: 0.75rem;
-                max-width: none;
-                gap: 0.35rem;
-            }
-
-            .graph3d-stat-pill {
-                padding: 0.42rem 0.6rem;
-                font-size: 0.68rem;
-            }
-
-            .graph3d-stat-value {
-                font-size: 0.86rem;
-            }
-
-            .graph3d-detail-panel {
-                min-height: 0;
-            }
-
-            #graph-intelligence-view.is-graph-fullscreen,
-            #network-3d-view.is-graph3d-fullscreen {
+            #graph-intelligence-view.is-graph-fullscreen {
                 padding: 0.75rem;
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
             }
 
-            #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls,
-            #network-3d-view.is-graph3d-fullscreen .graph3d-header-bar {
+            #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls {
                 position: relative;
                 inset: auto;
                 width: 100%;
@@ -1196,9 +689,7 @@
             }
 
             #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-intelligence-controls,
-            #network-3d-view.is-graph3d-fullscreen.is-hud-hidden .graph3d-header-bar,
-            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-sidebar-column,
-            #network-3d-view.is-graph3d-fullscreen.is-hud-hidden .graph3d-side-column {
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-sidebar-column {
                 display: none;
             }
 
@@ -1209,20 +700,17 @@
                 min-height: 2.5rem;
             }
 
-            #graph-intelligence-view.is-graph-fullscreen .graph-container,
-            #network-3d-view.is-graph3d-fullscreen #graph3d-stage {
+            #graph-intelligence-view.is-graph-fullscreen .graph-container {
                 height: clamp(460px, 68dvh, 760px) !important;
                 min-height: 460px;
             }
 
-            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-container,
-            #network-3d-view.is-graph3d-fullscreen.is-hud-hidden #graph3d-stage {
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-container {
                 height: calc(100dvh - 1.5rem) !important;
                 min-height: 0;
             }
 
-            #graph-intelligence-view.is-graph-fullscreen .graph-sidebar-column,
-            #network-3d-view.is-graph3d-fullscreen .graph3d-side-column {
+            #graph-intelligence-view.is-graph-fullscreen .graph-sidebar-column {
                 position: relative;
                 inset: auto;
                 width: 100%;
@@ -1231,14 +719,9 @@
             }
 
             #graph-intelligence-view.is-graph-fullscreen #sidebar,
-            #graph-intelligence-view.is-graph-fullscreen #empty-sidebar,
-            #network-3d-view.is-graph3d-fullscreen #graph3d-details {
+            #graph-intelligence-view.is-graph-fullscreen #empty-sidebar {
                 height: auto;
                 max-height: min(48dvh, 30rem);
-            }
-
-            #network-3d-view.is-graph3d-fullscreen .graph3d-legend {
-                max-height: none;
             }
 
             .app-view-tabs {
@@ -1256,17 +739,6 @@
         }
 
         @media (max-width: 480px) {
-            #graph3d-stage,
-            #graph3d-canvas {
-                height: clamp(380px, 62vh, 500px);
-                min-height: 380px;
-            }
-
-            .graph3d-toolbar .focus-button {
-                flex-basis: 100%;
-            }
-
-            #network-3d-view.is-graph3d-fullscreen .graph3d-toolbar .focus-button,
             #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button {
                 flex: 1 1 calc(50% - 0.35rem);
             }
@@ -1277,17 +749,6 @@
                 min-width: 0;
             }
 
-            .graph3d-depth-control,
-            .graph3d-filter-control {
-                flex-basis: 100%;
-            }
-
-            .graph3d-stat-overlay {
-                position: static;
-                padding: 0.75rem;
-                background: rgba(3, 7, 18, 0.48);
-                border-top: 1px solid rgba(255, 255, 255, 0.08);
-            }
         }
     </style>
 </head>
@@ -1347,10 +808,6 @@
                 <i class="fa-solid fa-clipboard-list"></i>
                 <span>Source Workbench</span>
             </button>
-            <button id="network-3d-tab" type="button" class="app-view-tab rounded-3xl px-5 py-2.5 text-xs font-mono tracking-[1.3px] flex items-center gap-2" role="tab" aria-selected="false" aria-controls="network-3d-view" onclick="setAppView('graph3d')">
-                <i class="fa-solid fa-cube"></i>
-                <span>3D Network</span>
-            </button>
         </div>
 
         <section id="graph-intelligence-view" role="tabpanel" aria-labelledby="graph-intelligence-tab">
@@ -1383,9 +840,9 @@
                     <span>Focus Mode</span>
                 </button>
 
-                <button id="orbit-toggle" onclick="toggleOrbitMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
-                    <i class="fa-solid fa-circle-notch"></i>
-                    <span>Orbit</span>
+                <button id="perspective-toggle" onclick="togglePerspectiveMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-cubes"></i>
+                    <span>Perspective Mode</span>
                 </button>
 
                 <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
@@ -1490,133 +947,6 @@
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section id="network-3d-view" class="hidden pb-10" role="tabpanel" aria-labelledby="network-3d-tab">
-            <section class="graph3d-workbench rounded-3xl p-4 md:p-5" aria-labelledby="network-3d-title">
-                <div class="graph3d-header-bar flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-4">
-                    <div>
-                        <div class="source-workbench-label mb-2">Production Network Prototype</div>
-                        <h2 id="network-3d-title" class="font-display text-3xl md:text-4xl font-semibold">3D Network</h2>
-                    </div>
-
-                    <div class="graph3d-header-actions flex flex-col md:flex-row md:items-start md:justify-end gap-3">
-                        <div class="graph3d-search">
-                            <label class="sr-only" for="graph3d-search-input">Search 3D network by ticker or company</label>
-                            <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-cyan-100/45 pointer-events-none"></i>
-                            <input id="graph3d-search-input" type="text" class="graph3d-search-input rounded-3xl font-mono" placeholder="Jump to ticker or company..." autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="graph3d-search-results">
-                            <div id="graph3d-search-results" class="graph3d-search-results hidden rounded-2xl" role="listbox" aria-label="3D network search results"></div>
-                        </div>
-
-                        <div class="graph3d-toolbar rounded-3xl p-1.5 flex flex-wrap gap-1.5">
-                            <button id="graph3d-labels-toggle" type="button" onclick="toggleGraph3DLabels()" aria-pressed="true" class="focus-button is-active px-4 py-2.5 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle 3D labels">
-                                <i class="fa-solid fa-tags"></i>
-                                <span>Labels On</span>
-                            </button>
-                            <button id="graph3d-sec-toggle" type="button" onclick="toggleGraph3DSecEmphasis()" aria-pressed="true" class="focus-button is-active px-4 py-2.5 text-xs rounded-3xl border border-yellow-300/25 flex items-center gap-x-2" title="Toggle SEC-backed edge emphasis">
-                                <i class="fa-solid fa-file-shield"></i>
-                                <span>SEC Emphasis On</span>
-                            </button>
-                            <button id="graph3d-auto-rotate-toggle" type="button" onclick="toggleGraph3DAutoRotate()" aria-pressed="false" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Toggle auto-rotate">
-                                <i class="fa-solid fa-circle-notch"></i>
-                                <span>Auto-Rotate Off</span>
-                            </button>
-                            <button id="graph3d-neighborhood-toggle" type="button" onclick="toggleGraph3DNeighborhoodMode()" aria-pressed="false" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle selected-node neighborhood emphasis">
-                                <i class="fa-solid fa-diagram-project"></i>
-                                <span>Neighborhood Mode</span>
-                            </button>
-                            <label class="graph3d-depth-control rounded-3xl px-3 py-2 text-xs flex items-center gap-x-2" title="Set selected-neighborhood expansion depth">
-                                <span class="font-mono text-cyan-50/72 whitespace-nowrap">Depth Level</span>
-                                <select id="graph3d-depth-level" class="rounded-2xl px-2 py-1.5 font-mono text-xs" aria-label="3D depth level">
-                                    <option value="1" selected>1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                </select>
-                            </label>
-                            <label class="graph3d-filter-control rounded-3xl px-3 py-2 text-xs flex items-center gap-x-2" title="Emphasize one sector in the 3D view only">
-                                <span class="font-mono text-cyan-50/72 whitespace-nowrap">Sector</span>
-                                <select id="graph3d-sector-filter" class="rounded-2xl px-2 py-1.5 font-mono text-xs" aria-label="3D sector filter">
-                                    <option value="" selected>All</option>
-                                </select>
-                            </label>
-                            <label class="graph3d-filter-control rounded-3xl px-3 py-2 text-xs flex items-center gap-x-2" title="Emphasize one relationship type in the 3D view only">
-                                <span class="font-mono text-cyan-50/72 whitespace-nowrap">Relationship</span>
-                                <select id="graph3d-relationship-filter" class="rounded-2xl px-2 py-1.5 font-mono text-xs" aria-label="3D relationship type filter">
-                                    <option value="" selected>All</option>
-                                </select>
-                            </label>
-                            <button id="graph3d-fit-button" type="button" onclick="fitGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Fit 3D network">
-                                <i class="fa-solid fa-compress"></i>
-                                <span>FIT</span>
-                            </button>
-                            <button id="graph3d-focus-selected-button" type="button" onclick="focusGraph3DSelection()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Focus selected 3D node or relationship">
-                                <i class="fa-solid fa-crosshairs"></i>
-                                <span>Focus Selected</span>
-                            </button>
-                            <button id="graph3d-clear-selection-button" type="button" onclick="clearGraph3DSelection()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Clear 3D selection without moving the camera">
-                                <i class="fa-solid fa-eraser"></i>
-                                <span>Clear Selection</span>
-                            </button>
-                            <button id="graph3d-clear-filters-button" type="button" onclick="clearGraph3DFilters()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Clear 3D-only filters">
-                                <i class="fa-solid fa-filter-circle-xmark"></i>
-                                <span>Clear 3D Filters</span>
-                            </button>
-                            <button id="graph3d-reset-button" type="button" onclick="resetGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset 3D camera and selection">
-                                <i class="fa-solid fa-rotate-left"></i>
-                                <span>RESET</span>
-                            </button>
-                            <button id="graph3d-fullscreen-toggle" type="button" onclick="toggleGraph3DFullscreen()" aria-pressed="false" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle 3D network fullscreen">
-                                <i class="fa-solid fa-expand"></i>
-                                <span>Fullscreen</span>
-                            </button>
-                            <button id="graph3d-hud-toggle" type="button" onclick="toggleGraph3DHud()" aria-pressed="false" class="fullscreen-hud-toggle focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 items-center gap-x-2" title="Hide fullscreen HUD">
-                                <i class="fa-solid fa-eye-slash"></i>
-                                <span>Hide HUD</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <button id="graph3d-hud-restore" type="button" onclick="setGraph3DHudHidden(false)" class="fullscreen-hud-restore focus-button rounded-full px-4 py-2 text-xs font-mono items-center gap-x-2" title="Show fullscreen HUD">
-                    <i class="fa-solid fa-eye"></i>
-                    <span>Show HUD</span>
-                </button>
-
-                <div class="graph3d-body grid grid-cols-1 xl:grid-cols-12 gap-5">
-                    <div class="graph3d-stage-column xl:col-span-8">
-                        <div id="graph3d-stage" class="relative overflow-hidden rounded-3xl">
-                            <canvas id="graph3d-canvas" aria-label="3D production network"></canvas>
-                            <div id="graph3d-stats" class="graph3d-stat-overlay" aria-live="polite"></div>
-                            <div id="graph3d-tooltip" class="graph3d-tooltip hidden rounded-2xl px-3 py-2"></div>
-                        </div>
-                    </div>
-
-                    <div class="graph3d-side-column xl:col-span-4 flex flex-col gap-4">
-                        <div id="graph3d-details" class="graph3d-detail-panel rounded-3xl p-5 h-full min-h-[320px] overflow-y-auto"></div>
-                        <div class="graph3d-legend rounded-3xl p-4" aria-label="3D network legend">
-                            <div class="source-workbench-label mb-3">3D Legend</div>
-                            <div class="space-y-2.5">
-                                <div class="graph3d-legend-row">
-                                    <span class="graph3d-legend-mark graph3d-legend-node"></span>
-                                    <span>Nodes are companies sized by market presence and relationship density.</span>
-                                </div>
-                                <div class="graph3d-legend-row">
-                                    <span class="graph3d-legend-mark graph3d-legend-edge"></span>
-                                    <span>Edges are curated production relationships; hover or tap them for relationship context.</span>
-                                </div>
-                                <div class="graph3d-legend-row">
-                                    <span class="graph3d-legend-mark graph3d-legend-sec"></span>
-                                    <span>Gold dashed edges have SEC-backed evidence when emphasis is on.</span>
-                                </div>
-                                <div class="graph3d-legend-row">
-                                    <span class="graph3d-legend-mark graph3d-legend-label"></span>
-                                    <span>Labels show priority tickers, plus hovered or selected companies and relationship endpoints.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
         </section>
 
         <section id="source-workbench-view" class="hidden pb-10" role="tabpanel" aria-labelledby="source-workbench-tab">
@@ -1873,8 +1203,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/graph/interactions.js"></script>
     <script src="js/graph/layouts.js"></script>
     <script src="js/graph/render.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
-    <script src="js/graph/graph3d.js"></script>
     <script src="js/intelligence/clusters.js"></script>
     <script src="js/intelligence/industryCorrelations.js"></script>
     <script src="js/intelligence/portfolioNexus.js"></script>
@@ -1933,10 +1261,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         if (!window.StockPhotonicUI?.controls) {
             throw new Error('StockPhotonic controls module failed to load');
-        }
-
-        if (!window.StockPhotonicGraph3D) {
-            console.warn('StockPhotonic 3D graph module unavailable');
         }
 
         const StockPhotonicUtils = window.StockPhotonicUtils || {};
@@ -2030,11 +1354,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             NEXUS_GROUPS
         } = window.StockPhotonicConfig;
 
-        const ORBIT_PHASE_TAU = Math.PI * 2;
-        const ORBIT_DRAG_PHASE_SCALE = 0.00012;
-        const ORBIT_DRAG_VERTICAL_PHASE_SCALE = 0.000035;
-        const ORBIT_DRAG_MAX_PHASE_STEP = 0.012;
-        const ORBIT_DRAG_SPEED_REFERENCE = 1.2;
+        const DEFAULT_PERSPECTIVE_YAW = -0.26;
+        const DEFAULT_PERSPECTIVE_PITCH = 0.34;
+        const MIN_PERSPECTIVE_YAW = -0.92;
+        const MAX_PERSPECTIVE_YAW = 0.92;
+        const MIN_PERSPECTIVE_PITCH = -0.2;
+        const MAX_PERSPECTIVE_PITCH = 0.68;
+        const PERSPECTIVE_YAW_DRAG_SCALE = 0.0042;
+        const PERSPECTIVE_PITCH_DRAG_SCALE = 0.0032;
         const SEC_PREVIEW_NODE_COLOR = '#67e8f9';
         const SEC_PREVIEW_EDGE_COLOR = '#7dd3fc';
         const SEC_PREVIEW_ENDPOINT_HALO = '#38bdf8';
@@ -2051,11 +1378,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let nodes = [];
         let links = [];
         let currentAppView = 'graph';
-        let graph3dView = null;
         let graphFullscreenActive = false;
-        let graph3dFullscreenActive = false;
         let graphHudHidden = false;
-        let graph3dHudHidden = false;
         let immersiveResizeHandle = null;
         let nodeById = new Map();
         let degreeById = new Map();
@@ -2101,9 +1425,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let layoutMode = LAYOUT_MODE_SECTOR;
         let hubLayoutPositions = new Map();
         let nexusLayoutPositions = new Map();
-        let orbitEnabled = false;
-        let orbitStartedAt = 0;
-        let orbitPhase = -Math.PI / 2;
+        let perspectiveEnabled = false;
+        let yaw = DEFAULT_PERSPECTIVE_YAW;
+        let pitch = DEFAULT_PERSPECTIVE_PITCH;
         let currentOrbitOffset = { x: 0, y: 0 };
 
         let offsetX = 0;
@@ -2128,7 +1452,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             lastScreen: { x: 0, y: 0 },
             nodeStart: { x: 0, y: 0 },
             lastMoveAt: 0,
-            orbitInfluenceEnabled: false,
             moved: false
         };
 
@@ -2177,7 +1500,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             get topLabelIds() { return topLabelIds; },
             get portfolioEdgeKeys() { return portfolioEdgeKeys; },
             get signalStrengthThreshold() { return signalStrengthThreshold; },
-            get orbitEnabled() { return orbitEnabled; },
+            get orbitEnabled() { return false; },
+            get perspectiveEnabled() { return perspectiveEnabled; },
+            get yaw() { return yaw; },
+            get pitch() { return pitch; },
             get pulseUntil() { return pulseUntil; },
             get focusTransitionUntil() { return focusTransitionUntil; },
             get highlightedNodeId() { return highlightedNodeId; },
@@ -2194,6 +1520,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             clamp,
             hexToRgba,
             getOrbitOffset,
+            getPerspectiveTransform,
             worldToScreen,
             getNodeLayoutPosition,
             isNexusLayoutActive,
@@ -2214,30 +1541,19 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function setAppView(view) {
             exitActiveFullscreenModes({ fit: false });
-            const nextView = view === 'source' || view === 'graph3d' ? view : 'graph';
+            const nextView = view === 'source' ? view : 'graph';
             const isSourceView = nextView === 'source';
-            const isGraph3DView = nextView === 'graph3d';
             const isGraphView = nextView === 'graph';
             const graphView = document.getElementById('graph-intelligence-view');
             const sourceView = document.getElementById('source-workbench-view');
-            const network3DView = document.getElementById('network-3d-view');
             const graphTab = document.getElementById('graph-intelligence-tab');
             const sourceTab = document.getElementById('source-workbench-tab');
-            const network3DTab = document.getElementById('network-3d-tab');
 
             currentAppView = nextView;
             graphView?.classList.toggle('hidden', !isGraphView);
             sourceView?.classList.toggle('hidden', !isSourceView);
-            network3DView?.classList.toggle('hidden', !isGraph3DView);
             graphTab?.setAttribute('aria-selected', String(isGraphView));
             sourceTab?.setAttribute('aria-selected', String(isSourceView));
-            network3DTab?.setAttribute('aria-selected', String(isGraph3DView));
-
-            if (isGraph3DView) {
-                window.requestAnimationFrame(() => activateGraph3DView());
-            } else {
-                deactivateGraph3DView();
-            }
 
             if (isGraphView) {
                 window.requestAnimationFrame(() => {
@@ -2251,22 +1567,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             setGraphFullscreen(typeof force === 'boolean' ? force : !graphFullscreenActive);
         }
 
-        function toggleGraph3DFullscreen(force) {
-            setGraph3DFullscreen(typeof force === 'boolean' ? force : !graph3dFullscreenActive);
-        }
-
         function toggleGraphHud(force) {
             setGraphHudHidden(typeof force === 'boolean' ? force : !graphHudHidden);
-        }
-
-        function toggleGraph3DHud(force) {
-            setGraph3DHudHidden(typeof force === 'boolean' ? force : !graph3dHudHidden);
         }
 
         function setGraphFullscreen(enabled, options = {}) {
             const active = Boolean(enabled);
             if (graphFullscreenActive === active) return;
-            if (active) setGraph3DFullscreen(false, { fit: false });
 
             graphFullscreenActive = active;
             const view = document.getElementById('graph-intelligence-view');
@@ -2285,28 +1592,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             scheduleImmersiveResize('graph', options.fit !== false);
         }
 
-        function setGraph3DFullscreen(enabled, options = {}) {
-            const active = Boolean(enabled);
-            if (graph3dFullscreenActive === active) return;
-            if (active) setGraphFullscreen(false, { fit: false });
-
-            graph3dFullscreenActive = active;
-            const view = document.getElementById('network-3d-view');
-            const header = view?.querySelector('.graph3d-header-bar');
-            const details = document.getElementById('graph3d-details');
-            const legend = view?.querySelector('.graph3d-legend');
-            const button = document.getElementById('graph3d-fullscreen-toggle');
-
-            view?.classList.toggle('is-graph3d-fullscreen', active);
-            header?.classList.toggle('fullscreen-hud', active);
-            details?.classList.toggle('fullscreen-panel', active);
-            legend?.classList.toggle('fullscreen-panel', active);
-            document.body.classList.toggle('graph3d-fullscreen-active', active);
-            updateFullscreenButton(button, active);
-            setGraph3DHudHidden(false, { resize: false });
-            scheduleImmersiveResize('graph3d', options.fit !== false);
-        }
-
         function setGraphHudHidden(hidden, options = {}) {
             const nextHidden = Boolean(hidden) && graphFullscreenActive;
             graphHudHidden = nextHidden;
@@ -2314,15 +1599,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             view?.classList.toggle('is-hud-hidden', nextHidden);
             updateHudToggleButton(document.getElementById('graph-hud-toggle'), nextHidden);
             if (options.resize !== false) scheduleImmersiveResize('graph', false);
-        }
-
-        function setGraph3DHudHidden(hidden, options = {}) {
-            const nextHidden = Boolean(hidden) && graph3dFullscreenActive;
-            graph3dHudHidden = nextHidden;
-            const view = document.getElementById('network-3d-view');
-            view?.classList.toggle('is-hud-hidden', nextHidden);
-            updateHudToggleButton(document.getElementById('graph3d-hud-toggle'), nextHidden);
-            if (options.resize !== false) scheduleImmersiveResize('graph3d', false);
         }
 
         function updateFullscreenButton(button, active) {
@@ -2354,7 +1630,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function exitActiveFullscreenModes(options = {}) {
             if (graphFullscreenActive) setGraphFullscreen(false, options);
-            if (graph3dFullscreenActive) setGraph3DFullscreen(false, options);
         }
 
         function scheduleImmersiveResize(target, fit = true) {
@@ -2371,17 +1646,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         if (fit) fitGraph(false, { keepOrbit: true });
                         else requestDraw();
                     }
-                    if (target === 'graph3d' || target === 'all') {
-                        graph3dView?.resize();
-                        if (fit) graph3dView?.fitCamera();
-                    }
                 });
             });
         }
 
         function setupFullscreenSafety() {
             document.addEventListener('keydown', event => {
-                if (event.key !== 'Escape' || (!graphFullscreenActive && !graph3dFullscreenActive)) return;
+                if (event.key !== 'Escape' || !graphFullscreenActive) return;
                 event.preventDefault();
                 exitActiveFullscreenModes({ fit: true });
             });
@@ -2389,119 +1660,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             document.addEventListener('visibilitychange', () => {
                 if (document.hidden) exitActiveFullscreenModes({ fit: false });
             });
-        }
-
-        function getGraph3DView() {
-            if (graph3dView) return graph3dView;
-            if (!window.StockPhotonicGraph3D) {
-                renderGraph3DUnavailable('3D module unavailable');
-                return null;
-            }
-
-            graph3dView = window.StockPhotonicGraph3D.create({
-                canvas: document.getElementById('graph3d-canvas'),
-                stage: document.getElementById('graph3d-stage'),
-                tooltip: document.getElementById('graph3d-tooltip'),
-                details: document.getElementById('graph3d-details'),
-                stats: document.getElementById('graph3d-stats'),
-                controls: {
-                    labels: document.getElementById('graph3d-labels-toggle'),
-                    sec: document.getElementById('graph3d-sec-toggle'),
-                    autoRotate: document.getElementById('graph3d-auto-rotate-toggle'),
-                    neighborhood: document.getElementById('graph3d-neighborhood-toggle'),
-                    depthSelect: document.getElementById('graph3d-depth-level'),
-                    sectorFilter: document.getElementById('graph3d-sector-filter'),
-                    relationshipFilter: document.getElementById('graph3d-relationship-filter'),
-                    clearFilters: document.getElementById('graph3d-clear-filters-button'),
-                    searchInput: document.getElementById('graph3d-search-input'),
-                    searchResults: document.getElementById('graph3d-search-results')
-                },
-                edgeColors: EDGE_COLORS,
-                defaultEdgeColor: DEFAULT_EDGE_COLOR,
-                getCompanyIndustryGroup,
-                isSecBackedConnection,
-                formatConnectionType,
-                escapeHtml
-            });
-            syncGraph3DData();
-            return graph3dView;
-        }
-
-        function syncGraph3DData() {
-            if (!graph3dView) return;
-            graph3dView.setData({
-                nodes,
-                links,
-                edgeColors: EDGE_COLORS,
-                defaultEdgeColor: DEFAULT_EDGE_COLOR,
-                getCompanyIndustryGroup,
-                isSecBackedConnection,
-                formatConnectionType,
-                escapeHtml
-            });
-        }
-
-        function activateGraph3DView() {
-            const view = getGraph3DView();
-            if (!view) return;
-            syncGraph3DData();
-            view.activate();
-        }
-
-        function deactivateGraph3DView() {
-            graph3dView?.deactivate();
-        }
-
-        function renderGraph3DUnavailable(message) {
-            const details = document.getElementById('graph3d-details');
-            if (!details) return;
-            details.innerHTML = `
-                <div class="source-workbench-label mb-3">3D Network</div>
-                <div class="rounded-3xl border border-yellow-300/20 bg-yellow-300/10 p-4">
-                    <div class="font-display text-2xl text-white">${escapeHtml(message)}</div>
-                    <p class="text-sm leading-6 text-white/64 mt-2">The 3D module could not initialize. The production 2D graph and Source Workbench remain available.</p>
-                </div>
-            `;
-        }
-
-        function toggleGraph3DLabels() {
-            getGraph3DView()?.toggleLabels();
-        }
-
-        function toggleGraph3DSecEmphasis() {
-            getGraph3DView()?.toggleSecEmphasis();
-        }
-
-        function toggleGraph3DAutoRotate() {
-            getGraph3DView()?.toggleAutoRotate();
-        }
-
-        function toggleGraph3DNeighborhoodMode() {
-            getGraph3DView()?.toggleNeighborhoodMode();
-        }
-
-        function setGraph3DDepthLevel(value) {
-            getGraph3DView()?.setDepthLevel(value);
-        }
-
-        function resetGraph3DCamera() {
-            getGraph3DView()?.resetView();
-        }
-
-        function fitGraph3DCamera() {
-            getGraph3DView()?.fitCamera();
-        }
-
-        function focusGraph3DSelection() {
-            getGraph3DView()?.focusSelection();
-        }
-
-        function clearGraph3DSelection() {
-            getGraph3DView()?.clearSelection();
-        }
-
-        function clearGraph3DFilters() {
-            getGraph3DView()?.clearFilters();
         }
 
         /* ==============================
@@ -2524,10 +1682,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 buildIndustryGroupFilter();
                 updateFocusModeControl();
                 updateSignalThresholdControl();
-                updateOrbitModeControl();
+                updatePerspectiveModeControl();
                 updatePortfolioPanel();
                 initGraphData();
-                syncGraph3DData();
                 await loadSecPreviewCandidateGraph();
                 resizeCanvas();
                 fitGraph(false, { keepOrbit: true });
@@ -2535,7 +1692,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 setupCanvasInteractions();
                 setupSearchInteractions();
                 updateSearchMatches();
-                setOrbitMode(true, { preserveView: false, restart: true });
                 document.getElementById('view-status').innerText = 'READY';
                 console.log(`Loaded ${companies.length} companies + ${connections.length} connections`);
             } catch (error) {
@@ -3019,11 +2175,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function onPointerDown(event) {
-            if (event.button !== 0 && event.pointerType === 'mouse') return;
+            if (event.pointerType === 'mouse' && event.button !== 0 && event.button !== 1) return;
 
             const canvas = document.getElementById('graph-canvas');
-            const wasOrbiting = orbitEnabled;
-            stopOrbitForInteraction();
             const screen = getEventPoint(event);
             const node = findNodeAt(screen.x, screen.y);
             cancelViewAnimation();
@@ -3039,7 +2193,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             pointerState.lastScreen = screen;
             pointerState.nodeStart = node ? getNodeLayoutPosition(node) : { x: 0, y: 0 };
             pointerState.lastMoveAt = performance.now();
-            pointerState.orbitInfluenceEnabled = wasOrbiting;
             pointerState.moved = false;
 
             canvas.setPointerCapture(event.pointerId);
@@ -3070,7 +2223,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             // into movement. Staying below it preserves click selection reliability.
             if (!pointerState.moved && totalDistance > DRAG_THRESHOLD_PX) {
                 pointerState.moved = true;
-                pointerState.mode = pointerState.node ? 'node-drag' : 'canvas-pan';
+                pointerState.mode = pointerState.node
+                    ? 'node-drag'
+                    : shouldPanInPerspective(event)
+                        ? 'canvas-pan'
+                        : perspectiveEnabled
+                            ? 'perspective-rotate'
+                            : 'canvas-pan';
                 cancelViewAnimation();
             }
 
@@ -3092,7 +2251,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 const dy = screen.y - pointerState.lastScreen.y;
                 offsetX += dx;
                 offsetY += dy;
-                applyOrbitDragInfluence(dx, dy, frameNow - pointerState.lastMoveAt);
+                requestDraw();
+            } else if (pointerState.mode === 'perspective-rotate') {
+                const dx = screen.x - pointerState.lastScreen.x;
+                const dy = screen.y - pointerState.lastScreen.y;
+                rotatePerspective(dx, dy);
                 requestDraw();
             }
 
@@ -3126,7 +2289,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             pointerState.pointerId = null;
             pointerState.mode = 'idle';
             pointerState.node = null;
-            pointerState.orbitInfluenceEnabled = false;
             if (canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
                 canvas.releasePointerCapture(event.pointerId);
             }
@@ -3141,7 +2303,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             pointerState.pointerId = null;
             pointerState.mode = 'idle';
             pointerState.node = null;
-            pointerState.orbitInfluenceEnabled = false;
             const canvas = document.getElementById('graph-canvas');
             if (event && canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
                 canvas.releasePointerCapture(event.pointerId);
@@ -3158,7 +2319,6 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function onWheelZoom(event) {
             event.preventDefault();
-            stopOrbitForInteraction();
             const point = getEventPoint(event);
             const before = screenToWorld(point.x, point.y);
             const delta = normalizeWheelDelta(event);
@@ -3336,7 +2496,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const point = getSecPreviewScreenPoint(node);
             if (!point) return;
 
-            const radius = Math.max(5, getScreenNodeRadius(node));
+            const radius = Math.max(5, node._screenRadius ?? getScreenNodeRadius(node));
             const isSelected = selectedSecPreviewNode?.id === node.id;
             const isHovered = hoveredNode?.id === node.id;
             const pulse = isSelected || isHovered ? 1 + Math.sin(timestamp * 0.006) * 0.08 : 1;
@@ -3423,7 +2583,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (isSecPreviewNode(node)) {
                 node._screenX = point.x;
                 node._screenY = point.y;
-                node._screenRadius = getScreenNodeRadius(node);
+                node._screenRadius = getScreenNodeRadius(node) * (point.perspectiveScale || 1);
             }
             return point;
         }
@@ -4427,8 +3587,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             updateSearchMatches();
             closeSearchPanel();
             clearSelection(false);
+            resetGraphViewState();
             fitGraph();
-            graph3dView?.resetView();
         }
 
         function analyzePortfolioInput() {
@@ -4823,7 +3983,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!fitNodes.length) return;
 
             const bounds = graphViewport.getBoundsForNodes(fitNodes, getNodeLayoutPosition);
-            const padding = isNexusLayoutActive() ? 190 : isHubLayoutActive() ? 150 : selectedNode ? 120 : 70;
+            const padding = (isNexusLayoutActive() ? 190 : isHubLayoutActive() ? 150 : selectedNode ? 120 : 70) + (perspectiveEnabled ? 36 : 0);
             const nextView = graphViewport.getFitView(bounds, {
                 canvasWidth,
                 canvasHeight,
@@ -4955,7 +4115,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 signalStrengthThreshold,
                 isPortfolioAnalysisActive,
                 matchedPortfolioNodes,
-                orbitEnabled,
+                perspectiveEnabled,
                 escapeHtml
             });
             appendSecPreviewOverlayStats();
@@ -5169,91 +4329,78 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return graphRender.getScreenNodeRadius(renderContext, node);
         }
 
-        function toggleOrbitMode() {
-            setOrbitMode(!orbitEnabled, { preserveView: orbitEnabled, restart: true });
+        function togglePerspectiveMode() {
+            setPerspectiveMode(!perspectiveEnabled);
         }
 
-        function setOrbitMode(enabled, options = {}) {
+        function setPerspectiveMode(enabled) {
             const nextValue = Boolean(enabled);
-            const now = performance.now();
-            if (nextValue === orbitEnabled && !options.restart) {
-                updateOrbitModeControl();
+            if (nextValue === perspectiveEnabled) {
+                updatePerspectiveModeControl();
                 updateGraphOverlayStats();
                 return;
             }
 
-            if (nextValue) {
-                orbitEnabled = true;
-                orbitStartedAt = now;
-                currentOrbitOffset = { x: 0, y: 0 };
-            } else {
-                const offset = orbitEnabled ? getOrbitOffset(now) : null;
-                preserveOrbitPhase(offset);
-                if (orbitEnabled && options.preserveView !== false) {
-                    offsetX += offset.x;
-                    offsetY += offset.y;
-                }
-                orbitEnabled = false;
-                currentOrbitOffset = { x: 0, y: 0 };
-            }
-
-            updateOrbitModeControl();
+            perspectiveEnabled = nextValue;
+            resetPerspectiveAngles();
+            updatePerspectiveModeControl();
             updateGraphOverlayStats();
             requestDraw();
         }
 
+        function resetPerspectiveAngles() {
+            yaw = DEFAULT_PERSPECTIVE_YAW;
+            pitch = DEFAULT_PERSPECTIVE_PITCH;
+        }
+
+        function rotatePerspective(dx, dy) {
+            if (!perspectiveEnabled) return;
+            yaw = clamp(yaw + dx * PERSPECTIVE_YAW_DRAG_SCALE, MIN_PERSPECTIVE_YAW, MAX_PERSPECTIVE_YAW);
+            pitch = clamp(pitch - dy * PERSPECTIVE_PITCH_DRAG_SCALE, MIN_PERSPECTIVE_PITCH, MAX_PERSPECTIVE_PITCH);
+        }
+
+        function shouldPanInPerspective(event) {
+            return !perspectiveEnabled || event.shiftKey || event.ctrlKey || event.metaKey || event.button === 1;
+        }
+
+        function getPerspectiveTransform() {
+            return {
+                enabled: perspectiveEnabled,
+                yaw,
+                pitch
+            };
+        }
+
         function stopOrbitForInteraction() {
-            if (!orbitEnabled) return;
-            setOrbitMode(false, { preserveView: true });
         }
 
-        function preserveOrbitPhase(offset) {
-            if (!Number.isFinite(offset?.phase)) return;
-            orbitPhase = normalizeOrbitPhase(offset.phase);
-        }
-
-        function applyOrbitDragInfluence(dx, dy, elapsedMs) {
-            if (!pointerState.orbitInfluenceEnabled) return;
-            const distance = Math.hypot(dx, dy);
-            if (distance <= 0) return;
-            const speed = distance / Math.max(16, elapsedMs || 16);
-            const speedScale = clamp(speed / ORBIT_DRAG_SPEED_REFERENCE, 0.15, 1);
-            const phaseDelta = clamp(
-                (dx * ORBIT_DRAG_PHASE_SCALE + dy * ORBIT_DRAG_VERTICAL_PHASE_SCALE) * speedScale,
-                -ORBIT_DRAG_MAX_PHASE_STEP,
-                ORBIT_DRAG_MAX_PHASE_STEP
-            );
-            orbitPhase = normalizeOrbitPhase(orbitPhase + phaseDelta);
-        }
-
-        function normalizeOrbitPhase(phase) {
-            const wrapped = phase % ORBIT_PHASE_TAU;
-            if (wrapped > Math.PI) return wrapped - ORBIT_PHASE_TAU;
-            if (wrapped < -Math.PI) return wrapped + ORBIT_PHASE_TAU;
-            return wrapped;
-        }
-
-        function updateOrbitModeControl() {
-            uiControls.updateOrbitModeControl({
-                toggle: document.getElementById('orbit-toggle'),
-                orbitEnabled
+        function updatePerspectiveModeControl() {
+            uiControls.updatePerspectiveModeControl({
+                toggle: document.getElementById('perspective-toggle'),
+                perspectiveEnabled
             });
         }
-        function getOrbitOffset(now = performance.now()) {
+
+        function getOrbitOffset() {
             return graphViewport.getOrbitOffset({
-                enabled: orbitEnabled,
-                now,
-                startedAt: orbitStartedAt,
-                phase: orbitPhase,
+                enabled: false,
+                now: performance.now(),
+                startedAt: 0,
+                phase: 0,
                 canvasWidth,
                 canvasHeight,
-                radiusRatio: ORBIT_RADIUS_RATIO,
-                minRadius: ORBIT_MIN_RADIUS,
-                maxRadius: ORBIT_MAX_RADIUS,
-                rampMs: ORBIT_RAMP_MS,
-                angularSpeed: ORBIT_ANGULAR_SPEED,
+                radiusRatio: 0,
+                minRadius: 0,
+                maxRadius: 0,
+                rampMs: 1,
+                angularSpeed: 0,
                 clamp
             });
+        }
+
+        function resetGraphViewState() {
+            resetPerspectiveAngles();
+            requestDraw();
         }
 
         function setView(nextScale, nextOffsetX, nextOffsetY) {
@@ -5376,7 +4523,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 offsetX,
                 offsetY,
                 scale,
-                orbitOffset: orbitEnabled ? currentOrbitOffset : null
+                orbitOffset: currentOrbitOffset,
+                perspective: getPerspectiveTransform(),
+                canvasWidth,
+                canvasHeight
             });
         }
 
@@ -5385,7 +4535,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 offsetX,
                 offsetY,
                 scale,
-                orbitOffset: orbitEnabled ? currentOrbitOffset : null
+                orbitOffset: currentOrbitOffset,
+                perspective: getPerspectiveTransform(),
+                canvasWidth,
+                canvasHeight
             });
         }
 

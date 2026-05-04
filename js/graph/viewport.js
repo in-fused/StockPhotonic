@@ -133,17 +133,105 @@
 
     function screenToWorld(x, y, transform) {
         const orbit = transform.orbitOffset || getZeroOrbitOffset();
+        const point = unprojectPerspectivePoint(x, y, transform);
         return {
-            x: (x - transform.offsetX - orbit.x) / transform.scale,
-            y: (y - transform.offsetY - orbit.y) / transform.scale
+            x: (point.x - transform.offsetX - orbit.x) / transform.scale,
+            y: (point.y - transform.offsetY - orbit.y) / transform.scale
         };
     }
 
     function worldToScreen(x, y, transform) {
         const orbit = transform.orbitOffset || getZeroOrbitOffset();
-        return {
+        const point = {
             x: x * transform.scale + transform.offsetX + orbit.x,
             y: y * transform.scale + transform.offsetY + orbit.y
+        };
+        return projectPerspectivePoint(point.x, point.y, transform);
+    }
+
+    function getPerspectiveState(transform) {
+        const perspective = transform?.perspective;
+        if (!perspective?.enabled) {
+            return {
+                enabled: false,
+                yaw: 0,
+                pitch: 0,
+                centerX: 0,
+                centerY: 0,
+                focalLength: 1
+            };
+        }
+
+        const canvasWidth = Math.max(1, Number(transform.canvasWidth) || 1);
+        const canvasHeight = Math.max(1, Number(transform.canvasHeight) || 1);
+        return {
+            enabled: true,
+            yaw: Number.isFinite(perspective.yaw) ? perspective.yaw : 0,
+            pitch: Number.isFinite(perspective.pitch) ? perspective.pitch : 0,
+            centerX: canvasWidth * 0.5,
+            centerY: canvasHeight * 0.5,
+            focalLength: Math.max(canvasWidth, canvasHeight) * 1.8
+        };
+    }
+
+    function projectPerspectivePoint(x, y, transform) {
+        const perspective = getPerspectiveState(transform);
+        if (!perspective.enabled) return { x, y, perspectiveScale: 1, depth: 0, depthNormalized: 0 };
+
+        const relativeX = x - perspective.centerX;
+        const relativeY = y - perspective.centerY;
+        const sinYaw = Math.sin(perspective.yaw);
+        const cosYaw = Math.cos(perspective.yaw);
+        const sinPitch = Math.sin(perspective.pitch);
+        const cosPitch = Math.cos(perspective.pitch);
+
+        const rotatedX = relativeX * cosYaw;
+        const yawDepth = -relativeX * sinYaw;
+        const rotatedY = relativeY * cosPitch - yawDepth * sinPitch;
+        const depth = relativeY * sinPitch + yawDepth * cosPitch;
+        const perspectiveScale = perspective.focalLength / Math.max(1, perspective.focalLength + depth);
+
+        return {
+            x: perspective.centerX + rotatedX * perspectiveScale,
+            y: perspective.centerY + rotatedY * perspectiveScale,
+            perspectiveScale,
+            depth,
+            depthNormalized: Math.max(-1, Math.min(1, depth / perspective.focalLength))
+        };
+    }
+
+    function unprojectPerspectivePoint(x, y, transform) {
+        const perspective = getPerspectiveState(transform);
+        if (!perspective.enabled) return { x, y };
+
+        const screenX = x - perspective.centerX;
+        const screenY = y - perspective.centerY;
+        const sinYaw = Math.sin(perspective.yaw);
+        const cosYaw = Math.cos(perspective.yaw);
+        const sinPitch = Math.sin(perspective.pitch);
+        const cosPitch = Math.cos(perspective.pitch);
+        const focal = perspective.focalLength;
+        const depthFromX = -sinYaw * cosPitch;
+        const depthFromY = sinPitch;
+        const yFromX = sinYaw * sinPitch;
+
+        const a11 = screenX * depthFromX - focal * cosYaw;
+        const a12 = screenX * depthFromY;
+        const b1 = -screenX * focal;
+        const a21 = screenY * depthFromX - focal * yFromX;
+        const a22 = screenY * depthFromY - focal * cosPitch;
+        const b2 = -screenY * focal;
+        const determinant = a11 * a22 - a12 * a21;
+
+        if (Math.abs(determinant) < 0.0001) {
+            return { x, y };
+        }
+
+        const relativeX = (b1 * a22 - a12 * b2) / determinant;
+        const relativeY = (a11 * b2 - b1 * a21) / determinant;
+        return {
+            x: perspective.centerX + relativeX,
+            y: perspective.centerY + relativeY
         };
     }
 
@@ -202,6 +290,8 @@
         getEventPoint,
         screenToWorld,
         worldToScreen,
+        projectPerspectivePoint,
+        unprojectPerspectivePoint,
         getBoundsForNodes,
         getFitView,
         getScreenNodeRadius,

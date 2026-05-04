@@ -36,8 +36,13 @@
 
         options.visibleNodes.forEach(node => {
             const position = options.getNodeLayoutPosition(node);
-            const point = options.worldToScreen(position.x, position.y);
-            const hitRadius = Math.max(16, options.getScreenNodeRadius(node) + 10);
+            const fallback = options.worldToScreen(position.x, position.y);
+            const point = {
+                x: Number.isFinite(node._screenX) ? node._screenX : fallback.x,
+                y: Number.isFinite(node._screenY) ? node._screenY : fallback.y
+            };
+            const cachedRadius = Number.isFinite(node._screenRadius) ? node._screenRadius : options.getScreenNodeRadius(node);
+            const hitRadius = Math.max(16, cachedRadius + 10);
             const distance = Math.hypot(point.x - screenX, point.y - screenY);
             if (distance <= hitRadius && distance < closestDistance) {
                 closest = node;

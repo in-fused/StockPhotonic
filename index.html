@@ -236,6 +236,244 @@
             background: rgba(251, 191, 36, 0.065);
         }
 
+        #sidebar,
+        #empty-sidebar,
+        .graph3d-detail-panel,
+        .graph3d-search-results,
+        .fullscreen-hud,
+        .fullscreen-panel {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.38) rgba(255, 255, 255, 0.045);
+        }
+
+        #sidebar::-webkit-scrollbar,
+        #empty-sidebar::-webkit-scrollbar,
+        .graph3d-detail-panel::-webkit-scrollbar,
+        .graph3d-search-results::-webkit-scrollbar,
+        .fullscreen-hud::-webkit-scrollbar,
+        .fullscreen-panel::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        #sidebar::-webkit-scrollbar-track,
+        #empty-sidebar::-webkit-scrollbar-track,
+        .graph3d-detail-panel::-webkit-scrollbar-track,
+        .graph3d-search-results::-webkit-scrollbar-track,
+        .fullscreen-hud::-webkit-scrollbar-track,
+        .fullscreen-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.035);
+            border-radius: 999px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb,
+        #empty-sidebar::-webkit-scrollbar-thumb,
+        .graph3d-detail-panel::-webkit-scrollbar-thumb,
+        .graph3d-search-results::-webkit-scrollbar-thumb,
+        .fullscreen-hud::-webkit-scrollbar-thumb,
+        .fullscreen-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(0, 249, 255, 0.44), rgba(255, 0, 170, 0.28));
+            border-radius: 999px;
+        }
+
+        body.graph-fullscreen-active,
+        body.graph3d-fullscreen-active {
+            overflow: hidden;
+        }
+
+        .fullscreen-hud {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.12), rgba(255, 0, 170, 0.06)),
+                rgba(3, 7, 18, 0.82);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32), 0 0 28px rgba(0, 249, 255, 0.10);
+            backdrop-filter: blur(20px);
+        }
+
+        .fullscreen-panel {
+            border: 1px solid rgba(0, 249, 255, 0.18) !important;
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.10), rgba(255, 0, 170, 0.045)),
+                rgba(3, 7, 18, 0.86) !important;
+            box-shadow: 0 22px 58px rgba(0, 0, 0, 0.40), 0 0 34px rgba(0, 249, 255, 0.10);
+            backdrop-filter: blur(20px);
+        }
+
+        .graph-fullscreen-action {
+            display: none;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-fullscreen-action {
+            display: inline-flex;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen,
+        #network-3d-view.is-graph3d-fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            width: 100vw;
+            height: 100dvh;
+            padding: 0.85rem;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 18% 12%, rgba(0, 249, 255, 0.18), transparent 28rem),
+                radial-gradient(circle at 82% 20%, rgba(255, 0, 170, 0.12), transparent 24rem),
+                radial-gradient(circle at 50% 86%, rgba(0, 255, 159, 0.08), transparent 30rem),
+                rgba(5, 5, 8, 0.98);
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls,
+        #network-3d-view.is-graph3d-fullscreen .graph3d-header-bar {
+            position: absolute;
+            top: 0.85rem;
+            left: 0.85rem;
+            right: 0.85rem;
+            z-index: 24;
+            max-height: min(25vh, 14rem);
+            margin: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls {
+            gap: 0.5rem;
+            padding: 0.65rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button,
+        #network-3d-view.is-graph3d-fullscreen .graph3d-toolbar .focus-button {
+            min-height: 2.4rem;
+            padding: 0.55rem 0.8rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls select,
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls input,
+        #network-3d-view.is-graph3d-fullscreen .graph3d-search-input {
+            min-height: 2.4rem;
+            padding-top: 0.55rem;
+            padding-bottom: 0.55rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .signal-control {
+            padding-top: 0.55rem;
+            padding-bottom: 0.55rem;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen .graph3d-header-bar {
+            align-items: flex-start;
+            padding: 0.65rem;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen #network-3d-title {
+            font-size: clamp(1.35rem, 2vw, 2rem);
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-layout {
+            display: block;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-stage-column {
+            height: 100%;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-container {
+            height: calc(100dvh - 1.7rem) !important;
+            border-radius: 1.25rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen #graph-canvas {
+            border-radius: 1rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .sec-production-legend {
+            top: auto;
+            right: 1rem;
+            bottom: 1rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-sidebar-column {
+            position: absolute;
+            z-index: 22;
+            top: min(28vh, 15.75rem);
+            right: 1rem;
+            bottom: 1rem;
+            width: min(26rem, calc(100vw - 2rem));
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen #sidebar,
+        #graph-intelligence-view.is-graph-fullscreen #empty-sidebar {
+            position: static;
+            max-height: 100%;
+            height: 100%;
+            overflow-y: auto;
+            border-radius: 1.25rem;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen .graph3d-workbench {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border-radius: 1.25rem;
+            background: transparent;
+            border-color: transparent;
+            box-shadow: none;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen .graph3d-body {
+            display: block;
+            height: 100%;
+            margin: 0;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen .graph3d-stage-column {
+            height: 100%;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen #graph3d-stage {
+            height: calc(100dvh - 1.7rem);
+            min-height: 0;
+            border-radius: 1.25rem;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen .graph3d-side-column {
+            position: absolute;
+            z-index: 22;
+            top: min(28vh, 15.75rem);
+            right: 1rem;
+            bottom: 1rem;
+            width: min(27rem, calc(100vw - 2rem));
+            gap: 0.75rem;
+            pointer-events: none;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen #graph3d-details,
+        #network-3d-view.is-graph3d-fullscreen .graph3d-legend {
+            pointer-events: auto;
+            border-radius: 1.25rem;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen #graph3d-details {
+            min-height: 0;
+            max-height: calc(100% - 8.5rem);
+        }
+
+        #network-3d-view.is-graph3d-fullscreen .graph3d-legend {
+            max-height: 7.75rem;
+            overflow-y: auto;
+            padding: 0.85rem;
+            opacity: 0.86;
+        }
+
+        #network-3d-view.is-graph3d-fullscreen .graph3d-legend-row {
+            font-size: 0.72rem;
+            gap: 0.5rem;
+        }
+
         .node-source-link {
             max-width: none;
         }
@@ -832,6 +1070,47 @@
                 min-height: 0;
             }
 
+            #graph-intelligence-view.is-graph-fullscreen,
+            #network-3d-view.is-graph3d-fullscreen {
+                padding: 0.75rem;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls,
+            #network-3d-view.is-graph3d-fullscreen .graph3d-header-bar {
+                position: relative;
+                inset: auto;
+                max-height: none;
+                margin-bottom: 0.75rem;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-container,
+            #network-3d-view.is-graph3d-fullscreen #graph3d-stage {
+                height: clamp(460px, 68dvh, 760px) !important;
+                min-height: 460px;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-sidebar-column,
+            #network-3d-view.is-graph3d-fullscreen .graph3d-side-column {
+                position: relative;
+                inset: auto;
+                width: 100%;
+                margin-top: 0.75rem;
+                pointer-events: auto;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen #sidebar,
+            #graph-intelligence-view.is-graph-fullscreen #empty-sidebar,
+            #network-3d-view.is-graph3d-fullscreen #graph3d-details {
+                height: auto;
+                max-height: min(48dvh, 30rem);
+            }
+
+            #network-3d-view.is-graph3d-fullscreen .graph3d-legend {
+                max-height: none;
+            }
+
             .app-view-tabs {
                 width: 100%;
             }
@@ -934,7 +1213,7 @@
         </div>
 
         <section id="graph-intelligence-view" role="tabpanel" aria-labelledby="graph-intelligence-tab">
-            <div class="glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10">
+            <div class="graph-intelligence-controls glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10">
                 <div class="flex-1 min-w-[220px] relative">
                     <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-white/35"></i>
                     <input id="search-input" type="text" placeholder="Search ticker or company..."
@@ -971,6 +1250,21 @@
                 <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
                     <i class="fa-solid fa-file-shield"></i>
                     <span>SEC Preview On</span>
+                </button>
+
+                <button id="graph-fullscreen-toggle" type="button" onclick="toggleGraphFullscreen()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle 2D graph fullscreen">
+                    <i class="fa-solid fa-expand"></i>
+                    <span>Fullscreen</span>
+                </button>
+
+                <button type="button" onclick="fitGraph()" class="graph-fullscreen-action focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 items-center gap-x-2" title="Fit 2D graph">
+                    <i class="fa-solid fa-compress"></i>
+                    <span>FIT</span>
+                </button>
+
+                <button type="button" onclick="resetAll()" class="graph-fullscreen-action focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 items-center gap-x-2" title="Reset 2D graph">
+                    <i class="fa-solid fa-undo"></i>
+                    <span>RESET</span>
                 </button>
 
                 <div class="signal-control rounded-3xl px-4 py-2 min-w-[240px]">
@@ -1019,8 +1313,8 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-8">
-                <div class="lg:col-span-8">
+            <div class="graph-intelligence-layout grid grid-cols-1 lg:grid-cols-12 gap-6 pb-8">
+                <div class="graph-stage-column lg:col-span-8">
                     <div class="glass rounded-3xl p-3 graph-container relative overflow-hidden" style="height: 680px;">
                         <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
                         <div id="sec-production-legend" class="sec-production-legend hidden rounded-2xl px-3 py-2 text-[10px] font-mono text-yellow-100/80 tracking-[1.1px]">
@@ -1034,7 +1328,7 @@
                     </div>
                 </div>
 
-                <div class="lg:col-span-4">
+                <div class="graph-sidebar-column lg:col-span-4">
                     <div id="sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full hidden"></div>
                     <div id="empty-sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full min-h-[320px] overflow-y-auto">
                         <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
@@ -1049,7 +1343,7 @@
 
         <section id="network-3d-view" class="hidden pb-10" role="tabpanel" aria-labelledby="network-3d-tab">
             <section class="graph3d-workbench rounded-3xl p-4 md:p-5" aria-labelledby="network-3d-title">
-                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-4">
+                <div class="graph3d-header-bar flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 mb-4">
                     <div>
                         <div class="source-workbench-label mb-2">Production Network Prototype</div>
                         <h2 id="network-3d-title" class="font-display text-3xl md:text-4xl font-semibold">3D Network</h2>
@@ -1120,12 +1414,16 @@
                                 <i class="fa-solid fa-rotate-left"></i>
                                 <span>RESET</span>
                             </button>
+                            <button id="graph3d-fullscreen-toggle" type="button" onclick="toggleGraph3DFullscreen()" aria-pressed="false" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle 3D network fullscreen">
+                                <i class="fa-solid fa-expand"></i>
+                                <span>Fullscreen</span>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 xl:grid-cols-12 gap-5">
-                    <div class="xl:col-span-8">
+                <div class="graph3d-body grid grid-cols-1 xl:grid-cols-12 gap-5">
+                    <div class="graph3d-stage-column xl:col-span-8">
                         <div id="graph3d-stage" class="relative overflow-hidden rounded-3xl">
                             <canvas id="graph3d-canvas" aria-label="3D production network"></canvas>
                             <div id="graph3d-stats" class="graph3d-stat-overlay" aria-live="polite"></div>
@@ -1133,7 +1431,7 @@
                         </div>
                     </div>
 
-                    <div class="xl:col-span-4 flex flex-col gap-4">
+                    <div class="graph3d-side-column xl:col-span-4 flex flex-col gap-4">
                         <div id="graph3d-details" class="graph3d-detail-panel rounded-3xl p-5 h-full min-h-[320px] overflow-y-auto"></div>
                         <div class="graph3d-legend rounded-3xl p-4" aria-label="3D network legend">
                             <div class="source-workbench-label mb-3">3D Legend</div>
@@ -1594,6 +1892,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let links = [];
         let currentAppView = 'graph';
         let graph3dView = null;
+        let graphFullscreenActive = false;
+        let graph3dFullscreenActive = false;
+        let immersiveResizeHandle = null;
         let nodeById = new Map();
         let degreeById = new Map();
         let adjacencyById = new Map();
@@ -1750,6 +2051,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         };
 
         function setAppView(view) {
+            exitActiveFullscreenModes({ fit: false });
             const nextView = view === 'source' || view === 'graph3d' ? view : 'graph';
             const isSourceView = nextView === 'source';
             const isGraph3DView = nextView === 'graph3d';
@@ -1781,6 +2083,108 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     requestDraw();
                 });
             }
+        }
+
+        function toggleGraphFullscreen(force) {
+            setGraphFullscreen(typeof force === 'boolean' ? force : !graphFullscreenActive);
+        }
+
+        function toggleGraph3DFullscreen(force) {
+            setGraph3DFullscreen(typeof force === 'boolean' ? force : !graph3dFullscreenActive);
+        }
+
+        function setGraphFullscreen(enabled, options = {}) {
+            const active = Boolean(enabled);
+            if (graphFullscreenActive === active) return;
+            if (active) setGraph3DFullscreen(false, { fit: false });
+
+            graphFullscreenActive = active;
+            const view = document.getElementById('graph-intelligence-view');
+            const controls = view?.querySelector('.graph-intelligence-controls');
+            const sidebar = document.getElementById('sidebar');
+            const emptySidebar = document.getElementById('empty-sidebar');
+            const button = document.getElementById('graph-fullscreen-toggle');
+
+            view?.classList.toggle('is-graph-fullscreen', active);
+            controls?.classList.toggle('fullscreen-hud', active);
+            sidebar?.classList.toggle('fullscreen-panel', active);
+            emptySidebar?.classList.toggle('fullscreen-panel', active);
+            document.body.classList.toggle('graph-fullscreen-active', active);
+            updateFullscreenButton(button, active);
+            scheduleImmersiveResize('graph', options.fit !== false);
+        }
+
+        function setGraph3DFullscreen(enabled, options = {}) {
+            const active = Boolean(enabled);
+            if (graph3dFullscreenActive === active) return;
+            if (active) setGraphFullscreen(false, { fit: false });
+
+            graph3dFullscreenActive = active;
+            const view = document.getElementById('network-3d-view');
+            const header = view?.querySelector('.graph3d-header-bar');
+            const details = document.getElementById('graph3d-details');
+            const legend = view?.querySelector('.graph3d-legend');
+            const button = document.getElementById('graph3d-fullscreen-toggle');
+
+            view?.classList.toggle('is-graph3d-fullscreen', active);
+            header?.classList.toggle('fullscreen-hud', active);
+            details?.classList.toggle('fullscreen-panel', active);
+            legend?.classList.toggle('fullscreen-panel', active);
+            document.body.classList.toggle('graph3d-fullscreen-active', active);
+            updateFullscreenButton(button, active);
+            scheduleImmersiveResize('graph3d', options.fit !== false);
+        }
+
+        function updateFullscreenButton(button, active) {
+            if (!button) return;
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            button.classList.toggle('is-active', active);
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-expand', !active);
+                icon.classList.toggle('fa-compress', active);
+            }
+            const label = button.querySelector('span');
+            if (label) label.innerText = active ? 'Exit Fullscreen' : 'Fullscreen';
+        }
+
+        function exitActiveFullscreenModes(options = {}) {
+            if (graphFullscreenActive) setGraphFullscreen(false, options);
+            if (graph3dFullscreenActive) setGraph3DFullscreen(false, options);
+        }
+
+        function scheduleImmersiveResize(target, fit = true) {
+            if (immersiveResizeHandle) {
+                window.cancelAnimationFrame(immersiveResizeHandle);
+                immersiveResizeHandle = null;
+            }
+
+            immersiveResizeHandle = window.requestAnimationFrame(() => {
+                immersiveResizeHandle = window.requestAnimationFrame(() => {
+                    immersiveResizeHandle = null;
+                    if (target === 'graph' || target === 'all') {
+                        resizeCanvas();
+                        if (fit) fitGraph(false, { keepOrbit: true });
+                        else requestDraw();
+                    }
+                    if (target === 'graph3d' || target === 'all') {
+                        graph3dView?.resize();
+                        if (fit) graph3dView?.fitCamera();
+                    }
+                });
+            });
+        }
+
+        function setupFullscreenSafety() {
+            document.addEventListener('keydown', event => {
+                if (event.key !== 'Escape' || (!graphFullscreenActive && !graph3dFullscreenActive)) return;
+                event.preventDefault();
+                exitActiveFullscreenModes({ fit: true });
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) exitActiveFullscreenModes({ fit: false });
+            });
         }
 
         function getGraph3DView() {
@@ -4933,6 +5337,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return graphRender.truncateLabel(ctx, text, maxWidth);
         }
 
+        setupFullscreenSafety();
         loadSourceCandidatePreview();
         loadData();
     </script>

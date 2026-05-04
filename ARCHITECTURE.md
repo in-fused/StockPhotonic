@@ -1,241 +1,59 @@
-# StockPhotonic Architecture
+# CURRENT SYSTEM STATE
 
-**Project Goal**: A reliable, beautiful, insightful web application that visualizes the hidden photonic web of interconnections between the top 500+ US public companies (and key subsidiaries). Designed for personal investing insight, risk assessment, and sharing with a small trusted circle. No monetization until rock-solid.
+Document: StockPhotonic Architecture. StockPhotonic is a static browser app. `index.html` hosts the UI shell; modular JavaScript under `js/` handles data loading, graph rendering, intelligence, controls, and sidebar/dashboard rendering.
 
-**Core Philosophy**:
-- **Photonic Aesthetic First**: Neon, glowing, particle-driven, immersive UI that makes complex networks feel alive and explorable.
-- **Data Quality > Quantity**: Every connection has provenance, confidence score (1-5), type, strength, and last-verified date. "Unknown interconnections" are explicitly called out.
-- **Personal Utility First**: Portfolio exposure calculator, watchlists, notes, "nexus risk" scores.
-- **Pragmatic Scaling**: Start single-file / static JSON → Next.js + lightweight backend → optional graph DB.
+- Graph Intelligence (2D): Canvas graph using the production static dataset with filtering, search, layout modes, focus/threshold controls, portfolio exposure, SEC visibility, cluster intelligence, shared exposure, hidden relationship hints, and industry correlations.
+- 3D Network capabilities: Three.js production graph with camera controls, labels, SEC emphasis, sector/type filters, neighborhood depth, search, details panel, and fullscreen mode.
+- Source Workbench pipeline: Static UI tab documenting local SEC commands, candidate files, workflow stages, and candidate preview status.
+- SEC ingestion + candidate system: Python scripts under `scripts/` handle local SEC cache/fetch/inspect/report/candidate workflows and keep staging output under `data/candidates/`.
+- Promotion + validation flow: Candidate data is previewed and manually promoted into production JSON, then validated before use.
 
----
+## CORE RULES
 
-## Current State (v5.4 / Phase 1 – April 29, 2026)
+- No fake data.
+- No automatic production writes.
+- Candidate -> preview -> manual promotion only.
+- No backend in the current app.
+- Static production JSON is the source of truth.
 
-- Single `index.html` with embedded Canvas graph and static JSON loading.
-- 300 companies and 600 connections load from `data/companies.json` and `data/connections.json`.
-- Connection colors are preserved by type: supply, partnership, investment, ecosystem, and competitor.
-- Fully client-side, zero dependencies beyond CDNs (Tailwind, FontAwesome, Chart.js).
-- Strengths: Photonic/neon visual identity, static-host friendly deployment, dynamic data counts, and no backend dependency.
-- Current immediate priority: **Phase 1 – Graph Usability Stabilization** for the 300-company / 600-connection dataset.
-- Stabilization scope: reliable node click/drag/pan/zoom interactions, strength-scaled edge opacity/thickness, label level-of-detail, first-degree focus mode, and a more stable sector-aware initial layout.
-- Limitations: No persistence, no user accounts, and no future ETF/crypto/options/earnings layers in the current app.
+## FILE STRUCTURE OVERVIEW
 
-**Decision**: Do **not** heavy-refactor the app into a new framework during Phase 1. Keep `index.html` as the living static prototype, preserve existing JSON data loading, and stabilize graph usability before future expansion.
-
----
-
-## Future Target Architecture (v2.0 – Recommended Path)
-
-The following architecture remains a future direction, not the current immediate work. Phase 1 should not convert the app to Next.js, React, Three.js, or a backend-driven architecture.
-
-### High-Level Stack (Chosen for Solo Dev + Free Hosting + Performance)
-
-| Layer          | Technology                          | Why |
-|----------------|-------------------------------------|-----|
-| **Frontend**   | Next.js 15 (App Router) + TypeScript + Tailwind + shadcn/ui | Best DX, server components for data, easy Vercel deploy, built-in API routes |
-| **Graph Viz**  | Three.js + @react-three/fiber + drei + postprocessing (bloom, glow) | True 3D photonic experience (volumetric lights, fiber-optic edges, LOD labels). Falls back to 2D Canvas if needed. |
-| **State**      | Zustand or Jotai + React Query      | Lightweight, great for filters/search |
-| **Data**       | Static JSON (build-time) + optional live API routes | Fast initial load. Live prices/market caps via FMP free tier. |
-| **Backend**    | Next.js API Routes (or separate FastAPI if heavy ETL) | Zero extra infra. Python scripts for ingestion. |
-| **Database**   | Turso (serverless SQLite) or Supabase Postgres (free tier) | Simple SQL, easy migrations, works great with Prisma. For graph queries: recursive CTEs or in-memory NetworkX cache. |
-| **Auth**       | Supabase Auth (magic links) or Clerk (free tier) | Invite-only for 5-10 friends initially. Later: public read + private notes. |
-| **Hosting**    | Vercel (frontend + API) + Turso/Supabase | Free, global CDN, instant previews on PRs. |
-| **Analytics**  | Plausible or Umami (self-hosted, privacy-first) | Optional, only if sharing publicly later. |
-
-**Alternative Lightweight Path** (if you want to stay closer to current):
-- Keep HTML + vanilla JS.
-- Use `data/companies.json` + `data/connections.json`.
-- Add a small Python/FastAPI backend only for ETL + portfolio calculations.
-- Deploy as static site on GitHub Pages / Vercel.
-
-**Recommendation**: Go Next.js. The photonic canvas code ports easily, and you'll gain routing (`/company/NVDA`, `/portfolio`, `/explore`), better mobile, component reuse, and future-proofing. The single HTML can live as `/demo` or landing page.
-
----
-
-## Folder Structure (Monorepo Style – Recommended)
-
-```
+```text
 StockPhotonic/
-├── app/                          # Next.js App Router (or keep root index.html as demo)
-│   ├── layout.tsx
-│   ├── page.tsx                  # Landing + 3D Graph
-│   ├── company/[ticker]/page.tsx # Deep dive per company
-│   ├── portfolio/page.tsx        # Personal exposure calculator
-│   ├── api/
-│   │   ├── companies/route.ts
-│   │   ├── connections/route.ts
-│   │   ├── subgraph/route.ts     # Ego network for a node
-│   │   └── portfolio/route.ts    # Nexus exposure calc
-│   └── components/
-│       ├── PhotonicGraph.tsx     # Three.js canvas
-│       ├── NodeModal.tsx
-│       ├── Filters.tsx
-│       ├── PortfolioInput.tsx
-│       └── ConnectionCard.tsx
-├── data/                         # Version-controlled core dataset
-│   ├── companies.json            # 100-200 core nodes (expandable)
-│   ├── connections.json          # 300-1000 high-quality edges
-│   ├── sectors.json
-│   └── provenance.md             # Future detailed source index
-├── scripts/                      # ETL & maintenance (Python)
-│   ├── ingest_fmp.py             # Market caps, M&A via FinancialModelingPrep
-│   ├── ingest_opencorporates.py  # Subsidiaries from OpenCorporates API
-│   ├── build_graph.py            # Validate, compute centrality, export JSON
-│   └── validate_data.py          # Static JSON integrity checks
-├── lib/                          # Shared utils
-│   ├── graph.ts                  # Centrality, community detection (via networkx WASM or API)
-│   └── utils.ts
-├── docs/
-│   ├── ARCHITECTURE.md           # This file
-│   ├── ROADMAP.md
-│   ├── DATA_SOURCES.md           # Detailed provenance + update cadence
-│   └── CONTRIBUTING.md           # How friends can suggest connections
-├── public/
-│   └── logos/                    # Company logos (or use SVG inline / Clearbit)
-├── .env.example
-├── next.config.js
-├── package.json
-└── README.md
+  index.html                  # Static app shell and tab structure
+  data/
+    companies.json            # Production companies
+    connections.json          # Production connections
+    candidates/               # Review-only staging data
+    cache/sec/                # Local SEC cache artifacts
+  js/
+    core/                     # Dataset loading and normalization
+    graph/                    # 2D render/viewport/layout plus 3D view
+    intelligence/             # Clusters, correlations, portfolio nexus
+    ui/                       # Controls, dashboard, search, sidebar
+    utils/                    # DOM, formatting, math helpers
+  scripts/                    # Local ingestion, candidate, promotion, validation tools
+  docs/                       # Supporting source registry/refactor notes
 ```
 
-**Data Flow**:
-1. `scripts/build_graph.py` runs daily (GitHub Action or local cron) → updates `data/*.json` + computes metrics (degree, betweenness, PageRank per sector).
-2. Next.js build includes latest JSON.
-3. Client fetches live prices on demand (FMP free tier: 250 calls/day sufficient for personal use).
-4. User portfolio calc happens client-side or via API route (privacy).
+## GRAPH SYSTEM
 
----
+2D Graph Intelligence is the default exploration surface. It renders production nodes and edges, applies visible graph filters, supports focus and signal-threshold pruning, and derives dashboard/sidebar intelligence from existing data only.
 
-## Data Model (Core Entities)
+3D Network is an alternate production-network view powered by Three.js. It uses the same production graph and adds spatial exploration, relationship filtering, SEC emphasis, neighborhood expansion, and selected-item inspection without changing data.
 
-### companies.json
-```json
-[
-  {
-    "id": 1,
-    "ticker": "NVDA",
-    "name": "NVIDIA Corporation",
-    "sector": "Semiconductors",
-    "industry": "Semiconductor Equipment & Materials",
-    "market_cap": 5.264,
-    "rank": 1,
-    "description": "Leader in GPU computing and AI infrastructure.",
-    "color": "#00f9ff",
-    "cik": "1045810",
-    "logo_url": null,
-    "last_updated": "2026-04-28"
-  }
-]
-```
+## UI LAYERS
 
-### connections.json
-```json
-[
-  {
-    "source": 1,              // NVDA company id
-    "target": 15,             // MU company id
-    "type": "supply",         // current: supply | partnership | investment | ecosystem | competitor
-    "strength": 0.91,         // 0-1 (revenue dependency or strategic importance)
-    "label": "HBM memory for Blackwell GPUs",
-    "confidence": 5,          // 1-5 (5 = primary source doc, 1 = inferred)
-    "provenance": "NVIDIA earnings call + Micron 10-K supplier disclosure",
-    "verified_date": "2026-04-20"
-  }
-]
-```
+- App tabs: Graph Intelligence, Source Workbench, 3D Network.
+- Graph controls: sector, industry group, layout, search, focus, threshold, orbit, portfolio input, SEC preview visibility.
+- Sidebar/dashboard: selected company details, connection rows, SEC evidence cues, nexus view, shared exposure, hidden relationships, cluster context, portfolio exposure, trust summary.
+- Source Workbench: command reference, pipeline overview, candidate file list, recommended local workflow, and static candidate preview table.
 
-Current Phase 1 data uses `source`/`target` numeric IDs and `provenance` summaries. `source_url`, `notes`, and additional connection types are future schema enhancements, not required by the current static dataset.
+## PIPELINE COMPONENTS
 
-**Connection Types** (current plus future expansion):
-- `supply` – Tier-1 supplier (with % revenue if known)
-- `subsidiary` – Majority ownership (>50%)
-- `investment` – Significant stake (e.g., BRK 9% KO)
-- `partnership` – JV, co-development, major alliance
-- `board_interlock` – Shared director (future data)
-- `mna` – Recent or historical M&A
-- `ecosystem` – Platform (Azure + OpenAI, AWS + NVDA)
-- `competitor` – Direct rival with known collab (rare but useful)
-
-**Provenance Rules** (enforced in validation script):
-- Every edge must have `provenance`, `verified_date`, and `confidence >= 3` for the core dataset.
-- Auto-flag edges >90 days old for re-verification.
-- "Inferred" edges (e.g., "likely supplier because both in AI stack") have confidence 2 and visible warning.
-
----
-
-## Key Features Roadmap (Prioritized for Personal Use)
-
-**MVP (Next 3-4 weeks – Usable for daily investing)**:
-1. 3D Photonic Graph (Three.js) with 80-120 nodes, 300+ edges.
-2. Live market caps + 1-day change via FMP.
-3. Advanced filters (sector, min degree, connection type, search fuzzy).
-4. Portfolio Exposure: Paste 5-15 tickers → shows connected subgraph + "Nexus Risk Score" (weighted sum of connection strengths to your holdings).
-5. Per-company modal: Full ego-network, all connections with sources, description, quick links to SEC/earnings.
-6. "Share View" button: Generates URL with current filters + highlighted nodes (for friends).
-
-**v2.1 (1-2 months)**:
-- User accounts (Supabase) + private watchlists + notes on connections/companies.
-- Time travel: Historical connections (M&A dates, new supply wins).
-- Graph analytics panel: Top central nodes, communities ("AI Infra", "Berkshire Web", "Pharma Payer-Provider").
-- Export: High-res PNG, SVG, GraphML (for Gephi), JSON subgraph.
-
-**v2.5 (3 months)**:
-- Automated daily refresh of prices + new M&A (FMP webhook or cron).
-- "New Connection Alert": Email when a watched company adds a high-confidence link.
-- Mobile PWA + offline support (IndexedDB cache of core graph).
-- Simple NLP on latest 10-K risk factors / earnings transcripts to suggest new edges (human review required).
-
-**Future (if traction)**:
-- Paid data layers (FactSet Supply Chain, BoardEx interlocks) behind feature flag.
-- Public read-only mode + "Suggest Connection" form (moderated).
-- Risk modeling: Monte Carlo contagion simulation (if NVDA supply disrupted, impact on downstream?).
-
----
-
-## Performance & Scalability Targets
-
-- **Nodes**: 200 (core) → 500 (full top + key subs) → 2000+ (with paid data).
-- **Edges**: 800 → 3000 → 10k+.
-- **Load Time**: <1.5s initial (static JSON + code-split Three.js).
-- **Interaction**: 60fps on mid-range laptop even with 300 nodes + bloom postprocessing.
-- **Mobile**: Graceful degradation (2D Canvas fallback, fewer particles).
-
-**Tech Mitigations**:
-- Instanced meshes for nodes.
-- LOD for labels (only show ticker when zoomed or selected).
-- Edge bundling or opacity culling for dense areas.
-- Web Workers for force simulation if needed.
-
----
-
-## Security & Privacy (Critical for Personal Finance Data)
-
-- Portfolio inputs never stored server-side by default (client-side calc or ephemeral session).
-- If accounts enabled: All user data (watchlists, notes) encrypted at rest, row-level security via Supabase.
-- No tracking pixels. Self-hosted analytics only.
-- Open source everything (MIT or AGPL) so friends can self-host if paranoid.
-
----
-
-## Development Workflow
-
-1. **Local**: `npm run dev` – hot reloads, live graph updates from `data/*.json`.
-2. **Data Update**: Edit JSON manually (for now) or run `python scripts/ingest_*.py`.
-3. **PR Flow**: Every PR touching `data/` must pass `python scripts/validate_data.py` (valid source/target IDs, no duplicate edges, confidence >=3 for core data, provenance and verified dates present).
-4. **Deployment**: Vercel previews on every PR. Main branch auto-deploys to production.
-
----
-
-## Open Questions / Decisions Needed
-
-1. **Stack Confirmation**: Next.js + Three.js or stay vanilla HTML longer?
-2. **Data Priority**: Focus first on AI/Semi supply chain (highest signal for 2026 investing) or balanced across all sectors?
-3. **Hosting Budget**: $0 (Vercel + Turso free) or willing to pay $10-20/mo for premium data APIs later?
-4. **Friend Onboarding**: Invite codes + magic link, or simple shared password + localStorage for v1?
-
----
-
-**Next Immediate Action**: Finish Phase 1 graph usability stabilization against the current `companies.json` (300 entries) and `connections.json` (600 entries), then validate the graph is stable enough for future data and UI work.
-
-This architecture keeps the magic of the original photonic viz while giving us a professional, maintainable, data-rich foundation that can grow with your investing needs and the friend circle. Ready to build.
+- Source registry and candidate validators define allowed source and relationship metadata.
+- SEC scripts fetch/cache filings only when explicitly requested and properly identified.
+- Candidate scripts generate review-only relationship records.
+- Promotion preview classifies candidates before production writes.
+- Manual promotion can write reviewed edges to `data/connections.json`.
+- `scripts/validate_data.py` enforces production dataset integrity.

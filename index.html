@@ -475,6 +475,26 @@
             max-width: 100%;
         }
 
+        .graph3d-depth-control {
+            min-height: 2.75rem;
+            border: 1px solid rgba(0, 249, 255, 0.22);
+            background: rgba(3, 7, 18, 0.58);
+            color: rgba(255, 255, 255, 0.88);
+        }
+
+        .graph3d-depth-control select {
+            min-width: 3.15rem;
+            border: 1px solid rgba(0, 249, 255, 0.20);
+            background: rgba(0, 249, 255, 0.10);
+            color: #ffffff;
+            outline: none;
+        }
+
+        .graph3d-depth-control select:focus-visible {
+            border-color: rgba(0, 249, 255, 0.58);
+            box-shadow: 0 0 0 2px rgba(0, 249, 255, 0.14);
+        }
+
         .graph3d-header-actions {
             width: min(100%, 64rem);
             align-items: stretch;
@@ -752,6 +772,12 @@
                 text-align: center;
             }
 
+            .graph3d-depth-control {
+                flex: 1 1 calc(50% - 0.4rem);
+                justify-content: center;
+                min-width: 0;
+            }
+
             .graph3d-stat-overlay {
                 left: 0.75rem;
                 right: 0.75rem;
@@ -795,6 +821,10 @@
             }
 
             .graph3d-toolbar .focus-button {
+                flex-basis: 100%;
+            }
+
+            .graph3d-depth-control {
                 flex-basis: 100%;
             }
 
@@ -1016,6 +1046,14 @@
                                 <i class="fa-solid fa-diagram-project"></i>
                                 <span>Neighborhood Mode</span>
                             </button>
+                            <label class="graph3d-depth-control rounded-3xl px-3 py-2 text-xs flex items-center gap-x-2" title="Set selected-neighborhood expansion depth">
+                                <span class="font-mono text-cyan-50/72 whitespace-nowrap">Depth Level</span>
+                                <select id="graph3d-depth-level" class="rounded-2xl px-2 py-1.5 font-mono text-xs" aria-label="3D depth level">
+                                    <option value="1" selected>1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                </select>
+                            </label>
                             <button id="graph3d-fit-button" type="button" onclick="fitGraph3DCamera()" class="focus-button px-4 py-2.5 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Fit 3D network">
                                 <i class="fa-solid fa-compress"></i>
                                 <span>FIT</span>
@@ -1713,6 +1751,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     sec: document.getElementById('graph3d-sec-toggle'),
                     autoRotate: document.getElementById('graph3d-auto-rotate-toggle'),
                     neighborhood: document.getElementById('graph3d-neighborhood-toggle'),
+                    depthSelect: document.getElementById('graph3d-depth-level'),
                     searchInput: document.getElementById('graph3d-search-input'),
                     searchResults: document.getElementById('graph3d-search-results')
                 },
@@ -1778,6 +1817,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function toggleGraph3DNeighborhoodMode() {
             getGraph3DView()?.toggleNeighborhoodMode();
+        }
+
+        function setGraph3DDepthLevel(value) {
+            getGraph3DView()?.setDepthLevel(value);
         }
 
         function resetGraph3DCamera() {

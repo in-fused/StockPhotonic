@@ -10,6 +10,10 @@
     const TOUCH_EDGE_HOVER_THRESHOLD = 22;
     const FOCUS_ANIMATION_MS = 620;
     const SEARCH_RESULT_LIMIT = 6;
+    const DEPTH_LEVEL_MIN = 1;
+    const DEPTH_LEVEL_MAX = 3;
+    const MAX_EXPANDED_NODES = 90;
+    const MAX_EXPANDED_EDGES = 220;
 
     function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
@@ -32,6 +36,11 @@
             hash = Math.imul(hash, 16777619);
         }
         return Math.abs(hash >>> 0);
+    }
+
+    function normalizeDepthLevel(value) {
+        const depth = Number.parseInt(value, 10);
+        return clamp(Number.isFinite(depth) ? depth : DEPTH_LEVEL_MIN, DEPTH_LEVEL_MIN, DEPTH_LEVEL_MAX);
     }
 
     function getValidSourceUrls(sourceUrls) {
@@ -141,6 +150,8 @@
             this.nodeRecords = [];
             this.linkRecords = [];
             this.nodeRecordById = new Map();
+            this.adjacencyByRecord = new Map();
+            this.expansionCache = null;
             this.topLabelIds = new Set();
 
             this.nodeGroup = null;
@@ -155,6 +166,7 @@
             this.secEmphasisEnabled = true;
             this.autoRotateEnabled = false;
             this.neighborhoodModeEnabled = false;
+            this.depthLevel = DEPTH_LEVEL_MIN;
             this.selectedRecord = null;
             this.hoveredRecord = null;
             this.selectedEdgeRecord = null;
@@ -195,8 +207,10 @@
             this.onSearchKeyDown = this.onSearchKeyDown.bind(this);
             this.onSearchResultPointerDown = this.onSearchResultPointerDown.bind(this);
             this.onDocumentPointerDown = this.onDocumentPointerDown.bind(this);
+            this.onDepthControlChange = this.onDepthControlChange.bind(this);
             this.onContextMenu = event => event.preventDefault();
             this.bindSearchEvents();
+            this.bindDepthControlEvents();
         }
 
         setData(payload = {}) {
@@ -363,6 +377,16 @@
             document.addEventListener('pointerdown', this.onDocumentPointerDown);
         }
 
+        bindDepthControlEvents() {
+            const depthSelect = this.controls.depthSelect;
+            if (!depthSelect) return;
+            depthSelect.addEventListener('change', this.onDepthControlChange);
+        }
+
+        onDepthControlChange(event) {
+            this.setDepthLevel(event.target?.value);
+        }
+
         onSearchInput() {
             this.updateSearchResults();
         }
@@ -517,6 +541,8 @@
             this.nodeRecords = [];
             this.linkRecords = [];
             this.nodeRecordById = new Map();
+            this.adjacencyByRecord = new Map();
+            this.expansionCache = null;
 
             this.nodes.forEach(node => {
                 const record = {
@@ -532,6 +558,7 @@
                 };
                 this.nodeRecords.push(record);
                 this.nodeRecordById.set(record.id, record);
+                this.adjacencyByRecord.set(record, []);
             });
 
             this.links.forEach(link => {
@@ -552,9 +579,30 @@
             });
 
             this.nodeRecords.forEach(record => {
-                record.degree = Math.max(record.degree, this.linkRecords.reduce((count, link) => {
-                    return count + (link.source === record || link.target === record ? 1 : 0);
-                }, 0));
+                this.adjacencyByRecord.set(record, []);
+            });
+
+            this.linkRecords.forEach(linkRecord => {
+                this.adjacencyByRecord.get(linkRecord.source)?.push({
+                    linkRecord,
+                    other: linkRecord.target
+                });
+                this.adjacencyByRecord.get(linkRecord.target)?.push({
+                    linkRecord,
+                    other: linkRecord.source
+                });
+            });
+
+            this.adjacencyByRecord.forEach(items => {
+                items.sort((a, b) =>
+                    b.linkRecord.strength - a.linkRecord.strength ||
+                    Number(b.linkRecord.secBacked) - Number(a.linkRecord.secBacked) ||
+                    String(a.other.node.ticker || '').localeCompare(String(b.other.node.ticker || ''))
+                );
+            });
+
+            this.nodeRecords.forEach(record => {
+                record.degree = Math.max(record.degree, this.adjacencyByRecord.get(record)?.length || 0);
             });
 
             this.topLabelIds = new Set([...this.nodeRecords]
@@ -758,8 +806,12 @@
                 labelIds.add(this.hoveredEdgeRecord.target.id);
             }
             if (this.neighborhoodModeEnabled && this.selectedRecord) {
-                this.getDirectNeighborSummaries(this.selectedRecord).slice(0, 5).forEach(item => {
-                    labelIds.add(item.other.id);
+                const expansion = this.getSelectedExpansion();
+                [1, 2, 3].slice(0, this.depthLevel).forEach(depth => {
+                    const limit = depth === 1 ? 5 : depth === 2 ? 4 : 3;
+                    (expansion.nodesByDepth[depth] || []).slice(0, limit).forEach(record => {
+                        labelIds.add(record.id);
+                    });
                 });
             }
 
@@ -782,7 +834,10 @@
         addLabel(record) {
             const THREE = this.THREE;
             const activeEdgeEndpoint = this.isEndpointOfEdge(record, this.selectedEdgeRecord);
-            const activeNeighbor = this.neighborhoodModeEnabled && this.selectedRecord && this.areConnected(record, this.selectedRecord);
+            const depth = this.neighborhoodModeEnabled && this.selectedRecord
+                ? this.getSelectedExpansion().nodeDepths.get(record)
+                : null;
+            const activeNeighbor = Number.isFinite(depth) && depth > 0;
             const activeLabel = record.id === this.selectedRecord?.id || activeEdgeEndpoint || activeNeighbor;
             const color = activeLabel ? '#ffffff' : record.node.color || CYAN;
             const label = createLabelTexture(THREE, record.node.ticker || record.node.name || '', color);
@@ -1041,55 +1096,89 @@
         }
 
         updateNodeEmphasis() {
+            const expansion = this.getSelectedExpansion();
             this.nodeRecords.forEach(record => {
                 const nodeNeighborhoodActive = this.neighborhoodModeEnabled && this.selectedRecord;
                 const selectedNode = record === this.selectedRecord;
-                const directNeighbor = nodeNeighborhoodActive && this.areConnected(record, this.selectedRecord);
+                const depth = nodeNeighborhoodActive ? expansion.nodeDepths.get(record) : null;
+                const directNeighbor = depth === 1;
+                const expandedNeighbor = Number.isFinite(depth) && depth > 1;
                 const edgeEndpoint = this.isEndpointOfEdge(record, this.selectedEdgeRecord);
                 const hoveredEdgeEndpoint = this.isEndpointOfEdge(record, this.hoveredEdgeRecord);
                 const active =
                     selectedNode ||
                     directNeighbor ||
+                    expandedNeighbor ||
                     record === this.hoveredRecord ||
                     edgeEndpoint ||
                     hoveredEdgeEndpoint;
-                const dimmedByNode = nodeNeighborhoodActive && !selectedNode && !directNeighbor;
+                const dimmedByNode = nodeNeighborhoodActive && !Number.isFinite(depth);
                 const dimmedByEdge = this.selectedEdgeRecord && !this.isEndpointOfEdge(record, this.selectedEdgeRecord);
                 const dimmed = dimmedByNode || dimmedByEdge;
+                const expandedNodeDimming = dimmedByNode && this.depthLevel > DEPTH_LEVEL_MIN;
                 if (record.mesh?.material) {
-                    record.mesh.material.opacity = active ? 1 : dimmed ? 0.35 : 0.88;
+                    record.mesh.material.opacity = selectedNode || edgeEndpoint
+                        ? 1
+                        : directNeighbor || record === this.hoveredRecord || hoveredEdgeEndpoint
+                            ? 0.96
+                            : depth === 2
+                                ? 0.72
+                                : depth === 3
+                                ? 0.52
+                                : dimmed
+                                        ? (expandedNodeDimming ? 0.18 : 0.35)
+                                        : active
+                                            ? 0.88
+                                            : 0.88;
                     const scaleBoost = selectedNode || edgeEndpoint
                         ? 1.22
                         : directNeighbor || record === this.hoveredRecord || hoveredEdgeEndpoint
                             ? 1.12
-                            : 1;
+                            : depth === 2
+                                ? 1.06
+                                : depth === 3
+                                    ? 1.02
+                                    : 1;
                     record.mesh.scale.setScalar(record.radius * scaleBoost);
                 }
                 if (record.glow?.material) {
-                    record.glow.material.opacity = active ? 0.58 : dimmed ? 0.12 : 0.31;
+                    record.glow.material.opacity = selectedNode || edgeEndpoint
+                        ? 0.62
+                        : directNeighbor || record === this.hoveredRecord || hoveredEdgeEndpoint
+                            ? 0.48
+                            : depth === 2
+                                ? 0.28
+                                : depth === 3
+                                ? 0.16
+                                : dimmed
+                                        ? (expandedNodeDimming ? 0.07 : 0.12)
+                                        : active
+                                            ? 0.31
+                                            : 0.31;
                 }
             });
         }
 
         updateEdgeEmphasis() {
+            const expansion = this.getSelectedExpansion();
             this.linkRecords.forEach(record => {
                 const selected = record === this.selectedEdgeRecord;
                 const hovered = record === this.hoveredEdgeRecord;
                 const nodeNeighborhoodActive = this.neighborhoodModeEnabled && this.selectedRecord;
-                const incidentToSelectedNode = nodeNeighborhoodActive && (record.source === this.selectedRecord || record.target === this.selectedRecord);
-                const dimmedByNode = nodeNeighborhoodActive && !incidentToSelectedNode;
+                const edgeDepth = nodeNeighborhoodActive ? expansion.edgeDepths.get(record) : null;
+                const dimmedByNode = nodeNeighborhoodActive && !Number.isFinite(edgeDepth);
                 const dimmedByEdge = this.selectedEdgeRecord && !selected;
                 const secMode = record.secBacked && this.secEmphasisEnabled;
-                const color = record.secBacked && (selected || secMode) ? GOLD : record.color;
+                const color = secMode ? GOLD : record.color;
                 const baseOpacity = secMode ? 0.86 : 0.18 + record.strength * 0.36;
-                const neighborhoodOpacity = secMode ? 0.9 : Math.max(baseOpacity, 0.46 + record.strength * 0.34);
+                const neighborhoodOpacity = this.getDepthEdgeOpacity(record, edgeDepth, baseOpacity, secMode);
                 const opacity = selected
                     ? 1
                     : hovered
                         ? 0.72
                         : (dimmedByNode || dimmedByEdge)
                             ? (secMode ? 0.14 : 0.055)
-                            : incidentToSelectedNode
+                            : Number.isFinite(edgeDepth)
                                 ? neighborhoodOpacity
                                 : baseOpacity;
 
@@ -1105,8 +1194,8 @@
                             ? 0.24
                             : dimmedByNode
                                 ? (secMode ? 0.04 : 0)
-                                : incidentToSelectedNode
-                                    ? (record.secBacked ? 0.32 : 0.18)
+                                : Number.isFinite(edgeDepth)
+                                    ? this.getDepthEdgeGlowOpacity(edgeDepth, secMode)
                                     : secMode
                                         ? 0.22
                                         : 0;
@@ -1114,12 +1203,158 @@
             });
         }
 
+        getDepthEdgeOpacity(record, depth, baseOpacity, secMode) {
+            if (depth === 1) return secMode ? 0.9 : Math.max(baseOpacity, 0.48 + record.strength * 0.34);
+            if (depth === 2) return secMode ? 0.52 : Math.max(baseOpacity * 0.88, 0.28 + record.strength * 0.2);
+            if (depth === 3) return secMode ? 0.3 : Math.max(baseOpacity * 0.62, 0.13 + record.strength * 0.14);
+            return baseOpacity;
+        }
+
+        getDepthEdgeGlowOpacity(depth, secMode) {
+            if (depth === 1) return secMode ? 0.32 : 0.18;
+            if (depth === 2) return secMode ? 0.18 : 0.09;
+            if (depth === 3) return secMode ? 0.09 : 0.035;
+            return 0;
+        }
+
         areConnected(a, b) {
             if (!a || !b) return false;
-            return this.linkRecords.some(link =>
-                (link.source === a && link.target === b) ||
-                (link.source === b && link.target === a)
-            );
+            return (this.adjacencyByRecord.get(a) || []).some(item => item.other === b);
+        }
+
+        getSelectedExpansion() {
+            if (!this.neighborhoodModeEnabled || !this.selectedRecord) {
+                return this.getEmptyExpansion();
+            }
+
+            const cacheKey = [
+                this.selectedRecord.id,
+                this.depthLevel,
+                this.nodeRecords.length,
+                this.linkRecords.length
+            ].join('|');
+            if (this.expansionCache?.key === cacheKey) return this.expansionCache.value;
+
+            const nodeDepths = new Map([[this.selectedRecord, 0]]);
+            const parentByRecord = new Map();
+            const nodesByDepth = [[], [], [], []];
+            nodesByDepth[0].push(this.selectedRecord);
+            const queue = [this.selectedRecord];
+            const maxExpandedNodes = this.depthLevel > DEPTH_LEVEL_MIN ? MAX_EXPANDED_NODES : Number.POSITIVE_INFINITY;
+            const maxExpandedEdges = this.depthLevel > DEPTH_LEVEL_MIN ? MAX_EXPANDED_EDGES : Number.POSITIVE_INFINITY;
+            let capped = false;
+
+            for (let index = 0; index < queue.length; index++) {
+                const current = queue[index];
+                const currentDepth = nodeDepths.get(current);
+                if (currentDepth >= this.depthLevel) continue;
+
+                const connections = this.adjacencyByRecord.get(current) || [];
+                for (const item of connections) {
+                    if (nodeDepths.has(item.other)) continue;
+                    if (nodeDepths.size >= maxExpandedNodes) {
+                        capped = true;
+                        break;
+                    }
+
+                    const nextDepth = currentDepth + 1;
+                    nodeDepths.set(item.other, nextDepth);
+                    parentByRecord.set(item.other, {
+                        parent: current,
+                        linkRecord: item.linkRecord
+                    });
+                    nodesByDepth[nextDepth].push(item.other);
+                    queue.push(item.other);
+                }
+                if (capped) break;
+            }
+
+            const edgeDepths = new Map();
+            const edgeSeen = new Set();
+            for (const nodeRecord of nodeDepths.keys()) {
+                if (edgeDepths.size >= maxExpandedEdges) {
+                    capped = true;
+                    break;
+                }
+                const connections = this.adjacencyByRecord.get(nodeRecord) || [];
+                for (const item of connections) {
+                    const linkRecord = item.linkRecord;
+                    if (edgeSeen.has(linkRecord)) continue;
+                    edgeSeen.add(linkRecord);
+
+                    if (edgeDepths.size >= maxExpandedEdges) {
+                        capped = true;
+                        break;
+                    }
+
+                    const sourceDepth = nodeDepths.get(linkRecord.source);
+                    const targetDepth = nodeDepths.get(linkRecord.target);
+                    if (!Number.isFinite(sourceDepth) || !Number.isFinite(targetDepth)) continue;
+
+                    const maxDepth = Math.max(sourceDepth, targetDepth);
+                    if (maxDepth < 1 || maxDepth > this.depthLevel) continue;
+
+                    const edgeDepth = linkRecord.source === this.selectedRecord || linkRecord.target === this.selectedRecord
+                        ? 1
+                        : Math.min(DEPTH_LEVEL_MAX, Math.max(2, maxDepth));
+                    edgeDepths.set(linkRecord, edgeDepth);
+                }
+            }
+
+            const value = {
+                nodeDepths,
+                edgeDepths,
+                nodesByDepth,
+                capped,
+                strongestPath: this.getStrongestExpandedPath(parentByRecord, nodeDepths)
+            };
+            this.expansionCache = { key: cacheKey, value };
+            return value;
+        }
+
+        getEmptyExpansion() {
+            return {
+                nodeDepths: new Map(),
+                edgeDepths: new Map(),
+                nodesByDepth: [[], [], [], []],
+                capped: false,
+                strongestPath: null
+            };
+        }
+
+        getStrongestExpandedPath(parentByRecord, nodeDepths) {
+            let strongest = null;
+            nodeDepths.forEach((depth, record) => {
+                if (depth < 2) return;
+                const pathRecords = [];
+                const pathEdges = [];
+                let cursor = record;
+                while (cursor) {
+                    pathRecords.unshift(cursor);
+                    const parent = parentByRecord.get(cursor);
+                    if (!parent) break;
+                    pathEdges.unshift(parent.linkRecord);
+                    cursor = parent.parent;
+                }
+                if (pathEdges.length < 2) return;
+
+                const minStrength = Math.min(...pathEdges.map(edge => edge.strength));
+                const averageStrength = pathEdges.reduce((sum, edge) => sum + edge.strength, 0) / pathEdges.length;
+                const score = minStrength * 0.7 + averageStrength * 0.3;
+                if (
+                    !strongest ||
+                    score > strongest.score ||
+                    (score === strongest.score && depth > strongest.depth)
+                ) {
+                    strongest = {
+                        depth,
+                        score,
+                        label: pathRecords.map(item => item.node.ticker || item.node.name || item.id).join(' -> '),
+                        strength: Math.round(score * 100)
+                    };
+                }
+            });
+            return strongest;
         }
 
         isEndpointOfEdge(record, edgeRecord) {
@@ -1191,8 +1426,12 @@
             const secCount = connections.filter(item => item.linkRecord.secBacked).length;
             const top = this.neighborhoodModeEnabled ? directNeighbors.slice(0, 5) : connections.slice(0, 5);
             const strongest = directNeighbors[0] || null;
+            const expansion = this.neighborhoodModeEnabled ? this.getSelectedExpansion() : null;
             const neighborhoodSummary = this.neighborhoodModeEnabled
                 ? this.renderNeighborhoodSummary(directNeighbors, secCount, strongest)
+                : '';
+            const expandedSummary = this.neighborhoodModeEnabled && this.depthLevel > 1
+                ? this.renderExpandedNetworkSummary(expansion)
                 : '';
             this.details.innerHTML = `
                 <div class="flex items-start justify-between gap-3">
@@ -1218,6 +1457,7 @@
                     ${this.renderMetric('SEC edges', secCount)}
                 </div>
                 ${neighborhoodSummary}
+                ${expandedSummary}
                 <div class="sidebar-section">
                     <div class="flex items-center justify-between gap-3 mb-3">
                         <div class="sidebar-section-title mb-0">${this.neighborhoodModeEnabled ? 'Top Direct Neighbors' : 'Top Relationships'}</div>
@@ -1248,12 +1488,14 @@
                     ${this.renderGuideRow('fa-file-shield', 'SEC emphasis', 'Gold dashed edges mark relationships backed by SEC evidence when emphasis is on.')}
                     ${this.renderGuideRow('fa-tags', 'Labels', 'The labels toggle shows or hides priority tickers plus hovered and selected nodes or relationship endpoints.')}
                     ${this.renderGuideRow('fa-diagram-project', 'Neighborhood Mode', 'When enabled, selecting a company emphasizes its direct neighbors without changing 2D graph state.')}
+                    ${this.renderGuideRow('fa-layer-group', 'Depth Level', 'Depth 1 shows direct neighbors; Depth 2 and 3 expand selected-neighborhood emphasis with capped context.')}
                 </div>
                 <div class="mt-5 grid grid-cols-2 gap-3">
                     ${this.renderMetric('Nodes', this.nodeRecords.length)}
                     ${this.renderMetric('Edges', this.linkRecords.length)}
                     ${this.renderMetric('SEC edges', secCount)}
                     ${this.renderMetric('Neighborhood', this.neighborhoodModeEnabled ? 'On' : 'Off')}
+                    ${this.renderMetric('Depth', this.depthLevel)}
                 </div>
             `;
         }
@@ -1275,6 +1517,29 @@
                         ${this.renderCompactMetric('Strongest', strongestLabel)}
                     </div>
                     <div class="mt-2 text-[12px] leading-5 text-cyan-50/62">${this.escapeHtml(relationship)}</div>
+                </div>
+            `;
+        }
+
+        renderExpandedNetworkSummary(expansion) {
+            if (!expansion) return '';
+            const strongestPath = expansion.strongestPath
+                ? `${expansion.strongestPath.label} (${expansion.strongestPath.strength}%)`
+                : '';
+            const capBadge = expansion.capped
+                ? '<span class="rounded-full border border-yellow-200/20 bg-yellow-200/10 px-2 py-0.5 text-[10px] font-mono text-yellow-50/78">CAPPED</span>'
+                : '';
+            return `
+                <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-3">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="source-workbench-label mb-0">Expanded Network</div>
+                        ${capBadge}
+                    </div>
+                    <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        ${this.renderCompactMetric('Expanded nodes', expansion.nodeDepths.size)}
+                        ${this.renderCompactMetric('Expanded edges', expansion.edgeDepths.size)}
+                        ${strongestPath ? this.renderCompactMetric('Strongest path', strongestPath) : ''}
+                    </div>
                 </div>
             `;
         }
@@ -1446,16 +1711,7 @@
         }
 
         getConnectionsForRecord(record) {
-            return this.linkRecords
-                .filter(link => link.source === record || link.target === record)
-                .map(linkRecord => ({
-                    linkRecord,
-                    other: linkRecord.source === record ? linkRecord.target : linkRecord.source
-                }))
-                .sort((a, b) =>
-                    b.linkRecord.strength - a.linkRecord.strength ||
-                    String(a.other.node.ticker || '').localeCompare(String(b.other.node.ticker || ''))
-                );
+            return [...(this.adjacencyByRecord.get(record) || [])];
         }
 
         getDirectNeighborSummaries(record) {
@@ -1520,6 +1776,21 @@
 
         toggleNeighborhoodMode() {
             this.setNeighborhoodModeEnabled(!this.neighborhoodModeEnabled);
+        }
+
+        setDepthLevel(value) {
+            const nextDepth = normalizeDepthLevel(value);
+            if (nextDepth === this.depthLevel) {
+                this.syncControls();
+                return;
+            }
+            this.depthLevel = nextDepth;
+            this.expansionCache = null;
+            this.refreshLabels();
+            this.updateNodeEmphasis();
+            this.updateEdgeEmphasis();
+            this.syncControls();
+            this.renderDetails();
         }
 
         focusSelection() {
@@ -1604,6 +1875,9 @@
             this.syncToggle(this.controls.sec, this.secEmphasisEnabled, this.secEmphasisEnabled ? 'SEC Emphasis On' : 'SEC Emphasis Off');
             this.syncToggle(this.controls.autoRotate, this.autoRotateEnabled, this.autoRotateEnabled ? 'Auto-Rotate On' : 'Auto-Rotate Off');
             this.syncToggle(this.controls.neighborhood, this.neighborhoodModeEnabled, this.neighborhoodModeEnabled ? 'Neighborhood On' : 'Neighborhood Mode');
+            if (this.controls.depthSelect) {
+                this.controls.depthSelect.value = String(this.depthLevel);
+            }
         }
 
         syncToggle(button, active, label) {

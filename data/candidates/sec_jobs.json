@@ -54,6 +54,15 @@
       "forms": ["10-K", "10-Q", "8-K"],
       "limit": 25,
       "review_status": "approved_for_local_run"
+    },
+    {
+      "id": "phase_d55_sec_backed_core",
+      "description": "Phase D55 focused SEC-backed candidate scan for mapped AI/semiconductor, big tech ecosystem, and financial-core tickers.",
+      "job_scope": "phase_d55_sec_backed_source_coverage_expansion",
+      "tickers": ["NVDA", "AMD", "AVGO", "INTC", "MSFT", "GOOGL", "AMZN", "META", "AAPL", "JPM", "GS", "BLK"],
+      "forms": ["10-K", "10-Q", "8-K"],
+      "limit": 25,
+      "review_status": "approved_for_local_run"
     }
   ]
 }

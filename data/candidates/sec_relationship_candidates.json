@@ -49,10 +49,10 @@
   "source_preview": {
     "preview_type": "sec_signal_candidate_preview",
     "expected_cache_root": "data/cache/sec/filings",
-    "input_files": 180,
+    "input_files": 256,
     "limit_chars_per_file": null,
-    "scanned_characters": 159500608,
-    "total_signals": 3109
+    "scanned_characters": 199264981,
+    "total_signals": 4664
   },
   "candidate_count": 4,
   "candidates": [

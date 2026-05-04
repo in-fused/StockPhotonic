@@ -1080,6 +1080,7 @@
         selectRecord(record) {
             this.selectedRecord = record || null;
             this.selectedEdgeRecord = null;
+            this.expansionCache = null;
             this.refreshLabels();
             this.updateNodeEmphasis();
             this.updateEdgeEmphasis();
@@ -1089,6 +1090,7 @@
         selectEdgeRecord(record) {
             this.selectedEdgeRecord = record || null;
             this.selectedRecord = null;
+            this.expansionCache = null;
             this.refreshLabels();
             this.updateNodeEmphasis();
             this.updateEdgeEmphasis();
@@ -1350,7 +1352,9 @@
                         depth,
                         score,
                         label: pathRecords.map(item => item.node.ticker || item.node.name || item.id).join(' -> '),
-                        strength: Math.round(score * 100)
+                        strength: Math.round(score * 100),
+                        secBacked: pathEdges.some(edge => edge.secBacked),
+                        edgeCount: pathEdges.length
                     };
                 }
             });
@@ -1433,6 +1437,7 @@
             const expandedSummary = this.neighborhoodModeEnabled && this.depthLevel > 1
                 ? this.renderExpandedNetworkSummary(expansion)
                 : '';
+            const pathInsights = this.renderPathInsights(record, directNeighbors, expansion);
             this.details.innerHTML = `
                 <div class="flex items-start justify-between gap-3">
                     <div class="min-w-0">
@@ -1458,6 +1463,7 @@
                 </div>
                 ${neighborhoodSummary}
                 ${expandedSummary}
+                ${pathInsights}
                 <div class="sidebar-section">
                     <div class="flex items-center justify-between gap-3 mb-3">
                         <div class="sidebar-section-title mb-0">${this.neighborhoodModeEnabled ? 'Top Direct Neighbors' : 'Top Relationships'}</div>
@@ -1468,6 +1474,89 @@
                     </div>
                 </div>
             `;
+        }
+
+        renderPathInsights(record, directNeighbors, expansion) {
+            const rows = [];
+            const strongestDirect = directNeighbors[0] || null;
+            if (strongestDirect) {
+                rows.push({
+                    label: 'Strongest direct relationship',
+                    path: this.getDirectPathLabel(record, strongestDirect.other),
+                    strength: Math.round(strongestDirect.linkRecord.strength * 100),
+                    secBacked: strongestDirect.linkRecord.secBacked,
+                    detail: this.getRelationshipLabel(strongestDirect.linkRecord)
+                });
+            }
+
+            const strongestSec = directNeighbors.find(item => item.linkRecord.secBacked) || null;
+            if (strongestSec) {
+                rows.push({
+                    label: 'Strongest SEC-backed relationship',
+                    path: this.getDirectPathLabel(record, strongestSec.other),
+                    strength: Math.round(strongestSec.linkRecord.strength * 100),
+                    secBacked: true,
+                    detail: this.getRelationshipLabel(strongestSec.linkRecord)
+                });
+            }
+
+            if (this.neighborhoodModeEnabled && this.depthLevel > 1 && expansion?.strongestPath) {
+                rows.push({
+                    label: 'Strongest expanded path',
+                    path: expansion.strongestPath.label,
+                    strength: expansion.strongestPath.strength,
+                    secBacked: expansion.strongestPath.secBacked,
+                    depth: expansion.strongestPath.depth,
+                    detail: `${expansion.strongestPath.edgeCount} relationships`
+                });
+            }
+
+            const secEmpty = strongestSec
+                ? ''
+                : '<div class="text-[12px] leading-5 text-white/42">No SEC-backed direct relationship for this node.</div>';
+            const empty = rows.length
+                ? ''
+                : '<div class="text-sm leading-5 text-white/42">No production path context for this node.</div>';
+
+            return `
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Path Insights</div>
+                    <div class="space-y-2">
+                        ${rows.map(row => this.renderPathInsightRow(row)).join('')}
+                        ${secEmpty}
+                        ${empty}
+                    </div>
+                </div>
+            `;
+        }
+
+        renderPathInsightRow(row) {
+            const secBadge = row.secBacked
+                ? '<span class="sec-edge-badge rounded-full px-2 py-0.5 text-[10px] font-mono">SEC</span>'
+                : '';
+            const depthBadge = Number.isFinite(row.depth)
+                ? `<span class="rounded-full border border-cyan-200/20 bg-cyan-200/10 px-2 py-0.5 text-[10px] font-mono text-cyan-50/78">Depth ${this.escapeHtml(row.depth)}</span>`
+                : '';
+            return `
+                <div class="graph3d-path-insight-row rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                    <div class="text-[10px] uppercase font-mono text-white/42">${this.escapeHtml(row.label)}</div>
+                    <div class="graph3d-path-line mt-1 font-display text-sm leading-5 text-white">${this.escapeHtml(row.path)}</div>
+                    <div class="graph3d-path-meta mt-2">
+                        <span class="font-mono text-[11px] text-white/58">Strength ${this.escapeHtml(row.strength)}%</span>
+                        ${secBadge}
+                        ${depthBadge}
+                    </div>
+                    ${row.detail ? `<div class="mt-2 text-[12px] leading-5 text-cyan-50/58">${this.escapeHtml(row.detail)}</div>` : ''}
+                </div>
+            `;
+        }
+
+        getDirectPathLabel(record, other) {
+            return `${this.getRecordTicker(record)} -> ${this.getRecordTicker(other)}`;
+        }
+
+        getRecordTicker(record) {
+            return record?.node?.ticker || record?.node?.name || record?.id || 'Unknown';
         }
 
         renderGuideDetails(hint = '') {
@@ -1560,6 +1649,7 @@
                 ? '<span class="sec-edge-badge rounded-full px-2.5 py-1 text-[10px] font-mono tracking-[1px]">SEC BACKED</span>'
                 : '';
             const edgeColor = record.secBacked ? GOLD : record.color;
+            const pathContext = this.renderSelectedEdgePathContext(record);
 
             this.details.innerHTML = `
                 <div class="flex items-start justify-between gap-3">
@@ -1590,12 +1680,30 @@
                     ${confidence ? this.renderDetailField('CONFIDENCE', confidence) : ''}
                     ${sourceIndicator ? this.renderDetailField('SOURCE URL', sourceIndicator) : ''}
                 </div>
+                ${pathContext}
                 ${link.provenance ? `
                     <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.035] p-3">
                         <div class="text-[10px] text-white/42 font-mono">PROVENANCE</div>
                         <div class="mt-1 text-sm leading-5 text-white/76">${this.escapeHtml(link.provenance)}</div>
                     </div>
                 ` : ''}
+            `;
+        }
+
+        renderSelectedEdgePathContext(record) {
+            if (!this.neighborhoodModeEnabled) return '';
+            const expansion = this.getSelectedExpansion();
+            const edgeDepth = expansion.edgeDepths.get(record);
+            const message = Number.isFinite(edgeDepth)
+                ? `This relationship is part of the active expanded neighborhood at depth ${edgeDepth}.`
+                : this.selectedRecord
+                    ? 'This relationship is outside the active expanded neighborhood.'
+                    : 'No active expanded neighborhood while a relationship is selected.';
+            return `
+                <div class="mt-4 rounded-2xl border border-cyan-300/16 bg-cyan-300/[0.055] p-3">
+                    <div class="text-[10px] text-cyan-50/58 font-mono uppercase">Path Context</div>
+                    <div class="mt-1 text-sm leading-5 text-cyan-50/74">${this.escapeHtml(message)}</div>
+                </div>
             `;
         }
 
@@ -1767,6 +1875,7 @@
 
         setNeighborhoodModeEnabled(value) {
             this.neighborhoodModeEnabled = Boolean(value);
+            this.expansionCache = null;
             this.refreshLabels();
             this.updateNodeEmphasis();
             this.updateEdgeEmphasis();
@@ -1841,6 +1950,7 @@
             this.hoveredRecord = null;
             this.selectedEdgeRecord = null;
             this.hoveredEdgeRecord = null;
+            this.expansionCache = null;
             if (this.canvas) this.canvas.style.cursor = 'grab';
             this.refreshLabels();
             this.updateNodeEmphasis();

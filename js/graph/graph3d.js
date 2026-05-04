@@ -6,14 +6,18 @@
     const FALLBACK_EDGE = '#00f9ff';
     const LABEL_LIMIT = 16;
     const TAU = Math.PI * 2;
-    const EDGE_HOVER_THRESHOLD = 11;
-    const TOUCH_EDGE_HOVER_THRESHOLD = 22;
+    const EDGE_HOVER_THRESHOLD = 13;
+    const TOUCH_EDGE_HOVER_THRESHOLD = 26;
     const FOCUS_ANIMATION_MS = 620;
     const SEARCH_RESULT_LIMIT = 6;
     const DEPTH_LEVEL_MIN = 1;
     const DEPTH_LEVEL_MAX = 3;
     const MAX_EXPANDED_NODES = 90;
     const MAX_EXPANDED_EDGES = 220;
+    const STARFIELD_POINT_COUNT = 520;
+    const STARFIELD_INNER_RADIUS = 520;
+    const STARFIELD_DEPTH = 760;
+    const GALAXY_LOCAL_SPACING = 11.2;
 
     function clamp(value, min, max) {
         return Math.min(max, Math.max(min, value));
@@ -164,9 +168,12 @@
             this.edgeGroup = null;
             this.labelGroup = null;
             this.coreGroup = null;
+            this.depthCueGroup = null;
+            this.sectorMistGroup = null;
             this.nodePickables = [];
             this.nodeGeometry = null;
             this.glowTexture = null;
+            this.sectorCenters = [];
 
             this.labelsEnabled = true;
             this.secEmphasisEnabled = true;
@@ -284,10 +291,10 @@
 
             this.THREE = THREE;
             this.scene = new THREE.Scene();
-            this.scene.fog = new THREE.FogExp2(0x050508, 0.0022);
-            this.camera = new THREE.PerspectiveCamera(54, 1, 0.1, 5000);
+            this.scene.fog = new THREE.FogExp2(0x050508, 0.00135);
+            this.camera = new THREE.PerspectiveCamera(54, 1, 0.1, 7000);
             this.raycaster = new THREE.Raycaster();
-            this.raycaster.params.Line.threshold = 1.6;
+            this.raycaster.params.Line.threshold = 2.2;
             this.pointer = new THREE.Vector2();
             this.renderer = new THREE.WebGLRenderer({
                 canvas: this.canvas,
@@ -303,6 +310,7 @@
             this.glowTexture = createGlowTexture(THREE);
             this.createLighting();
             this.createCore();
+            this.createDepthCues();
             this.bindEvents();
             this.rebuildScene();
             this.resetCamera(false);
@@ -363,6 +371,83 @@
             sprite.scale.set(52, 52, 1);
             this.coreGroup.add(sprite);
             this.scene.add(this.coreGroup);
+        }
+
+        createDepthCues() {
+            const THREE = this.THREE;
+            this.depthCueGroup = new THREE.Group();
+
+            const positions = new Float32Array(STARFIELD_POINT_COUNT * 3);
+            const colors = new Float32Array(STARFIELD_POINT_COUNT * 3);
+            const palette = [
+                new THREE.Color(0x7ffcff),
+                new THREE.Color(0xff7bd8),
+                new THREE.Color(0xffe7a3),
+                new THREE.Color(0xb9c8ff)
+            ];
+
+            for (let index = 0; index < STARFIELD_POINT_COUNT; index++) {
+                const seed = hashNumber(`graph3d-galaxy-star:${index}`);
+                const theta = ((seed % 10000) / 10000) * TAU;
+                const phiSeed = ((hashNumber(`graph3d-galaxy-star-phi:${index}`) % 10000) / 10000) * 2 - 1;
+                const sinPhi = Math.sqrt(Math.max(0, 1 - phiSeed * phiSeed));
+                const shell = STARFIELD_INNER_RADIUS + ((hashNumber(`graph3d-galaxy-star-shell:${index}`) % 10000) / 10000) * STARFIELD_DEPTH;
+                positions[index * 3] = Math.cos(theta) * sinPhi * shell;
+                positions[index * 3 + 1] = phiSeed * shell * 0.72;
+                positions[index * 3 + 2] = Math.sin(theta) * sinPhi * shell;
+
+                const color = palette[seed % palette.length];
+                const intensity = 0.46 + ((seed >>> 5) % 100) / 240;
+                colors[index * 3] = color.r * intensity;
+                colors[index * 3 + 1] = color.g * intensity;
+                colors[index * 3 + 2] = color.b * intensity;
+            }
+
+            const starGeometry = new THREE.BufferGeometry();
+            starGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            starGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            const starMaterial = new THREE.PointsMaterial({
+                size: 1.7,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.42,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            this.depthCueGroup.add(new THREE.Points(starGeometry, starMaterial));
+
+            const horizonGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: this.glowTexture,
+                color: 0x00f9ff,
+                transparent: true,
+                opacity: 0.115,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            }));
+            horizonGlow.position.set(0, -26, -70);
+            horizonGlow.scale.set(720, 265, 1);
+            this.depthCueGroup.add(horizonGlow);
+
+            [
+                { radius: 255, color: 0x00f9ff, opacity: 0.055, rotation: [1.26, 0.16, 0.2] },
+                { radius: 390, color: 0xff00aa, opacity: 0.038, rotation: [1.18, -0.12, -0.34] },
+                { radius: 540, color: 0xffd700, opacity: 0.024, rotation: [1.32, 0.04, 0.52] }
+            ].forEach(item => {
+                const ring = new THREE.Mesh(
+                    new THREE.TorusGeometry(item.radius, 0.18, 8, 160),
+                    new THREE.MeshBasicMaterial({
+                        color: item.color,
+                        transparent: true,
+                        opacity: item.opacity,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                ring.rotation.set(item.rotation[0], item.rotation[1], item.rotation[2]);
+                this.depthCueGroup.add(ring);
+            });
+
+            this.scene.add(this.depthCueGroup);
         }
 
         bindEvents() {
@@ -749,14 +834,18 @@
             this.clearGroup(this.nodeGroup);
             this.clearGroup(this.edgeGroup);
             this.clearGroup(this.labelGroup);
+            this.clearGroup(this.sectorMistGroup);
             this.nodeGroup = new this.THREE.Group();
             this.edgeGroup = new this.THREE.Group();
             this.labelGroup = new this.THREE.Group();
+            this.sectorMistGroup = new this.THREE.Group();
+            this.scene.add(this.sectorMistGroup);
             this.scene.add(this.edgeGroup);
             this.scene.add(this.nodeGroup);
             this.scene.add(this.labelGroup);
             this.nodePickables = [];
             this.layoutRecords();
+            this.createSectorMists();
             this.createEdges();
             this.createNodes();
             this.refreshLabels();
@@ -782,22 +871,30 @@
             const sectors = [...new Set(this.nodeRecords.map(record => record.node.sector || 'Other'))].sort();
             const sectorIndex = new Map(sectors.map((sector, index) => [sector, index]));
             const recordsBySector = new Map();
+            this.sectorCenters = [];
             this.nodeRecords.forEach(record => {
                 const sector = record.node.sector || 'Other';
                 if (!recordsBySector.has(sector)) recordsBySector.set(sector, []);
                 recordsBySector.get(sector).push(record);
             });
 
-            const sectorRadius = clamp(78 + sectors.length * 5.5, 94, 138);
+            const sectorRadius = clamp(150 + sectors.length * 15 + Math.sqrt(this.nodeRecords.length) * 5, 210, 360);
+            const sectorVerticalRange = clamp(38 + sectors.length * 3.5, 48, 92);
             let maxDistance = 0;
             recordsBySector.forEach((records, sector) => {
                 const index = sectorIndex.get(sector) || 0;
                 const sectorAngle = (index / Math.max(1, sectors.length)) * TAU - Math.PI / 2;
+                const sectorSeed = hashNumber(`graph3d-sector:${sector}`);
                 const sectorCenter = new THREE.Vector3(
                     Math.cos(sectorAngle) * sectorRadius,
-                    Math.sin(index * 1.37) * 32,
-                    Math.sin(sectorAngle) * sectorRadius
+                    Math.sin(index * 1.37) * sectorVerticalRange + ((sectorSeed % 31) - 15) * 0.9,
+                    Math.sin(sectorAngle) * sectorRadius + Math.cos(index * 0.83) * 42
                 );
+                this.sectorCenters.push({
+                    position: sectorCenter.clone(),
+                    color: records[0]?.node?.color || CYAN,
+                    count: records.length
+                });
 
                 const groups = new Map();
                 records.forEach(record => {
@@ -812,34 +909,58 @@
                         String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
                     );
                     const groupSeed = hashNumber(`${sector}:${group}`);
-                    const groupAngle = (groupIndex / Math.max(1, groups.size)) * TAU + (groupSeed % 80) / 160;
-                    const groupRadius = groups.size > 1 ? 24 + (groupIndex % 2) * 7 : 0;
+                    const groupAngle = groupIndex * 2.399963 + sectorAngle * 0.34 + (groupSeed % 97) / 350;
+                    const groupOrbit = clamp(36 + Math.sqrt(records.length) * 3.8 + Math.sqrt(groups.size) * 7, 52, 94);
+                    const groupRadius = groups.size > 1
+                        ? groupOrbit + (groupIndex % 3) * 12 + ((groupSeed % 23) - 11) * 0.8
+                        : 0;
                     const groupCenter = sectorCenter.clone().add(new THREE.Vector3(
                         Math.cos(groupAngle) * groupRadius,
-                        ((groupSeed % 17) - 8) * 1.6,
-                        Math.sin(groupAngle) * groupRadius
+                        Math.sin(groupAngle + sectorAngle) * 18 + ((groupSeed % 37) - 18) * 1.45,
+                        Math.sin(groupAngle) * groupRadius + Math.cos(groupAngle * 1.3 + sectorAngle) * 34
                     ));
 
                     groupRecords.forEach((record, nodeIndex) => {
                         const seed = hashNumber(`${record.node.ticker || record.id}:d39`);
-                        const angle = nodeIndex * 2.399963 + (seed % 360) * Math.PI / 900;
-                        const localRadius = 5 + Math.sqrt(nodeIndex + 1) * 7.5 + (seed % 7);
-                        const vertical = ((seed % 31) - 15) * 0.9 + Math.sin(angle * 1.6) * 8;
-                        const depth = Math.cos(angle * 1.12) * localRadius * 0.72;
+                        const angle = nodeIndex * 2.399963 + (seed % 360) * Math.PI / 720;
+                        const localRadius = 8 + Math.sqrt(nodeIndex + 1) * GALAXY_LOCAL_SPACING + (seed % 11) * 1.35;
+                        const vertical = ((seed % 43) - 21) * 1.2 + Math.sin(angle * 1.52) * 14 + ((nodeIndex % 5) - 2) * 2.8;
+                        const depth = Math.cos(angle * 1.12 + groupSeed * 0.001) * (localRadius * 0.95 + 12);
                         record.position = groupCenter.clone().add(new THREE.Vector3(
                             Math.cos(angle) * localRadius,
                             vertical,
-                            Math.sin(angle) * localRadius * 0.54 + depth
+                            Math.sin(angle) * localRadius * 0.72 + depth
                         ));
                         const cap = Math.max(0.04, Number(record.node.market_cap) || 0.04);
                         const rankBoost = Number(record.node.rank) <= 25 ? 0.42 : 0;
-                        record.radius = clamp(1.05 + Math.sqrt(cap) * 0.52 + Math.sqrt(record.degree) * 0.13 + rankBoost, 1.05, 4.4);
+                        record.radius = clamp(1.18 + Math.sqrt(cap) * 0.54 + Math.sqrt(record.degree) * 0.15 + rankBoost, 1.18, 5.05);
                         maxDistance = Math.max(maxDistance, record.position.length() + record.radius * 5);
                     });
                 });
             });
 
-            this.fitRadius = clamp(maxDistance * 1.8, 145, 430);
+            this.fitRadius = clamp(maxDistance * 1.46, 260, 1040);
+        }
+
+        createSectorMists() {
+            if (!this.sectorMistGroup || !this.sectorCenters.length) return;
+            const THREE = this.THREE;
+            this.sectorCenters.forEach((sector, index) => {
+                const seed = hashNumber(`graph3d-sector-mist:${index}:${sector.count}`);
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: this.glowTexture,
+                    color: sector.color || CYAN,
+                    transparent: true,
+                    opacity: 0.042 + Math.min(0.026, Math.sqrt(sector.count) * 0.004),
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                }));
+                sprite.position.copy(sector.position).multiplyScalar(1.015);
+                sprite.position.y += ((seed % 19) - 9) * 1.2;
+                const scale = clamp(62 + Math.sqrt(sector.count) * 15, 86, 168);
+                sprite.scale.set(scale, scale * 0.58, 1);
+                this.sectorMistGroup.add(sprite);
+            });
         }
 
         createEdges() {
@@ -911,11 +1032,15 @@
                     depthWrite: false
                 }));
                 glow.position.copy(record.position);
-                const glowScale = record.radius * 7.2;
+                const glowScale = this.getNodeGlowScale(record);
                 glow.scale.set(glowScale, glowScale, 1);
                 record.glow = glow;
                 this.nodeGroup.add(glow);
             });
+        }
+
+        getNodeGlowScale(record) {
+            return record.radius * 8.4 + 3;
         }
 
         refreshLabels() {
@@ -999,6 +1124,9 @@
                 this.coreGroup.rotation.y += 0.003;
                 this.coreGroup.rotation.x = Math.sin(timestamp * 0.00045) * 0.12;
             }
+            if (this.depthCueGroup) {
+                this.depthCueGroup.rotation.y += 0.00012;
+            }
             this.updateCamera();
             this.renderer.render(this.scene, this.camera);
             this.animationFrame = window.requestAnimationFrame(this.animate);
@@ -1040,6 +1168,26 @@
             if (progress >= 1) this.cameraTransition = null;
         }
 
+        isCompactViewport() {
+            const rect = this.stage?.getBoundingClientRect?.();
+            const width = rect?.width || window.innerWidth || 0;
+            return width > 0 && width < 720;
+        }
+
+        getCameraMaxRadius() {
+            return this.isCompactViewport() ? 920 : 1380;
+        }
+
+        clampCameraRadius(radius) {
+            return clamp(radius, 34, this.getCameraMaxRadius());
+        }
+
+        getOverviewCameraRadius(scale = 1) {
+            const minimum = this.isCompactViewport() ? 190 : 255;
+            const maximum = this.isCompactViewport() ? 760 : 1120;
+            return clamp((this.fitRadius || 260) * scale, minimum, maximum);
+        }
+
         animateCameraTo(target, radius, duration = FOCUS_ANIMATION_MS) {
             this.cameraTransition = {
                 startedAt: performance.now(),
@@ -1051,7 +1199,7 @@
                     z: target.z
                 },
                 fromRadius: this.cameraState.radius,
-                toRadius: clamp(radius, 58, 360)
+                toRadius: this.clampCameraRadius(radius)
             };
             this.start();
         }
@@ -1140,7 +1288,7 @@
             event.preventDefault();
             this.cameraTransition = null;
             const nextRadius = this.cameraState.radius * Math.exp(clamp(event.deltaY, -180, 180) * 0.0018);
-            this.cameraState.radius = clamp(nextRadius, 38, 720);
+            this.cameraState.radius = this.clampCameraRadius(nextRadius);
         }
 
         pickNode(event) {
@@ -1304,6 +1452,17 @@
                                         : active
                                             ? 0.31
                                             : 0.31;
+                    const glowBase = this.getNodeGlowScale(record);
+                    const glowBoost = selectedNode || edgeEndpoint
+                        ? 1.36
+                        : directNeighbor || record === this.hoveredRecord || hoveredEdgeEndpoint
+                            ? 1.22
+                            : filterBoth
+                                ? 1.2
+                                : filterMatch
+                                    ? 1.12
+                                    : 1;
+                    record.glow.scale.set(glowBase * glowBoost, glowBase * glowBoost, 1);
                 }
             });
         }
@@ -2153,7 +2312,8 @@
             if (!record?.source?.position || !record?.target?.position) return;
             const midpoint = record.source.position.clone().add(record.target.position).multiplyScalar(0.5);
             const endpointDistance = record.source.position.distanceTo(record.target.position);
-            const radius = clamp(endpointDistance * 1.45 + 58, 96, 260);
+            const maxFocus = this.isCompactViewport() ? 360 : 520;
+            const radius = clamp(endpointDistance * 1.08 + 72, 90, maxFocus);
             this.animateCameraTo(midpoint, radius);
         }
 
@@ -2167,7 +2327,8 @@
                 .filter(distance => distance > 0)
                 .sort((a, b) => a - b);
             const nearbyDistance = distances.length ? distances[Math.min(distances.length - 1, 5)] : 0;
-            return clamp(Math.max(88, nearbyDistance * 1.65, record.radius * 24), 88, 190);
+            const maxFocus = this.isCompactViewport() ? 230 : 320;
+            return clamp(Math.max(72, nearbyDistance * 1.28, record.radius * 24), 64, maxFocus);
         }
 
         clearSelection(renderDetails = true) {
@@ -2195,7 +2356,7 @@
             this.cameraTransition = null;
             this.cameraState.theta = -0.72;
             this.cameraState.phi = 1.08;
-            this.cameraState.radius = this.fitRadius || 210;
+            this.cameraState.radius = this.getOverviewCameraRadius(1);
             this.cameraState.target = { x: 0, y: 0, z: 0 };
             if (renderDetails) this.renderDetails();
         }
@@ -2203,7 +2364,7 @@
         fitCamera() {
             this.cameraTransition = null;
             this.cameraState.target = { x: 0, y: 0, z: 0 };
-            this.cameraState.radius = clamp(this.fitRadius * 0.92, 110, 420);
+            this.cameraState.radius = this.getOverviewCameraRadius(0.9);
         }
 
         syncControls() {

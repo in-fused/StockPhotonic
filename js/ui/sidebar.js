@@ -61,6 +61,8 @@
         } = context;
 
         sidebar.innerHTML = `
+                ${renderActiveContextStrip(context)}
+
                 <div class="flex items-start justify-between gap-4 mb-5">
                     <div>
                         <div class="text-xs text-cyan-300/80 font-mono tracking-[2px]">${escapeHtml(node.sector || 'UNKNOWN')}</div>
@@ -87,6 +89,8 @@
                         <div class="font-display text-xl text-white">${connectionsForNode.length}</div>
                     </div>
                 </div>
+
+                ${renderSelectedNodeWhyLayer(context)}
 
                 ${renderSecPreviewNodeOverlaySection(secPreviewLinksForNode, context)}
 
@@ -206,6 +210,117 @@
             `;
         sidebar.classList.remove('hidden');
         empty.classList.add('hidden');
+    }
+
+    function renderActiveContextStrip(context) {
+        const { escapeHtml } = context;
+        const filters = [
+            context.currentSector || '',
+            context.currentIndustryGroup || '',
+            context.currentSearch ? `Search: ${context.currentSearch}` : ''
+        ].filter(Boolean).join(' / ') || 'All companies';
+        const focusOn = Boolean(context.focusModeEnabled || (typeof context.isFocusModeActive === 'function' && context.isFocusModeActive()));
+        const threshold = Number(context.signalStrengthThreshold || 0);
+        const portfolioActive = typeof context.isPortfolioAnalysisActive === 'function' && context.isPortfolioAnalysisActive();
+        const portfolio = portfolioActive
+            ? `${context.matchedPortfolioNodes?.length || 0} matched`
+            : 'Inactive';
+
+        return `
+                <div class="mb-4 rounded-2xl border border-cyan-300/15 bg-black/25 px-3 py-2">
+                    <div class="flex flex-wrap items-center gap-2 text-[10px] font-mono tracking-[1.1px]">
+                        <span class="text-cyan-100/70">ACTIVE CONTEXT</span>
+                        <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/70">${escapeHtml(filters)}</span>
+                        <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">FOCUS ${focusOn ? 'ON' : 'OFF'}</span>
+                        <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">SIGNAL ${threshold > 0 ? threshold.toFixed(2) : 'ALL'}</span>
+                        <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">PORTFOLIO ${escapeHtml(portfolio)}</span>
+                    </div>
+                </div>
+            `;
+    }
+
+    function renderSelectedNodeWhyLayer(context) {
+        const {
+            node,
+            topConnections,
+            networkSummary,
+            sectorCounts,
+            industryGroup,
+            industryGroupStats,
+            portfolioContext,
+            escapeHtml,
+            formatConnectionType
+        } = context;
+        const role = getSelectedNodeRole(context);
+        const topConnection = topConnections[0];
+        const topPartner = topConnection?.node?.ticker || topConnection?.node?.name || '';
+        const dominantType = formatConnectionType(networkSummary.mostCommonType || 'link').toLowerCase();
+        const leadingSector = sectorCounts[0]?.[0] || node.sector || 'its sector';
+        const leadingCluster = industryGroupStats[0]?.group || industryGroup || 'its industry group';
+        const connectionLine = topPartner
+            ? `${escapeHtml(node.ticker || node.name || 'This company')} matters most through ${escapeHtml(topPartner)}, its strongest visible ${escapeHtml(dominantType)} relationship.`
+            : `${escapeHtml(node.ticker || node.name || 'This company')} has no visible curated relationships at the current threshold.`;
+        const roleLine = getSelectedNodeRoleSentence(role, node, leadingSector, leadingCluster, portfolioContext, context);
+
+        return `
+                <div class="why-panel rounded-2xl p-4 mb-5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="text-[10px] text-cyan-100/70 font-mono tracking-[1.5px]">WHY THIS MATTERS</div>
+                            <div class="mt-2 text-sm text-white/88 leading-relaxed">${roleLine}</div>
+                            <div class="mt-2 text-xs text-white/58 leading-relaxed">${connectionLine}</div>
+                        </div>
+                        <div class="shrink-0 px-2.5 py-1 rounded-full border border-cyan-300/25 bg-cyan-300/10 text-[10px] text-cyan-100/85 font-mono">${escapeHtml(role.label)}</div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2 text-[10px] font-mono">
+                        <span class="px-2 py-1 rounded-full bg-black/25 border border-white/10 text-cyan-200/80">${escapeHtml(role.hubLabel)}</span>
+                        <span class="px-2 py-1 rounded-full bg-black/25 border border-white/10 text-fuchsia-200/80">${escapeHtml(role.bridgeLabel)}</span>
+                        <span class="px-2 py-1 rounded-full bg-black/25 border border-white/10 text-emerald-200/80">${escapeHtml(role.dependencyLabel)}</span>
+                    </div>
+                </div>
+            `;
+    }
+
+    function getSelectedNodeRole(context) {
+        const { networkSummary, sectorCounts, portfolioContext } = context;
+        const degree = networkSummary.degree || 0;
+        const sectorDiversity = sectorCounts.length;
+        const highCapCount = networkSummary.highCapCount || 0;
+        const dominantType = networkSummary.mostCommonType || 'link';
+        const isHub = degree >= 8;
+        const isBridge = sectorDiversity >= 3 || (sectorDiversity >= 2 && degree >= 5);
+        const isDependency = highCapCount >= 3 || dominantType === 'supply' || portfolioContext?.adjacent || portfolioContext?.isTopNexus;
+
+        return {
+            label: isHub ? 'HUB' : isBridge ? 'BRIDGE' : isDependency ? 'DEPENDENCY' : 'CONTEXT',
+            isHub,
+            isBridge,
+            isDependency,
+            hubLabel: isHub ? 'Hub' : 'Not a hub',
+            bridgeLabel: isBridge ? 'Bridge' : 'Limited bridge',
+            dependencyLabel: isDependency ? 'Dependency signal' : 'Low dependency signal'
+        };
+    }
+
+    function getSelectedNodeRoleSentence(role, node, leadingSector, leadingCluster, portfolioContext, context) {
+        const { escapeHtml } = context;
+        const ticker = escapeHtml(node.ticker || node.name || 'This company');
+        if (role.isHub && role.isBridge) {
+            return `${ticker} is both a hub and a bridge: it concentrates attention inside ${escapeHtml(leadingCluster)} while linking into ${escapeHtml(leadingSector)} relationships.`;
+        }
+        if (role.isHub) {
+            return `${ticker} is a hub in this network, so its relationships help explain where attention and dependency are concentrated.`;
+        }
+        if (role.isBridge) {
+            return `${ticker} bridges sectors, which makes it useful for seeing how ${escapeHtml(node.sector || 'one market area')} connects to ${escapeHtml(leadingSector)}.`;
+        }
+        if (portfolioContext?.adjacent || portfolioContext?.isTopNexus) {
+            return `${ticker} is portfolio-adjacent, so its links can reveal indirect exposure around the active holdings.`;
+        }
+        if (role.isDependency) {
+            return `${ticker} acts like a dependency point because its visible relationships are concentrated around important counterparties.`;
+        }
+        return `${ticker} provides context for ${escapeHtml(leadingCluster)}, with its current importance coming from a smaller set of visible relationships.`;
     }
 
     function renderNexusViewSection(node, context) {

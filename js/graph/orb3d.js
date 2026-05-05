@@ -81,6 +81,7 @@
             screenNodes: [],
             hoveredNode: null,
             selectedNode: null,
+            focusContext: null,
             layoutDensity: 'balanced',
             sectorAdjustments: new Map(),
             tuningSector: null,
@@ -443,6 +444,7 @@
         const layout = buildOrbLayout(state.nodes, state.links, options, state);
         state.layoutNodes = layout.nodes;
         state.layoutLinks = layout.links;
+        state.focusContext = null;
     }
 
     function getDataSnapshot(options) {
@@ -552,23 +554,25 @@
         state.screenNodes = projectedNodes;
 
         drawSphereGuide(ctx, state);
+        const focusContext = getOrbFocusContext(state);
         state.layoutLinks
             .map(item => ({
                 ...item,
                 sourceProjected: projectedById.get(item.source.node.id),
-                targetProjected: projectedById.get(item.target.node.id)
+                targetProjected: projectedById.get(item.target.node.id),
+                focusPriority: getOrbLinkFocusPriority(item, focusContext)
             }))
             .filter(item => item.sourceProjected && item.targetProjected)
-            .sort((a, b) => averageDepth(a) - averageDepth(b))
-            .forEach(item => drawOrbLink(ctx, state, item, options));
+            .sort((a, b) => a.focusPriority - b.focusPriority || averageDepth(a) - averageDepth(b))
+            .forEach(item => drawOrbLink(ctx, state, item, options, focusContext));
 
         drawTunedSectorHighlight(ctx, state, projectedNodes);
 
         projectedNodes
             .sort((a, b) => a.projected.depth - b.projected.depth)
-            .forEach(item => drawOrbNode(ctx, state, item, options));
+            .forEach(item => drawOrbNode(ctx, state, item, options, focusContext));
 
-        drawOrbLabels(ctx, state, projectedNodes, options);
+        drawOrbLabels(ctx, state, projectedNodes, options, focusContext);
         drawHoverReadout(ctx, state, options);
         drawClusterTuningReadout(ctx, state, options);
     }
@@ -694,36 +698,45 @@
         ctx.stroke();
     }
 
-    function drawOrbLink(ctx, state, item, options) {
+    function drawOrbLink(ctx, state, item, options, focusContext) {
         const source = item.source.point;
         const target = item.target.point;
         const strength = clamp(Number(item.link.strength) || 0.4, 0.05, 1);
         const secBacked = Boolean(options.isSecBackedLink?.(item.link));
-        const selectedId = state.selectedNode?.id;
-        const hoveredId = state.hoveredNode?.node?.id;
-        const touchesActiveNode = Boolean((selectedId || hoveredId) && (
-            item.source.node.id === selectedId ||
-            item.target.node.id === selectedId ||
-            item.source.node.id === hoveredId ||
-            item.target.node.id === hoveredId
+        const sourceId = item.source.node.id;
+        const targetId = item.target.node.id;
+        const selectedEdge = Boolean(focusContext?.selectedId && (
+            sourceId === focusContext.selectedId ||
+            targetId === focusContext.selectedId
         ));
-        const color = touchesActiveNode ? GOLD_SOFT : secBacked ? GOLD : (options.getLinkColor?.(item.link) || CYAN);
+        const hoverEdge = Boolean(focusContext?.hoveredId && (
+            sourceId === focusContext.hoveredId ||
+            targetId === focusContext.hoveredId
+        ));
+        const primaryActive = selectedEdge || (!focusContext?.selectedId && hoverEdge);
+        const secondaryActive = Boolean(focusContext?.selectedId && hoverEdge && !selectedEdge);
+        const inactive = Boolean(focusContext?.hasFocus && !selectedEdge && !hoverEdge);
+        const linkColor = options.getLinkColor?.(item.link) || CYAN;
+        const color = secBacked ? GOLD : primaryActive ? GOLD_SOFT : linkColor;
         const averageDepthT = clamp((item.sourceProjected.projected.depthT + item.targetProjected.projected.depthT) / 2, 0, 1);
         const depthLayer = getDepthLayer(averageDepthT);
         const quietStrength = 0.74 + Math.pow(strength, 1.45) * 0.26;
         const depthAlpha = 0.24 + depthLayer * 0.76;
         const baseAlpha = secBacked ? 0.15 + strength * 0.23 : 0.045 + Math.pow(strength, 1.9) * 0.2;
-        const alpha = baseAlpha * quietStrength * depthAlpha * (touchesActiveNode ? 1.8 : 1);
-        const width = (secBacked ? 0.68 + strength * 1.25 : 0.32 + strength * 1.08) * (0.82 + depthLayer * 0.2) * (touchesActiveNode ? 1.3 : 1);
-        const glowBlur = (secBacked ? 17 : 12) * (0.46 + depthLayer * 0.84) * (touchesActiveNode ? 1.25 : 1);
+        const activeAlpha = primaryActive ? 2.72 : secondaryActive ? 1.48 : inactive ? 0.26 : 1;
+        const alpha = baseAlpha * quietStrength * depthAlpha * activeAlpha;
+        const activeWidth = primaryActive ? 1.68 : secondaryActive ? 1.24 : inactive ? 0.72 : 1;
+        const width = (secBacked ? 0.68 + strength * 1.25 : 0.32 + strength * 1.08) * (0.82 + depthLayer * 0.2) * activeWidth;
+        const activeGlow = primaryActive ? 1.9 : secondaryActive ? 1.28 : inactive ? 0.54 : 1;
+        const glowBlur = (secBacked ? 17 : 12) * (0.46 + depthLayer * 0.84) * activeGlow;
         const points = getArcPoints(source, target, 18, 0.1 + strength * 0.13);
 
         ctx.save();
-        if (secBacked && !touchesActiveNode) ctx.setLineDash([3, 7]);
+        if (secBacked && !primaryActive && !secondaryActive) ctx.setLineDash([3, 7]);
         strokeProjectedPath(ctx, state, points, color, alpha * (0.34 + depthLayer * 0.26), width + 2.35 + depthLayer * 1.1, glowBlur + 8);
-        if (secBacked && !touchesActiveNode) ctx.setLineDash([3, 7]);
+        if (secBacked && !primaryActive && !secondaryActive) ctx.setLineDash([3, 7]);
         else ctx.setLineDash([]);
-        strokeProjectedPath(ctx, state, points, color, alpha, width, touchesActiveNode ? glowBlur + 8 : glowBlur);
+        strokeProjectedPath(ctx, state, points, color, alpha, width, primaryActive ? glowBlur + 10 : glowBlur);
         ctx.restore();
     }
 
@@ -742,52 +755,145 @@
         ctx.stroke();
     }
 
-    function drawOrbNode(ctx, state, item, options) {
+    function getOrbFocusContext(state) {
+        const selectedId = state.selectedNode?.id || null;
+        const hoveredId = state.hoveredNode?.node?.id || null;
+        const cached = state.focusContext;
+        if (
+            cached &&
+            cached.selectedId === selectedId &&
+            cached.hoveredId === hoveredId &&
+            cached.links === state.layoutLinks
+        ) {
+            return cached;
+        }
+
+        const selectedNeighbors = new Set();
+        const hoverNeighbors = new Set();
+        if (selectedId || hoveredId) {
+            state.layoutLinks.forEach(item => {
+                const sourceId = item.source.node.id;
+                const targetId = item.target.node.id;
+                if (selectedId && (sourceId === selectedId || targetId === selectedId)) {
+                    selectedNeighbors.add(sourceId === selectedId ? targetId : sourceId);
+                }
+                if (hoveredId && (sourceId === hoveredId || targetId === hoveredId)) {
+                    hoverNeighbors.add(sourceId === hoveredId ? targetId : sourceId);
+                }
+            });
+        }
+
+        state.focusContext = {
+            selectedId,
+            hoveredId,
+            selectedNeighbors,
+            hoverNeighbors,
+            hasFocus: Boolean(selectedId || hoveredId),
+            links: state.layoutLinks
+        };
+        return state.focusContext;
+    }
+
+    function getOrbLinkFocusPriority(item, focusContext) {
+        if (!focusContext?.hasFocus) return 0;
+        const sourceId = item.source.node.id;
+        const targetId = item.target.node.id;
+        if (focusContext.selectedId && (sourceId === focusContext.selectedId || targetId === focusContext.selectedId)) return 2;
+        if (focusContext.hoveredId && (sourceId === focusContext.hoveredId || targetId === focusContext.hoveredId)) return 1;
+        return 0;
+    }
+
+    function drawOrbNode(ctx, state, item, options, focusContext) {
         const p = item.projected;
         const depthLayer = getDepthLayer(p.depthT);
         const depthAlpha = 0.16 + depthLayer * 0.78;
-        const selected = state.selectedNode?.id === item.node.id;
-        const hovered = state.hoveredNode?.node?.id === item.node.id;
+        const selected = focusContext?.selectedId === item.node.id;
+        const hovered = focusContext?.hoveredId === item.node.id;
+        const selectedNeighbor = Boolean(focusContext?.selectedNeighbors?.has(item.node.id));
+        const hoverNeighbor = Boolean(focusContext?.hoverNeighbors?.has(item.node.id));
+        const selectedMode = Boolean(focusContext?.selectedId);
+        const unrelated = Boolean(focusContext?.hasFocus && !selected && !hovered && !selectedNeighbor && !hoverNeighbor);
         const tuning = Boolean(state.tuningSector && item.sector === state.tuningSector);
         const hub = item.centrality >= 0.58;
         const color = options.getNodeColor?.(item.node) || item.node.color || CYAN;
         const hubScale = hub ? 1.06 + item.centrality * 0.055 : 1;
-        const emphasisScale = selected ? 1.42 : hovered ? 1.26 : tuning ? 1.08 : hubScale;
+        const emphasisScale = selected
+            ? 1.64
+            : hovered
+                ? (selectedMode ? 1.16 : 1.28)
+                : selectedNeighbor
+                    ? 1.12
+                    : hoverNeighbor
+                        ? (selectedMode ? 1.035 : 1.08)
+                        : tuning
+                            ? 1.08
+                            : unrelated
+                                ? 0.9
+                                : hubScale;
         const depthSize = 0.94 + depthLayer * 0.13;
         const radius = item.size * (0.62 + p.scale * 0.28) * depthSize * emphasisScale;
-        const glowScale = selected ? 5.8 : hovered ? 5 : hub ? 4.8 : 4.05;
-        const glowAlpha = selected ? 0.48 : hovered ? 0.34 : hub ? 0.24 : 0.17;
-        const coreAlpha = selected ? 0.98 : hovered ? 0.84 : 0.48 + depthLayer * 0.2 + (hub ? 0.08 : 0);
-        const rimAlpha = clamp(0.42 + depthLayer * 0.32 + (hub ? 0.08 : 0), 0.38, 0.86);
+        const glowScale = selected ? 6.35 : hovered ? 5 : selectedNeighbor ? 4.95 : hub ? 4.8 : 4.05;
+        const glowAlpha = selected ? 0.62 : hovered ? (selectedMode ? 0.25 : 0.34) : selectedNeighbor ? 0.28 : hoverNeighbor ? 0.2 : unrelated ? 0.07 : hub ? 0.24 : 0.17;
+        const coreAlpha = selected
+            ? 1
+            : hovered
+                ? (selectedMode ? 0.72 : 0.84)
+                : selectedNeighbor
+                    ? 0.76
+                    : hoverNeighbor
+                        ? 0.58
+                        : unrelated
+                            ? 0.25 + depthLayer * 0.13
+                            : 0.48 + depthLayer * 0.2 + (hub ? 0.08 : 0);
+        const rimAlpha = selectedNeighbor
+            ? 0.78
+            : hoverNeighbor
+                ? 0.62
+                : unrelated
+                    ? 0.28 + depthLayer * 0.16
+                    : clamp(0.42 + depthLayer * 0.32 + (hub ? 0.08 : 0), 0.38, 0.86);
+        const nodeAlpha = selected
+            ? 1
+            : hovered
+                ? (selectedMode ? 0.78 : 0.94)
+                : selectedNeighbor
+                    ? 0.9
+                    : hoverNeighbor
+                        ? (selectedMode ? 0.58 : 0.76)
+                        : unrelated
+                            ? 0.34 + depthLayer * 0.16
+                            : tuning
+                                ? Math.min(0.82, depthAlpha + 0.18)
+                                : depthAlpha;
 
         ctx.save();
-        ctx.globalAlpha = selected ? 1 : hovered ? 0.94 : tuning ? Math.min(0.82, depthAlpha + 0.18) : depthAlpha;
+        ctx.globalAlpha = nodeAlpha;
         const glow = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, radius * glowScale);
         glow.addColorStop(0, rgba(selected ? GOLD : color, glowAlpha));
-        glow.addColorStop(0.4, rgba(color, selected ? 0.18 : hub ? 0.13 : 0.09));
+        glow.addColorStop(0.4, rgba(color, selected ? 0.24 : selectedNeighbor ? 0.14 : hub ? 0.13 : 0.09));
         glow.addColorStop(1, rgba(color, 0));
         ctx.fillStyle = glow;
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius * glowScale, 0, TAU);
         ctx.fill();
 
-        ctx.shadowBlur = selected ? 34 : hovered ? 24 : hub ? 16 : 10 + depthLayer * 5;
+        ctx.shadowBlur = selected ? 42 : hovered ? 24 : selectedNeighbor ? 18 : hub ? 16 : unrelated ? 4 : 10 + depthLayer * 5;
         ctx.shadowColor = selected ? GOLD : color;
         ctx.fillStyle = rgba(color, coreAlpha);
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, TAU);
         ctx.fill();
-        ctx.lineWidth = selected ? 2.4 : hovered ? 1.65 : tuning ? 1.2 : hub ? 1.15 : 0.9;
-        ctx.strokeStyle = selected ? GOLD_SOFT : hovered ? GOLD : tuning ? 'rgba(253, 230, 138, 0.72)' : rgba('#ffffff', rimAlpha);
+        ctx.lineWidth = selected ? 2.8 : hovered ? 1.65 : selectedNeighbor ? 1.45 : tuning ? 1.2 : hub ? 1.15 : 0.9;
+        ctx.strokeStyle = selected ? GOLD_SOFT : hovered ? GOLD : selectedNeighbor ? 'rgba(253, 230, 138, 0.78)' : tuning ? 'rgba(253, 230, 138, 0.72)' : rgba('#ffffff', rimAlpha);
         ctx.stroke();
 
-        if (selected || hovered || hub) {
-            ctx.globalAlpha = selected ? 0.9 : hovered ? 0.64 : 0.18 + depthLayer * 0.16;
-            ctx.shadowBlur = selected ? 22 : hovered ? 14 : 10;
-            ctx.strokeStyle = selected ? GOLD : hovered ? rgba(color, 0.92) : rgba(color, 0.68);
-            ctx.lineWidth = selected ? 1.35 : hovered ? 1 : 0.75;
+        if (selected || hovered || selectedNeighbor || hub) {
+            ctx.globalAlpha = selected ? 0.96 : hovered ? (selectedMode ? 0.48 : 0.64) : selectedNeighbor ? 0.42 : 0.18 + depthLayer * 0.16;
+            ctx.shadowBlur = selected ? 28 : hovered ? 14 : selectedNeighbor ? 12 : 10;
+            ctx.strokeStyle = selected ? GOLD : hovered ? rgba(color, 0.92) : selectedNeighbor ? GOLD_SOFT : rgba(color, 0.68);
+            ctx.lineWidth = selected ? 1.55 : hovered ? 1 : selectedNeighbor ? 0.95 : 0.75;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, radius + (selected ? 7 : hovered ? 5 : 3.5), 0, TAU);
+            ctx.arc(p.x, p.y, radius + (selected ? 9 : hovered ? 5 : selectedNeighbor ? 4.5 : 3.5), 0, TAU);
             ctx.stroke();
         }
         ctx.restore();
@@ -824,18 +930,26 @@
         ctx.restore();
     }
 
-    function drawOrbLabels(ctx, state, nodes, options) {
-        const selectedId = state.selectedNode?.id;
-        const hoveredId = state.hoveredNode?.node?.id;
+    function drawOrbLabels(ctx, state, nodes, options, focusContext) {
+        const selectedId = focusContext?.selectedId;
+        const hoveredId = focusContext?.hoveredId;
         const candidates = nodes
             .map(item => {
                 const selected = selectedId === item.node.id;
                 const hovered = hoveredId === item.node.id;
+                const selectedNeighbor = Boolean(focusContext?.selectedNeighbors?.has(item.node.id));
+                const hoverNeighbor = Boolean(focusContext?.hoverNeighbors?.has(item.node.id));
                 const hub = item.centrality >= 0.58 && item.projected.depthT > 0.38;
-                const priority = (selected ? 100 : 0) + (hovered ? 90 : 0) + item.centrality * 16 + item.projected.depthT * 5;
-                return { ...item, selected, hovered, hub, priority };
+                const neighborLabel = selectedNeighbor || (!selectedId && hoverNeighbor && item.projected.depthT > 0.32);
+                const priority = (selected ? 120 : 0) +
+                    (hovered ? 96 : 0) +
+                    (selectedNeighbor ? 54 : 0) +
+                    (!selectedId && hoverNeighbor ? 30 : 0) +
+                    item.centrality * 16 +
+                    item.projected.depthT * 5;
+                return { ...item, selected, hovered, selectedNeighbor, hoverNeighbor, hub, neighborLabel, priority };
             })
-            .filter(item => item.selected || item.hovered || item.hub)
+            .filter(item => item.selected || item.hovered || item.neighborLabel || item.hub)
             .sort((a, b) => b.priority - a.priority)
             .slice(0, 14);
 
@@ -860,18 +974,20 @@
             if (!detailed && occupied.some(other => boxesOverlap(box, other))) return;
             occupied.push({ x: x - 4, y: y - 3, width: width + 8, height: height + 6 });
 
-            ctx.globalAlpha = item.selected ? 0.98 : item.hovered ? 0.92 : 0.35 + item.projected.depthT * 0.32;
+            ctx.globalAlpha = item.selected ? 0.99 : item.hovered ? 0.92 : item.selectedNeighbor ? 0.68 : item.hoverNeighbor ? 0.54 : 0.35 + item.projected.depthT * 0.32;
             ctx.fillStyle = item.selected
                 ? 'rgba(39, 25, 4, 0.84)'
                 : item.hovered
                     ? 'rgba(18, 20, 24, 0.82)'
-                    : 'rgba(2, 6, 23, 0.58)';
+                    : item.selectedNeighbor
+                        ? 'rgba(17, 24, 39, 0.68)'
+                        : 'rgba(2, 6, 23, 0.58)';
             roundedRect(ctx, x, y, width, height, 6);
             ctx.fill();
-            ctx.strokeStyle = item.selected ? 'rgba(251, 191, 36, 0.58)' : item.hovered ? rgba(color, 0.44) : 'rgba(251, 191, 36, 0.18)';
+            ctx.strokeStyle = item.selected ? 'rgba(251, 191, 36, 0.62)' : item.hovered ? rgba(color, 0.44) : item.selectedNeighbor ? 'rgba(251, 191, 36, 0.34)' : 'rgba(251, 191, 36, 0.18)';
             ctx.lineWidth = item.selected || item.hovered ? 1 : 0.75;
             ctx.stroke();
-            ctx.fillStyle = item.selected ? GOLD_SOFT : item.hovered ? GOLD : rgba(color, 0.9);
+            ctx.fillStyle = item.selected ? GOLD_SOFT : item.hovered ? GOLD : item.selectedNeighbor ? 'rgba(254, 243, 199, 0.92)' : rgba(color, 0.9);
             ctx.fillText(text, x + width / 2, y + height / 2 + 0.5);
         });
         ctx.restore();

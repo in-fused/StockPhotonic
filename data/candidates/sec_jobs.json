@@ -840,6 +840,47 @@
       ],
       "limit": 2,
       "review_status": "approved_for_local_run"
+    },
+    {
+      "id": "phase_d70_sector_aware_validation",
+      "description": "Phase D70 targeted cached-filing validation for sector-aware SEC relationship extraction across energy, industrials/defense, healthcare, consumer/media/travel, and financials.",
+      "job_scope": "phase_d70_sector_aware_relationship_extraction_expansion",
+      "tickers": [
+        "PAA",
+        "ET",
+        "MPLX",
+        "KMI",
+        "WMB",
+        "LMT",
+        "NOC",
+        "BA",
+        "HII",
+        "GE",
+        "CAT",
+        "MRK",
+        "LLY",
+        "PFE",
+        "JNJ",
+        "ABT",
+        "MCD",
+        "MAR",
+        "CMCSA",
+        "BKNG",
+        "YUM",
+        "JPM",
+        "GS",
+        "BK",
+        "STT",
+        "V",
+        "MA",
+        "AXP"
+      ],
+      "forms": [
+        "10-K",
+        "10-Q"
+      ],
+      "limit": 1,
+      "review_status": "approved_for_local_validation"
     }
   ]
 }

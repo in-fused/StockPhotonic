@@ -23,7 +23,17 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from sec_filing_inspect import FilingInspectError  # noqa: E402
-from sec_filing_signals import SignalExtractionError, parse_nonnegative_int  # noqa: E402
+from sec_filing_inspect import (  # noqa: E402
+    build_metadata_summary,
+    decode_document,
+    read_document,
+    sanitize_text,
+)
+from sec_filing_signals import (  # noqa: E402
+    SignalExtractionError,
+    parse_nonnegative_int,
+    resolve_cached_filing,
+)
 from sec_signal_report import build_report  # noqa: E402
 
 
@@ -39,10 +49,18 @@ SIGNAL_RELATIONSHIP_TYPES = {
     "partnership": "partnership",
     "investment": "investment",
 }
+CORE_RELATIONSHIP_TYPES = {
+    "partnership",
+    "supplier_customer",
+    "investment",
+    "competitive",
+}
 MIN_TARGET_MATCH_CONFIDENCE = 0.75
 MIN_CONFIDENCE_HINT = 0.85
 MAX_PREVIEW_CANDIDATES_TOTAL = 500
 MAX_PREVIEW_CANDIDATES_PER_SOURCE_TICKER = 8
+MAX_SECTOR_AWARE_SNIPPETS_TOTAL = 600
+SECTOR_RELATIONSHIP_CONTEXT_CHARS = 360
 SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS = (
     "revenue from",
     "licensing",
@@ -53,6 +71,10 @@ SUPPLIER_CUSTOMER_SUPPLY_TERMS = (
     "supplies",
     "manufactures for",
     "component supplier",
+    "supply agreement",
+    "manufacturing agreement",
+    "manufacturing services",
+    "manufacturing services agreement",
 )
 GENERIC_RELATIONSHIP_NOISE_TERMS = (
     "depends on",
@@ -78,6 +100,16 @@ INTERNAL_OPERATIONS_NOISE_TERMS = (
     "operating results",
     "results of operations",
 )
+LEGAL_ONLY_RELATIONSHIP_NOISE_TERMS = (
+    "exhibit no.",
+    "incorporated by reference",
+    "judgment sharing agreement",
+    "settlement sharing agreement",
+    "omnibus judgment",
+)
+GENERIC_AGREEMENT_SIGNALS = (
+    "agreement with",
+)
 GRAPH_WORTHY_SIGNAL_TERMS = (
     *SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS,
     *SUPPLIER_CUSTOMER_SUPPLY_TERMS,
@@ -94,6 +126,197 @@ GRAPH_WORTHY_SIGNAL_TERMS = (
     "investment in",
     "ownership stake in",
 )
+SECTOR_AWARE_RELATIONSHIP_RULES: tuple[dict[str, Any], ...] = (
+    {
+        "sector": "energy_midstream",
+        "relationship_type": "partnership",
+        "signal_type": "partnership",
+        "confidence_hint": 0.94,
+        "terms": (
+            "joint venture",
+            "offtake agreement",
+        ),
+    },
+    {
+        "sector": "energy_midstream",
+        "relationship_type": "supplier_customer",
+        "signal_type": "customer",
+        "confidence_hint": 0.91,
+        "terms": (
+            "pipeline system",
+            "transportation services agreement",
+            "gathering agreement",
+            "processing agreement",
+            "fractionation agreement",
+            "terminal services",
+            "terminal services agreement",
+            "throughput agreement",
+            "take-or-pay",
+            "long-term supply",
+            "long-term supply agreement",
+        ),
+    },
+    {
+        "sector": "industrials_defense",
+        "relationship_type": "partnership",
+        "signal_type": "partnership",
+        "confidence_hint": 0.91,
+        "terms": (
+            "program partner",
+            "production agreement",
+            "aerospace program",
+            "defense contract",
+            "government contractor relationship",
+        ),
+    },
+    {
+        "sector": "industrials_defense",
+        "relationship_type": "supplier_customer",
+        "signal_type": "supplier",
+        "confidence_hint": 0.91,
+        "terms": (
+            "prime contractor",
+            "subcontractor",
+            "manufacturing agreement",
+            "supply agreement",
+        ),
+    },
+    {
+        "sector": "healthcare",
+        "relationship_type": "partnership",
+        "signal_type": "partnership",
+        "confidence_hint": 0.92,
+        "terms": (
+            "collaboration agreement",
+            "commercialization agreement",
+            "licensing agreement",
+            "license agreement",
+            "distribution agreement",
+            "clinical collaboration",
+            "co-development",
+            "co-development agreement",
+            "royalty agreement",
+        ),
+    },
+    {
+        "sector": "healthcare",
+        "relationship_type": "supplier_customer",
+        "signal_type": "supplier",
+        "confidence_hint": 0.9,
+        "terms": (
+            "manufacturing services",
+            "manufacturing services agreement",
+        ),
+    },
+    {
+        "sector": "consumer_media_travel",
+        "relationship_type": "partnership",
+        "signal_type": "partnership",
+        "confidence_hint": 0.9,
+        "terms": (
+            "franchise agreement",
+            "licensing agreement",
+            "license agreement",
+            "distribution agreement",
+            "advertising partnership",
+            "content licensing",
+            "merchant agreement",
+            "platform partnership",
+            "co-branded agreement",
+        ),
+    },
+    {
+        "sector": "financials",
+        "relationship_type": "partnership",
+        "signal_type": "partnership",
+        "confidence_hint": 0.9,
+        "terms": (
+            "custody agreement",
+            "asset management agreement",
+            "clearing agreement",
+            "card network relationship",
+            "merchant acquiring",
+            "investment management",
+        ),
+    },
+    {
+        "sector": "financials",
+        "relationship_type": "investment",
+        "signal_type": "investment",
+        "confidence_hint": 0.91,
+        "terms": (
+            "lending facility",
+            "credit agreement",
+            "credit facility",
+            "loan agreement",
+            "revolving loan agreement",
+        ),
+    },
+)
+SECTOR_AWARE_RELATIONSHIP_TERMS = tuple(
+    dict.fromkeys(
+        term
+        for rule in SECTOR_AWARE_RELATIONSHIP_RULES
+        for term in rule["terms"]
+    )
+)
+GRAPH_WORTHY_SIGNAL_TERMS = (
+    *GRAPH_WORTHY_SIGNAL_TERMS,
+    *SECTOR_AWARE_RELATIONSHIP_TERMS,
+)
+SECTOR_TERM_RULE_BY_TERM = {
+    term: rule
+    for rule in SECTOR_AWARE_RELATIONSHIP_RULES
+    for term in rule["terms"]
+}
+RELATIONSHIP_CONNECTOR_PATTERN = (
+    r"(?:with|to|from|by|for|between|among|under|pursuant\s+to|involving)"
+)
+SECTOR_TARGET_FRAGMENT = (
+    r"(?:[A-Z][A-Za-z0-9&.'-]*|[A-Z]{1,6})"
+    r"(?:\s+(?:&|and|of|the|[A-Z][A-Za-z0-9&.'-]*|[A-Z]{1,6})){0,8}"
+    r"(?:\s*,?\s+(?:"
+    r"Corporation|Corp\.?|Incorporated|Inc\.?|LLC|L\.L\.C\.|"
+    r"Limited|Ltd\.?|LP|L\.P\.|Ltd|PLC|plc|N\.V\.|S\.A\.|AG|SE|Company|Co\.?"
+    r"))?"
+)
+UPPERCASE_TICKER_TOKEN_PATTERN = re.compile(r"\b[A-Z][A-Z.]{1,5}\b")
+TICKER_TOKEN_STOP_WORDS = {
+    "A",
+    "AM",
+    "AS",
+    "ASC",
+    "CEO",
+    "CFO",
+    "EPS",
+    "ESG",
+    "FASB",
+    "FDA",
+    "GAAP",
+    "IRS",
+    "NYSE",
+    "SEC",
+    "US",
+    "U.S",
+}
+EXACT_TICKER_CONTEXT_ALLOWLIST = {
+    "BKR",
+    "EPD",
+    "KMI",
+    "MPC",
+    "MPLX",
+    "MRNA",
+    "OKE",
+    "PAA",
+    "PNC",
+    "RTX",
+    "SLB",
+    "WMB",
+}
+TERMS_REQUIRING_DIRECTIONAL_TARGET_AFTER = {
+    "credit facility",
+    "lending facility",
+}
 ALIAS_FIELD_NAMES = (
     "aliases",
     "alias",
@@ -140,10 +363,71 @@ COMMON_PUBLIC_ALIASES_BY_TICKER = {
     "BLK": ("BlackRock",),
     "XOM": ("ExxonMobil", "Exxon Mobil"),
     "CVX": ("Chevron",),
+    "COP": ("ConocoPhillips",),
+    "OXY": ("Occidental", "Occidental Petroleum"),
+    "SLB": ("SLB", "Schlumberger"),
+    "HAL": ("Halliburton",),
+    "BKR": ("Baker Hughes",),
+    "KMI": ("Kinder Morgan",),
+    "OKE": ("ONEOK", "Oneok"),
+    "WMB": ("Williams", "The Williams Companies", "Williams Companies"),
+    "MPC": ("Marathon Petroleum", "Marathon Petroleum Corporation"),
+    "MPLX": ("MPLX", "MPLX LP"),
+    "PAA": ("Plains All American", "Plains All American Pipeline"),
+    "ET": ("Energy Transfer", "Energy Transfer LP"),
+    "EPD": ("Enterprise Products", "Enterprise Products Partners"),
+    "LNG": ("Cheniere", "Cheniere Energy"),
     "UNH": ("UnitedHealth", "UnitedHealth Group", "UnitedHealthcare", "Optum"),
     "LLY": ("Eli Lilly", "Lilly"),
+    "MRK": ("Merck", "Merck & Co."),
+    "PFE": ("Pfizer",),
+    "JNJ": ("Johnson & Johnson",),
+    "ABT": ("Abbott", "Abbott Laboratories"),
+    "ABBV": ("AbbVie",),
+    "BMY": ("Bristol Myers Squibb", "Bristol-Myers Squibb"),
+    "AMGN": ("Amgen",),
+    "MRNA": ("Moderna",),
+    "REGN": ("Regeneron",),
+    "GILD": ("Gilead", "Gilead Sciences"),
+    "TMO": ("Thermo Fisher", "Thermo Fisher Scientific"),
+    "MDT": ("Medtronic",),
+    "BSX": ("Boston Scientific",),
     "GE": ("GE Aerospace", "General Electric"),
     "CAT": ("Caterpillar",),
+    "HON": ("Honeywell",),
+    "RTX": ("RTX", "Raytheon", "Raytheon Technologies", "Pratt & Whitney", "Collins Aerospace"),
+    "LMT": ("Lockheed Martin",),
+    "BA": ("Boeing", "The Boeing Company"),
+    "NOC": ("Northrop Grumman",),
+    "GD": ("General Dynamics",),
+    "HII": ("Huntington Ingalls", "Huntington Ingalls Industries"),
+    "DE": ("Deere", "John Deere", "Deere & Company"),
+    "WMT": ("Walmart", "Wal-Mart"),
+    "COST": ("Costco", "Costco Wholesale"),
+    "HD": ("Home Depot", "The Home Depot"),
+    "LOW": ("Lowe's", "Lowes"),
+    "MCD": ("McDonald's", "McDonalds"),
+    "YUM": ("Yum!", "Yum Brands", "Yum! Brands"),
+    "SBUX": ("Starbucks",),
+    "DIS": ("Disney", "The Walt Disney Company"),
+    "CMCSA": ("Comcast", "NBCUniversal", "NBC Universal"),
+    "NFLX": ("Netflix",),
+    "BKNG": ("Booking Holdings", "Booking.com"),
+    "MAR": ("Marriott", "Marriott International"),
+    "HLT": ("Hilton", "Hilton Worldwide"),
+    "UBER": ("Uber", "Uber Technologies"),
+    "BAC": ("Bank of America", "BofA"),
+    "WFC": ("Wells Fargo",),
+    "C": ("Citigroup", "Citi"),
+    "MS": ("Morgan Stanley",),
+    "PNC": ("PNC", "PNC Bank", "PNC Bank, National Association"),
+    "AXP": ("American Express", "Amex"),
+    "SCHW": ("Charles Schwab", "Schwab"),
+    "BK": ("BNY Mellon", "Bank of New York Mellon", "The Bank of New York Mellon"),
+    "STT": ("State Street", "State Street Corporation"),
+    "ICE": ("Intercontinental Exchange",),
+    "CME": ("CME Group",),
+    "NDAQ": ("Nasdaq", "Nasdaq Inc."),
 }
 LEGAL_SUFFIXES = (
     "Corporation",
@@ -154,6 +438,8 @@ LEGAL_SUFFIXES = (
     "Inc",
     "LLC",
     "L.L.C.",
+    "LP",
+    "L.P.",
     "Limited",
     "Ltd.",
     "Ltd",
@@ -172,6 +458,7 @@ LEGAL_SUFFIX_WORDS = {
     "incorporated",
     "limited",
     "llc",
+    "lp",
     "ltd",
     "nv",
     "plc",
@@ -343,8 +630,18 @@ def relationship_term_hits(text: str, terms: tuple[str, ...]) -> list[str]:
     return hits
 
 
+def normalize_relationship_type(value: str | None) -> str | None:
+    if value == "supply":
+        return "supplier_customer"
+    if value in CORE_RELATIONSHIP_TYPES:
+        return value
+    return None
+
+
 def relationship_type_for(signal_type: str, snippet_text: Any) -> str | None:
-    relationship_type = SIGNAL_RELATIONSHIP_TYPES.get(signal_type, "ecosystem")
+    relationship_type = normalize_relationship_type(
+        SIGNAL_RELATIONSHIP_TYPES.get(signal_type, "ecosystem")
+    )
     if relationship_type != "supplier_customer":
         return relationship_type
 
@@ -352,7 +649,7 @@ def relationship_type_for(signal_type: str, snippet_text: Any) -> str | None:
     if relationship_term_hits(visible_text, SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS):
         return "partnership"
     if relationship_term_hits(visible_text, SUPPLIER_CUSTOMER_SUPPLY_TERMS):
-        return "supply"
+        return "supplier_customer"
     return None
 
 
@@ -381,7 +678,7 @@ def base_display_name(value: str) -> str:
     display = re.sub(
         r"\s*,\s*(?:"
         r"Corporation|Corp\.?|Incorporated|Inc\.?|LLC|L\.L\.C\.|"
-        r"Limited|Ltd\.?|PLC|plc|N\.V\.|S\.A\.|AG|SE|Company|Co\.?"
+        r"Limited|Ltd\.?|LP|L\.P\.|PLC|plc|N\.V\.|S\.A\.|AG|SE|Company|Co\.?"
         r")$",
         "",
         display,
@@ -390,7 +687,7 @@ def base_display_name(value: str) -> str:
     display = re.sub(
         r"\s+(?:"
         r"Corporation|Corp\.?|Incorporated|Inc\.?|LLC|L\.L\.C\.|"
-        r"Limited|Ltd\.?|PLC|plc|N\.V\.|S\.A\.|AG|SE|Company|Co\.?"
+        r"Limited|Ltd\.?|LP|L\.P\.|PLC|plc|N\.V\.|S\.A\.|AG|SE|Company|Co\.?"
         r")$",
         "",
         display,
@@ -762,6 +1059,271 @@ def mention_regex(mention: str) -> str:
     return re.escape(mention).replace(r"\ ", r"\s+")
 
 
+def sector_term_pattern(term: str) -> re.Pattern[str]:
+    parts = [re.escape(part) for part in term.split()]
+    phrase = r"\s+".join(parts)
+    return re.compile(rf"(?<![a-z0-9]){phrase}(?![a-z0-9])", re.IGNORECASE)
+
+
+def clean_sector_target(value: str) -> str | None:
+    target = " ".join(value.strip(" ,.;:()[]{}\"'").split())
+    if len(target) == 1 or normalize_match_key(target) in {"a", "an", "the"}:
+        return None
+    if entity_mention_looks_generic(target):
+        return None
+    return target or None
+
+
+def add_sector_target(
+    targets: list[tuple[int, int, str]],
+    *,
+    quality: int,
+    position: int,
+    mention: str | None,
+) -> None:
+    if mention is None:
+        return
+    clean = clean_sector_target(mention)
+    if clean is None:
+        return
+    targets.append((quality, position, clean))
+
+
+def sector_targets_after(text: str, match_end: int) -> list[tuple[int, int, str]]:
+    window = text[match_end : min(len(text), match_end + 240)]
+    targets: list[tuple[int, int, str]] = []
+    connector_pattern = re.compile(
+        rf"^\W*(?:{RELATIONSHIP_CONNECTOR_PATTERN})\s+"
+        rf"(?:an?\s+|the\s+)?(?P<target>{SECTOR_TARGET_FRAGMENT})\b",
+        re.IGNORECASE,
+    )
+    match = connector_pattern.search(window)
+    if match is not None:
+        add_sector_target(
+            targets,
+            quality=0,
+            position=match_end + match.start("target"),
+            mention=match.group("target"),
+        )
+
+    indirect_pattern = re.compile(
+        rf"\b(?:{RELATIONSHIP_CONNECTOR_PATTERN})\s+"
+        rf"(?:an?\s+|the\s+)?(?P<target>{SECTOR_TARGET_FRAGMENT})\b",
+        re.IGNORECASE,
+    )
+    for match in indirect_pattern.finditer(window[:160]):
+        add_sector_target(
+            targets,
+            quality=1,
+            position=match_end + match.start("target"),
+            mention=match.group("target"),
+        )
+    return targets
+
+
+def sector_targets_before(text: str, match_start: int) -> list[tuple[int, int, str]]:
+    window_start = max(0, match_start - 220)
+    window = text[window_start:match_start]
+    targets: list[tuple[int, int, str]] = []
+    fragment_pattern = re.compile(SECTOR_TARGET_FRAGMENT)
+    allowed_gap_pattern = re.compile(
+        r"^(?:'s|is|was|are|were|as|the|a|an|under|under\s+a|under\s+an|"
+        r"pursuant\s+to|pursuant\s+to\s+an?|with|to|from|by|for|"
+        r",|and|\(|\)|\s)*$",
+        re.IGNORECASE,
+    )
+    for match in fragment_pattern.finditer(window):
+        gap = window[match.end() :].strip()
+        if len(gap) > 48 or allowed_gap_pattern.match(gap) is None:
+            continue
+        add_sector_target(
+            targets,
+            quality=0 if len(gap) <= 12 else 1,
+            position=window_start + match.start("target")
+            if "target" in match.groupdict()
+            else window_start + match.start(),
+            mention=match.group(0),
+        )
+    return targets[-3:]
+
+
+def ticker_token_targets_near(
+    text: str,
+    match_start: int,
+    match_end: int,
+) -> list[tuple[int, int, str]]:
+    window_start = max(0, match_start - 100)
+    window = text[window_start : min(len(text), match_end + 100)]
+    targets: list[tuple[int, int, str]] = []
+    for match in UPPERCASE_TICKER_TOKEN_PATTERN.finditer(window):
+        token = match.group(0).rstrip(".")
+        if token in TICKER_TOKEN_STOP_WORDS:
+            continue
+        add_sector_target(
+            targets,
+            quality=2,
+            position=window_start + match.start(),
+            mention=token,
+        )
+    return targets
+
+
+def sector_target_mentions_for_match(
+    text: str,
+    match_start: int,
+    match_end: int,
+    term: str,
+    matcher: dict[str, list[dict[str, Any]]],
+    source_ticker: str | None,
+) -> list[str]:
+    raw_targets = [
+        *sector_targets_after(text, match_end),
+    ]
+    if term not in TERMS_REQUIRING_DIRECTIONAL_TARGET_AFTER:
+        raw_targets.extend(sector_targets_before(text, match_start))
+    ranked: list[tuple[int, int, float, str]] = []
+    seen_mentions: set[str] = set()
+    for quality, position, mention in raw_targets:
+        key = normalize_match_key(mention)
+        if not key or key in seen_mentions:
+            continue
+        seen_mentions.add(key)
+        match = resolve_entity_mention(matcher, mention)
+        if match is None:
+            continue
+        if (
+            match.get("method") == "ticker_exact"
+            and mention.upper() not in EXACT_TICKER_CONTEXT_ALLOWLIST
+        ):
+            continue
+        if source_ticker is not None and match["ticker"] == source_ticker:
+            continue
+        distance = min(abs(position - match_start), abs(position - match_end))
+        ranked.append((quality, distance, -float(match["confidence"]), mention))
+
+    ranked.sort()
+    return [mention for _, _, _, mention in ranked[:3]]
+
+
+def sector_snippet_text(text: str, match_start: int, match_end: int) -> str:
+    snippet_start = max(0, match_start - SECTOR_RELATIONSHIP_CONTEXT_CHARS)
+    snippet_end = min(len(text), match_end + SECTOR_RELATIONSHIP_CONTEXT_CHARS)
+    prefix = "..." if snippet_start > 0 else ""
+    suffix = "..." if snippet_end < len(text) else ""
+    return f"{prefix}{' '.join(text[snippet_start:snippet_end].split())}{suffix}"
+
+
+def metadata_fields_for_cached_filing(filing_path: Path) -> dict[str, str]:
+    metadata_summary = build_metadata_summary(filing_path, None)
+    fields = metadata_summary.get("fields")
+    if not isinstance(fields, dict):
+        return {}
+    return {
+        key: value.strip()
+        for key, value in fields.items()
+        if isinstance(key, str) and isinstance(value, str) and value.strip()
+    }
+
+
+def sector_aware_snippets_for_file(
+    raw_file: str,
+    *,
+    file_index: int,
+    limit_chars: int | None,
+    matcher: dict[str, list[dict[str, Any]]],
+) -> list[dict[str, Any]]:
+    filing_path = resolve_cached_filing(raw_file)
+    body = read_document(filing_path)
+    decoded_text, _, _ = decode_document(body)
+    sanitized_text = sanitize_text(decoded_text)
+    scan_text = sanitized_text[:limit_chars] if limit_chars is not None else sanitized_text
+    text = visible_snippet_text(scan_text)
+    metadata_fields = metadata_fields_for_cached_filing(filing_path)
+    source_ticker = source_ticker_from_metadata(metadata_fields)
+    snippets: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str, int]] = set()
+
+    for term in SECTOR_AWARE_RELATIONSHIP_TERMS:
+        rule = SECTOR_TERM_RULE_BY_TERM[term]
+        for match in sector_term_pattern(term).finditer(text):
+            context = sector_snippet_text(text, match.start(), match.end())
+            if generic_relationship_noise_dominates(context):
+                continue
+            target_mentions = sector_target_mentions_for_match(
+                text,
+                match.start(),
+                match.end(),
+                term,
+                matcher,
+                source_ticker,
+            )
+            for target_mention in target_mentions:
+                key = (
+                    str(rule["relationship_type"]),
+                    term,
+                    normalize_match_key(target_mention),
+                    match.start(),
+                )
+                if key in seen:
+                    continue
+                seen.add(key)
+                snippets.append(
+                    {
+                        "rank": 0,
+                        "type": rule["signal_type"],
+                        "keyword": term,
+                        "confidence_hint": rule["confidence_hint"],
+                        "frequency": 1,
+                        "filing_date": clean_optional_string(
+                            metadata_fields.get("filing_date")
+                        ),
+                        "file": str(filing_path),
+                        "file_index": file_index,
+                        "offset": match.start(),
+                        "metadata": metadata_fields,
+                        "text_snippet": context,
+                        "relationship_signal": term,
+                        "relationship_type_hint": rule["relationship_type"],
+                        "target_entity_mention_hint": target_mention,
+                        "sector_hint": rule["sector"],
+                        "extraction_method": "sector_aware_relationship_pattern",
+                    }
+                )
+    return snippets
+
+
+def sector_aware_snippets(
+    raw_files: list[str],
+    limit_chars: int | None,
+    matcher: dict[str, list[dict[str, Any]]],
+) -> list[dict[str, Any]]:
+    snippets: list[dict[str, Any]] = []
+    for file_index, raw_file in enumerate(raw_files):
+        snippets.extend(
+            sector_aware_snippets_for_file(
+                raw_file,
+                file_index=file_index,
+                limit_chars=limit_chars,
+                matcher=matcher,
+            )
+        )
+        if len(snippets) >= MAX_SECTOR_AWARE_SNIPPETS_TOTAL:
+            break
+
+    snippets.sort(
+        key=lambda snippet: (
+            -float(snippet.get("confidence_hint") or 0),
+            str(snippet.get("filing_date") or ""),
+            int(snippet.get("file_index") or 0),
+            int(snippet.get("offset") or 0),
+            str(snippet.get("keyword") or ""),
+        )
+    )
+    for rank, snippet in enumerate(snippets[:MAX_SECTOR_AWARE_SNIPPETS_TOTAL], start=1):
+        snippet["rank"] = rank
+    return snippets[:MAX_SECTOR_AWARE_SNIPPETS_TOTAL]
+
+
 def relationship_evidence_for_mention(text: str, mention: str) -> dict[str, str] | None:
     mention_pattern = mention_regex(mention)
     checks: tuple[tuple[str, str, str], ...] = (
@@ -786,17 +1348,17 @@ def relationship_evidence_for_mention(text: str, mention: str) -> dict[str, str]
             rf"\bjoint\s+venture\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
         ),
         (
-            "supply",
+            "supplier_customer",
             "supplies",
             rf"(?<![A-Za-z0-9]){mention_pattern}\s+supplies\b",
         ),
         (
-            "supply",
+            "supplier_customer",
             "manufactured by",
             rf"\bmanufactured\s+by\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
         ),
         (
-            "supply",
+            "supplier_customer",
             "components sourced from",
             rf"\bcomponents\s+sourced\s+from\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
         ),
@@ -827,8 +1389,30 @@ def relationship_evidence_for_mention(text: str, mention: str) -> dict[str, str]
     for relationship_type, signal, pattern in checks:
         if re.search(pattern, text, re.IGNORECASE):
             return {
-                "relationship_type": relationship_type,
+                "relationship_type": normalize_relationship_type(relationship_type)
+                or relationship_type,
                 "relationship_signal": signal,
+                "target_entity_mention_hint": mention,
+            }
+
+    for term in SECTOR_AWARE_RELATIONSHIP_TERMS:
+        rule = SECTOR_TERM_RULE_BY_TERM[term]
+        term_pattern = r"\s+".join(re.escape(part) for part in term.split())
+        after_pattern = (
+            rf"\b{term_pattern}\b.{{0,80}}\b(?:{RELATIONSHIP_CONNECTOR_PATTERN})\s+"
+            rf"(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])"
+        )
+        before_pattern = (
+            rf"(?<![A-Za-z0-9]){mention_pattern}.{{0,80}}\b{term_pattern}\b"
+        )
+        if re.search(after_pattern, text, re.IGNORECASE) or re.search(
+            before_pattern,
+            text,
+            re.IGNORECASE,
+        ):
+            return {
+                "relationship_type": str(rule["relationship_type"]),
+                "relationship_signal": term,
                 "target_entity_mention_hint": mention,
             }
     return None
@@ -842,8 +1426,11 @@ def relationship_evidence_for(
     hint_target = clean_optional_string(snippet.get("target_entity_mention_hint"))
     hint_signal = clean_optional_string(snippet.get("relationship_signal"))
     if hint_type and hint_target and not entity_mention_looks_generic(hint_target):
+        normalized_hint_type = normalize_relationship_type(hint_type)
+        if normalized_hint_type is None:
+            return None
         return {
-            "relationship_type": hint_type,
+            "relationship_type": normalized_hint_type,
             "relationship_signal": hint_signal or str(snippet.get("keyword") or ""),
             "target_entity_mention_hint": hint_target,
         }
@@ -923,6 +1510,17 @@ def generic_relationship_noise_dominates(snippet_text: Any) -> bool:
     return not relationship_term_hits(visible_text, GRAPH_WORTHY_SIGNAL_TERMS)
 
 
+def legal_only_relationship_noise_dominates(
+    snippet_text: Any,
+    relationship_signal: Any,
+) -> bool:
+    signal = clean_optional_string(relationship_signal)
+    if signal not in GENERIC_AGREEMENT_SIGNALS:
+        return False
+    visible_text = visible_snippet_text(snippet_text)
+    return bool(relationship_term_hits(visible_text, LEGAL_ONLY_RELATIONSHIP_NOISE_TERMS))
+
+
 def candidate_has_required_resolution(candidate: dict[str, Any]) -> bool:
     if clean_optional_string(candidate.get("target_ticker")) is None:
         return False
@@ -950,6 +1548,11 @@ def candidate_is_graph_worthy(
     if xbrl_noise_metrics(snippet)["is_dominated"]:
         return False
     if generic_relationship_noise_dominates(candidate.get("evidence_snippet")):
+        return False
+    if legal_only_relationship_noise_dominates(
+        candidate.get("evidence_snippet"),
+        candidate.get("relationship_signal"),
+    ):
         return False
     return candidate_has_required_resolution(candidate)
 
@@ -1005,12 +1608,16 @@ def candidate_from_snippet(
 
 
 def build_preview(raw_files: list[str], limit_chars: int | None) -> dict[str, Any]:
-    report = build_report(raw_files, limit_chars)
     matcher = build_company_matcher()
+    report = build_report(raw_files, limit_chars)
     source_snippets = report.get("candidate_snippets")
     if not isinstance(source_snippets, list) or not source_snippets:
         source_snippets = report["top_snippets"]
-    ranked_snippets = preview_ranked_snippets(source_snippets)
+    expanded_snippets = [
+        *source_snippets,
+        *sector_aware_snippets(raw_files, limit_chars, matcher),
+    ]
+    ranked_snippets = preview_ranked_snippets(expanded_snippets)
     candidates: list[dict[str, Any]] = []
     candidates_by_source: Counter[str] = Counter()
     seen_candidate_keys: set[tuple[str, str, str]] = set()

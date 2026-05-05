@@ -49,54 +49,33 @@
   "source_preview": {
     "preview_type": "sec_signal_candidate_preview",
     "expected_cache_root": "data/cache/sec/filings",
-    "input_files": 966,
+    "input_files": 26,
     "limit_chars_per_file": null,
-    "scanned_characters": 785520363,
-    "total_signals": 16127
+    "scanned_characters": 75035206,
+    "total_signals": 1950
   },
-  "candidate_count": 9,
+  "candidate_count": 11,
   "candidates": [
     {
-      "source_ticker": "LCID",
-      "target_ticker": "UBER",
-      "target_name": "Uber Technologies, Inc",
-      "target_match_method": "ticker_exact",
-      "target_match_confidence": 0.98,
-      "target_entity_mention": "Uber",
-      "relationship_type": "partnership",
-      "source_type": "sec_filing",
-      "source_tier": 1,
-      "confidence_hint": 0.94,
-      "evidence_snippet": "...uro to install autonomous driving software in Lucid Gravity vehicles, to enable Uber and its designated fleet operators to operate the vehicles as robotaxis with Level 4 autonomy . In April 2026, we entered into the Second VPA, further expanding our strategic partnership with Uber in connection with our Midsize platform vehicles. See Note 8 \u201cStockholders\u2019 Equity\u201d and Note 17 \u201cSubsequent Events\u201d to the condensed consolidated financial statements included elsewhere in this Quarterly Report for more information. We may not be able to real...",
-      "filing_date": "2026-05-05",
-      "accession_number": "0001628280-26-030517",
-      "review_status": "pending_review",
-      "archive_url": "https://www.sec.gov/Archives/edgar/data/1811210/000162828026030517/lcid-20260331.htm",
-      "source_urls": [
-        "https://www.sec.gov/Archives/edgar/data/1811210/000162828026030517/lcid-20260331.htm"
-      ],
-      "relationship_signal": "partnership with"
-    },
-    {
-      "source_ticker": "RIVN",
-      "target_ticker": "UBER",
-      "target_name": "Uber Technologies, Inc",
+      "source_ticker": "ET",
+      "target_ticker": "KMI",
+      "target_name": "KINDER MORGAN, INC.",
       "target_match_method": "company_name_exact",
       "target_match_confidence": 0.98,
-      "target_entity_mention": "Uber Technologies, Inc",
+      "target_entity_mention": "Kinder Morgan, Inc",
       "relationship_type": "partnership",
       "source_type": "sec_filing",
       "source_tier": 1,
       "confidence_hint": 0.94,
-      "evidence_snippet": "...from time to time consider entering into additional strategic alliances, including joint ventures, minority equity investments, strategic commercial arrangements or other transactions, with various third parties to further our business purpose, including our partnership with Uber Technologies, Inc. announced in March 2026. There are no assurances that we will be able to identify or secure suitable alliances in the future or that we will be able to successfully achieve any milestones related to or otherwise maintain any alliances entered into, which cou...",
-      "filing_date": "2026-04-30",
-      "accession_number": "0001874178-26-000035",
+      "evidence_snippet": "...state. In addition, FGT\u2019s numerous intrastate and interstate pipeline interconnections with major interstate and intrastate natural gas pipelines provide access to diverse natural gas supply sources. FGT\u2019s customers include electric utilities, independent power producers, industrial end-users and local distribution companies. FGT is owned by Citrus, a 50/50 joint venture with Kinder Morgan, Inc. \u2022 Transwestern Pipeline transports natural gas supply from the Permian Basin, the San Juan Basin and the Anadarko Basin. The system has bi-directional capabilities and can access Texas and Midcontinent natural gas market hubs as well as major western markets in Arizona, New Mexico, Nevada and California. Transwestern\u2019s customers inc...",
+      "filing_date": "2026-02-19",
+      "accession_number": "0001276187-26-000013",
       "review_status": "pending_review",
-      "archive_url": "https://www.sec.gov/Archives/edgar/data/1874178/000187417826000035/rivn-20260331.htm",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm",
       "source_urls": [
-        "https://www.sec.gov/Archives/edgar/data/1874178/000187417826000035/rivn-20260331.htm"
+        "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
       ],
-      "relationship_signal": "partnership with"
+      "relationship_signal": "joint venture"
     },
     {
       "source_ticker": "PAA",
@@ -121,27 +100,6 @@
     },
     {
       "source_ticker": "ET",
-      "target_ticker": "KMI",
-      "target_name": "KINDER MORGAN, INC.",
-      "target_match_method": "company_name_exact",
-      "target_match_confidence": 0.98,
-      "target_entity_mention": "Kinder Morgan, Inc",
-      "relationship_type": "partnership",
-      "source_type": "sec_filing",
-      "source_tier": 1,
-      "confidence_hint": 0.94,
-      "evidence_snippet": "...terstate and intrastate natural gas pipelines provide access to diverse natural gas supply sources. FGT\u2019s customers include electric utilities, independent power producers, industrial end-users and local distribution companies. FGT is owned by Citrus, a 50/50 joint venture with Kinder Morgan, Inc. \u2022 Transwestern Pipeline transports natural gas supply from the Permian Basin, the San Juan Basin and the Anadarko Basin. The system has bi-directional capabilities and can access Texas and Midcontinent natural gas market hubs as well as major western markets...",
-      "filing_date": "2026-02-19",
-      "accession_number": "0001276187-26-000013",
-      "review_status": "pending_review",
-      "archive_url": "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm",
-      "source_urls": [
-        "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
-      ],
-      "relationship_signal": "joint venture with"
-    },
-    {
-      "source_ticker": "ET",
       "target_ticker": "ENB",
       "target_name": "ENBRIDGE INC",
       "target_match_method": "company_name_exact",
@@ -151,7 +109,7 @@
       "source_type": "sec_filing",
       "source_tier": 1,
       "confidence_hint": 0.94,
-      "evidence_snippet": "...Louisiana and Illinois. MRT receives natural gas from a variety of interstate and intrastate pipelines through its interconnections and delivers natural gas primarily to the St. Louis market. 16 Table of Contents Index to Financial Statements \u2022 SESH, a 50/50 joint venture with Enbridge Inc., provides transportation services in Louisiana, Mississippi and Alabama. SESH transports natural gas from the Perryville Hub in Louisiana to its endpoint in Mobile County, Alabama. SESH has interconnections with third-party natural gas pipelines and provides...",
+      "evidence_snippet": "...s, Arkansas, Louisiana, Missouri and Illinois. MRT has underground natural gas storage facilities in Louisiana and Illinois. MRT receives natural gas from a variety of interstate and intrastate pipelines through its interconnections and delivers natural gas primarily to the St. Louis market. 16 Table of Contents Index to Financial Statements \u2022 SESH, a 50/50 joint venture with Enbridge Inc., provides transportation services in Louisiana, Mississippi and Alabama. SESH transports natural gas from the Perryville Hub in Louisiana to its endpoint in Mobile County, Alabama. SESH has interconnections with third-party natural gas pipelines and provides access to major Southeast and Northeast markets and transports directly to genera...",
       "filing_date": "2026-02-19",
       "accession_number": "0001276187-26-000013",
       "review_status": "pending_review",
@@ -159,7 +117,7 @@
       "source_urls": [
         "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
       ],
-      "relationship_signal": "joint venture with"
+      "relationship_signal": "joint venture"
     },
     {
       "source_ticker": "ET",
@@ -172,7 +130,7 @@
       "source_type": "sec_filing",
       "source_tier": 1,
       "confidence_hint": 0.94,
-      "evidence_snippet": "...justed EBITDA $ 2,942 $ 3,177 $ (235) Volumes. For the year ended December 31, 2025 compared to the prior year, crude oil transportation volumes were higher due to continued growth on our Texas pipeline system, our gathering systems, and from the ET-S Permian joint venture with Sunoco LP, partially offset by lower volumes on our Bakken Pipeline. Crude terminal volumes were lower primarily due to Gulf Coast refinery maintenance and lower volumes received from our Bakken Pipeline system. Segment Adjusted EBITDA. For the year ended December 31,...",
+      "evidence_snippet": "...152) (149) (3) Adjusted EBITDA related to unconsolidated affiliates 33 28 5 Other \u2014 2 (2) Segment Adjusted EBITDA $ 2,942 $ 3,177 $ (235) Volumes. For the year ended December 31, 2025 compared to the prior year, crude oil transportation volumes were higher due to continued growth on our Texas pipeline system, our gathering systems, and from the ET-S Permian joint venture with Sunoco LP, partially offset by lower volumes on our Bakken Pipeline. Crude terminal volumes were lower primarily due to Gulf Coast refinery maintenance and lower volumes received from our Bakken Pipeline system. Segment Adjusted EBITDA. For the year ended December 31, 2025 compared to the prior year, Segment Adjusted EBITDA related to our crude oil tra...",
       "filing_date": "2026-02-19",
       "accession_number": "0001276187-26-000013",
       "review_status": "pending_review",
@@ -180,28 +138,91 @@
       "source_urls": [
         "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
       ],
-      "relationship_signal": "joint venture with"
+      "relationship_signal": "joint venture"
     },
     {
-      "source_ticker": "INTC",
-      "target_ticker": "NVDA",
-      "target_name": "NVIDIA Corporation",
+      "source_ticker": "MAR",
+      "target_ticker": "BAC",
+      "target_name": "Bank of America Corporation",
       "target_match_method": "common_public_alias_exact",
       "target_match_confidence": 0.92,
-      "target_entity_mention": "NVIDIA",
-      "relationship_type": "partnership",
+      "target_entity_mention": "Bank of America",
+      "relationship_type": "investment",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "confidence_hint": 0.94,
-      "evidence_snippet": "...ient and data center platforms, including our next generation client CPU code named Panther Lake, which is designed to combine improved power efficiency and performance to support next-generation AI-enabled workloads at the edge. We also announced a strategic partnership with NVIDIA to co-develop custom client and data center products combining our x86 CPU technologies with NVIDIA's AI and accelerated computing capabilities. The collaboration is intended to jointly develop multiple generations of products for hyperscale, enterprise and c...",
-      "filing_date": "2026-01-23",
-      "accession_number": "0000050863-26-000011",
+      "confidence_hint": 0.91,
+      "evidence_snippet": "...of New York Mellon, as successor to JPMorgan Chase Bank, N.A., formerly known as The Chase Manhattan Bank. Exhibit No. 4.1 to our Form 10-K filed March 16, 1999 (File No. 001-13881). 4.3 Description of Registrant\u2019s Securities. Exhibit No. 4.3 to our Form 10-K filed February 13, 2024 (File No. 001-13881). 10.1.1 U.S. $4,500,000,000 Sixth Amended and Restated Credit Agreement dated as of December 14, 2022 with Bank of America, N.A. as administrative agent and certain banks. Exhibit No. 10 to our Form 8-K filed December 1 5 , 2022 (File No. 001-13881). 10.1.2 First Amendment, dated as of May 17, 2024 and effective as of June 4, 2024, to the Sixth Amended and Restated Credit Agreement with Bank of America, N.A. as administrative a...",
+      "filing_date": "2026-02-10",
+      "accession_number": "0001048286-26-000007",
       "review_status": "pending_review",
-      "archive_url": "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/1048286/000104828626000007/mar-20251231.htm",
       "source_urls": [
-        "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm"
+        "https://www.sec.gov/Archives/edgar/data/1048286/000104828626000007/mar-20251231.htm"
       ],
-      "relationship_signal": "partnership with"
+      "relationship_signal": "credit agreement"
+    },
+    {
+      "source_ticker": "ET",
+      "target_ticker": "KMI",
+      "target_name": "KINDER MORGAN, INC.",
+      "target_match_method": "company_name_exact",
+      "target_match_confidence": 0.98,
+      "target_entity_mention": "Kinder Morgan, Inc",
+      "relationship_type": "supplier_customer",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "confidence_hint": 0.91,
+      "evidence_snippet": "...Pennsylvania for delivery to other pipeline interconnects in Ohio and Michigan, where the gas is delivered for distribution to markets across the United States and to Ontario, Canada. \u2022 Midcontinent Express Pipeline originates near Bennington, Oklahoma and traverses northern Louisiana and central Mississippi to an interconnect with the Transcontinental Gas Pipeline system in Butler, Alabama. The Midcontinent Express Pipeline is owned by a 50/50 joint venture with Kinder Morgan, Inc., the operator of the system. \u2022 EGT provides natural gas transportation and storage services to customers in Oklahoma, Texas, Arkansas, Louisiana, Missouri and Kansas. EGT has two underground storage facilities in Oklahoma and one underground natu...",
+      "filing_date": "2026-02-19",
+      "accession_number": "0001276187-26-000013",
+      "review_status": "pending_review",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm",
+      "source_urls": [
+        "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
+      ],
+      "relationship_signal": "pipeline system"
+    },
+    {
+      "source_ticker": "PAA",
+      "target_ticker": "ENB",
+      "target_name": "ENBRIDGE INC",
+      "target_match_method": "company_name_base",
+      "target_match_confidence": 0.9,
+      "target_entity_mention": "Enbridge",
+      "relationship_type": "supplier_customer",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "confidence_hint": 0.91,
+      "evidence_snippet": "...s to the transportation pipelines. We acquire the rights to extract the NGL from producers and/or shippers of the gas streams that pass through our Empress facility and then purchase natural gas to replace the thermal content attributable to the NGL that was extracted. The NGL mix can be fractionated at our Empress facility or transported along the Enbridge pipeline system for fractionation at our Sarnia facility. Our Empress plants are capable of processing up to 5.7 Bcf of natural gas per day; however, supply available to these plants is typically in the 3.5 to 4.5 Bcf per day range. These plants produce approximately 65,000 to 100,000 barrels per day of ethane, and 40,000 to 60,000 barrels per day of NGL mix. Our Empress f...",
+      "filing_date": "2026-02-27",
+      "accession_number": "0001070423-26-000014",
+      "review_status": "pending_review",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/1070423/000107042326000014/paa-20251231.htm",
+      "source_urls": [
+        "https://www.sec.gov/Archives/edgar/data/1070423/000107042326000014/paa-20251231.htm"
+      ],
+      "relationship_signal": "pipeline system"
+    },
+    {
+      "source_ticker": "MPLX",
+      "target_ticker": "MPC",
+      "target_name": "Marathon Petroleum Corp",
+      "target_match_method": "ticker_exact",
+      "target_match_confidence": 0.98,
+      "target_entity_mention": "MPC",
+      "relationship_type": "investment",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "confidence_hint": 0.91,
+      "evidence_snippet": "...ovide a fixed fee for 100 percent of available capacity for boats, barges and third-party chartered equipment under a marine transportation services agreement. In addition, MPLX has obligations to MPC for services provided to MPLX by MPC under omnibus and employee services agreements as well as various other agreements. Related Party Loan MPLX is party to a loan agreement with MPC (the \u201cMPC Loan Agreement\u201d). Under the terms of the MPC Loan Agreement, MPC extends loans to MPLX on a revolving basis as requested by MPLX and as agreed to by MPC. The borrowing capacity of the 11 Table of Contents MPC Loan Agreement is $ 1.5 billion aggregate principal amount of all loans outstanding at any one time. The MPC Loan Agreement is sche...",
+      "filing_date": "2026-05-05",
+      "accession_number": "0001552000-26-000025",
+      "review_status": "pending_review",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/1552000/000155200026000025/mplx-20260331.htm",
+      "source_urls": [
+        "https://www.sec.gov/Archives/edgar/data/1552000/000155200026000025/mplx-20260331.htm"
+      ],
+      "relationship_signal": "loan agreement"
     },
     {
       "source_ticker": "MPLX",
@@ -234,8 +255,8 @@
       "relationship_type": "partnership",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "confidence_hint": 0.93,
-      "evidence_snippet": "...iabilities 85 113 Moderna, Inc. In 2022, Merck exercised its option to jointly develop and commercialize intismeran autogene (V940/mRNA-4157), an investigational individualized neoantigen therapy, pursuant to the terms of an existing collaboration and license agreement with Moderna, Inc. (Moderna). Intismeran autogene is currently being evaluated in combination with Keytruda in multiple clinical trials. Merck and Moderna share costs and will share any profits equally under this worldwide collaboration. Merck records its share of development...",
+      "confidence_hint": 0.9,
+      "evidence_snippet": "...ncluded in Other current assets $ 22 $ 15 Payables to Daiichi Sankyo included in Accrued and other current liabilities 85 113 Moderna, Inc. In 2022, Merck exercised its option to jointly develop and commercialize intismeran autogene (V940/mRNA-4157), an investigational individualized neoantigen therapy, pursuant to the terms of an existing collaboration and license agreement with Moderna, Inc. (Moderna). Intismeran autogene is currently being evaluated in combination with Keytruda in multiple clinical trials. Merck and Moderna share costs and will share any profits equally under this worldwide collaboration. Merck records its share of development costs associated with the collaboration as part of Research and development expens...",
       "filing_date": "2026-05-04",
       "accession_number": "0001628280-26-029802",
       "review_status": "pending_review",
@@ -243,7 +264,28 @@
       "source_urls": [
         "https://www.sec.gov/Archives/edgar/data/310158/000162828026029802/mrk-20260331.htm"
       ],
-      "relationship_signal": "agreement with"
+      "relationship_signal": "license agreement"
+    },
+    {
+      "source_ticker": "MRK",
+      "target_ticker": "PFE",
+      "target_name": "Pfizer Inc.",
+      "target_match_method": "company_name_exact",
+      "target_match_confidence": 0.98,
+      "target_entity_mention": "Pfizer Inc",
+      "relationship_type": "partnership",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "confidence_hint": 0.92,
+      "evidence_snippet": "...tment, then continued after radical cystectomy as adjuvant treatment, for patients with muscle invasive bladder cancer (MIBC) who are ineligible for cisplatin-based chemotherapy. The application is based on data from the Phase 3 KEYNOTE-905 trial conducted in collaboration with Pfizer Inc. (Pfizer) and Astellas. Keytruda and Keytruda Qlex are under priority review by the FDA in combination with Padcev as neoadjuvant treatment, then continued after radical cystectomy as adjuvant treatment, for patients with MIBC who are eligible for cisplatin-b...",
+      "filing_date": "2026-05-04",
+      "accession_number": "0001628280-26-029802",
+      "review_status": "pending_review",
+      "archive_url": "https://www.sec.gov/Archives/edgar/data/310158/000162828026029802/mrk-20260331.htm",
+      "source_urls": [
+        "https://www.sec.gov/Archives/edgar/data/310158/000162828026029802/mrk-20260331.htm"
+      ],
+      "relationship_signal": "collaboration with"
     }
   ],
   "safety": {

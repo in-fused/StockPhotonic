@@ -37,16 +37,26 @@
     }
 
     function updatePerspectiveModeControl(context) {
-        const { toggle, perspectiveEnabled } = context;
-        if (!toggle) return;
+        const { toggle, resetButton, perspectiveEnabled } = context;
 
-        const label = toggle.querySelector('span');
-        toggle.setAttribute('aria-pressed', perspectiveEnabled ? 'true' : 'false');
-        toggle.classList.toggle('is-active', perspectiveEnabled);
-        if (label) label.innerText = 'Perspective Mode';
-        toggle.title = perspectiveEnabled
-            ? 'Perspective Mode on: drag empty graph space to tilt or rotate.'
-            : 'Perspective Mode off: flat 2D graph rendering.';
+        if (toggle) {
+            const label = toggle.querySelector('span');
+            toggle.setAttribute('aria-pressed', perspectiveEnabled ? 'true' : 'false');
+            toggle.setAttribute('aria-label', perspectiveEnabled ? 'Perspective Mode on' : 'Perspective Mode off');
+            toggle.classList.toggle('is-active', perspectiveEnabled);
+            if (label) label.innerText = 'Perspective Mode';
+            toggle.title = perspectiveEnabled
+                ? 'Perspective Mode on: drag empty graph space to tilt or rotate. Drag nodes to reposition. Scroll to zoom.'
+                : 'Perspective Mode off: flat 2D graph rendering.';
+        }
+
+        if (resetButton) {
+            resetButton.disabled = !perspectiveEnabled;
+            resetButton.setAttribute('aria-disabled', perspectiveEnabled ? 'false' : 'true');
+            resetButton.title = perspectiveEnabled
+                ? 'Reset Perspective yaw and pitch'
+                : 'Turn on Perspective Mode to reset yaw and pitch';
+        }
     }
 
     function updatePortfolioPanel(context) {
@@ -98,11 +108,20 @@
         if (isPortfolioAnalysisActive()) items.push(`Portfolio ${matchedPortfolioNodes.length}`);
         if (perspectiveEnabled) items.push('Perspective Mode');
 
-        overlay.innerHTML = items.map(item => `
+        const statsMarkup = items.map(item => `
                 <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/75 font-mono tracking-[1.1px]">
                     ${escapeHtml(item)}
                 </span>
             `).join('');
+        const perspectiveHint = perspectiveEnabled
+            ? `
+                <span class="graph-perspective-hint rounded-2xl px-3 py-1.5 text-[10px] font-mono tracking-[0.9px]">
+                    ${escapeHtml('Drag empty space to tilt / rotate. Drag nodes to reposition. Scroll to zoom.')}
+                </span>
+            `
+            : '';
+
+        overlay.innerHTML = `${statsMarkup}${perspectiveHint}`;
     }
 
     window.StockPhotonicUI.controls = {

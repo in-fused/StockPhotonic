@@ -89,6 +89,21 @@
             box-shadow: 0 0 22px rgba(0, 249, 255, 0.16);
         }
 
+        #perspective-toggle.is-active {
+            border-color: rgba(0, 249, 255, 0.82);
+            box-shadow: 0 0 24px rgba(0, 249, 255, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        .perspective-reset-control {
+            border-color: rgba(0, 249, 255, 0.16);
+            color: rgba(207, 250, 254, 0.82);
+        }
+
+        .perspective-reset-control:disabled {
+            cursor: not-allowed;
+            opacity: 0.44;
+        }
+
         .signal-control {
             border: 1px solid rgba(0, 249, 255, 0.18);
             background: rgba(0, 0, 0, 0.28);
@@ -510,6 +525,16 @@
             backdrop-filter: blur(14px);
         }
 
+        .graph-perspective-hint {
+            flex-basis: 100%;
+            max-width: min(34rem, calc(100vw - 2rem));
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background: rgba(3, 7, 18, 0.7);
+            color: rgba(207, 250, 254, 0.78);
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.07);
+            backdrop-filter: blur(14px);
+        }
+
         .dashboard-chip {
             border: 1px solid rgba(0, 249, 255, 0.18);
             background: rgba(0, 249, 255, 0.065);
@@ -736,11 +761,28 @@
             .connection-row {
                 border-radius: 1rem;
             }
+
+            .graph-overlay-stats {
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: 0.75rem;
+                max-width: calc(100% - 1.5rem);
+            }
+
+            .graph-perspective-hint {
+                max-width: 100%;
+                line-height: 1.35;
+            }
         }
 
         @media (max-width: 480px) {
             #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button {
                 flex: 1 1 calc(50% - 0.35rem);
+            }
+
+            .graph-intelligence-controls .perspective-reset-control {
+                flex: 1 1 calc(50% - 0.35rem);
+                justify-content: center;
             }
 
             #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls select,
@@ -840,9 +882,14 @@
                     <span>Focus Mode</span>
                 </button>
 
-                <button id="perspective-toggle" onclick="togglePerspectiveMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                <button id="perspective-toggle" onclick="togglePerspectiveMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Perspective Mode off: flat 2D graph rendering.">
                     <i class="fa-solid fa-cubes"></i>
                     <span>Perspective Mode</span>
+                </button>
+
+                <button id="perspective-reset" type="button" onclick="resetPerspectiveView()" class="perspective-reset-control focus-button px-3 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset Perspective yaw and pitch" disabled>
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Reset Perspective</span>
                 </button>
 
                 <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
@@ -4333,6 +4380,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             setPerspectiveMode(!perspectiveEnabled);
         }
 
+        function resetPerspectiveView() {
+            resetPerspectiveAngles();
+            updatePerspectiveModeControl();
+            requestDraw();
+        }
+
         function setPerspectiveMode(enabled) {
             const nextValue = Boolean(enabled);
             if (nextValue === perspectiveEnabled) {
@@ -4377,6 +4430,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function updatePerspectiveModeControl() {
             uiControls.updatePerspectiveModeControl({
                 toggle: document.getElementById('perspective-toggle'),
+                resetButton: document.getElementById('perspective-reset'),
                 perspectiveEnabled
             });
         }

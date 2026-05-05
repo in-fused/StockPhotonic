@@ -578,6 +578,16 @@
             backdrop-filter: blur(14px);
         }
 
+        .graph-orb-map-hint {
+            flex-basis: 100%;
+            max-width: min(38rem, calc(100vw - 2rem));
+            border: 1px solid rgba(251, 191, 36, 0.18);
+            background: rgba(13, 10, 4, 0.68);
+            color: rgba(254, 243, 199, 0.78);
+            box-shadow: 0 0 16px rgba(251, 191, 36, 0.07);
+            backdrop-filter: blur(14px);
+        }
+
         .dashboard-chip {
             border: 1px solid rgba(0, 249, 255, 0.18);
             background: rgba(0, 249, 255, 0.065);
@@ -830,7 +840,8 @@
                 max-width: calc(100% - 1.5rem);
             }
 
-            .graph-perspective-hint {
+            .graph-perspective-hint,
+            .graph-orb-map-hint {
                 max-width: 100%;
                 line-height: 1.35;
             }
@@ -966,7 +977,12 @@
 
                 <button id="orb-spread-clusters" type="button" onclick="cycleOrbMapClusters()" class="focus-button hidden px-4 py-3 text-xs rounded-3xl border border-yellow-300/25 flex items-center gap-x-2" title="Spread Clusters: Balanced">
                     <i class="fa-solid fa-arrows-up-down-left-right"></i>
-                    <span>Spread Clusters</span>
+                    <span>Spread: Balanced</span>
+                </button>
+
+                <button id="orb-reset-layout" type="button" onclick="resetOrbMapLayout()" class="focus-button hidden px-3 py-3 text-xs rounded-3xl border border-yellow-300/20 flex items-center gap-x-2" title="Reset Orb Layout">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Reset Orb Layout</span>
                 </button>
 
                 <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
@@ -1866,6 +1882,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             updateOrbMapSpreadControl();
         }
 
+        function resetOrbMapLayout() {
+            if (!orbMapController) setupOrbMap();
+            orbMapController?.resetLayout?.();
+            updateOrbMapSpreadControl();
+        }
+
         function updateOrbMapControl(status = null) {
             const button = document.getElementById('orb-map-toggle');
             if (!button) {
@@ -1890,19 +1912,31 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function updateOrbMapSpreadControl(status = null) {
             const button = document.getElementById('orb-spread-clusters');
-            if (!button) return;
+            const resetButton = document.getElementById('orb-reset-layout');
 
             const unsupported = status === 'unsupported' || (orbMapController && !orbMapController.isSupported?.());
             const active = orbMapEnabled && !unsupported;
             const mode = orbMapController?.getLayoutDensity?.() || 'balanced';
             const label = mode.charAt(0).toUpperCase() + mode.slice(1);
-            button.classList.toggle('hidden', !active);
-            button.disabled = !active;
-            button.setAttribute('aria-disabled', active ? 'false' : 'true');
-            button.setAttribute('aria-label', `Spread Clusters: ${label}`);
-            button.title = active
-                ? `Spread Clusters: ${label}. Click to cycle Balanced, Wide, and Vertical. Shift+drag a cluster to nudge it for this session.`
-                : 'Spread Clusters is available while Orb Map is active.';
+            if (button) {
+                const text = button.querySelector('span');
+                if (text) text.innerText = `Spread: ${label}`;
+                button.classList.toggle('hidden', !active);
+                button.disabled = !active;
+                button.setAttribute('aria-disabled', active ? 'false' : 'true');
+                button.setAttribute('aria-label', `Spread Clusters: ${label}`);
+                button.title = active
+                    ? `Spread Clusters: ${label}. Click to cycle Balanced, Wide, and Vertical. Shift+drag a cluster to tune spacing for this session.`
+                    : 'Spread Clusters is available while Orb Map is active.';
+            }
+            if (resetButton) {
+                resetButton.classList.toggle('hidden', !active);
+                resetButton.disabled = !active;
+                resetButton.setAttribute('aria-disabled', active ? 'false' : 'true');
+                resetButton.title = active
+                    ? 'Reset Orb Layout: clear session tuning and return spread to Balanced.'
+                    : 'Reset Orb Layout is available while Orb Map is active.';
+            }
         }
 
         /* ==============================
@@ -4428,6 +4462,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             overlay.insertAdjacentHTML('beforeend', `
                 <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-yellow-100/80 font-mono tracking-[1.1px] border border-yellow-300/25 bg-yellow-300/10">
                     Orb Map
+                </span>
+                <span class="graph-orb-map-hint rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[0.8px]">
+                    Drag to rotate. Scroll to zoom. Click a company. Shift+drag a cluster to tune spacing.
                 </span>
             `);
         }

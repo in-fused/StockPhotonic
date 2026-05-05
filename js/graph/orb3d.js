@@ -89,6 +89,7 @@
                 setLayoutDensity: () => 'balanced',
                 cycleLayoutDensity: () => 'balanced',
                 getLayoutDensity: () => 'balanced',
+                resetLayout: () => 'balanced',
                 resize: () => {},
                 draw: () => {}
             };
@@ -140,6 +141,15 @@
                 return this.setLayoutDensity(nextMode);
             },
             getLayoutDensity() {
+                return state.layoutDensity;
+            },
+            resetLayout() {
+                state.layoutDensity = 'balanced';
+                state.sectorAdjustments.clear();
+                state.tuningSector = null;
+                state.pointer.tuningSector = null;
+                setData(state, getDataSnapshot(options), options);
+                if (state.enabled) draw(state, options);
                 return state.layoutDensity;
             },
             resize() {
@@ -375,6 +385,8 @@
             .sort((a, b) => averageDepth(a) - averageDepth(b))
             .forEach(item => drawOrbLink(ctx, state, item, options));
 
+        drawTunedSectorHighlight(ctx, state, projectedNodes);
+
         projectedNodes
             .sort((a, b) => a.projected.depth - b.projected.depth)
             .forEach(item => drawOrbNode(ctx, state, item, options));
@@ -527,12 +539,13 @@
         const depthAlpha = 0.22 + p.depthT * 0.68;
         const selected = state.selectedNode?.id === item.node.id;
         const hovered = state.hoveredNode?.node?.id === item.node.id;
+        const tuning = Boolean(state.tuningSector && item.sector === state.tuningSector);
         const color = options.getNodeColor?.(item.node) || item.node.color || CYAN;
-        const emphasisScale = selected ? 1.42 : hovered ? 1.26 : 1;
+        const emphasisScale = selected ? 1.42 : hovered ? 1.26 : tuning ? 1.08 : 1;
         const radius = item.size * (0.62 + p.scale * 0.28) * emphasisScale;
 
         ctx.save();
-        ctx.globalAlpha = selected ? 1 : hovered ? 0.94 : depthAlpha;
+        ctx.globalAlpha = selected ? 1 : hovered ? 0.94 : tuning ? Math.min(0.82, depthAlpha + 0.18) : depthAlpha;
         const glow = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, radius * (selected ? 5.8 : hovered ? 5 : 4.2));
         glow.addColorStop(0, rgba(selected ? GOLD : color, selected ? 0.48 : hovered ? 0.34 : 0.2));
         glow.addColorStop(0.44, rgba(color, selected ? 0.18 : 0.105));
@@ -548,8 +561,8 @@
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, TAU);
         ctx.fill();
-        ctx.lineWidth = selected ? 2.4 : hovered ? 1.65 : 1;
-        ctx.strokeStyle = selected ? GOLD_SOFT : hovered ? GOLD : rgba('#ffffff', 0.62);
+        ctx.lineWidth = selected ? 2.4 : hovered ? 1.65 : tuning ? 1.2 : 1;
+        ctx.strokeStyle = selected ? GOLD_SOFT : hovered ? GOLD : tuning ? 'rgba(253, 230, 138, 0.72)' : rgba('#ffffff', 0.62);
         ctx.stroke();
 
         if (selected || hovered) {
@@ -561,6 +574,37 @@
             ctx.arc(p.x, p.y, radius + (selected ? 7 : 5), 0, TAU);
             ctx.stroke();
         }
+        ctx.restore();
+    }
+
+    function drawTunedSectorHighlight(ctx, state, nodes) {
+        if (!state.tuningSector) return;
+
+        const sectorNodes = nodes.filter(item => item.sector === state.tuningSector);
+        if (!sectorNodes.length) return;
+
+        const minX = Math.min(...sectorNodes.map(item => item.projected.x));
+        const maxX = Math.max(...sectorNodes.map(item => item.projected.x));
+        const minY = Math.min(...sectorNodes.map(item => item.projected.y));
+        const maxY = Math.max(...sectorNodes.map(item => item.projected.y));
+        const pad = clamp(Math.min(state.width, state.height) * 0.036, 18, 36);
+        const x = clamp(minX - pad, 12, state.width - 24);
+        const y = clamp(minY - pad, 12, state.height - 24);
+        const maxWidth = Math.max(44, state.width - x - 12);
+        const maxHeight = Math.max(34, state.height - y - 12);
+        const width = Math.min(Math.max(maxX - minX + pad * 2, 44), maxWidth);
+        const height = Math.min(Math.max(maxY - minY + pad * 2, 34), maxHeight);
+
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.035)';
+        ctx.strokeStyle = 'rgba(253, 230, 138, 0.24)';
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(251, 191, 36, 0.14)';
+        roundedRect(ctx, x, y, width, height, 14);
+        ctx.fill();
+        ctx.stroke();
         ctx.restore();
     }
 
@@ -642,21 +686,30 @@
 
     function drawClusterTuningReadout(ctx, state) {
         if (!state.tuningSector) return;
-        const text = `Tuning ${state.tuningSector}`;
+        const adjustment = getSectorAdjustment(state, state.tuningSector);
+        const longitude = Math.round(adjustment.longitude * 100);
+        const latitude = Math.round(adjustment.latitude * 100);
+        const title = `Cluster tuning: ${state.tuningSector}`;
+        const detail = `Spacing X ${formatSigned(longitude)} / Y ${formatSigned(latitude)} - session only`;
         ctx.save();
         ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
-        const width = Math.min(ctx.measureText(text).width + 20, state.width - 28);
+        const width = Math.min(
+            Math.max(ctx.measureText(title).width, ctx.measureText(detail).width) + 24,
+            state.width - 28
+        );
         const x = state.width / 2 - width / 2;
         const y = 16;
         ctx.fillStyle = 'rgba(3, 7, 18, 0.88)';
-        ctx.strokeStyle = 'rgba(251, 191, 36, 0.42)';
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.48)';
         ctx.lineWidth = 1;
-        roundedRect(ctx, x, y, width, 25, 8);
+        roundedRect(ctx, x, y, width, 38, 10);
         ctx.fill();
         ctx.stroke();
         ctx.fillStyle = GOLD_SOFT;
         ctx.textAlign = 'center';
-        ctx.fillText(text, state.width / 2, y + 16);
+        ctx.fillText(title, state.width / 2, y + 15);
+        ctx.fillStyle = 'rgba(254, 243, 199, 0.72)';
+        ctx.fillText(detail, state.width / 2, y + 29);
         ctx.restore();
     }
 
@@ -844,6 +897,10 @@
         const g = (value >> 8) & 255;
         const b = value & 255;
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function formatSigned(value) {
+        return value > 0 ? `+${value}` : String(value);
     }
 
     function hash(value) {

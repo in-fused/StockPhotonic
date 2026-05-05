@@ -59,72 +59,6 @@
         }
     }
 
-    function updatePerspectiveNavigationHud(context) {
-        const {
-            hud,
-            compassNeedle,
-            bearingValue,
-            pitchValue,
-            pitchMeter,
-            resetButton,
-            presetButtons,
-            perspectiveEnabled,
-            bearing,
-            pitch,
-            targetBearing,
-            targetPitch,
-            rawBearing,
-            rawPitch,
-            presets,
-            minPitch,
-            maxPitch
-        } = context;
-        if (!hud) return;
-
-        hud.classList.toggle('is-active', perspectiveEnabled);
-        hud.setAttribute('aria-hidden', perspectiveEnabled ? 'false' : 'true');
-        hud.closest('.graph-container')?.classList.toggle('has-perspective-nav', perspectiveEnabled);
-        if (!perspectiveEnabled) return;
-
-        const displayBearing = getFiniteNumber(bearing, rawBearing, targetBearing, 0);
-        const displayPitch = getFiniteNumber(pitch, rawPitch, targetPitch, 0);
-        const nextBearingDegrees = Math.round(displayBearing * 180 / Math.PI);
-        const nextPitchDegrees = Math.round(displayPitch * 180 / Math.PI);
-
-        if (compassNeedle) {
-            compassNeedle.style.transform = `translate(-50%, -50%) rotate(${nextBearingDegrees}deg)`;
-        }
-        if (bearingValue) bearingValue.innerText = `${nextBearingDegrees} deg`;
-        if (pitchValue) pitchValue.innerText = `${nextPitchDegrees} deg`;
-        if (pitchMeter) {
-            const min = Number.isFinite(minPitch) ? minPitch : -0.08;
-            const max = Number.isFinite(maxPitch) ? maxPitch : 1.08;
-            const range = Math.max(0.0001, max - min);
-            const amount = Math.max(0, Math.min(1, (displayPitch - min) / range));
-            pitchMeter.style.transform = `scaleX(${amount})`;
-        }
-        if (resetButton) {
-            resetButton.disabled = !perspectiveEnabled;
-            resetButton.setAttribute('aria-disabled', perspectiveEnabled ? 'false' : 'true');
-        }
-
-        const activeBearing = getFiniteNumber(rawBearing, targetBearing, displayBearing);
-        const activePitch = getFiniteNumber(rawPitch, targetPitch, displayPitch);
-        Object.entries(presetButtons || {}).forEach(([id, button]) => {
-            if (!button) return;
-            const preset = presets?.[id];
-            const active = Boolean(preset) &&
-                Math.abs(activeBearing - preset.bearing) <= 0.025 &&
-                Math.abs(activePitch - preset.pitch) <= 0.025;
-            button.classList.toggle('is-active', active);
-            button.setAttribute('aria-pressed', active ? 'true' : 'false');
-        });
-    }
-
-    function getFiniteNumber(...values) {
-        return values.find(value => Number.isFinite(value)) ?? 0;
-    }
-
     function updatePortfolioPanel(context) {
         const { matchCount, notFound, matchedPortfolioNodes, unmatchedPortfolioTickers } = context;
         if (matchCount) matchCount.innerText = `${matchedPortfolioNodes.length} MATCHED`;
@@ -196,7 +130,6 @@
         updateFocusModeControl,
         updateSignalThresholdControl,
         updatePerspectiveModeControl,
-        updatePerspectiveNavigationHud,
         updatePortfolioPanel,
         updateDatasetTrustPanel,
         updateGraphOverlayStats

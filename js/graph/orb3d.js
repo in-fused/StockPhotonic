@@ -1,11 +1,13 @@
 (function () {
     const TAU = Math.PI * 2;
     const GOLD = '#fbbf24';
+    const GOLD_SOFT = '#fde68a';
     const CYAN = '#00f9ff';
     const CAMERA_DISTANCE = 3.15;
     const DRAG_THRESHOLD = 4;
     const MIN_ZOOM = 0.68;
     const MAX_ZOOM = 1.82;
+    const GOLDEN_RATIO_FRACTION = 0.61803398875;
 
     function createOrbMapController(options) {
         const canvas = options.canvas;
@@ -53,6 +55,14 @@
 
         bindEvents(canvas, state, options);
         resize(state, canvas, options);
+        const resizeObserver = typeof ResizeObserver !== 'undefined'
+            ? new ResizeObserver(() => {
+                if (!state.enabled) return;
+                resize(state, canvas, options);
+                draw(state, options);
+            })
+            : null;
+        resizeObserver?.observe(container || canvas);
 
         return {
             isSupported: () => state.supported,
@@ -213,19 +223,22 @@
             const sector = node.sector || 'Other';
             const bucket = sectorBuckets.get(sector) || [];
             const localIndex = Math.max(0, bucket.indexOf(node));
+            const bucketT = bucket.length <= 1 ? 0.5 : localIndex / (bucket.length - 1);
             const sIndex = sectorIndex.get(sector) || 0;
             const bandIndex = sIndex % bandCount;
             const bandT = bandCount <= 1 ? 0.5 : bandIndex / (bandCount - 1);
-            const latitude = -0.72 + bandT * 1.44 + ((localIndex % 3) - 1) * 0.045;
+            const latitude = clamp(-0.82 + bandT * 1.64 + (bucketT - 0.5) * 0.36 + ((localIndex % 5) - 2) * 0.032, -1.08, 1.08);
             const sectorTurn = sectors.length ? sIndex / sectors.length : 0;
-            const localSpread = (localIndex - (bucket.length - 1) / 2) * 0.125;
+            const sectorArc = sectors.length ? TAU / sectors.length : TAU;
+            const localSpread = (bucketT - 0.5) * sectorArc * 0.72;
+            const goldenOffset = (((localIndex + 1) * GOLDEN_RATIO_FRACTION) % 1 - 0.5) * sectorArc * 0.22;
             const seed = hash(`${node.id}:${node.ticker || ''}:${sector}`);
-            const longitude = sectorTurn * TAU - Math.PI / 2 + localSpread + ((seed % 100) - 50) * 0.0009;
+            const longitude = sectorTurn * TAU - Math.PI / 2 + localSpread + goldenOffset + ((seed % 100) - 50) * 0.0014;
             const nodeDegree = degree.get(node.id) || node.degree || 0;
             const rank = Number(node.rank) || 9999;
             const rankCentrality = rank <= 50 ? (50 - rank) / 50 : 0;
             const centrality = clamp(nodeDegree / maxDegree * 0.72 + rankCentrality * 0.28, 0, 1);
-            const radius = 0.98 - centrality * 0.27 + ((seed % 21) - 10) * 0.0017;
+            const radius = 0.96 - centrality * 0.23 + ((seed % 31) - 15) * 0.0019;
             const cosLat = Math.cos(latitude);
             const point = {
                 x: Math.cos(longitude) * cosLat * radius,
@@ -293,15 +306,16 @@
         const cy = state.height / 2;
         const radius = Math.min(state.width, state.height) * 0.48;
         const glow = ctx.createRadialGradient(cx, cy, radius * 0.08, cx, cy, radius * 1.25);
-        glow.addColorStop(0, 'rgba(251, 191, 36, 0.18)');
-        glow.addColorStop(0.38, 'rgba(0, 249, 255, 0.07)');
-        glow.addColorStop(0.72, 'rgba(255, 0, 170, 0.045)');
+        glow.addColorStop(0, 'rgba(251, 191, 36, 0.24)');
+        glow.addColorStop(0.34, 'rgba(251, 191, 36, 0.105)');
+        glow.addColorStop(0.58, 'rgba(0, 249, 255, 0.055)');
+        glow.addColorStop(0.82, 'rgba(3, 7, 18, 0.12)');
         glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, state.width, state.height);
 
         ctx.save();
-        ctx.globalAlpha = 0.08;
+        ctx.globalAlpha = 0.045;
         ctx.strokeStyle = GOLD;
         ctx.lineWidth = 1;
         const gridStep = Math.max(38, Math.min(state.width, state.height) / 13);
@@ -317,18 +331,42 @@
             ctx.lineTo(state.width, y);
             ctx.stroke();
         }
+
+        ctx.globalAlpha = 0.42;
+        for (let i = 0; i < 70; i++) {
+            const seed = hash(`orb-star:${i}:${Math.round(state.width)}:${Math.round(state.height)}`);
+            const x = (seed % 1000) / 1000 * state.width;
+            const y = (Math.floor(seed / 1000) % 1000) / 1000 * state.height;
+            const edgeFade = clamp(Math.min(x, y, state.width - x, state.height - y) / Math.min(state.width, state.height) * 7, 0, 1);
+            ctx.fillStyle = i % 5 === 0 ? 'rgba(251, 191, 36, 0.42)' : 'rgba(254, 243, 199, 0.26)';
+            ctx.beginPath();
+            ctx.arc(x, y, (i % 4 === 0 ? 1.15 : 0.7) * edgeFade, 0, TAU);
+            ctx.fill();
+        }
         ctx.restore();
     }
 
     function drawSphereGuide(ctx, state) {
         ctx.save();
-        ctx.lineWidth = 1;
+        const cx = state.width / 2;
+        const cy = state.height / 2;
+        const radius = Math.min(state.width, state.height) * 0.39 * state.zoom;
+
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.34)';
+        ctx.lineWidth = 1.2;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = 'rgba(251, 191, 36, 0.26)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, TAU);
+        ctx.stroke();
+
         [-0.68, -0.34, 0, 0.34, 0.68].forEach(latitude => {
             drawSphereLine(ctx, state, t => ({
                 x: Math.cos(t) * Math.cos(latitude),
                 y: Math.sin(latitude),
                 z: Math.sin(t) * Math.cos(latitude)
-            }), 'rgba(251, 191, 36, 0.22)');
+            }), latitude === 0 ? 'rgba(251, 191, 36, 0.34)' : 'rgba(251, 191, 36, 0.22)', latitude === 0 ? 1.15 : 0.82);
         });
         for (let i = 0; i < 8; i++) {
             const longitude = i / 8 * TAU;
@@ -336,12 +374,12 @@
                 x: Math.cos(longitude) * Math.cos(t),
                 y: Math.sin(t),
                 z: Math.sin(longitude) * Math.cos(t)
-            }), i % 2 ? 'rgba(0, 249, 255, 0.14)' : 'rgba(251, 191, 36, 0.16)');
+            }), i % 2 ? 'rgba(0, 249, 255, 0.12)' : 'rgba(251, 191, 36, 0.18)', 0.78);
         }
         ctx.restore();
     }
 
-    function drawSphereLine(ctx, state, pointAt, color) {
+    function drawSphereLine(ctx, state, pointAt, color, lineWidth = 1) {
         const samples = 96;
         ctx.beginPath();
         for (let i = 0; i <= samples; i++) {
@@ -351,7 +389,8 @@
         }
         ctx.globalAlpha = 1;
         ctx.strokeStyle = color;
-        ctx.shadowBlur = 7;
+        ctx.lineWidth = lineWidth;
+        ctx.shadowBlur = 9;
         ctx.shadowColor = color;
         ctx.stroke();
     }
@@ -361,18 +400,36 @@
         const target = item.target.point;
         const strength = clamp(Number(item.link.strength) || 0.4, 0.05, 1);
         const secBacked = Boolean(options.isSecBackedLink?.(item.link));
-        const color = secBacked ? GOLD : (options.getLinkColor?.(item.link) || CYAN);
-        const alpha = secBacked ? 0.22 + strength * 0.28 : 0.08 + Math.pow(strength, 1.6) * 0.25;
-        const width = secBacked ? 0.85 + strength * 1.6 : 0.45 + strength * 1.45;
+        const selectedId = state.selectedNode?.id;
+        const hoveredId = state.hoveredNode?.node?.id;
+        const touchesActiveNode = Boolean((selectedId || hoveredId) && (
+            item.source.node.id === selectedId ||
+            item.target.node.id === selectedId ||
+            item.source.node.id === hoveredId ||
+            item.target.node.id === hoveredId
+        ));
+        const color = touchesActiveNode ? GOLD_SOFT : secBacked ? GOLD : (options.getLinkColor?.(item.link) || CYAN);
+        const averageDepthT = clamp((item.sourceProjected.projected.depthT + item.targetProjected.projected.depthT) / 2, 0, 1);
+        const depthAlpha = 0.28 + averageDepthT * 0.72;
+        const alpha = (secBacked ? 0.18 + strength * 0.25 : 0.055 + Math.pow(strength, 1.65) * 0.21) * depthAlpha * (touchesActiveNode ? 1.85 : 1);
+        const width = (secBacked ? 0.75 + strength * 1.35 : 0.38 + strength * 1.2) * (touchesActiveNode ? 1.32 : 1);
         const points = getArcPoints(source, target, 18, 0.1 + strength * 0.13);
 
         ctx.save();
-        ctx.globalAlpha = alpha;
+        if (secBacked && !touchesActiveNode) ctx.setLineDash([3, 7]);
+        strokeProjectedPath(ctx, state, points, color, alpha * 0.52, width + 3.2, secBacked ? 22 : 16);
+        if (secBacked && !touchesActiveNode) ctx.setLineDash([3, 7]);
+        else ctx.setLineDash([]);
+        strokeProjectedPath(ctx, state, points, color, alpha, width, touchesActiveNode ? 18 : secBacked ? 12 : 8);
+        ctx.restore();
+    }
+
+    function strokeProjectedPath(ctx, state, points, color, alpha, width, shadowBlur) {
+        ctx.globalAlpha = Math.min(0.95, alpha);
         ctx.strokeStyle = color;
         ctx.lineWidth = width;
-        ctx.shadowBlur = secBacked ? 16 : 10;
+        ctx.shadowBlur = shadowBlur;
         ctx.shadowColor = color;
-        if (secBacked) ctx.setLineDash([3, 7]);
         ctx.beginPath();
         points.forEach((point, index) => {
             const projected = project(point, state);
@@ -380,67 +437,99 @@
             else ctx.lineTo(projected.x, projected.y);
         });
         ctx.stroke();
-        ctx.restore();
     }
 
     function drawOrbNode(ctx, state, item, options) {
         const p = item.projected;
-        const depthAlpha = 0.34 + p.depthT * 0.56;
+        const depthAlpha = 0.22 + p.depthT * 0.68;
         const selected = state.selectedNode?.id === item.node.id;
         const hovered = state.hoveredNode?.node?.id === item.node.id;
         const color = options.getNodeColor?.(item.node) || item.node.color || CYAN;
-        const radius = item.size * (0.68 + p.scale * 0.22) * (hovered || selected ? 1.2 : 1);
+        const emphasisScale = selected ? 1.42 : hovered ? 1.26 : 1;
+        const radius = item.size * (0.62 + p.scale * 0.28) * emphasisScale;
 
         ctx.save();
-        ctx.globalAlpha = selected ? 0.96 : hovered ? 0.9 : depthAlpha;
-        const glow = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, radius * 4.4);
-        glow.addColorStop(0, rgba(color, selected ? 0.38 : 0.24));
-        glow.addColorStop(0.45, rgba(color, 0.12));
+        ctx.globalAlpha = selected ? 1 : hovered ? 0.94 : depthAlpha;
+        const glow = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, radius * (selected ? 5.8 : hovered ? 5 : 4.2));
+        glow.addColorStop(0, rgba(selected ? GOLD : color, selected ? 0.48 : hovered ? 0.34 : 0.2));
+        glow.addColorStop(0.44, rgba(color, selected ? 0.18 : 0.105));
         glow.addColorStop(1, rgba(color, 0));
         ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, radius * 4.4, 0, TAU);
+        ctx.arc(p.x, p.y, radius * (selected ? 5.8 : hovered ? 5 : 4.2), 0, TAU);
         ctx.fill();
 
-        ctx.shadowBlur = selected ? 26 : hovered ? 21 : 13;
-        ctx.shadowColor = color;
-        ctx.fillStyle = rgba(color, selected ? 0.92 : 0.64);
+        ctx.shadowBlur = selected ? 34 : hovered ? 24 : 12;
+        ctx.shadowColor = selected ? GOLD : color;
+        ctx.fillStyle = rgba(color, selected ? 0.98 : hovered ? 0.84 : 0.58);
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, TAU);
         ctx.fill();
-        ctx.lineWidth = selected ? 2.1 : 1.15;
-        ctx.strokeStyle = selected ? GOLD : rgba('#ffffff', 0.7);
+        ctx.lineWidth = selected ? 2.4 : hovered ? 1.65 : 1;
+        ctx.strokeStyle = selected ? GOLD_SOFT : hovered ? GOLD : rgba('#ffffff', 0.62);
         ctx.stroke();
+
+        if (selected || hovered) {
+            ctx.globalAlpha = selected ? 0.9 : 0.64;
+            ctx.shadowBlur = selected ? 22 : 14;
+            ctx.strokeStyle = selected ? GOLD : rgba(color, 0.92);
+            ctx.lineWidth = selected ? 1.35 : 1;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, radius + (selected ? 7 : 5), 0, TAU);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 
     function drawOrbLabels(ctx, state, nodes, options) {
+        const selectedId = state.selectedNode?.id;
+        const hoveredId = state.hoveredNode?.node?.id;
         const candidates = nodes
-            .filter(item => {
-                if (state.selectedNode?.id === item.node.id) return true;
-                if (state.hoveredNode?.node?.id === item.node.id) return true;
-                return item.centrality >= 0.42 && item.projected.depthT > 0.42;
+            .map(item => {
+                const selected = selectedId === item.node.id;
+                const hovered = hoveredId === item.node.id;
+                const hub = item.centrality >= 0.58 && item.projected.depthT > 0.38;
+                const priority = (selected ? 100 : 0) + (hovered ? 90 : 0) + item.centrality * 16 + item.projected.depthT * 5;
+                return { ...item, selected, hovered, hub, priority };
             })
-            .sort((a, b) => b.centrality - a.centrality)
-            .slice(0, 30);
+            .filter(item => item.selected || item.hovered || item.hub)
+            .sort((a, b) => b.priority - a.priority)
+            .slice(0, 14);
 
         ctx.save();
         ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        const occupied = [];
         candidates.forEach(item => {
-            const label = options.getLabelText?.(item.node) || item.node.ticker || '';
+            const detailed = item.selected || item.hovered;
+            const label = getOrbLabel(item.node, options, detailed);
             if (!label) return;
             const p = item.projected;
             const color = options.getNodeColor?.(item.node) || item.node.color || CYAN;
-            const selected = state.selectedNode?.id === item.node.id;
-            ctx.globalAlpha = selected ? 0.96 : 0.42 + item.projected.depthT * 0.42;
-            ctx.fillStyle = 'rgba(2, 6, 23, 0.72)';
-            const width = ctx.measureText(label).width + 10;
-            roundedRect(ctx, p.x - width / 2, p.y + item.size + 8, width, 17, 6);
+            const maxWidth = detailed ? Math.min(230, state.width * 0.42) : 82;
+            const text = fitText(ctx, label, maxWidth - 14);
+            const width = Math.min(maxWidth, ctx.measureText(text).width + 14);
+            const height = detailed ? 20 : 17;
+            const x = clamp(p.x - width / 2, 8, state.width - width - 8);
+            const y = clamp(p.y + item.size + 8, 8, state.height - height - 8);
+            const box = { x, y, width, height };
+            if (!detailed && occupied.some(other => boxesOverlap(box, other))) return;
+            occupied.push({ x: x - 4, y: y - 3, width: width + 8, height: height + 6 });
+
+            ctx.globalAlpha = item.selected ? 0.98 : item.hovered ? 0.92 : 0.35 + item.projected.depthT * 0.32;
+            ctx.fillStyle = item.selected
+                ? 'rgba(39, 25, 4, 0.84)'
+                : item.hovered
+                    ? 'rgba(18, 20, 24, 0.82)'
+                    : 'rgba(2, 6, 23, 0.58)';
+            roundedRect(ctx, x, y, width, height, 6);
             ctx.fill();
-            ctx.fillStyle = selected ? GOLD : color;
-            ctx.fillText(label, p.x, p.y + item.size + 16);
+            ctx.strokeStyle = item.selected ? 'rgba(251, 191, 36, 0.58)' : item.hovered ? rgba(color, 0.44) : 'rgba(251, 191, 36, 0.18)';
+            ctx.lineWidth = item.selected || item.hovered ? 1 : 0.75;
+            ctx.stroke();
+            ctx.fillStyle = item.selected ? GOLD_SOFT : item.hovered ? GOLD : rgba(color, 0.9);
+            ctx.fillText(text, x + width / 2, y + height / 2 + 0.5);
         });
         ctx.restore();
     }
@@ -466,6 +555,31 @@
         ctx.fillStyle = 'rgba(254, 243, 199, 0.92)';
         ctx.fillText(text, x + 9, y + 15);
         ctx.restore();
+    }
+
+    function getOrbLabel(node, options, detailed = false) {
+        const primary = String(options.getLabelText?.(node) || node.ticker || node.name || '').trim();
+        if (!detailed) return primary;
+
+        const name = String(node.name || '').trim();
+        if (!name || !primary || name.toLowerCase() === primary.toLowerCase()) return primary;
+        return `${primary} ${name}`;
+    }
+
+    function fitText(ctx, text, maxWidth) {
+        if (ctx.measureText(text).width <= maxWidth) return text;
+        let next = String(text || '').trim();
+        while (next.length > 4 && ctx.measureText(`${next}...`).width > maxWidth) {
+            next = next.slice(0, -1).trimEnd();
+        }
+        return `${next}...`;
+    }
+
+    function boxesOverlap(a, b) {
+        return a.x < b.x + b.width &&
+            a.x + a.width > b.x &&
+            a.y < b.y + b.height &&
+            a.y + a.height > b.y;
     }
 
     function getArcPoints(source, target, samples, lift) {

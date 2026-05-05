@@ -44,8 +44,12 @@
         drawBackground(context, ctx);
         updateScreenCache(context, orbitFrame);
         drawNexusQuadrantLabels(context, ctx);
-        const frameNodes = context.visibleNodes.filter(node => isNodeInFrame(context, node));
-        const frameLinks = context.visibleLinks.filter(link => shouldDrawLink(context, link));
+        const frameNodes = context.visibleNodes
+            .filter(node => isNodeInFrame(context, node))
+            .sort(sortByPerspectiveDepth);
+        const frameLinks = context.visibleLinks
+            .filter(link => shouldDrawLink(context, link))
+            .sort(sortLinkByPerspectiveDepth);
 
         ctx.save();
         frameLinks.forEach(link => drawLink(context, ctx, link));
@@ -73,6 +77,67 @@
         gradient.addColorStop(1, 'rgba(5, 5, 8, 0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, context.canvasWidth, context.canvasHeight);
+        drawPerspectiveDepthCue(context, ctx);
+    }
+
+    function drawPerspectiveDepthCue(context, ctx) {
+        if (!context.perspectiveEnabled || !context.graphViewport?.projectPerspectivePoint) return;
+
+        const transform = context.getPerspectiveTransform?.();
+        if (!transform?.enabled) return;
+
+        const width = context.canvasWidth;
+        const height = context.canvasHeight;
+        const centerY = height * 0.54;
+        const lineCount = 11;
+        const halfWidth = width * 0.92;
+        const topY = centerY - height * 0.42;
+        const bottomY = centerY + height * 0.78;
+        const projectionTransform = {
+            perspective: transform,
+            canvasWidth: width,
+            canvasHeight: height
+        };
+
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.shadowBlur = 0;
+
+        for (let i = 0; i < lineCount; i++) {
+            const t = i / Math.max(1, lineCount - 1);
+            const y = topY + (bottomY - topY) * t * t;
+            const alpha = 0.015 + t * 0.035;
+            const left = context.graphViewport.projectPerspectivePoint(width * 0.5 - halfWidth, y, projectionTransform);
+            const right = context.graphViewport.projectPerspectivePoint(width * 0.5 + halfWidth, y, projectionTransform);
+
+            ctx.globalAlpha = alpha;
+            ctx.strokeStyle = 'rgba(125, 211, 252, 0.72)';
+            ctx.beginPath();
+            ctx.moveTo(left.x, left.y);
+            ctx.lineTo(right.x, right.y);
+            ctx.stroke();
+        }
+
+        for (let i = -3; i <= 3; i++) {
+            const x = width * 0.5 + i * width * 0.18;
+            const near = context.graphViewport.projectPerspectivePoint(x, bottomY, projectionTransform);
+            const far = context.graphViewport.projectPerspectivePoint(x, topY, projectionTransform);
+
+            ctx.globalAlpha = 0.018;
+            ctx.strokeStyle = 'rgba(255, 0, 170, 0.62)';
+            ctx.beginPath();
+            ctx.moveTo(near.x, near.y);
+            ctx.lineTo(far.x, far.y);
+            ctx.stroke();
+        }
+
+        ctx.globalAlpha = 0.055;
+        ctx.strokeStyle = 'rgba(0, 249, 255, 0.72)';
+        ctx.beginPath();
+        ctx.moveTo(width * 0.08, centerY);
+        ctx.lineTo(width * 0.92, centerY);
+        ctx.stroke();
+        ctx.restore();
     }
 
     function drawNexusQuadrantLabels(context, ctx) {
@@ -440,7 +505,21 @@
     function getPerspectiveShade(context, ...nodes) {
         if (!context.perspectiveEnabled) return 1;
         const depth = nodes.reduce((sum, node) => sum + Math.max(0, getFiniteNumber(node?._pseudoDepth, 0)), 0) / Math.max(1, nodes.length);
-        return context.clamp(1 - depth * 0.18, 0.84, 1);
+        return context.clamp(1 - depth * 0.28, 0.72, 1);
+    }
+
+    function sortByPerspectiveDepth(a, b) {
+        return getFiniteNumber(b?._pseudoDepth, 0) - getFiniteNumber(a?._pseudoDepth, 0);
+    }
+
+    function sortLinkByPerspectiveDepth(a, b) {
+        return getLinkDepth(b) - getLinkDepth(a);
+    }
+
+    function getLinkDepth(link) {
+        const sourceDepth = getFiniteNumber(link?.source?._pseudoDepth, 0);
+        const targetDepth = getFiniteNumber(link?.target?._pseudoDepth, 0);
+        return (sourceDepth + targetDepth) * 0.5;
     }
 
     function getOrbitRenderFrame(context, orbit) {
@@ -599,6 +678,8 @@
         shouldDrawLabel,
         labelPriority,
         getPerspectiveShade,
+        sortByPerspectiveDepth,
+        sortLinkByPerspectiveDepth,
         updateScreenCache,
         isNodeInFrame,
         shouldDrawLink,

@@ -380,6 +380,11 @@
                 rgba(5, 5, 8, 0.98);
         }
 
+        #graph-intelligence-view.is-graph-fullscreen,
+        #graph-intelligence-view.is-graph-fullscreen * {
+            min-width: 0;
+        }
+
         #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls {
             position: absolute;
             top: 0.85rem;
@@ -442,6 +447,7 @@
                 linear-gradient(90deg, rgba(0, 249, 255, 0.04) 1px, transparent 1px);
             background-size: 100% 100%, 52px 52px, 52px 52px;
             box-shadow: inset 0 0 88px rgba(0, 249, 255, 0.10), 0 0 74px rgba(0, 249, 255, 0.08);
+            overflow: hidden;
         }
 
         #graph-intelligence-view.is-graph-fullscreen #graph-canvas {
@@ -887,7 +893,7 @@
                     <span>Perspective Mode</span>
                 </button>
 
-                <button id="perspective-reset" type="button" onclick="resetPerspectiveView()" class="perspective-reset-control focus-button px-3 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset Perspective yaw and pitch" disabled>
+                <button id="perspective-reset" type="button" onclick="resetPerspectiveView()" class="perspective-reset-control focus-button px-3 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2" title="Reset Perspective bearing and pitch" disabled>
                     <i class="fa-solid fa-rotate-left"></i>
                     <span>Reset Perspective</span>
                 </button>
@@ -1401,14 +1407,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             NEXUS_GROUPS
         } = window.StockPhotonicConfig;
 
-        const DEFAULT_PERSPECTIVE_YAW = -0.26;
-        const DEFAULT_PERSPECTIVE_PITCH = 0.34;
-        const MIN_PERSPECTIVE_YAW = -0.92;
-        const MAX_PERSPECTIVE_YAW = 0.92;
-        const MIN_PERSPECTIVE_PITCH = -0.2;
-        const MAX_PERSPECTIVE_PITCH = 0.68;
-        const PERSPECTIVE_YAW_DRAG_SCALE = 0.0042;
-        const PERSPECTIVE_PITCH_DRAG_SCALE = 0.0032;
+        const DEFAULT_PERSPECTIVE_BEARING = -0.34;
+        const DEFAULT_PERSPECTIVE_PITCH = 0.62;
+        const MIN_PERSPECTIVE_BEARING = -1.35;
+        const MAX_PERSPECTIVE_BEARING = 1.35;
+        const MIN_PERSPECTIVE_PITCH = -0.08;
+        const MAX_PERSPECTIVE_PITCH = 1.08;
+        const PERSPECTIVE_BEARING_DRAG_SCALE = 0.0048;
+        const PERSPECTIVE_PITCH_DRAG_SCALE = 0.004;
         const SEC_PREVIEW_NODE_COLOR = '#67e8f9';
         const SEC_PREVIEW_EDGE_COLOR = '#7dd3fc';
         const SEC_PREVIEW_ENDPOINT_HALO = '#38bdf8';
@@ -1473,7 +1479,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let hubLayoutPositions = new Map();
         let nexusLayoutPositions = new Map();
         let perspectiveEnabled = false;
-        let yaw = DEFAULT_PERSPECTIVE_YAW;
+        let bearing = DEFAULT_PERSPECTIVE_BEARING;
         let pitch = DEFAULT_PERSPECTIVE_PITCH;
         let currentOrbitOffset = { x: 0, y: 0 };
 
@@ -1549,7 +1555,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             get signalStrengthThreshold() { return signalStrengthThreshold; },
             get orbitEnabled() { return false; },
             get perspectiveEnabled() { return perspectiveEnabled; },
-            get yaw() { return yaw; },
+            get bearing() { return bearing; },
             get pitch() { return pitch; },
             get pulseUntil() { return pulseUntil; },
             get focusTransitionUntil() { return focusTransitionUntil; },
@@ -2226,7 +2232,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             const canvas = document.getElementById('graph-canvas');
             const screen = getEventPoint(event);
-            const node = findNodeAt(screen.x, screen.y);
+            const rotateGesture = isPerspectiveRotateGesture(event);
+            const node = rotateGesture ? null : findNodeAt(screen.x, screen.y);
             cancelViewAnimation();
 
             // Pointer down: capture the pointer and classify the gesture as either
@@ -2234,7 +2241,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             // pointer up so a drag never also fires a click.
             pointerState.active = true;
             pointerState.pointerId = event.pointerId;
-            pointerState.mode = node ? 'node-pending' : 'pan-pending';
+            pointerState.mode = rotateGesture ? 'rotate-pending' : node ? 'node-pending' : 'pan-pending';
             pointerState.node = node;
             pointerState.startScreen = screen;
             pointerState.lastScreen = screen;
@@ -2243,8 +2250,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             pointerState.moved = false;
 
             canvas.setPointerCapture(event.pointerId);
-            canvas.classList.remove('cursor-grab');
-            canvas.classList.add('cursor-grabbing');
+            updateGraphCanvasCursor(pointerState.mode);
             event.preventDefault();
         }
 
@@ -2272,11 +2278,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 pointerState.moved = true;
                 pointerState.mode = pointerState.node
                     ? 'node-drag'
-                    : shouldPanInPerspective(event)
-                        ? 'canvas-pan'
-                        : perspectiveEnabled
-                            ? 'perspective-rotate'
-                            : 'canvas-pan';
+                    : pointerState.mode === 'rotate-pending' || isPerspectiveRotateGesture(event)
+                        ? 'perspective-rotate'
+                        : 'canvas-pan';
+                updateGraphCanvasCursor(pointerState.mode);
                 cancelViewAnimation();
             }
 
@@ -2294,10 +2299,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             } else if (pointerState.mode === 'canvas-pan') {
                 // Canvas pan: dragging empty space shifts the viewport only. It does
                 // not alter selection, focus, or any node positions.
-                const dx = screen.x - pointerState.lastScreen.x;
-                const dy = screen.y - pointerState.lastScreen.y;
-                offsetX += dx;
-                offsetY += dy;
+                panGraphPlane(pointerState.lastScreen, screen);
                 requestDraw();
             } else if (pointerState.mode === 'perspective-rotate') {
                 const dx = screen.x - pointerState.lastScreen.x;
@@ -2339,8 +2341,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
                 canvas.releasePointerCapture(event.pointerId);
             }
-            canvas.classList.add('cursor-grab');
-            canvas.classList.remove('cursor-grabbing');
+            updateGraphCanvasCursor('idle');
             requestDraw();
             event.preventDefault();
         }
@@ -2354,8 +2355,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (event && canvas.hasPointerCapture && canvas.hasPointerCapture(event.pointerId)) {
                 canvas.releasePointerCapture(event.pointerId);
             }
-            canvas.classList.add('cursor-grab');
-            canvas.classList.remove('cursor-grabbing');
+            updateGraphCanvasCursor('idle');
         }
 
         function onPointerLeave() {
@@ -2371,10 +2371,44 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const delta = normalizeWheelDelta(event);
             const zoomFactor = Math.exp(-delta * WHEEL_ZOOM_SENSITIVITY);
             const nextScale = clamp(scale * zoomFactor, MIN_SCALE, MAX_SCALE);
-            const nextOffsetX = point.x - before.x * nextScale;
-            const nextOffsetY = point.y - before.y * nextScale;
+            const anchoredView = getViewForScreenAnchor(before, point, nextScale);
+            const nextOffsetX = anchoredView.offsetX;
+            const nextOffsetY = anchoredView.offsetY;
             setView(nextScale, nextOffsetX, nextOffsetY);
             requestDraw();
+        }
+
+        function panGraphPlane(fromScreen, toScreen) {
+            const anchoredWorld = screenToWorld(fromScreen.x, fromScreen.y);
+            const anchoredView = getViewForScreenAnchor(anchoredWorld, toScreen, scale);
+            offsetX = anchoredView.offsetX;
+            offsetY = anchoredView.offsetY;
+        }
+
+        function getViewForScreenAnchor(world, screen, nextScale) {
+            const planePoint = graphViewport.unprojectPerspectivePoint(screen.x, screen.y, {
+                perspective: getPerspectiveTransform(),
+                canvasWidth,
+                canvasHeight
+            });
+            return {
+                scale: nextScale,
+                offsetX: planePoint.x - world.x * nextScale - currentOrbitOffset.x,
+                offsetY: planePoint.y - world.y * nextScale - currentOrbitOffset.y
+            };
+        }
+
+        function updateGraphCanvasCursor(mode = pointerState.mode) {
+            const canvas = document.getElementById('graph-canvas');
+            if (!canvas) return;
+
+            canvas.classList.toggle('cursor-grab', mode === 'idle' || mode === 'pan-pending' || mode === 'node-pending');
+            canvas.classList.toggle('cursor-grabbing', mode !== 'idle' && mode !== 'pan-pending' && mode !== 'node-pending');
+            canvas.style.cursor = mode === 'perspective-rotate' || mode === 'rotate-pending'
+                ? 'grabbing'
+                : mode === 'canvas-pan' || mode === 'node-drag'
+                    ? 'grabbing'
+                    : 'grab';
         }
 
         function normalizeWheelDelta(event) {
@@ -4165,8 +4199,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 perspectiveEnabled,
                 escapeHtml
             });
+            updatePerspectiveOverlayHint();
             appendSecPreviewOverlayStats();
             updateSecPreviewControl();
+        }
+
+        function updatePerspectiveOverlayHint() {
+            const hint = document.querySelector('#graph-overlay-stats .graph-perspective-hint');
+            if (!hint) return;
+            hint.innerText = 'Drag to pan. Shift+drag to rotate/pitch. Scroll to zoom.';
         }
 
         function appendSecPreviewOverlayStats() {
@@ -4381,8 +4422,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function resetPerspectiveView() {
+            perspectiveEnabled = true;
             resetPerspectiveAngles();
             updatePerspectiveModeControl();
+            updateGraphOverlayStats();
             requestDraw();
         }
 
@@ -4402,25 +4445,28 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function resetPerspectiveAngles() {
-            yaw = DEFAULT_PERSPECTIVE_YAW;
+            bearing = DEFAULT_PERSPECTIVE_BEARING;
             pitch = DEFAULT_PERSPECTIVE_PITCH;
         }
 
         function rotatePerspective(dx, dy) {
             if (!perspectiveEnabled) return;
-            yaw = clamp(yaw + dx * PERSPECTIVE_YAW_DRAG_SCALE, MIN_PERSPECTIVE_YAW, MAX_PERSPECTIVE_YAW);
+            bearing = clamp(bearing + dx * PERSPECTIVE_BEARING_DRAG_SCALE, MIN_PERSPECTIVE_BEARING, MAX_PERSPECTIVE_BEARING);
             pitch = clamp(pitch - dy * PERSPECTIVE_PITCH_DRAG_SCALE, MIN_PERSPECTIVE_PITCH, MAX_PERSPECTIVE_PITCH);
         }
 
-        function shouldPanInPerspective(event) {
-            return !perspectiveEnabled || event.shiftKey || event.ctrlKey || event.metaKey || event.button === 1;
+        function isPerspectiveRotateGesture(event) {
+            if (!perspectiveEnabled || !event) return false;
+            const middleButtonDown = event.button === 1 || Boolean((event.buttons || 0) & 4);
+            return middleButtonDown || event.shiftKey || event.altKey;
         }
 
         function getPerspectiveTransform() {
             return {
                 enabled: perspectiveEnabled,
-                yaw,
-                pitch
+                bearing,
+                pitch,
+                fullscreen: graphFullscreenActive
             };
         }
 
@@ -4428,11 +4474,23 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function updatePerspectiveModeControl() {
+            const toggle = document.getElementById('perspective-toggle');
+            const resetButton = document.getElementById('perspective-reset');
             uiControls.updatePerspectiveModeControl({
-                toggle: document.getElementById('perspective-toggle'),
-                resetButton: document.getElementById('perspective-reset'),
+                toggle,
+                resetButton,
                 perspectiveEnabled
             });
+            if (toggle) {
+                toggle.title = perspectiveEnabled
+                    ? 'Perspective Mode on: drag to pan. Shift+drag or middle-drag to rotate/pitch. Scroll to zoom.'
+                    : 'Perspective Mode off: flat 2D graph rendering.';
+            }
+            if (resetButton) {
+                resetButton.title = perspectiveEnabled
+                    ? 'Reset Perspective bearing and pitch'
+                    : 'Turn on Perspective Mode to reset bearing and pitch';
+            }
         }
 
         function getOrbitOffset() {

@@ -94,6 +94,40 @@
             box-shadow: 0 0 24px rgba(0, 249, 255, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
         }
 
+        #orb-map-toggle.is-active {
+            border-color: rgba(251, 191, 36, 0.78);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(0, 249, 255, 0.10));
+            box-shadow: 0 0 24px rgba(251, 191, 36, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+        }
+
+        .orb-map-canvas {
+            position: absolute;
+            inset: 0.75rem;
+            width: calc(100% - 1.5rem);
+            height: calc(100% - 1.5rem);
+            border-radius: 1.5rem;
+            touch-action: none;
+            user-select: none;
+            z-index: 2;
+            background:
+                radial-gradient(circle at 50% 48%, rgba(251, 191, 36, 0.11), rgba(0, 249, 255, 0.045) 42%, rgba(5, 5, 8, 0.92) 78%),
+                linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(255, 0, 170, 0.045));
+        }
+
+        .graph-container.is-orb-map-active #graph-canvas {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .graph-container.is-orb-map-active #perspective-nav-hud {
+            display: none;
+        }
+
+        .graph-container.is-orb-map-active .sec-production-legend {
+            border-color: rgba(251, 191, 36, 0.28);
+            background: rgba(13, 10, 4, 0.72);
+        }
+
         .perspective-reset-control {
             border-color: rgba(0, 249, 255, 0.16);
             color: rgba(207, 250, 254, 0.82);
@@ -1136,6 +1170,11 @@
                     <span>Reset Perspective</span>
                 </button>
 
+                <button id="orb-map-toggle" type="button" onclick="toggleOrbMap()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-yellow-300/25 flex items-center gap-x-2" title="Orb Map off: normal 2D graph rendering.">
+                    <i class="fa-solid fa-globe"></i>
+                    <span>Orb Map</span>
+                </button>
+
                 <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
                     <i class="fa-solid fa-file-shield"></i>
                     <span>SEC Preview On</span>
@@ -1216,6 +1255,7 @@
                 <div class="graph-stage-column lg:col-span-8">
                     <div class="glass rounded-3xl p-3 graph-container relative overflow-hidden" style="height: 680px;">
                         <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
+                        <canvas id="orb-map-canvas" class="orb-map-canvas hidden cursor-grab" aria-label="Orb Map graph view"></canvas>
                         <div id="sec-production-legend" class="sec-production-legend hidden rounded-2xl px-3 py-2 text-[10px] font-mono text-yellow-100/80 tracking-[1.1px]">
                             <div class="flex items-center gap-2">
                                 <span class="sec-production-line-swatch"></span>
@@ -1522,6 +1562,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/graph/interactions.js"></script>
     <script src="js/graph/layouts.js"></script>
     <script src="js/graph/render.js"></script>
+    <script src="js/graph/orb3d.js"></script>
     <script src="js/intelligence/clusters.js"></script>
     <script src="js/intelligence/industryCorrelations.js"></script>
     <script src="js/intelligence/portfolioNexus.js"></script>
@@ -1587,7 +1628,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             viewport: graphViewport,
             interactions: graphInteractions,
             layouts: graphLayouts,
-            render: graphRender
+            render: graphRender,
+            orb3d: graphOrb3d
         } = window.StockPhotonicGraph;
         const {
             clusters: intelligenceClusters,
@@ -1750,6 +1792,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let layoutMode = LAYOUT_MODE_SECTOR;
         let hubLayoutPositions = new Map();
         let nexusLayoutPositions = new Map();
+        let orbMapEnabled = false;
+        let orbMapController = null;
         let perspectiveEnabled = false;
         let bearing = DEFAULT_PERSPECTIVE_BEARING;
         let pitch = DEFAULT_PERSPECTIVE_PITCH;
@@ -1884,6 +1928,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (isGraphView) {
                 window.requestAnimationFrame(() => {
                     resizeCanvas();
+                    updateOrbMapData();
                     requestDraw();
                 });
             }
@@ -1988,6 +2033,92 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             });
         }
 
+        function setupOrbMap() {
+            if (orbMapController) return;
+            const canvas = document.getElementById('orb-map-canvas');
+            const container = canvas?.closest('.graph-container');
+            if (!graphOrb3d?.createOrbMapController || !canvas || !container) {
+                updateOrbMapControl('unsupported');
+                return;
+            }
+
+            try {
+                orbMapController = graphOrb3d.createOrbMapController({
+                    canvas,
+                    container,
+                    devicePixelRatio: () => window.devicePixelRatio,
+                    getData: getOrbMapSnapshot,
+                    onSelectNode: selectNode,
+                    isSecBackedLink: isSecBackedConnection,
+                    getLinkColor: link => EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR,
+                    getNodeColor: node => node.color || '#00f9ff',
+                    getLabelText: node => node.ticker || node.name || ''
+                });
+            } catch (error) {
+                console.warn('Orb Map unavailable', error);
+                orbMapController = null;
+                updateOrbMapControl('unsupported');
+                return;
+            }
+
+            updateOrbMapControl();
+        }
+
+        function toggleOrbMap(force) {
+            setOrbMapEnabled(typeof force === 'boolean' ? force : !orbMapEnabled);
+        }
+
+        function setOrbMapEnabled(enabled) {
+            if (!orbMapController) setupOrbMap();
+            const requested = Boolean(enabled);
+
+            if (requested && !orbMapController?.isSupported?.()) {
+                orbMapEnabled = false;
+                updateOrbMapControl('unsupported');
+                requestDraw();
+                return;
+            }
+
+            const applied = Boolean(orbMapController?.setEnabled(requested));
+            orbMapEnabled = requested && applied;
+            updateOrbMapControl();
+            updateGraphOverlayStats();
+            if (orbMapEnabled) updateOrbMapData();
+            else requestDraw();
+        }
+
+        function getOrbMapSnapshot() {
+            return {
+                nodes: visibleNodes.length ? visibleNodes : nodes,
+                links: visibleLinks.length ? visibleLinks : links,
+                selectedNode
+            };
+        }
+
+        function updateOrbMapData() {
+            if (!orbMapController) return;
+            orbMapController.setData(getOrbMapSnapshot());
+            orbMapController.setSelectedNode(selectedNode);
+        }
+
+        function updateOrbMapControl(status = null) {
+            const button = document.getElementById('orb-map-toggle');
+            if (!button) return;
+
+            const unsupported = status === 'unsupported' || (orbMapController && !orbMapController.isSupported?.());
+            const label = button.querySelector('span');
+            button.disabled = unsupported;
+            button.setAttribute('aria-disabled', unsupported ? 'true' : 'false');
+            button.setAttribute('aria-pressed', orbMapEnabled ? 'true' : 'false');
+            button.classList.toggle('is-active', orbMapEnabled);
+            if (label) label.innerText = 'Orb Map';
+            button.title = unsupported
+                ? 'Orb Map unavailable: normal 2D graph remains active.'
+                : orbMapEnabled
+                    ? 'Orb Map on: drag to rotate, scroll to zoom, click a company to select it.'
+                    : 'Orb Map off: normal 2D graph rendering.';
+        }
+
         /* ==============================
            DATA LOADING
         ================================ */
@@ -2016,6 +2147,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 fitGraph(false, { keepOrbit: true });
                 showDefaultDashboard();
                 setupCanvasInteractions();
+                setupOrbMap();
+                updateOrbMapData();
                 setupSearchInteractions();
                 updateSearchMatches();
                 document.getElementById('view-status').innerText = 'READY';
@@ -2698,6 +2831,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function resizeCanvas() {
             graphRender.resizeCanvas(renderContext);
+            orbMapController?.resize?.();
         }
 
         function requestDraw() {
@@ -3926,6 +4060,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             focusModeEnabled = false;
             signalStrengthThreshold = 0;
             secPreviewEnabled = true;
+            setOrbMapEnabled(false);
             resetPortfolioState();
             document.getElementById('sector-filter').value = '';
             document.getElementById('industry-group-filter').value = '';
@@ -4397,6 +4532,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             refreshSecPreviewVisibility();
             rebuildLayoutPositions();
             updateGraphOverlayStats();
+            updateOrbMapData();
             if (!selectedNode && !selectedSecPreviewNode && !selectedSecPreviewLink) renderDefaultDashboard();
         }
 
@@ -4474,7 +4610,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             });
             updatePerspectiveOverlayHint();
             appendSecPreviewOverlayStats();
+            appendOrbMapOverlayStats();
             updateSecPreviewControl();
+            updateOrbMapControl();
         }
 
         function updatePerspectiveOverlayHint() {
@@ -4493,6 +4631,17 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             overlay.insertAdjacentHTML('beforeend', `
                 <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/75 font-mono tracking-[1.1px] border border-cyan-300/20 bg-cyan-300/10">
                     ${escapeHtml(String(visibleSecPreviewLinks.length))} SEC Preview Edges
+                </span>
+            `);
+        }
+
+        function appendOrbMapOverlayStats() {
+            const overlay = document.getElementById('graph-overlay-stats');
+            if (!overlay || !orbMapEnabled) return;
+
+            overlay.insertAdjacentHTML('beforeend', `
+                <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-yellow-100/80 font-mono tracking-[1.1px] border border-yellow-300/25 bg-yellow-300/10">
+                    Orb Map
                 </span>
             `);
         }
@@ -5149,6 +5298,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         setupFullscreenSafety();
+        setupOrbMap();
         loadSourceCandidatePreview();
         loadData();
     </script>

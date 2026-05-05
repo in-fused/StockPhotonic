@@ -34,6 +34,9 @@
             context.getPerspectiveTransform?.(),
             now
         ) || false;
+        context.onPerspectiveMotionFrame?.(
+            context.graphViewport?.getPerspectiveMotionSnapshot?.(context.getPerspectiveTransform?.())
+        );
         const ctx = canvas.getContext('2d');
         const orbit = context.getOrbitOffset(now);
         const orbitFrame = getOrbitRenderFrame(context, orbit);

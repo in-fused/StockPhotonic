@@ -101,6 +101,35 @@
         perspectiveMotion.targetPitch = perspectiveMotion.currentPitch;
     }
 
+    function getPerspectiveMotionSnapshot(transform) {
+        const input = getPerspectiveInput(transform);
+        if (!input.enabled) {
+            return {
+                enabled: false,
+                bearing: 0,
+                pitch: 0,
+                targetBearing: 0,
+                targetPitch: 0,
+                rawBearing: 0,
+                rawPitch: 0
+            };
+        }
+
+        if (!perspectiveMotion.initialized || !perspectiveMotion.enabled) {
+            initializePerspectiveMotion(input, getNow());
+        }
+
+        return {
+            enabled: true,
+            bearing: perspectiveMotion.currentBearing,
+            pitch: perspectiveMotion.currentPitch,
+            targetBearing: perspectiveMotion.targetBearing,
+            targetPitch: perspectiveMotion.targetPitch,
+            rawBearing: input.bearing,
+            rawPitch: input.pitch
+        };
+    }
+
     function stepPerspectiveMotion(transform, now = getNow()) {
         const input = getPerspectiveInput(transform);
         if (!input.enabled) {
@@ -483,6 +512,7 @@
         getScreenNodeRadius,
         isNodeInFrame,
         stepPerspectiveMotion,
+        getPerspectiveMotionSnapshot,
         setPerspectivePointerActive,
         releasePerspectivePointer,
         cancelPerspectiveMotion

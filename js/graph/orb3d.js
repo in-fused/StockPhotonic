@@ -447,13 +447,40 @@
         const cy = state.height / 2;
         const radius = Math.min(state.width, state.height) * 0.39 * state.zoom;
 
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = 'rgba(251, 191, 36, 0.34)';
-        ctx.lineWidth = 1.2;
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = 'rgba(251, 191, 36, 0.26)';
+        const innerGlow = ctx.createRadialGradient(cx, cy, radius * 0.12, cx, cy, radius * 1.04);
+        innerGlow.addColorStop(0, 'rgba(251, 191, 36, 0.07)');
+        innerGlow.addColorStop(0.42, 'rgba(0, 249, 255, 0.035)');
+        innerGlow.addColorStop(0.78, 'rgba(251, 191, 36, 0.018)');
+        innerGlow.addColorStop(1, 'rgba(0, 249, 255, 0)');
+        ctx.fillStyle = innerGlow;
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, TAU);
+        ctx.fill();
+
+        const atmosphericFade = ctx.createRadialGradient(cx, cy, radius * 0.62, cx, cy, radius * 1.08);
+        atmosphericFade.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        atmosphericFade.addColorStop(0.74, 'rgba(0, 249, 255, 0.022)');
+        atmosphericFade.addColorStop(1, 'rgba(251, 191, 36, 0.085)');
+        ctx.fillStyle = atmosphericFade;
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 1.03, 0, TAU);
+        ctx.fill();
+
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(253, 230, 138, 0.42)';
+        ctx.lineWidth = 1.35;
+        ctx.shadowBlur = 24;
+        ctx.shadowColor = 'rgba(251, 191, 36, 0.34)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, TAU);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(0, 249, 255, 0.12)';
+        ctx.lineWidth = 3.4;
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = 'rgba(0, 249, 255, 0.16)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 1.006, 0, TAU);
         ctx.stroke();
 
         [-0.68, -0.34, 0, 0.34, 0.68].forEach(latitude => {
@@ -505,17 +532,21 @@
         ));
         const color = touchesActiveNode ? GOLD_SOFT : secBacked ? GOLD : (options.getLinkColor?.(item.link) || CYAN);
         const averageDepthT = clamp((item.sourceProjected.projected.depthT + item.targetProjected.projected.depthT) / 2, 0, 1);
-        const depthAlpha = 0.28 + averageDepthT * 0.72;
-        const alpha = (secBacked ? 0.18 + strength * 0.25 : 0.055 + Math.pow(strength, 1.65) * 0.21) * depthAlpha * (touchesActiveNode ? 1.85 : 1);
-        const width = (secBacked ? 0.75 + strength * 1.35 : 0.38 + strength * 1.2) * (touchesActiveNode ? 1.32 : 1);
+        const depthLayer = getDepthLayer(averageDepthT);
+        const quietStrength = 0.74 + Math.pow(strength, 1.45) * 0.26;
+        const depthAlpha = 0.24 + depthLayer * 0.76;
+        const baseAlpha = secBacked ? 0.15 + strength * 0.23 : 0.045 + Math.pow(strength, 1.9) * 0.2;
+        const alpha = baseAlpha * quietStrength * depthAlpha * (touchesActiveNode ? 1.8 : 1);
+        const width = (secBacked ? 0.68 + strength * 1.25 : 0.32 + strength * 1.08) * (0.82 + depthLayer * 0.2) * (touchesActiveNode ? 1.3 : 1);
+        const glowBlur = (secBacked ? 17 : 12) * (0.46 + depthLayer * 0.84) * (touchesActiveNode ? 1.25 : 1);
         const points = getArcPoints(source, target, 18, 0.1 + strength * 0.13);
 
         ctx.save();
         if (secBacked && !touchesActiveNode) ctx.setLineDash([3, 7]);
-        strokeProjectedPath(ctx, state, points, color, alpha * 0.52, width + 3.2, secBacked ? 22 : 16);
+        strokeProjectedPath(ctx, state, points, color, alpha * (0.34 + depthLayer * 0.26), width + 2.35 + depthLayer * 1.1, glowBlur + 8);
         if (secBacked && !touchesActiveNode) ctx.setLineDash([3, 7]);
         else ctx.setLineDash([]);
-        strokeProjectedPath(ctx, state, points, color, alpha, width, touchesActiveNode ? 18 : secBacked ? 12 : 8);
+        strokeProjectedPath(ctx, state, points, color, alpha, width, touchesActiveNode ? glowBlur + 8 : glowBlur);
         ctx.restore();
     }
 
@@ -536,42 +567,50 @@
 
     function drawOrbNode(ctx, state, item, options) {
         const p = item.projected;
-        const depthAlpha = 0.22 + p.depthT * 0.68;
+        const depthLayer = getDepthLayer(p.depthT);
+        const depthAlpha = 0.16 + depthLayer * 0.78;
         const selected = state.selectedNode?.id === item.node.id;
         const hovered = state.hoveredNode?.node?.id === item.node.id;
         const tuning = Boolean(state.tuningSector && item.sector === state.tuningSector);
+        const hub = item.centrality >= 0.58;
         const color = options.getNodeColor?.(item.node) || item.node.color || CYAN;
-        const emphasisScale = selected ? 1.42 : hovered ? 1.26 : tuning ? 1.08 : 1;
-        const radius = item.size * (0.62 + p.scale * 0.28) * emphasisScale;
+        const hubScale = hub ? 1.06 + item.centrality * 0.055 : 1;
+        const emphasisScale = selected ? 1.42 : hovered ? 1.26 : tuning ? 1.08 : hubScale;
+        const depthSize = 0.94 + depthLayer * 0.13;
+        const radius = item.size * (0.62 + p.scale * 0.28) * depthSize * emphasisScale;
+        const glowScale = selected ? 5.8 : hovered ? 5 : hub ? 4.8 : 4.05;
+        const glowAlpha = selected ? 0.48 : hovered ? 0.34 : hub ? 0.24 : 0.17;
+        const coreAlpha = selected ? 0.98 : hovered ? 0.84 : 0.48 + depthLayer * 0.2 + (hub ? 0.08 : 0);
+        const rimAlpha = clamp(0.42 + depthLayer * 0.32 + (hub ? 0.08 : 0), 0.38, 0.86);
 
         ctx.save();
         ctx.globalAlpha = selected ? 1 : hovered ? 0.94 : tuning ? Math.min(0.82, depthAlpha + 0.18) : depthAlpha;
-        const glow = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, radius * (selected ? 5.8 : hovered ? 5 : 4.2));
-        glow.addColorStop(0, rgba(selected ? GOLD : color, selected ? 0.48 : hovered ? 0.34 : 0.2));
-        glow.addColorStop(0.44, rgba(color, selected ? 0.18 : 0.105));
+        const glow = ctx.createRadialGradient(p.x, p.y, 1, p.x, p.y, radius * glowScale);
+        glow.addColorStop(0, rgba(selected ? GOLD : color, glowAlpha));
+        glow.addColorStop(0.4, rgba(color, selected ? 0.18 : hub ? 0.13 : 0.09));
         glow.addColorStop(1, rgba(color, 0));
         ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, radius * (selected ? 5.8 : hovered ? 5 : 4.2), 0, TAU);
+        ctx.arc(p.x, p.y, radius * glowScale, 0, TAU);
         ctx.fill();
 
-        ctx.shadowBlur = selected ? 34 : hovered ? 24 : 12;
+        ctx.shadowBlur = selected ? 34 : hovered ? 24 : hub ? 16 : 10 + depthLayer * 5;
         ctx.shadowColor = selected ? GOLD : color;
-        ctx.fillStyle = rgba(color, selected ? 0.98 : hovered ? 0.84 : 0.58);
+        ctx.fillStyle = rgba(color, coreAlpha);
         ctx.beginPath();
         ctx.arc(p.x, p.y, radius, 0, TAU);
         ctx.fill();
-        ctx.lineWidth = selected ? 2.4 : hovered ? 1.65 : tuning ? 1.2 : 1;
-        ctx.strokeStyle = selected ? GOLD_SOFT : hovered ? GOLD : tuning ? 'rgba(253, 230, 138, 0.72)' : rgba('#ffffff', 0.62);
+        ctx.lineWidth = selected ? 2.4 : hovered ? 1.65 : tuning ? 1.2 : hub ? 1.15 : 0.9;
+        ctx.strokeStyle = selected ? GOLD_SOFT : hovered ? GOLD : tuning ? 'rgba(253, 230, 138, 0.72)' : rgba('#ffffff', rimAlpha);
         ctx.stroke();
 
-        if (selected || hovered) {
-            ctx.globalAlpha = selected ? 0.9 : 0.64;
-            ctx.shadowBlur = selected ? 22 : 14;
-            ctx.strokeStyle = selected ? GOLD : rgba(color, 0.92);
-            ctx.lineWidth = selected ? 1.35 : 1;
+        if (selected || hovered || hub) {
+            ctx.globalAlpha = selected ? 0.9 : hovered ? 0.64 : 0.18 + depthLayer * 0.16;
+            ctx.shadowBlur = selected ? 22 : hovered ? 14 : 10;
+            ctx.strokeStyle = selected ? GOLD : hovered ? rgba(color, 0.92) : rgba(color, 0.68);
+            ctx.lineWidth = selected ? 1.35 : hovered ? 1 : 0.75;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, radius + (selected ? 7 : 5), 0, TAU);
+            ctx.arc(p.x, p.y, radius + (selected ? 7 : hovered ? 5 : 3.5), 0, TAU);
             ctx.stroke();
         }
         ctx.restore();
@@ -850,6 +889,11 @@
 
     function averageDepth(item) {
         return (item.sourceProjected.projected.depth + item.targetProjected.projected.depth) / 2;
+    }
+
+    function getDepthLayer(depthT) {
+        const t = clamp(depthT, 0, 1);
+        return t * t * (3 - 2 * t);
     }
 
     function findNodeAt(state, x, y) {

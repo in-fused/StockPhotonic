@@ -30,6 +30,10 @@
         context.setDrawHandle(null);
         const canvas = context.getCanvas();
         const now = context.now();
+        const perspectiveMotionActive = context.graphViewport?.stepPerspectiveMotion?.(
+            context.getPerspectiveTransform?.(),
+            now
+        ) || false;
         const ctx = canvas.getContext('2d');
         const orbit = context.getOrbitOffset(now);
         const orbitFrame = getOrbitRenderFrame(context, orbit);
@@ -50,7 +54,7 @@
         frameNodes.forEach(node => drawNode(context, ctx, node, timestamp));
         drawLabels(context, ctx, frameNodes);
 
-        if (context.orbitEnabled || now < context.pulseUntil || now < context.highlightedNodeUntil || now < context.focusTransitionUntil) {
+        if (context.orbitEnabled || perspectiveMotionActive || now < context.pulseUntil || now < context.highlightedNodeUntil || now < context.focusTransitionUntil) {
             requestDraw(context);
         }
     }

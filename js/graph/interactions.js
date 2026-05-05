@@ -14,13 +14,37 @@
 
         windowTarget.addEventListener('resize', onResize);
         canvas.addEventListener('wheel', onWheel, { passive: false });
-        canvas.addEventListener('pointerdown', onPointerDown);
+        canvas.addEventListener('pointerdown', event => {
+            if (isPrimaryGraphPointer(event)) {
+                getPerspectiveMotionController()?.setPerspectivePointerActive?.(true);
+            }
+            onPointerDown(event);
+        });
         canvas.addEventListener('pointermove', onPointerMove);
-        canvas.addEventListener('pointerup', onPointerUp);
-        canvas.addEventListener('pointercancel', onPointerCancel);
-        canvas.addEventListener('lostpointercapture', onPointerCancel);
+        canvas.addEventListener('pointerup', event => {
+            onPointerUp(event);
+            if (isPrimaryGraphPointer(event)) {
+                getPerspectiveMotionController()?.releasePerspectivePointer?.();
+            }
+        });
+        canvas.addEventListener('pointercancel', event => {
+            onPointerCancel(event);
+            getPerspectiveMotionController()?.cancelPerspectiveMotion?.();
+        });
+        canvas.addEventListener('lostpointercapture', event => {
+            onPointerCancel(event);
+            getPerspectiveMotionController()?.cancelPerspectiveMotion?.();
+        });
         canvas.addEventListener('pointerleave', onPointerLeave);
         canvas.addEventListener('contextmenu', event => event.preventDefault());
+    }
+
+    function getPerspectiveMotionController() {
+        return window.StockPhotonicGraph?.viewport || null;
+    }
+
+    function isPrimaryGraphPointer(event) {
+        return event.pointerType !== 'mouse' || event.button === 0 || event.button === 1;
     }
 
     function normalizeWheelDelta(event, options) {
@@ -58,6 +82,8 @@
     window.StockPhotonicGraph.interactions = {
         bindCanvasInteractions,
         normalizeWheelDelta,
-        findNodeAt
+        findNodeAt,
+        getPerspectiveMotionController,
+        isPrimaryGraphPointer
     };
 })();

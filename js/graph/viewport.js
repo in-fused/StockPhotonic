@@ -1,4 +1,30 @@
 (function () {
+    const PERSPECTIVE_MIN_YAW = -0.92;
+    const PERSPECTIVE_MAX_YAW = 0.92;
+    const PERSPECTIVE_MIN_PITCH = -0.2;
+    const PERSPECTIVE_MAX_PITCH = 0.68;
+    const PERSPECTIVE_RESPONSE = 12;
+    const PERSPECTIVE_INERTIA_DECAY = 0.9;
+    const PERSPECTIVE_MAX_DT = 0.05;
+    const PERSPECTIVE_EPSILON = 0.00012;
+    const PERSPECTIVE_VELOCITY_EPSILON = 0.00035;
+
+    const perspectiveMotion = {
+        enabled: false,
+        initialized: false,
+        pointerActive: false,
+        releasedNeedsSample: false,
+        currentYaw: 0,
+        currentPitch: 0,
+        targetYaw: 0,
+        targetPitch: 0,
+        rawYaw: 0,
+        rawPitch: 0,
+        velocityYaw: 0,
+        velocityPitch: 0,
+        lastFrameAt: 0
+    };
+
     function getZeroOrbitOffset() {
         return {
             x: 0,
@@ -9,6 +35,163 @@
             verticalPhaseSin: 0,
             ramp: 0
         };
+    }
+
+    function getNow() {
+        if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+            return performance.now();
+        }
+        return Date.now();
+    }
+
+    function clampFinite(value, min, max) {
+        return Math.max(min, Math.min(max, Number.isFinite(value) ? value : 0));
+    }
+
+    function easeOutCubic(t) {
+        const inverse = 1 - clampFinite(t, 0, 1);
+        return 1 - inverse * inverse * inverse;
+    }
+
+    function getPerspectiveInput(transform) {
+        const perspective = transform?.perspective;
+        const enabled = Boolean(perspective?.enabled);
+        return {
+            enabled,
+            yaw: enabled ? clampFinite(perspective.yaw, PERSPECTIVE_MIN_YAW, PERSPECTIVE_MAX_YAW) : 0,
+            pitch: enabled ? clampFinite(perspective.pitch, PERSPECTIVE_MIN_PITCH, PERSPECTIVE_MAX_PITCH) : 0
+        };
+    }
+
+    function initializePerspectiveMotion(input, now) {
+        perspectiveMotion.enabled = input.enabled;
+        perspectiveMotion.initialized = input.enabled;
+        perspectiveMotion.currentYaw = input.yaw;
+        perspectiveMotion.currentPitch = input.pitch;
+        perspectiveMotion.targetYaw = input.yaw;
+        perspectiveMotion.targetPitch = input.pitch;
+        perspectiveMotion.rawYaw = input.yaw;
+        perspectiveMotion.rawPitch = input.pitch;
+        perspectiveMotion.velocityYaw = 0;
+        perspectiveMotion.velocityPitch = 0;
+        perspectiveMotion.lastFrameAt = now;
+    }
+
+    function setPerspectivePointerActive(active) {
+        perspectiveMotion.pointerActive = Boolean(active);
+        if (active) {
+            perspectiveMotion.releasedNeedsSample = false;
+            perspectiveMotion.velocityYaw = 0;
+            perspectiveMotion.velocityPitch = 0;
+        }
+    }
+
+    function releasePerspectivePointer() {
+        perspectiveMotion.pointerActive = false;
+        perspectiveMotion.releasedNeedsSample = true;
+    }
+
+    function cancelPerspectiveMotion() {
+        perspectiveMotion.pointerActive = false;
+        perspectiveMotion.releasedNeedsSample = false;
+        perspectiveMotion.velocityYaw = 0;
+        perspectiveMotion.velocityPitch = 0;
+        perspectiveMotion.targetYaw = perspectiveMotion.currentYaw;
+        perspectiveMotion.targetPitch = perspectiveMotion.currentPitch;
+    }
+
+    function stepPerspectiveMotion(transform, now = getNow()) {
+        const input = getPerspectiveInput(transform);
+        if (!input.enabled) {
+            perspectiveMotion.enabled = false;
+            perspectiveMotion.initialized = false;
+            perspectiveMotion.pointerActive = false;
+            perspectiveMotion.releasedNeedsSample = false;
+            perspectiveMotion.velocityYaw = 0;
+            perspectiveMotion.velocityPitch = 0;
+            return false;
+        }
+
+        if (!perspectiveMotion.initialized || !perspectiveMotion.enabled) {
+            initializePerspectiveMotion(input, now);
+            return false;
+        }
+
+        const elapsed = Math.max(0, now - perspectiveMotion.lastFrameAt);
+        const dt = Math.min(PERSPECTIVE_MAX_DT, elapsed / 1000 || 1 / 60);
+        const rawDeltaYaw = input.yaw - perspectiveMotion.rawYaw;
+        const rawDeltaPitch = input.pitch - perspectiveMotion.rawPitch;
+        const rawChanged = Math.abs(rawDeltaYaw) > PERSPECTIVE_EPSILON || Math.abs(rawDeltaPitch) > PERSPECTIVE_EPSILON;
+
+        if (rawChanged) {
+            perspectiveMotion.targetYaw = input.yaw;
+            perspectiveMotion.targetPitch = input.pitch;
+            if ((perspectiveMotion.pointerActive || perspectiveMotion.releasedNeedsSample) && dt > 0) {
+                const nextVelocityYaw = rawDeltaYaw / dt;
+                const nextVelocityPitch = rawDeltaPitch / dt;
+                perspectiveMotion.velocityYaw = perspectiveMotion.velocityYaw * 0.3 + nextVelocityYaw * 0.7;
+                perspectiveMotion.velocityPitch = perspectiveMotion.velocityPitch * 0.3 + nextVelocityPitch * 0.7;
+            } else {
+                perspectiveMotion.velocityYaw = 0;
+                perspectiveMotion.velocityPitch = 0;
+            }
+            perspectiveMotion.releasedNeedsSample = false;
+            perspectiveMotion.rawYaw = input.yaw;
+            perspectiveMotion.rawPitch = input.pitch;
+        } else if (!perspectiveMotion.pointerActive) {
+            perspectiveMotion.releasedNeedsSample = false;
+            if (Math.abs(perspectiveMotion.velocityYaw) > PERSPECTIVE_VELOCITY_EPSILON) {
+                const nextTargetYaw = clampFinite(
+                    perspectiveMotion.targetYaw + perspectiveMotion.velocityYaw * dt,
+                    PERSPECTIVE_MIN_YAW,
+                    PERSPECTIVE_MAX_YAW
+                );
+                if (nextTargetYaw === PERSPECTIVE_MIN_YAW || nextTargetYaw === PERSPECTIVE_MAX_YAW) {
+                    perspectiveMotion.velocityYaw = 0;
+                }
+                perspectiveMotion.targetYaw = nextTargetYaw;
+            }
+
+            if (Math.abs(perspectiveMotion.velocityPitch) > PERSPECTIVE_VELOCITY_EPSILON) {
+                const nextTargetPitch = clampFinite(
+                    perspectiveMotion.targetPitch + perspectiveMotion.velocityPitch * dt,
+                    PERSPECTIVE_MIN_PITCH,
+                    PERSPECTIVE_MAX_PITCH
+                );
+                if (nextTargetPitch === PERSPECTIVE_MIN_PITCH || nextTargetPitch === PERSPECTIVE_MAX_PITCH) {
+                    perspectiveMotion.velocityPitch = 0;
+                }
+                perspectiveMotion.targetPitch = nextTargetPitch;
+            }
+        }
+
+        const decay = Math.pow(PERSPECTIVE_INERTIA_DECAY, dt * 60);
+        perspectiveMotion.velocityYaw *= decay;
+        perspectiveMotion.velocityPitch *= decay;
+
+        if (Math.abs(perspectiveMotion.velocityYaw) <= PERSPECTIVE_VELOCITY_EPSILON) {
+            perspectiveMotion.velocityYaw = 0;
+        }
+        if (Math.abs(perspectiveMotion.velocityPitch) <= PERSPECTIVE_VELOCITY_EPSILON) {
+            perspectiveMotion.velocityPitch = 0;
+        }
+
+        const alpha = easeOutCubic(1 - Math.exp(-PERSPECTIVE_RESPONSE * dt));
+        const yawDelta = perspectiveMotion.targetYaw - perspectiveMotion.currentYaw;
+        const pitchDelta = perspectiveMotion.targetPitch - perspectiveMotion.currentPitch;
+        perspectiveMotion.currentYaw += yawDelta * alpha;
+        perspectiveMotion.currentPitch += pitchDelta * alpha;
+
+        const yawSettled = Math.abs(perspectiveMotion.targetYaw - perspectiveMotion.currentYaw) <= PERSPECTIVE_EPSILON;
+        const pitchSettled = Math.abs(perspectiveMotion.targetPitch - perspectiveMotion.currentPitch) <= PERSPECTIVE_EPSILON;
+        if (yawSettled) perspectiveMotion.currentYaw = perspectiveMotion.targetYaw;
+        if (pitchSettled) perspectiveMotion.currentPitch = perspectiveMotion.targetPitch;
+
+        perspectiveMotion.lastFrameAt = now;
+        return !yawSettled ||
+            !pitchSettled ||
+            Math.abs(perspectiveMotion.velocityYaw) > 0 ||
+            Math.abs(perspectiveMotion.velocityPitch) > 0;
     }
 
     function getOrbitOffset(options) {
@@ -150,8 +333,13 @@
     }
 
     function getPerspectiveState(transform) {
-        const perspective = transform?.perspective;
-        if (!perspective?.enabled) {
+        const input = getPerspectiveInput(transform);
+        if (!input.enabled) {
+            perspectiveMotion.enabled = false;
+            perspectiveMotion.initialized = false;
+            perspectiveMotion.releasedNeedsSample = false;
+            perspectiveMotion.velocityYaw = 0;
+            perspectiveMotion.velocityPitch = 0;
             return {
                 enabled: false,
                 yaw: 0,
@@ -162,12 +350,16 @@
             };
         }
 
+        if (!perspectiveMotion.initialized || !perspectiveMotion.enabled) {
+            initializePerspectiveMotion(input, getNow());
+        }
+
         const canvasWidth = Math.max(1, Number(transform.canvasWidth) || 1);
         const canvasHeight = Math.max(1, Number(transform.canvasHeight) || 1);
         return {
             enabled: true,
-            yaw: Number.isFinite(perspective.yaw) ? perspective.yaw : 0,
-            pitch: Number.isFinite(perspective.pitch) ? perspective.pitch : 0,
+            yaw: perspectiveMotion.currentYaw,
+            pitch: perspectiveMotion.currentPitch,
             centerX: canvasWidth * 0.5,
             centerY: canvasHeight * 0.5,
             focalLength: Math.max(canvasWidth, canvasHeight) * 1.8
@@ -295,6 +487,10 @@
         getBoundsForNodes,
         getFitView,
         getScreenNodeRadius,
-        isNodeInFrame
+        isNodeInFrame,
+        stepPerspectiveMotion,
+        setPerspectivePointerActive,
+        releasePerspectivePointer,
+        cancelPerspectiveMotion
     };
 })();

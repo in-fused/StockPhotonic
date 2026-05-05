@@ -30,6 +30,24 @@
   },
   "mappings": [
     {
+      "ticker": "A",
+      "cik": "0001090872",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001090872.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AAL",
+      "cik": "0000006201",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000006201.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
       "ticker": "AAPL",
       "cik": "0000320193",
       "source_type": "sec_filing",
@@ -39,48 +57,138 @@
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "MSFT",
-      "cik": "0000789019",
+      "ticker": "ABBV",
+      "cik": "0001551152",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0000789019.json",
-      "capture_date": "2026-05-02",
+      "source_url": "https://data.sec.gov/submissions/CIK0001551152.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "NVDA",
-      "cik": "0001045810",
+      "ticker": "ABNB",
+      "cik": "0001559720",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0001045810.json",
-      "capture_date": "2026-05-02",
+      "source_url": "https://data.sec.gov/submissions/CIK0001559720.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "AMZN",
-      "cik": "0001018724",
+      "ticker": "ABT",
+      "cik": "0000001800",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0001018724.json",
-      "capture_date": "2026-05-02",
+      "source_url": "https://data.sec.gov/submissions/CIK0000001800.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "GOOGL",
-      "cik": "0001652044",
+      "ticker": "ADBE",
+      "cik": "0000796343",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0001652044.json",
-      "capture_date": "2026-05-02",
+      "source_url": "https://data.sec.gov/submissions/CIK0000796343.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "META",
-      "cik": "0001326801",
+      "ticker": "ADI",
+      "cik": "0000006281",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0001326801.json",
-      "capture_date": "2026-05-02",
+      "source_url": "https://data.sec.gov/submissions/CIK0000006281.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ADP",
+      "cik": "0000008670",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000008670.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ADSK",
+      "cik": "0000769397",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000769397.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AIG",
+      "cik": "0000005272",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000005272.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AJG",
+      "cik": "0000354190",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000354190.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AKAM",
+      "cik": "0001086222",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001086222.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ALGN",
+      "cik": "0001097149",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001097149.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ALL",
+      "cik": "0000899051",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000899051.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ALLE",
+      "cik": "0001579241",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001579241.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ALNY",
+      "cik": "0001178670",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001178670.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AMAT",
+      "cik": "0000006951",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000006951.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
@@ -93,12 +201,93 @@
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "INTC",
-      "cik": "0000050863",
+      "ticker": "AME",
+      "cik": "0001037868",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0000050863.json",
+      "source_url": "https://data.sec.gov/submissions/CIK0001037868.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AMGN",
+      "cik": "0000318154",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000318154.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AMP",
+      "cik": "0000820027",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000820027.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AMZN",
+      "cik": "0001018724",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001018724.json",
       "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AON",
+      "cik": "0000315293",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000315293.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "APA",
+      "cik": "0001841666",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001841666.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "APH",
+      "cik": "0000820313",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000820313.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "APO",
+      "cik": "0001858681",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001858681.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "AR",
+      "cik": "0001433270",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001433270.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ARES",
+      "cik": "0001176948",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001176948.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
@@ -111,21 +300,102 @@
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "JPM",
-      "cik": "0000019617",
+      "ticker": "AXON",
+      "cik": "0001069183",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0000019617.json",
-      "capture_date": "2026-05-02",
+      "source_url": "https://data.sec.gov/submissions/CIK0001069183.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "GS",
-      "cik": "0000886982",
+      "ticker": "AXP",
+      "cik": "0000004962",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0000886982.json",
-      "capture_date": "2026-05-02",
+      "source_url": "https://data.sec.gov/submissions/CIK0000004962.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BA",
+      "cik": "0000012927",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000012927.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BAC",
+      "cik": "0000070858",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000070858.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BAX",
+      "cik": "0000010456",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000010456.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BDX",
+      "cik": "0000010795",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000010795.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BEN",
+      "cik": "0000038777",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000038777.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BIIB",
+      "cik": "0000875045",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000875045.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BK",
+      "cik": "0001390777",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001390777.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BKNG",
+      "cik": "0001075531",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001075531.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BKR",
+      "cik": "0001701605",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001701605.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
@@ -138,12 +408,390 @@
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "XOM",
-      "cik": "0000034088",
+      "ticker": "BMRN",
+      "cik": "0001048477",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0000034088.json",
+      "source_url": "https://data.sec.gov/submissions/CIK0001048477.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BMY",
+      "cik": "0000014272",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000014272.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BP",
+      "cik": "0000313807",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000313807.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BRO",
+      "cik": "0000079282",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000079282.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BSX",
+      "cik": "0000885725",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000885725.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "BX",
+      "cik": "0001393818",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001393818.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "C",
+      "cik": "0000831001",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000831001.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CAH",
+      "cik": "0000721371",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000721371.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CARR",
+      "cik": "0001783180",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001783180.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CAT",
+      "cik": "0000018230",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000018230.json",
       "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CB",
+      "cik": "0000896159",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000896159.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CBOE",
+      "cik": "0001374310",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001374310.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CCL",
+      "cik": "0000815097",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000815097.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CDNS",
+      "cik": "0000813672",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000813672.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CDW",
+      "cik": "0001402057",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001402057.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CFG",
+      "cik": "0000759944",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000759944.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CHD",
+      "cik": "0000313927",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000313927.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CHRD",
+      "cik": "0001486159",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001486159.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CHRW",
+      "cik": "0001043277",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001043277.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CHTR",
+      "cik": "0001091667",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001091667.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CI",
+      "cik": "0001739940",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001739940.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CINF",
+      "cik": "0000020286",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000020286.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CL",
+      "cik": "0000021665",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000021665.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CLX",
+      "cik": "0000021076",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000021076.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CMCSA",
+      "cik": "0001166691",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001166691.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CME",
+      "cik": "0001156375",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001156375.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CMG",
+      "cik": "0001058090",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001058090.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CMI",
+      "cik": "0000026172",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000026172.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CNC",
+      "cik": "0001071739",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001071739.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CNQ",
+      "cik": "0001017413",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001017413.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "COF",
+      "cik": "0000927628",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000927628.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "COO",
+      "cik": "0000711404",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000711404.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "COP",
+      "cik": "0001163165",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001163165.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "COR",
+      "cik": "0001140859",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001140859.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "COST",
+      "cik": "0000909832",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000909832.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CPB",
+      "cik": "0000016732",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000016732.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CRM",
+      "cik": "0001108524",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001108524.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CRWD",
+      "cik": "0001535527",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001535527.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CSCO",
+      "cik": "0000858877",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000858877.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CSX",
+      "cik": "0000277948",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000277948.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CTAS",
+      "cik": "0000723254",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000723254.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CTRA",
+      "cik": "0000858470",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000858470.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "CVS",
+      "cik": "0000064803",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000064803.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
@@ -156,21 +804,345 @@
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "UNH",
-      "cik": "0000731766",
+      "ticker": "DAL",
+      "cik": "0000027904",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0000731766.json",
-      "capture_date": "2026-05-02",
+      "source_url": "https://data.sec.gov/submissions/CIK0000027904.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "LLY",
-      "cik": "0000059478",
+      "ticker": "DASH",
+      "cik": "0001792789",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0000059478.json",
-      "capture_date": "2026-05-02",
+      "source_url": "https://data.sec.gov/submissions/CIK0001792789.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DDOG",
+      "cik": "0001561550",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001561550.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DE",
+      "cik": "0000315189",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000315189.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DELL",
+      "cik": "0001571996",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001571996.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DGX",
+      "cik": "0001022079",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001022079.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DHR",
+      "cik": "0000313616",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000313616.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DIS",
+      "cik": "0001744489",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001744489.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DOCU",
+      "cik": "0001261333",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001261333.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DOV",
+      "cik": "0000029905",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000029905.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DPZ",
+      "cik": "0001286681",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001286681.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DVN",
+      "cik": "0001090012",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001090012.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "DXCM",
+      "cik": "0001093557",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001093557.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EA",
+      "cik": "0000712515",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000712515.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EFX",
+      "cik": "0000033185",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000033185.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EL",
+      "cik": "0001001250",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001001250.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ELV",
+      "cik": "0001156039",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001156039.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EMR",
+      "cik": "0000032604",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000032604.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ENB",
+      "cik": "0000895728",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000895728.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EOG",
+      "cik": "0000821189",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000821189.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EPD",
+      "cik": "0001061219",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001061219.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EQT",
+      "cik": "0000033213",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000033213.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ET",
+      "cik": "0001276187",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001276187.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ETN",
+      "cik": "0001551182",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001551182.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EW",
+      "cik": "0001099800",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001099800.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EXPD",
+      "cik": "0000746515",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000746515.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "EXPE",
+      "cik": "0001324424",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001324424.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "F",
+      "cik": "0000037996",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000037996.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "FANG",
+      "cik": "0001539838",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001539838.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "FAST",
+      "cik": "0000815556",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000815556.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "FDX",
+      "cik": "0001048911",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001048911.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "FIS",
+      "cik": "0001136893",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001136893.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "FITB",
+      "cik": "0000035527",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000035527.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "FTI",
+      "cik": "0001681459",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001681459.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "FTNT",
+      "cik": "0001262039",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001262039.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "FTV",
+      "cik": "0001659166",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001659166.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GD",
+      "cik": "0000040533",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000040533.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GDDY",
+      "cik": "0001609711",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001609711.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     },
     {
@@ -183,12 +1155,2019 @@
       "review_status": "approved_for_fetch"
     },
     {
-      "ticker": "CAT",
-      "cik": "0000018230",
+      "ticker": "GEHC",
+      "cik": "0001932393",
       "source_type": "sec_filing",
       "source_tier": 1,
-      "source_url": "https://data.sec.gov/submissions/CIK0000018230.json",
+      "source_url": "https://data.sec.gov/submissions/CIK0001932393.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GEN",
+      "cik": "0000849399",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000849399.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GILD",
+      "cik": "0000882095",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000882095.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GIS",
+      "cik": "0000040704",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000040704.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GLW",
+      "cik": "0000024741",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000024741.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GM",
+      "cik": "0001467858",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001467858.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GNRC",
+      "cik": "0001474735",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001474735.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GOOGL",
+      "cik": "0001652044",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001652044.json",
       "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GPN",
+      "cik": "0001123360",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001123360.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GS",
+      "cik": "0000886982",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000886982.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "GWW",
+      "cik": "0000277135",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000277135.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HAL",
+      "cik": "0000045012",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000045012.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HBAN",
+      "cik": "0000049196",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000049196.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HCA",
+      "cik": "0000860730",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000860730.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HD",
+      "cik": "0000354950",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000354950.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HIG",
+      "cik": "0000874766",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000874766.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HII",
+      "cik": "0001501585",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001501585.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HLT",
+      "cik": "0001585689",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001585689.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HON",
+      "cik": "0000773840",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000773840.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HPE",
+      "cik": "0001645590",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001645590.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HPQ",
+      "cik": "0000047217",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000047217.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HSY",
+      "cik": "0000047111",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000047111.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HUM",
+      "cik": "0000049071",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000049071.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "HWM",
+      "cik": "0000004281",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000004281.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "IBM",
+      "cik": "0000051143",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000051143.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ICE",
+      "cik": "0001571949",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001571949.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "IDXX",
+      "cik": "0000874716",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000874716.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "IEX",
+      "cik": "0000832101",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000832101.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ILMN",
+      "cik": "0001110803",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001110803.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "IMO",
+      "cik": "0000049938",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000049938.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "INCY",
+      "cik": "0000879169",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000879169.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "INTC",
+      "cik": "0000050863",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000050863.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "INTU",
+      "cik": "0000896878",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000896878.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "IQV",
+      "cik": "0001478242",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001478242.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "IR",
+      "cik": "0001699150",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001699150.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ISRG",
+      "cik": "0001035267",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001035267.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "IT",
+      "cik": "0000749251",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000749251.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ITW",
+      "cik": "0000049826",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000049826.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "IVZ",
+      "cik": "0000914208",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000914208.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "JBHT",
+      "cik": "0000728535",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000728535.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "JCI",
+      "cik": "0000833444",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000833444.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "JNJ",
+      "cik": "0000200406",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000200406.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "JPM",
+      "cik": "0000019617",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000019617.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "KDP",
+      "cik": "0001418135",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001418135.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "KEY",
+      "cik": "0000091576",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000091576.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "KEYS",
+      "cik": "0001601046",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001601046.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "KHC",
+      "cik": "0001637459",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001637459.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "KKR",
+      "cik": "0001404912",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001404912.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "KLAC",
+      "cik": "0000319201",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000319201.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "KMB",
+      "cik": "0000055785",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000055785.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "KMI",
+      "cik": "0001506307",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001506307.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "KO",
+      "cik": "0000021344",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000021344.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LCID",
+      "cik": "0001811210",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001811210.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LH",
+      "cik": "0000920148",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000920148.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LLY",
+      "cik": "0000059478",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000059478.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LMT",
+      "cik": "0000936468",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000936468.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LNG",
+      "cik": "0000003570",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000003570.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LOW",
+      "cik": "0000060667",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000060667.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LRCX",
+      "cik": "0000707549",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000707549.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LULU",
+      "cik": "0001397187",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001397187.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LUV",
+      "cik": "0000092380",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000092380.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "LYV",
+      "cik": "0001335258",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001335258.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MA",
+      "cik": "0001141391",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001141391.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MAR",
+      "cik": "0001048286",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001048286.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MAS",
+      "cik": "0000062996",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000062996.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MCD",
+      "cik": "0000063908",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000063908.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MCHP",
+      "cik": "0000827054",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000827054.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MCK",
+      "cik": "0000927653",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000927653.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MCO",
+      "cik": "0001059556",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001059556.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MDB",
+      "cik": "0001441816",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001441816.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MDLZ",
+      "cik": "0001103982",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001103982.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MDT",
+      "cik": "0001613103",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001613103.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "META",
+      "cik": "0001326801",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001326801.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MNST",
+      "cik": "0000865752",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000865752.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MO",
+      "cik": "0000764180",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000764180.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MOH",
+      "cik": "0001179929",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001179929.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MPC",
+      "cik": "0001510295",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001510295.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MPLX",
+      "cik": "0001552000",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001552000.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MPWR",
+      "cik": "0001280452",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001280452.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MRK",
+      "cik": "0000310158",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000310158.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MRNA",
+      "cik": "0001682852",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001682852.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MRVL",
+      "cik": "0001835632",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001835632.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MS",
+      "cik": "0000895421",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000895421.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MSCI",
+      "cik": "0001408198",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001408198.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MSFT",
+      "cik": "0000789019",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000789019.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MTB",
+      "cik": "0000036270",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000036270.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MTD",
+      "cik": "0001037646",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001037646.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MTDR",
+      "cik": "0001520006",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001520006.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "MU",
+      "cik": "0000723125",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000723125.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NCLH",
+      "cik": "0001513761",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001513761.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NDAQ",
+      "cik": "0001120193",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001120193.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NDSN",
+      "cik": "0000072331",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000072331.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NET",
+      "cik": "0001477333",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001477333.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NFLX",
+      "cik": "0001065280",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001065280.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NKE",
+      "cik": "0000320187",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000320187.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NOC",
+      "cik": "0001133421",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001133421.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NOV",
+      "cik": "0001021860",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001021860.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NOW",
+      "cik": "0001373715",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001373715.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NSC",
+      "cik": "0000702165",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000702165.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NTAP",
+      "cik": "0001002047",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001002047.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NTRS",
+      "cik": "0000073124",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000073124.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NVDA",
+      "cik": "0001045810",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001045810.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "NXPI",
+      "cik": "0001413447",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001413447.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ODFL",
+      "cik": "0000878927",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000878927.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "OKE",
+      "cik": "0001039684",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001039684.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "OKTA",
+      "cik": "0001660134",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001660134.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "OMC",
+      "cik": "0000029989",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000029989.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ON",
+      "cik": "0001097864",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001097864.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ORCL",
+      "cik": "0001341439",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001341439.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "OTIS",
+      "cik": "0001781335",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001781335.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "OWL",
+      "cik": "0001823945",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001823945.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "OXY",
+      "cik": "0000797468",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000797468.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PAA",
+      "cik": "0001070423",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001070423.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PANW",
+      "cik": "0001327567",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001327567.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PATH",
+      "cik": "0001734722",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001734722.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PAYX",
+      "cik": "0000723531",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000723531.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PCAR",
+      "cik": "0000075362",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000075362.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PEP",
+      "cik": "0000077476",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000077476.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PFE",
+      "cik": "0000078003",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000078003.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PG",
+      "cik": "0000080424",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000080424.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PGR",
+      "cik": "0000080661",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000080661.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PH",
+      "cik": "0000076334",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000076334.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PLTR",
+      "cik": "0001321655",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001321655.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PM",
+      "cik": "0001413329",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001413329.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PNC",
+      "cik": "0000713676",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000713676.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PNR",
+      "cik": "0000077360",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000077360.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PODD",
+      "cik": "0001145197",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001145197.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PR",
+      "cik": "0001658566",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001658566.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PSX",
+      "cik": "0001534701",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001534701.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PTC",
+      "cik": "0000857005",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000857005.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "PYPL",
+      "cik": "0001633917",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001633917.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "QCOM",
+      "cik": "0000804328",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000804328.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "QRVO",
+      "cik": "0001604778",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001604778.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "RCL",
+      "cik": "0000884887",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000884887.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "REGN",
+      "cik": "0000872589",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000872589.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "RF",
+      "cik": "0001281761",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001281761.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "RIVN",
+      "cik": "0001874178",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001874178.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "RJF",
+      "cik": "0000720005",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000720005.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "RMD",
+      "cik": "0000943819",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000943819.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ROK",
+      "cik": "0001024478",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001024478.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ROP",
+      "cik": "0000882835",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000882835.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ROST",
+      "cik": "0000745732",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000745732.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "RRC",
+      "cik": "0000315852",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000315852.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "RSG",
+      "cik": "0001060391",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001060391.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "RTX",
+      "cik": "0000101829",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000101829.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "RVTY",
+      "cik": "0000031791",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000031791.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SBUX",
+      "cik": "0000829224",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000829224.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SCHW",
+      "cik": "0000316709",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000316709.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SHEL",
+      "cik": "0001306965",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001306965.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SHOP",
+      "cik": "0001594805",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001594805.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SLB",
+      "cik": "0000087347",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000087347.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SMCI",
+      "cik": "0001375365",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001375365.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SNOW",
+      "cik": "0001640147",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001640147.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SNPS",
+      "cik": "0000883241",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000883241.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SPGI",
+      "cik": "0000064040",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000064040.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "STE",
+      "cik": "0001757898",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001757898.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "STT",
+      "cik": "0000093751",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000093751.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "STX",
+      "cik": "0001137789",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001137789.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "STZ",
+      "cik": "0000016918",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000016918.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SU",
+      "cik": "0000311337",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000311337.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SUN",
+      "cik": "0001552275",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001552275.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SWK",
+      "cik": "0000093556",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000093556.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SWKS",
+      "cik": "0000004127",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000004127.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SYF",
+      "cik": "0001601712",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001601712.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "SYK",
+      "cik": "0000310764",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000310764.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "T",
+      "cik": "0000732717",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000732717.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TAP",
+      "cik": "0000024545",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000024545.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TDG",
+      "cik": "0001260221",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001260221.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TEAM",
+      "cik": "0001650372",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001650372.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TECH",
+      "cik": "0000842023",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000842023.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TEL",
+      "cik": "0001385157",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001385157.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TER",
+      "cik": "0000097210",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000097210.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TFC",
+      "cik": "0000092230",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000092230.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TFX",
+      "cik": "0000096943",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000096943.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TGT",
+      "cik": "0000027419",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000027419.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TJX",
+      "cik": "0000109198",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000109198.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TMO",
+      "cik": "0000097745",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000097745.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TMUS",
+      "cik": "0001283699",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001283699.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TPL",
+      "cik": "0001811074",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001811074.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TRGP",
+      "cik": "0001389170",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001389170.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TROW",
+      "cik": "0001113169",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001113169.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TRP",
+      "cik": "0001232384",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001232384.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TRV",
+      "cik": "0000086312",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000086312.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TSLA",
+      "cik": "0001318605",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001318605.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TT",
+      "cik": "0001466258",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001466258.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TTE",
+      "cik": "0000879764",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000879764.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TTWO",
+      "cik": "0000946581",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000946581.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TXN",
+      "cik": "0000097476",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000097476.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TXT",
+      "cik": "0000217346",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000217346.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "TYL",
+      "cik": "0000860731",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000860731.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "UAL",
+      "cik": "0000100517",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000100517.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "UBER",
+      "cik": "0001543151",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001543151.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "UHS",
+      "cik": "0000352915",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000352915.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "UNH",
+      "cik": "0000731766",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000731766.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "UNP",
+      "cik": "0000100885",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000100885.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "UPS",
+      "cik": "0001090727",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001090727.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "URI",
+      "cik": "0001067701",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001067701.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "USB",
+      "cik": "0000036104",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000036104.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "V",
+      "cik": "0001403161",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001403161.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "VLO",
+      "cik": "0001035002",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001035002.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "VNOM",
+      "cik": "0002074176",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0002074176.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "VRSK",
+      "cik": "0001442145",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001442145.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "VRSN",
+      "cik": "0001014473",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001014473.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "VRTX",
+      "cik": "0000875320",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000875320.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "VTRS",
+      "cik": "0001792044",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001792044.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "VZ",
+      "cik": "0000732712",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000732712.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WAB",
+      "cik": "0000943452",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000943452.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WAT",
+      "cik": "0001000697",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001000697.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WBD",
+      "cik": "0001437107",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001437107.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WDAY",
+      "cik": "0001327811",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001327811.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WDC",
+      "cik": "0000106040",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000106040.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WFC",
+      "cik": "0000072971",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000072971.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WM",
+      "cik": "0000823768",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000823768.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WMB",
+      "cik": "0000107263",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000107263.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WMT",
+      "cik": "0000104169",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000104169.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WRB",
+      "cik": "0000011544",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000011544.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "WST",
+      "cik": "0000105770",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000105770.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "XOM",
+      "cik": "0000034088",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000034088.json",
+      "capture_date": "2026-05-02",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "XYL",
+      "cik": "0001524472",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001524472.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "YUM",
+      "cik": "0001041061",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001041061.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ZBH",
+      "cik": "0001136869",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001136869.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ZION",
+      "cik": "0000109380",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0000109380.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ZS",
+      "cik": "0001713683",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001713683.json",
+      "capture_date": "2026-05-05",
+      "review_status": "approved_for_fetch"
+    },
+    {
+      "ticker": "ZTS",
+      "cik": "0001555280",
+      "source_type": "sec_filing",
+      "source_tier": 1,
+      "source_url": "https://data.sec.gov/submissions/CIK0001555280.json",
+      "capture_date": "2026-05-05",
       "review_status": "approved_for_fetch"
     }
   ]

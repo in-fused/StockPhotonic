@@ -18,6 +18,7 @@ sys.dont_write_bytecode = True
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 PRODUCTION_COMPANIES_PATH = PROJECT_ROOT / "data" / "companies.json"
+OFFICIAL_TICKER_UNIVERSE_PATH = PROJECT_ROOT / "data" / "candidates" / "official_ticker_universe.json"
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
@@ -39,8 +40,9 @@ SIGNAL_RELATIONSHIP_TYPES = {
     "investment": "investment",
 }
 MIN_TARGET_MATCH_CONFIDENCE = 0.75
-MAX_PREVIEW_CANDIDATES_TOTAL = 75
-MAX_PREVIEW_CANDIDATES_PER_SOURCE_TICKER = 5
+MIN_CONFIDENCE_HINT = 0.85
+MAX_PREVIEW_CANDIDATES_TOTAL = 500
+MAX_PREVIEW_CANDIDATES_PER_SOURCE_TICKER = 8
 SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS = (
     "revenue from",
     "licensing",
@@ -428,7 +430,39 @@ def company_alias_values(company: dict[str, Any]) -> list[str]:
     return aliases
 
 
-def load_production_companies() -> list[dict[str, str]]:
+def load_candidate_ticker_universe_companies() -> list[dict[str, str]]:
+    if not OFFICIAL_TICKER_UNIVERSE_PATH.exists():
+        return []
+    try:
+        with OFFICIAL_TICKER_UNIVERSE_PATH.open("r", encoding="utf-8") as file:
+            payload = json.load(file)
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    candidates = payload.get("candidates") if isinstance(payload, dict) else None
+    if not isinstance(candidates, list):
+        return []
+
+    companies: list[dict[str, str]] = []
+    for raw_company in candidates:
+        if not isinstance(raw_company, dict):
+            continue
+        ticker = clean_optional_string(raw_company.get("ticker"))
+        name = clean_optional_string(raw_company.get("name"))
+        if ticker is None or name is None:
+            continue
+        companies.append(
+            {
+                "ticker": ticker.upper(),
+                "name": name,
+                "_index": "candidate",
+                "_aliases": "[]",
+            }
+        )
+    return companies
+
+
+def load_match_companies() -> list[dict[str, str]]:
     try:
         with PRODUCTION_COMPANIES_PATH.open("r", encoding="utf-8") as file:
             raw_companies = json.load(file)
@@ -460,6 +494,11 @@ def load_production_companies() -> list[dict[str, str]]:
                 "_aliases": json.dumps(company_alias_values(raw_company)),
             }
         )
+    production_tickers = {company["ticker"] for company in companies}
+    for candidate_company in load_candidate_ticker_universe_companies():
+        if candidate_company["ticker"] in production_tickers:
+            continue
+        companies.append(candidate_company)
     return companies
 
 
@@ -488,7 +527,7 @@ def add_matcher_entry(
 
 
 def build_company_matcher() -> dict[str, list[dict[str, Any]]]:
-    companies = load_production_companies()
+    companies = load_match_companies()
     matcher: dict[str, list[dict[str, Any]]] = {}
     companies_by_ticker = {company["ticker"]: company for company in companies}
 
@@ -905,6 +944,9 @@ def candidate_is_graph_worthy(
     candidate: dict[str, Any],
     snippet: dict[str, Any],
 ) -> bool:
+    confidence_hint = numeric_score(candidate.get("confidence_hint"))
+    if confidence_hint is None or confidence_hint < MIN_CONFIDENCE_HINT:
+        return False
     if xbrl_noise_metrics(snippet)["is_dominated"]:
         return False
     if generic_relationship_noise_dominates(candidate.get("evidence_snippet")):
@@ -971,19 +1013,17 @@ def build_preview(raw_files: list[str], limit_chars: int | None) -> dict[str, An
     ranked_snippets = preview_ranked_snippets(source_snippets)
     candidates: list[dict[str, Any]] = []
     candidates_by_source: Counter[str] = Counter()
-    seen_candidate_keys: set[tuple[str, str, str, str]] = set()
+    seen_candidate_keys: set[tuple[str, str, str]] = set()
     for snippet in ranked_snippets:
         candidate = candidate_from_snippet(snippet, matcher)
         if candidate is not None:
             source_ticker = str(candidate.get("source_ticker") or "")
             target_ticker = str(candidate.get("target_ticker") or "")
             relationship_type = str(candidate.get("relationship_type") or "")
-            relationship_signal = str(candidate.get("relationship_signal") or "")
             key = (
                 source_ticker,
                 target_ticker,
                 relationship_type,
-                relationship_signal,
             )
             if key in seen_candidate_keys:
                 continue

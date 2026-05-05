@@ -72,8 +72,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--files",
         nargs="+",
-        required=True,
+        default=[],
         help="One or more local filing cache documents under data/cache/sec/filings.",
+    )
+    parser.add_argument(
+        "--files-from",
+        action="append",
+        default=[],
+        help=(
+            "Text file containing one local filing cache document path per line. "
+            "May be used more than once for large Windows batch runs."
+        ),
     )
     parser.add_argument(
         "--limit-chars",
@@ -93,7 +102,34 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Allow --write to overwrite an existing candidate file.",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    if not args.files and not args.files_from:
+        parser.error("--files or --files-from is required.")
+    return args
+
+
+def read_files_from_list(path: Path) -> list[str]:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        raise CandidateWriteError(f"could not read files list {path}: {exc}") from exc
+    return [
+        line.strip()
+        for line in lines
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+
+
+def resolve_input_files(args: argparse.Namespace) -> list[str]:
+    files = list(args.files)
+    for raw_path in args.files_from:
+        path = Path(raw_path)
+        if not path.is_absolute():
+            path = PROJECT_ROOT / path
+        files.extend(read_files_from_list(path))
+    if not files:
+        raise CandidateWriteError("no filing cache documents were provided.")
+    return files
 
 
 def metadata() -> dict[str, Any]:
@@ -334,7 +370,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     try:
-        payload = build_candidate_payload(args.files, args.limit_chars)
+        payload = build_candidate_payload(resolve_input_files(args), args.limit_chars)
         validate_payload(payload)
         if not args.write:
             print_dry_run(payload["candidates"])

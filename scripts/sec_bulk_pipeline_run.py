@@ -15,6 +15,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -28,6 +29,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CIK_MAPPINGS_PATH = ROOT / "data" / "candidates" / "cik_mappings.json"
 SEC_PIPELINE_RUN_SCRIPT = ROOT / "scripts" / "sec_pipeline_run.py"
 SEC_SIGNAL_CANDIDATES_WRITE_SCRIPT = ROOT / "scripts" / "sec_signal_candidates_write.py"
+RUN_LOG_DIR = ROOT / "data" / "candidates" / "run_logs"
 PRODUCTION_DATA_PATHS = (
     ROOT / "data" / "companies.json",
     ROOT / "data" / "connections.json",
@@ -546,27 +548,49 @@ def write_combined_candidates(
     print()
     print("SEC bulk candidate writer")
     print("=========================")
+    files_list_path: Path | None = None
+    RUN_LOG_DIR.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        "w",
+        encoding="utf-8",
+        delete=False,
+        dir=RUN_LOG_DIR,
+        prefix=".sec_bulk_files_",
+        suffix=".txt",
+    ) as files_list:
+        files_list_path = Path(files_list.name)
+        for path in files:
+            files_list.write(str(path))
+            files_list.write("\n")
+
     command = [
         sys.executable,
         str(SEC_SIGNAL_CANDIDATES_WRITE_SCRIPT),
-        "--files",
-        *[str(path) for path in files],
+        "--files-from",
+        str(files_list_path),
         "--write",
     ]
     if args.force:
         command.append("--force")
 
-    result = run_subprocess(command)
-    assert_production_data_unchanged(initial_hashes)
-    if result.returncode != 0:
-        raise SecBulkPipelineError(
-            "combined review-only SEC candidate writer failed; production writes remain 0."
-        )
-    metrics = parse_pipeline_metrics(f"{result.stdout}\n{result.stderr}")
-    candidate_count = metrics.get("candidate_file_count")
-    if isinstance(candidate_count, int):
-        print(f"SEC bulk combined candidate count: {candidate_count}", flush=True)
-    return True
+    try:
+        result = run_subprocess(command)
+        assert_production_data_unchanged(initial_hashes)
+        if result.returncode != 0:
+            raise SecBulkPipelineError(
+                "combined review-only SEC candidate writer failed; production writes remain 0."
+            )
+        metrics = parse_pipeline_metrics(f"{result.stdout}\n{result.stderr}")
+        candidate_count = metrics.get("candidate_file_count")
+        if isinstance(candidate_count, int):
+            print(f"SEC bulk combined candidate count: {candidate_count}", flush=True)
+        return True
+    finally:
+        if files_list_path is not None:
+            try:
+                files_list_path.unlink()
+            except OSError:
+                pass
 
 
 def result_list(results: list[TickerResult], status: str) -> list[TickerResult]:

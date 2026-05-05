@@ -964,6 +964,11 @@
                     <span>Orb Map</span>
                 </button>
 
+                <button id="orb-spread-clusters" type="button" onclick="cycleOrbMapClusters()" class="focus-button hidden px-4 py-3 text-xs rounded-3xl border border-yellow-300/25 flex items-center gap-x-2" title="Spread Clusters: Balanced">
+                    <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                    <span>Spread Clusters</span>
+                </button>
+
                 <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
                     <i class="fa-solid fa-file-shield"></i>
                     <span>SEC Preview On</span>
@@ -1855,9 +1860,18 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             orbMapController.setSelectedNode(selectedNode);
         }
 
+        function cycleOrbMapClusters() {
+            if (!orbMapController) setupOrbMap();
+            orbMapController?.cycleLayoutDensity?.();
+            updateOrbMapSpreadControl();
+        }
+
         function updateOrbMapControl(status = null) {
             const button = document.getElementById('orb-map-toggle');
-            if (!button) return;
+            if (!button) {
+                updateOrbMapSpreadControl(status);
+                return;
+            }
 
             const unsupported = status === 'unsupported' || (orbMapController && !orbMapController.isSupported?.());
             const label = button.querySelector('span');
@@ -1871,6 +1885,24 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 : orbMapEnabled
                     ? 'Orb Map on: drag to rotate, scroll to zoom, click a company to select it.'
                     : 'Orb Map off: normal 2D graph rendering.';
+            updateOrbMapSpreadControl(status);
+        }
+
+        function updateOrbMapSpreadControl(status = null) {
+            const button = document.getElementById('orb-spread-clusters');
+            if (!button) return;
+
+            const unsupported = status === 'unsupported' || (orbMapController && !orbMapController.isSupported?.());
+            const active = orbMapEnabled && !unsupported;
+            const mode = orbMapController?.getLayoutDensity?.() || 'balanced';
+            const label = mode.charAt(0).toUpperCase() + mode.slice(1);
+            button.classList.toggle('hidden', !active);
+            button.disabled = !active;
+            button.setAttribute('aria-disabled', active ? 'false' : 'true');
+            button.setAttribute('aria-label', `Spread Clusters: ${label}`);
+            button.title = active
+                ? `Spread Clusters: ${label}. Click to cycle Balanced, Wide, and Vertical. Shift+drag a cluster to nudge it for this session.`
+                : 'Spread Clusters is available while Orb Map is active.';
         }
 
         /* ==============================

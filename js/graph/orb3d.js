@@ -8,6 +8,39 @@
     const MIN_ZOOM = 0.68;
     const MAX_ZOOM = 1.82;
     const GOLDEN_RATIO_FRACTION = 0.61803398875;
+    const ORB_LAYOUT_DENSITY_MODES = ['balanced', 'wide', 'vertical'];
+    const ORB_LAYOUT_DENSITY_PROFILES = {
+        balanced: {
+            label: 'Balanced',
+            latitudes: [-0.88, 0.62, -0.34, 0.94, -0.64, 0.28, -1.04, 0.76, -0.12, 1.08],
+            localLatitudeSpread: 0.34,
+            localLatitudeWave: 0.08,
+            localLongitudeSpread: 0.74,
+            sectorLatitudeJitter: 0.11,
+            sectorLongitudeJitter: 0.036,
+            radiusSpread: 0.048
+        },
+        wide: {
+            label: 'Wide',
+            latitudes: [-0.74, 0.78, -0.18, 1.02, -0.98, 0.38, -0.48, 0.14, -1.1, 0.94],
+            localLatitudeSpread: 0.38,
+            localLatitudeWave: 0.1,
+            localLongitudeSpread: 1.06,
+            sectorLatitudeJitter: 0.13,
+            sectorLongitudeJitter: 0.05,
+            radiusSpread: 0.062
+        },
+        vertical: {
+            label: 'Vertical',
+            latitudes: [-1.1, 1.08, -0.78, 0.82, -0.48, 0.52, -0.18, 1.18, -1.2, 0.16],
+            localLatitudeSpread: 0.54,
+            localLatitudeWave: 0.13,
+            localLongitudeSpread: 0.58,
+            sectorLatitudeJitter: 0.1,
+            sectorLongitudeJitter: 0.032,
+            radiusSpread: 0.052
+        }
+    };
 
     function createOrbMapController(options) {
         const canvas = options.canvas;
@@ -30,14 +63,19 @@
             screenNodes: [],
             hoveredNode: null,
             selectedNode: null,
+            layoutDensity: 'balanced',
+            sectorAdjustments: new Map(),
+            tuningSector: null,
             pointer: {
                 active: false,
                 pointerId: null,
+                mode: 'rotate',
                 moved: false,
                 startX: 0,
                 startY: 0,
                 lastX: 0,
-                lastY: 0
+                lastY: 0,
+                tuningSector: null
             }
         };
 
@@ -48,6 +86,9 @@
                 setEnabled: () => false,
                 setData: () => {},
                 setSelectedNode: () => {},
+                setLayoutDensity: () => 'balanced',
+                cycleLayoutDensity: () => 'balanced',
+                getLayoutDensity: () => 'balanced',
                 resize: () => {},
                 draw: () => {}
             };
@@ -87,6 +128,20 @@
                 state.selectedNode = node || null;
                 if (state.enabled) draw(state, options);
             },
+            setLayoutDensity(mode) {
+                state.layoutDensity = normalizeLayoutDensityMode(mode);
+                setData(state, getDataSnapshot(options), options);
+                if (state.enabled) draw(state, options);
+                return state.layoutDensity;
+            },
+            cycleLayoutDensity() {
+                const index = ORB_LAYOUT_DENSITY_MODES.indexOf(state.layoutDensity);
+                const nextMode = ORB_LAYOUT_DENSITY_MODES[(Math.max(0, index) + 1) % ORB_LAYOUT_DENSITY_MODES.length];
+                return this.setLayoutDensity(nextMode);
+            },
+            getLayoutDensity() {
+                return state.layoutDensity;
+            },
             resize() {
                 resize(state, canvas, options);
                 if (state.enabled) draw(state, options);
@@ -100,16 +155,23 @@
     function bindEvents(canvas, state, options) {
         canvas.addEventListener('pointerdown', event => {
             if (!state.enabled || (event.pointerType === 'mouse' && event.button !== 0)) return;
+            const point = getCanvasPoint(canvas, event);
+            const tuningTarget = event.shiftKey ? findNodeAt(state, point.x, point.y) : null;
             state.pointer.active = true;
             state.pointer.pointerId = event.pointerId;
+            state.pointer.mode = tuningTarget ? 'sector-tune' : 'rotate';
             state.pointer.moved = false;
             state.pointer.startX = event.clientX;
             state.pointer.startY = event.clientY;
             state.pointer.lastX = event.clientX;
             state.pointer.lastY = event.clientY;
+            state.pointer.tuningSector = tuningTarget?.sector || null;
+            state.tuningSector = state.pointer.tuningSector;
+            if (tuningTarget) state.hoveredNode = tuningTarget;
             canvas.setPointerCapture?.(event.pointerId);
             canvas.classList.remove('cursor-grab');
             canvas.classList.add('cursor-grabbing');
+            if (tuningTarget) draw(state, options);
             event.preventDefault();
         });
 
@@ -120,8 +182,12 @@
                 const dy = event.clientY - state.pointer.lastY;
                 const total = Math.hypot(event.clientX - state.pointer.startX, event.clientY - state.pointer.startY);
                 if (total > DRAG_THRESHOLD) state.pointer.moved = true;
-                state.rotationY += dx * 0.0065;
-                state.rotationX = clamp(state.rotationX + dy * 0.005, -1.12, 1.12);
+                if (state.pointer.mode === 'sector-tune' && state.pointer.tuningSector) {
+                    nudgeSector(state, state.pointer.tuningSector, dx * 0.0068, -dy * 0.0049);
+                } else {
+                    state.rotationY += dx * 0.0065;
+                    state.rotationX = clamp(state.rotationX + dy * 0.005, -1.12, 1.12);
+                }
                 state.pointer.lastX = event.clientX;
                 state.pointer.lastY = event.clientY;
                 draw(state, options);
@@ -140,9 +206,14 @@
         canvas.addEventListener('pointerup', event => {
             if (!state.pointer.active || state.pointer.pointerId !== event.pointerId) return;
             const point = getCanvasPoint(canvas, event);
-            const clickedNode = !state.pointer.moved ? findNodeAt(state, point.x, point.y) : null;
+            const clickedNode = !state.pointer.moved && state.pointer.mode !== 'sector-tune'
+                ? findNodeAt(state, point.x, point.y)
+                : null;
             state.pointer.active = false;
             state.pointer.pointerId = null;
+            state.pointer.mode = 'rotate';
+            state.pointer.tuningSector = null;
+            state.tuningSector = null;
             canvas.releasePointerCapture?.(event.pointerId);
             canvas.classList.add('cursor-grab');
             canvas.classList.remove('cursor-grabbing');
@@ -153,6 +224,9 @@
         canvas.addEventListener('pointercancel', event => {
             state.pointer.active = false;
             state.pointer.pointerId = null;
+            state.pointer.mode = 'rotate';
+            state.pointer.tuningSector = null;
+            state.tuningSector = null;
             canvas.releasePointerCapture?.(event.pointerId);
             canvas.classList.add('cursor-grab');
             canvas.classList.remove('cursor-grabbing');
@@ -179,7 +253,7 @@
         state.nodes = Array.isArray(data?.nodes) ? data.nodes : [];
         state.links = Array.isArray(data?.links) ? data.links : [];
         state.selectedNode = data?.selectedNode || state.selectedNode || null;
-        const layout = buildOrbLayout(state.nodes, state.links, options);
+        const layout = buildOrbLayout(state.nodes, state.links, options, state);
         state.layoutNodes = layout.nodes;
         state.layoutLinks = layout.links;
     }
@@ -198,7 +272,8 @@
         canvas.height = Math.floor(state.height * dpr);
     }
 
-    function buildOrbLayout(nodes, links, options) {
+    function buildOrbLayout(nodes, links, options, state = {}) {
+        const profile = getLayoutDensityProfile(state.layoutDensity);
         const degree = new Map();
         links.forEach(link => {
             if (!link?.source || !link?.target) return;
@@ -218,38 +293,45 @@
             bucket.sort((a, b) => (Number(a.rank) || 9999) - (Number(b.rank) || 9999) || String(a.ticker || '').localeCompare(String(b.ticker || '')));
         });
 
-        const bandCount = Math.min(5, Math.max(3, sectors.length));
         const layoutNodes = nodes.map(node => {
             const sector = node.sector || 'Other';
             const bucket = sectorBuckets.get(sector) || [];
             const localIndex = Math.max(0, bucket.indexOf(node));
             const bucketT = bucket.length <= 1 ? 0.5 : localIndex / (bucket.length - 1);
             const sIndex = sectorIndex.get(sector) || 0;
-            const bandIndex = sIndex % bandCount;
-            const bandT = bandCount <= 1 ? 0.5 : bandIndex / (bandCount - 1);
-            const latitude = clamp(-0.82 + bandT * 1.64 + (bucketT - 0.5) * 0.36 + ((localIndex % 5) - 2) * 0.032, -1.08, 1.08);
-            const sectorTurn = sectors.length ? sIndex / sectors.length : 0;
-            const sectorArc = sectors.length ? TAU / sectors.length : TAU;
-            const localSpread = (bucketT - 0.5) * sectorArc * 0.72;
-            const goldenOffset = (((localIndex + 1) * GOLDEN_RATIO_FRACTION) % 1 - 0.5) * sectorArc * 0.22;
             const seed = hash(`${node.id}:${node.ticker || ''}:${sector}`);
-            const longitude = sectorTurn * TAU - Math.PI / 2 + localSpread + goldenOffset + ((seed % 100) - 50) * 0.0014;
+            const sectorAnchor = getSectorAnchor(sector, sIndex, sectors.length, profile);
             const nodeDegree = degree.get(node.id) || node.degree || 0;
             const rank = Number(node.rank) || 9999;
             const rankCentrality = rank <= 50 ? (50 - rank) / 50 : 0;
             const centrality = clamp(nodeDegree / maxDegree * 0.72 + rankCentrality * 0.28, 0, 1);
-            const radius = 0.96 - centrality * 0.23 + ((seed % 31) - 15) * 0.0019;
-            const cosLat = Math.cos(latitude);
-            const point = {
-                x: Math.cos(longitude) * cosLat * radius,
-                y: Math.sin(latitude) * radius,
-                z: Math.sin(longitude) * cosLat * radius
-            };
+            const localArc = Math.min(1.24, Math.max(0.5, TAU / Math.max(4, sectors.length || 1)));
+            const localTurn = (((localIndex + 1) * GOLDEN_RATIO_FRACTION + (seed % 997) / 997 * 0.09) % 1) - 0.5;
+            const localWave = Math.sin((localIndex + 1) * 1.79 + (hash(`sector-wave:${sector}`) % 360) * Math.PI / 180);
+            const centralityFocus = 1 - centrality * 0.34;
+            const baseLatitude = clamp(
+                sectorAnchor.latitude +
+                (bucketT - 0.5) * profile.localLatitudeSpread * centralityFocus +
+                localWave * profile.localLatitudeWave,
+                -1.24,
+                1.24
+            );
+            const baseLongitude = sectorAnchor.longitude +
+                localTurn * localArc * profile.localLongitudeSpread * centralityFocus +
+                ((seed % 101) - 50) * 0.0009;
+            const radius = 0.96 - centrality * 0.22 + sectorAnchor.radiusOffset + ((seed % 31) - 15) * 0.0019;
+            const adjustment = getSectorAdjustment(state, sector);
+            const latitude = clamp(baseLatitude + adjustment.latitude, -1.28, 1.28);
+            const longitude = baseLongitude + adjustment.longitude;
+            const point = pointFromOrbital(latitude, longitude, radius);
 
             return {
                 node,
                 point,
                 sector,
+                baseLatitude,
+                baseLongitude,
+                radius,
                 centrality,
                 size: clamp(4.5 + Math.sqrt(Math.max(0.05, Number(node.market_cap) || 0.05)) * 1.75 + Math.sqrt(nodeDegree) * 0.9, 5.5, 18)
             };
@@ -299,6 +381,7 @@
 
         drawOrbLabels(ctx, state, projectedNodes, options);
         drawHoverReadout(ctx, state, options);
+        drawClusterTuningReadout(ctx, state, options);
     }
 
     function drawOrbBackground(ctx, state) {
@@ -557,6 +640,26 @@
         ctx.restore();
     }
 
+    function drawClusterTuningReadout(ctx, state) {
+        if (!state.tuningSector) return;
+        const text = `Tuning ${state.tuningSector}`;
+        ctx.save();
+        ctx.font = '11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+        const width = Math.min(ctx.measureText(text).width + 20, state.width - 28);
+        const x = state.width / 2 - width / 2;
+        const y = 16;
+        ctx.fillStyle = 'rgba(3, 7, 18, 0.88)';
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.42)';
+        ctx.lineWidth = 1;
+        roundedRect(ctx, x, y, width, 25, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = GOLD_SOFT;
+        ctx.textAlign = 'center';
+        ctx.fillText(text, state.width / 2, y + 16);
+        ctx.restore();
+    }
+
     function getOrbLabel(node, options, detailed = false) {
         const primary = String(options.getLabelText?.(node) || node.ticker || node.name || '').trim();
         if (!detailed) return primary;
@@ -601,6 +704,66 @@
             });
         }
         return points;
+    }
+
+    function getLayoutDensityProfile(mode) {
+        return ORB_LAYOUT_DENSITY_PROFILES[normalizeLayoutDensityMode(mode)] || ORB_LAYOUT_DENSITY_PROFILES.balanced;
+    }
+
+    function normalizeLayoutDensityMode(mode) {
+        return ORB_LAYOUT_DENSITY_MODES.includes(mode) ? mode : 'balanced';
+    }
+
+    function getSectorAnchor(sector, sectorIndex, sectorCount, profile) {
+        const seed = hash(`orb-sector:${sector}`);
+        const latitudeSlots = profile.latitudes;
+        const slot = sectorIndex % latitudeSlots.length;
+        const cycle = Math.floor(sectorIndex / latitudeSlots.length);
+        const latitudeJitter = (((seed % 1000) / 1000) - 0.5) * profile.sectorLatitudeJitter;
+        const longitudeJitter = (((Math.floor(seed / 1000) % 1000) / 1000) - 0.5) * profile.sectorLongitudeJitter;
+        const sparseOffset = sectorCount <= 3 ? sectorIndex / Math.max(1, sectorCount) : sectorIndex * GOLDEN_RATIO_FRACTION;
+        const longitude = ((sparseOffset + cycle * 0.137 + longitudeJitter) % 1) * TAU - Math.PI / 2;
+        const radiusOffset = (((Math.floor(seed / 1000000) % 1000) / 1000) - 0.5) * profile.radiusSpread;
+
+        return {
+            latitude: clamp(latitudeSlots[slot] + latitudeJitter, -1.22, 1.22),
+            longitude,
+            radiusOffset
+        };
+    }
+
+    function getSectorAdjustment(state, sector) {
+        if (!state?.sectorAdjustments) return { latitude: 0, longitude: 0 };
+        if (!state.sectorAdjustments.has(sector)) {
+            state.sectorAdjustments.set(sector, { latitude: 0, longitude: 0 });
+        }
+        return state.sectorAdjustments.get(sector);
+    }
+
+    function nudgeSector(state, sector, longitudeDelta, latitudeDelta) {
+        const adjustment = getSectorAdjustment(state, sector);
+        adjustment.longitude = clamp(adjustment.longitude + longitudeDelta, -1.4, 1.4);
+        adjustment.latitude = clamp(adjustment.latitude + latitudeDelta, -0.74, 0.74);
+        applySectorAdjustment(state, sector);
+    }
+
+    function applySectorAdjustment(state, sector) {
+        const adjustment = getSectorAdjustment(state, sector);
+        state.layoutNodes.forEach(item => {
+            if (item.sector !== sector) return;
+            const latitude = clamp(item.baseLatitude + adjustment.latitude, -1.28, 1.28);
+            const longitude = item.baseLongitude + adjustment.longitude;
+            item.point = pointFromOrbital(latitude, longitude, item.radius);
+        });
+    }
+
+    function pointFromOrbital(latitude, longitude, radius) {
+        const cosLat = Math.cos(latitude);
+        return {
+            x: Math.cos(longitude) * cosLat * radius,
+            y: Math.sin(latitude) * radius,
+            z: Math.sin(longitude) * cosLat * radius
+        };
     }
 
     function project(point, state) {

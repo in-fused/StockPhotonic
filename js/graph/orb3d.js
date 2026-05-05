@@ -7,6 +7,15 @@
     const DRAG_THRESHOLD = 4;
     const MIN_ZOOM = 0.68;
     const MAX_ZOOM = 1.82;
+    const ROTATION_Y_SENSITIVITY = 0.0065;
+    const ROTATION_X_SENSITIVITY = 0.005;
+    const ROTATION_DAMPING = 22;
+    const ROTATION_INERTIA_DECAY = 0.9;
+    const MIN_ROTATION_VELOCITY = 0.000012;
+    const ZOOM_SENSITIVITY = 0.0017;
+    const ZOOM_DAMPING = 18;
+    const AUTO_DRIFT_DELAY = 1400;
+    const AUTO_DRIFT_SPEED = 0.012;
     const GOLDEN_RATIO_FRACTION = 0.61803398875;
     const ORB_LAYOUT_DENSITY_MODES = ['balanced', 'wide', 'vertical'];
     const ORB_LAYOUT_DENSITY_PROFILES = {
@@ -54,8 +63,17 @@
             height: 1,
             dpr: 1,
             zoom: 1,
+            targetZoom: 1,
             rotationX: -0.18,
             rotationY: 0.48,
+            rotationTargetX: -0.18,
+            rotationTargetY: 0.48,
+            rotationVelocityX: 0,
+            rotationVelocityY: 0,
+            animationFrame: null,
+            idleDriftTimer: null,
+            lastFrameAt: 0,
+            lastInteractionAt: 0,
             nodes: [],
             links: [],
             layoutNodes: [],
@@ -75,6 +93,7 @@
                 startY: 0,
                 lastX: 0,
                 lastY: 0,
+                lastMoveAt: 0,
                 tuningSector: null
             }
         };
@@ -117,7 +136,11 @@
                 if (state.enabled) {
                     resize(state, canvas, options);
                     setData(state, getDataSnapshot(options), options);
+                    state.lastInteractionAt = performance.now();
                     draw(state, options);
+                    queueIdleDrift(state, options);
+                } else {
+                    stopAnimation(state);
                 }
                 return state.enabled;
             },
@@ -158,6 +181,7 @@
             },
             draw() {
                 if (state.enabled) draw(state, options);
+                if (state.enabled) scheduleAnimation(state, options);
             }
         };
     }
@@ -175,13 +199,20 @@
             state.pointer.startY = event.clientY;
             state.pointer.lastX = event.clientX;
             state.pointer.lastY = event.clientY;
+            state.pointer.lastMoveAt = event.timeStamp || performance.now();
             state.pointer.tuningSector = tuningTarget?.sector || null;
             state.tuningSector = state.pointer.tuningSector;
+            state.rotationTargetX = state.rotationX;
+            state.rotationTargetY = state.rotationY;
+            state.rotationVelocityX = 0;
+            state.rotationVelocityY = 0;
+            markInteraction(state, event.timeStamp);
             if (tuningTarget) state.hoveredNode = tuningTarget;
             canvas.setPointerCapture?.(event.pointerId);
             canvas.classList.remove('cursor-grab');
             canvas.classList.add('cursor-grabbing');
             if (tuningTarget) draw(state, options);
+            else scheduleAnimation(state, options);
             event.preventDefault();
         });
 
@@ -190,17 +221,26 @@
             if (state.pointer.active && state.pointer.pointerId === event.pointerId) {
                 const dx = event.clientX - state.pointer.lastX;
                 const dy = event.clientY - state.pointer.lastY;
+                const now = event.timeStamp || performance.now();
+                const dt = Math.max(8, now - (state.pointer.lastMoveAt || now));
                 const total = Math.hypot(event.clientX - state.pointer.startX, event.clientY - state.pointer.startY);
                 if (total > DRAG_THRESHOLD) state.pointer.moved = true;
                 if (state.pointer.mode === 'sector-tune' && state.pointer.tuningSector) {
                     nudgeSector(state, state.pointer.tuningSector, dx * 0.0068, -dy * 0.0049);
+                    state.rotationVelocityX = 0;
+                    state.rotationVelocityY = 0;
+                    draw(state, options);
                 } else {
-                    state.rotationY += dx * 0.0065;
-                    state.rotationX = clamp(state.rotationX + dy * 0.005, -1.12, 1.12);
+                    state.rotationTargetY += dx * ROTATION_Y_SENSITIVITY;
+                    state.rotationTargetX = clamp(state.rotationTargetX + dy * ROTATION_X_SENSITIVITY, -1.12, 1.12);
+                    state.rotationVelocityY = clamp(dx * ROTATION_Y_SENSITIVITY / dt, -0.0045, 0.0045);
+                    state.rotationVelocityX = clamp(dy * ROTATION_X_SENSITIVITY / dt, -0.0035, 0.0035);
+                    scheduleAnimation(state, options);
                 }
                 state.pointer.lastX = event.clientX;
                 state.pointer.lastY = event.clientY;
-                draw(state, options);
+                state.pointer.lastMoveAt = now;
+                markInteraction(state, now);
                 event.preventDefault();
                 return;
             }
@@ -211,12 +251,15 @@
                 state.hoveredNode = hovered;
                 draw(state, options);
             }
+            markInteraction(state, event.timeStamp);
+            queueIdleDrift(state, options);
         });
 
         canvas.addEventListener('pointerup', event => {
             if (!state.pointer.active || state.pointer.pointerId !== event.pointerId) return;
+            const wasTuning = state.pointer.mode === 'sector-tune';
             const point = getCanvasPoint(canvas, event);
-            const clickedNode = !state.pointer.moved && state.pointer.mode !== 'sector-tune'
+            const clickedNode = !state.pointer.moved && !wasTuning
                 ? findNodeAt(state, point.x, point.y)
                 : null;
             state.pointer.active = false;
@@ -224,10 +267,20 @@
             state.pointer.mode = 'rotate';
             state.pointer.tuningSector = null;
             state.tuningSector = null;
+            if (!wasTuning && (event.timeStamp || performance.now()) - state.pointer.lastMoveAt > 120) {
+                state.rotationVelocityX = 0;
+                state.rotationVelocityY = 0;
+            }
+            if (wasTuning) {
+                state.rotationVelocityX = 0;
+                state.rotationVelocityY = 0;
+            }
+            markInteraction(state, event.timeStamp);
             canvas.releasePointerCapture?.(event.pointerId);
             canvas.classList.add('cursor-grab');
             canvas.classList.remove('cursor-grabbing');
             if (clickedNode && options.onSelectNode) options.onSelectNode(clickedNode.node);
+            scheduleAnimation(state, options);
             event.preventDefault();
         });
 
@@ -237,26 +290,150 @@
             state.pointer.mode = 'rotate';
             state.pointer.tuningSector = null;
             state.tuningSector = null;
+            state.rotationVelocityX = 0;
+            state.rotationVelocityY = 0;
+            markInteraction(state, event.timeStamp);
             canvas.releasePointerCapture?.(event.pointerId);
             canvas.classList.add('cursor-grab');
             canvas.classList.remove('cursor-grabbing');
+            scheduleAnimation(state, options);
         });
 
         canvas.addEventListener('pointerleave', () => {
             if (state.pointer.active || !state.hoveredNode) return;
             state.hoveredNode = null;
+            markInteraction(state);
             draw(state, options);
+            queueIdleDrift(state, options);
         });
 
         canvas.addEventListener('wheel', event => {
             if (!state.enabled) return;
             const delta = clamp(Number(event.deltaY) || 0, -180, 180);
-            state.zoom = clamp(state.zoom * Math.exp(-delta * 0.0017), MIN_ZOOM, MAX_ZOOM);
-            draw(state, options);
+            state.targetZoom = clamp(state.targetZoom * Math.exp(-delta * ZOOM_SENSITIVITY), MIN_ZOOM, MAX_ZOOM);
+            markInteraction(state, event.timeStamp);
+            scheduleAnimation(state, options);
             event.preventDefault();
         }, { passive: false });
 
         canvas.addEventListener('contextmenu', event => event.preventDefault());
+    }
+
+    function markInteraction(state) {
+        state.lastInteractionAt = performance.now();
+        clearIdleDrift(state);
+    }
+
+    function scheduleAnimation(state, options) {
+        if (!state.enabled || state.animationFrame !== null || typeof requestAnimationFrame !== 'function') return;
+        clearIdleDrift(state);
+        state.animationFrame = requestAnimationFrame(timestamp => runAnimationFrame(state, options, timestamp));
+    }
+
+    function stopAnimation(state) {
+        clearIdleDrift(state);
+        if (state.animationFrame !== null && typeof cancelAnimationFrame === 'function') {
+            cancelAnimationFrame(state.animationFrame);
+        }
+        state.animationFrame = null;
+        state.lastFrameAt = 0;
+        state.rotationVelocityX = 0;
+        state.rotationVelocityY = 0;
+    }
+
+    function clearIdleDrift(state) {
+        if (state.idleDriftTimer === null || typeof clearTimeout !== 'function') return;
+        clearTimeout(state.idleDriftTimer);
+        state.idleDriftTimer = null;
+    }
+
+    function queueIdleDrift(state, options) {
+        if (!state.enabled || state.idleDriftTimer !== null || typeof setTimeout !== 'function') return;
+        const now = performance.now();
+        const delay = Math.max(0, AUTO_DRIFT_DELAY - (now - state.lastInteractionAt));
+        state.idleDriftTimer = setTimeout(() => {
+            state.idleDriftTimer = null;
+            scheduleAnimation(state, options);
+        }, delay);
+    }
+
+    function runAnimationFrame(state, options, timestamp) {
+        state.animationFrame = null;
+        if (!state.enabled) {
+            state.lastFrameAt = 0;
+            return;
+        }
+
+        const dtMs = state.lastFrameAt ? clamp(timestamp - state.lastFrameAt, 1, 48) : 16.67;
+        state.lastFrameAt = timestamp;
+        const changed = stepOrbMotion(state, timestamp, dtMs);
+        if (changed) draw(state, options);
+
+        if (shouldContinueAnimation(state, timestamp)) {
+            scheduleAnimation(state, options);
+        } else {
+            state.lastFrameAt = 0;
+            queueIdleDrift(state, options);
+        }
+    }
+
+    function stepOrbMotion(state, timestamp, dtMs) {
+        const dt = dtMs / 1000;
+        let changed = false;
+
+        if (!state.pointer.active) {
+            const velocityActive = Math.abs(state.rotationVelocityX) > MIN_ROTATION_VELOCITY ||
+                Math.abs(state.rotationVelocityY) > MIN_ROTATION_VELOCITY;
+            if (velocityActive) {
+                state.rotationTargetY += state.rotationVelocityY * dtMs;
+                state.rotationTargetX = clamp(state.rotationTargetX + state.rotationVelocityX * dtMs, -1.12, 1.12);
+                const decay = Math.pow(ROTATION_INERTIA_DECAY, dtMs / 16.67);
+                state.rotationVelocityX *= decay;
+                state.rotationVelocityY *= decay;
+                if (Math.abs(state.rotationVelocityX) <= MIN_ROTATION_VELOCITY) state.rotationVelocityX = 0;
+                if (Math.abs(state.rotationVelocityY) <= MIN_ROTATION_VELOCITY) state.rotationVelocityY = 0;
+                changed = true;
+            }
+
+            if (state.layoutNodes.length && timestamp - state.lastInteractionAt > AUTO_DRIFT_DELAY) {
+                const focusScale = state.hoveredNode || state.selectedNode ? 0.18 : 1;
+                state.rotationTargetY += AUTO_DRIFT_SPEED * focusScale * dt;
+                changed = true;
+            }
+        }
+
+        const rotationEase = 1 - Math.exp(-ROTATION_DAMPING * dt);
+        const nextRotationX = state.rotationX + (state.rotationTargetX - state.rotationX) * rotationEase;
+        const nextRotationY = state.rotationY + (state.rotationTargetY - state.rotationY) * rotationEase;
+        if (Math.abs(nextRotationX - state.rotationX) > 0.00005 || Math.abs(nextRotationY - state.rotationY) > 0.00005) {
+            state.rotationX = clamp(nextRotationX, -1.12, 1.12);
+            state.rotationY = nextRotationY;
+            changed = true;
+        } else {
+            state.rotationX = clamp(state.rotationTargetX, -1.12, 1.12);
+            state.rotationY = state.rotationTargetY;
+        }
+
+        const zoomEase = 1 - Math.exp(-ZOOM_DAMPING * dt);
+        const nextZoom = state.zoom + (state.targetZoom - state.zoom) * zoomEase;
+        if (Math.abs(nextZoom - state.zoom) > 0.0005) {
+            state.zoom = clamp(nextZoom, MIN_ZOOM, MAX_ZOOM);
+            changed = true;
+        } else {
+            state.zoom = clamp(state.targetZoom, MIN_ZOOM, MAX_ZOOM);
+        }
+
+        return changed;
+    }
+
+    function shouldContinueAnimation(state, timestamp) {
+        if (!state.enabled) return false;
+        if (state.pointer.active) return true;
+        if (Math.abs(state.rotationVelocityX) > 0 || Math.abs(state.rotationVelocityY) > 0) return true;
+        if (Math.abs(state.rotationTargetX - state.rotationX) > 0.00008) return true;
+        if (Math.abs(state.rotationTargetY - state.rotationY) > 0.00008) return true;
+        if (Math.abs(state.targetZoom - state.zoom) > 0.0006) return true;
+        return state.layoutNodes.length > 0 && timestamp - state.lastInteractionAt > AUTO_DRIFT_DELAY;
     }
 
     function setData(state, data, options) {
@@ -448,9 +625,9 @@
         const radius = Math.min(state.width, state.height) * 0.39 * state.zoom;
 
         const innerGlow = ctx.createRadialGradient(cx, cy, radius * 0.12, cx, cy, radius * 1.04);
-        innerGlow.addColorStop(0, 'rgba(251, 191, 36, 0.07)');
-        innerGlow.addColorStop(0.42, 'rgba(0, 249, 255, 0.035)');
-        innerGlow.addColorStop(0.78, 'rgba(251, 191, 36, 0.018)');
+        innerGlow.addColorStop(0, 'rgba(251, 191, 36, 0.04)');
+        innerGlow.addColorStop(0.42, 'rgba(0, 249, 255, 0.018)');
+        innerGlow.addColorStop(0.78, 'rgba(251, 191, 36, 0.01)');
         innerGlow.addColorStop(1, 'rgba(0, 249, 255, 0)');
         ctx.fillStyle = innerGlow;
         ctx.beginPath();
@@ -459,26 +636,26 @@
 
         const atmosphericFade = ctx.createRadialGradient(cx, cy, radius * 0.62, cx, cy, radius * 1.08);
         atmosphericFade.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        atmosphericFade.addColorStop(0.74, 'rgba(0, 249, 255, 0.022)');
-        atmosphericFade.addColorStop(1, 'rgba(251, 191, 36, 0.085)');
+        atmosphericFade.addColorStop(0.74, 'rgba(0, 249, 255, 0.01)');
+        atmosphericFade.addColorStop(1, 'rgba(251, 191, 36, 0.034)');
         ctx.fillStyle = atmosphericFade;
         ctx.beginPath();
         ctx.arc(cx, cy, radius * 1.03, 0, TAU);
         ctx.fill();
 
         ctx.globalAlpha = 1;
-        ctx.strokeStyle = 'rgba(253, 230, 138, 0.42)';
-        ctx.lineWidth = 1.35;
-        ctx.shadowBlur = 24;
-        ctx.shadowColor = 'rgba(251, 191, 36, 0.34)';
+        ctx.strokeStyle = 'rgba(253, 230, 138, 0.14)';
+        ctx.lineWidth = 0.85;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(251, 191, 36, 0.08)';
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, TAU);
         ctx.stroke();
 
-        ctx.strokeStyle = 'rgba(0, 249, 255, 0.12)';
-        ctx.lineWidth = 3.4;
-        ctx.shadowBlur = 18;
-        ctx.shadowColor = 'rgba(0, 249, 255, 0.16)';
+        ctx.strokeStyle = 'rgba(0, 249, 255, 0.035)';
+        ctx.lineWidth = 1.4;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = 'rgba(0, 249, 255, 0.045)';
         ctx.beginPath();
         ctx.arc(cx, cy, radius * 1.006, 0, TAU);
         ctx.stroke();
@@ -488,7 +665,7 @@
                 x: Math.cos(t) * Math.cos(latitude),
                 y: Math.sin(latitude),
                 z: Math.sin(t) * Math.cos(latitude)
-            }), latitude === 0 ? 'rgba(251, 191, 36, 0.34)' : 'rgba(251, 191, 36, 0.22)', latitude === 0 ? 1.15 : 0.82);
+            }), latitude === 0 ? 'rgba(251, 191, 36, 0.105)' : 'rgba(251, 191, 36, 0.06)', latitude === 0 ? 0.65 : 0.45);
         });
         for (let i = 0; i < 8; i++) {
             const longitude = i / 8 * TAU;
@@ -496,7 +673,7 @@
                 x: Math.cos(longitude) * Math.cos(t),
                 y: Math.sin(t),
                 z: Math.sin(longitude) * Math.cos(t)
-            }), i % 2 ? 'rgba(0, 249, 255, 0.12)' : 'rgba(251, 191, 36, 0.18)', 0.78);
+            }), i % 2 ? 'rgba(0, 249, 255, 0.04)' : 'rgba(251, 191, 36, 0.055)', 0.42);
         }
         ctx.restore();
     }
@@ -512,7 +689,7 @@
         ctx.globalAlpha = 1;
         ctx.strokeStyle = color;
         ctx.lineWidth = lineWidth;
-        ctx.shadowBlur = 9;
+        ctx.shadowBlur = 2;
         ctx.shadowColor = color;
         ctx.stroke();
     }

@@ -39,6 +39,11 @@
         generatedManifest: null,
         generatedFixtures: [],
         activeGeneratedFixture: null,
+        filters: {
+            transactionType: 'all',
+            token: 'all',
+            direction: 'all'
+        },
         solanaAdapterLoadPromise: null,
         flowReplayEnabled: false,
         flowReplay: {
@@ -81,7 +86,8 @@
         connectedWallets: 4,
         directFlows: 4,
         tokenExposure: 3,
-        multiHopPaths: 3
+        multiHopPaths: 3,
+        transactionGroups: 5
     };
     const GENERATED_FIXTURE_DIR = 'data/crypto/generated/';
     const SOURCE_LABELS = {
@@ -348,6 +354,7 @@
         status.className = 'grid gap-2 text-[10px] font-mono tracking-[1.1px] text-cyan-50/78 max-w-3xl grow md:grow-0';
         status.innerHTML = `
             ${renderGeneratedDataManager(metadata, isGeneratedFixture, isSolana)}
+            ${renderFlowFilters()}
             ${renderFlowQueueStatus()}
         `;
         panelHeader.appendChild(status);
@@ -433,6 +440,88 @@
         `;
     }
 
+    function renderFlowFilters() {
+        if (!state.graph) return '';
+        const typeOptions = buildTransactionTypeOptions();
+        const tokenOptions = buildTokenFilterOptions();
+        const current = state.filters;
+        return `
+            <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <div class="text-white/38">FLOW FILTERS</div>
+                        <div class="text-white/66">${escapeHtml(getVisibleFlowEdges().length)} visible / ${escapeHtml(state.graph.flowEdges.length)} total transfer legs</div>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <label class="flex items-center gap-1.5 text-white/52">
+                            <span>Type</span>
+                            <select id="crypto-filter-transaction-type" class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none">
+                                ${typeOptions.map(option => `<option value="${escapeAttr(option.value)}" ${option.value === current.transactionType ? 'selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+                            </select>
+                        </label>
+                        <label class="flex items-center gap-1.5 text-white/52">
+                            <span>Token</span>
+                            <select id="crypto-filter-token" class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none">
+                                ${tokenOptions.map(option => `<option value="${escapeAttr(option.value)}" ${option.value === current.token ? 'selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+                            </select>
+                        </label>
+                        <label class="flex items-center gap-1.5 text-white/52">
+                            <span>Direction</span>
+                            <select id="crypto-filter-direction" class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none">
+                                ${[
+                                    ['all', 'All'],
+                                    ['inbound', 'Inbound'],
+                                    ['outbound', 'Outbound'],
+                                    ['internal_mixed', 'Internal/Mixed']
+                                ].map(([value, label]) => `<option value="${value}" ${value === current.direction ? 'selected' : ''}>${label}</option>`).join('')}
+                            </select>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function buildTransactionTypeOptions() {
+        const counts = new Map();
+        (state.graph.flowEdges || []).forEach(edge => {
+            const key = edge.transaction_type_key || core.interpretTransactionType?.(edge.transaction_type).key || 'UNKNOWN';
+            const label = edge.transaction_type_label || core.interpretTransactionType?.(edge.transaction_type).label || 'Unknown / Unclassified';
+            const current = counts.get(key) || { value: key, label, count: 0 };
+            current.count += 1;
+            counts.set(key, current);
+        });
+        (state.graph.transactionGroups || []).forEach(group => {
+            const key = group.transaction_type_key || 'UNKNOWN';
+            if (counts.has(key)) return;
+            counts.set(key, { value: key, label: group.transaction_type_label || 'Unknown / Unclassified', count: 0 });
+        });
+        return [
+            { value: 'all', label: 'All Types' },
+            ...[...counts.values()]
+                .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+                .map(item => ({ value: item.value, label: `${item.label} (${item.count})` }))
+        ];
+    }
+
+    function buildTokenFilterOptions() {
+        const counts = new Map();
+        (state.graph.flowEdges || []).forEach(edge => {
+            const value = `${edge.token_mint || ''}|${edge.symbol || ''}`;
+            if (value === '|') return;
+            const label = edge.symbol || shortLongValue(edge.token_mint) || 'Token';
+            const current = counts.get(value) || { value, label, count: 0 };
+            current.count += 1;
+            counts.set(value, current);
+        });
+        return [
+            { value: 'all', label: 'All Tokens' },
+            ...[...counts.values()]
+                .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+                .map(item => ({ value: item.value, label: `${item.label} (${item.count})` }))
+        ];
+    }
+
     function bindStatusControls(status) {
         status.querySelector('#crypto-generated-fixture-select')?.addEventListener('change', event => {
             const path = event.target.value;
@@ -450,6 +539,27 @@
             setFlowAnimationEnabled(!state.flowMotion.enabled);
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         });
+        status.querySelector('#crypto-filter-transaction-type')?.addEventListener('change', event => {
+            state.filters.transactionType = event.target.value || 'all';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            updateStats();
+            render();
+            renderDetails();
+        });
+        status.querySelector('#crypto-filter-token')?.addEventListener('change', event => {
+            state.filters.token = event.target.value || 'all';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            updateStats();
+            render();
+            renderDetails();
+        });
+        status.querySelector('#crypto-filter-direction')?.addEventListener('change', event => {
+            state.filters.direction = event.target.value || 'all';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            updateStats();
+            render();
+            renderDetails();
+        });
     }
 
     async function switchGeneratedFixture(path) {
@@ -466,6 +576,7 @@
         state.flowReplay.index = 0;
         state.flowReplay.activeFlowId = null;
         state.flowReplay.lastStepAt = 0;
+        state.filters = { transactionType: 'all', token: 'all', direction: 'all' };
         state.manualNodePositions.clear();
         prepareFlowMotion();
         rebuildInteractionIndex();
@@ -519,12 +630,12 @@
         ctx.scale(state.viewport.scale, state.viewport.scale);
 
         const nodeById = state.graph.nodeById;
-        state.graph.edges
+        getVisibleEdges()
             .filter(edge => edge.type !== core.EDGE_TYPES.LABEL)
             .sort((a, b) => edgeLayerOrder(a) - edgeLayerOrder(b) || (a.width || 0) - (b.width || 0))
             .forEach(edge => drawEdge(ctx, edge, nodeById, interaction));
 
-        state.graph.edges
+        getVisibleEdges()
             .filter(edge => edge.type === core.EDGE_TYPES.LABEL)
             .forEach(edge => drawEdge(ctx, edge, nodeById, interaction));
 
@@ -534,6 +645,70 @@
             .forEach(node => drawNode(ctx, node, interaction));
 
         ctx.restore();
+    }
+
+    function getVisibleEdges() {
+        if (!state.graph) return [];
+        const visibleFlowIds = new Set(getVisibleFlowEdges().map(edge => edge.id));
+        const hasFlowFilter = hasActiveFlowFilter();
+        return (state.graph.edges || []).filter(edge => {
+            if (edge.type === core.EDGE_TYPES.FLOW) return visibleFlowIds.has(edge.id);
+            if (edge.type === core.EDGE_TYPES.EXPOSURE) return exposureEdgeMatchesFilters(edge);
+            if (edge.type === core.EDGE_TYPES.LABEL) {
+                if (!hasFlowFilter) return true;
+                const related = edge.related_flow_ids || [];
+                return related.some(flowId => visibleFlowIds.has(flowId));
+            }
+            return true;
+        });
+    }
+
+    function getVisibleFlowEdges() {
+        return (state.graph?.flowEdges || []).filter(edgeMatchesActiveFilters);
+    }
+
+    function hasActiveFlowFilter() {
+        return state.filters.transactionType !== 'all'
+            || state.filters.token !== 'all'
+            || state.filters.direction !== 'all';
+    }
+
+    function edgeMatchesActiveFilters(edge) {
+        if (!edge) return false;
+        if (state.filters.transactionType !== 'all' && edge.transaction_type_key !== state.filters.transactionType) return false;
+        if (state.filters.token !== 'all') {
+            const tokenKey = `${edge.token_mint || ''}|${edge.symbol || ''}`;
+            if (tokenKey !== state.filters.token) return false;
+        }
+        if (state.filters.direction !== 'all' && getEdgeDirection(edge) !== state.filters.direction) return false;
+        return true;
+    }
+
+    function exposureEdgeMatchesFilters(edge) {
+        if (state.filters.token === 'all') return true;
+        const token = state.graph?.nodeById.get(edge.target);
+        if (token) return `${token.token_mint || ''}|${token.symbol || ''}` === state.filters.token;
+        return `${edge.token_mint || ''}|${edge.symbol || ''}` === state.filters.token
+            || `${edge.target || ''}|${edge.symbol || ''}` === state.filters.token;
+    }
+
+    function getEdgeDirection(edge) {
+        if (edge.direction) return edge.direction;
+        const trackedWallet = getRelationshipWallet();
+        if (!trackedWallet) return 'internal_mixed';
+        const sourceMatches = core.normalizeAddress(edge.source_wallet) === trackedWallet;
+        const targetMatches = core.normalizeAddress(edge.destination_wallet) === trackedWallet;
+        if (sourceMatches && targetMatches) return 'internal_mixed';
+        if (sourceMatches) return 'outbound';
+        if (targetMatches) return 'inbound';
+        return 'internal_mixed';
+    }
+
+    function getRelationshipWallet() {
+        const metadataWallet = core.normalizeAddress(state.graph?.metadata?.generated_wallet || state.graph?.metadata?.wallet || '');
+        if (metadataWallet) return metadataWallet;
+        const selected = state.graph?.nodeById.get(state.selectedId);
+        return selected?.type === core.NODE_TYPES.WALLET ? core.normalizeAddress(selected.address) : '';
     }
 
     function drawBackdrop(ctx, width, height) {
@@ -861,23 +1036,32 @@
 
         const relatedFlows = getRelatedEdges(node.id, core.EDGE_TYPES.FLOW);
         const relatedHubFlows = isHubNode(node) ? getRelatedHubFlows(node) : [];
-        const relatedExposureEdges = getRelatedEdges(node.id, core.EDGE_TYPES.EXPOSURE);
+        const relatedExposureEdges = getRelatedEdges(node.id, core.EDGE_TYPES.EXPOSURE).filter(exposureEdgeMatchesFilters);
         const connectedWallets = isHubNode(node) ? getConnectedWallets(node) : [];
-        const displayedRelatedFlows = mergeUniqueEdges([...relatedFlows, ...relatedHubFlows]);
+        const displayedRelatedFlows = mergeUniqueEdges([...relatedFlows, ...relatedHubFlows]).filter(edgeMatchesActiveFilters);
         const relatedPaths = uniqueRelatedPaths(getRelatedPaths(node.id));
+        const insight = buildNodeFlowInsight(node, displayedRelatedFlows);
+        const relatedGroups = getRelatedTransactionGroups(node, displayedRelatedFlows);
         state.detailPanel.innerHTML = `
             <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">${escapeHtml(isHubNode(node) ? 'ENTITY HUB' : node.type.toUpperCase())} NODE</div>
             <h3 class="font-display text-2xl mt-1">${escapeHtml(labelForNode(node))}</h3>
-            <div class="text-[11px] text-white/42 mt-2">Sample/dev-only graph. Future: Live Flow Queue intake after secure data runner.</div>
+            <div class="text-[11px] text-white/42 mt-2">Local fixture graph. Source/program labels are hints from sanitized data, not identity claims.</div>
             ${renderDetailSection('Summary', `
                 ${detailRow('Chain', node.chain || '-')}
                 ${isHubNode(node) ? detailRow('Hub Category', formatHubCategory(node.category)) : ''}
                 ${node.name && node.type === core.NODE_TYPES.TOKEN ? detailRow('Token', node.name) : ''}
+                ${node.type === core.NODE_TYPES.WALLET ? detailRow('Tracked Wallet Relationship', describeWalletRelationship(node)) : ''}
                 ${detailRow('Label Source', node.label_source || '-')}
                 ${detailRow('Confidence', `${Math.round((node.confidence || 0) * 100)}%`)}
                 ${node.address ? detailRow('Address', node.address, { shorten: true }) : ''}
                 ${node.token_mint ? detailRow('Token Mint', node.token_mint, { shorten: true }) : ''}
                 ${state.graph.flowQueue?.enabled === false || state.graph.flowReplay?.enabled === false ? detailRow('Live Flow Queue', `${state.graph.flowQueue?.ordered_flow_ids?.length || state.graph.flowReplay?.ordered_flow_ids?.length || 0} ordered flows staged offline`) : ''}
+            `)}
+            ${renderDetailSection('Flow Summary', `
+                ${detailRow('Top Types', insight.types || '-')}
+                ${detailRow('Tokens Involved', insight.tokens || '-')}
+                ${detailRow('Direct In / Out', `${insight.inbound} in / ${insight.outbound} out / ${insight.mixed} mixed`)}
+                ${detailRow('Visible Legs', `${displayedRelatedFlows.length} transfer leg${displayedRelatedFlows.length === 1 ? '' : 's'}`)}
             `)}
             ${renderDetailSection('Value / Exposure', `
                 ${node.type === core.NODE_TYPES.WALLET ? detailRow('Total In', core.formatUsd(node.total_in_usd || 0)) : ''}
@@ -890,6 +1074,7 @@
                 ${renderCardSection('Connected Wallets', connectedWallets, DETAIL_LIMITS.connectedWallets, renderNodeSummary, 'No connected sample wallets.')}
             ` : ''}
             ${renderCardSection('Direct Flows', displayedRelatedFlows, DETAIL_LIMITS.directFlows, edge => renderEdgeSummary(edge, node.id), 'No related sample flows.')}
+            ${renderCardSection('Transaction Groups', relatedGroups, DETAIL_LIMITS.transactionGroups, renderTransactionGroupSummary, 'No transaction groups match this selection.')}
             ${renderCardSection('Token Exposure', relatedExposureEdges, DETAIL_LIMITS.tokenExposure, edge => renderEdgeSummary(edge, node.id), 'No token exposure links for this sample node.')}
             ${renderCardSection('Multi-Hop Paths', relatedPaths, DETAIL_LIMITS.multiHopPaths, renderPathSummary, 'No multi-hop wallet paths include this node.')}
         `;
@@ -933,15 +1118,32 @@
         const direction = edge.type === core.EDGE_TYPES.FLOW
             ? edge.source === selectedNodeId ? 'OUTFLOW' : edge.target === selectedNodeId ? 'INFLOW' : 'FLOW'
             : edge.type === core.EDGE_TYPES.LABEL ? formatRelation(edge.relation) : 'EXPOSURE';
+        const amount = edge.amount_display || core.formatTokenAmount?.(edge.amount, edge.symbol) || '';
+        const typeLabel = edge.transaction_type_label || '';
+        const sourceLabel = edge.source_label || '';
         const label = edge.type === core.EDGE_TYPES.FLOW
             ? `${compactNodeLabel(source)} -> ${compactNodeLabel(target)}`
             : `${compactNodeLabel(source)} / ${compactNodeLabel(target)}`;
         return `
             <div class="crypto-edge-summary rounded-2xl p-3">
-                <div class="text-[10px] font-mono text-cyan-100/70">${escapeHtml(direction)}</div>
+                <div class="text-[10px] font-mono text-cyan-100/70">${escapeHtml(typeLabel ? `${direction} / ${typeLabel}` : direction)}</div>
                 <div class="text-xs text-white/72 mt-1" title="${escapeAttr(edge.type === core.EDGE_TYPES.FLOW ? `${labelForNode(source)} -> ${labelForNode(target)}` : `${labelForNode(source)} / ${labelForNode(target)}`)}">${escapeHtml(label)}</div>
-                <div class="text-[11px] text-white/42 mt-1">${escapeHtml(edge.symbol || edge.chain || '')} ${edge.usd_value ? core.formatUsd(edge.usd_value) : ''}${edge.transaction_count ? ` across ${escapeHtml(edge.transaction_count)} tx` : ''}</div>
+                <div class="text-[11px] text-white/42 mt-1">${escapeHtml(amount || edge.symbol || edge.chain || '')}${sourceLabel ? ` / ${escapeHtml(sourceLabel)}` : ''}${edge.usd_value ? ` / ${core.formatUsd(edge.usd_value)}` : ''}${edge.transaction_count ? ` across ${escapeHtml(edge.transaction_count)} tx` : ''}</div>
                 ${edge.transaction_hash ? `<div class="text-[10px] font-mono text-white/32 mt-1">${escapeHtml(shortHash(edge.transaction_hash))}</div>` : ''}
+            </div>
+        `;
+    }
+
+    function renderTransactionGroupSummary(group) {
+        const tokens = (group.tokens_involved || []).join(', ') || '-';
+        const sourceLabel = group.source_label || group.source_program || 'Source unavailable';
+        const role = group.primary_wallet_role ? formatRelation(group.primary_wallet_role) : 'No tracked wallet role';
+        return `
+            <div class="crypto-edge-summary rounded-2xl p-3">
+                <div class="text-[10px] font-mono text-cyan-100/70">${escapeHtml(group.transaction_type_label || 'Unknown / Unclassified')}</div>
+                <div class="text-xs text-white/72 mt-1">${escapeHtml(group.leg_count || 0)} leg${group.leg_count === 1 ? '' : 's'} / ${escapeHtml(tokens)}</div>
+                <div class="text-[11px] text-white/42 mt-1">${escapeHtml(sourceLabel)} / ${escapeHtml(role)}${group.timestamp ? ` / ${escapeHtml(formatDate(group.timestamp))}` : ''}</div>
+                ${group.signature ? `<div class="text-[10px] font-mono text-white/32 mt-1">${escapeHtml(shortHash(group.signature))}</div>` : ''}
             </div>
         `;
     }
@@ -976,11 +1178,80 @@
         `;
     }
 
+    function buildNodeFlowInsight(node, flows = []) {
+        const typeCounts = new Map();
+        const tokenCounts = new Map();
+        let inbound = 0;
+        let outbound = 0;
+        let mixed = 0;
+
+        flows.forEach(edge => {
+            const type = edge.transaction_type_label || 'Unknown / Unclassified';
+            typeCounts.set(type, (typeCounts.get(type) || 0) + 1);
+            const token = edge.symbol || shortLongValue(edge.token_mint) || 'Token';
+            tokenCounts.set(token, (tokenCounts.get(token) || 0) + 1);
+            const direction = edge.source === node.id ? 'outbound' : edge.target === node.id ? 'inbound' : getEdgeDirection(edge);
+            if (direction === 'inbound') inbound += 1;
+            else if (direction === 'outbound') outbound += 1;
+            else mixed += 1;
+        });
+
+        return {
+            types: topCountLabels(typeCounts, 3),
+            tokens: topCountLabels(tokenCounts, 4),
+            inbound,
+            outbound,
+            mixed
+        };
+    }
+
+    function getRelatedTransactionGroups(node, flows = []) {
+        const relatedIds = new Set(flows.map(edge => edge.transaction_group_id).filter(Boolean));
+        if (!relatedIds.size && node.type === core.NODE_TYPES.WALLET) {
+            const wallet = core.normalizeAddress(node.address);
+            (state.graph.transactionGroups || []).forEach(group => {
+                if (core.normalizeAddress(group.primary_wallet) === wallet) relatedIds.add(group.id);
+            });
+        }
+        return (state.graph.transactionGroups || [])
+            .filter(group => relatedIds.has(group.id))
+            .filter(groupMatchesActiveFilters)
+            .sort((a, b) => timestampValue(b.timestamp) - timestampValue(a.timestamp));
+    }
+
+    function groupMatchesActiveFilters(group) {
+        if (state.filters.transactionType !== 'all' && group.transaction_type_key !== state.filters.transactionType) return false;
+        if (state.filters.token !== 'all') {
+            const [mint, symbol] = state.filters.token.split('|');
+            const hasToken = (group.token_mints || []).includes(mint) || (group.tokens_involved || []).includes(symbol);
+            if (!hasToken) return false;
+        }
+        if (state.filters.direction !== 'all' && group.direction !== state.filters.direction) return false;
+        return true;
+    }
+
+    function describeWalletRelationship(node) {
+        const wallet = core.normalizeAddress(node.address);
+        const tracked = getRelationshipWallet();
+        if (!tracked) return 'No tracked wallet metadata';
+        if (wallet === tracked) return 'Tracked Wallet';
+        return 'Counterparty / Transfer Leg Wallet';
+    }
+
+    function topCountLabels(counts, limit) {
+        return [...counts.entries()]
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+            .slice(0, limit)
+            .map(([label, count]) => `${label} (${count})`)
+            .join(', ');
+    }
+
     function updateStats() {
         if (!state.graph) return;
+        const visibleFlows = getVisibleFlowEdges();
         setText('crypto-wallet-count', `${state.graph.walletNodes.length} WALLETS / ${state.graph.hubNodes?.length || 0} HUBS`);
         setText('crypto-token-count', `${state.graph.tokenNodes.length} TOKENS`);
-        setText('crypto-flow-count', `${state.graph.flowEdges.length} FLOWS`);
+        setText('crypto-flow-count', `${visibleFlows.length} / ${state.graph.flowEdges.length} FLOWS`);
         setText('crypto-path-count', `${state.graph.walletPaths.length} PATHS`);
     }
 
@@ -998,6 +1269,8 @@
     function labelForNode(node = {}) {
         if (node.type === core.NODE_TYPES.TOKEN) return node.symbol || node.name || 'Token';
         if (isHubNode(node)) return node.label || 'Entity Hub';
+        const tracked = core.normalizeAddress(state.graph?.metadata?.generated_wallet || state.graph?.metadata?.wallet || '');
+        if (tracked && core.normalizeAddress(node.address) === tracked) return 'Tracked Wallet';
         return node.label || core.shortAddress(node.address);
     }
 
@@ -1543,6 +1816,17 @@
 
     function formatRelation(relation) {
         return String(relation || 'HUB LINK').replaceAll('_', ' ').toUpperCase();
+    }
+
+    function formatDate(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value || '');
+        return date.toISOString().slice(0, 10);
+    }
+
+    function timestampValue(value) {
+        const parsed = Date.parse(value || '');
+        return Number.isFinite(parsed) ? parsed : 0;
     }
 
     namespace.ui = {

@@ -333,14 +333,20 @@ def sanitize_transfer(transfer: dict[str, Any], native: bool) -> dict[str, Any]:
     if native and allowed["amount"] is None:
         allowed["amount"] = number_or_none(transfer.get("lamports"))
     raw_token_amount = transfer.get("rawTokenAmount")
+    safe_raw_token_amount: dict[str, Any] = {}
     if isinstance(raw_token_amount, dict):
         decimals = number_or_none(raw_token_amount.get("decimals"))
         token_amount = number_or_none(raw_token_amount.get("tokenAmount"))
         if allowed["decimals"] is None:
             allowed["decimals"] = decimals
-        if allowed["tokenAmount"] is None:
-            allowed["tokenAmount"] = token_amount
-    return {key: value for key, value in allowed.items() if value not in ("", None)}
+        if token_amount is not None:
+            safe_raw_token_amount["tokenAmount"] = token_amount
+        if decimals is not None:
+            safe_raw_token_amount["decimals"] = decimals
+    sanitized = {key: value for key, value in allowed.items() if value not in ("", None)}
+    if safe_raw_token_amount:
+        sanitized["rawTokenAmount"] = safe_raw_token_amount
+    return sanitized
 
 
 def sanitize_swap_event(swap: Any) -> dict[str, Any]:

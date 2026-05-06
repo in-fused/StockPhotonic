@@ -135,6 +135,38 @@ Each sanitized Solana transaction keeps only graph-needed safe fields:
 - `events.swap` when present and reduced to safe transfer records
 - `fee` and `feePayer` when present
 
+## Transaction Interpretation In The UI
+
+CryptoPhotonic interprets sanitized Helius transaction records locally after a generated fixture is loaded. It does not make browser-side Helius, Jupiter, RPC, WebSocket, signing, or swap-execution calls.
+
+The Solana adapter converts common Helius transaction types into compact labels:
+
+- `TRANSFER`: Transfer
+- `SWAP`: Swap
+- `CLOSE_ACCOUNT`: Close Account
+- `STAKE_TOKEN`: Stake
+- `COLLECT_REWARD`: Reward Collection
+- `COLLECT_REVENUE`: Revenue Collection
+- `CREATE_ORDER`: Order Created
+- `FILL_ORDER`: Order Filled
+- `UNKNOWN`: Unknown / Unclassified
+
+Native SOL transfers are normalized from lamports into SOL unless the sanitized input explicitly marks the value as already SOL. SPL token transfers use Helius `tokenAmount` as already-readable token units. If only `rawTokenAmount` is present, the adapter applies the available decimals before display. Raw values remain metadata for debugging context and no USD values are invented.
+
+Each source transaction also gets transaction-group metadata keyed by signature. The graph still keeps every individual transfer leg as its own edge, while the detail panel can summarize the parent transaction signature, type, source/program hint, leg count, tracked-wallet involvement, tokens involved, and timestamp.
+
+## Why Some Transactions Have Many Legs
+
+Helius Enhanced Transactions can contain many internal native or SPL transfer legs for one signature. This is common for routed swaps, order fills, account closes, fee movements, rewards, and other program-driven activity. The graph renders those legs separately so the wallet-to-wallet/token movement remains inspectable, but transaction-group summaries provide the compact "what happened" view.
+
+The UI filters reduce noise without changing the source fixture:
+
+- Transaction Type narrows visible flow edges by interpreted type.
+- Token narrows visible flow edges by symbol or mint.
+- Direction narrows flow edges relative to the generated/tracked wallet when fixture metadata identifies one.
+
+Labels such as source/program hints come from sanitized provider fields or local fixture metadata. They are not accusations, fraud judgments, identity claims, or reviewed entity attribution unless a fixture or allowlist explicitly provides that meaning.
+
 ## Generated Fixture Review Checklist
 
 Before committing or sharing generated output:

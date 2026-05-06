@@ -5,6 +5,14 @@
     const CHAIN = 'solana';
     const SOURCE = 'solana_offline_fixture';
     const NATIVE_SOL_MINT = 'solana:native-sol';
+    const WRAPPED_SOL_MINT = 'so11111111111111111111111111111111111111112';
+    const LAMPORTS_PER_SOL = 1000000000;
+    const KNOWN_TOKEN_HINTS = Object.freeze({
+        [NATIVE_SOL_MINT]: { symbol: 'SOL', name: 'Solana', decimals: 9, source: 'native_sol' },
+        [WRAPPED_SOL_MINT]: { symbol: 'WSOL', name: 'Wrapped SOL', decimals: 9, source: 'well_known_mint_hint' },
+        epjfwdd5aufqssqem2qn1xzybapc8g4weggkzwytdt1v: { symbol: 'USDC', name: 'USD Coin', decimals: 6, source: 'well_known_mint_hint' },
+        es9vmfrzacermjfrf4h2fyd4kconky11mcce8benwnyb: { symbol: 'USDT', name: 'Tether USD', decimals: 6, source: 'well_known_mint_hint' }
+    });
     const LIVE_DATA_SECURITY_BOUNDARY = Object.freeze({
         status: 'disabled_planning_only',
         browser_secret_policy: 'Public browser code must never contain API keys, bearer tokens, private RPC URLs, or signing material.',
@@ -235,10 +243,12 @@
 
     function normalizeSolanaTransactionBatch(transactions = []) {
         const sourceTransactions = getTransactionList(transactions);
-        const transfers = extractSolanaTransfers(sourceTransactions);
-        const wallets = extractSolanaWallets(sourceTransactions);
-        const tokens = extractSolanaTokens(sourceTransactions);
+        const trackedWallet = normalizeAddress(getTrackedWallet(transactions));
+        const transfers = extractSolanaTransfers(sourceTransactions, { trackedWallet });
+        const wallets = extractSolanaWallets(transactions, transfers, trackedWallet);
+        const tokens = extractSolanaTokens(transfers);
         const entities = extractSolanaEntities(transactions, sourceTransactions);
+        const transactionGroups = buildTransactionGroups(sourceTransactions, transfers, trackedWallet);
 
         return {
             metadata: {
@@ -248,6 +258,7 @@
                 adapter: 'solana',
                 production_meaning: false,
                 live_blockchain_fetching: false,
+                generated_wallet: trackedWallet,
                 disclaimer: 'Synthetic Solana-shaped records for local rendering only. No real-world attribution or accusation is implied.',
                 future_adapters: [
                     'Helius Enhanced Transactions',
@@ -264,107 +275,163 @@
             wallets,
             tokens,
             entities,
-            transactions: transfers
+            transactions: transfers,
+            transaction_groups: transactionGroups
         };
     }
 
-    function extractSolanaWallets(transactions = []) {
+    function extractSolanaWallets(transactions = [], precomputedTransfers = null, trackedWallet = '') {
         const walletsByAddress = new Map();
-        extractSolanaTransfers(transactions).forEach(transfer => {
+        const transfers = Array.isArray(precomputedTransfers) ? precomputedTransfers : extractSolanaTransfers(getTransactionList(transactions));
+        transfers.forEach(transfer => {
             addWallet(walletsByAddress, transfer.source_wallet, transfer);
             addWallet(walletsByAddress, transfer.destination_wallet, transfer);
         });
+        if (trackedWallet) {
+            addWallet(walletsByAddress, trackedWallet, {
+                label: 'Tracked Wallet',
+                label_source: 'local_runner_metadata',
+                metadata: { source_format: 'generated_fixture_metadata' }
+            });
+        }
         return [...walletsByAddress.values()];
     }
 
     function extractSolanaTokens(transactions = []) {
         const tokensByMint = new Map();
-        extractSolanaTransfers(transactions).forEach(transfer => {
+        const transfers = Array.isArray(transactions) && transactions.some(item => item?.transaction_hash)
+            ? transactions
+            : extractSolanaTransfers(transactions);
+        transfers.forEach(transfer => {
             const mint = normalizeAddress(transfer.token_mint || NATIVE_SOL_MINT);
             if (!mint || tokensByMint.has(mint)) return;
+            const hint = getTokenHint(mint);
+            const decimals = firstFiniteNumber(transfer.metadata?.decimals, hint?.decimals);
+            const symbol = transfer.symbol || hint?.symbol || tokenSymbolFromMint(mint);
             tokensByMint.set(mint, {
                 token_mint: mint,
                 contract_address: mint,
                 chain: CHAIN,
-                symbol: transfer.symbol || (mint === NATIVE_SOL_MINT ? 'SOL' : 'SPL'),
-                name: transfer.metadata?.token_name || transfer.symbol || (mint === NATIVE_SOL_MINT ? 'Solana' : 'SPL Token'),
-                decimals: normalizeNumber(transfer.metadata?.decimals),
+                symbol,
+                name: transfer.metadata?.token_name || hint?.name || symbol || (mint === NATIVE_SOL_MINT ? 'Solana' : 'SPL Token'),
+                decimals,
                 label_source: SOURCE,
                 confidence: 0,
                 metadata: {
                     fixture_only: true,
-                    source_format: transfer.metadata?.source_format || 'solana_transfer'
+                    source_format: transfer.metadata?.source_format || 'solana_transfer',
+                    symbol_source: transfer.metadata?.symbol_source || hint?.source || 'sanitized_transfer'
                 }
             });
         });
         return [...tokensByMint.values()];
     }
 
-    function extractSolanaTransfers(transactions = []) {
+    function extractSolanaTransfers(transactions = [], options = {}) {
         return getTransactionList(transactions)
-            .flatMap((tx, txIndex) => normalizeTransferRecords(tx, txIndex))
+            .flatMap((tx, txIndex) => normalizeTransferRecords(tx, txIndex, options))
             .filter(transfer => transfer.source_wallet && transfer.destination_wallet);
     }
 
-    function normalizeTransferRecords(tx = {}, txIndex = 0) {
+    function normalizeTransferRecords(tx = {}, txIndex = 0, options = {}) {
         const signature = String(tx.signature || tx.transaction_hash || tx.hash || `solana-fixture-${txIndex}`).trim();
         const timestamp = normalizeTimestamp(tx.timestamp || tx.blockTime || tx.block_time);
+        const typeInfo = interpretTransactionType(tx.type || tx.transactionType);
+        const sourceProgram = String(tx.source || tx.program || tx.programId || tx.program_id || '').trim();
+        const sourceLabel = core?.formatSourceLabel ? core.formatSourceLabel(sourceProgram) : titleCase(sourceProgram);
+        const trackedWallet = normalizeAddress(options.trackedWallet);
         const records = [];
 
         getNativeTransfers(tx).forEach((transfer, transferIndex) => {
-            const amount = normalizeLamports(transfer.amount ?? transfer.lamports);
+            const amountInfo = normalizeNativeSolAmount(transfer);
             records.push(buildTransaction({
                 tx,
                 signature,
                 timestamp,
                 transferIndex,
+                typeInfo,
+                sourceProgram,
+                sourceLabel,
+                trackedWallet,
                 sourceWallet: transfer.fromUserAccount || transfer.from || transfer.source_wallet || transfer.source,
                 destinationWallet: transfer.toUserAccount || transfer.to || transfer.destination_wallet || transfer.destination,
                 tokenMint: NATIVE_SOL_MINT,
                 symbol: transfer.symbol || 'SOL',
-                amount,
+                amount: amountInfo.amount,
+                amountDisplay: amountInfo.display,
                 usdValue: transfer.usd_value,
+                decimals: 9,
                 format: 'native_transfer',
                 transfer
             }));
         });
 
         getTokenTransfers(tx).forEach((transfer, transferIndex) => {
+            const mint = normalizeAddress(transfer.mint || transfer.tokenMint || transfer.token_mint || transfer.contract_address);
+            const hint = getTokenHint(mint);
+            const decimals = firstFiniteNumber(transfer.decimals, transfer.rawTokenAmount?.decimals, hint?.decimals);
+            const symbol = resolveTokenSymbol(mint, transfer.symbol || transfer.tokenSymbol || transfer.token_symbol);
+            const amountInfo = normalizeSplTokenAmount(transfer, decimals, symbol);
             records.push(buildTransaction({
                 tx,
                 signature,
                 timestamp,
                 transferIndex: records.length + transferIndex,
+                typeInfo,
+                sourceProgram,
+                sourceLabel,
+                trackedWallet,
                 sourceWallet: transfer.fromUserAccount || transfer.fromOwner || transfer.from || transfer.source_wallet || transfer.source,
                 destinationWallet: transfer.toUserAccount || transfer.toOwner || transfer.to || transfer.destination_wallet || transfer.destination,
-                tokenMint: transfer.mint || transfer.tokenMint || transfer.token_mint || transfer.contract_address,
-                symbol: transfer.symbol || transfer.tokenSymbol || transfer.token_symbol || 'SPL',
-                amount: transfer.tokenAmount ?? transfer.amount ?? transfer.rawTokenAmount?.tokenAmount,
+                tokenMint: mint,
+                symbol,
+                amount: amountInfo.amount,
+                amountDisplay: amountInfo.display,
                 usdValue: transfer.usd_value,
-                decimals: transfer.decimals ?? transfer.rawTokenAmount?.decimals,
+                decimals,
                 format: 'token_transfer',
                 transfer
             }));
         });
 
         getSwapTransfers(tx).forEach((transfer, transferIndex) => {
+            const mint = normalizeAddress(transfer.mint || transfer.tokenMint || transfer.token_mint || (transfer.symbol === 'SOL' ? NATIVE_SOL_MINT : undefined));
+            const hint = getTokenHint(mint);
+            const decimals = firstFiniteNumber(transfer.decimals, transfer.rawTokenAmount?.decimals, hint?.decimals);
+            const symbol = resolveTokenSymbol(mint, transfer.symbol || transfer.tokenSymbol);
+            const amountInfo = mint === NATIVE_SOL_MINT
+                ? normalizeNativeSolAmount(transfer)
+                : normalizeSplTokenAmount(transfer, decimals, symbol);
             records.push(buildTransaction({
                 tx,
                 signature,
                 timestamp,
                 transferIndex: records.length + transferIndex,
+                typeInfo,
+                sourceProgram,
+                sourceLabel,
+                trackedWallet,
                 sourceWallet: transfer.source_wallet || transfer.fromUserAccount || transfer.from || transfer.owner,
                 destinationWallet: transfer.destination_wallet || transfer.toUserAccount || transfer.to || transfer.counterparty,
-                tokenMint: transfer.mint || transfer.tokenMint || transfer.token_mint || (transfer.symbol === 'SOL' ? NATIVE_SOL_MINT : undefined),
-                symbol: transfer.symbol || transfer.tokenSymbol || 'SWAP',
-                amount: transfer.tokenAmount ?? transfer.amount,
+                tokenMint: mint,
+                symbol,
+                amount: amountInfo.amount,
+                amountDisplay: amountInfo.display,
                 usdValue: transfer.usd_value,
-                decimals: transfer.decimals,
+                decimals,
                 format: 'swap_leg',
                 transfer
             }));
         });
 
+        records.forEach((record, index) => {
+            record.transaction_group_id = `txgroup:${CHAIN}:${signature}`;
+            record.leg_index = index + 1;
+            record.leg_count = records.length;
+            record.metadata.transaction_group_id = record.transaction_group_id;
+            record.metadata.leg_index = record.leg_index;
+            record.metadata.leg_count = record.leg_count;
+        });
         return records;
     }
 
@@ -373,28 +440,41 @@
         signature,
         timestamp,
         transferIndex,
+        typeInfo,
+        sourceProgram,
+        sourceLabel,
+        trackedWallet,
         sourceWallet,
         destinationWallet,
         tokenMint,
         symbol,
         amount,
+        amountDisplay,
         usdValue,
         decimals,
         format,
         transfer
     }) {
         const normalizedMint = normalizeAddress(tokenMint || `${CHAIN}:${symbol || 'spl'}`);
+        const normalizedSource = normalizeAddress(sourceWallet);
+        const normalizedDestination = normalizeAddress(destinationWallet);
+        const walletRole = trackedWallet ? trackedWalletRole(trackedWallet, normalizedSource, normalizedDestination, tx.feePayer || tx.fee_payer) : '';
+        const direction = directionFromRole(walletRole);
+        const type = typeInfo || interpretTransactionType(tx.type || tx.transactionType || format);
         return {
             id: `tx:${CHAIN}:${signature}:${transferIndex}`,
             transaction_type: tx.type || tx.transactionType || format,
+            transaction_type_key: type.key,
+            transaction_type_label: type.label,
             transaction_hash: signature,
             chain: CHAIN,
-            source_wallet: normalizeAddress(sourceWallet),
-            destination_wallet: normalizeAddress(destinationWallet),
+            source_wallet: normalizedSource,
+            destination_wallet: normalizedDestination,
             token_mint: normalizedMint,
             contract_address: normalizedMint,
             symbol: String(symbol || 'SPL').trim(),
             amount: normalizeNumber(amount),
+            amount_display: amountDisplay || formatTokenAmount(amount, symbol),
             usd_value: normalizeNumber(usdValue),
             timestamp,
             confidence: 0,
@@ -402,10 +482,18 @@
             hub_ids: collectHubIds(tx, transfer),
             flow_role: format === 'swap_leg' ? 'swap_route' : '',
             route_id: String(tx.route_id || tx.routeId || transfer?.route_id || transfer?.routeId || '').trim(),
+            source_program: sourceProgram,
+            source_label: sourceLabel,
+            direction,
+            tracked_wallet_role: walletRole,
             metadata: {
                 fixture_only: true,
                 source_format: format,
                 solana_type: tx.type || tx.transactionType || transfer?.type || null,
+                transaction_type_key: type.key,
+                transaction_type_label: type.label,
+                source_program: sourceProgram,
+                source_label: sourceLabel,
                 hub_ids: collectHubIds(tx, transfer),
                 exchange_hub_id: tx.exchange_hub_id || transfer?.exchange_hub_id || null,
                 protocol_hub_id: tx.protocol_hub_id || tx.route_hub_id || transfer?.protocol_hub_id || transfer?.route_hub_id || null,
@@ -415,9 +503,59 @@
                 token_account_source: transfer?.fromTokenAccount || null,
                 token_account_destination: transfer?.toTokenAccount || null,
                 decimals: normalizeNumber(decimals),
-                raw_amount: amount ?? null
+                raw_amount: getRawAmountForMetadata(transfer, format),
+                amount_display: amountDisplay || formatTokenAmount(amount, symbol),
+                tracked_wallet_role: walletRole,
+                direction
             }
         };
+    }
+
+    function buildTransactionGroups(sourceTransactions = [], transfers = [], trackedWallet = '') {
+        const transfersBySignature = new Map();
+        transfers.forEach(transfer => {
+            const signature = transfer.transaction_hash;
+            if (!transfersBySignature.has(signature)) transfersBySignature.set(signature, []);
+            transfersBySignature.get(signature).push(transfer);
+        });
+
+        return sourceTransactions.map((tx, index) => {
+            const signature = String(tx.signature || tx.transaction_hash || tx.hash || `solana-fixture-${index}`).trim();
+            const relatedTransfers = transfersBySignature.get(signature) || [];
+            const typeInfo = interpretTransactionType(tx.type || tx.transactionType);
+            const sourceProgram = String(tx.source || tx.program || tx.programId || tx.program_id || '').trim();
+            const sourceLabel = core?.formatSourceLabel ? core.formatSourceLabel(sourceProgram) : titleCase(sourceProgram);
+            const tokens = uniqueStrings(relatedTransfers.map(transfer => transfer.symbol || tokenSymbolFromMint(transfer.token_mint)));
+            const tokenMints = uniqueStrings(relatedTransfers.map(transfer => transfer.token_mint));
+            const involvement = summarizeTrackedWalletInvolvement(trackedWallet, relatedTransfers, tx);
+            return {
+                id: `txgroup:${CHAIN}:${signature}`,
+                chain: CHAIN,
+                signature,
+                transaction_type: tx.type || tx.transactionType || 'UNKNOWN',
+                transaction_type_key: typeInfo.key,
+                transaction_type_label: typeInfo.label,
+                source_program: sourceProgram,
+                source_label: sourceLabel,
+                leg_count: relatedTransfers.length,
+                primary_wallet: trackedWallet,
+                primary_wallet_role: involvement.role,
+                direction: involvement.direction,
+                tokens_involved: tokens,
+                token_mints: tokenMints,
+                timestamp: normalizeTimestamp(tx.timestamp || tx.blockTime || tx.block_time),
+                fee_payer: normalizeAddress(tx.feePayer || tx.fee_payer),
+                metadata: {
+                    fixture_only: true,
+                    sanitized: true,
+                    native_transfer_count: getNativeTransfers(tx).length,
+                    token_transfer_count: getTokenTransfers(tx).length,
+                    swap_leg_count: getSwapTransfers(tx).length,
+                    source_program: sourceProgram,
+                    source_label: sourceLabel
+                }
+            };
+        });
     }
 
     function extractSolanaEntities(input, transactions = []) {
@@ -531,29 +669,163 @@
 
     function addWallet(walletsByAddress, address, transfer) {
         const normalized = normalizeAddress(address);
-        if (!normalized || walletsByAddress.has(normalized)) return;
+        if (!normalized) return;
+        const existing = walletsByAddress.get(normalized);
+        if (existing) {
+            if (transfer?.label && existing.label === shortAddress(normalized)) {
+                existing.label = transfer.label;
+                existing.title = transfer.label;
+                existing.label_source = transfer.label_source || existing.label_source;
+            }
+            return;
+        }
         walletsByAddress.set(normalized, {
             address: normalized,
             chain: CHAIN,
-            label: shortAddress(normalized),
-            label_source: SOURCE,
+            label: transfer?.label || shortAddress(normalized),
+            label_source: transfer?.label_source || SOURCE,
             confidence: 0,
             metadata: {
                 fixture_only: true,
-                first_seen_format: transfer.metadata?.source_format || 'solana_transfer'
+                first_seen_format: transfer?.metadata?.source_format || 'solana_transfer'
             }
         });
+    }
+
+    function interpretTransactionType(value) {
+        return core?.interpretTransactionType
+            ? core.interpretTransactionType(value)
+            : {
+                key: String(value || '').toUpperCase().replace(/[^A-Z0-9]+/g, '_') || 'UNKNOWN',
+                raw: String(value || ''),
+                label: titleCase(value || 'Unknown')
+            };
+    }
+
+    function normalizeNativeSolAmount(transfer = {}) {
+        const raw = transfer.lamports ?? transfer.amount ?? transfer.tokenAmount;
+        const unit = String(transfer.unit || transfer.amount_unit || '').trim().toLowerCase();
+        const value = normalizeNumber(raw);
+        const amount = unit === 'sol' || transfer.amountInSol === true || transfer.solAmount != null
+            ? normalizeNumber(transfer.solAmount ?? raw)
+            : value / LAMPORTS_PER_SOL;
+        return {
+            amount,
+            display: formatTokenAmount(amount, 'SOL')
+        };
+    }
+
+    function normalizeSplTokenAmount(transfer = {}, decimals = null, symbol = '') {
+        const tokenAmount = transfer.tokenAmount ?? transfer.token_amount;
+        if (tokenAmount != null) {
+            const amount = normalizeNumber(tokenAmount);
+            return { amount, display: formatTokenAmount(amount, symbol) };
+        }
+
+        const rawTokenAmount = transfer.rawTokenAmount?.tokenAmount ?? transfer.raw_token_amount?.tokenAmount;
+        if (rawTokenAmount != null && Number.isFinite(Number(decimals))) {
+            const amount = normalizeNumber(rawTokenAmount) / (10 ** Number(decimals));
+            return { amount, display: formatTokenAmount(amount, symbol) };
+        }
+
+        const amount = normalizeNumber(transfer.amount);
+        return { amount, display: formatTokenAmount(amount, symbol) };
+    }
+
+    function resolveTokenSymbol(mint, providedSymbol = '') {
+        const cleanSymbol = String(providedSymbol || '').trim();
+        if (cleanSymbol) return cleanSymbol;
+        return getTokenHint(mint)?.symbol || tokenSymbolFromMint(mint);
+    }
+
+    function tokenSymbolFromMint(mint) {
+        const normalized = normalizeAddress(mint);
+        if (normalized === NATIVE_SOL_MINT) return 'SOL';
+        if (!normalized) return 'SPL';
+        return `SPL ${shortLongValue(normalized)}`;
+    }
+
+    function getTokenHint(mint) {
+        return KNOWN_TOKEN_HINTS[normalizeAddress(mint)] || null;
+    }
+
+    function firstFiniteNumber(...values) {
+        for (const value of values) {
+            const number = Number(value);
+            if (Number.isFinite(number)) return number;
+        }
+        return 0;
+    }
+
+    function formatTokenAmount(value, symbol = '') {
+        return core?.formatTokenAmount ? core.formatTokenAmount(value, symbol) : `${normalizeNumber(value)} ${symbol}`.trim();
+    }
+
+    function getRawAmountForMetadata(transfer = {}, format = '') {
+        if (format === 'native_transfer') return transfer.lamports ?? transfer.amount ?? null;
+        return transfer.rawTokenAmount?.tokenAmount ?? transfer.raw_token_amount?.tokenAmount ?? transfer.amount ?? null;
+    }
+
+    function trackedWalletRole(trackedWallet, sourceWallet, destinationWallet, feePayer = '') {
+        const tracked = normalizeAddress(trackedWallet);
+        if (!tracked) return '';
+        const isSource = normalizeAddress(sourceWallet) === tracked;
+        const isDestination = normalizeAddress(destinationWallet) === tracked;
+        const isFeePayer = normalizeAddress(feePayer) === tracked;
+        if (isSource && isDestination) return 'internal';
+        if (isSource) return 'outbound';
+        if (isDestination) return 'inbound';
+        if (isFeePayer) return 'fee_payer';
+        return 'unrelated';
+    }
+
+    function directionFromRole(role = '') {
+        if (role === 'inbound') return 'inbound';
+        if (role === 'outbound' || role === 'fee_payer') return 'outbound';
+        return role ? 'internal_mixed' : '';
+    }
+
+    function summarizeTrackedWalletInvolvement(trackedWallet, transfers = [], tx = {}) {
+        const tracked = normalizeAddress(trackedWallet);
+        if (!tracked) return { role: '', direction: '' };
+        const roles = new Set(transfers.map(transfer => trackedWalletRole(tracked, transfer.source_wallet, transfer.destination_wallet, tx.feePayer || tx.fee_payer)).filter(Boolean));
+        if (normalizeAddress(tx.feePayer || tx.fee_payer) === tracked) roles.add('fee_payer');
+        if (roles.has('inbound') && roles.has('outbound')) return { role: 'mixed', direction: 'internal_mixed' };
+        if (roles.has('inbound')) return { role: 'inbound', direction: 'inbound' };
+        if (roles.has('outbound')) return { role: 'outbound', direction: 'outbound' };
+        if (roles.has('fee_payer')) return { role: 'fee_payer', direction: 'outbound' };
+        if (roles.has('internal')) return { role: 'internal', direction: 'internal_mixed' };
+        return { role: 'unrelated', direction: 'internal_mixed' };
+    }
+
+    function getTrackedWallet(input) {
+        if (!input || Array.isArray(input)) return '';
+        return input.metadata?.wallet || input.metadata?.generated_wallet || input.wallet || '';
+    }
+
+    function uniqueStrings(values = []) {
+        return [...new Set(values.map(value => String(value || '').trim()).filter(Boolean))];
+    }
+
+    function titleCase(value = '') {
+        return String(value || '')
+            .trim()
+            .replace(/[_-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .toLowerCase()
+            .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    function shortLongValue(value) {
+        const text = String(value || '');
+        if (text.length <= 18) return text;
+        return `${text.slice(0, 7)}...${text.slice(-6)}`;
     }
 
     function normalizeTimestamp(value) {
         if (!value) return null;
         if (typeof value === 'number') return new Date(value * 1000).toISOString();
         return String(value);
-    }
-
-    function normalizeLamports(value) {
-        const number = normalizeNumber(value);
-        return number > 1000000 ? number / 1000000000 : number;
     }
 
     function normalizeAddress(value) {

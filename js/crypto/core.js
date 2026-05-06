@@ -22,6 +22,19 @@
         LABEL: 'label_link'
     });
 
+    const TRANSACTION_TYPE_LABELS = Object.freeze({
+        TRANSFER: 'Transfer',
+        TOKEN_TRANSFER: 'Token Transfer',
+        SWAP: 'Swap',
+        CLOSE_ACCOUNT: 'Close Account',
+        STAKE_TOKEN: 'Stake',
+        COLLECT_REWARD: 'Reward Collection',
+        COLLECT_REVENUE: 'Revenue Collection',
+        CREATE_ORDER: 'Order Created',
+        FILL_ORDER: 'Order Filled',
+        UNKNOWN: 'Unknown / Unclassified'
+    });
+
     const SAMPLE_DATASET = Object.freeze({
         metadata: {
             name: 'CryptoPhotonic dev-only sample flow',
@@ -205,6 +218,25 @@
         return Number.isFinite(number) ? number : 0;
     }
 
+    function interpretTransactionType(value = '') {
+        const raw = String(value || '').trim();
+        const key = raw.toUpperCase().replace(/[^A-Z0-9]+/g, '_') || 'UNKNOWN';
+        return {
+            key: TRANSACTION_TYPE_LABELS[key] ? key : 'UNKNOWN',
+            raw,
+            label: TRANSACTION_TYPE_LABELS[key] || TRANSACTION_TYPE_LABELS.UNKNOWN
+        };
+    }
+
+    function formatSourceLabel(value = '') {
+        return String(value || '')
+            .trim()
+            .replace(/[_-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .toLowerCase()
+            .replace(/\b\w/g, char => char.toUpperCase()) || '';
+    }
+
     function normalizeWallet(wallet = {}) {
         const chain = normalizeChain(wallet.chain);
         const address = normalizeAddress(wallet.address || wallet.wallet_address);
@@ -296,6 +328,8 @@
             id: transaction.id || `tx:${chain}:${transactionHash || cryptoSafeId(transaction)}`,
             type: 'transaction',
             transaction_type: String(transaction.transaction_type || transaction.type || metadata.source_format || '').trim(),
+            transaction_type_key: String(transaction.transaction_type_key || metadata.transaction_type_key || interpretTransactionType(transaction.transaction_type || transaction.type || metadata.solana_type).key).trim(),
+            transaction_type_label: String(transaction.transaction_type_label || metadata.transaction_type_label || interpretTransactionType(transaction.transaction_type || transaction.type || metadata.solana_type).label).trim(),
             transaction_hash: transactionHash,
             chain,
             source_wallet: normalizeAddress(transaction.source_wallet || transaction.from || transaction.source),
@@ -303,6 +337,7 @@
             token_mint: normalizeAddress(transaction.token_mint || transaction.contract_address || transaction.token),
             symbol: String(transaction.symbol || '').trim(),
             amount: normalizeNumber(transaction.amount),
+            amount_display: String(transaction.amount_display || metadata.amount_display || '').trim(),
             usd_value: normalizeNumber(transaction.usd_value),
             timestamp: transaction.timestamp || transaction.block_time || null,
             confidence: normalizeConfidence(transaction.confidence),
@@ -310,7 +345,39 @@
             hub_ids: hubIds,
             flow_role: String(transaction.flow_role || metadata.flow_role || '').trim(),
             route_id: String(transaction.route_id || metadata.route_id || '').trim(),
+            transaction_group_id: String(transaction.transaction_group_id || metadata.transaction_group_id || '').trim(),
+            leg_index: normalizeNumber(transaction.leg_index ?? metadata.leg_index),
+            leg_count: normalizeNumber(transaction.leg_count ?? metadata.leg_count),
+            source_program: String(transaction.source_program || metadata.source_program || '').trim(),
+            source_label: String(transaction.source_label || metadata.source_label || formatSourceLabel(transaction.source_program || metadata.source_program)).trim(),
+            direction: String(transaction.direction || metadata.direction || '').trim(),
+            tracked_wallet_role: String(transaction.tracked_wallet_role || metadata.tracked_wallet_role || '').trim(),
             metadata
+        };
+    }
+
+    function normalizeTransactionGroup(group = {}) {
+        const typeInfo = interpretTransactionType(group.transaction_type || group.type || group.transaction_type_key);
+        const tokens = normalizeStringList(group.tokens_involved || group.tokens || group.token_symbols);
+        const tokenMints = normalizeStringList(group.token_mints || group.mints);
+        return {
+            id: String(group.id || `txgroup:${normalizeChain(group.chain)}:${group.signature || group.transaction_hash || cryptoSafeId(group)}`).trim(),
+            chain: normalizeChain(group.chain),
+            signature: String(group.signature || group.transaction_hash || '').trim(),
+            transaction_type: String(group.transaction_type || group.type || typeInfo.raw).trim(),
+            transaction_type_key: String(group.transaction_type_key || typeInfo.key).trim(),
+            transaction_type_label: String(group.transaction_type_label || typeInfo.label).trim(),
+            source_program: String(group.source_program || group.source || '').trim(),
+            source_label: String(group.source_label || formatSourceLabel(group.source_program || group.source)).trim(),
+            leg_count: normalizeNumber(group.leg_count),
+            primary_wallet: normalizeAddress(group.primary_wallet || group.tracked_wallet),
+            primary_wallet_role: String(group.primary_wallet_role || group.tracked_wallet_role || '').trim(),
+            direction: String(group.direction || '').trim(),
+            tokens_involved: tokens,
+            token_mints: tokenMints.map(normalizeAddress).filter(Boolean),
+            timestamp: group.timestamp || null,
+            fee_payer: normalizeAddress(group.fee_payer || group.feePayer),
+            metadata: { ...(group.metadata || {}) }
         };
     }
 
@@ -325,13 +392,17 @@
         const transactions = (Array.isArray(dataset.transactions) ? dataset.transactions : [])
             .map(normalizeTransaction)
             .filter(transaction => transaction.source_wallet && transaction.destination_wallet);
+        const transactionGroups = (Array.isArray(dataset.transaction_groups) ? dataset.transaction_groups : [])
+            .map(normalizeTransactionGroup)
+            .filter(group => group.signature || group.id);
 
         return {
             metadata: { ...(dataset.metadata || {}) },
             wallets,
             tokens,
             entities,
-            transactions
+            transactions,
+            transaction_groups: transactionGroups
         };
     }
 
@@ -351,6 +422,19 @@
         if (Math.abs(number) >= 1000000) return `$${(number / 1000000).toFixed(2)}M`;
         if (Math.abs(number) >= 1000) return `$${(number / 1000).toFixed(1)}K`;
         return `$${number.toFixed(0)}`;
+    }
+
+    function formatTokenAmount(value, symbol = '') {
+        const number = normalizeNumber(value);
+        const token = String(symbol || '').trim();
+        const abs = Math.abs(number);
+        let text;
+        if (!abs) text = '0';
+        else if (abs >= 1000000) text = number.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        else if (abs >= 1000) text = number.toLocaleString(undefined, { maximumFractionDigits: 3 });
+        else if (abs >= 1) text = number.toLocaleString(undefined, { maximumFractionDigits: 6 });
+        else text = number.toLocaleString(undefined, { maximumFractionDigits: 9 });
+        return token ? `${text} ${token}` : text;
     }
 
     function cryptoSafeId(value) {
@@ -375,17 +459,21 @@
         normalizeToken,
         normalizeEntity,
         normalizeTransaction,
+        normalizeTransactionGroup,
         normalizeHubCategory,
         normalizeAddress,
         normalizeChain,
         normalizeConfidence,
         normalizeNumber,
+        interpretTransactionType,
+        formatSourceLabel,
         walletId,
         tokenId,
         entityId,
         hubId,
         shortAddress,
         formatUsd,
+        formatTokenAmount,
         getSampleDataset
     };
 })();

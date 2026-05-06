@@ -102,6 +102,7 @@
             nodes,
             edges,
             transactions: dataset.transactions,
+            transactionGroups: dataset.transaction_groups || [],
             nodeById,
             walletNodes: nodes.filter(node => node.type === core.NODE_TYPES.WALLET),
             tokenNodes: nodes.filter(node => node.type === core.NODE_TYPES.TOKEN),
@@ -176,17 +177,22 @@
     function buildFlowEdge(transaction, sourceWalletId, destinationWalletId, index) {
         const usdValue = Math.max(0, Number(transaction.usd_value) || 0);
         return {
-            id: `${core.EDGE_TYPES.FLOW}:${transaction.transaction_hash || index}`,
+            id: `${core.EDGE_TYPES.FLOW}:${transaction.id || transaction.transaction_hash || index}`,
             type: core.EDGE_TYPES.FLOW,
             source: sourceWalletId,
             target: destinationWalletId,
             source_wallet: transaction.source_wallet,
             destination_wallet: transaction.destination_wallet,
             transaction_hash: transaction.transaction_hash,
+            transaction_group_id: transaction.transaction_group_id || transaction.metadata?.transaction_group_id || '',
+            transaction_type: transaction.transaction_type || '',
+            transaction_type_key: transaction.transaction_type_key || transaction.metadata?.transaction_type_key || core.interpretTransactionType?.(transaction.transaction_type).key || '',
+            transaction_type_label: transaction.transaction_type_label || transaction.metadata?.transaction_type_label || core.interpretTransactionType?.(transaction.transaction_type).label || '',
             chain: transaction.chain,
             token_mint: transaction.token_mint,
             symbol: transaction.symbol,
             amount: transaction.amount,
+            amount_display: transaction.amount_display || transaction.metadata?.amount_display || core.formatTokenAmount?.(transaction.amount, transaction.symbol) || '',
             usd_value: usdValue,
             timestamp: transaction.timestamp,
             confidence: transaction.confidence,
@@ -194,6 +200,12 @@
             priority: usdValue,
             flow_role: transaction.flow_role || transaction.metadata?.source_format || '',
             route_id: transaction.route_id || transaction.metadata?.route_id || '',
+            leg_index: transaction.leg_index || transaction.metadata?.leg_index || 0,
+            leg_count: transaction.leg_count || transaction.metadata?.leg_count || 0,
+            source_program: transaction.source_program || transaction.metadata?.source_program || '',
+            source_label: transaction.source_label || transaction.metadata?.source_label || '',
+            direction: transaction.direction || transaction.metadata?.direction || '',
+            tracked_wallet_role: transaction.tracked_wallet_role || transaction.metadata?.tracked_wallet_role || '',
             production_write: false
         };
     }
@@ -398,6 +410,8 @@
                 target: edge.target,
                 usd_value: edge.usd_value || 0,
                 symbol: edge.symbol || '',
+                amount_display: edge.amount_display || '',
+                transaction_type_label: edge.transaction_type_label || '',
                 transaction_hash: edge.transaction_hash || ''
             }));
 

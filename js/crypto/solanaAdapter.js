@@ -5,6 +5,95 @@
     const CHAIN = 'solana';
     const SOURCE = 'solana_offline_fixture';
     const NATIVE_SOL_MINT = 'solana:native-sol';
+    const LIVE_DATA_SECURITY_BOUNDARY = Object.freeze({
+        status: 'disabled_planning_only',
+        browser_secret_policy: 'Public browser code must never contain API keys, bearer tokens, private RPC URLs, or signing material.',
+        key_storage_policy: 'Future Helius, Solana, and Jupiter credentials must remain in local environment variables or a managed secret store.',
+        live_call_requirement: 'Live blockchain calls require a future backend/proxy or local-only secure runner before enablement.',
+        fixture_policy: 'Public fixtures remain dev-only, synthetic, and safe to ship without secrets.',
+        forbidden_in_browser: [
+            'API key loading',
+            'secret manager access',
+            'live RPC fetches',
+            'WebSocket subscriptions',
+            'swap execution',
+            'transaction signing'
+        ]
+    });
+
+    function createHeliusEnhancedTransactionPlan(options = {}) {
+        return createDisabledLiveDataPlan({
+            id: 'helius_enhanced_transactions',
+            provider: 'Helius',
+            target: 'Enhanced Transactions',
+            adapter_status: 'stub_only_no_fetch',
+            intended_use: [
+                'Normalize enriched Solana transaction records into CryptoPhotonic wallet, token, entity, and flow graphs.',
+                'Preserve offline fixture compatibility as the default development mode.'
+            ],
+            required_secure_runtime: 'backend_proxy_or_local_secure_runner',
+            required_secret_names: options.required_secret_names || ['HELIUS_API_KEY'],
+            browser_parameters_allowed: [
+                'public fixture path',
+                'synthetic transaction signature list',
+                'non-secret feature flag'
+            ]
+        });
+    }
+
+    function createSolanaWebSocketPlan(options = {}) {
+        return createDisabledLiveDataPlan({
+            id: 'solana_realtime_websocket',
+            provider: 'Helius/Solana',
+            target: 'WebSocket realtime transaction stream',
+            adapter_status: 'stub_only_no_subscription',
+            intended_use: [
+                'Prepare future realtime flow updates for watched wallets, hubs, or programs.',
+                'Route all subscriptions through a secure runtime so browser code never receives provider secrets.'
+            ],
+            required_secure_runtime: 'backend_proxy_or_local_secure_runner',
+            required_secret_names: options.required_secret_names || ['HELIUS_API_KEY', 'SOLANA_RPC_URL'],
+            browser_parameters_allowed: [
+                'synthetic watchlist id',
+                'offline fixture replay mode',
+                'non-secret feature flag'
+            ]
+        });
+    }
+
+    function createJupiterRouteContextPlan(options = {}) {
+        return createDisabledLiveDataPlan({
+            id: 'jupiter_route_context',
+            provider: 'Jupiter',
+            target: 'Route and swap context',
+            adapter_status: 'stub_only_no_route_request',
+            intended_use: [
+                'Annotate Solana swap-like fixture flows with future route, quote, and pool context.',
+                'Keep swap execution, signing, and live quote requests outside browser public code.'
+            ],
+            required_secure_runtime: 'backend_proxy_or_local_secure_runner',
+            required_secret_names: options.required_secret_names || [],
+            browser_parameters_allowed: [
+                'synthetic route id',
+                'offline fixture route metadata',
+                'non-secret feature flag'
+            ]
+        });
+    }
+
+    function createDisabledLiveDataPlan(plan = {}) {
+        return {
+            ...plan,
+            chain: CHAIN,
+            live_enabled: false,
+            live_blockchain_fetching: false,
+            loads_browser_api_keys: false,
+            fetch_implemented: false,
+            websocket_implemented: false,
+            swap_execution_enabled: false,
+            security_boundary: { ...LIVE_DATA_SECURITY_BOUNDARY }
+        };
+    }
 
     function normalizeSolanaEnhancedTransaction(tx = {}) {
         return normalizeSolanaTransactionBatch([tx]);
@@ -31,7 +120,12 @@
                     'Helius Webhooks',
                     'Solana RPC/WebSocket',
                     'Jupiter'
-                ]
+                ],
+                live_data_boundary: {
+                    status: LIVE_DATA_SECURITY_BOUNDARY.status,
+                    browser_secret_policy: LIVE_DATA_SECURITY_BOUNDARY.browser_secret_policy,
+                    live_call_requirement: LIVE_DATA_SECURITY_BOUNDARY.live_call_requirement
+                }
             },
             wallets,
             tokens,
@@ -346,6 +440,9 @@
         extractSolanaWallets,
         extractSolanaTokens,
         extractSolanaEntities,
-        extractSolanaTransfers
+        extractSolanaTransfers,
+        createHeliusEnhancedTransactionPlan,
+        createSolanaWebSocketPlan,
+        createJupiterRouteContextPlan
     };
 })();

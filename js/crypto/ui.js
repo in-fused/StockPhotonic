@@ -157,8 +157,8 @@
         status.id = 'crypto-solana-status';
         status.className = 'text-[10px] font-mono tracking-[1.1px] text-cyan-50/78 rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 max-w-md';
         status.innerHTML = isSolana
-            ? 'Solana-first offline fixture mode<br>No live RPC/WebSocket/API calls yet<br>Future adapters: Helius Enhanced Transactions, Helius Webhooks, Solana RPC/WebSocket, Jupiter'
-            : 'Offline sample fixture mode<br>No live RPC/WebSocket/API calls yet<br>Future adapters: Helius Enhanced Transactions, Helius Webhooks, Solana RPC/WebSocket, Jupiter';
+            ? 'Solana offline fixture mode<br>Live data disabled; API keys not loaded in browser<br>Future live mode requires secure proxy/local runner'
+            : 'Offline fixture mode<br>Live data disabled; API keys not loaded in browser<br>Future live mode requires secure proxy/local runner';
         panelHeader.appendChild(status);
     }
 

@@ -2,12 +2,13 @@
 
 CryptoPhotonic remains an offline, fixture-driven Solana-first graph renderer until a secure runtime exists for live-data access. This plan defines the boundary for future Helius, Solana, and Jupiter integration without adding credentials, live requests, backend code, or production data claims.
 
-## Phase D79 Scope
+## Phase D79-D80 Scope
 
 - Planning and adapter shaping only.
 - No API keys, private RPC URLs, bearer tokens, wallet private keys, or signing material are added.
 - No browser-side live fetching, WebSocket subscription, backend/server implementation, swap request, transaction signing, or production-data claim is added.
 - No CryptoPhotonic UI rendering, canvas animation, layout, replay controls, or StockPhotonic behavior is changed.
+- Phase D80 adds only the local secure runner plan, cache/rate-limit strategy, and generated output contract. It does not implement the runner or any live provider calls.
 
 ## Solana-First Strategy
 
@@ -20,13 +21,13 @@ CryptoPhotonic remains an offline, fixture-driven Solana-first graph renderer un
 
 The live-data path must preserve the current graph model:
 
-`Input -> Adapter -> Graph -> UI -> Replay`
+`Input -> Adapter -> Graph -> UI -> Live Flow Queue`
 
 - Input: a secure runtime receives an allowed request such as one public wallet address or an approved transaction signature list, then calls external Solana providers. The browser never calls Helius, private Solana RPC URLs, or secret-backed Jupiter endpoints directly.
 - Adapter: `js/crypto/solanaAdapter.js` remains the boundary that normalizes provider payloads into CryptoPhotonic dataset records with `metadata`, `wallets`, `tokens`, `entities`, and `transactions`.
 - Graph: the normalized dataset continues through `CryptoPhotonic.core.normalizeDataset()` and `CryptoPhotonic.graph.buildGraph()` with no graph contract changes.
 - UI: existing CryptoPhotonic rendering consumes graph nodes and edges exactly as it does for fixtures. No live-data-specific rendering path is required for the first milestone.
-- Replay: normalized transactions become flow edges. `buildFlowReplayPlan()` derives `flowReplay.ordered_flows` from those edges, so live records append to the same replay queue shape used by offline fixtures.
+- Live Flow Queue: normalized transactions become ordered flow edges. `buildFlowReplayPlan()` currently derives `flowReplay.ordered_flows` from those edges, so live records append to the same ordered queue shape used by offline fixtures.
 
 ## Target Integrations
 
@@ -250,17 +251,133 @@ Out of scope for the first live milestone:
 - No browser-side secret loading is implemented in this phase.
 - No live blockchain fetching, WebSocket subscription, swap request, transaction signing, or backend/server code is implemented in this phase.
 
-## Replay Integration
+## Local Secure Runner Plan
 
-The animation system should reuse the existing flow replay path:
+A future local-only secure runner may live under `scripts/crypto/`. It is not implemented in this phase. Its purpose is to let the user run a controlled ingestion process from their own machine while keeping provider credentials out of the browser and out of public fixtures.
+
+Required runner boundaries:
+
+- Run only as a local command-line process from the user's machine.
+- Read the Helius API key from a local environment variable such as `HELIUS_API_KEY`.
+- Never write, print, bundle, or expose the Helius key to browser JavaScript, HTML, public assets, generated fixtures, logs intended for sharing, or source maps.
+- Accept a constrained public Solana wallet address, signature list, and optional time window as local input.
+- Validate wallet addresses, transaction signatures, pagination limits, response size, and time windows before any provider request in a later implementation.
+- Write only sanitized graph-ready JSON fixtures under `data/crypto/generated/`.
+- Keep any raw provider payload cache outside public generated output. If raw cache is later needed, use `data/crypto/cache/` and ignore it before writing real payloads.
+- Exit without starting a backend service, web server, proxy, browser listener, signing workflow, or swap execution path.
+
+The local runner is a preparation path for secure ingestion, not a replacement for the public fixture model. Offline fixture loading remains the default browser behavior until a later phase explicitly wires sanitized generated files into the app.
+
+## Cache Strategy For Helius Free-Tier Limits
+
+Helius free-tier limits should be treated as constrained and subject to change. The future runner should avoid hardcoded plan assumptions and should make its request policy configurable below the current provider allowance documented at implementation time.
+
+Recommended cache locations:
+
+- `data/crypto/generated/`: sanitized output fixtures that are safe for browser consumption.
+- `data/crypto/cache/`: optional future raw or semi-raw local cache, ignored before any real provider payloads are written.
+
+Cache rules:
+
+- Cache wallet scans by normalized wallet address.
+- Cache transaction details by transaction signature.
+- Cache list results by wallet address plus time window and pagination cursor where applicable.
+- Track already-seen signatures per wallet and skip them on later runs.
+- Batch unknown signatures before requesting enhanced transaction details.
+- Append only new sanitized transfer records to the generated wallet-flow fixture.
+- Deduplicate by transaction signature plus transfer index or another stable transfer identifier.
+- Preserve raw provider payloads only outside public generated data if they are needed for local diagnostics or replayable parsing tests.
+- Never copy raw request headers, private URLs, API keys, bearer tokens, or provider diagnostics that include secrets into generated fixtures.
+
+Incremental updates should be preferred over full re-pulls. A runner should load the existing generated wallet-flow file first, collect known signatures and transfer IDs, request only missing windows or signatures, then rewrite or append the sanitized fixture with deterministic ordering.
+
+## Rate Limit Strategy For Helius Free-Tier Limits
+
+The future runner should default to conservative local throttling because free-tier provider limits can change by account, endpoint, and date.
+
+Safe defaults:
+
+- Keep maximum requests per second below the documented free-tier allowance at implementation time.
+- Use a configurable request interval rather than embedding fragile assumptions in code or fixtures.
+- Retry 429 responses with exponential backoff and jitter.
+- Respect provider retry headers when present.
+- Batch signature lookups where the provider endpoint supports batching.
+- Avoid tight polling loops and realtime-style refresh intervals on the free tier.
+- Prefer incremental wallet updates over full history re-pulls.
+- Stop or slow down after repeated rate-limit responses rather than continuing to burn quota.
+- Record non-secret request timing and count metadata locally so future runs can choose smaller windows.
+
+Polling should not be the first realtime design. The first live milestone should remain a user-triggered local command that refreshes a bounded wallet/time-window fixture, then hands sanitized JSON to the offline UI.
+
+## Generated Output Contract
+
+The future runner should write sanitized fixtures using this path pattern:
+
+`data/crypto/generated/solana-wallet-flow.<wallet>.json`
+
+`<wallet>` should be a normalized, filesystem-safe public wallet address or reviewed short identifier. The generated file must be safe to commit only after review and must contain no secrets.
+
+Required top-level shape:
+
+```json
+{
+  "metadata": {
+    "name": "Solana wallet flow",
+    "environment": "local_secure_runner_generated",
+    "chain": "solana",
+    "adapter": "solana",
+    "source": "helius_enhanced_transactions_sanitized",
+    "wallet": "public wallet address",
+    "generated_at": "ISO-8601 timestamp",
+    "time_window": {
+      "start": "ISO-8601 timestamp or null",
+      "end": "ISO-8601 timestamp or null"
+    },
+    "production_meaning": false,
+    "live_blockchain_fetching": false,
+    "sanitized": true
+  },
+  "wallets": [],
+  "tokens": [],
+  "entities": [],
+  "transactions": []
+}
+```
+
+Generated files must include:
+
+- `metadata`
+- `wallets`
+- `tokens`
+- `entities`
+- `transactions`
+
+Generated files must not include:
+
+- API keys, bearer tokens, signing material, private keys, or secret names that reveal secret values.
+- Raw request headers or authorization metadata.
+- Private RPC, WebSocket, proxy, or provider URLs.
+- Raw provider payloads unless explicitly sanitized into the public graph contract.
+- Local filesystem paths that expose private machine details.
+- Error traces or diagnostics that contain request credentials.
+
+The generated contract mirrors the existing adapter output contract so `solanaAdapter`, graph building, and the current animation state can consume the same shape without public UI changes.
+
+## Live Flow Queue Integration
+
+The user-facing concept should be Live Flow Queue, not Replay. The queue represents realtime ordered flow intake from sanitized transaction records, not press-play historical playback.
+
+The internal `flowReplay` name and `buildFlowReplayPlan()` function may remain for now to avoid UI or graph contract churn. A later refactor can rename the internal state to `flowQueue` after generated live fixtures and merge/dedupe behavior are stable.
+
+The animation system should reuse the existing ordered-flow path:
 
 1. Secure runtime returns sanitized Helius transaction payloads.
 2. `solanaAdapter` maps each parsed transfer into CryptoPhotonic transaction records.
 3. `graph.buildGraph()` turns transactions into flow edges.
 4. `buildFlowReplayPlan()` sorts flow edges by timestamp and value into `flowReplay.ordered_flows`.
-5. The current UI replay controls and flow pulse animation read `flowReplay.ordered_flows` and `activeFlowId`.
+5. The current UI controls and flow pulse animation read `flowReplay.ordered_flows` and `activeFlowId`.
 
-For later incremental live updates, a sanitized transaction batch should be normalized, deduplicated by `transaction_hash` plus transfer index, merged into the current dataset, and rebuilt into graph/replay state. New transactions append to the replay queue according to the existing timestamp sort. No new animation primitives are needed for the first live milestone.
+For later incremental live updates, a sanitized transaction batch should be normalized, deduplicated by `transaction_hash` plus transfer index, merged into the current dataset, and rebuilt into graph/queue state. New transactions append to the Live Flow Queue according to the existing timestamp sort. No new animation primitives are needed for the first live milestone.
 
 ## Disabled Adapter Stubs
 
@@ -277,6 +394,8 @@ These functions return configuration/readiness objects only. They do not fetch, 
 - Add a backend/proxy or local-only secure runner outside public browser code.
 - Load provider credentials only from environment variables or a secret manager inside that secure runtime.
 - Keep request allowlists and rate limits server-side.
+- Add cache indexes by wallet address, transaction signature, and time window before making repeated Helius requests.
+- Add conservative rate limiting, 429 retry/backoff, batched signature lookup, and incremental update behavior before free-tier live testing.
 - Add request filtering for wallet addresses, signatures, pagination, date windows, response size, and provider endpoints.
 - Sanitize live responses before they reach CryptoPhotonic UI code.
 - Add merge/dedupe behavior for recent transactions before realtime append.

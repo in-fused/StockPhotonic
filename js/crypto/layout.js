@@ -16,11 +16,15 @@
         const flowEdges = [...(graph.flowEdges || [])].sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0));
         const maxFlowValue = Math.max(1, ...flowEdges.map(edge => Number(edge.usd_value) || 0));
         const maxNodeExposure = Math.max(1, ...graph.nodes.map(node => Number(node.exposure_usd || node.aggregate_value_usd) || 0));
+        const maxWalletExposure = Math.max(1, ...walletNodes.map(node => Number(node.exposure_usd) || 0));
+        const maxTokenExposure = Math.max(1, ...tokenNodes.map(node => Number(node.exposure_usd) || 0));
+        const walletLabelRanks = rankNodesByValue(walletNodes, node => Number(node.exposure_usd) || 0);
+        const tokenLabelRanks = rankNodesByValue(tokenNodes, node => Number(node.exposure_usd) || 0);
         const positions = new Map();
         const hubPositions = placeHubs(hubNodes, center, width, height, positions);
         const clusters = groupWallets(walletNodes, graph.labelEdges || [], graph.nodeById);
         const clusterEntries = [...clusters.entries()].sort(([a], [b]) => a.localeCompare(b));
-        const fallbackClusterRadius = Math.min(width, height) * 0.27;
+        const fallbackClusterRadius = Math.min(width, height) * 0.34;
 
         clusterEntries.forEach(([clusterKey, wallets], clusterIndex) => {
             const hubAnchor = hubPositions.get(clusterKey);
@@ -32,7 +36,7 @@
                 y: center.y + Math.sin(clusterAngle) * fallbackClusterRadius * 0.72
             };
             const hubNode = graph.nodeById?.get(clusterKey);
-            const walletRadius = Math.max(56, Math.min(146, (hubNode?.radius || 26) + 48 + wallets.length * 13));
+            const walletRadius = Math.max(104, Math.min(236, (hubNode?.radius || 26) + 82 + wallets.length * 20));
 
             wallets
                 .sort((a, b) => (b.exposure_usd || 0) - (a.exposure_usd || 0) || sortByStableNodeKey(a, b))
@@ -42,7 +46,7 @@
                         : clusterAngle + (Math.PI * 2 * walletIndex) / wallets.length;
                     positions.set(wallet.id, {
                         x: clusterCenter.x + Math.cos(angle) * walletRadius,
-                        y: clusterCenter.y + Math.sin(angle) * walletRadius * 0.72,
+                        y: clusterCenter.y + Math.sin(angle) * walletRadius * 0.82,
                         cluster_key: clusterKey,
                         layer: 'wallet'
                     });
@@ -73,26 +77,29 @@
                 x: center.x + Math.cos(tokenIndex) * Math.min(width, height) * 0.18,
                 y: center.y + Math.sin(tokenIndex) * Math.min(width, height) * 0.14
             });
-            const offsetAngle = -Math.PI / 2 + tokenIndex * 0.92;
+            const offsetAngle = -Math.PI / 2 + tokenIndex * 1.08;
+            const tokenDistance = clamp(134 + relatedWalletPositions.length * 18, 146, 254);
             positions.set(token.id, {
-                x: anchor.x + Math.cos(offsetAngle) * 92,
-                y: anchor.y + Math.sin(offsetAngle) * 68,
+                x: anchor.x + Math.cos(offsetAngle) * tokenDistance,
+                y: anchor.y + Math.sin(offsetAngle) * tokenDistance * 0.86,
                 cluster_key: token.cluster_key,
                 layer: 'token'
             });
         });
 
-        const laidOutNodes = graph.nodes.map(node => {
+        let laidOutNodes = graph.nodes.map(node => {
             const position = positions.get(node.id) || center;
             return {
                 ...node,
                 x: clamp(position.x, 42, width - 42),
                 y: clamp(position.y, 42, height - 42),
                 layout_layer: position.layer || node.type,
+                label_priority: getLabelPriority(node, walletLabelRanks, tokenLabelRanks, maxWalletExposure, maxTokenExposure),
                 radius: getNodeRadius(node, maxNodeExposure),
                 color: getNodeColor(node)
             };
         });
+        laidOutNodes = resolveNodeOverlaps(laidOutNodes, width, height);
 
         const laidOutEdges = graph.edges.map(edge => {
             const isLargeValue = edge.type === core.EDGE_TYPES.FLOW && (Number(edge.usd_value) || 0) >= maxFlowValue * 0.72;
@@ -119,24 +126,26 @@
             labelEdges: laidOutEdges.filter(edge => edge.type === core.EDGE_TYPES.LABEL),
             bounds: { width, height },
             layout: {
-                mode: 'deterministic_hub_flow_v1',
+                mode: 'deterministic_hub_flow_v2',
                 supports_transaction_tree_expansion: true,
-                max_flow_value: maxFlowValue
+                max_flow_value: maxFlowValue,
+                major_wallet_threshold: Math.max(1, maxWalletExposure * 0.42),
+                major_token_threshold: Math.max(1, maxTokenExposure * 0.5)
             }
         };
     }
 
     function placeHubs(hubNodes, center, width, height, positions) {
         const hubPositions = new Map();
-        const anchorRadius = Math.min(width, height) * (hubNodes.length <= 1 ? 0 : 0.2);
+        const anchorRadius = Math.min(width, height) * (hubNodes.length <= 1 ? 0 : 0.32);
         hubNodes.forEach((hub, hubIndex) => {
             const angle = hubNodes.length === 1
                 ? -Math.PI / 2
                 : -Math.PI / 2 + (Math.PI * 2 * hubIndex) / hubNodes.length;
-            const valueRankOffset = Math.max(0, hubIndex - 1) * 9;
+            const valueRankOffset = Math.max(0, hubIndex - 1) * 16;
             const position = {
                 x: center.x + Math.cos(angle) * (anchorRadius + valueRankOffset),
-                y: center.y + Math.sin(angle) * (anchorRadius + valueRankOffset) * 0.7,
+                y: center.y + Math.sin(angle) * (anchorRadius + valueRankOffset) * 0.82,
                 cluster_key: hub.id,
                 layer: 'hub'
             };
@@ -144,6 +153,80 @@
             hubPositions.set(hub.id, position);
         });
         return hubPositions;
+    }
+
+    function rankNodesByValue(nodes, getValue) {
+        return new Map([...nodes]
+            .sort((a, b) => getValue(b) - getValue(a) || sortByStableNodeKey(a, b))
+            .map((node, index) => [node.id, index]));
+    }
+
+    function getLabelPriority(node, walletLabelRanks, tokenLabelRanks, maxWalletExposure, maxTokenExposure) {
+        if (isHubNode(node)) return 'hub';
+        const exposure = Number(node.exposure_usd) || 0;
+        if (node.type === core.NODE_TYPES.TOKEN) {
+            const rank = tokenLabelRanks.get(node.id) ?? Infinity;
+            return rank < 2 || exposure >= maxTokenExposure * 0.5 ? 'major' : 'minor';
+        }
+        if (node.type === core.NODE_TYPES.WALLET) {
+            const rank = walletLabelRanks.get(node.id) ?? Infinity;
+            return rank < 3 || exposure >= maxWalletExposure * 0.42 ? 'major' : 'minor';
+        }
+        return 'minor';
+    }
+
+    function resolveNodeOverlaps(nodes, width, height) {
+        const laidOut = nodes.map(node => ({ ...node }));
+        const padding = 24;
+
+        for (let pass = 0; pass < 10; pass += 1) {
+            let moved = false;
+            for (let i = 0; i < laidOut.length; i += 1) {
+                for (let j = i + 1; j < laidOut.length; j += 1) {
+                    const a = laidOut[i];
+                    const b = laidOut[j];
+                    const minDistance = (a.radius || 18) + (b.radius || 18) + padding;
+                    let dx = b.x - a.x;
+                    let dy = b.y - a.y;
+                    let distance = Math.hypot(dx, dy);
+
+                    if (distance >= minDistance) continue;
+                    if (distance < 0.01) {
+                        const angle = stableAngle(`${a.id}:${b.id}`);
+                        dx = Math.cos(angle);
+                        dy = Math.sin(angle);
+                        distance = 1;
+                    }
+
+                    const push = (minDistance - distance) / distance;
+                    const aWeight = isHubNode(a) ? 0.34 : isHubNode(b) ? 0.66 : 0.5;
+                    const bWeight = 1 - aWeight;
+                    a.x -= dx * push * aWeight;
+                    a.y -= dy * push * aWeight;
+                    b.x += dx * push * bWeight;
+                    b.y += dy * push * bWeight;
+                    moved = true;
+                }
+            }
+
+            laidOut.forEach(node => {
+                const margin = Math.max(46, (node.radius || 18) + 18);
+                node.x = clamp(node.x, margin, width - margin);
+                node.y = clamp(node.y, margin, height - margin);
+            });
+
+            if (!moved) break;
+        }
+
+        return laidOut;
+    }
+
+    function stableAngle(value) {
+        let hash = 0;
+        String(value).split('').forEach(char => {
+            hash = ((hash << 5) - hash + char.charCodeAt(0)) | 0;
+        });
+        return ((Math.abs(hash) % 360) / 180) * Math.PI;
     }
 
     function groupWallets(walletNodes, labelEdges, nodeById) {
@@ -205,17 +288,17 @@
     function getEdgeWidth(edge, maxFlowValue) {
         if (edge.type === core.EDGE_TYPES.LABEL) {
             const ratio = Math.sqrt(Math.max(0, Number(edge.usd_value) || 0) / Math.max(1, maxFlowValue));
-            return 1 + ratio * 2.6;
+            return 0.8 + ratio * 1.8;
         }
-        if (edge.type === core.EDGE_TYPES.EXPOSURE) return 1.1 + Math.min(1.9, Math.sqrt(Math.max(0, edge.usd_value || 0)) / 210);
+        if (edge.type === core.EDGE_TYPES.EXPOSURE) return 0.8 + Math.min(1.45, Math.sqrt(Math.max(0, edge.usd_value || 0)) / 260);
         const ratio = Math.max(0, Math.min(1, (Number(edge.usd_value) || 0) / maxFlowValue));
-        return 1.6 + Math.sqrt(ratio) * 6.4;
+        return 1.25 + Math.sqrt(ratio) * 5.8;
     }
 
     function getEdgeOpacity(edge, isLargeValue = false) {
-        if (edge.type === core.EDGE_TYPES.LABEL) return edge.usd_value ? 0.5 : 0.34;
-        if (edge.type === core.EDGE_TYPES.EXPOSURE) return 0.42;
-        return isLargeValue ? 0.98 : 0.68;
+        if (edge.type === core.EDGE_TYPES.LABEL) return edge.usd_value ? 0.28 : 0.18;
+        if (edge.type === core.EDGE_TYPES.EXPOSURE) return 0.26;
+        return isLargeValue ? 0.92 : 0.48;
     }
 
     function getEdgeColor(edge) {

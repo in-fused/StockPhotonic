@@ -21,8 +21,18 @@
         detailPanel: null,
         resizeObserver: null,
         datasetSource: null,
-        solanaAdapterLoadPromise: null
+        solanaAdapterLoadPromise: null,
+        viewport: {
+            x: 0,
+            y: 0,
+            scale: 1
+        },
+        drag: null,
+        manualNodePositions: new Map()
     };
+
+    const ZOOM_LIMITS = { min: 0.48, max: 2.35 };
+    const DRAG_SELECT_THRESHOLD = 5;
 
     async function initialize(options = {}) {
         if (state.initialized) return state.graph;
@@ -33,9 +43,15 @@
         if (!state.root || !state.canvas || !state.detailPanel) return null;
 
         state.ctx = state.canvas.getContext('2d');
-        state.canvas.addEventListener('click', handleCanvasClick);
-        state.canvas.addEventListener('mousemove', handleCanvasMove);
+        state.canvas.style.cursor = 'grab';
+        state.canvas.addEventListener('wheel', handleCanvasWheel, { passive: false });
+        state.canvas.addEventListener('pointerdown', handleCanvasPointerDown);
+        state.canvas.addEventListener('pointermove', handleCanvasPointerMove);
+        state.canvas.addEventListener('pointerup', handleCanvasPointerUp);
+        state.canvas.addEventListener('pointercancel', handleCanvasPointerCancel);
         state.canvas.addEventListener('mouseleave', handleCanvasLeave);
+        document.getElementById('crypto-reset-view')?.addEventListener('click', resetView);
+        document.getElementById('crypto-reset-layout')?.addEventListener('click', resetLayout);
         window.addEventListener('resize', resizeAndRender);
 
         if (window.ResizeObserver) {
@@ -173,6 +189,8 @@
         state.canvas.style.height = `${size.height}px`;
         state.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
         state.graph = layoutEngine.layoutGraph(state.graph, size);
+        applyManualNodePositions();
+        clampViewport();
         rebuildInteractionIndex();
         render();
     }
@@ -194,6 +212,10 @@
         ctx.clearRect(0, 0, width, height);
         drawBackdrop(ctx, width, height);
 
+        ctx.save();
+        ctx.translate(state.viewport.x, state.viewport.y);
+        ctx.scale(state.viewport.scale, state.viewport.scale);
+
         const nodeById = state.graph.nodeById;
         state.graph.edges
             .filter(edge => edge.type !== core.EDGE_TYPES.LABEL)
@@ -208,6 +230,8 @@
             .slice()
             .sort((a, b) => typeOrder(a.type) - typeOrder(b.type))
             .forEach(node => drawNode(ctx, node, interaction));
+
+        ctx.restore();
     }
 
     function drawBackdrop(ctx, width, height) {
@@ -287,7 +311,8 @@
         const focusVisible = interaction.hasFocus;
         const muted = focusVisible && !connected;
         const radius = node.radius + (selected ? 5 : hovered ? 3 : 0);
-        const labelAlpha = !focusVisible || selected || hovered || connected ? (muted ? 0.3 : 0.92) : 0;
+        const showLabel = shouldShowNodeLabel(node, { selected, hovered, connected, interaction });
+        const labelAlpha = showLabel ? (muted ? 0.3 : 0.92) : 0;
 
         ctx.save();
         ctx.shadowColor = node.color;
@@ -332,29 +357,102 @@
         ctx.restore();
     }
 
-    function handleCanvasClick(event) {
+    function handleCanvasWheel(event) {
         if (!state.graph || !state.canvas) return;
-        const selected = getNodeAtEvent(event);
+        event.preventDefault();
 
-        if (!selected) return;
-        state.selectedId = selected.id;
+        const point = getScreenPoint(event);
+        if (!point) return;
+        const worldPoint = screenToWorld(point);
+        const zoomIntensity = event.deltaMode === 1 ? 0.08 : 0.0018;
+        const nextScale = clamp(
+            state.viewport.scale * Math.exp(-event.deltaY * zoomIntensity),
+            ZOOM_LIMITS.min,
+            ZOOM_LIMITS.max
+        );
+
+        state.viewport.scale = nextScale;
+        state.viewport.x = point.x - worldPoint.x * nextScale;
+        state.viewport.y = point.y - worldPoint.y * nextScale;
+        clampViewport();
         render();
-        renderDetails();
     }
 
-    function handleCanvasMove(event) {
+    function handleCanvasPointerDown(event) {
         if (!state.graph || !state.canvas) return;
-        const hovered = getNodeAtEvent(event);
-        const nextHoveredId = hovered?.id || null;
-        state.canvas.style.cursor = hovered ? 'pointer' : 'default';
-        if (nextHoveredId === state.hoveredId) return;
-        state.hoveredId = nextHoveredId;
-        render();
+        const screenPoint = getScreenPoint(event);
+        const worldPoint = screenToWorld(screenPoint);
+        const node = getNodeAtWorldPoint(worldPoint);
+
+        state.canvas.setPointerCapture?.(event.pointerId);
+        state.drag = {
+            pointerId: event.pointerId,
+            mode: node ? 'node' : 'pan',
+            nodeId: node?.id || null,
+            startScreen: screenPoint,
+            lastScreen: screenPoint,
+            startNode: node ? { x: node.x, y: node.y } : null,
+            startViewport: { ...state.viewport },
+            moved: false
+        };
+        state.canvas.style.cursor = 'grabbing';
+    }
+
+    function handleCanvasPointerMove(event) {
+        if (!state.graph || !state.canvas) return;
+        const screenPoint = getScreenPoint(event);
+        if (!screenPoint) return;
+
+        if (state.drag?.pointerId === event.pointerId) {
+            const dx = screenPoint.x - state.drag.startScreen.x;
+            const dy = screenPoint.y - state.drag.startScreen.y;
+            if (Math.hypot(dx, dy) > DRAG_SELECT_THRESHOLD) state.drag.moved = true;
+
+            if (state.drag.mode === 'node') {
+                dragNodeTo(screenPoint);
+            } else {
+                state.viewport.x = state.drag.startViewport.x + dx;
+                state.viewport.y = state.drag.startViewport.y + dy;
+                clampViewport();
+                render();
+            }
+            state.drag.lastScreen = screenPoint;
+            return;
+        }
+
+        updateHoverFromScreenPoint(screenPoint);
+    }
+
+    function handleCanvasPointerUp(event) {
+        if (!state.graph || !state.canvas) return;
+        const drag = state.drag;
+        if (drag?.pointerId === event.pointerId) {
+            state.canvas.releasePointerCapture?.(event.pointerId);
+            state.drag = null;
+
+            if (drag.mode === 'node' && !drag.moved && drag.nodeId) {
+                state.selectedId = drag.nodeId;
+                render();
+                renderDetails();
+            }
+
+            updateHoverFromScreenPoint(getScreenPoint(event));
+            return;
+        }
+
+        updateHoverFromScreenPoint(getScreenPoint(event));
+    }
+
+    function handleCanvasPointerCancel(event) {
+        if (!state.canvas || state.drag?.pointerId !== event.pointerId) return;
+        state.canvas.releasePointerCapture?.(event.pointerId);
+        state.drag = null;
+        state.canvas.style.cursor = state.hoveredId ? 'grab' : 'grab';
     }
 
     function handleCanvasLeave() {
-        if (!state.canvas) return;
-        state.canvas.style.cursor = 'default';
+        if (!state.canvas || state.drag) return;
+        state.canvas.style.cursor = 'grab';
         if (!state.hoveredId) return;
         state.hoveredId = null;
         render();
@@ -495,27 +593,104 @@
         return node.label || core.shortAddress(node.address);
     }
 
+    function shouldShowNodeLabel(node, context) {
+        if (!node) return false;
+        if (context.selected || context.hovered) return true;
+        if (isHubNode(node)) return true;
+
+        const isMajor = node.label_priority === 'major';
+        if (!context.interaction.hasFocus) return isMajor;
+        return context.connected && isMajor;
+    }
+
     function shortHash(hash) {
         const value = String(hash || '');
         return value.length <= 16 ? value : `${value.slice(0, 10)}...${value.slice(-6)}`;
     }
 
-    function getNodeAtEvent(event) {
-        const point = getCanvasPoint(event);
+    function dragNodeTo(screenPoint) {
+        if (!state.drag?.nodeId) return;
+        const node = state.graph.nodeById.get(state.drag.nodeId);
+        if (!node) return;
+
+        const dx = (screenPoint.x - state.drag.startScreen.x) / state.viewport.scale;
+        const dy = (screenPoint.y - state.drag.startScreen.y) / state.viewport.scale;
+        const margin = Math.max(38, (node.radius || 18) + 10);
+        node.x = clamp(state.drag.startNode.x + dx, margin, state.graph.bounds.width - margin);
+        node.y = clamp(state.drag.startNode.y + dy, margin, state.graph.bounds.height - margin);
+        state.manualNodePositions.set(node.id, { x: node.x, y: node.y });
+        render();
+    }
+
+    function updateHoverFromScreenPoint(screenPoint) {
+        if (!screenPoint || !state.canvas) return;
+        const hovered = getNodeAtWorldPoint(screenToWorld(screenPoint));
+        const nextHoveredId = hovered?.id || null;
+        state.canvas.style.cursor = hovered ? 'grab' : 'grab';
+        if (nextHoveredId === state.hoveredId) return;
+        state.hoveredId = nextHoveredId;
+        render();
+    }
+
+    function getNodeAtWorldPoint(point) {
         if (!point) return null;
         return state.graph.nodes
             .slice()
             .sort((a, b) => (b.radius || 0) - (a.radius || 0))
-            .find(node => Math.hypot(node.x - point.x, node.y - point.y) <= (node.radius || 18) + 8);
+            .find(node => Math.hypot(node.x - point.x, node.y - point.y) <= (node.radius || 18) + 10 / state.viewport.scale);
     }
 
-    function getCanvasPoint(event) {
+    function getScreenPoint(event) {
         if (!state.canvas) return null;
         const rect = state.canvas.getBoundingClientRect();
         return {
             x: event.clientX - rect.left,
             y: event.clientY - rect.top
         };
+    }
+
+    function screenToWorld(point) {
+        return {
+            x: (point.x - state.viewport.x) / state.viewport.scale,
+            y: (point.y - state.viewport.y) / state.viewport.scale
+        };
+    }
+
+    function applyManualNodePositions() {
+        if (!state.graph || !state.manualNodePositions.size) return;
+        state.manualNodePositions.forEach((position, nodeId) => {
+            const node = state.graph.nodeById.get(nodeId);
+            if (!node) return;
+            const margin = Math.max(38, (node.radius || 18) + 10);
+            node.x = clamp(position.x, margin, state.graph.bounds.width - margin);
+            node.y = clamp(position.y, margin, state.graph.bounds.height - margin);
+        });
+    }
+
+    function clampViewport() {
+        if (!state.graph) return;
+        const { width, height } = state.graph.bounds;
+        const scaledWidth = width * state.viewport.scale;
+        const scaledHeight = height * state.viewport.scale;
+        const slackX = Math.max(120, width * 0.45);
+        const slackY = Math.max(120, height * 0.45);
+        state.viewport.x = clamp(state.viewport.x, width - scaledWidth - slackX, slackX);
+        state.viewport.y = clamp(state.viewport.y, height - scaledHeight - slackY, slackY);
+    }
+
+    function resetView() {
+        state.viewport = { x: 0, y: 0, scale: 1 };
+        clampViewport();
+        render();
+    }
+
+    function resetLayout() {
+        if (!state.graph) return;
+        state.manualNodePositions.clear();
+        state.graph = layoutEngine.layoutGraph(state.graph, getCanvasSize());
+        rebuildInteractionIndex();
+        render();
+        renderDetails();
     }
 
     function rebuildInteractionIndex() {
@@ -605,8 +780,8 @@
 
         if (connected) {
             return {
-                opacity: isFlow ? 1 : isExposure ? 0.72 : 0.52,
-                width: baseWidth + (isFlow ? 2.2 : isExposure ? 0.8 : 0.2),
+                opacity: isFlow ? 1 : isExposure ? 0.58 : 0.38,
+                width: baseWidth + (isFlow ? 2.2 : isExposure ? 0.45 : 0.1),
                 shadowBlur: isFlow ? 16 : 7,
                 shadowColor: edge.color || '#22d3ee',
                 arrowSize: isFlow ? 10 : 8
@@ -614,8 +789,8 @@
         }
 
         return {
-            opacity: isLargeFlow ? 0.46 : isFlow ? 0.2 : isExposure ? 0.24 : 0.14,
-            width: isLargeFlow ? Math.max(baseWidth, 3) : Math.max(0.8, baseWidth * 0.72),
+            opacity: isLargeFlow ? 0.42 : isFlow ? 0.13 : isExposure ? 0.12 : 0.08,
+            width: isLargeFlow ? Math.max(baseWidth, 2.8) : Math.max(0.55, baseWidth * 0.62),
             shadowBlur: isLargeFlow ? 5 : 0,
             shadowColor: edge.color || '#22d3ee',
             arrowSize: 7
@@ -707,6 +882,8 @@
         initialize,
         setActive,
         render,
+        resetView,
+        resetLayout,
         getState: () => ({ ...state })
     };
 })();

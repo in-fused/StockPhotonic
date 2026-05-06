@@ -8,6 +8,18 @@
         throw new Error('CryptoPhotonic core, graph, and layout modules must load before UI module');
     }
 
+    const mathUtils = window.StockPhotonicUtils?.math || {};
+    const clamp = mathUtils.clamp || ((value, min, max) => Math.max(min, Math.min(max, value)));
+    const hashString = mathUtils.hashNumber || ((value) => {
+        const text = String(value);
+        let hash = 2166136261;
+        for (let i = 0; i < text.length; i += 1) {
+            hash ^= text.charCodeAt(i);
+            hash = Math.imul(hash, 16777619);
+        }
+        return Math.abs(hash >>> 0);
+    });
+
     const state = {
         initialized: false,
         active: false,
@@ -23,6 +35,22 @@
         datasetSource: null,
         solanaAdapterLoadPromise: null,
         flowReplayEnabled: false,
+        flowReplay: {
+            playing: false,
+            index: 0,
+            activeFlowId: null,
+            lastStepAt: 0,
+            stepMs: 1150
+        },
+        flowMotion: {
+            enabled: true,
+            ambientEnabled: true,
+            rafId: null,
+            lastFrameAt: 0,
+            now: 0,
+            topFlowIds: new Set(),
+            userInteractingUntil: 0
+        },
         viewport: {
             x: 0,
             y: 0,
@@ -34,6 +62,13 @@
 
     const ZOOM_LIMITS = { min: 0.48, max: 2.35 };
     const DRAG_SELECT_THRESHOLD = 5;
+    const FLOW_ANIMATION = {
+        maxPulsedEdges: 7,
+        frameMs: 33,
+        minDurationMs: 1400,
+        maxDurationMs: 3600,
+        idlePauseMs: 950
+    };
     const DETAIL_LIMITS = {
         connectedWallets: 4,
         directFlows: 4,
@@ -71,6 +106,7 @@
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
+        prepareFlowMotion();
         rebuildInteractionIndex();
         state.selectedId = state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
         state.initialized = true;
@@ -78,11 +114,13 @@
         updateStats();
         resizeAndRender();
         renderDetails();
+        updateFlowAnimationLoop();
         return state.graph;
     }
 
     function setActive(active) {
         state.active = Boolean(active);
+        updateFlowAnimationLoop();
         if (!state.active || !state.initialized) return;
         resizeAndRender();
         renderDetails();
@@ -199,6 +237,7 @@
         state.graph = layoutEngine.layoutGraph(state.graph, size);
         applyManualNodePositions();
         clampViewport();
+        prepareFlowMotion();
         rebuildInteractionIndex();
         render();
     }
@@ -216,6 +255,8 @@
 
         const { width, height } = state.graph.bounds;
         const ctx = state.ctx;
+        updateFlowReplay(performance.now());
+        state.flowMotion.now = performance.now();
         const interaction = getInteractionState();
         ctx.clearRect(0, 0, width, height);
         drawBackdrop(ctx, width, height);
@@ -297,8 +338,93 @@
 
         if (edge.type === core.EDGE_TYPES.FLOW) {
             drawArrow(ctx, control, target, edge.color || '#22d3ee', style.arrowSize);
+            drawFlowPulse(ctx, edge, source, control, target, distance, interaction);
         }
         ctx.restore();
+    }
+
+    function drawFlowPulse(ctx, edge, source, control, target, distance, interaction) {
+        if (!isFlowEdgeVisible(source, target)) return;
+        const pulse = getFlowPulse(edge, distance, interaction);
+        if (!pulse) return;
+
+        const point = pointOnQuadratic(source, control, target, pulse.t);
+        const glowPoint = pointOnQuadratic(source, control, target, clamp(pulse.t - 0.055, 0, 1));
+
+        ctx.save();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = pulse.opacity * 0.34;
+        ctx.strokeStyle = edge.color || '#67e8f9';
+        ctx.lineWidth = pulse.radius * 1.35;
+        ctx.shadowColor = edge.color || '#67e8f9';
+        ctx.shadowBlur = pulse.glow;
+        ctx.beginPath();
+        ctx.moveTo(glowPoint.x, glowPoint.y);
+        ctx.lineTo(point.x, point.y);
+        ctx.stroke();
+
+        ctx.globalAlpha = pulse.opacity;
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = pulse.glow;
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, pulse.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.globalAlpha = pulse.opacity * 0.58;
+        ctx.fillStyle = edge.color || '#67e8f9';
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, pulse.radius * 1.9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function isFlowEdgeVisible(source, target) {
+        const bounds = state.graph?.bounds;
+        if (!bounds) return true;
+        const scale = state.viewport.scale || 1;
+        const margin = 80 / scale;
+        const left = (-state.viewport.x / scale) - margin;
+        const top = (-state.viewport.y / scale) - margin;
+        const right = ((bounds.width - state.viewport.x) / scale) + margin;
+        const bottom = ((bounds.height - state.viewport.y) / scale) + margin;
+        const edgeLeft = Math.min(source.x, target.x);
+        const edgeRight = Math.max(source.x, target.x);
+        const edgeTop = Math.min(source.y, target.y);
+        const edgeBottom = Math.max(source.y, target.y);
+        return edgeRight >= left && edgeLeft <= right && edgeBottom >= top && edgeTop <= bottom;
+    }
+
+    function getFlowPulse(edge, distance, interaction) {
+        if (!state.flowMotion.enabled) return null;
+        const now = state.flowMotion.now || performance.now();
+        const replayActive = state.flowReplay.activeFlowId === edge.id;
+        const ambientPaused = now < state.flowMotion.userInteractingUntil;
+        const ambientActive = state.flowMotion.ambientEnabled
+            && !state.flowReplay.playing
+            && !ambientPaused
+            && state.flowMotion.topFlowIds.has(edge.id);
+        if (!replayActive && !ambientActive) return null;
+
+        const duration = clamp(distance * 10, FLOW_ANIMATION.minDurationMs, FLOW_ANIMATION.maxDurationMs);
+        const seed = hashString(edge.id) % duration;
+        const t = replayActive
+            ? clamp((now - state.flowReplay.lastStepAt) / state.flowReplay.stepMs, 0.08, 0.94)
+            : ((now + seed) % duration) / duration;
+        const isFocused = interaction.replayActiveFlowId === edge.id;
+        return {
+            t,
+            opacity: isFocused ? 0.82 : 0.48,
+            radius: isFocused ? 4.6 : 3.4,
+            glow: isFocused ? 18 : 11
+        };
+    }
+
+    function pointOnQuadratic(source, control, target, t) {
+        const oneMinusT = 1 - t;
+        return {
+            x: oneMinusT * oneMinusT * source.x + 2 * oneMinusT * t * control.x + t * t * target.x,
+            y: oneMinusT * oneMinusT * source.y + 2 * oneMinusT * t * control.y + t * t * target.y
+        };
     }
 
     function drawArrow(ctx, from, to, color, size = 8) {
@@ -368,6 +494,7 @@
     function handleCanvasWheel(event) {
         if (!state.graph || !state.canvas) return;
         event.preventDefault();
+        markFlowInteraction();
 
         const point = getScreenPoint(event);
         if (!point) return;
@@ -388,6 +515,7 @@
 
     function handleCanvasPointerDown(event) {
         if (!state.graph || !state.canvas) return;
+        markFlowInteraction();
         const screenPoint = getScreenPoint(event);
         const worldPoint = screenToWorld(screenPoint);
         const node = getNodeAtWorldPoint(worldPoint);
@@ -412,6 +540,7 @@
         if (!screenPoint) return;
 
         if (state.drag?.pointerId === event.pointerId) {
+            markFlowInteraction();
             const dx = screenPoint.x - state.drag.startScreen.x;
             const dy = screenPoint.y - state.drag.startScreen.y;
             if (Math.hypot(dx, dy) > DRAG_SELECT_THRESHOLD) state.drag.moved = true;
@@ -433,6 +562,7 @@
 
     function handleCanvasPointerUp(event) {
         if (!state.graph || !state.canvas) return;
+        markFlowInteraction();
         const drag = state.drag;
         if (drag?.pointerId === event.pointerId) {
             state.canvas.releasePointerCapture?.(event.pointerId);
@@ -453,6 +583,7 @@
 
     function handleCanvasPointerCancel(event) {
         if (!state.canvas || state.drag?.pointerId !== event.pointerId) return;
+        markFlowInteraction();
         state.canvas.releasePointerCapture?.(event.pointerId);
         state.drag = null;
         state.canvas.style.cursor = state.hoveredId ? 'grab' : 'grab';
@@ -460,6 +591,7 @@
 
     function handleCanvasLeave() {
         if (!state.canvas || state.drag) return;
+        markFlowInteraction();
         state.canvas.style.cursor = 'grab';
         if (!state.hoveredId) return;
         state.hoveredId = null;
@@ -725,9 +857,134 @@
         if (!state.graph) return;
         state.manualNodePositions.clear();
         state.graph = layoutEngine.layoutGraph(state.graph, getCanvasSize());
+        prepareFlowMotion();
         rebuildInteractionIndex();
         render();
         renderDetails();
+    }
+
+    function prepareFlowMotion() {
+        if (!state.graph) return;
+        state.flowMotion.topFlowIds = new Set(
+            (state.graph.flowEdges || [])
+                .slice()
+                .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0))
+                .slice(0, FLOW_ANIMATION.maxPulsedEdges)
+                .map(edge => edge.id)
+        );
+
+        const replayFlows = state.graph.flowReplay?.ordered_flows || [];
+        const activeIndex = clamp(state.flowReplay.index, 0, Math.max(0, replayFlows.length - 1));
+        state.flowReplay.index = activeIndex;
+        if (state.flowReplay.playing && replayFlows.length) {
+            state.flowReplay.activeFlowId = replayFlows[activeIndex]?.id || null;
+        } else if (!state.flowReplay.playing) {
+            state.flowReplay.activeFlowId = null;
+        }
+    }
+
+    function markFlowInteraction() {
+        state.flowMotion.userInteractingUntil = performance.now() + FLOW_ANIMATION.idlePauseMs;
+    }
+
+    function updateFlowAnimationLoop() {
+        if (!state.flowMotion.enabled || !state.active || !state.initialized || !state.graph) {
+            if (state.flowMotion.rafId) {
+                cancelAnimationFrame(state.flowMotion.rafId);
+                state.flowMotion.rafId = null;
+            }
+            return;
+        }
+
+        if (!state.flowMotion.rafId) {
+            state.flowMotion.lastFrameAt = 0;
+            state.flowMotion.rafId = requestAnimationFrame(runFlowAnimationFrame);
+        }
+    }
+
+    function runFlowAnimationFrame(timestamp) {
+        state.flowMotion.rafId = null;
+        if (!state.flowMotion.enabled || !state.active || !state.initialized || !state.graph) return;
+
+        state.flowMotion.now = timestamp;
+        const replayPulseVisible = Boolean(state.flowReplay.activeFlowId)
+            && timestamp - state.flowReplay.lastStepAt <= state.flowReplay.stepMs;
+        const ambientVisible = state.flowMotion.ambientEnabled
+            && state.flowMotion.topFlowIds.size > 0
+            && timestamp >= state.flowMotion.userInteractingUntil;
+        const shouldRender = (state.flowReplay.playing || replayPulseVisible || ambientVisible)
+            && timestamp - state.flowMotion.lastFrameAt >= FLOW_ANIMATION.frameMs;
+        if (shouldRender) {
+            state.flowMotion.lastFrameAt = timestamp;
+            render();
+        }
+
+        state.flowMotion.rafId = requestAnimationFrame(runFlowAnimationFrame);
+    }
+
+    function updateFlowReplay(now) {
+        const replay = state.graph?.flowReplay;
+        const orderedFlows = replay?.ordered_flows || [];
+        if (!state.flowReplay.playing || !orderedFlows.length) return;
+
+        if (!state.flowReplay.activeFlowId) {
+            state.flowReplay.activeFlowId = orderedFlows[state.flowReplay.index]?.id || null;
+            state.flowReplay.lastStepAt = now;
+            return;
+        }
+
+        if (now - state.flowReplay.lastStepAt < state.flowReplay.stepMs) return;
+        stepFlowReplay(1, { keepPlaying: true, now, skipRender: true });
+    }
+
+    function setFlowReplayPlaying(playing) {
+        const orderedFlows = state.graph?.flowReplay?.ordered_flows || [];
+        state.flowReplay.playing = Boolean(playing && orderedFlows.length);
+        if (!state.flowReplay.playing) {
+            state.flowReplay.activeFlowId = null;
+            render();
+            return state.flowReplay;
+        }
+
+        state.flowReplay.index = clamp(state.flowReplay.index, 0, orderedFlows.length - 1);
+        state.flowReplay.activeFlowId = orderedFlows[state.flowReplay.index]?.id || null;
+        state.flowReplay.lastStepAt = performance.now();
+        updateFlowAnimationLoop();
+        render();
+        return state.flowReplay;
+    }
+
+    function stepFlowReplay(direction = 1, options = {}) {
+        const orderedFlows = state.graph?.flowReplay?.ordered_flows || [];
+        if (!orderedFlows.length) return state.flowReplay;
+
+        if (state.flowReplay.activeFlowId) {
+            const delta = direction < 0 ? -1 : 1;
+            state.flowReplay.index = (state.flowReplay.index + delta + orderedFlows.length) % orderedFlows.length;
+        } else {
+            state.flowReplay.index = clamp(state.flowReplay.index, 0, orderedFlows.length - 1);
+        }
+        state.flowReplay.activeFlowId = orderedFlows[state.flowReplay.index]?.id || null;
+        state.flowReplay.lastStepAt = options.now || performance.now();
+        if (!options.keepPlaying) state.flowReplay.playing = false;
+        updateFlowAnimationLoop();
+        if (!options.skipRender) render();
+        return state.flowReplay;
+    }
+
+    function toggleFlowReplay() {
+        return setFlowReplayPlaying(!state.flowReplay.playing);
+    }
+
+    function setFlowAnimationEnabled(enabled) {
+        state.flowMotion.enabled = Boolean(enabled);
+        if (!state.flowMotion.enabled) {
+            state.flowReplay.playing = false;
+            state.flowReplay.activeFlowId = null;
+        }
+        updateFlowAnimationLoop();
+        render();
+        return state.flowMotion.enabled;
     }
 
     function rebuildInteractionIndex() {
@@ -780,6 +1037,10 @@
         const connectedNodeIds = new Set(activeIds);
         const connectedEdgeIds = new Set();
         const index = state.interactionIndex;
+        const replayActiveFlowId = state.flowReplay.activeFlowId;
+        const replayActiveEdge = replayActiveFlowId
+            ? (state.graph.flowEdges || []).find(edge => edge.id === replayActiveFlowId)
+            : null;
 
         if (index) {
             activeIds.forEach(nodeId => {
@@ -788,30 +1049,67 @@
             });
         }
 
+        if (replayActiveEdge) {
+            connectedEdgeIds.add(replayActiveEdge.id);
+            connectedNodeIds.add(replayActiveEdge.source);
+            connectedNodeIds.add(replayActiveEdge.target);
+        }
+
         return {
             activeIds,
             connectedNodeIds,
             connectedEdgeIds,
             hasFocus: activeIds.size > 0,
-            hasSelected: Boolean(state.selectedId)
+            hasSelected: Boolean(state.selectedId),
+            replayActiveFlowId,
+            hasReplayFocus: Boolean(replayActiveEdge)
         };
     }
 
     function getEdgeInteractionStyle(edge, interaction) {
         const baseOpacity = edge.opacity || 0.7;
         const baseWidth = edge.width || 1.4;
+        const isFlow = edge.type === core.EDGE_TYPES.FLOW;
+        const isReplayActive = interaction.replayActiveFlowId === edge.id;
+        const hasReplayFocus = interaction.hasReplayFocus;
+        const ambientPulsed = isFlow
+            && state.flowMotion.enabled
+            && state.flowMotion.ambientEnabled
+            && !hasReplayFocus
+            && state.flowMotion.topFlowIds.has(edge.id)
+            && (state.flowMotion.now || performance.now()) >= state.flowMotion.userInteractingUntil;
+
+        if (isReplayActive) {
+            return {
+                opacity: 1,
+                width: baseWidth + 2.8,
+                shadowBlur: 22,
+                shadowColor: edge.color || '#22d3ee',
+                arrowSize: 11
+            };
+        }
+
+        if (hasReplayFocus && isFlow) {
+            return {
+                opacity: Math.max(0.1, baseOpacity * 0.42),
+                width: Math.max(0.7, baseWidth * 0.72),
+                shadowBlur: 0,
+                shadowColor: edge.color || '#22d3ee',
+                arrowSize: 7
+            };
+        }
+
         if (!interaction.hasFocus) {
             return {
-                opacity: baseOpacity,
-                width: baseWidth,
-                shadowBlur: edge.is_large_value ? 10 : 0,
+                opacity: ambientPulsed ? Math.min(0.95, baseOpacity + 0.1) : baseOpacity,
+                width: ambientPulsed ? baseWidth + 0.55 : baseWidth,
+                shadowBlur: ambientPulsed ? 9 : edge.is_large_value ? 10 : 0,
                 shadowColor: edge.color || '#22d3ee',
                 arrowSize: 8
             };
         }
 
         const connected = interaction.connectedEdgeIds.has(edge.id);
-        const isFlow = edge.type === core.EDGE_TYPES.FLOW;
         const isExposure = edge.type === core.EDGE_TYPES.EXPOSURE;
         const isLargeFlow = isFlow && edge.is_large_value;
 
@@ -944,6 +1242,11 @@
         render,
         resetView,
         resetLayout,
+        playFlowReplay: () => setFlowReplayPlaying(true),
+        pauseFlowReplay: () => setFlowReplayPlaying(false),
+        toggleFlowReplay,
+        stepFlowReplay,
+        setFlowAnimationEnabled,
         getState: () => ({ ...state })
     };
 })();

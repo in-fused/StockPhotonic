@@ -3,6 +3,7 @@
     const core = namespace.core;
     const graphEngine = namespace.graph;
     const layoutEngine = namespace.layout;
+    const viewportUtils = window.StockPhotonicGraph?.viewport || {};
 
     if (!core || !graphEngine || !layoutEngine) {
         throw new Error('CryptoPhotonic core, graph, and layout modules must load before UI module');
@@ -47,6 +48,7 @@
             lastStepAt: 0,
             stepMs: 1150
         },
+        flowQueue: null,
         flowMotion: {
             enabled: true,
             ambientEnabled: true,
@@ -64,6 +66,7 @@
         drag: null,
         manualNodePositions: new Map()
     };
+    state.flowQueue = state.flowReplay;
 
     const ZOOM_LIMITS = { min: 0.48, max: 2.35 };
     const DRAG_SELECT_THRESHOLD = 5;
@@ -1035,8 +1038,14 @@
         const dx = (screenPoint.x - state.drag.startScreen.x) / state.viewport.scale;
         const dy = (screenPoint.y - state.drag.startScreen.y) / state.viewport.scale;
         const margin = Math.max(38, (node.radius || 18) + 10);
-        node.x = clamp(state.drag.startNode.x + dx, margin, state.graph.bounds.width - margin);
-        node.y = clamp(state.drag.startNode.y + dy, margin, state.graph.bounds.height - margin);
+        const position = clampNodeToWorkspace(
+            node,
+            state.drag.startNode.x + dx,
+            state.drag.startNode.y + dy,
+            margin
+        );
+        node.x = position.x;
+        node.y = position.y;
         state.manualNodePositions.set(node.id, { x: node.x, y: node.y });
         render();
     }
@@ -1081,20 +1090,70 @@
             const node = state.graph.nodeById.get(nodeId);
             if (!node) return;
             const margin = Math.max(38, (node.radius || 18) + 10);
-            node.x = clamp(position.x, margin, state.graph.bounds.width - margin);
-            node.y = clamp(position.y, margin, state.graph.bounds.height - margin);
+            const nextPosition = clampNodeToWorkspace(node, position.x, position.y, margin);
+            node.x = nextPosition.x;
+            node.y = nextPosition.y;
         });
+    }
+
+    function getGraphWorkspace() {
+        const bounds = state.graph?.bounds || { width: 1, height: 1 };
+        return state.graph?.workspace || {
+            minX: 0,
+            maxX: bounds.width,
+            minY: 0,
+            maxY: bounds.height,
+            width: bounds.width,
+            height: bounds.height
+        };
+    }
+
+    function clampNodeToWorkspace(node, x, y, margin = 0) {
+        const workspace = getGraphWorkspace();
+        if (viewportUtils.clampPointToBounds) {
+            return viewportUtils.clampPointToBounds({ x, y }, workspace, { margin, clamp });
+        }
+        return {
+            x: clamp(x, workspace.minX + margin, workspace.maxX - margin),
+            y: clamp(y, workspace.minY + margin, workspace.maxY - margin)
+        };
     }
 
     function clampViewport() {
         if (!state.graph) return;
         const { width, height } = state.graph.bounds;
-        const scaledWidth = width * state.viewport.scale;
-        const scaledHeight = height * state.viewport.scale;
-        const slackX = Math.max(120, width * 0.45);
-        const slackY = Math.max(120, height * 0.45);
-        state.viewport.x = clamp(state.viewport.x, width - scaledWidth - slackX, slackX);
-        state.viewport.y = clamp(state.viewport.y, height - scaledHeight - slackY, slackY);
+        const workspace = getGraphWorkspace();
+        if (viewportUtils.clampViewToWorkspace) {
+            const view = viewportUtils.clampViewToWorkspace({
+                scale: state.viewport.scale,
+                offsetX: state.viewport.x,
+                offsetY: state.viewport.y
+            }, workspace, {
+                canvasWidth: width,
+                canvasHeight: height,
+                slackScale: 0.32,
+                minSlackX: 120,
+                minSlackY: 120,
+                clamp
+            });
+            state.viewport.scale = view.scale;
+            state.viewport.x = view.offsetX;
+            state.viewport.y = view.offsetY;
+            return;
+        }
+
+        const slackX = Math.max(120, width * 0.32);
+        const slackY = Math.max(120, height * 0.32);
+        state.viewport.x = clamp(
+            state.viewport.x,
+            width - workspace.maxX * state.viewport.scale - slackX,
+            -workspace.minX * state.viewport.scale + slackX
+        );
+        state.viewport.y = clamp(
+            state.viewport.y,
+            height - workspace.maxY * state.viewport.scale - slackY,
+            -workspace.minY * state.viewport.scale + slackY
+        );
     }
 
     function resetView() {
@@ -1496,6 +1555,7 @@
         pauseFlowReplay: () => setFlowReplayPlaying(false),
         toggleFlowReplay,
         stepFlowReplay,
+        getFlowQueue: () => state.flowQueue,
         setFlowAnimationEnabled,
         getState: () => ({ ...state })
     };

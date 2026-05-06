@@ -9,6 +9,7 @@
     function layoutGraph(graph, options = {}) {
         const width = Math.max(320, Number(options.width) || 960);
         const height = Math.max(420, Number(options.height) || 620);
+        const workspace = getWorkspaceBounds(width, height);
         const center = { x: width * 0.48, y: height * 0.5 };
         const walletNodes = [...(graph.walletNodes || [])].sort(sortByStableNodeKey);
         const tokenNodes = [...(graph.tokenNodes || [])].sort(sortByStableNodeKey);
@@ -125,13 +126,31 @@
             exposureEdges: laidOutEdges.filter(edge => edge.type === core.EDGE_TYPES.EXPOSURE),
             labelEdges: laidOutEdges.filter(edge => edge.type === core.EDGE_TYPES.LABEL),
             bounds: { width, height },
+            workspace,
             layout: {
                 mode: 'deterministic_hub_flow_v2',
                 supports_transaction_tree_expansion: true,
+                workspace_padding_x: workspace.paddingX,
+                workspace_padding_y: workspace.paddingY,
                 max_flow_value: maxFlowValue,
                 major_wallet_threshold: Math.max(1, maxWalletExposure * 0.42),
                 major_token_threshold: Math.max(1, maxTokenExposure * 0.5)
             }
+        };
+    }
+
+    function getWorkspaceBounds(width, height) {
+        const paddingX = Math.max(width * 2.35, 760);
+        const paddingY = Math.max(height * 2.35, 840);
+        return {
+            minX: -paddingX,
+            maxX: width + paddingX,
+            minY: -paddingY,
+            maxY: height + paddingY,
+            width: width + paddingX * 2,
+            height: height + paddingY * 2,
+            paddingX,
+            paddingY
         };
     }
 

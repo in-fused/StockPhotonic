@@ -462,6 +462,80 @@
         }, { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity });
     }
 
+    function getPaddedWorkspaceBounds(bounds, options = {}) {
+        const normalized = normalizeBounds(bounds);
+        const canvasWidth = Math.max(1, Number(options.canvasWidth) || normalized.width || 1);
+        const canvasHeight = Math.max(1, Number(options.canvasHeight) || normalized.height || 1);
+        const paddingScaleX = Number.isFinite(options.paddingScaleX) ? options.paddingScaleX : 2.25;
+        const paddingScaleY = Number.isFinite(options.paddingScaleY) ? options.paddingScaleY : 2.25;
+        const paddingX = Math.max(Number(options.minPaddingX) || 0, canvasWidth * paddingScaleX);
+        const paddingY = Math.max(Number(options.minPaddingY) || 0, canvasHeight * paddingScaleY);
+
+        return {
+            minX: normalized.minX - paddingX,
+            maxX: normalized.maxX + paddingX,
+            minY: normalized.minY - paddingY,
+            maxY: normalized.maxY + paddingY,
+            width: normalized.width + paddingX * 2,
+            height: normalized.height + paddingY * 2,
+            paddingX,
+            paddingY
+        };
+    }
+
+    function clampPointToBounds(point, bounds, options = {}) {
+        const normalized = normalizeBounds(bounds);
+        const margin = Math.max(0, Number(options.margin) || 0);
+        const clamp = options.clamp || clampFinite;
+        return {
+            x: clamp(point.x, normalized.minX + margin, normalized.maxX - margin),
+            y: clamp(point.y, normalized.minY + margin, normalized.maxY - margin)
+        };
+    }
+
+    function clampViewToWorkspace(view, bounds, options = {}) {
+        const normalized = normalizeBounds(bounds);
+        const clamp = options.clamp || clampFinite;
+        const scale = Math.max(0.001, Number(view.scale) || 1);
+        const canvasWidth = Math.max(1, Number(options.canvasWidth) || 1);
+        const canvasHeight = Math.max(1, Number(options.canvasHeight) || 1);
+        const slackScale = Number.isFinite(options.slackScale) ? options.slackScale : 0.25;
+        const slackX = Math.max(Number(options.minSlackX) || 0, canvasWidth * slackScale);
+        const slackY = Math.max(Number(options.minSlackY) || 0, canvasHeight * slackScale);
+        const minOffsetX = canvasWidth - normalized.maxX * scale - slackX;
+        const maxOffsetX = -normalized.minX * scale + slackX;
+        const minOffsetY = canvasHeight - normalized.maxY * scale - slackY;
+        const maxOffsetY = -normalized.minY * scale + slackY;
+
+        return {
+            scale,
+            offsetX: minOffsetX <= maxOffsetX
+                ? clamp(view.offsetX, minOffsetX, maxOffsetX)
+                : (minOffsetX + maxOffsetX) / 2,
+            offsetY: minOffsetY <= maxOffsetY
+                ? clamp(view.offsetY, minOffsetY, maxOffsetY)
+                : (minOffsetY + maxOffsetY) / 2
+        };
+    }
+
+    function normalizeBounds(bounds = {}) {
+        const width = Math.max(1, Number(bounds.width) || Math.abs((Number(bounds.maxX) || 0) - (Number(bounds.minX) || 0)) || 1);
+        const height = Math.max(1, Number(bounds.height) || Math.abs((Number(bounds.maxY) || 0) - (Number(bounds.minY) || 0)) || 1);
+        const minX = Number.isFinite(bounds.minX) ? bounds.minX : 0;
+        const minY = Number.isFinite(bounds.minY) ? bounds.minY : 0;
+        const maxX = Number.isFinite(bounds.maxX) ? bounds.maxX : minX + width;
+        const maxY = Number.isFinite(bounds.maxY) ? bounds.maxY : minY + height;
+
+        return {
+            minX,
+            maxX,
+            minY,
+            maxY,
+            width: Math.max(1, maxX - minX),
+            height: Math.max(1, maxY - minY)
+        };
+    }
+
     function getFitView(bounds, options) {
         const {
             canvasWidth,
@@ -508,6 +582,9 @@
         projectPerspectivePoint,
         unprojectPerspectivePoint,
         getBoundsForNodes,
+        getPaddedWorkspaceBounds,
+        clampPointToBounds,
+        clampViewToWorkspace,
         getFitView,
         getScreenNodeRadius,
         isNodeInFrame,

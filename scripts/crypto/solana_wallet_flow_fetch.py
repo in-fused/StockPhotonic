@@ -42,6 +42,7 @@ def main() -> int:
     wallet = normalize_wallet(args.wallet)
     limit = clamp_limit(args.limit)
     output_path = resolve_output_path(args.output, wallet)
+    ensure_path_under(output_path, DEFAULT_GENERATED_DIR, "Generated fixture output")
     cache_dir = resolve_repo_path(args.cache_dir) if args.cache_dir else DEFAULT_CACHE_DIR
     cache_path = cache_dir / f"solana-wallet-flow.{safe_filename(wallet)}.cache.json"
     manifest_path = DEFAULT_GENERATED_DIR / "manifest.json"
@@ -153,6 +154,13 @@ def resolve_repo_path(value: str) -> Path:
     return path.resolve()
 
 
+def ensure_path_under(path: Path, parent: Path, label: str) -> None:
+    try:
+        path.resolve().relative_to(parent.resolve())
+    except ValueError as error:
+        raise RunnerError(f"{label} must be under {repo_relative(parent)}.") from error
+
+
 def safe_filename(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]", "_", value)[:96]
 
@@ -243,9 +251,19 @@ def fetch_helius_transactions(wallet: str, limit: int, api_key: str, max_retries
                 raise RunnerError("Helius rate-limited the request (HTTP 429). Try again later or increase --min-request-interval-ms.")
             raise RunnerError(f"Helius request failed with HTTP {error.code}.")
         except URLError as error:
-            raise RunnerError(f"Helius request failed before a response was received: {error.reason}.")
+            reason = redact_sensitive(error.reason, api_key)
+            raise RunnerError(f"Helius request failed before a response was received: {reason}.")
         except json.JSONDecodeError as error:
             raise RunnerError(f"Helius returned invalid JSON: {error.msg}.")
+
+
+def redact_sensitive(value: Any, api_key: str = "") -> str:
+    text = str(value)
+    if api_key:
+        text = text.replace(api_key, "[REDACTED_API_KEY]")
+    text = re.sub(r"https://api\.helius\.xyz/\S+", "[REDACTED_PROVIDER_URL]", text, flags=re.IGNORECASE)
+    text = re.sub(r"api-key=[^&\s]+", "api-key=[REDACTED]", text, flags=re.IGNORECASE)
+    return text
 
 
 def retry_wait_seconds(error: HTTPError, attempt: int) -> float:
@@ -435,8 +453,12 @@ def build_cache_state(
             "environment": "local_secure_runner_cache",
             "wallet": wallet,
             "sanitized": True,
+            "production_meaning": False,
+            "live_blockchain_fetching": False,
+            "local_only": True,
             "contains_raw_provider_payload": False,
             "contains_api_key": False,
+            "contains_provider_url": False,
             "updated_at": generated_at,
         },
         "wallet": wallet,
@@ -467,6 +489,7 @@ def update_manifest(manifest_path: Path, fixture_path: Path, wallet: str, genera
             "environment": "local_secure_runner_manifest",
             "sanitized": True,
             "production_meaning": False,
+            "live_blockchain_fetching": False,
         },
         "active_fixture": fixture_ref,
         "fixtures": next_fixtures,

@@ -38,6 +38,31 @@ python scripts/crypto/solana_wallet_flow_fetch.py --wallet <PUBLIC_WALLET> --lim
 
 The API key is read from `HELIUS_API_KEY` only at request time. Do not put a key in this README, command history intended for sharing, generated fixtures, source files, browser code, or committed JSON.
 
+## Recommended Workflow
+
+1. Dry run the local command without network or writes:
+
+```powershell
+python scripts/crypto/solana_wallet_flow_fetch.py --wallet <PUBLIC_WALLET> --limit 25 --dry-run
+```
+
+2. Run the local wallet fetch:
+
+```powershell
+python scripts/crypto/solana_wallet_flow_fetch.py --wallet <PUBLIC_WALLET> --limit 25
+```
+
+3. Audit generated fixtures before review or commit:
+
+```powershell
+python scripts/crypto/fixture_audit.py --path data/crypto/generated
+```
+
+4. Open the browser UI.
+5. In CryptoPhotonic, use the generated fixture manager to select a generated fixture when more than one is listed.
+
+Do not commit generated fixtures before audit and human review.
+
 ## Recommended Paths
 
 - `data/crypto/generated/`: sanitized graph-ready fixtures safe for browser consumption after review.
@@ -117,24 +142,40 @@ Before committing or sharing generated output:
 - Confirm `metadata.sanitized` is `true`.
 - Confirm `metadata.production_meaning` is `false`.
 - Confirm `metadata.live_blockchain_fetching` is `false`.
-- Search the generated fixture for `api-key`, `HELIUS_API_KEY`, `Authorization`, `Bearer`, and `https://api.helius.xyz`.
+- Run `python scripts/crypto/fixture_audit.py --path data/crypto/generated`.
+- Search the generated fixture for `api-key`, `HELIUS_API_KEY`, `Authorization`, `Bearer`, and `https://api.helius.xyz` if you need a manual spot-check.
 - Confirm the fixture contains no request headers, private URLs, private keys, signing material, or local private filesystem paths.
 - Confirm the wallet address is public and intended for local visualization.
 
+## Fixture Audit Tool
+
+`scripts/crypto/fixture_audit.py` scans generated fixture JSON without third-party packages. It checks for suspicious strings, raw request/header fields, provider private URLs, and required metadata flags.
+
+Examples:
+
+```powershell
+python scripts/crypto/fixture_audit.py --path data/crypto/generated
+python scripts/crypto/fixture_audit.py --path data/crypto/generated/solana-wallet-flow.<PUBLIC_WALLET>.json --fail-on-warning
+```
+
 ## Loading Generated Output In The UI
 
-After a successful runner command, `data/crypto/generated/manifest.json` points `active_fixture` at the generated file. CryptoPhotonic loads data in this order:
+After a successful runner command, `data/crypto/generated/manifest.json` points `active_fixture` at the generated file and can list multiple fixtures in `fixtures`. CryptoPhotonic validates every generated fixture path before loading it. Paths must stay under `data/crypto/generated/`, must be local JSON files, and must not contain URLs or `..` traversal.
+
+CryptoPhotonic loads data in this order:
 
 1. `data/crypto/generated/manifest.json`
-2. The manifest `active_fixture`, when present and under `data/crypto/generated/`
+2. The manifest `active_fixture`, when present and valid under `data/crypto/generated/`
 3. `data/crypto/solana-sample-flow.json`
 4. `data/crypto/sample-flow.json`
 5. The built-in sample
 
-If a generated fixture is missing or malformed, the browser falls back to sample data. The browser does not call Helius and does not load `HELIUS_API_KEY`.
+If a generated fixture is missing, invalid, or malformed, the browser falls back to sample data. The browser does not call Helius and does not load `HELIUS_API_KEY`.
+
+The CryptoPhotonic generated fixture manager shows the current data source, active generated wallet, generated timestamp, transaction count, and fixture selector when multiple valid generated fixtures are listed. Switching generated fixtures reloads the local JSON fixture without a page refresh.
 
 ## Flow Queue Terminology
 
 The user-facing concept is Live Flow Queue. It describes realtime ordered flow intake from sanitized transactions, not press-play historical playback.
 
-The existing internal `flowReplay` state can remain for now. A later refactor can rename it to `flowQueue` after the local secure runner, generated fixtures, merge behavior, and dedupe rules are stable.
+The existing internal `flowReplay` state can remain for now. Graph metadata exposes `flowQueue` as an alias for future clarity while preserving `flowReplay` compatibility.

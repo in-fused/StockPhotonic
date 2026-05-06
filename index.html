@@ -1719,6 +1719,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let bearing = DEFAULT_PERSPECTIVE_BEARING;
         let pitch = DEFAULT_PERSPECTIVE_PITCH;
         let currentOrbitOffset = { x: 0, y: 0 };
+        let graphWorkspaceBounds = { minX: -1800, maxX: 1800, minY: -1500, maxY: 1500 };
 
         let offsetX = 0;
         let offsetY = 0;
@@ -2619,6 +2620,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 windowTarget: window,
                 onResize: () => {
                     resizeCanvas();
+                    refreshGraphWorkspaceBounds();
                     fitGraph(false, { keepOrbit: true });
                 },
                 onWheel: onWheelZoom,
@@ -2786,6 +2788,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const anchoredView = getViewForScreenAnchor(anchoredWorld, toScreen, scale);
             offsetX = anchoredView.offsetX;
             offsetY = anchoredView.offsetY;
+            clampGraphViewport();
         }
 
         function getViewForScreenAnchor(world, screen, nextScale) {
@@ -4468,6 +4471,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const fitNodes = getFitNodes();
             if (!fitNodes.length) return;
 
+            refreshGraphWorkspaceBounds();
             const bounds = graphViewport.getBoundsForNodes(fitNodes, getNodeLayoutPosition);
             const padding = (isNexusLayoutActive() ? 190 : isHubLayoutActive() ? 150 : selectedNode ? 120 : 70) + (perspectiveEnabled ? 36 : 0);
             const nextView = graphViewport.getFitView(bounds, {
@@ -4528,6 +4532,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             visibleNodeIds = new Set(visibleNodes.map(node => node.id));
             refreshSecPreviewVisibility();
             rebuildLayoutPositions();
+            refreshGraphWorkspaceBounds();
             updateGraphOverlayStats();
             updateOrbMapData();
             if (!selectedNode && !selectedSecPreviewNode && !selectedSecPreviewLink) renderDefaultDashboard();
@@ -4743,22 +4748,23 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function setNodeLayoutPosition(node, x, y) {
+            const position = clampGraphNodePosition(node, x, y);
             if (isSecPreviewNode(node)) {
-                node.x = x;
-                node.y = y;
+                node.x = position.x;
+                node.y = position.y;
                 return;
             }
             if (isNexusLayoutActive()) {
-                nexusLayoutPositions.set(node.id, { x, y });
+                nexusLayoutPositions.set(node.id, position);
                 return;
             }
             if (isHubLayoutActive()) {
-                hubLayoutPositions.set(node.id, { x, y });
+                hubLayoutPositions.set(node.id, position);
                 return;
             }
 
-            node.x = x;
-            node.y = y;
+            node.x = position.x;
+            node.y = position.y;
         }
 
         function getFitNodes() {
@@ -4944,15 +4950,70 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function setView(nextScale, nextOffsetX, nextOffsetY) {
-            viewController.setView(nextScale, nextOffsetX, nextOffsetY);
+            const view = getClampedGraphView(nextScale, nextOffsetX, nextOffsetY);
+            viewController.setView(view.scale, view.offsetX, view.offsetY);
         }
 
         function animateView(nextScale, nextOffsetX, nextOffsetY, duration) {
-            viewController.animateView(nextScale, nextOffsetX, nextOffsetY, duration);
+            const view = getClampedGraphView(nextScale, nextOffsetX, nextOffsetY);
+            viewController.animateView(view.scale, view.offsetX, view.offsetY, duration);
         }
 
         function cancelViewAnimation() {
             viewController.cancelViewAnimation();
+        }
+
+        function refreshGraphWorkspaceBounds() {
+            const fallbackWidth = Math.max(1, canvasWidth || 900);
+            const fallbackHeight = Math.max(1, canvasHeight || 680);
+            const workspaceNodes = getFitNodes();
+            const contentBounds = workspaceNodes.length
+                ? graphViewport.getBoundsForNodes(workspaceNodes, getNodeLayoutPosition)
+                : {
+                    minX: -fallbackWidth * 0.5,
+                    maxX: fallbackWidth * 0.5,
+                    minY: -fallbackHeight * 0.5,
+                    maxY: fallbackHeight * 0.5
+                };
+
+            graphWorkspaceBounds = graphViewport.getPaddedWorkspaceBounds(contentBounds, {
+                canvasWidth: fallbackWidth,
+                canvasHeight: fallbackHeight,
+                paddingScaleX: 2.35,
+                paddingScaleY: 2.35,
+                minPaddingX: fallbackWidth * 2,
+                minPaddingY: fallbackHeight * 2
+            });
+        }
+
+        function clampGraphNodePosition(node, x, y) {
+            const margin = Math.max(42, (node?.radius || 18) + 18);
+            return graphViewport.clampPointToBounds({ x, y }, graphWorkspaceBounds, {
+                margin,
+                clamp
+            });
+        }
+
+        function getClampedGraphView(nextScale, nextOffsetX, nextOffsetY) {
+            return graphViewport.clampViewToWorkspace({
+                scale: clamp(nextScale, MIN_SCALE, MAX_SCALE),
+                offsetX: nextOffsetX,
+                offsetY: nextOffsetY
+            }, graphWorkspaceBounds, {
+                canvasWidth: Math.max(1, canvasWidth || 900),
+                canvasHeight: Math.max(1, canvasHeight || 680),
+                slackScale: 0.32,
+                minSlackX: 180,
+                minSlackY: 160,
+                clamp
+            });
+        }
+
+        function clampGraphViewport() {
+            const view = getClampedGraphView(scale, offsetX, offsetY);
+            scale = view.scale;
+            offsetX = view.offsetX;
+            offsetY = view.offsetY;
         }
 
         function triggerPulse(duration = PULSE_DURATION_MS) {

@@ -114,6 +114,7 @@
 
         graph.walletPaths = buildMultiHopPaths(graph, { maxHops: 3 });
         graph.flowReplayEnabled = false;
+        graph.flowQueueEnabled = graph.flowReplayEnabled;
         graph.flowReplay = buildFlowReplayPlan(graph);
         graph.flowQueue = graph.flowReplay;
         return graph;

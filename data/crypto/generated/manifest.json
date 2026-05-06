@@ -2,7 +2,8 @@
   "metadata": {
     "environment": "local_secure_runner_manifest",
     "sanitized": true,
-    "production_meaning": false
+    "production_meaning": false,
+    "live_blockchain_fetching": false
   },
   "active_fixture": "data/crypto/generated/solana-wallet-flow.9yhpCwGYTWycAAd41X3rKpH328iHSrU7TrQWeVsoGcX5.json",
   "fixtures": [

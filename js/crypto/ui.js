@@ -31,8 +31,13 @@
         ctx: null,
         root: null,
         detailPanel: null,
+        statusPanel: null,
         resizeObserver: null,
         datasetSource: null,
+        datasetSourceKind: 'built_in',
+        generatedManifest: null,
+        generatedFixtures: [],
+        activeGeneratedFixture: null,
         solanaAdapterLoadPromise: null,
         flowReplayEnabled: false,
         flowReplay: {
@@ -75,6 +80,13 @@
         tokenExposure: 3,
         multiHopPaths: 3
     };
+    const GENERATED_FIXTURE_DIR = 'data/crypto/generated/';
+    const SOURCE_LABELS = {
+        generated: 'Generated Fixture',
+        solana_sample: 'Solana Sample Fixture',
+        legacy_sample: 'Legacy Sample Fixture',
+        built_in: 'Built-in Sample'
+    };
 
     async function initialize(options = {}) {
         if (state.initialized) return state.graph;
@@ -102,7 +114,6 @@
         }
 
         const dataset = await loadSampleDataset();
-        renderSolanaStatusCopy(dataset);
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
@@ -111,6 +122,7 @@
         state.selectedId = state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
         state.initialized = true;
 
+        renderSolanaStatusCopy(dataset);
         updateStats();
         resizeAndRender();
         renderDetails();
@@ -126,18 +138,14 @@
         renderDetails();
     }
 
-    async function loadSampleDataset() {
+    async function loadSampleDataset(options = {}) {
         const manifest = await loadLocalJson('data/crypto/generated/manifest.json', 'Generated crypto manifest unavailable');
-        const generatedFixturePath = getGeneratedFixturePath(manifest);
+        applyGeneratedManifest(manifest);
+        const requestedPath = isSafeGeneratedFixturePath(options.generatedFixturePath) ? options.generatedFixturePath : '';
+        const generatedFixturePath = requestedPath || getPreferredGeneratedFixturePath();
         if (generatedFixturePath) {
-            const generatedFixture = await loadLocalJson(generatedFixturePath, 'Generated crypto fixture unavailable');
-            if (generatedFixture) {
-                const normalized = await normalizeSolanaFixture(generatedFixture, generatedFixturePath);
-                if (normalized) {
-                    state.datasetSource = generatedFixturePath;
-                    return normalized;
-                }
-            }
+            const normalized = await loadGeneratedFixtureDataset(generatedFixturePath);
+            if (normalized) return normalized;
         }
 
         const solanaFixture = await loadLocalJson('data/crypto/solana-sample-flow.json', 'Solana fixture file unavailable');
@@ -145,6 +153,8 @@
             const normalized = await normalizeSolanaFixture(solanaFixture, 'data/crypto/solana-sample-flow.json');
             if (normalized) {
                 state.datasetSource = 'data/crypto/solana-sample-flow.json';
+                state.datasetSourceKind = 'solana_sample';
+                state.activeGeneratedFixture = null;
                 return normalized;
             }
         }
@@ -152,20 +162,110 @@
         const sampleFixture = await loadLocalJson('data/crypto/sample-flow.json', 'Crypto sample file unavailable');
         if (sampleFixture) {
             state.datasetSource = 'data/crypto/sample-flow.json';
+            state.datasetSourceKind = 'legacy_sample';
+            state.activeGeneratedFixture = null;
             return sampleFixture;
         }
 
         console.warn('CryptoPhotonic sample data fell back to built-in dev sample');
         state.datasetSource = 'built_in_dev_sample';
+        state.datasetSourceKind = 'built_in';
+        state.activeGeneratedFixture = null;
         return core.getSampleDataset();
     }
 
-    function getGeneratedFixturePath(manifest) {
-        const activeFixture = typeof manifest?.active_fixture === 'string' ? manifest.active_fixture.trim() : '';
-        if (!activeFixture) return '';
-        if (!activeFixture.startsWith('data/crypto/generated/')) return '';
-        if (/^[a-z]+:\/\//i.test(activeFixture) || activeFixture.includes('..')) return '';
-        return activeFixture;
+    async function loadGeneratedFixtureDataset(path) {
+        const fixture = await loadLocalJson(path, 'Generated crypto fixture unavailable');
+        if (!fixture) return null;
+
+        const normalized = await normalizeSolanaFixture(fixture, path);
+        if (!normalized) return null;
+
+        const fixtureEntry = getGeneratedFixtureEntry(path);
+        const transactionCount = getFixtureTransactionCount(fixture, fixtureEntry);
+        normalized.metadata = {
+            ...(normalized.metadata || {}),
+            ...(fixture.metadata || {}),
+            source_path: path,
+            generated_wallet: fixtureEntry?.wallet || fixture.metadata?.wallet || '',
+            generated_at: fixtureEntry?.generated_at || fixture.metadata?.generated_at || '',
+            generated_transaction_count: transactionCount
+        };
+        state.datasetSource = path;
+        state.datasetSourceKind = 'generated';
+        state.activeGeneratedFixture = {
+            path,
+            wallet: normalized.metadata.generated_wallet,
+            generated_at: normalized.metadata.generated_at,
+            transaction_count: transactionCount,
+            source: fixtureEntry?.source || fixture.metadata?.source || '',
+            sanitized: fixtureEntry?.sanitized === true || fixture.metadata?.sanitized === true
+        };
+        return normalized;
+    }
+
+    function applyGeneratedManifest(manifest) {
+        state.generatedManifest = manifest && typeof manifest === 'object' ? manifest : null;
+        state.generatedFixtures = getValidGeneratedFixtures(state.generatedManifest);
+    }
+
+    function getValidGeneratedFixtures(manifest) {
+        if (!manifest || typeof manifest !== 'object') return [];
+
+        const entries = [];
+        const seen = new Set();
+        const addEntry = item => {
+            const path = typeof item === 'string' ? item.trim() : typeof item?.path === 'string' ? item.path.trim() : '';
+            if (!isSafeGeneratedFixturePath(path) || seen.has(path)) return;
+            seen.add(path);
+            entries.push({
+                path,
+                wallet: typeof item?.wallet === 'string' ? item.wallet : '',
+                generated_at: typeof item?.generated_at === 'string' ? item.generated_at : '',
+                transaction_count: Number.isFinite(Number(item?.transaction_count)) ? Number(item.transaction_count) : null,
+                source: typeof item?.source === 'string' ? item.source : '',
+                sanitized: item?.sanitized === true
+            });
+        };
+
+        const fixtures = Array.isArray(manifest.fixtures) ? manifest.fixtures : [];
+        fixtures.forEach(addEntry);
+        addEntry(manifest.active_fixture);
+        return entries;
+    }
+
+    function getPreferredGeneratedFixturePath() {
+        const activeFixture = typeof state.generatedManifest?.active_fixture === 'string'
+            ? state.generatedManifest.active_fixture.trim()
+            : '';
+        if (isSafeGeneratedFixturePath(activeFixture) && state.generatedFixtures.some(item => item.path === activeFixture)) {
+            return activeFixture;
+        }
+        return state.generatedFixtures[0]?.path || '';
+    }
+
+    function getGeneratedFixtureEntry(path) {
+        return state.generatedFixtures.find(item => item.path === path) || null;
+    }
+
+    function isSafeGeneratedFixturePath(value) {
+        const path = String(value || '').trim();
+        if (!path || !path.startsWith(GENERATED_FIXTURE_DIR)) return false;
+        if (/^[a-z][a-z0-9+.-]*:\/\//i.test(path) || path.startsWith('//')) return false;
+        if (path.includes('\\') || path.includes('?') || path.includes('#')) return false;
+        const suffix = path.slice(GENERATED_FIXTURE_DIR.length);
+        if (!suffix || !suffix.endsWith('.json')) return false;
+        return suffix.split('/').every(part => part && part !== '.' && part !== '..');
+    }
+
+    function getFixtureTransactionCount(fixture, fixtureEntry = null) {
+        if (Number.isFinite(Number(fixtureEntry?.transaction_count))) return Number(fixtureEntry.transaction_count);
+        if (Number.isFinite(Number(fixture?.metadata?.transaction_count))) return Number(fixture.metadata.transaction_count);
+        if (Array.isArray(fixture?.solana_transactions)) return fixture.solana_transactions.length;
+        if (Array.isArray(fixture?.enhancedTransactions)) return fixture.enhancedTransactions.length;
+        if (Array.isArray(fixture?.enhanced_transactions)) return fixture.enhanced_transactions.length;
+        if (Array.isArray(fixture?.transactions)) return fixture.transactions.length;
+        return null;
     }
 
     async function loadLocalJson(path, unavailableMessage) {
@@ -242,13 +342,136 @@
 
         const status = document.createElement('div');
         status.id = 'crypto-solana-status';
-        status.className = 'text-[10px] font-mono tracking-[1.1px] text-cyan-50/78 rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 max-w-md';
-        status.innerHTML = isGeneratedFixture
-            ? 'Solana local runner generated fixture<br>No browser live fetching; API keys not loaded in browser<br>Source: sanitized Helius Enhanced Transactions output'
-            : isSolana
-            ? 'Solana offline fixture mode<br>Live data disabled; API keys not loaded in browser<br>Future live mode requires secure proxy/local runner'
-            : 'Offline fixture mode<br>Live data disabled; API keys not loaded in browser<br>Future live mode requires secure proxy/local runner';
+        status.className = 'grid gap-2 text-[10px] font-mono tracking-[1.1px] text-cyan-50/78 max-w-3xl grow md:grow-0';
+        status.innerHTML = `
+            ${renderGeneratedDataManager(metadata, isGeneratedFixture, isSolana)}
+            ${renderFlowQueueStatus()}
+        `;
         panelHeader.appendChild(status);
+        state.statusPanel = status;
+        bindStatusControls(status);
+    }
+
+    function renderGeneratedDataManager(metadata = {}, isGeneratedFixture = false, isSolana = false) {
+        const sourceLabel = SOURCE_LABELS[state.datasetSourceKind] || SOURCE_LABELS.built_in;
+        const activeFixture = state.activeGeneratedFixture || {};
+        const generatedWallet = activeFixture.wallet || metadata.generated_wallet || metadata.wallet || '';
+        const generatedAt = activeFixture.generated_at || metadata.generated_at || '';
+        const transactionCount = activeFixture.transaction_count ?? metadata.generated_transaction_count ?? metadata.transaction_count ?? null;
+        const selector = renderGeneratedFixtureSelector();
+        const sourceTone = isGeneratedFixture ? 'text-emerald-100/82' : isSolana ? 'text-cyan-50/78' : 'text-white/68';
+
+        return `
+            <div class="rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <div class="text-white/38">DATA SOURCE</div>
+                        <div class="${sourceTone}">${escapeHtml(sourceLabel)}</div>
+                    </div>
+                    ${selector}
+                </div>
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-white/56">
+                    <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
+                    <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
+                    <div>Tx: ${escapeHtml(transactionCount ?? '-')}</div>
+                </div>
+                <div class="mt-2 text-yellow-100/76">Browser does not call Helius. Generated files come from local runner.</div>
+            </div>
+        `;
+    }
+
+    function renderGeneratedFixtureSelector() {
+        const fixtures = state.generatedFixtures || [];
+        if (!fixtures.length) {
+            return '<div class="text-white/38">No generated fixtures listed</div>';
+        }
+
+        const options = [
+            state.datasetSourceKind === 'generated' ? '' : '<option value="">Select generated fixture</option>',
+            ...fixtures.map(item => {
+                const label = item.wallet
+                    ? `${shortLongValue(item.wallet)} (${item.transaction_count ?? '-'} tx)`
+                    : item.path.replace(GENERATED_FIXTURE_DIR, '');
+                return `<option value="${escapeAttr(item.path)}" ${item.path === state.datasetSource ? 'selected' : ''}>${escapeHtml(label)}</option>`;
+            })
+        ].join('');
+
+        return `
+            <label class="flex items-center gap-2 text-white/52">
+                <span>Fixture</span>
+                <select id="crypto-generated-fixture-select" class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none">
+                    ${options}
+                </select>
+            </label>
+        `;
+    }
+
+    function renderFlowQueueStatus() {
+        const orderedCount = state.graph?.flowQueue?.ordered_flow_ids?.length
+            || state.graph?.flowReplay?.ordered_flow_ids?.length
+            || 0;
+        const sourceLabel = SOURCE_LABELS[state.datasetSourceKind] || SOURCE_LABELS.built_in;
+        const motionLabel = state.flowMotion.enabled ? 'Motion On' : 'Motion Off';
+        const queueLabel = state.flowReplay.playing ? 'Pause Queue' : 'Start Queue';
+        return `
+            <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <div class="text-white/38">LIVE FLOW QUEUE</div>
+                        <div class="text-white/66">${escapeHtml(orderedCount)} ordered flows / ${escapeHtml(motionLabel)} / ${escapeHtml(sourceLabel)} / Local Offline</div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button id="crypto-flow-queue-toggle" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(queueLabel)}</button>
+                        <button id="crypto-flow-queue-step" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">Step</button>
+                        <button id="crypto-flow-motion-toggle" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(motionLabel)}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function bindStatusControls(status) {
+        status.querySelector('#crypto-generated-fixture-select')?.addEventListener('change', event => {
+            const path = event.target.value;
+            if (path) switchGeneratedFixture(path);
+        });
+        status.querySelector('#crypto-flow-queue-toggle')?.addEventListener('click', () => {
+            toggleFlowReplay();
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        });
+        status.querySelector('#crypto-flow-queue-step')?.addEventListener('click', () => {
+            stepFlowReplay(1);
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        });
+        status.querySelector('#crypto-flow-motion-toggle')?.addEventListener('click', () => {
+            setFlowAnimationEnabled(!state.flowMotion.enabled);
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        });
+    }
+
+    async function switchGeneratedFixture(path) {
+        if (!isSafeGeneratedFixturePath(path) || path === state.datasetSource) return;
+        const dataset = await loadSampleDataset({ generatedFixturePath: path });
+        applyDataset(dataset);
+    }
+
+    function applyDataset(dataset = {}) {
+        const graph = graphEngine.buildGraph(dataset);
+        state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
+        state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
+        state.flowReplay.playing = false;
+        state.flowReplay.index = 0;
+        state.flowReplay.activeFlowId = null;
+        state.flowReplay.lastStepAt = 0;
+        state.manualNodePositions.clear();
+        prepareFlowMotion();
+        rebuildInteractionIndex();
+        state.selectedId = state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
+        renderSolanaStatusCopy(dataset);
+        updateStats();
+        resizeAndRender();
+        renderDetails();
+        updateFlowAnimationLoop();
     }
 
     function resizeAndRender() {
@@ -642,7 +865,7 @@
         state.detailPanel.innerHTML = `
             <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">${escapeHtml(isHubNode(node) ? 'ENTITY HUB' : node.type.toUpperCase())} NODE</div>
             <h3 class="font-display text-2xl mt-1">${escapeHtml(labelForNode(node))}</h3>
-            <div class="text-[11px] text-white/42 mt-2">Sample/dev-only graph. Future: live transfer pulses / route replay after secure data runner.</div>
+            <div class="text-[11px] text-white/42 mt-2">Sample/dev-only graph. Future: Live Flow Queue intake after secure data runner.</div>
             ${renderDetailSection('Summary', `
                 ${detailRow('Chain', node.chain || '-')}
                 ${isHubNode(node) ? detailRow('Hub Category', formatHubCategory(node.category)) : ''}
@@ -651,7 +874,7 @@
                 ${detailRow('Confidence', `${Math.round((node.confidence || 0) * 100)}%`)}
                 ${node.address ? detailRow('Address', node.address, { shorten: true }) : ''}
                 ${node.token_mint ? detailRow('Token Mint', node.token_mint, { shorten: true }) : ''}
-                ${state.graph.flowReplay?.enabled === false ? detailRow('Flow Replay', `${state.graph.flowReplay.ordered_flow_ids?.length || 0} ordered flows staged offline`) : ''}
+                ${state.graph.flowQueue?.enabled === false || state.graph.flowReplay?.enabled === false ? detailRow('Live Flow Queue', `${state.graph.flowQueue?.ordered_flow_ids?.length || state.graph.flowReplay?.ordered_flow_ids?.length || 0} ordered flows staged offline`) : ''}
             `)}
             ${renderDetailSection('Value / Exposure', `
                 ${node.type === core.NODE_TYPES.WALLET ? detailRow('Total In', core.formatUsd(node.total_in_usd || 0)) : ''}

@@ -3,3 +3,4 @@ __pycache__/
 data/candidates/run_logs
 data/cache
 data/candidates/plans/.sec_pipeline_*
+data/crypto/cache/

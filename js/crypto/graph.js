@@ -115,6 +115,7 @@
         graph.walletPaths = buildMultiHopPaths(graph, { maxHops: 3 });
         graph.flowReplayEnabled = false;
         graph.flowReplay = buildFlowReplayPlan(graph);
+        graph.flowQueue = graph.flowReplay;
         return graph;
     }
 
@@ -401,10 +402,11 @@
 
         return {
             enabled: false,
-            mode: 'offline_planning_only',
+            mode: 'local_offline_queue',
+            label: 'Live Flow Queue',
             ordered_flow_ids: orderedFlows.map(flow => flow.id),
             ordered_flows: orderedFlows,
-            future_note: 'Future: live transfer pulses / route replay after secure data runner.'
+            future_note: 'Future: Live Flow Queue intake after secure data runner.'
         };
     }
 

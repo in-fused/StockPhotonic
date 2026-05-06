@@ -113,6 +113,8 @@
         };
 
         graph.walletPaths = buildMultiHopPaths(graph, { maxHops: 3 });
+        graph.flowReplayEnabled = false;
+        graph.flowReplay = buildFlowReplayPlan(graph);
         return graph;
     }
 
@@ -378,6 +380,39 @@
         return paths.sort((a, b) => b.usd_value - a.usd_value || a.hops - b.hops);
     }
 
+    function buildFlowReplayPlan(graph) {
+        const orderedFlows = (graph.flowEdges || [])
+            .slice()
+            .sort((a, b) => {
+                const timeDelta = timestampValue(a.timestamp) - timestampValue(b.timestamp);
+                if (timeDelta) return timeDelta;
+                return (b.usd_value || 0) - (a.usd_value || 0);
+            })
+            .map((edge, index) => ({
+                id: edge.id,
+                order: index,
+                timestamp: edge.timestamp || '',
+                source: edge.source,
+                target: edge.target,
+                usd_value: edge.usd_value || 0,
+                symbol: edge.symbol || '',
+                transaction_hash: edge.transaction_hash || ''
+            }));
+
+        return {
+            enabled: false,
+            mode: 'offline_planning_only',
+            ordered_flow_ids: orderedFlows.map(flow => flow.id),
+            ordered_flows: orderedFlows,
+            future_note: 'Future: live transfer pulses / route replay after secure data runner.'
+        };
+    }
+
+    function timestampValue(timestamp) {
+        const value = Date.parse(timestamp || '');
+        return Number.isFinite(value) ? value : Number.MAX_SAFE_INTEGER;
+    }
+
     function walletKey(address, chain) {
         return `${core.normalizeChain(chain)}:${core.normalizeAddress(address)}`;
     }
@@ -400,6 +435,7 @@
 
     namespace.graph = {
         buildGraph,
-        buildMultiHopPaths
+        buildMultiHopPaths,
+        buildFlowReplayPlan
     };
 })();

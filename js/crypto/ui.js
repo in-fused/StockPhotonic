@@ -22,6 +22,7 @@
         resizeObserver: null,
         datasetSource: null,
         solanaAdapterLoadPromise: null,
+        flowReplayEnabled: false,
         viewport: {
             x: 0,
             y: 0,
@@ -33,6 +34,12 @@
 
     const ZOOM_LIMITS = { min: 0.48, max: 2.35 };
     const DRAG_SELECT_THRESHOLD = 5;
+    const DETAIL_LIMITS = {
+        connectedWallets: 4,
+        directFlows: 4,
+        tokenExposure: 3,
+        multiHopPaths: 3
+    };
 
     async function initialize(options = {}) {
         if (state.initialized) return state.graph;
@@ -63,6 +70,7 @@
         renderSolanaStatusCopy(dataset);
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
+        state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
         rebuildInteractionIndex();
         state.selectedId = state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
         state.initialized = true;
@@ -469,61 +477,69 @@
         const relatedFlows = getRelatedEdges(node.id, core.EDGE_TYPES.FLOW);
         const relatedHubFlows = isHubNode(node) ? getRelatedHubFlows(node) : [];
         const relatedExposureEdges = getRelatedEdges(node.id, core.EDGE_TYPES.EXPOSURE);
-        const relatedHubEdges = getRelatedEdges(node.id, core.EDGE_TYPES.LABEL);
         const connectedWallets = isHubNode(node) ? getConnectedWallets(node) : [];
         const displayedRelatedFlows = mergeUniqueEdges([...relatedFlows, ...relatedHubFlows]);
-        const relatedPaths = getRelatedPaths(node.id);
+        const relatedPaths = uniqueRelatedPaths(getRelatedPaths(node.id));
         state.detailPanel.innerHTML = `
             <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">${escapeHtml(isHubNode(node) ? 'ENTITY HUB' : node.type.toUpperCase())} NODE</div>
             <h3 class="font-display text-2xl mt-1">${escapeHtml(labelForNode(node))}</h3>
-            <div class="text-[11px] text-white/42 mt-2">Sample/dev-only crypto graph. No live chain lookup or production attribution.</div>
-            <div class="mt-4 grid gap-2 text-xs text-white/68">
+            <div class="text-[11px] text-white/42 mt-2">Sample/dev-only graph. Future: live transfer pulses / route replay after secure data runner.</div>
+            ${renderDetailSection('Summary', `
                 ${detailRow('Chain', node.chain || '-')}
                 ${isHubNode(node) ? detailRow('Hub Category', formatHubCategory(node.category)) : ''}
-                ${node.address ? detailRow('Address', node.address) : ''}
-                ${node.token_mint ? detailRow('Token Mint', node.token_mint) : ''}
                 ${node.name && node.type === core.NODE_TYPES.TOKEN ? detailRow('Token', node.name) : ''}
                 ${detailRow('Label Source', node.label_source || '-')}
                 ${detailRow('Confidence', `${Math.round((node.confidence || 0) * 100)}%`)}
+                ${node.address ? detailRow('Address', node.address, { shorten: true }) : ''}
+                ${node.token_mint ? detailRow('Token Mint', node.token_mint, { shorten: true }) : ''}
+                ${state.graph.flowReplay?.enabled === false ? detailRow('Flow Replay', `${state.graph.flowReplay.ordered_flow_ids?.length || 0} ordered flows staged offline`) : ''}
+            `)}
+            ${renderDetailSection('Value / Exposure', `
                 ${node.type === core.NODE_TYPES.WALLET ? detailRow('Total In', core.formatUsd(node.total_in_usd || 0)) : ''}
                 ${node.type === core.NODE_TYPES.WALLET ? detailRow('Total Out', core.formatUsd(node.total_out_usd || 0)) : ''}
                 ${isHubNode(node) ? detailRow('Aggregate Value', core.formatUsd(node.aggregate_value_usd || 0)) : ''}
                 ${isHubNode(node) ? detailRow('Transaction Count', node.transaction_count || 0) : ''}
                 ${detailRow(node.type === core.NODE_TYPES.TOKEN ? 'Token Exposure' : isHubNode(node) ? 'Hub Exposure' : 'Exposure', core.formatUsd(node.exposure_usd || 0))}
-            </div>
+            `)}
             ${isHubNode(node) ? `
-                <div class="mt-5 pt-4 border-t border-white/10">
-                    <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">CONNECTED WALLETS</div>
-                    <div class="space-y-2">
-                        ${connectedWallets.slice(0, 6).map(renderNodeSummary).join('') || '<div class="text-xs text-white/38">No connected sample wallets.</div>'}
-                    </div>
-                </div>
-                <div class="mt-5 pt-4 border-t border-white/10">
-                    <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">HUB RELATION LINKS</div>
-                    <div class="space-y-2">
-                        ${relatedHubEdges.slice(0, 6).map(edge => renderEdgeSummary(edge, node.id)).join('') || '<div class="text-xs text-white/38">No hub relation links.</div>'}
-                    </div>
-                </div>
+                ${renderCardSection('Connected Wallets', connectedWallets, DETAIL_LIMITS.connectedWallets, renderNodeSummary, 'No connected sample wallets.')}
             ` : ''}
-            <div class="mt-5 pt-4 border-t border-white/10">
-                <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">RELATED TRANSACTION FLOWS</div>
-                <div class="space-y-2">
-                    ${displayedRelatedFlows.slice(0, 6).map(edge => renderEdgeSummary(edge, node.id)).join('') || '<div class="text-xs text-white/38">No related sample flows.</div>'}
-                </div>
-            </div>
-            <div class="mt-5 pt-4 border-t border-white/10">
-                <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">TOKEN EXPOSURE LINKS</div>
-                <div class="space-y-2">
-                    ${relatedExposureEdges.slice(0, 4).map(edge => renderEdgeSummary(edge, node.id)).join('') || '<div class="text-xs text-white/38">No token exposure links for this sample node.</div>'}
-                </div>
-            </div>
-            <div class="mt-5 pt-4 border-t border-white/10">
-                <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">MULTI-HOP SAMPLE PATHS</div>
-                <div class="space-y-2">
-                    ${relatedPaths.slice(0, 4).map(renderPathSummary).join('') || '<div class="text-xs text-white/38">No multi-hop wallet paths include this node.</div>'}
-                </div>
-            </div>
+            ${renderCardSection('Direct Flows', displayedRelatedFlows, DETAIL_LIMITS.directFlows, edge => renderEdgeSummary(edge, node.id), 'No related sample flows.')}
+            ${renderCardSection('Token Exposure', relatedExposureEdges, DETAIL_LIMITS.tokenExposure, edge => renderEdgeSummary(edge, node.id), 'No token exposure links for this sample node.')}
+            ${renderCardSection('Multi-Hop Paths', relatedPaths, DETAIL_LIMITS.multiHopPaths, renderPathSummary, 'No multi-hop wallet paths include this node.')}
         `;
+    }
+
+    function renderDetailSection(title, rowsHtml) {
+        const rows = compactHtmlRows(rowsHtml);
+        if (!rows) return '';
+        return `
+            <section class="mt-5 pt-4 border-t border-white/10">
+                <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">${escapeHtml(title)}</div>
+                <div class="grid gap-2 text-xs text-white/68">${rows}</div>
+            </section>
+        `;
+    }
+
+    function renderCardSection(title, items, limit, renderItem, emptyMessage) {
+        const list = Array.isArray(items) ? items : [];
+        const displayed = list.slice(0, limit);
+        const hiddenCount = Math.max(0, list.length - displayed.length);
+        return `
+            <section class="mt-5 pt-4 border-t border-white/10">
+                <div class="flex items-center justify-between gap-3 mb-2">
+                    <div class="text-[10px] font-mono tracking-[1.3px] text-white/45">${escapeHtml(title)}</div>
+                    ${hiddenCount ? `<div class="text-[10px] font-mono text-white/32">+${hiddenCount} more</div>` : ''}
+                </div>
+                <div class="space-y-2">
+                    ${displayed.map(renderItem).join('') || `<div class="text-xs text-white/38">${escapeHtml(emptyMessage)}</div>`}
+                </div>
+            </section>
+        `;
+    }
+
+    function compactHtmlRows(rowsHtml) {
+        return String(rowsHtml || '').replace(/\s+/g, ' ').trim();
     }
 
     function renderEdgeSummary(edge, selectedNodeId) {
@@ -533,12 +549,12 @@
             ? edge.source === selectedNodeId ? 'OUTFLOW' : edge.target === selectedNodeId ? 'INFLOW' : 'FLOW'
             : edge.type === core.EDGE_TYPES.LABEL ? formatRelation(edge.relation) : 'EXPOSURE';
         const label = edge.type === core.EDGE_TYPES.FLOW
-            ? `${labelForNode(source)} -> ${labelForNode(target)}`
-            : `${labelForNode(source)} / ${labelForNode(target)}`;
+            ? `${compactNodeLabel(source)} -> ${compactNodeLabel(target)}`
+            : `${compactNodeLabel(source)} / ${compactNodeLabel(target)}`;
         return `
             <div class="crypto-edge-summary rounded-2xl p-3">
                 <div class="text-[10px] font-mono text-cyan-100/70">${escapeHtml(direction)}</div>
-                <div class="text-xs text-white/72 mt-1">${escapeHtml(label)}</div>
+                <div class="text-xs text-white/72 mt-1" title="${escapeAttr(edge.type === core.EDGE_TYPES.FLOW ? `${labelForNode(source)} -> ${labelForNode(target)}` : `${labelForNode(source)} / ${labelForNode(target)}`)}">${escapeHtml(label)}</div>
                 <div class="text-[11px] text-white/42 mt-1">${escapeHtml(edge.symbol || edge.chain || '')} ${edge.usd_value ? core.formatUsd(edge.usd_value) : ''}${edge.transaction_count ? ` across ${escapeHtml(edge.transaction_count)} tx` : ''}</div>
                 ${edge.transaction_hash ? `<div class="text-[10px] font-mono text-white/32 mt-1">${escapeHtml(shortHash(edge.transaction_hash))}</div>` : ''}
             </div>
@@ -549,8 +565,8 @@
         return `
             <div class="crypto-edge-summary rounded-2xl p-3">
                 <div class="text-[10px] font-mono text-cyan-100/70">${escapeHtml(node.chain || 'WALLET')}</div>
-                <div class="text-xs text-white/72 mt-1">${escapeHtml(labelForNode(node))}</div>
-                <div class="text-[11px] text-white/42 mt-1">${escapeHtml(node.address || node.id)}</div>
+                <div class="text-xs text-white/72 mt-1" title="${escapeAttr(labelForNode(node))}">${escapeHtml(compactNodeLabel(node))}</div>
+                <div class="text-[11px] font-mono text-white/42 mt-1" title="${escapeAttr(node.address || node.id)}">${escapeHtml(shortLongValue(node.address || node.id))}</div>
             </div>
         `;
     }
@@ -559,12 +575,17 @@
         const labels = path.wallet_ids
             .map(id => state.graph.nodeById.get(id))
             .filter(Boolean)
+            .map(compactNodeLabel)
+            .join(' -> ');
+        const fullLabels = path.wallet_ids
+            .map(id => state.graph.nodeById.get(id))
+            .filter(Boolean)
             .map(labelForNode)
             .join(' -> ');
         return `
             <div class="crypto-edge-summary rounded-2xl p-3">
                 <div class="text-[10px] font-mono text-cyan-100/70">${escapeHtml(path.hops)} HOP${path.hops === 1 ? '' : 'S'}</div>
-                <div class="text-xs text-white/72 mt-1">${escapeHtml(labels)}</div>
+                <div class="text-xs text-white/72 mt-1" title="${escapeAttr(fullLabels)}">${escapeHtml(labels)}</div>
                 <div class="text-[11px] text-white/42 mt-1">${core.formatUsd(path.usd_value || 0)} sample flow path</div>
             </div>
         `;
@@ -578,11 +599,13 @@
         setText('crypto-path-count', `${state.graph.walletPaths.length} PATHS`);
     }
 
-    function detailRow(label, value) {
+    function detailRow(label, value, options = {}) {
+        const rawValue = String(value);
+        const visibleValue = options.shorten ? shortLongValue(rawValue) : rawValue;
         return `
             <div class="crypto-detail-row rounded-xl px-3 py-2">
                 <div class="text-[10px] font-mono text-white/40">${escapeHtml(label)}</div>
-                <div class="mt-1 break-all">${escapeHtml(String(value))}</div>
+                <div class="mt-1 break-all" title="${escapeAttr(rawValue)}">${escapeHtml(visibleValue)}</div>
             </div>
         `;
     }
@@ -606,6 +629,20 @@
     function shortHash(hash) {
         const value = String(hash || '');
         return value.length <= 16 ? value : `${value.slice(0, 10)}...${value.slice(-6)}`;
+    }
+
+    function shortLongValue(value) {
+        const text = String(value || '');
+        if (text.length <= 18) return text;
+        if (text.startsWith('0x')) return `${text.slice(0, 8)}...${text.slice(-6)}`;
+        return `${text.slice(0, 7)}...${text.slice(-6)}`;
+    }
+
+    function compactNodeLabel(node = {}) {
+        if (!node) return '-';
+        const label = labelForNode(node);
+        if (label && label.length <= 22 && label !== node.address) return label;
+        return shortLongValue(node.address || node.token_mint || label || node.id);
     }
 
     function dragNodeTo(screenPoint) {
@@ -840,6 +877,25 @@
             .sort((a, b) => b.usd_value - a.usd_value || a.hops - b.hops);
     }
 
+    function uniqueRelatedPaths(paths) {
+        const bestByRoute = new Map();
+        (paths || []).forEach(path => {
+            const routeKey = (path.wallet_ids || []).join('>');
+            if (!routeKey) return;
+            const existing = bestByRoute.get(routeKey);
+            if (
+                !existing
+                || (path.usd_value || 0) > (existing.usd_value || 0)
+                || ((path.usd_value || 0) === (existing.usd_value || 0) && (path.hops || 0) < (existing.hops || 0))
+            ) {
+                bestByRoute.set(routeKey, path);
+            }
+        });
+
+        return [...bestByRoute.values()]
+            .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0) || (a.hops || 0) - (b.hops || 0));
+    }
+
     function escapeHtml(value) {
         return String(value ?? '')
             .replaceAll('&', '&amp;')
@@ -847,6 +903,10 @@
             .replaceAll('>', '&gt;')
             .replaceAll('"', '&quot;')
             .replaceAll("'", '&#039;');
+    }
+
+    function escapeAttr(value) {
+        return escapeHtml(value).replaceAll('`', '&#096;');
     }
 
     function setText(id, value) {

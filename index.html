@@ -629,6 +629,72 @@
             box-shadow: 0 0 20px rgba(0, 249, 255, 0.12);
         }
 
+        .product-view-switch {
+            width: fit-content;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(0, 0, 0, 0.34);
+        }
+
+        .product-view-tab {
+            min-height: 2.5rem;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.62);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .product-view-tab:hover,
+        .product-view-tab:focus-visible {
+            border-color: rgba(0, 249, 255, 0.32);
+            color: #ffffff;
+            outline: none;
+        }
+
+        .product-view-tab[aria-selected="true"] {
+            border-color: rgba(0, 249, 255, 0.54);
+            background: rgba(0, 249, 255, 0.13);
+            color: #ffffff;
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.12);
+        }
+
+        body.is-crypto-active [data-stock-only] {
+            display: none;
+        }
+
+        .crypto-surface {
+            min-height: calc(100vh - 6rem);
+        }
+
+        .crypto-panel {
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.075), rgba(251, 191, 36, 0.045)),
+                rgba(6, 8, 18, 0.88);
+            box-shadow: 0 0 42px rgba(0, 249, 255, 0.08);
+        }
+
+        .crypto-canvas-wrap {
+            height: min(66vh, 680px);
+            min-height: 520px;
+            border: 1px solid rgba(0, 249, 255, 0.12);
+            background:
+                linear-gradient(rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                rgba(2, 6, 23, 0.74);
+            background-size: 46px 46px, 46px 46px, 100% 100%;
+        }
+
+        #crypto-flow-canvas {
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .crypto-stat-pill,
+        .crypto-detail-row,
+        .crypto-edge-summary {
+            border: 1px solid rgba(255, 255, 255, 0.085);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
         .source-workbench {
             border: 1px solid rgba(0, 249, 255, 0.16);
             background:
@@ -829,6 +895,15 @@
                 justify-content: center;
             }
 
+            .product-view-switch {
+                width: 100%;
+            }
+
+            .product-view-tab {
+                flex: 1 1 calc(50% - 0.25rem);
+                justify-content: center;
+            }
+
             .connection-row {
                 border-radius: 1rem;
             }
@@ -887,7 +962,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-x-3 text-sm">
+            <div class="flex items-center gap-x-3 text-sm" data-stock-only>
                 <div class="hidden sm:flex items-center gap-x-2 px-4 py-1.5 rounded-3xl bg-white/5 border border-white/10">
                     <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
                     <span class="font-mono text-emerald-400 text-xs tracking-widest">LIVE - APR 29 2026</span>
@@ -906,7 +981,20 @@
         </div>
     </header>
 
-    <div class="max-w-screen-2xl mx-auto px-8 pt-6 page-shell">
+    <div class="max-w-screen-2xl mx-auto px-8 pt-5 page-shell">
+        <div class="product-view-switch rounded-3xl p-1.5 flex flex-wrap gap-1.5" role="tablist" aria-label="Photonic product views">
+            <button id="stock-product-tab" type="button" class="product-view-tab rounded-3xl px-4 py-2 text-xs font-mono tracking-[1.2px] flex items-center gap-2" role="tab" aria-selected="true" aria-controls="stock-photonic-surface" onclick="setProductView('stock')">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>StockPhotonic</span>
+            </button>
+            <button id="crypto-product-tab" type="button" class="product-view-tab rounded-3xl px-4 py-2 text-xs font-mono tracking-[1.2px] flex items-center gap-2" role="tab" aria-selected="false" aria-controls="crypto-photonic-view" onclick="setProductView('crypto')">
+                <i class="fa-solid fa-wallet"></i>
+                <span>CryptoPhotonic</span>
+            </button>
+        </div>
+    </div>
+
+    <main id="stock-photonic-surface" class="max-w-screen-2xl mx-auto px-8 pt-6 page-shell" role="tabpanel" aria-labelledby="stock-product-tab">
         <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
             <div>
                 <h1 class="font-display text-5xl md:text-6xl font-semibold">Photonic Chart</h1>
@@ -1333,7 +1421,50 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
             </section>
         </section>
-    </div>
+    </main>
+
+    <main id="crypto-photonic-view" class="hidden max-w-screen-2xl mx-auto px-8 pt-6 pb-10 page-shell crypto-surface" role="tabpanel" aria-labelledby="crypto-product-tab">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
+            <div>
+                <h1 class="font-display text-5xl md:text-6xl font-semibold">CryptoPhotonic Core</h1>
+                <p class="text-lg md:text-xl text-white/70 mt-1">Wallet, token, and transaction-flow graph intelligence foundation</p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono text-white/64">
+                <div id="crypto-wallet-count" class="crypto-stat-pill rounded-2xl px-3 py-2">0 WALLETS</div>
+                <div id="crypto-token-count" class="crypto-stat-pill rounded-2xl px-3 py-2">0 TOKENS</div>
+                <div id="crypto-flow-count" class="crypto-stat-pill rounded-2xl px-3 py-2">0 FLOWS</div>
+                <div id="crypto-path-count" class="crypto-stat-pill rounded-2xl px-3 py-2">0 PATHS</div>
+            </div>
+        </div>
+
+        <section class="crypto-panel rounded-3xl p-4 md:p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <div>
+                    <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">ISOLATED SAMPLE GRAPH</div>
+                    <div class="text-sm text-white/50 mt-1">Synthetic dev-only data under <span class="font-mono text-cyan-50/78">data/crypto/</span></div>
+                </div>
+                <div class="text-[10px] font-mono tracking-[1.2px] text-yellow-100/75 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1.5">NO LIVE CHAIN FETCHING</div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div class="lg:col-span-8">
+                    <div class="crypto-canvas-wrap rounded-3xl overflow-hidden">
+                        <canvas id="crypto-flow-canvas" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+                <aside class="lg:col-span-4">
+                    <div id="crypto-detail-panel" class="glass rounded-3xl p-6 border border-white/10 h-full min-h-[320px] overflow-y-auto">
+                        <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
+                            <i class="fa-solid fa-wallet text-5xl text-white/20 mb-4"></i>
+                            <div class="font-semibold text-white/60">Crypto graph inactive</div>
+                            <div class="text-xs text-white/35 mt-2 max-w-xs">Select CryptoPhotonic to initialize the isolated sample graph.</div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </main>
 
     <script src="js/core/config.js"></script>
     <script src="js/utils/math.js"></script>
@@ -1352,6 +1483,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/ui/sidebar.js"></script>
     <script src="js/ui/search.js"></script>
     <script src="js/ui/controls.js"></script>
+    <script src="js/crypto/core.js"></script>
+    <script src="js/crypto/graph.js"></script>
+    <script src="js/crypto/layout.js"></script>
+    <script src="js/crypto/ui.js"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -1405,6 +1540,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic controls module failed to load');
         }
 
+        if (!window.CryptoPhotonic?.core || !window.CryptoPhotonic?.graph || !window.CryptoPhotonic?.layout || !window.CryptoPhotonic?.ui) {
+            throw new Error('CryptoPhotonic modules failed to load');
+        }
+
         const StockPhotonicUtils = window.StockPhotonicUtils || {};
         const {
             viewport: graphViewport,
@@ -1446,6 +1585,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             sumMarketCap,
             getDatasetTrustMetrics
         } = window.StockPhotonicData;
+        const cryptoPhotonicUi = window.CryptoPhotonic.ui;
 
         const {
             CACHE_BUST,
@@ -1520,6 +1660,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let connections = [];
         let nodes = [];
         let links = [];
+        let currentProductView = 'stock';
         let currentAppView = 'graph';
         let graphFullscreenActive = false;
         let graphHudHidden = false;
@@ -1683,6 +1824,38 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             isFocusModeActive,
             isIndustryCorrelationHintNode
         };
+
+        function setProductView(view) {
+            const nextView = view === 'crypto' ? 'crypto' : 'stock';
+            const isCryptoView = nextView === 'crypto';
+            const stockSurface = document.getElementById('stock-photonic-surface');
+            const cryptoSurface = document.getElementById('crypto-photonic-view');
+            const stockTab = document.getElementById('stock-product-tab');
+            const cryptoTab = document.getElementById('crypto-product-tab');
+
+            currentProductView = nextView;
+            document.body.classList.toggle('is-crypto-active', isCryptoView);
+            stockSurface?.classList.toggle('hidden', isCryptoView);
+            cryptoSurface?.classList.toggle('hidden', !isCryptoView);
+            stockTab?.setAttribute('aria-selected', String(!isCryptoView));
+            cryptoTab?.setAttribute('aria-selected', String(isCryptoView));
+            cryptoPhotonicUi.setActive(isCryptoView);
+
+            if (isCryptoView) {
+                cryptoPhotonicUi.initialize().then(() => {
+                    cryptoPhotonicUi.setActive(currentProductView === 'crypto');
+                });
+                return;
+            }
+
+            window.requestAnimationFrame(() => {
+                if (currentAppView === 'graph') {
+                    resizeCanvas();
+                    updateOrbMapData();
+                    requestDraw();
+                }
+            });
+        }
 
         function setAppView(view) {
             exitActiveFullscreenModes({ fit: false });

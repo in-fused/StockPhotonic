@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "name": "CryptoPhotonic Solana dev-only sample flow",
+    "environment": "dev_offline_fixture",
+    "chain": "solana",
+    "adapter": "solana",
+    "production_meaning": false,
+    "live_blockchain_fetching": false,
+    "disclaimer": "Synthetic Solana-shaped records for local rendering only. No real-world attribution or accusation is implied.",
+    "notes": "Dev-only fixture with anonymized wallet, SPL token, native SOL, and swap-like transfer records."
+  },
+  "solana_transactions": [
+    {
+      "signature": "solsampletx1111111111111111111111111111111111111111111111111111111111",
+      "type": "TRANSFER",
+      "timestamp": "2026-04-28T14:20:00Z",
+      "nativeTransfers": [
+        {
+          "fromUserAccount": "samplealpha11111111111111111111111111111111",
+          "toUserAccount": "samplebeta22222222222222222222222222222222",
+          "amount": 9250000000,
+          "usd_value": 1350
+        }
+      ]
+    },
+    {
+      "signature": "solsampletx2222222222222222222222222222222222222222222222222222222222",
+      "type": "TOKEN_TRANSFER",
+      "timestamp": "2026-04-28T14:42:00Z",
+      "tokenTransfers": [
+        {
+          "fromUserAccount": "samplebeta22222222222222222222222222222222",
+          "toUserAccount": "samplegamma33333333333333333333333333333333",
+          "fromTokenAccount": "sampletokenacctbetausdc111111111111111111111",
+          "toTokenAccount": "sampletokenacctgammausdc222222222222222222",
+          "mint": "sampleusdcmint444444444444444444444444444444",
+          "tokenAmount": 4200,
+          "decimals": 6,
+          "symbol": "sUSDC",
+          "usd_value": 4200
+        }
+      ]
+    },
+    {
+      "signature": "solsampletx3333333333333333333333333333333333333333333333333333333333",
+      "type": "SWAP",
+      "source": "JUPITER_SAMPLE_ROUTE",
+      "timestamp": "2026-04-28T15:05:00Z",
+      "swapTransfers": [
+        {
+          "type": "tokenInput",
+          "fromUserAccount": "samplegamma33333333333333333333333333333333",
+          "toUserAccount": "samplepool555555555555555555555555555555555",
+          "fromTokenAccount": "sampletokenacctgammausdc222222222222222222",
+          "toTokenAccount": "samplepoolacctusdc3333333333333333333333",
+          "mint": "sampleusdcmint444444444444444444444444444444",
+          "tokenAmount": 1800,
+          "decimals": 6,
+          "symbol": "sUSDC",
+          "usd_value": 1800
+        },
+        {
+          "type": "tokenOutput",
+          "fromUserAccount": "samplepool555555555555555555555555555555555",
+          "toUserAccount": "samplegamma33333333333333333333333333333333",
+          "fromTokenAccount": "samplepoolacctbonk4444444444444444444444",
+          "toTokenAccount": "sampletokenacctgammabonk555555555555555555",
+          "mint": "samplebonkmint666666666666666666666666666666",
+          "tokenAmount": 24000000,
+          "decimals": 5,
+          "symbol": "sBONK",
+          "usd_value": 1792
+        }
+      ]
+    },
+    {
+      "signature": "solsampletx4444444444444444444444444444444444444444444444444444444444",
+      "type": "TOKEN_TRANSFER",
+      "timestamp": "2026-04-28T15:31:00Z",
+      "tokenTransfers": [
+        {
+          "fromUserAccount": "samplegamma33333333333333333333333333333333",
+          "toUserAccount": "sampledelta77777777777777777777777777777777",
+          "fromTokenAccount": "sampletokenacctgammabonk555555555555555555",
+          "toTokenAccount": "sampletokenacctdeltabonk666666666666666666",
+          "mint": "samplebonkmint666666666666666666666666666666",
+          "tokenAmount": 8200000,
+          "decimals": 5,
+          "symbol": "sBONK",
+          "usd_value": 612
+        }
+      ]
+    }
+  ]
+}

@@ -19,7 +19,9 @@
         ctx: null,
         root: null,
         detailPanel: null,
-        resizeObserver: null
+        resizeObserver: null,
+        datasetSource: null,
+        solanaAdapterLoadPromise: null
     };
 
     async function initialize(options = {}) {
@@ -42,6 +44,7 @@
         }
 
         const dataset = await loadSampleDataset();
+        renderSolanaStatusCopy(dataset);
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         rebuildInteractionIndex();
@@ -62,15 +65,101 @@
     }
 
     async function loadSampleDataset() {
-        try {
-            const response = await fetch(`data/crypto/sample-flow.json?v=${Date.now()}`);
-            if (!response.ok) throw new Error('Crypto sample file unavailable');
-            const payload = await response.json();
-            return payload;
-        } catch (error) {
-            console.warn('CryptoPhotonic sample data fell back to built-in dev sample', error);
-            return core.getSampleDataset();
+        const solanaFixture = await loadLocalJson('data/crypto/solana-sample-flow.json', 'Solana fixture file unavailable');
+        if (solanaFixture) {
+            const normalized = await normalizeSolanaFixture(solanaFixture);
+            if (normalized) {
+                state.datasetSource = 'data/crypto/solana-sample-flow.json';
+                return normalized;
+            }
         }
+
+        const sampleFixture = await loadLocalJson('data/crypto/sample-flow.json', 'Crypto sample file unavailable');
+        if (sampleFixture) {
+            state.datasetSource = 'data/crypto/sample-flow.json';
+            return sampleFixture;
+        }
+
+        console.warn('CryptoPhotonic sample data fell back to built-in dev sample');
+        state.datasetSource = 'built_in_dev_sample';
+        return core.getSampleDataset();
+    }
+
+    async function loadLocalJson(path, unavailableMessage) {
+        try {
+            const response = await fetch(`${path}?v=${Date.now()}`);
+            if (!response.ok) throw new Error(unavailableMessage);
+            return await response.json();
+        } catch (error) {
+            return null;
+        }
+    }
+
+    async function normalizeSolanaFixture(payload = {}) {
+        const hasRawSolanaTransactions = Array.isArray(payload.solana_transactions)
+            || Array.isArray(payload.enhancedTransactions)
+            || Array.isArray(payload.enhanced_transactions);
+        const hasGraphDataset = Array.isArray(payload.wallets)
+            && Array.isArray(payload.tokens)
+            && Array.isArray(payload.transactions);
+
+        if (!hasRawSolanaTransactions) return hasGraphDataset ? payload : null;
+
+        const adapter = await ensureSolanaAdapter();
+        if (!adapter) return hasGraphDataset ? payload : null;
+
+        const normalized = adapter.normalizeSolanaTransactionBatch(payload);
+        return {
+            ...normalized,
+            metadata: {
+                ...(payload.metadata || {}),
+                ...(normalized.metadata || {}),
+                source_path: 'data/crypto/solana-sample-flow.json'
+            }
+        };
+    }
+
+    function ensureSolanaAdapter() {
+        if (namespace.solanaAdapter) return Promise.resolve(namespace.solanaAdapter);
+        if (state.solanaAdapterLoadPromise) return state.solanaAdapterLoadPromise;
+
+        state.solanaAdapterLoadPromise = new Promise(resolve => {
+            const script = document.createElement('script');
+            script.src = `js/crypto/solanaAdapter.js?v=${Date.now()}`;
+            script.async = false;
+            script.onload = () => resolve(namespace.solanaAdapter || null);
+            script.onerror = () => {
+                console.warn('CryptoPhotonic Solana adapter unavailable; using next offline sample fallback');
+                resolve(null);
+            };
+            document.head.appendChild(script);
+        });
+
+        return state.solanaAdapterLoadPromise;
+    }
+
+    function renderSolanaStatusCopy(dataset = {}) {
+        if (!state.root) return;
+        const metadata = dataset.metadata || {};
+        const isSolana = metadata.adapter === 'solana' || metadata.chain === 'solana';
+        const subtitle = state.root.querySelector('h1 + p');
+        if (subtitle && isSolana) {
+            subtitle.textContent = 'Solana-first offline fixture mode for wallet, SPL token, and swap-like flow graphs';
+        }
+
+        const panelHeader = state.root.querySelector('.crypto-panel > div:first-child');
+        if (!panelHeader) return;
+
+        const existing = document.getElementById('crypto-solana-status');
+        if (existing) existing.remove();
+
+        const status = document.createElement('div');
+        status.id = 'crypto-solana-status';
+        status.className = 'text-[10px] font-mono tracking-[1.1px] text-cyan-50/78 rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 max-w-md';
+        status.innerHTML = isSolana
+            ? 'Solana-first offline fixture mode<br>No live RPC/WebSocket/API calls yet<br>Future adapters: Helius Enhanced Transactions, Helius Webhooks, Solana RPC/WebSocket, Jupiter'
+            : 'Offline sample fixture mode<br>No live RPC/WebSocket/API calls yet<br>Future adapters: Helius Enhanced Transactions, Helius Webhooks, Solana RPC/WebSocket, Jupiter';
+        panelHeader.appendChild(status);
     }
 
     function resizeAndRender() {

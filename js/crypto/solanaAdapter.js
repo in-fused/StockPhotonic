@@ -15,6 +15,7 @@
         const transfers = extractSolanaTransfers(sourceTransactions);
         const wallets = extractSolanaWallets(sourceTransactions);
         const tokens = extractSolanaTokens(sourceTransactions);
+        const entities = extractSolanaEntities(transactions, sourceTransactions);
 
         return {
             metadata: {
@@ -34,7 +35,7 @@
             },
             wallets,
             tokens,
-            entities: [],
+            entities,
             transactions: transfers
         };
     }
@@ -157,6 +158,7 @@
         const normalizedMint = normalizeAddress(tokenMint || `${CHAIN}:${symbol || 'spl'}`);
         return {
             id: `tx:${CHAIN}:${signature}:${transferIndex}`,
+            transaction_type: tx.type || tx.transactionType || format,
             transaction_hash: signature,
             chain: CHAIN,
             source_wallet: normalizeAddress(sourceWallet),
@@ -169,10 +171,18 @@
             timestamp,
             confidence: 0,
             label_source: SOURCE,
+            hub_ids: collectHubIds(tx, transfer),
+            flow_role: format === 'swap_leg' ? 'swap_route' : '',
+            route_id: String(tx.route_id || tx.routeId || transfer?.route_id || transfer?.routeId || '').trim(),
             metadata: {
                 fixture_only: true,
                 source_format: format,
                 solana_type: tx.type || tx.transactionType || transfer?.type || null,
+                hub_ids: collectHubIds(tx, transfer),
+                exchange_hub_id: tx.exchange_hub_id || transfer?.exchange_hub_id || null,
+                protocol_hub_id: tx.protocol_hub_id || tx.route_hub_id || transfer?.protocol_hub_id || transfer?.route_hub_id || null,
+                pool_hub_id: tx.pool_hub_id || tx.liquidity_pool_hub_id || transfer?.pool_hub_id || transfer?.liquidity_pool_hub_id || null,
+                bridge_hub_id: tx.bridge_hub_id || transfer?.bridge_hub_id || null,
                 instruction_index: transfer?.instructionIndex ?? transfer?.instruction_index ?? null,
                 token_account_source: transfer?.fromTokenAccount || null,
                 token_account_destination: transfer?.toTokenAccount || null,
@@ -180,6 +190,67 @@
                 raw_amount: amount ?? null
             }
         };
+    }
+
+    function extractSolanaEntities(input, transactions = []) {
+        const roots = [];
+        if (!Array.isArray(input) && input && typeof input === 'object') {
+            if (Array.isArray(input.entities)) roots.push(...input.entities);
+            if (Array.isArray(input.hubs)) roots.push(...input.hubs);
+            if (Array.isArray(input.entity_hubs)) roots.push(...input.entity_hubs);
+        }
+
+        transactions.forEach(tx => {
+            if (Array.isArray(tx.entities)) roots.push(...tx.entities);
+            if (Array.isArray(tx.hubs)) roots.push(...tx.hubs);
+            if (Array.isArray(tx.entity_hubs)) roots.push(...tx.entity_hubs);
+        });
+
+        const seen = new Set();
+        return roots
+            .map(entity => ({
+                ...entity,
+                chain: entity.chain || CHAIN,
+                label_source: entity.label_source || entity.source || SOURCE,
+                source: entity.source || entity.label_source || SOURCE,
+                confidence: normalizeNumber(entity.confidence) || 0,
+                metadata: {
+                    fixture_only: true,
+                    ...(entity.metadata || {})
+                }
+            }))
+            .filter(entity => {
+                const key = entity.id || `${entity.type || entity.category || 'entity'}:${entity.label || entity.name || ''}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+    }
+
+    function collectHubIds(tx = {}, transfer = {}) {
+        const values = [
+            tx.hub_id,
+            tx.entity_id,
+            tx.exchange_hub_id,
+            tx.protocol_hub_id,
+            tx.route_hub_id,
+            tx.pool_hub_id,
+            tx.liquidity_pool_hub_id,
+            tx.bridge_hub_id,
+            transfer.hub_id,
+            transfer.entity_id,
+            transfer.exchange_hub_id,
+            transfer.protocol_hub_id,
+            transfer.route_hub_id,
+            transfer.pool_hub_id,
+            transfer.liquidity_pool_hub_id,
+            transfer.bridge_hub_id
+        ];
+        if (Array.isArray(tx.hub_ids)) values.push(...tx.hub_ids);
+        if (Array.isArray(tx.entity_ids)) values.push(...tx.entity_ids);
+        if (Array.isArray(transfer.hub_ids)) values.push(...transfer.hub_ids);
+        if (Array.isArray(transfer.entity_ids)) values.push(...transfer.entity_ids);
+        return [...new Set(values.map(value => String(value || '').trim()).filter(Boolean))];
     }
 
     function getTransactionList(input) {
@@ -274,6 +345,7 @@
         normalizeSolanaTransactionBatch,
         extractSolanaWallets,
         extractSolanaTokens,
+        extractSolanaEntities,
         extractSolanaTransfers
     };
 })();

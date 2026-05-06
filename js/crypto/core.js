@@ -4,7 +4,16 @@
     const NODE_TYPES = Object.freeze({
         WALLET: 'wallet',
         TOKEN: 'token',
-        ENTITY: 'entity'
+        ENTITY: 'entity',
+        HUB: 'hub'
+    });
+
+    const HUB_CATEGORIES = Object.freeze({
+        EXCHANGE: 'exchange',
+        DEFI_PROTOCOL: 'defi_protocol',
+        LIQUIDITY_POOL: 'liquidity_pool',
+        BRIDGE: 'bridge',
+        LABELED_ENTITY: 'labeled_entity'
     });
 
     const EDGE_TYPES = Object.freeze({
@@ -84,10 +93,11 @@
         ],
         entities: [
             {
+                type: 'labeled_entity',
                 label: 'Sample Entity Group A',
                 source: 'dev_sample',
                 confidence: 0.48,
-                wallets: [
+                related_wallets: [
                     '0xsamplealpha000000000000000000000000000001',
                     '0xsamplebeta0000000000000000000000000000002'
                 ],
@@ -172,6 +182,18 @@
         return `${NODE_TYPES.ENTITY}:${normalizedSource}:${normalizedLabel}`;
     }
 
+    function hubId(label, source = 'unknown', category = HUB_CATEGORIES.LABELED_ENTITY) {
+        const normalizedLabel = String(label || 'unlabeled').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const normalizedSource = String(source || 'unknown').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        const normalizedCategory = normalizeHubCategory(category);
+        return `${NODE_TYPES.HUB}:${normalizedCategory}:${normalizedSource}:${normalizedLabel}`;
+    }
+
+    function normalizeHubCategory(value) {
+        const normalized = String(value || HUB_CATEGORIES.LABELED_ENTITY).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+        return Object.values(HUB_CATEGORIES).includes(normalized) ? normalized : HUB_CATEGORIES.LABELED_ENTITY;
+    }
+
     function normalizeConfidence(value) {
         const number = Number(value);
         if (!Number.isFinite(number)) return 0;
@@ -219,14 +241,24 @@
     function normalizeEntity(entity = {}) {
         const label = entity.label || entity.name || 'Unlabeled Entity';
         const source = entity.source || entity.label_source || 'unknown';
+        const category = normalizeHubCategory(entity.category || entity.hub_type || entity.entity_type || entity.type);
+        const relatedWallets = normalizeStringList(entity.related_wallets || entity.wallets || entity.wallet_addresses)
+            .map(normalizeAddress)
+            .filter(Boolean);
+        const relatedPrograms = normalizeStringList(entity.related_programs || entity.programs || entity.program_ids)
+            .map(normalizeAddress)
+            .filter(Boolean);
         return {
-            id: entity.id || entityId(label, source),
-            type: NODE_TYPES.ENTITY,
+            id: entity.id || hubId(label, source, category),
+            type: NODE_TYPES.HUB,
             label,
+            category,
             chain: normalizeChain(entity.chain),
             label_source: source,
             confidence: normalizeConfidence(entity.confidence),
-            wallets: Array.isArray(entity.wallets) ? entity.wallets.map(normalizeAddress).filter(Boolean) : [],
+            related_wallets: relatedWallets,
+            related_programs: relatedPrograms,
+            wallets: relatedWallets,
             metadata: { ...entity.metadata }
         };
     }
@@ -234,9 +266,36 @@
     function normalizeTransaction(transaction = {}) {
         const chain = normalizeChain(transaction.chain);
         const transactionHash = String(transaction.transaction_hash || transaction.hash || transaction.tx_hash || '').trim();
+        const metadata = { ...transaction.metadata };
+        const hubIds = normalizeStringList(transaction.hub_ids || transaction.entity_ids || transaction.related_hubs || metadata.hub_ids);
+        [
+            transaction.hub_id,
+            transaction.entity_id,
+            transaction.exchange_hub_id,
+            transaction.protocol_hub_id,
+            transaction.route_hub_id,
+            transaction.pool_hub_id,
+            transaction.liquidity_pool_hub_id,
+            transaction.bridge_hub_id,
+            transaction.counterparty_hub_id,
+            metadata.hub_id,
+            metadata.entity_id,
+            metadata.exchange_hub_id,
+            metadata.protocol_hub_id,
+            metadata.route_hub_id,
+            metadata.pool_hub_id,
+            metadata.liquidity_pool_hub_id,
+            metadata.bridge_hub_id,
+            metadata.counterparty_hub_id
+        ].forEach(id => {
+            const value = String(id || '').trim();
+            if (value && !hubIds.includes(value)) hubIds.push(value);
+        });
+
         return {
             id: transaction.id || `tx:${chain}:${transactionHash || cryptoSafeId(transaction)}`,
             type: 'transaction',
+            transaction_type: String(transaction.transaction_type || transaction.type || metadata.source_format || '').trim(),
             transaction_hash: transactionHash,
             chain,
             source_wallet: normalizeAddress(transaction.source_wallet || transaction.from || transaction.source),
@@ -248,14 +307,21 @@
             timestamp: transaction.timestamp || transaction.block_time || null,
             confidence: normalizeConfidence(transaction.confidence),
             label_source: transaction.label_source || transaction.source || 'unknown',
-            metadata: { ...transaction.metadata }
+            hub_ids: hubIds,
+            flow_role: String(transaction.flow_role || metadata.flow_role || '').trim(),
+            route_id: String(transaction.route_id || metadata.route_id || '').trim(),
+            metadata
         };
     }
 
     function normalizeDataset(dataset = {}) {
         const wallets = (Array.isArray(dataset.wallets) ? dataset.wallets : []).map(normalizeWallet).filter(wallet => wallet.address);
         const tokens = (Array.isArray(dataset.tokens) ? dataset.tokens : []).map(normalizeToken).filter(token => token.token_mint);
-        const entities = (Array.isArray(dataset.entities) ? dataset.entities : []).map(normalizeEntity);
+        const entities = [
+            ...(Array.isArray(dataset.entities) ? dataset.entities : []),
+            ...(Array.isArray(dataset.hubs) ? dataset.hubs : []),
+            ...(Array.isArray(dataset.entity_hubs) ? dataset.entity_hubs : [])
+        ].map(normalizeEntity);
         const transactions = (Array.isArray(dataset.transactions) ? dataset.transactions : [])
             .map(normalizeTransaction)
             .filter(transaction => transaction.source_wallet && transaction.destination_wallet);
@@ -267,6 +333,11 @@
             entities,
             transactions
         };
+    }
+
+    function normalizeStringList(value) {
+        const list = Array.isArray(value) ? value : value ? [value] : [];
+        return list.map(item => String(item || '').trim()).filter(Boolean);
     }
 
     function shortAddress(address) {
@@ -297,12 +368,14 @@
 
     namespace.core = {
         NODE_TYPES,
+        HUB_CATEGORIES,
         EDGE_TYPES,
         normalizeDataset,
         normalizeWallet,
         normalizeToken,
         normalizeEntity,
         normalizeTransaction,
+        normalizeHubCategory,
         normalizeAddress,
         normalizeChain,
         normalizeConfidence,
@@ -310,6 +383,7 @@
         walletId,
         tokenId,
         entityId,
+        hubId,
         shortAddress,
         formatUsd,
         getSampleDataset

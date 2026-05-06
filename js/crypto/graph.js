@@ -12,6 +12,7 @@
         const walletByKey = new Map();
         const tokenByKey = new Map();
         const edges = [];
+        const labelEdgeByKey = new Map();
         const exposureByWalletToken = new Map();
 
         dataset.wallets.forEach(wallet => {
@@ -40,21 +41,21 @@
             nodeById.set(entity.id, {
                 ...entity,
                 title: entity.label,
-                cluster_key: entity.label
+                cluster_key: `hub:${entity.category || 'labeled_entity'}:${entity.label}`,
+                aggregate_value_usd: 0,
+                transaction_count: 0,
+                connected_wallet_ids: new Set(),
+                related_flow_ids: new Set()
             });
 
-            entity.wallets.forEach(address => {
+            (entity.related_wallets || entity.wallets || []).forEach(address => {
                 const walletId = walletByKey.get(walletKey(address, entity.chain))
                     || findWalletIdByAddress(walletByKey, address);
                 if (!walletId) return;
-                edges.push({
-                    id: `${core.EDGE_TYPES.LABEL}:${entity.id}:${walletId}`,
-                    type: core.EDGE_TYPES.LABEL,
-                    source: entity.id,
-                    target: walletId,
+                addHubLabelEdge(edges, labelEdgeByKey, nodeById, walletId, entity.id, {
+                    relation: entity.category === core.HUB_CATEGORIES.LIQUIDITY_POOL ? 'pool_wallet' : 'labeled_counterparty',
                     label_source: entity.label_source,
-                    confidence: entity.confidence,
-                    production_write: false
+                    confidence: entity.confidence
                 });
             });
         });
@@ -67,6 +68,7 @@
 
             edges.push(flowEdge);
             updateWalletFlowTotals(nodeById.get(sourceWalletId), nodeById.get(destinationWalletId), transaction.usd_value);
+            connectTransactionHubs(transaction, flowEdge, [sourceWalletId, destinationWalletId], nodeById, edges, labelEdgeByKey);
 
             if (tokenNodeId) {
                 addExposure(exposureByWalletToken, sourceWalletId, tokenNodeId, transaction, 'source');
@@ -93,6 +95,7 @@
             });
         });
 
+        finalizeHubNodes(nodeById);
         const nodes = [...nodeById.values()];
         const graph = {
             metadata: dataset.metadata,
@@ -102,7 +105,8 @@
             nodeById,
             walletNodes: nodes.filter(node => node.type === core.NODE_TYPES.WALLET),
             tokenNodes: nodes.filter(node => node.type === core.NODE_TYPES.TOKEN),
-            entityNodes: nodes.filter(node => node.type === core.NODE_TYPES.ENTITY),
+            hubNodes: nodes.filter(isHubNode),
+            entityNodes: nodes.filter(isHubNode),
             flowEdges: edges.filter(edge => edge.type === core.EDGE_TYPES.FLOW),
             exposureEdges: edges.filter(edge => edge.type === core.EDGE_TYPES.EXPOSURE),
             labelEdges: edges.filter(edge => edge.type === core.EDGE_TYPES.LABEL)
@@ -184,8 +188,103 @@
             confidence: transaction.confidence,
             label_source: transaction.label_source,
             priority: usdValue,
+            flow_role: transaction.flow_role || transaction.metadata?.source_format || '',
+            route_id: transaction.route_id || transaction.metadata?.route_id || '',
             production_write: false
         };
+    }
+
+    function connectTransactionHubs(transaction, flowEdge, walletIds, nodeById, edges, labelEdgeByKey) {
+        const hubIds = [...new Set(transaction.hub_ids || [])].filter(hubId => isHubNode(nodeById.get(hubId)));
+        if (!hubIds.length) return;
+
+        hubIds.forEach(hubId => {
+            aggregateHubFlow(nodeById.get(hubId), walletIds, flowEdge);
+            walletIds.forEach(walletId => {
+                addHubLabelEdge(edges, labelEdgeByKey, nodeById, walletId, hubId, {
+                    relation: relationForTransactionHub(transaction, nodeById.get(hubId)),
+                    label_source: transaction.label_source,
+                    confidence: transaction.confidence,
+                    usd_value: flowEdge.usd_value,
+                    transaction_hash: flowEdge.transaction_hash,
+                    transaction_count: 1,
+                    related_flow_id: flowEdge.id,
+                    symbol: flowEdge.symbol,
+                    chain: flowEdge.chain
+                });
+            });
+        });
+    }
+
+    function addHubLabelEdge(edges, labelEdgeByKey, nodeById, walletId, hubId, options = {}) {
+        const wallet = nodeById.get(walletId);
+        const hub = nodeById.get(hubId);
+        if (!wallet || !hub || !isHubNode(hub)) return null;
+
+        const key = `${walletId}|${hubId}|${options.relation || 'hub_link'}`;
+        const existing = labelEdgeByKey.get(key);
+        const value = Math.max(0, Number(options.usd_value) || 0);
+        if (existing) {
+            existing.usd_value += value;
+            existing.transaction_count += Number(options.transaction_count) || 0;
+            existing.confidence = Math.max(existing.confidence || 0, Number(options.confidence) || 0);
+            if (options.related_flow_id && !existing.related_flow_ids.includes(options.related_flow_id)) {
+                existing.related_flow_ids.push(options.related_flow_id);
+            }
+            return existing;
+        }
+
+        const edge = {
+            id: `${core.EDGE_TYPES.LABEL}:${walletId}:${hubId}:${options.relation || 'hub_link'}`,
+            type: core.EDGE_TYPES.LABEL,
+            source: walletId,
+            target: hubId,
+            relation: options.relation || 'hub_link',
+            hub_category: hub.category || core.HUB_CATEGORIES.LABELED_ENTITY,
+            chain: options.chain || wallet.chain || hub.chain,
+            symbol: options.symbol || '',
+            usd_value: value,
+            transaction_hash: options.transaction_hash || '',
+            transaction_count: Number(options.transaction_count) || 0,
+            related_flow_ids: options.related_flow_id ? [options.related_flow_id] : [],
+            label_source: options.label_source || hub.label_source,
+            confidence: Number(options.confidence) || 0,
+            production_write: false
+        };
+        edges.push(edge);
+        labelEdgeByKey.set(key, edge);
+
+        hub.connected_wallet_ids.add(walletId);
+        return edge;
+    }
+
+    function aggregateHubFlow(hubNode, walletIds, flowEdge) {
+        if (!hubNode || !isHubNode(hubNode)) return;
+        hubNode.aggregate_value_usd += Math.max(0, Number(flowEdge.usd_value) || 0);
+        hubNode.exposure_usd = hubNode.aggregate_value_usd;
+        hubNode.transaction_count += 1;
+        hubNode.related_flow_ids.add(flowEdge.id);
+        walletIds.forEach(walletId => hubNode.connected_wallet_ids.add(walletId));
+    }
+
+    function finalizeHubNodes(nodeById) {
+        nodeById.forEach(node => {
+            if (!isHubNode(node)) return;
+            node.connected_wallet_ids = [...(node.connected_wallet_ids || [])];
+            node.related_flow_ids = [...(node.related_flow_ids || [])];
+            node.aggregate_value_usd = Math.max(0, Number(node.aggregate_value_usd) || 0);
+            node.exposure_usd = Math.max(node.exposure_usd || 0, node.aggregate_value_usd);
+            node.transaction_count = Math.max(0, Number(node.transaction_count) || 0);
+        });
+    }
+
+    function relationForTransactionHub(transaction, hubNode) {
+        if (transaction.flow_role === 'swap_route' || transaction.metadata?.source_format === 'swap_leg') return 'swap_route';
+        if (hubNode?.category === core.HUB_CATEGORIES.LIQUIDITY_POOL) return 'pool_flow';
+        if (hubNode?.category === core.HUB_CATEGORIES.DEFI_PROTOCOL) return 'protocol_flow';
+        if (hubNode?.category === core.HUB_CATEGORIES.BRIDGE) return 'bridge_flow';
+        if (hubNode?.category === core.HUB_CATEGORIES.EXCHANGE) return 'exchange_flow';
+        return 'counterparty_flow';
     }
 
     function addExposure(exposureByWalletToken, walletId, tokenId, transaction, direction) {
@@ -293,6 +392,10 @@
             if (key.endsWith(`:${normalized}`)) return id;
         }
         return null;
+    }
+
+    function isHubNode(node) {
+        return node?.type === core.NODE_TYPES.HUB || node?.type === core.NODE_TYPES.ENTITY;
     }
 
     namespace.graph = {

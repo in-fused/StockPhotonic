@@ -48,7 +48,7 @@
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         rebuildInteractionIndex();
-        state.selectedId = state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
+        state.selectedId = state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
         state.initialized = true;
 
         updateStats();
@@ -197,7 +197,7 @@
         const nodeById = state.graph.nodeById;
         state.graph.edges
             .filter(edge => edge.type !== core.EDGE_TYPES.LABEL)
-            .sort((a, b) => (a.type === core.EDGE_TYPES.EXPOSURE) - (b.type === core.EDGE_TYPES.EXPOSURE) || (a.width || 0) - (b.width || 0))
+            .sort((a, b) => edgeLayerOrder(a) - edgeLayerOrder(b) || (a.width || 0) - (b.width || 0))
             .forEach(edge => drawEdge(ctx, edge, nodeById, interaction));
 
         state.graph.edges
@@ -256,7 +256,7 @@
         ctx.shadowBlur = style.shadowBlur;
         ctx.strokeStyle = edge.color || '#22d3ee';
         ctx.lineWidth = style.width;
-        ctx.setLineDash(edge.type === core.EDGE_TYPES.LABEL ? [4, 6] : []);
+        ctx.setLineDash(edge.type === core.EDGE_TYPES.LABEL ? [4, 6] : edge.flow_role === 'swap_route' ? [9, 5] : []);
         ctx.beginPath();
         ctx.moveTo(source.x, source.y);
         ctx.quadraticCurveTo(control.x, control.y, target.x, target.y);
@@ -296,6 +296,17 @@
         ctx.fillStyle = 'rgba(2, 6, 23, 0.92)';
         ctx.strokeStyle = selected || hovered ? '#ffffff' : node.color;
         ctx.lineWidth = selected ? 3.4 : hovered ? 2.6 : connected ? 1.8 : 1.1;
+        if (isHubNode(node)) {
+            ctx.globalAlpha = muted ? 0.34 : 0.88;
+            ctx.strokeStyle = node.color;
+            ctx.lineWidth = selected || hovered ? 2.2 : 1.4;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius + 6, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.globalAlpha = muted ? (interaction.hasSelected ? 0.28 : 0.42) : 1;
+            ctx.strokeStyle = selected || hovered ? '#ffffff' : node.color;
+            ctx.lineWidth = selected ? 3.4 : hovered ? 2.6 : connected ? 1.8 : 1.1;
+        }
         ctx.beginPath();
         ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
         ctx.fill();
@@ -314,7 +325,7 @@
 
         ctx.globalAlpha = labelAlpha;
         ctx.fillStyle = selected || hovered ? '#ffffff' : 'rgba(226, 232, 240, 0.82)';
-        ctx.font = node.type === core.NODE_TYPES.TOKEN ? '600 11px Inter, sans-serif' : '500 10px Inter, sans-serif';
+        ctx.font = isHubNode(node) ? '700 12px Inter, sans-serif' : node.type === core.NODE_TYPES.TOKEN ? '600 11px Inter, sans-serif' : '500 10px Inter, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText(labelForNode(node), node.x, node.y + radius + 8);
@@ -358,14 +369,19 @@
         }
 
         const relatedFlows = getRelatedEdges(node.id, core.EDGE_TYPES.FLOW);
+        const relatedHubFlows = isHubNode(node) ? getRelatedHubFlows(node) : [];
         const relatedExposureEdges = getRelatedEdges(node.id, core.EDGE_TYPES.EXPOSURE);
+        const relatedHubEdges = getRelatedEdges(node.id, core.EDGE_TYPES.LABEL);
+        const connectedWallets = isHubNode(node) ? getConnectedWallets(node) : [];
+        const displayedRelatedFlows = mergeUniqueEdges([...relatedFlows, ...relatedHubFlows]);
         const relatedPaths = getRelatedPaths(node.id);
         state.detailPanel.innerHTML = `
-            <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">${escapeHtml(node.type).toUpperCase()} NODE</div>
+            <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">${escapeHtml(isHubNode(node) ? 'ENTITY HUB' : node.type.toUpperCase())} NODE</div>
             <h3 class="font-display text-2xl mt-1">${escapeHtml(labelForNode(node))}</h3>
             <div class="text-[11px] text-white/42 mt-2">Sample/dev-only crypto graph. No live chain lookup or production attribution.</div>
             <div class="mt-4 grid gap-2 text-xs text-white/68">
                 ${detailRow('Chain', node.chain || '-')}
+                ${isHubNode(node) ? detailRow('Hub Category', formatHubCategory(node.category)) : ''}
                 ${node.address ? detailRow('Address', node.address) : ''}
                 ${node.token_mint ? detailRow('Token Mint', node.token_mint) : ''}
                 ${node.name && node.type === core.NODE_TYPES.TOKEN ? detailRow('Token', node.name) : ''}
@@ -373,12 +389,28 @@
                 ${detailRow('Confidence', `${Math.round((node.confidence || 0) * 100)}%`)}
                 ${node.type === core.NODE_TYPES.WALLET ? detailRow('Total In', core.formatUsd(node.total_in_usd || 0)) : ''}
                 ${node.type === core.NODE_TYPES.WALLET ? detailRow('Total Out', core.formatUsd(node.total_out_usd || 0)) : ''}
-                ${detailRow(node.type === core.NODE_TYPES.TOKEN ? 'Token Exposure' : 'Exposure', core.formatUsd(node.exposure_usd || 0))}
+                ${isHubNode(node) ? detailRow('Aggregate Value', core.formatUsd(node.aggregate_value_usd || 0)) : ''}
+                ${isHubNode(node) ? detailRow('Transaction Count', node.transaction_count || 0) : ''}
+                ${detailRow(node.type === core.NODE_TYPES.TOKEN ? 'Token Exposure' : isHubNode(node) ? 'Hub Exposure' : 'Exposure', core.formatUsd(node.exposure_usd || 0))}
             </div>
+            ${isHubNode(node) ? `
+                <div class="mt-5 pt-4 border-t border-white/10">
+                    <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">CONNECTED WALLETS</div>
+                    <div class="space-y-2">
+                        ${connectedWallets.slice(0, 6).map(renderNodeSummary).join('') || '<div class="text-xs text-white/38">No connected sample wallets.</div>'}
+                    </div>
+                </div>
+                <div class="mt-5 pt-4 border-t border-white/10">
+                    <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">HUB RELATION LINKS</div>
+                    <div class="space-y-2">
+                        ${relatedHubEdges.slice(0, 6).map(edge => renderEdgeSummary(edge, node.id)).join('') || '<div class="text-xs text-white/38">No hub relation links.</div>'}
+                    </div>
+                </div>
+            ` : ''}
             <div class="mt-5 pt-4 border-t border-white/10">
                 <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">RELATED TRANSACTION FLOWS</div>
                 <div class="space-y-2">
-                    ${relatedFlows.slice(0, 6).map(edge => renderEdgeSummary(edge, node.id)).join('') || '<div class="text-xs text-white/38">No related sample flows.</div>'}
+                    ${displayedRelatedFlows.slice(0, 6).map(edge => renderEdgeSummary(edge, node.id)).join('') || '<div class="text-xs text-white/38">No related sample flows.</div>'}
                 </div>
             </div>
             <div class="mt-5 pt-4 border-t border-white/10">
@@ -401,7 +433,7 @@
         const target = state.graph.nodeById.get(edge.target);
         const direction = edge.type === core.EDGE_TYPES.FLOW
             ? edge.source === selectedNodeId ? 'OUTFLOW' : edge.target === selectedNodeId ? 'INFLOW' : 'FLOW'
-            : 'EXPOSURE';
+            : edge.type === core.EDGE_TYPES.LABEL ? formatRelation(edge.relation) : 'EXPOSURE';
         const label = edge.type === core.EDGE_TYPES.FLOW
             ? `${labelForNode(source)} -> ${labelForNode(target)}`
             : `${labelForNode(source)} / ${labelForNode(target)}`;
@@ -411,6 +443,16 @@
                 <div class="text-xs text-white/72 mt-1">${escapeHtml(label)}</div>
                 <div class="text-[11px] text-white/42 mt-1">${escapeHtml(edge.symbol || edge.chain || '')} ${edge.usd_value ? core.formatUsd(edge.usd_value) : ''}${edge.transaction_count ? ` across ${escapeHtml(edge.transaction_count)} tx` : ''}</div>
                 ${edge.transaction_hash ? `<div class="text-[10px] font-mono text-white/32 mt-1">${escapeHtml(shortHash(edge.transaction_hash))}</div>` : ''}
+            </div>
+        `;
+    }
+
+    function renderNodeSummary(node) {
+        return `
+            <div class="crypto-edge-summary rounded-2xl p-3">
+                <div class="text-[10px] font-mono text-cyan-100/70">${escapeHtml(node.chain || 'WALLET')}</div>
+                <div class="text-xs text-white/72 mt-1">${escapeHtml(labelForNode(node))}</div>
+                <div class="text-[11px] text-white/42 mt-1">${escapeHtml(node.address || node.id)}</div>
             </div>
         `;
     }
@@ -432,7 +474,7 @@
 
     function updateStats() {
         if (!state.graph) return;
-        setText('crypto-wallet-count', `${state.graph.walletNodes.length} WALLETS`);
+        setText('crypto-wallet-count', `${state.graph.walletNodes.length} WALLETS / ${state.graph.hubNodes?.length || 0} HUBS`);
         setText('crypto-token-count', `${state.graph.tokenNodes.length} TOKENS`);
         setText('crypto-flow-count', `${state.graph.flowEdges.length} FLOWS`);
         setText('crypto-path-count', `${state.graph.walletPaths.length} PATHS`);
@@ -449,7 +491,7 @@
 
     function labelForNode(node = {}) {
         if (node.type === core.NODE_TYPES.TOKEN) return node.symbol || node.name || 'Token';
-        if (node.type === core.NODE_TYPES.ENTITY) return node.label || 'Entity';
+        if (isHubNode(node)) return node.label || 'Entity Hub';
         return node.label || core.shortAddress(node.address);
     }
 
@@ -488,7 +530,9 @@
             pathsByNode.set(node.id, []);
         });
 
+        const flowEdgeById = new Map();
         state.graph.edges.forEach(edge => {
+            if (edge.type === core.EDGE_TYPES.FLOW) flowEdgeById.set(edge.id, edge);
             if (!edgesByNode.has(edge.source)) edgesByNode.set(edge.source, []);
             if (!edgesByNode.has(edge.target)) edgesByNode.set(edge.target, []);
             if (!neighborsByNode.has(edge.source)) neighborsByNode.set(edge.source, new Set());
@@ -497,6 +541,16 @@
             edgesByNode.get(edge.target).push(edge);
             neighborsByNode.get(edge.source).add(edge.target);
             neighborsByNode.get(edge.target).add(edge.source);
+        });
+
+        (state.graph.hubNodes || []).forEach(hub => {
+            (hub.related_flow_ids || []).forEach(flowId => {
+                const flowEdge = flowEdgeById.get(flowId);
+                if (!flowEdge) return;
+                edgesByNode.get(hub.id).push(flowEdge);
+                neighborsByNode.get(hub.id).add(flowEdge.source);
+                neighborsByNode.get(hub.id).add(flowEdge.target);
+            });
         });
 
         (state.graph.walletPaths || []).forEach(path => {
@@ -575,6 +629,28 @@
             .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0));
     }
 
+    function getRelatedHubFlows(node) {
+        if (!node?.related_flow_ids?.length) return [];
+        const flowById = new Map((state.graph.flowEdges || []).map(edge => [edge.id, edge]));
+        return node.related_flow_ids
+            .map(id => flowById.get(id))
+            .filter(Boolean)
+            .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0));
+    }
+
+    function mergeUniqueEdges(edges) {
+        return edges
+            .filter((edge, index, list) => edge && list.findIndex(item => item?.id === edge.id) === index)
+            .sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0));
+    }
+
+    function getConnectedWallets(node) {
+        return (node.connected_wallet_ids || [])
+            .map(id => state.graph.nodeById.get(id))
+            .filter(Boolean)
+            .sort((a, b) => (b.exposure_usd || 0) - (a.exposure_usd || 0) || labelForNode(a).localeCompare(labelForNode(b)));
+    }
+
     function getRelatedPaths(nodeId) {
         const directPaths = state.interactionIndex?.pathsByNode.get(nodeId) || [];
         if (directPaths.length) return directPaths.sort((a, b) => b.usd_value - a.usd_value || a.hops - b.hops);
@@ -604,9 +680,27 @@
     }
 
     function typeOrder(type) {
-        if (type === core.NODE_TYPES.ENTITY) return 0;
+        if (type === core.NODE_TYPES.HUB || type === core.NODE_TYPES.ENTITY) return 0;
         if (type === core.NODE_TYPES.TOKEN) return 2;
         return 1;
+    }
+
+    function edgeLayerOrder(edge) {
+        if (edge.type === core.EDGE_TYPES.EXPOSURE) return 0;
+        if (edge.type === core.EDGE_TYPES.FLOW) return 1;
+        return 2;
+    }
+
+    function isHubNode(node) {
+        return node?.type === core.NODE_TYPES.HUB || node?.type === core.NODE_TYPES.ENTITY;
+    }
+
+    function formatHubCategory(category) {
+        return String(category || 'labeled_entity').replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    function formatRelation(relation) {
+        return String(relation || 'HUB LINK').replaceAll('_', ' ').toUpperCase();
     }
 
     namespace.ui = {

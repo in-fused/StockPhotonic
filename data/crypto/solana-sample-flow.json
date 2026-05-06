@@ -9,10 +9,91 @@
     "disclaimer": "Synthetic Solana-shaped records for local rendering only. No real-world attribution or accusation is implied.",
     "notes": "Dev-only fixture with anonymized wallet, SPL token, native SOL, and swap-like transfer records."
   },
+  "entities": [
+    {
+      "id": "hub:solana:exchange:sample-exchange-hub",
+      "type": "exchange",
+      "label": "Sample Exchange Hub",
+      "category": "exchange",
+      "chain": "solana",
+      "label_source": "dev_sample_only",
+      "confidence": 0.42,
+      "related_wallets": [
+        "samplebeta22222222222222222222222222222222"
+      ],
+      "related_programs": [],
+      "metadata": {
+        "fixture_only": true,
+        "dev_only": true,
+        "description": "Synthetic exchange-style hub for offline visualization tests only."
+      }
+    },
+    {
+      "id": "hub:solana:defi_protocol:sample-jupiter-route-hub",
+      "type": "defi_protocol",
+      "label": "Sample Jupiter Route Hub",
+      "category": "defi_protocol",
+      "chain": "solana",
+      "label_source": "dev_sample_only",
+      "confidence": 0.39,
+      "related_wallets": [
+        "samplegamma33333333333333333333333333333333"
+      ],
+      "related_programs": [
+        "samplejupiterprogram888888888888888888888888"
+      ],
+      "metadata": {
+        "fixture_only": true,
+        "dev_only": true,
+        "description": "Synthetic route/protocol hub; not a live Jupiter lookup."
+      }
+    },
+    {
+      "id": "hub:solana:liquidity_pool:sample-liquidity-pool",
+      "type": "liquidity_pool",
+      "label": "Sample Liquidity Pool",
+      "category": "liquidity_pool",
+      "chain": "solana",
+      "label_source": "dev_sample_only",
+      "confidence": 0.36,
+      "related_wallets": [
+        "samplepool555555555555555555555555555555555"
+      ],
+      "related_programs": [
+        "sampleammprogram999999999999999999999999999"
+      ],
+      "metadata": {
+        "fixture_only": true,
+        "dev_only": true,
+        "pool_pair": "sUSDC/sBONK"
+      }
+    },
+    {
+      "id": "hub:solana:bridge:sample-bridge-router",
+      "type": "bridge",
+      "label": "Sample Bridge / Router",
+      "category": "bridge",
+      "chain": "solana",
+      "label_source": "dev_sample_only",
+      "confidence": 0.34,
+      "related_wallets": [
+        "sampledelta77777777777777777777777777777777"
+      ],
+      "related_programs": [
+        "samplebridgeprogram1010101010101010101010"
+      ],
+      "metadata": {
+        "fixture_only": true,
+        "dev_only": true,
+        "description": "Synthetic bridge/router-style hub for layout testing only."
+      }
+    }
+  ],
   "solana_transactions": [
     {
       "signature": "solsampletx1111111111111111111111111111111111111111111111111111111111",
       "type": "TRANSFER",
+      "exchange_hub_id": "hub:solana:exchange:sample-exchange-hub",
       "timestamp": "2026-04-28T14:20:00Z",
       "nativeTransfers": [
         {
@@ -26,6 +107,7 @@
     {
       "signature": "solsampletx2222222222222222222222222222222222222222222222222222222222",
       "type": "TOKEN_TRANSFER",
+      "exchange_hub_id": "hub:solana:exchange:sample-exchange-hub",
       "timestamp": "2026-04-28T14:42:00Z",
       "tokenTransfers": [
         {
@@ -45,6 +127,10 @@
       "signature": "solsampletx3333333333333333333333333333333333333333333333333333333333",
       "type": "SWAP",
       "source": "JUPITER_SAMPLE_ROUTE",
+      "route_hub_id": "hub:solana:defi_protocol:sample-jupiter-route-hub",
+      "protocol_hub_id": "hub:solana:defi_protocol:sample-jupiter-route-hub",
+      "pool_hub_id": "hub:solana:liquidity_pool:sample-liquidity-pool",
+      "route_id": "dev-only-sample-route-001",
       "timestamp": "2026-04-28T15:05:00Z",
       "swapTransfers": [
         {
@@ -57,7 +143,9 @@
           "tokenAmount": 1800,
           "decimals": 6,
           "symbol": "sUSDC",
-          "usd_value": 1800
+          "usd_value": 1800,
+          "route_hub_id": "hub:solana:defi_protocol:sample-jupiter-route-hub",
+          "pool_hub_id": "hub:solana:liquidity_pool:sample-liquidity-pool"
         },
         {
           "type": "tokenOutput",
@@ -69,13 +157,16 @@
           "tokenAmount": 24000000,
           "decimals": 5,
           "symbol": "sBONK",
-          "usd_value": 1792
+          "usd_value": 1792,
+          "route_hub_id": "hub:solana:defi_protocol:sample-jupiter-route-hub",
+          "pool_hub_id": "hub:solana:liquidity_pool:sample-liquidity-pool"
         }
       ]
     },
     {
       "signature": "solsampletx4444444444444444444444444444444444444444444444444444444444",
       "type": "TOKEN_TRANSFER",
+      "bridge_hub_id": "hub:solana:bridge:sample-bridge-router",
       "timestamp": "2026-04-28T15:31:00Z",
       "tokenTransfers": [
         {
@@ -87,7 +178,27 @@
           "tokenAmount": 8200000,
           "decimals": 5,
           "symbol": "sBONK",
-          "usd_value": 612
+          "usd_value": 612,
+          "bridge_hub_id": "hub:solana:bridge:sample-bridge-router"
+        }
+      ]
+    },
+    {
+      "signature": "solsampletx5555555555555555555555555555555555555555555555555555555555",
+      "type": "TOKEN_TRANSFER",
+      "exchange_hub_id": "hub:solana:exchange:sample-exchange-hub",
+      "timestamp": "2026-04-28T16:08:00Z",
+      "tokenTransfers": [
+        {
+          "fromUserAccount": "sampledelta77777777777777777777777777777777",
+          "toUserAccount": "samplebeta22222222222222222222222222222222",
+          "fromTokenAccount": "sampletokenacctdeltausdc777777777777777777",
+          "toTokenAccount": "sampletokenacctbetausdc111111111111111111111",
+          "mint": "sampleusdcmint444444444444444444444444444444",
+          "tokenAmount": 26000,
+          "decimals": 6,
+          "symbol": "sUSDC",
+          "usd_value": 26000
         }
       ]
     }

@@ -11,6 +11,8 @@
         key_storage_policy: 'Future Helius, Solana, and Jupiter credentials must remain in local environment variables or a managed secret store.',
         live_call_requirement: 'Live blockchain calls require a future backend/proxy or local-only secure runner before enablement.',
         fixture_policy: 'Public fixtures remain dev-only, synthetic, and safe to ship without secrets.',
+        request_filtering_policy: 'A secure runtime must validate wallet scopes, signatures, pagination, time windows, response size, and provider endpoints before making live calls.',
+        response_sanitization_policy: 'Provider responses must be reduced to graph-ready wallet, token, hub, transaction, and route records before browser delivery.',
         forbidden_in_browser: [
             'API key loading',
             'secret manager access',
@@ -20,24 +22,139 @@
             'transaction signing'
         ]
     });
+    const REAL_DATA_PIPELINE = Object.freeze({
+        order: ['Input', 'Adapter', 'Graph', 'UI', 'Replay'],
+        input: [
+            'Helius Enhanced Transactions payloads returned by a future secure runtime.',
+            'Solana WebSocket events later, routed through the same secure runtime.',
+            'Jupiter route context later, used only as sanitized swap metadata.'
+        ],
+        adapter: [
+            'Normalize provider payloads into CryptoPhotonic metadata, wallets, tokens, entities, and transactions.',
+            'Keep provider-specific raw fields only as safe metadata needed for debugging or route context.'
+        ],
+        graph: [
+            'Pass normalized datasets through CryptoPhotonic.core.normalizeDataset() and CryptoPhotonic.graph.buildGraph().',
+            'Preserve existing node, edge, hub, exposure, and flow edge contracts.'
+        ],
+        ui: [
+            'Reuse existing CryptoPhotonic rendering and interaction logic.',
+            'Do not create a live-data-specific UI rendering path for the first milestone.'
+        ],
+        replay: [
+            'Let graph.buildFlowReplayPlan() derive ordered replay flows from normalized flow edges.',
+            'Append future sanitized transactions by merging/deduping the dataset, then rebuilding graph/replay state.'
+        ]
+    });
+    const REQUIRED_DATA_SHAPE = Object.freeze({
+        dataset: {
+            required_top_level_keys: ['metadata', 'wallets', 'tokens', 'entities', 'transactions'],
+            metadata: ['name', 'environment', 'chain', 'adapter', 'production_meaning', 'live_blockchain_fetching']
+        },
+        transaction: {
+            required_fields: [
+                'id',
+                'transaction_type',
+                'transaction_hash',
+                'chain',
+                'source_wallet',
+                'destination_wallet',
+                'token_mint',
+                'contract_address',
+                'symbol',
+                'amount',
+                'usd_value',
+                'timestamp',
+                'confidence',
+                'label_source',
+                'hub_ids',
+                'flow_role',
+                'route_id',
+                'metadata'
+            ],
+            graph_keys: ['source_wallet', 'destination_wallet', 'token_mint', 'symbol', 'transaction_hash', 'chain', 'amount', 'usd_value', 'timestamp', 'hub_ids'],
+            id_format: 'tx:solana:<signature>:<transfer_index>',
+            transfer_sources: ['nativeTransfers', 'tokenTransfers', 'events.swap']
+        },
+        wallet: {
+            required_fields: ['id', 'type', 'address', 'chain', 'label', 'label_source', 'confidence', 'metadata'],
+            id_format: 'wallet:solana:<address>',
+            label_policy: 'Default to short address unless a reviewed label or secure-runtime allowlist provides a hub label.'
+        },
+        token: {
+            required_fields: ['id', 'type', 'symbol', 'name', 'token_mint', 'contract_address', 'chain', 'decimals', 'label_source', 'confidence', 'metadata'],
+            id_format: 'token:solana:<mint>',
+            native_sol_mint: NATIVE_SOL_MINT
+        },
+        hub_labeling_inputs: {
+            required_fields_when_present: ['id', 'type', 'label', 'category', 'chain', 'label_source', 'confidence', 'related_wallets', 'related_programs', 'metadata'],
+            transaction_link_fields: ['hub_ids', 'exchange_hub_id', 'protocol_hub_id', 'route_hub_id', 'pool_hub_id', 'liquidity_pool_hub_id', 'bridge_hub_id', 'counterparty_hub_id'],
+            first_milestone_required: false
+        },
+        swap_route: {
+            required_fields_when_present: ['route_id', 'transaction_hash', 'source_wallet', 'input_token_mint', 'output_token_mint', 'input_amount', 'output_amount', 'usd_value', 'legs', 'metadata'],
+            transaction_mapping: 'Represent each animated route leg as a normal transaction with flow_role "swap_route" and the same route_id.',
+            first_milestone_required: false
+        }
+    });
+    const MINIMUM_LIVE_DATA_SET = Object.freeze({
+        milestone: 'first_live_candidate',
+        scope: [
+            'single wallet tracking',
+            'recent transactions',
+            'parsed native SOL transfers',
+            'parsed SPL token transfers'
+        ],
+        primary_provider: 'Helius Enhanced Transactions',
+        excluded: [
+            'wallet clustering',
+            'multi-wallet watchlists',
+            'entity attribution without reviewed allowlists',
+            'realtime WebSocket subscriptions',
+            'Jupiter route lookup',
+            'swap execution',
+            'transaction signing',
+            'browser-side provider calls'
+        ]
+    });
+    const REPLAY_INTEGRATION_PLAN = Object.freeze({
+        current_path: [
+            'Adapter emits normalized transactions.',
+            'Graph builder creates flow edges.',
+            'buildFlowReplayPlan() sorts flow edges into flowReplay.ordered_flows.',
+            'Existing UI animation reads activeFlowId from the replay state.'
+        ],
+        future_append_path: [
+            'Secure runtime returns sanitized recent or new transactions.',
+            'Adapter normalizes transfers.',
+            'Merge by transaction_hash plus transfer index.',
+            'Rebuild graph/replay state so new flows enter the existing ordered replay queue.'
+        ],
+        animation_policy: 'Reuse the existing flow replay and pulse logic; do not add live-specific animation primitives for the first milestone.'
+    });
 
     function createHeliusEnhancedTransactionPlan(options = {}) {
         return createDisabledLiveDataPlan({
             id: 'helius_enhanced_transactions',
             provider: 'Helius',
             target: 'Enhanced Transactions',
+            source_priority: 'primary',
+            phase_role: 'first_live_milestone_source',
             adapter_status: 'stub_only_no_fetch',
             intended_use: [
+                'Power the first live candidate by converting recent single-wallet transaction history into parsed transfer records.',
                 'Normalize enriched Solana transaction records into CryptoPhotonic wallet, token, entity, and flow graphs.',
                 'Preserve offline fixture compatibility as the default development mode.'
             ],
             required_secure_runtime: 'backend_proxy_or_local_secure_runner',
             required_secret_names: options.required_secret_names || ['HELIUS_API_KEY'],
             browser_parameters_allowed: [
+                'one public Solana wallet address after secure-runtime validation',
                 'public fixture path',
                 'synthetic transaction signature list',
                 'non-secret feature flag'
-            ]
+            ],
+            minimum_live_dataset: { ...MINIMUM_LIVE_DATA_SET }
         });
     }
 
@@ -46,6 +163,8 @@
             id: 'solana_realtime_websocket',
             provider: 'Helius/Solana',
             target: 'WebSocket realtime transaction stream',
+            source_priority: 'later_realtime',
+            phase_role: 'post_recent_transactions_realtime_append',
             adapter_status: 'stub_only_no_subscription',
             intended_use: [
                 'Prepare future realtime flow updates for watched wallets, hubs, or programs.',
@@ -57,7 +176,11 @@
                 'synthetic watchlist id',
                 'offline fixture replay mode',
                 'non-secret feature flag'
-            ]
+            ],
+            minimum_live_dataset: {
+                ...MINIMUM_LIVE_DATA_SET,
+                excluded: [...MINIMUM_LIVE_DATA_SET.excluded, 'first milestone dependency until recent-transaction path is secure']
+            }
         });
     }
 
@@ -66,6 +189,8 @@
             id: 'jupiter_route_context',
             provider: 'Jupiter',
             target: 'Route and swap context',
+            source_priority: 'later_swap_context',
+            phase_role: 'post_transfer_parsing_context_enrichment',
             adapter_status: 'stub_only_no_route_request',
             intended_use: [
                 'Annotate Solana swap-like fixture flows with future route, quote, and pool context.',
@@ -77,7 +202,11 @@
                 'synthetic route id',
                 'offline fixture route metadata',
                 'non-secret feature flag'
-            ]
+            ],
+            minimum_live_dataset: {
+                ...MINIMUM_LIVE_DATA_SET,
+                excluded: [...MINIMUM_LIVE_DATA_SET.excluded, 'required swap context in first milestone']
+            }
         });
     }
 
@@ -85,12 +214,17 @@
         return {
             ...plan,
             chain: CHAIN,
+            pipeline: { ...REAL_DATA_PIPELINE },
+            required_data_shape: { ...REQUIRED_DATA_SHAPE },
+            replay_integration: { ...REPLAY_INTEGRATION_PLAN },
             live_enabled: false,
             live_blockchain_fetching: false,
             loads_browser_api_keys: false,
             fetch_implemented: false,
             websocket_implemented: false,
             swap_execution_enabled: false,
+            request_filtering_required: true,
+            response_sanitization_required: true,
             security_boundary: { ...LIVE_DATA_SECURITY_BOUNDARY }
         };
     }

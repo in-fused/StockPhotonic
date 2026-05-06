@@ -1,56 +1,81 @@
-# CryptoPhotonic Local Secure Runner Plan
+# CryptoPhotonic Local Secure Runner
 
-This directory is reserved for a future local-only CryptoPhotonic runner. No runner implementation, live Helius calls, Solana calls, Jupiter calls, backend service, browser integration, or API key is added in this phase.
+This directory contains the local-only CryptoPhotonic Solana wallet runner. It fetches one public wallet's recent Helius Enhanced Transactions from a terminal command, sanitizes the response, writes a browser-loadable fixture under `data/crypto/generated/`, and keeps API keys out of browser JavaScript and generated JSON.
 
 ## Purpose
 
-The future runner should:
+The runner:
 
-- Run from the user's machine as a local command-line process.
-- Read the Helius API key only from a local environment variable such as `HELIUS_API_KEY`.
-- Never expose the key to browser JavaScript, HTML, public assets, generated fixtures, logs intended for sharing, or source maps.
-- Accept constrained public inputs such as one Solana wallet address, approved transaction signatures, and an optional time window.
-- Output sanitized JSON fixtures under `data/crypto/generated/`.
-- Preserve raw provider payloads only outside public data if local diagnostics are needed later.
+- Runs from the user's machine as a local command-line process.
+- Reads the Helius API key only from the local `HELIUS_API_KEY` environment variable.
+- Never exposes the key to browser JavaScript, HTML, public assets, generated fixtures, logs intended for sharing, or source maps.
+- Accepts one public Solana wallet address and a bounded transaction limit.
+- Outputs sanitized JSON fixtures under `data/crypto/generated/`.
+- Caches only sanitized transaction state and known signatures by wallet.
 
 The runner must not start a backend server, proxy, browser listener, signing workflow, swap workflow, or public live-fetching path.
+
+## Local Usage
+
+PowerShell:
+
+```powershell
+$env:HELIUS_API_KEY="paste-your-key-locally-only"
+python scripts/crypto/solana_wallet_flow_fetch.py --wallet <PUBLIC_WALLET> --limit 25
+```
+
+Dry run without calling Helius or writing files:
+
+```powershell
+python scripts/crypto/solana_wallet_flow_fetch.py --wallet <PUBLIC_WALLET> --limit 25 --dry-run
+```
+
+Optional output and cache paths:
+
+```powershell
+python scripts/crypto/solana_wallet_flow_fetch.py --wallet <PUBLIC_WALLET> --limit 25 --output data/crypto/generated/solana-wallet-flow.<PUBLIC_WALLET>.json --cache-dir data/crypto/cache
+```
+
+The API key is read from `HELIUS_API_KEY` only at request time. Do not put a key in this README, command history intended for sharing, generated fixtures, source files, browser code, or committed JSON.
 
 ## Recommended Paths
 
 - `data/crypto/generated/`: sanitized graph-ready fixtures safe for browser consumption after review.
 - `data/crypto/generated/solana-wallet-flow.<wallet>.json`: generated wallet-flow fixture path pattern.
-- `data/crypto/cache/`: optional future local cache for raw or semi-raw provider payloads, ignored before any real payloads are written.
+- `data/crypto/generated/manifest.json`: browser-visible sanitized manifest. The runner updates `active_fixture` after a successful write.
+- `data/crypto/cache/`: local sanitized cache for known wallet signatures and sanitized transactions. Treat it as local runtime state and do not commit raw or diagnostic cache files.
 
 ## Cache Strategy
 
-The future runner should reduce Helius free-tier pressure by caching and deduplicating before provider requests:
+The runner reduces Helius free-tier pressure with conservative local behavior:
 
 - Cache by normalized wallet address.
-- Cache transaction details by transaction signature.
-- Cache list results by wallet address plus time window.
-- Track already-seen signatures and skip them on later runs.
-- Batch unknown signature lookups when supported.
-- Append only new sanitized transfers to generated fixtures.
-- Deduplicate by transaction signature plus transfer index or another stable transfer identifier.
+- Cache known transaction signatures.
+- Skip already-seen signatures on later runs unless `--force-refresh` is used.
+- Append only new sanitized transactions to generated fixtures.
+- Deduplicate transactions by signature.
+- Deduplicate transfer records within transactions.
 - Keep raw provider payloads out of `data/crypto/generated/`.
+- Do not write request headers, API keys, or private provider URLs.
 
 ## Rate Limit Strategy
 
-Helius free-tier limits should be treated as constrained and changeable. A future implementation should check current provider documentation at implementation time and keep defaults below the relevant free-tier allowance.
+Helius free-tier limits should be treated as constrained and changeable. The runner keeps defaults conservative and configurable without hardcoding provider plan claims.
 
 Safe defaults:
 
-- Use a configurable max requests-per-second value below the free-tier limit.
-- Retry 429 responses with exponential backoff and jitter.
-- Respect provider retry headers when present.
-- Batch signature lookups where supported.
+- One user-triggered request per command; no polling loop.
+- Default `--limit 25`, capped at 100.
+- Default `--min-request-interval-ms 1200`.
+- Retry HTTP 429 responses only a few times with backoff and jitter.
+- Respect provider `Retry-After` headers when present.
 - Avoid fast polling loops.
-- Prefer incremental wallet updates over full re-pulls.
 - Slow down or stop after repeated rate-limit responses.
+- Increase `--min-request-interval-ms` if you hit rate limits.
 
 ## Sanitized Output Contract
 
-The generated fixture should use this top-level shape:
+The generated fixture uses this top-level shape:
 
 ```json
 {
@@ -66,16 +91,47 @@ The generated fixture should use this top-level shape:
     "live_blockchain_fetching": false,
     "sanitized": true
   },
-  "wallets": [],
-  "tokens": [],
-  "entities": [],
-  "transactions": []
+  "solana_transactions": []
 }
 ```
 
-Generated files must include `metadata`, `wallets`, `tokens`, `entities`, and `transactions`.
+Generated files include `metadata` and `solana_transactions`. Browser code loads them through the existing Solana adapter, which normalizes them into CryptoPhotonic `wallets`, `tokens`, `entities`, and `transactions`.
 
 Generated files must not include API keys, bearer tokens, signing material, private keys, raw request headers, private URLs, raw provider payloads, local private filesystem paths, or diagnostics containing secrets.
+
+Each sanitized Solana transaction keeps only graph-needed safe fields:
+
+- `signature`
+- `type`
+- `source`
+- `timestamp`
+- `nativeTransfers`
+- `tokenTransfers`
+- `events.swap` when present and reduced to safe transfer records
+- `fee` and `feePayer` when present
+
+## Generated Fixture Review Checklist
+
+Before committing or sharing generated output:
+
+- Confirm `metadata.sanitized` is `true`.
+- Confirm `metadata.production_meaning` is `false`.
+- Confirm `metadata.live_blockchain_fetching` is `false`.
+- Search the generated fixture for `api-key`, `HELIUS_API_KEY`, `Authorization`, `Bearer`, and `https://api.helius.xyz`.
+- Confirm the fixture contains no request headers, private URLs, private keys, signing material, or local private filesystem paths.
+- Confirm the wallet address is public and intended for local visualization.
+
+## Loading Generated Output In The UI
+
+After a successful runner command, `data/crypto/generated/manifest.json` points `active_fixture` at the generated file. CryptoPhotonic loads data in this order:
+
+1. `data/crypto/generated/manifest.json`
+2. The manifest `active_fixture`, when present and under `data/crypto/generated/`
+3. `data/crypto/solana-sample-flow.json`
+4. `data/crypto/sample-flow.json`
+5. The built-in sample
+
+If a generated fixture is missing or malformed, the browser falls back to sample data. The browser does not call Helius and does not load `HELIUS_API_KEY`.
 
 ## Flow Queue Terminology
 

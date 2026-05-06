@@ -127,9 +127,22 @@
     }
 
     async function loadSampleDataset() {
+        const manifest = await loadLocalJson('data/crypto/generated/manifest.json', 'Generated crypto manifest unavailable');
+        const generatedFixturePath = getGeneratedFixturePath(manifest);
+        if (generatedFixturePath) {
+            const generatedFixture = await loadLocalJson(generatedFixturePath, 'Generated crypto fixture unavailable');
+            if (generatedFixture) {
+                const normalized = await normalizeSolanaFixture(generatedFixture, generatedFixturePath);
+                if (normalized) {
+                    state.datasetSource = generatedFixturePath;
+                    return normalized;
+                }
+            }
+        }
+
         const solanaFixture = await loadLocalJson('data/crypto/solana-sample-flow.json', 'Solana fixture file unavailable');
         if (solanaFixture) {
-            const normalized = await normalizeSolanaFixture(solanaFixture);
+            const normalized = await normalizeSolanaFixture(solanaFixture, 'data/crypto/solana-sample-flow.json');
             if (normalized) {
                 state.datasetSource = 'data/crypto/solana-sample-flow.json';
                 return normalized;
@@ -147,6 +160,14 @@
         return core.getSampleDataset();
     }
 
+    function getGeneratedFixturePath(manifest) {
+        const activeFixture = typeof manifest?.active_fixture === 'string' ? manifest.active_fixture.trim() : '';
+        if (!activeFixture) return '';
+        if (!activeFixture.startsWith('data/crypto/generated/')) return '';
+        if (/^[a-z]+:\/\//i.test(activeFixture) || activeFixture.includes('..')) return '';
+        return activeFixture;
+    }
+
     async function loadLocalJson(path, unavailableMessage) {
         try {
             const response = await fetch(`${path}?v=${Date.now()}`);
@@ -157,7 +178,7 @@
         }
     }
 
-    async function normalizeSolanaFixture(payload = {}) {
+    async function normalizeSolanaFixture(payload = {}, sourcePath = '') {
         const hasRawSolanaTransactions = Array.isArray(payload.solana_transactions)
             || Array.isArray(payload.enhancedTransactions)
             || Array.isArray(payload.enhanced_transactions);
@@ -174,9 +195,9 @@
         return {
             ...normalized,
             metadata: {
-                ...(payload.metadata || {}),
                 ...(normalized.metadata || {}),
-                source_path: 'data/crypto/solana-sample-flow.json'
+                ...(payload.metadata || {}),
+                source_path: sourcePath
             }
         };
     }
@@ -204,9 +225,13 @@
         if (!state.root) return;
         const metadata = dataset.metadata || {};
         const isSolana = metadata.adapter === 'solana' || metadata.chain === 'solana';
+        const isGeneratedFixture = metadata.environment === 'local_secure_runner_generated'
+            || metadata.source === 'helius_enhanced_transactions_sanitized';
         const subtitle = state.root.querySelector('h1 + p');
         if (subtitle && isSolana) {
-            subtitle.textContent = 'Solana-first offline fixture mode for wallet, SPL token, and swap-like flow graphs';
+            subtitle.textContent = isGeneratedFixture
+                ? 'Solana local runner fixture mode for sanitized wallet, SPL token, and swap-like flow graphs'
+                : 'Solana-first offline fixture mode for wallet, SPL token, and swap-like flow graphs';
         }
 
         const panelHeader = state.root.querySelector('.crypto-panel > div:first-child');
@@ -218,7 +243,9 @@
         const status = document.createElement('div');
         status.id = 'crypto-solana-status';
         status.className = 'text-[10px] font-mono tracking-[1.1px] text-cyan-50/78 rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 max-w-md';
-        status.innerHTML = isSolana
+        status.innerHTML = isGeneratedFixture
+            ? 'Solana local runner generated fixture<br>No browser live fetching; API keys not loaded in browser<br>Source: sanitized Helius Enhanced Transactions output'
+            : isSolana
             ? 'Solana offline fixture mode<br>Live data disabled; API keys not loaded in browser<br>Future live mode requires secure proxy/local runner'
             : 'Offline fixture mode<br>Live data disabled; API keys not loaded in browser<br>Future live mode requires secure proxy/local runner';
         panelHeader.appendChild(status);

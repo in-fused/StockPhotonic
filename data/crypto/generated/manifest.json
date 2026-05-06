@@ -1,0 +1,18 @@
+{
+  "metadata": {
+    "environment": "local_secure_runner_manifest",
+    "sanitized": true,
+    "production_meaning": false
+  },
+  "active_fixture": "data/crypto/generated/solana-wallet-flow.9yhpCwGYTWycAAd41X3rKpH328iHSrU7TrQWeVsoGcX5.json",
+  "fixtures": [
+    {
+      "path": "data/crypto/generated/solana-wallet-flow.9yhpCwGYTWycAAd41X3rKpH328iHSrU7TrQWeVsoGcX5.json",
+      "wallet": "9yhpCwGYTWycAAd41X3rKpH328iHSrU7TrQWeVsoGcX5",
+      "generated_at": "2026-05-06T22:33:27Z",
+      "transaction_count": 25,
+      "source": "helius_enhanced_transactions_sanitized",
+      "sanitized": true
+    }
+  ]
+}

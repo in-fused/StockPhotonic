@@ -214,7 +214,7 @@ function sanitizeInteger(value) {
 
 function sanitizeIngestionSource(value) {
   const normalized = sanitizeString(value);
-  if (normalized === "local_test_event" || normalized === "fixture_fallback") {
+  if (normalized === "local_test_event" || normalized === "fixture_fallback" || normalized === "helius_webhook") {
     return normalized;
   }
 

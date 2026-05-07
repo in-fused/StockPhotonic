@@ -6,3 +6,16 @@ workers_dev = true
 [vars]
 CRYPTO_RUNTIME_MODE = "mvp-dev"
 LIVE_PROVIDER_FETCHING = "false"
+ENVIRONMENT = "local"
+
+# Future Cloudflare binding placeholders only. Do not commit real IDs here.
+#
+# [[kv_namespaces]]
+# binding = "CRYPTO_EVENTS_KV"
+# id = "replace-with-kv-namespace-id"
+# preview_id = "replace-with-preview-kv-namespace-id"
+#
+# [[d1_databases]]
+# binding = "CRYPTO_EVENTS_D1"
+# database_name = "cryptophotonic-events"
+# database_id = "replace-with-d1-database-id"

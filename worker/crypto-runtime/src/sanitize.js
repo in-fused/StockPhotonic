@@ -32,6 +32,7 @@ const UNSAFE_VALUE_PATTERNS = [
 ];
 
 const MAX_LIST_ITEMS = 32;
+export const EVENT_SCHEMA_VERSION = "cryptophotonic_event_v1";
 
 export class UnsafeEventInputError extends Error {
   constructor(issues) {
@@ -120,6 +121,37 @@ export function sanitizeEvents(input) {
   return input.map((event) => sanitizeEvent(event));
 }
 
+export function normalizeEvent(input, options = {}) {
+  const sanitized = sanitizeEvent(input);
+  const ingestionSource = sanitizeIngestionSource(options.ingestionSource || input.ingestion_source);
+  const receivedAt = sanitizeReceivedAt(options.receivedAt || input.received_at);
+
+  return {
+    ...sanitized,
+    schema_version: EVENT_SCHEMA_VERSION,
+    ingestion_source: ingestionSource,
+    received_at: receivedAt,
+    dedupe_key: deriveDedupeKey(sanitized),
+    metadata: {
+      ...sanitized.metadata,
+      sanitized: true,
+      production_meaning: false,
+      live_blockchain_fetching: false,
+    },
+  };
+}
+
+export function normalizeEvents(input, options = {}) {
+  if (!Array.isArray(input)) {
+    throw new InvalidEventInputError("Events payload must be an array.");
+  }
+
+  return input.map((event) => normalizeEvent(event, {
+    ...options,
+    receivedAt: options.receivedAt || event.received_at || event.timestamp,
+  }));
+}
+
 function sanitizeWallets(wallets) {
   return sanitizeObjectList(wallets).map((wallet) => ({
     address: sanitizeString(wallet.address),
@@ -180,6 +212,26 @@ function sanitizeInteger(value) {
   return parsed;
 }
 
+function sanitizeIngestionSource(value) {
+  const normalized = sanitizeString(value);
+  if (normalized === "local_test_event" || normalized === "fixture_fallback") {
+    return normalized;
+  }
+
+  return "local_test_event";
+}
+
+function sanitizeReceivedAt(value) {
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+  }
+
+  return new Date().toISOString();
+}
+
 function sanitizeTimestamp(value) {
   if (typeof value === "string" || typeof value === "number") {
     const date = new Date(value);
@@ -200,4 +252,46 @@ function deriveEventId(input) {
   const timestamp = sanitizeTimestamp(input.timestamp);
   const transactionType = sanitizeString(input.transaction_type) || "unknown";
   return `local-${transactionType}-${timestamp}`;
+}
+
+function deriveDedupeKey(event) {
+  if (event.signature) {
+    return `signature:${compactDedupePart(event.signature)}`;
+  }
+
+  if (event.id) {
+    return `id:${compactDedupePart(event.id)}`;
+  }
+
+  return `event:${hashString(stableStringify(event))}`;
+}
+
+function compactDedupePart(value) {
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._:-]/g, "_")
+    .slice(0, 160);
+}
+
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(",")}}`;
+  }
+
+  return JSON.stringify(value);
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+
+  return (hash >>> 0).toString(16).padStart(8, "0");
 }

@@ -7,12 +7,19 @@ import { createRuntimeStorage } from "./storage.js";
 
 const DEFAULT_EVENT_LIMIT = 50;
 const MAX_EVENT_LIMIT = 100;
+const DEFAULT_WALLET_ACTIVITY_LIMIT = 10;
+const MAX_WALLET_ACTIVITY_LIMIT = 25;
+const WALLET_LOOKUP_COOLDOWN_MS = 60 * 1000;
+const WALLET_LOOKUP_CACHE_KEY_PREFIX = "crypto-wallet-lookup:";
+const MAX_WALLET_LOOKUP_CACHE_ITEMS = 100;
 const MAX_TEST_EVENT_BATCH = 10;
 const MAX_HELIUS_WEBHOOK_BATCH = 10;
 const MAX_JSON_BODY_BYTES = 256 * 1024;
+const HELIUS_ADDRESS_HISTORY_ENDPOINT = "https://api-mainnet.helius-rpc.com/v0/addresses";
 const HELIUS_ALLOWED_WALLETS = [
   "CryptoPhotonicControlledWallet1111111111111111111",
 ];
+const walletLookupMemoryCache = new Map();
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -53,6 +60,87 @@ export default {
             source: "secure_runtime_feed",
             count: filteredEvents.length,
             filters_applied: feedQuery.filtersApplied,
+          },
+        });
+      }
+
+      if (request.method === "GET" && url.pathname === "/api/crypto/wallet-activity") {
+        const query = parseWalletActivityQuery(url);
+        const heliusApiKey = safeString(env.HELIUS_API_KEY);
+        if (!heliusApiKey) {
+          return json({
+            error: "wallet_lookup_not_configured",
+            message: "HELIUS_API_KEY is not configured. Set it as a Wrangler secret before using wallet lookup.",
+            metadata: {
+              sanitized: true,
+              production_meaning: false,
+              live_blockchain_fetching: false,
+              source: "helius_wallet_lookup",
+            },
+          }, 503);
+        }
+
+        const cacheStatus = await getWalletLookupCacheStatus(env, query.wallet);
+        const cachedEvents = applyEventFilters(await storage.listEvents(), {
+          since: null,
+          wallet: query.wallet,
+          token: null,
+          transaction_type: null,
+        }).slice(0, query.limit);
+
+        if (cacheStatus.fresh && cachedEvents.length > 0) {
+          return json({
+            events: cachedEvents,
+            metadata: {
+              sanitized: true,
+              production_meaning: false,
+              live_blockchain_fetching: false,
+              source: "helius_wallet_lookup_cache",
+              count: cachedEvents.length,
+              wallet: query.wallet,
+              limit: query.limit,
+              provider_fetch_performed: false,
+              cooldown_seconds_remaining: Math.ceil(cacheStatus.remainingMs / 1000),
+            },
+          });
+        }
+
+        const providerTransactions = await fetchHeliusAddressHistory({
+          wallet: query.wallet,
+          limit: query.limit,
+          heliusApiKey,
+        });
+        const receivedAt = new Date().toISOString();
+        const events = normalizeHeliusWalletLookupPayload(providerTransactions, {
+          wallet: query.wallet,
+          receivedAt,
+        });
+        const results = [];
+
+        for (const event of events) {
+          results.push(await storage.addEvent(event));
+        }
+
+        await putWalletLookupCacheStatus(env, query.wallet, {
+          fetchedAt: receivedAt,
+          count: results.length,
+        });
+
+        return json({
+          events: results.map((result) => result.event),
+          stored: results.filter((result) => result.stored).length,
+          duplicate: results.every((result) => result.duplicate),
+          duplicates: results.filter((result) => result.duplicate).length,
+          metadata: {
+            sanitized: true,
+            production_meaning: false,
+            live_blockchain_fetching: false,
+            source: "helius_wallet_lookup",
+            count: results.length,
+            wallet: query.wallet,
+            limit: query.limit,
+            provider_fetch_performed: true,
+            cooldown_seconds: Math.round(WALLET_LOOKUP_COOLDOWN_MS / 1000),
           },
         });
       }
@@ -175,6 +263,14 @@ class WebhookScopeError extends Error {
   }
 }
 
+class WalletLookupProviderError extends Error {
+  constructor(message, status = 502) {
+    super(message);
+    this.name = "WalletLookupProviderError";
+    this.status = status;
+  }
+}
+
 async function readJson(request) {
   const contentType = request.headers.get("content-type") || "";
   if (!contentType.toLowerCase().includes("application/json")) {
@@ -221,7 +317,10 @@ function normalizeTestEventPayload(payload) {
 }
 
 function normalizeHeliusWebhookPayload(payload, options) {
-  const transactions = getHeliusTransactions(payload);
+  const transactions = getHeliusTransactions(payload, {
+    maxBatch: MAX_HELIUS_WEBHOOK_BATCH,
+    label: "Helius webhook",
+  });
 
   return transactions.map((transaction, index) => {
     const event = reduceHeliusTransaction(transaction, index, options.receivedAt);
@@ -238,7 +337,30 @@ function normalizeHeliusWebhookPayload(payload, options) {
   });
 }
 
-function getHeliusTransactions(payload) {
+function normalizeHeliusWalletLookupPayload(payload, options) {
+  const transactions = getHeliusTransactions(payload, {
+    maxBatch: MAX_WALLET_ACTIVITY_LIMIT,
+    label: "Helius wallet lookup",
+    allowEmpty: true,
+  });
+
+  return transactions.slice(0, MAX_WALLET_ACTIVITY_LIMIT).map((transaction, index) => {
+    const event = reduceHeliusTransaction(transaction, index, options.receivedAt, {
+      trackedWallet: options.wallet,
+      source: "worker-wallet-lookup",
+    });
+
+    return normalizeEvent(event, {
+      ingestionSource: "helius_wallet_lookup",
+      receivedAt: options.receivedAt,
+    });
+  });
+}
+
+function getHeliusTransactions(payload, options = {}) {
+  const maxBatch = options.maxBatch || MAX_HELIUS_WEBHOOK_BATCH;
+  const label = options.label || "Helius webhook";
+  const allowEmpty = options.allowEmpty === true;
   let transactions;
 
   if (Array.isArray(payload)) {
@@ -248,27 +370,29 @@ function getHeliusTransactions(payload) {
   } else if (payload && typeof payload === "object" && typeof payload.signature === "string") {
     transactions = [payload];
   } else {
-    throw new InvalidEventInputError("Helius webhook payload must be an array of transactions or a transaction object.");
+    throw new InvalidEventInputError(`${label} payload must be an array of transactions or a transaction object.`);
   }
 
-  if (transactions.length === 0 || transactions.length > MAX_HELIUS_WEBHOOK_BATCH) {
-    throw new InvalidEventInputError(`Helius webhook payload must contain 1 to ${MAX_HELIUS_WEBHOOK_BATCH} transactions.`);
+  if ((!allowEmpty && transactions.length === 0) || transactions.length > maxBatch) {
+    const minimum = allowEmpty ? 0 : 1;
+    throw new InvalidEventInputError(`${label} payload must contain ${minimum} to ${maxBatch} transactions.`);
   }
 
   if (!transactions.every((transaction) => transaction && typeof transaction === "object" && !Array.isArray(transaction))) {
-    throw new InvalidEventInputError("Helius webhook transactions must be JSON objects.");
+    throw new InvalidEventInputError(`${label} transactions must be JSON objects.`);
   }
 
   return transactions;
 }
 
-function reduceHeliusTransaction(transaction, index, receivedAt) {
+function reduceHeliusTransaction(transaction, index, receivedAt, options = {}) {
   const signature = safeString(transaction.signature);
   if (!signature) {
     throw new InvalidEventInputError("Helius webhook transaction is missing a signature.");
   }
 
   const wallets = collectHeliusWallets(transaction);
+  addWallet(wallets, options.trackedWallet, "tracked");
   if (wallets.length === 0) {
     throw new InvalidEventInputError("Helius webhook transaction has no wallet accounts to scope.");
   }
@@ -279,7 +403,7 @@ function reduceHeliusTransaction(transaction, index, receivedAt) {
     signature,
     timestamp: normalizeHeliusTimestamp(transaction.timestamp, receivedAt),
     transaction_type: safeString(transaction.type || transaction.transactionType) || "unknown",
-    source: "helius-webhook",
+    source: safeString(options.source) || "helius-webhook",
     wallets,
     tokens: collectHeliusTokens(transaction),
     transfers: collectHeliusTransfers(transaction),
@@ -483,6 +607,158 @@ function verifyHeliusWebhookAuth(request, env = {}) {
   };
 }
 
+function parseWalletActivityQuery(url) {
+  const allowedParams = new Set(["wallet", "limit"]);
+  const issues = [];
+
+  for (const key of url.searchParams.keys()) {
+    if (!allowedParams.has(key)) {
+      issues.push({
+        param: key,
+        reason: "unsupported_query_param",
+      });
+    }
+  }
+
+  const wallet = parseSolanaWalletAddress(url.searchParams.get("wallet"), issues);
+  const limit = parseWalletActivityLimit(url.searchParams.get("limit"), issues);
+
+  if (issues.length > 0) {
+    throw new InvalidEventQueryError("Wallet activity query parameters are invalid.", issues);
+  }
+
+  return {
+    wallet,
+    limit,
+  };
+}
+
+function parseSolanaWalletAddress(value, issues) {
+  const wallet = typeof value === "string" ? value.trim() : "";
+  if (!wallet) {
+    issues.push({
+      param: "wallet",
+      reason: "required",
+    });
+    return null;
+  }
+
+  if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(wallet)) {
+    issues.push({
+      param: "wallet",
+      reason: "must_be_base58_solana_address_32_to_44_chars",
+    });
+    return null;
+  }
+
+  return wallet;
+}
+
+function parseWalletActivityLimit(value, issues) {
+  if (value === null) {
+    return DEFAULT_WALLET_ACTIVITY_LIMIT;
+  }
+
+  if (!/^\d+$/.test(value)) {
+    issues.push({
+      param: "limit",
+      reason: "must_be_integer",
+    });
+    return DEFAULT_WALLET_ACTIVITY_LIMIT;
+  }
+
+  const limit = Number(value);
+  if (limit < 1 || limit > MAX_WALLET_ACTIVITY_LIMIT) {
+    issues.push({
+      param: "limit",
+      reason: `must_be_between_1_and_${MAX_WALLET_ACTIVITY_LIMIT}`,
+    });
+    return DEFAULT_WALLET_ACTIVITY_LIMIT;
+  }
+
+  return limit;
+}
+
+async function fetchHeliusAddressHistory(options) {
+  const providerUrl = new URL(`${HELIUS_ADDRESS_HISTORY_ENDPOINT}/${encodeURIComponent(options.wallet)}/transactions`);
+  providerUrl.searchParams.set("api-key", options.heliusApiKey);
+  providerUrl.searchParams.set("limit", String(options.limit));
+
+  let response;
+  try {
+    response = await fetch(providerUrl.toString(), {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+      },
+    });
+  } catch {
+    throw new WalletLookupProviderError("Helius wallet lookup request failed before a response was returned.", 503);
+  }
+
+  if (!response.ok) {
+    const status = response.status === 429 ? 503 : 502;
+    throw new WalletLookupProviderError(`Helius wallet lookup returned ${response.status}.`, status);
+  }
+
+  const payload = await response.json();
+  if (!Array.isArray(payload)) {
+    throw new WalletLookupProviderError("Helius wallet lookup returned an unexpected response shape.", 502);
+  }
+
+  return payload.slice(0, options.limit);
+}
+
+async function getWalletLookupCacheStatus(env = {}, wallet) {
+  const cached = await readWalletLookupCache(env, wallet);
+  const fetchedAt = Date.parse(cached?.fetchedAt || "");
+  if (!Number.isFinite(fetchedAt)) {
+    return {
+      fresh: false,
+      remainingMs: 0,
+    };
+  }
+
+  const remainingMs = WALLET_LOOKUP_COOLDOWN_MS - (Date.now() - fetchedAt);
+  return {
+    fresh: remainingMs > 0,
+    remainingMs: Math.max(0, remainingMs),
+  };
+}
+
+async function readWalletLookupCache(env = {}, wallet) {
+  if (env.CRYPTO_EVENTS_KV) {
+    const cached = await env.CRYPTO_EVENTS_KV.get(walletLookupCacheKey(wallet), "json");
+    return cached && typeof cached === "object" ? cached : null;
+  }
+
+  return walletLookupMemoryCache.get(walletLookupCacheKey(wallet)) || null;
+}
+
+async function putWalletLookupCacheStatus(env = {}, wallet, value) {
+  const payload = {
+    fetchedAt: value.fetchedAt,
+    count: value.count,
+  };
+
+  if (env.CRYPTO_EVENTS_KV) {
+    await env.CRYPTO_EVENTS_KV.put(walletLookupCacheKey(wallet), JSON.stringify(payload), {
+      expirationTtl: Math.max(60, Math.ceil(WALLET_LOOKUP_COOLDOWN_MS / 1000) * 2),
+    });
+    return;
+  }
+
+  walletLookupMemoryCache.set(walletLookupCacheKey(wallet), payload);
+  if (walletLookupMemoryCache.size > MAX_WALLET_LOOKUP_CACHE_ITEMS) {
+    const firstKey = walletLookupMemoryCache.keys().next().value;
+    walletLookupMemoryCache.delete(firstKey);
+  }
+}
+
+function walletLookupCacheKey(wallet) {
+  return `${WALLET_LOOKUP_CACHE_KEY_PREFIX}${String(wallet || "").trim().toLowerCase()}`;
+}
+
 function parseEventFeedQuery(url) {
   const allowedParams = new Set(["limit", "since", "wallet", "token", "transaction_type"]);
   const issues = [];
@@ -665,6 +941,13 @@ function handleError(error) {
       error: "webhook_event_out_of_scope",
       message: error.message,
     }, 403);
+  }
+
+  if (error instanceof WalletLookupProviderError) {
+    return json({
+      error: "wallet_lookup_provider_unavailable",
+      message: error.message,
+    }, error.status);
   }
 
   return json({

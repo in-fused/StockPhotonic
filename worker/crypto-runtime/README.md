@@ -6,6 +6,7 @@ This Worker is the secure runtime foundation for CryptoPhotonic. It is isolated 
 
 - `GET /health` returns runtime status with no secrets and no provider calls.
 - `GET /api/crypto/events` returns sanitized events through the secure runtime feed contract.
+- `GET /api/crypto/wallet-activity?wallet=<address>&limit=<n>` performs one controlled server-side Helius Enhanced Transactions address-history lookup, stores/dedupes sanitized events, and returns browser-safe events only.
 - `POST /api/crypto/test-event` accepts local/dev event-like JSON payloads, rejects unsafe provider or secret-shaped fields, normalizes the event, stores it through the configured adapter, and never echoes unsafe input.
 - `POST /webhooks/helius` accepts bounded Helius webhook deliveries, verifies the configured authorization header when not running locally, reduces payloads to the CryptoPhotonic event shape, enforces the controlled wallet watchlist, dedupes retries, and stores only sanitized fields.
 - `POST /api/crypto/dev/clear-events` clears test events only when `ENVIRONMENT` is `local` or `development`.
@@ -41,7 +42,7 @@ Every response includes only sanitized event fields and metadata:
 Every event is normalized with:
 
 - `schema_version: "cryptophotonic_event_v1"`
-- `ingestion_source: "local_test_event"`, `"fixture_fallback"`, or `"helius_webhook"`
+- `ingestion_source: "local_test_event"`, `"fixture_fallback"`, `"helius_webhook"`, or `"helius_wallet_lookup"`
 - `received_at`
 - `dedupe_key`
 
@@ -78,11 +79,40 @@ wrangler secret put HELIUS_WEBHOOK_AUTH_HEADER
 
 The webhook route accepts at most 10 transactions per delivery and stores only the reduced fields: chain, signature, timestamp, transaction type, source, wallets, tokens, transfers, schema version, ingestion source, received time, dedupe key, and metadata flags.
 
+## Controlled Wallet Lookup
+
+`GET /api/crypto/wallet-activity?wallet=<address>&limit=<n>` is a user-action endpoint for the CryptoPhotonic "Track Wallet" UI. The browser calls only this Worker route. The Worker validates the Solana wallet address, reads `HELIUS_API_KEY` only from the Worker environment, calls Helius Enhanced Transactions address history server-side, reduces the provider response to the CryptoPhotonic event shape, stores/dedupes by signature through the existing adapter, and returns sanitized events only.
+
+Set the Helius API key as a Wrangler secret:
+
+```powershell
+cd worker/crypto-runtime
+wrangler secret put HELIUS_API_KEY
+```
+
+Do not put the key in `wrangler.toml`, `.dev.vars`, browser code, static HTML, docs, or committed source. If `HELIUS_API_KEY` is missing, the route returns `503 wallet_lookup_not_configured` and does not crash.
+
+Direct smoke test:
+
+```powershell
+curl.exe "https://<worker>/api/crypto/wallet-activity?wallet=<PUBLIC_WALLET>&limit=10"
+```
+
+Limits and free-tier controls:
+
+- `limit` defaults to `10`.
+- `limit` is hard-capped at `25`.
+- The Worker performs no polling loop; each lookup is one request caused by a user action.
+- Repeated lookup for the same wallet uses a short KV or in-memory cooldown when cached sanitized events already exist.
+- Events are deduped by normalized signature before storage.
+
+Wallet lookup complements webhook tracking. Webhooks are push-based configured watchlist ingestion at `/webhooks/helius`; wallet lookup is a controlled pull for recent activity entered in the UI. Both routes store the same sanitized event shape, and both keep provider secrets out of the browser.
+
 ## Controlled Watchlist
 
 The Helius route is intentionally limited to 1 to 3 wallets. The source contains a static placeholder watchlist, and deployments can set `CRYPTO_HELIUS_ALLOWED_WALLETS` to a comma-separated list of up to three controlled wallet addresses. Events with no wallet match are rejected and not stored.
 
-This is not an open wallet tracker. Do not add user-submitted wallet tracking, dynamic browser-controlled filters, or unrestricted address ingestion in this phase. A future allowlist system can move this into a signed admin workflow backed by durable storage, audit logging, and explicit per-wallet limits.
+This webhook watchlist is separate from the controlled wallet lookup endpoint. Do not broaden webhook ingestion beyond the 1 to 3 configured wallets, and do not add signing, swap execution, private RPC calls, or unrestricted background polling.
 
 ## Storage Modes
 
@@ -128,6 +158,7 @@ curl.exe http://127.0.0.1:8787/api/crypto/events
 curl.exe "http://127.0.0.1:8787/api/crypto/events?limit=1"
 curl.exe "http://127.0.0.1:8787/api/crypto/events?wallet=CryptoPhotonicControlledWallet1111111111111111111"
 curl.exe "http://127.0.0.1:8787/api/crypto/events?token=CPHOTON&transaction_type=token_transfer"
+curl.exe "http://127.0.0.1:8787/api/crypto/wallet-activity?wallet=<PUBLIC_WALLET>&limit=10"
 curl.exe -X POST http://127.0.0.1:8787/api/crypto/test-event `
   -H "content-type: application/json" `
   --data-binary "@test-payloads/test-event.sample.json"
@@ -204,10 +235,11 @@ ENVIRONMENT = "production"
 CRYPTO_HELIUS_ALLOWED_WALLETS = "CryptoPhotonicControlledWallet1111111111111111111"
 ```
 
-6. Set the Helius webhook authorization header as a Wrangler secret. Use a real value only at the prompt; do not put it in this README, `wrangler.toml`, `.dev.vars`, browser code, or static assets.
+6. Set the Helius wallet lookup API key and webhook authorization header as Wrangler secrets. Use real values only at the prompts; do not put them in this README, `wrangler.toml`, `.dev.vars`, browser code, or static assets.
 
 ```powershell
 cd worker/crypto-runtime
+wrangler secret put HELIUS_API_KEY
 wrangler secret put HELIUS_WEBHOOK_AUTH_HEADER
 ```
 
@@ -231,7 +263,13 @@ curl.exe "$WorkerBaseUrl/health"
 curl.exe "$WorkerBaseUrl/api/crypto/events"
 ```
 
-10. Post a synthetic test event:
+10. Test controlled wallet lookup. Replace the placeholder with a public Solana wallet address:
+
+```powershell
+curl.exe "$WorkerBaseUrl/api/crypto/wallet-activity?wallet=<PUBLIC_WALLET>&limit=10"
+```
+
+11. Post a synthetic test event:
 
 ```powershell
 curl.exe -X POST "$WorkerBaseUrl/api/crypto/test-event" `
@@ -239,7 +277,7 @@ curl.exe -X POST "$WorkerBaseUrl/api/crypto/test-event" `
   --data-binary "@test-payloads/test-event.sample.json"
 ```
 
-11. Post the synthetic Helius webhook sample with a placeholder authorization header. Replace the placeholder only in your local shell, never in source:
+12. Post the synthetic Helius webhook sample with a placeholder authorization header. Replace the placeholder only in your local shell, never in source:
 
 ```powershell
 $WebhookAuthHeader = "replace-with-local-webhook-auth-header"
@@ -249,7 +287,7 @@ curl.exe -X POST "$WorkerBaseUrl/webhooks/helius" `
   --data-binary "@test-payloads/helius-webhook.sample.json"
 ```
 
-12. Verify the event appears in the sanitized feed:
+13. Verify the event appears in the sanitized feed:
 
 ```powershell
 curl.exe "$WorkerBaseUrl/api/crypto/events?wallet=CryptoPhotonicControlledWallet1111111111111111111&limit=5"
@@ -282,6 +320,7 @@ $WebhookAuthHeader = "replace-with-local-webhook-auth-header"
 
 curl.exe "$WorkerBaseUrl/health"
 curl.exe "$WorkerBaseUrl/api/crypto/events"
+curl.exe "$WorkerBaseUrl/api/crypto/wallet-activity?wallet=<PUBLIC_WALLET>&limit=10"
 curl.exe -X POST "$WorkerBaseUrl/api/crypto/test-event" `
   -H "content-type: application/json" `
   --data-binary "@test-payloads/test-event.sample.json"
@@ -358,7 +397,7 @@ cd worker/crypto-runtime
 wrangler secret put HELIUS_API_KEY
 ```
 
-The command prompts for the value. Do not place the value in source, documentation, browser code, or static assets.
+The command prompts for the value used by server-side wallet lookup. Do not place the value in source, documentation, browser code, or static assets.
 
 For webhook receiver authentication, prefer:
 
@@ -382,8 +421,10 @@ The current `src/storage.js` adapter documents the future interface through `lis
 
 - No browser polling of Helius, Jupiter, Solana RPC, or private provider endpoints.
 - Browser reads only the bounded, sanitized Worker feed.
+- Browser wallet lookup calls only `/api/crypto/wallet-activity`; the Worker performs one bounded server-side Helius address-history request per user action.
 - Webhook/cache first: provider ingestion happens server-side, reduces raw payloads to safe events, and caches those events before the browser reads them.
 - Bounded reads: the public feed enforces a maximum `limit` of `100` and exact filters to avoid unbounded scans.
+- Wallet lookup reads default to `10`, are capped at `25`, use signature dedupe, and use a short cooldown for repeated wallet requests when cached data exists.
 - Bounded writes: Helius webhook ingestion accepts at most 10 transactions per delivery and only 1 to 3 configured wallets.
 - Keep scope small on the free tier because webhook fan-out, retries, KV writes, and feed reads compound quickly as wallet count and transaction volume rise.
 

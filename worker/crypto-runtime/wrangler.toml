@@ -6,7 +6,8 @@ workers_dev = true
 [vars]
 CRYPTO_RUNTIME_MODE = "mvp-dev"
 LIVE_PROVIDER_FETCHING = "false"
-ENVIRONMENT = "local"
+ENVIRONMENT = "production"
+CRYPTO_HELIUS_ALLOWED_WALLETS = "6auWkSk8nTL1XyuRPF5zG3WSwsFvLHDJn3TJWRY2JB3x"
 
 # Future Cloudflare binding placeholders only. Do not commit real IDs here.
 #

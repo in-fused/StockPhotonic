@@ -22,6 +22,7 @@
     });
 
     const DEFAULT_WORKER_FEED_ENDPOINT = '/api/crypto/events';
+    const DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT = '/api/crypto/wallet-activity';
 
     const state = {
         initialized: false,
@@ -59,6 +60,15 @@
             seenDedupeKeys: new Set(),
             pendingFlowIds: [],
             pulseTimerId: null
+        },
+        walletLookup: {
+            walletInput: '',
+            inFlight: false,
+            lastWallet: '',
+            lastLoadedAt: 0,
+            lastError: '',
+            eventCount: 0,
+            mergedEventCount: 0
         },
         filters: {
             transactionType: 'all',
@@ -114,11 +124,12 @@
     const WORKER_FEED_LIMIT = 50;
     const LIVE_POLL_MS = { min: 3000, max: 5000, default: 4000 };
     const SOURCE_LABELS = {
-        generated: 'Local Runner',
+        generated: 'Generated Fixture',
         solana_sample: 'Sample',
         legacy_sample: 'Sample',
         built_in: 'Sample',
-        worker_feed: 'Worker Feed'
+        worker_feed: 'Worker Feed',
+        worker_wallet_lookup: 'Worker Wallet Lookup'
     };
 
     async function initialize(options = {}) {
@@ -739,7 +750,19 @@
         }
     }
 
+    function resetWalletLookupState() {
+        state.walletLookup.inFlight = false;
+        state.walletLookup.lastWallet = '';
+        state.walletLookup.lastLoadedAt = 0;
+        state.walletLookup.lastError = '';
+        state.walletLookup.eventCount = 0;
+        state.walletLookup.mergedEventCount = 0;
+    }
+
     function getCurrentSourceLabel() {
+        if (state.walletLookup.eventCount > 0 || state.walletLookup.mergedEventCount > 0) {
+            return SOURCE_LABELS.worker_wallet_lookup;
+        }
         if (state.live.workerAvailable || state.live.mergedEventCount > 0) {
             return SOURCE_LABELS.worker_feed;
         }
@@ -748,20 +771,23 @@
 
     function getSourceBoundaryCopy() {
         if (!state.live.endpointValid) {
-            return 'Worker feed endpoint unavailable. Sample fixture fallback remains active.';
+            return 'Generated fixtures are local files. Track Wallet asks the secure Worker to fetch recent activity.';
+        }
+        if (state.walletLookup.eventCount > 0 || state.walletLookup.mergedEventCount > 0) {
+            return 'Generated fixtures are local files. Track Wallet asks the secure Worker to fetch recent activity.';
         }
         if (state.live.workerAvailable) {
             return 'Browser fetches only sanitized Worker feed events. No provider keys or direct provider calls are used.';
         }
         if (state.datasetSourceKind === 'generated') {
-            return 'Browser does not call Helius. Generated files come from local runner.';
+            return 'Generated fixtures are local files. Track Wallet asks the secure Worker to fetch recent activity.';
         }
-        return 'Worker feed unavailable or off. Sample fixture fallback remains active.';
+        return 'Generated fixtures are local files. Track Wallet asks the secure Worker to fetch recent activity.';
     }
 
     function getLiveStatusLabel() {
-        if (!state.live.endpointValid) return 'Live Mode OFF / Worker endpoint unavailable';
-        if (!state.live.enabled) return `Live Mode OFF / polls every ${Math.round(state.live.pollMs / 1000)}s when enabled`;
+        if (!state.live.endpointValid) return 'Worker Feed OFF / endpoint unavailable';
+        if (!state.live.enabled) return `Worker Feed OFF / polls every ${Math.round(state.live.pollMs / 1000)}s when enabled`;
         if (state.live.inFlight) return 'Polling Worker Feed';
         if (state.live.workerAvailable) {
             const merged = `${state.live.mergedEventCount} merged`;
@@ -776,6 +802,7 @@
 
     function getWorkerEventConfidence(event = {}) {
         if (event.ingestion_source === 'helius_webhook') return 0.82;
+        if (event.ingestion_source === 'helius_wallet_lookup') return 0.76;
         if (event.ingestion_source === 'fixture_fallback') return 0.42;
         if (event.ingestion_source === 'local_test_event') return 0.58;
         return 0.5;
@@ -930,11 +957,12 @@
                     ${selector}
                 </div>
                 <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-white/56">
-                    <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
+                    <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Fixture Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
                     <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
                     <div>Tx: ${escapeHtml(transactionCount ?? '-')}</div>
                 </div>
                 <div class="mt-2 text-yellow-100/76">${escapeHtml(getSourceBoundaryCopy())}</div>
+                ${renderWalletLookupControls()}
             </div>
         `;
     }
@@ -946,7 +974,7 @@
         }
 
         const options = [
-            state.datasetSourceKind === 'generated' ? '' : '<option value="">Select generated fixture</option>',
+            state.datasetSourceKind === 'generated' ? '' : '<option value="">Select Generated Fixture</option>',
             ...fixtures.map(item => {
                 const label = item.wallet
                     ? `${shortLongValue(item.wallet)} (${item.transaction_count ?? '-'} tx)`
@@ -957,12 +985,36 @@
 
         return `
             <label class="flex items-center gap-2 text-white/52">
-                <span>Fixture</span>
+                <span>Generated Fixture</span>
                 <select id="crypto-generated-fixture-select" class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none">
                     ${options}
                 </select>
             </label>
         `;
+    }
+
+    function renderWalletLookupControls() {
+        const status = getWalletLookupStatusLabel();
+        const value = state.walletLookup.walletInput || state.walletLookup.lastWallet || '';
+        return `
+            <form id="crypto-wallet-lookup-form" class="mt-3 flex flex-wrap items-end gap-2">
+                <label class="grid gap-1 min-w-[240px] grow text-white/52">
+                    <span>Track Wallet</span>
+                    <input id="crypto-wallet-lookup-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${escapeAttr(value)}" placeholder="Solana wallet address" class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1.5 text-cyan-50/82 outline-none placeholder:text-white/28">
+                </label>
+                <button id="crypto-wallet-lookup-submit" type="submit" ${state.walletLookup.inFlight ? 'disabled' : ''} class="rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Recent Activity</button>
+                <div id="crypto-wallet-lookup-status" class="text-white/48">${escapeHtml(status)}</div>
+            </form>
+        `;
+    }
+
+    function getWalletLookupStatusLabel() {
+        if (state.walletLookup.inFlight) return 'Loading from secure Worker';
+        if (state.walletLookup.lastError) return state.walletLookup.lastError;
+        if (state.walletLookup.eventCount > 0) {
+            return `${state.walletLookup.eventCount} returned / ${state.walletLookup.mergedEventCount} merged`;
+        }
+        return 'No wallet lookup loaded';
     }
 
     function renderFlowQueueStatus() {
@@ -972,13 +1024,13 @@
         const sourceLabel = getCurrentSourceLabel();
         const motionLabel = state.flowMotion.enabled ? 'Motion On' : 'Motion Off';
         const queueLabel = state.flowReplay.playing ? 'Pause Queue' : 'Start Queue';
-        const liveLabel = state.live.enabled ? 'Live Mode: ON' : 'Live Mode: OFF';
+        const liveLabel = state.live.enabled ? 'Worker Feed: ON' : 'Worker Feed: OFF';
         const liveStatus = getLiveStatusLabel();
         return `
             <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <div class="text-white/38">LIVE FLOW QUEUE</div>
+                        <div class="text-white/38">WORKER FLOW QUEUE</div>
                         <div class="text-white/66">${escapeHtml(orderedCount)} ordered flows / ${escapeHtml(motionLabel)} / Source: ${escapeHtml(sourceLabel)} / ${escapeHtml(liveStatus)}</div>
                     </div>
                     <div class="flex flex-wrap gap-1.5">
@@ -1079,6 +1131,14 @@
             const path = event.target.value;
             if (path) switchGeneratedFixture(path);
         });
+        status.querySelector('#crypto-wallet-lookup-input')?.addEventListener('input', event => {
+            state.walletLookup.walletInput = event.target.value;
+            state.walletLookup.lastError = '';
+        });
+        status.querySelector('#crypto-wallet-lookup-form')?.addEventListener('submit', event => {
+            event.preventDefault();
+            loadWalletActivity(state.walletLookup.walletInput || status.querySelector('#crypto-wallet-lookup-input')?.value || '');
+        });
         status.querySelector('#crypto-live-mode-toggle')?.addEventListener('click', () => {
             setLiveModeEnabled(!state.live.enabled);
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -1124,9 +1184,82 @@
         applyDataset(dataset);
     }
 
+    async function loadWalletActivity(wallet) {
+        const normalizedWallet = String(wallet || '').trim();
+        state.walletLookup.walletInput = normalizedWallet;
+        if (!isValidSolanaWalletAddress(normalizedWallet)) {
+            state.walletLookup.lastError = 'Enter a valid Solana wallet address';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return null;
+        }
+
+        const endpoint = resolveWalletLookupEndpoint();
+        if (!endpoint) {
+            state.walletLookup.lastError = 'Worker wallet lookup endpoint unavailable';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return null;
+        }
+
+        state.walletLookup.inFlight = true;
+        state.walletLookup.lastError = '';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+
+        try {
+            const separator = endpoint.includes('?') ? '&' : '?';
+            const response = await fetch(`${endpoint}${separator}wallet=${encodeURIComponent(normalizedWallet)}&limit=10`, {
+                cache: 'no-store',
+                headers: { accept: 'application/json' }
+            });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error(payload?.message || `Worker wallet lookup returned ${response.status}`);
+            }
+
+            const events = Array.isArray(payload?.events) ? payload.events : [];
+            const result = mergeWorkerFeedEvents(events, { animateNew: true });
+            state.walletLookup.lastWallet = normalizedWallet;
+            state.walletLookup.lastLoadedAt = Date.now();
+            state.walletLookup.eventCount = events.length;
+            state.walletLookup.mergedEventCount += result?.mergedEvents || 0;
+            state.walletLookup.lastError = events.length ? '' : 'No recent sanitized activity returned';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return result;
+        } catch (error) {
+            state.walletLookup.lastError = error?.message || 'Worker wallet lookup unavailable';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return null;
+        } finally {
+            state.walletLookup.inFlight = false;
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        }
+    }
+
+    function resolveWalletLookupEndpoint() {
+        if (!state.live.endpointValid || !state.live.endpoint) return '';
+
+        try {
+            const parsed = state.live.endpoint.startsWith('/')
+                ? new URL(state.live.endpoint, window.location.origin)
+                : new URL(state.live.endpoint);
+            if (parsed.pathname !== DEFAULT_WORKER_FEED_ENDPOINT) return '';
+            parsed.pathname = DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT;
+            parsed.search = '';
+            parsed.hash = '';
+            if (parsed.origin === window.location.origin) return parsed.pathname;
+            return parsed.protocol === 'https:' ? parsed.href : '';
+        } catch (error) {
+            return '';
+        }
+    }
+
+    function isValidSolanaWalletAddress(value) {
+        return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(String(value || '').trim());
+    }
+
     function applyDataset(dataset = {}) {
         state.dataset = cloneDataset(dataset);
         resetLiveMergeState();
+        resetWalletLookupState();
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);

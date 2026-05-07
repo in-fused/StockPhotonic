@@ -21,6 +21,8 @@
         return Math.abs(hash >>> 0);
     });
 
+    const DEFAULT_WORKER_FEED_ENDPOINT = '/api/crypto/events';
+
     const state = {
         initialized: false,
         active: false,
@@ -42,7 +44,8 @@
         activeGeneratedFixture: null,
         live: {
             enabled: false,
-            endpoint: '/api/crypto/events',
+            endpoint: DEFAULT_WORKER_FEED_ENDPOINT,
+            endpointValid: true,
             pollMs: 4000,
             pollTimerId: null,
             inFlight: false,
@@ -121,11 +124,11 @@
     async function initialize(options = {}) {
         if (state.initialized) return state.graph;
 
-        configureLiveFeed(options);
         state.root = document.getElementById(options.rootId || 'crypto-photonic-view');
         state.canvas = document.getElementById(options.canvasId || 'crypto-flow-canvas');
         state.detailPanel = document.getElementById(options.detailPanelId || 'crypto-detail-panel');
         if (!state.root || !state.canvas || !state.detailPanel) return null;
+        configureLiveFeed(options);
 
         state.ctx = state.canvas.getContext('2d');
         state.canvas.style.cursor = 'grab';
@@ -313,9 +316,15 @@
     }
 
     function configureLiveFeed(options = {}) {
-        const requestedEndpoint = String(options.workerFeedEndpoint || options.liveFeedEndpoint || '').trim();
-        if (requestedEndpoint.startsWith('/api/crypto/events')) {
-            state.live.endpoint = requestedEndpoint;
+        const endpointConfig = resolveWorkerFeedEndpoint(options);
+        state.live.endpoint = endpointConfig.endpoint;
+        state.live.endpointValid = endpointConfig.valid;
+        if (!state.live.endpointValid) {
+            state.live.enabled = false;
+            state.live.workerAvailable = false;
+            state.live.lastError = 'Worker feed endpoint unavailable';
+        } else {
+            state.live.lastError = '';
         }
 
         const requestedPollMs = Number(options.workerFeedPollMs ?? options.livePollMs ?? window.CryptoPhotonicLivePollMs);
@@ -326,7 +335,57 @@
         );
     }
 
+    function resolveWorkerFeedEndpoint(options = {}) {
+        const configuredValue = [
+            options.workerFeedEndpoint,
+            options.liveFeedEndpoint,
+            window.CryptoPhotonicWorkerFeedEndpoint,
+            state.root?.dataset?.workerFeedEndpoint
+        ].find(value => typeof value === 'string' && value.trim());
+
+        const rawEndpoint = configuredValue ? configuredValue.trim() : DEFAULT_WORKER_FEED_ENDPOINT;
+        const fallback = { endpoint: DEFAULT_WORKER_FEED_ENDPOINT, valid: false };
+
+        try {
+            if (rawEndpoint.startsWith('/')) {
+                const parsed = new URL(rawEndpoint, window.location.origin);
+                if (isSafeWorkerFeedUrl(parsed, { allowExternal: false })) {
+                    return { endpoint: parsed.pathname, valid: true };
+                }
+                return fallback;
+            }
+
+            const parsed = new URL(rawEndpoint);
+            if (isSafeWorkerFeedUrl(parsed, { allowExternal: false })) {
+                return { endpoint: parsed.pathname, valid: true };
+            }
+
+            if (configuredValue && isSafeWorkerFeedUrl(parsed, { allowExternal: true })) {
+                return { endpoint: parsed.href, valid: true };
+            }
+        } catch (error) {
+            return fallback;
+        }
+
+        return fallback;
+    }
+
+    function isSafeWorkerFeedUrl(parsed, options = {}) {
+        if (!parsed || parsed.pathname !== DEFAULT_WORKER_FEED_ENDPOINT) return false;
+        if (parsed.search || parsed.hash || parsed.username || parsed.password) return false;
+        if (parsed.origin === window.location.origin) return true;
+        return Boolean(options.allowExternal) && parsed.protocol === 'https:';
+    }
+
     function setLiveModeEnabled(enabled) {
+        if (enabled && !state.live.endpointValid) {
+            state.live.enabled = false;
+            state.live.workerAvailable = false;
+            state.live.lastError = 'Worker feed endpoint unavailable';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return state.live;
+        }
+
         state.live.enabled = Boolean(enabled);
         if (!state.live.enabled) {
             stopLivePolling();
@@ -341,7 +400,7 @@
 
     function updateLivePolling() {
         stopLivePolling();
-        if (!state.live.enabled || !state.active || !state.initialized) return;
+        if (!state.live.enabled || !state.live.endpointValid || !state.active || !state.initialized) return;
 
         state.live.pollTimerId = window.setInterval(() => {
             pollWorkerFeed({ animateNew: true });
@@ -355,7 +414,7 @@
     }
 
     async function pollWorkerFeed(options = {}) {
-        if (!state.live.enabled || state.live.inFlight) return null;
+        if (!state.live.enabled || !state.live.endpointValid || state.live.inFlight) return null;
 
         state.live.inFlight = true;
         try {
@@ -688,6 +747,9 @@
     }
 
     function getSourceBoundaryCopy() {
+        if (!state.live.endpointValid) {
+            return 'Worker feed endpoint unavailable. Sample fixture fallback remains active.';
+        }
         if (state.live.workerAvailable) {
             return 'Browser fetches only sanitized Worker feed events. No provider keys or direct provider calls are used.';
         }
@@ -698,6 +760,7 @@
     }
 
     function getLiveStatusLabel() {
+        if (!state.live.endpointValid) return 'Live Mode OFF / Worker endpoint unavailable';
         if (!state.live.enabled) return `Live Mode OFF / polls every ${Math.round(state.live.pollMs / 1000)}s when enabled`;
         if (state.live.inFlight) return 'Polling Worker Feed';
         if (state.live.workerAvailable) {

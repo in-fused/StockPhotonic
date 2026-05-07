@@ -134,6 +134,17 @@ curl -X POST http://127.0.0.1:8787/api/crypto/dev/clear-events
 
 `POST /api/crypto/test-event` also accepts a bounded array of 1 to 10 safe event objects for local testing.
 
+For a frontend smoke test, open the Worker routes first:
+
+```sh
+cd worker/crypto-runtime
+wrangler dev
+curl http://127.0.0.1:8787/health
+curl http://127.0.0.1:8787/api/crypto/events
+```
+
+Then open the CryptoPhotonic UI and turn Live Mode ON only after the feed endpoint is reachable. If the UI is not hosted behind the same local origin as the Worker, configure a safe endpoint for the browser test by using the same-origin `/api/crypto/events` path through a local proxy/rewrite, or by pointing at an explicit deployed HTTPS Worker URL. The browser guard rejects non-HTTPS external URLs such as `http://127.0.0.1:8787/api/crypto/events`, so local cross-origin tests should use curl, a same-origin proxy, or an HTTPS Worker endpoint.
+
 ## Deploy Placeholder
 
 ```sh
@@ -142,6 +153,50 @@ wrangler deploy
 ```
 
 Do not deploy this as a broad production live-data endpoint. The current Helius path is for a small controlled first-data phase only and requires webhook authorization, the 1 to 3 wallet allowlist, bounded payloads, dedupe, and sanitized storage.
+
+## Frontend Feed Deployment Options
+
+CryptoPhotonic Live Mode is OFF by default. When enabled, the browser fetches only the sanitized Worker feed and never calls Helius, Jupiter, Solana RPC, private provider endpoints, signing services, or swap execution routes.
+
+### Option A: Same Domain / Same Path
+
+Host the static CryptoPhotonic UI and the Worker/API route behind the same domain, with the Worker mounted at:
+
+```text
+/api/crypto/events
+```
+
+Use the default frontend configuration:
+
+```html
+<main id="crypto-photonic-view" data-worker-feed-endpoint="/api/crypto/events">
+```
+
+This is the preferred production shape because the UI can fetch same-origin `/api/crypto/events` without exposing secrets or provider endpoints to browser code.
+
+### Option B: GitHub Pages UI + Explicit Worker Endpoint
+
+GitHub Pages can host the static UI, but it cannot serve the same-origin `/api/crypto/events` Worker route. Keep Live Mode OFF until a deployed Worker feed is reachable over HTTPS, then configure the explicit Worker feed URL:
+
+```html
+<script>
+  window.CryptoPhotonicWorkerFeedEndpoint = 'https://cryptophotonic-runtime.<account>.workers.dev/api/crypto/events';
+</script>
+```
+
+or:
+
+```html
+<main id="crypto-photonic-view" data-worker-feed-endpoint="https://cryptophotonic-runtime.<account>.workers.dev/api/crypto/events">
+```
+
+The configured external endpoint must use HTTPS and must end at `/api/crypto/events` with no credentials, query string, or fragment. The Worker must also return CORS headers that allow the GitHub Pages origin to read `GET /api/crypto/events`. Do not configure provider URLs, Helius URLs, Jupiter URLs, private RPC URLs, API keys, auth headers, or non-HTTPS local URLs in the static UI.
+
+### Option C: Later Static Host Migration
+
+A later phase can move the static CryptoPhotonic UI to Cloudflare Pages or Vercel and route `/api/crypto/events` to the Worker/API runtime from the same site. Preserve the same browser contract: the UI reads sanitized feed events only, while the Worker owns webhook/provider secrets, bounded ingestion, dedupe, storage, and all server-side provider interaction.
+
+Generated fixture fallback remains safe in all options. If the Worker is unavailable, misconfigured, or not yet deployed, CryptoPhotonic stays in fixture/sample mode and Live Mode remains unavailable or OFF.
 
 ## Future Secrets
 

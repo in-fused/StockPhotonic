@@ -6,3 +6,7 @@ data/candidates/plans/.sec_pipeline_*
 data/crypto/cache/
 data/crypto/raw/
 data/crypto/provider-cache/
+.wrangler/
+worker/crypto-runtime/.dev.vars
+worker/crypto-runtime/node_modules/
+worker/crypto-runtime/.wrangler/

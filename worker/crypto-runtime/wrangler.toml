@@ -1,0 +1,8 @@
+name = "cryptophotonic-runtime"
+main = "src/index.js"
+compatibility_date = "2026-05-06"
+workers_dev = true
+
+[vars]
+CRYPTO_RUNTIME_MODE = "mvp-dev"
+LIVE_PROVIDER_FETCHING = "false"

@@ -179,7 +179,7 @@ curl http://127.0.0.1:8787/health
 curl http://127.0.0.1:8787/api/crypto/events
 ```
 
-Then open the CryptoPhotonic UI and turn Live Mode ON only after the feed endpoint is reachable. If the UI is not hosted behind the same local origin as the Worker, configure a safe endpoint for the browser test by using the same-origin `/api/crypto/events` path through a local proxy/rewrite, or by pointing at an explicit deployed HTTPS Worker URL. The browser guard rejects non-HTTPS external URLs such as `http://127.0.0.1:8787/api/crypto/events`, so local cross-origin tests should use curl, a same-origin proxy, or an HTTPS Worker endpoint.
+Then open the CryptoPhotonic UI and turn Live Mode ON only after the feed endpoint is reachable. If the UI is not hosted behind the same local origin as the Worker, configure safe endpoints for the browser test by using same-origin `/api/crypto/events` and `/api/crypto/wallet-activity` paths through a local proxy/rewrite, or by pointing at explicit deployed HTTPS Worker URLs. The browser guard rejects non-HTTPS external URLs such as `http://127.0.0.1:8787/api/crypto/events`, so local cross-origin tests should use curl, a same-origin proxy, or HTTPS Worker endpoints.
 
 ## Deployment Checklist
 
@@ -305,7 +305,7 @@ Use this exact order for the first real smoke test:
 6. Configure the Helius webhook manually in the Helius dashboard with the deployed `/webhooks/helius` URL, enhanced webhook type, the same one wallet, and the same auth header value.
 7. Send or observe one transaction for that wallet.
 8. Confirm the Worker feed receives one sanitized event at `/api/crypto/events`.
-9. Configure the frontend Worker endpoint as same-origin `/api/crypto/events` or as the deployed HTTPS Worker URL.
+9. Configure the frontend Worker endpoints as same-origin `/api/crypto/events` and `/api/crypto/wallet-activity` paths, or as deployed HTTPS Worker URLs.
 10. Turn CryptoPhotonic Live Mode ON only after the feed endpoint is reachable.
 
 ## Deployed Smoke Test Commands
@@ -339,7 +339,8 @@ Do not deploy this as a broad production live-data endpoint. The current Helius 
 - `403 webhook_event_out_of_scope`: the webhook payload did not include any wallet from `CRYPTO_HELIUS_ALLOWED_WALLETS`. Start with the default controlled placeholder locally, then use one real controlled wallet only for the first live test.
 - `503 webhook_not_configured`: `HELIUS_WEBHOOK_AUTH_HEADER` is missing in a non-local deployment. Set it with `wrangler secret put HELIUS_WEBHOOK_AUTH_HEADER` and redeploy if needed.
 - Worker feed unavailable in UI: check the Worker URL directly with `curl.exe "$WorkerBaseUrl/api/crypto/events"` before turning Live Mode ON.
-- GitHub Pages same-origin `/api/crypto/events` not available: GitHub Pages cannot serve the Worker route. Use an explicit deployed HTTPS Worker endpoint or move to a host that can route `/api/crypto/events` to the Worker.
+- Worker wallet endpoint unavailable in UI: check the Worker URL directly with `curl.exe "$WorkerBaseUrl/api/crypto/wallet-activity?wallet=<PUBLIC_WALLET>&limit=10"` before using Track Wallet.
+- GitHub Pages or static-host same-origin `/api/crypto/events` and `/api/crypto/wallet-activity` not available: static hosts cannot serve those Worker routes. Use explicit deployed HTTPS Worker endpoints or move to a host that can route both paths to the Worker.
 - CORS issue: direct browser reads from GitHub Pages require the Worker to return CORS headers that allow the page origin. Confirm curl succeeds first, then inspect the browser console.
 - KV not configured or memory fallback: without `CRYPTO_EVENTS_KV`, events are held in runtime memory and may disappear across isolates or restarts. Configure KV before relying on deployed feed persistence.
 - Duplicate events: repeated signatures are deduped. A second POST of the same sample payload can return duplicate metadata and may not add a new feed item.
@@ -364,13 +365,14 @@ Use the default frontend configuration:
 
 This is the preferred production shape because the UI can fetch same-origin `/api/crypto/events` without exposing secrets or provider endpoints to browser code.
 
-### Option B: GitHub Pages UI + Explicit Worker Endpoint
+### Option B: Static UI + Explicit Worker Endpoints
 
-GitHub Pages can host the static UI, but it cannot serve the same-origin `/api/crypto/events` Worker route. Keep Live Mode OFF until a deployed Worker feed is reachable over HTTPS, then configure the explicit Worker feed URL:
+GitHub Pages, Vercel static output, and other static hosts can host the UI, but they cannot serve same-origin Worker routes unless a rewrite/proxy is configured. Keep Live Mode OFF until the deployed Worker feed is reachable over HTTPS, then configure explicit Worker feed and wallet lookup URLs permanently in `index.html` or deployment-injected config:
 
 ```html
 <script>
   window.CryptoPhotonicWorkerFeedEndpoint = 'https://cryptophotonic-runtime.<account>.workers.dev/api/crypto/events';
+  window.CryptoPhotonicWorkerWalletActivityEndpoint = 'https://cryptophotonic-runtime.<account>.workers.dev/api/crypto/wallet-activity';
 </script>
 ```
 
@@ -380,11 +382,13 @@ or:
 <main id="crypto-photonic-view" data-worker-feed-endpoint="https://cryptophotonic-runtime.<account>.workers.dev/api/crypto/events">
 ```
 
-The configured external endpoint must use HTTPS and must end at `/api/crypto/events` with no credentials, query string, or fragment. The Worker must also return CORS headers that allow the GitHub Pages origin to read `GET /api/crypto/events`. Do not configure provider URLs, Helius URLs, Jupiter URLs, private RPC URLs, API keys, auth headers, or non-HTTPS local URLs in the static UI.
+The configured external feed endpoint must use HTTPS and must end at `/api/crypto/events` with no credentials, query string, or fragment. The configured external wallet lookup endpoint must use HTTPS and must end at `/api/crypto/wallet-activity` with no credentials, query string, or fragment. Console commands such as `window.CryptoPhotonicWorkerFeedEndpoint = '...'` are useful only for temporary manual testing and reset on refresh; deployed UI configuration should live in `index.html` or deployment config. The Worker must also return CORS headers that allow the static UI origin to read `GET /api/crypto/events` and `GET /api/crypto/wallet-activity`. Do not configure provider URLs, Helius URLs, Jupiter URLs, private RPC URLs, API keys, auth headers, or non-HTTPS local URLs in the static UI.
+
+The browser still calls only the Worker endpoints. It never calls Helius directly; the provider key stays in the Worker environment and wallet lookup remains one bounded server-side Worker action per user request.
 
 ### Option C: Later Static Host Migration
 
-A later phase can move the static CryptoPhotonic UI to Cloudflare Pages or Vercel and route `/api/crypto/events` to the Worker/API runtime from the same site. Preserve the same browser contract: the UI reads sanitized feed events only, while the Worker owns webhook/provider secrets, bounded ingestion, dedupe, storage, and all server-side provider interaction.
+A later phase can move the static CryptoPhotonic UI to Cloudflare Pages or Vercel and route `/api/crypto/events` and `/api/crypto/wallet-activity` to the Worker/API runtime from the same site. Preserve the same browser contract: the UI reads sanitized Worker events and wallet lookup results only, while the Worker owns webhook/provider secrets, bounded ingestion, dedupe, storage, and all server-side provider interaction.
 
 Generated fixture fallback remains safe in all options. If the Worker is unavailable, misconfigured, or not yet deployed, CryptoPhotonic stays in fixture/sample mode and Live Mode remains unavailable or OFF.
 

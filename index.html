@@ -1490,6 +1490,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/crypto/core.js"></script>
     <script src="js/crypto/graph.js"></script>
     <script src="js/crypto/layout.js"></script>
+    <script>
+        window.CryptoPhotonicWorkerFeedEndpoint =
+            "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/events";
+        window.CryptoPhotonicWorkerWalletActivityEndpoint =
+            "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/wallet-activity";
+    </script>
     <script src="js/crypto/ui.js"></script>
     <script>
         if (!window.StockPhotonicConfig) {

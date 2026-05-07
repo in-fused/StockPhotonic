@@ -354,25 +354,26 @@
             state.root?.dataset?.workerFeedEndpoint
         ].find(value => typeof value === 'string' && value.trim());
 
-        const rawEndpoint = configuredValue ? configuredValue.trim() : DEFAULT_WORKER_FEED_ENDPOINT;
-        const fallback = { endpoint: DEFAULT_WORKER_FEED_ENDPOINT, valid: false };
+        return resolveWorkerEndpoint({
+            configuredValue,
+            defaultEndpoint: DEFAULT_WORKER_FEED_ENDPOINT
+        });
+    }
 
+    function resolveWorkerEndpoint({ configuredValue, defaultEndpoint }) {
+        const hasConfiguredValue = typeof configuredValue === 'string' && configuredValue.trim();
+        const rawEndpoint = hasConfiguredValue ? configuredValue.trim() : defaultEndpoint;
+        const fallback = { endpoint: defaultEndpoint, valid: false };
         try {
-            if (rawEndpoint.startsWith('/')) {
-                const parsed = new URL(rawEndpoint, window.location.origin);
-                if (isSafeWorkerFeedUrl(parsed, { allowExternal: false })) {
-                    return { endpoint: parsed.pathname, valid: true };
-                }
-                return fallback;
-            }
-
-            const parsed = new URL(rawEndpoint);
-            if (isSafeWorkerFeedUrl(parsed, { allowExternal: false })) {
-                return { endpoint: parsed.pathname, valid: true };
-            }
-
-            if (configuredValue && isSafeWorkerFeedUrl(parsed, { allowExternal: true })) {
-                return { endpoint: parsed.href, valid: true };
+            const parsed = parseWorkerEndpointUrl(rawEndpoint);
+            if (isSafeWorkerUrl(parsed, {
+                expectedPath: defaultEndpoint,
+                allowExternal: Boolean(hasConfiguredValue)
+            })) {
+                return {
+                    endpoint: parsed.origin === window.location.origin ? parsed.pathname : parsed.href,
+                    valid: true
+                };
             }
         } catch (error) {
             return fallback;
@@ -381,8 +382,21 @@
         return fallback;
     }
 
-    function isSafeWorkerFeedUrl(parsed, options = {}) {
-        if (!parsed || parsed.pathname !== DEFAULT_WORKER_FEED_ENDPOINT) return false;
+    function parseWorkerEndpointUrl(rawEndpoint) {
+        const endpoint = String(rawEndpoint || '').trim();
+        if (!endpoint) throw new Error('Worker endpoint missing');
+        if (endpoint.includes('\\')) throw new Error('Worker endpoint backslashes rejected');
+        if (endpoint.startsWith('//')) throw new Error('Protocol-relative Worker endpoint rejected');
+        if (/^[a-z][a-z0-9+.-]*:/i.test(endpoint)) return new URL(endpoint);
+
+        const path = endpoint.startsWith('/')
+            ? endpoint
+            : `/${endpoint.replace(/^\.?\//, '')}`;
+        return new URL(path, window.location.origin);
+    }
+
+    function isSafeWorkerUrl(parsed, options = {}) {
+        if (!parsed || !parsed.pathname.endsWith(options.expectedPath)) return false;
         if (parsed.search || parsed.hash || parsed.username || parsed.password) return false;
         if (parsed.origin === window.location.origin) return true;
         return Boolean(options.allowExternal) && parsed.protocol === 'https:';
@@ -434,7 +448,11 @@
                 cache: 'no-store',
                 headers: { accept: 'application/json' }
             });
-            if (!response.ok) throw new Error(`Worker feed returned ${response.status}`);
+            if (!response.ok) {
+                throw new Error(response.status === 404
+                    ? 'Worker feed endpoint not configured for this host.'
+                    : `Worker feed returned ${response.status}`);
+            }
 
             const payload = await response.json();
             const events = Array.isArray(payload?.events) ? payload.events : [];
@@ -453,7 +471,7 @@
             return result;
         } catch (error) {
             state.live.workerAvailable = false;
-            state.live.lastError = 'Worker feed unavailable';
+            state.live.lastError = error?.message || 'Worker feed unavailable';
             state.live.lastPollAt = Date.now();
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             return null;
@@ -1212,7 +1230,9 @@
             });
             const payload = await response.json().catch(() => null);
             if (!response.ok) {
-                throw new Error(payload?.message || `Worker wallet lookup returned ${response.status}`);
+                throw new Error(response.status === 404
+                    ? 'Worker wallet endpoint not configured for this host.'
+                    : payload?.message || `Worker wallet lookup returned ${response.status}`);
             }
 
             const events = Array.isArray(payload?.events) ? payload.events : [];
@@ -1235,14 +1255,30 @@
     }
 
     function resolveWalletLookupEndpoint() {
+        const configuredValue = [
+            window.CryptoPhotonicWorkerWalletActivityEndpoint,
+            state.root?.dataset?.workerWalletActivityEndpoint
+        ].find(value => typeof value === 'string' && value.trim());
+        if (configuredValue) {
+            const configuredEndpoint = resolveWorkerEndpoint({
+                configuredValue,
+                defaultEndpoint: DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT
+            });
+            return configuredEndpoint.valid ? configuredEndpoint.endpoint : '';
+        }
+
         if (!state.live.endpointValid || !state.live.endpoint) return '';
 
         try {
             const parsed = state.live.endpoint.startsWith('/')
                 ? new URL(state.live.endpoint, window.location.origin)
                 : new URL(state.live.endpoint);
-            if (parsed.pathname !== DEFAULT_WORKER_FEED_ENDPOINT) return '';
-            parsed.pathname = DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT;
+            if (!isSafeWorkerUrl(parsed, {
+                expectedPath: DEFAULT_WORKER_FEED_ENDPOINT,
+                allowExternal: true
+            })) return '';
+            parsed.pathname = parsed.pathname.slice(0, -DEFAULT_WORKER_FEED_ENDPOINT.length)
+                + DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT;
             parsed.search = '';
             parsed.hash = '';
             if (parsed.origin === window.location.origin) return parsed.pathname;

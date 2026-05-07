@@ -118,18 +118,23 @@ cd worker/crypto-runtime
 wrangler dev
 ```
 
-Example local checks:
+PowerShell-friendly local checks:
 
-```sh
-curl http://127.0.0.1:8787/health
-curl http://127.0.0.1:8787/api/crypto/events
-curl "http://127.0.0.1:8787/api/crypto/events?limit=1"
-curl "http://127.0.0.1:8787/api/crypto/events?wallet=SyntheticWalletLocal"
-curl "http://127.0.0.1:8787/api/crypto/events?token=CPHOTON&transaction_type=token_transfer"
-curl -X POST http://127.0.0.1:8787/api/crypto/test-event \
-  -H "content-type: application/json" \
-  -d '{"chain":"solana-dev-synthetic","signature":"local_synthetic_signature","transaction_type":"token_transfer","wallets":[{"address":"SyntheticWalletLocal","role":"observer"}],"tokens":[{"symbol":"CPHOTON","mint":"SyntheticMintLocal","decimals":6}],"transfers":[]}'
-curl -X POST http://127.0.0.1:8787/api/crypto/dev/clear-events
+```powershell
+cd worker/crypto-runtime
+wrangler dev
+curl.exe http://127.0.0.1:8787/health
+curl.exe http://127.0.0.1:8787/api/crypto/events
+curl.exe "http://127.0.0.1:8787/api/crypto/events?limit=1"
+curl.exe "http://127.0.0.1:8787/api/crypto/events?wallet=CryptoPhotonicControlledWallet1111111111111111111"
+curl.exe "http://127.0.0.1:8787/api/crypto/events?token=CPHOTON&transaction_type=token_transfer"
+curl.exe -X POST http://127.0.0.1:8787/api/crypto/test-event `
+  -H "content-type: application/json" `
+  --data-binary "@test-payloads/test-event.sample.json"
+curl.exe -X POST http://127.0.0.1:8787/webhooks/helius `
+  -H "content-type: application/json" `
+  --data-binary "@test-payloads/helius-webhook.sample.json"
+curl.exe -X POST http://127.0.0.1:8787/api/crypto/dev/clear-events
 ```
 
 `POST /api/crypto/test-event` also accepts a bounded array of 1 to 10 safe event objects for local testing.
@@ -145,14 +150,160 @@ curl http://127.0.0.1:8787/api/crypto/events
 
 Then open the CryptoPhotonic UI and turn Live Mode ON only after the feed endpoint is reachable. If the UI is not hosted behind the same local origin as the Worker, configure a safe endpoint for the browser test by using the same-origin `/api/crypto/events` path through a local proxy/rewrite, or by pointing at an explicit deployed HTTPS Worker URL. The browser guard rejects non-HTTPS external URLs such as `http://127.0.0.1:8787/api/crypto/events`, so local cross-origin tests should use curl, a same-origin proxy, or an HTTPS Worker endpoint.
 
-## Deploy Placeholder
+## Deployment Checklist
 
-```sh
+Use this checklist for the first controlled Worker deployment and smoke test. Keep the first run to one controlled wallet. Do not add real API keys, webhook secrets, provider URLs, signing flows, swap execution, or broad wallet input to source control.
+
+1. Install Wrangler:
+
+```powershell
+npm install -g wrangler
+```
+
+2. Log in to Cloudflare:
+
+```powershell
+wrangler login
+```
+
+3. Create or select the Worker in `wrangler.toml`:
+
+```toml
+name = "cryptophotonic-runtime"
+main = "src/index.js"
+compatibility_date = "2026-05-06"
+workers_dev = true
+
+[vars]
+CRYPTO_RUNTIME_MODE = "mvp-dev"
+LIVE_PROVIDER_FETCHING = "false"
+ENVIRONMENT = "production"
+CRYPTO_HELIUS_ALLOWED_WALLETS = "CryptoPhotonicControlledWallet1111111111111111111"
+```
+
+4. If using KV, create namespaces and put only placeholder IDs in `wrangler.toml` until the real Cloudflare IDs are known locally:
+
+```powershell
+cd worker/crypto-runtime
+wrangler kv namespace create CRYPTO_EVENTS_KV
+wrangler kv namespace create CRYPTO_EVENTS_KV --preview
+```
+
+```toml
+[[kv_namespaces]]
+binding = "CRYPTO_EVENTS_KV"
+id = "replace-with-kv-namespace-id"
+preview_id = "replace-with-preview-kv-namespace-id"
+```
+
+5. Set deployment environment and watchlist values without broadening scope:
+
+```toml
+[vars]
+ENVIRONMENT = "production"
+CRYPTO_HELIUS_ALLOWED_WALLETS = "CryptoPhotonicControlledWallet1111111111111111111"
+```
+
+6. Set the Helius webhook authorization header as a Wrangler secret. Use a real value only at the prompt; do not put it in this README, `wrangler.toml`, `.dev.vars`, browser code, or static assets.
+
+```powershell
+cd worker/crypto-runtime
+wrangler secret put HELIUS_WEBHOOK_AUTH_HEADER
+```
+
+7. Deploy:
+
+```powershell
 cd worker/crypto-runtime
 wrangler deploy
 ```
 
+8. Test `/health`:
+
+```powershell
+$WorkerBaseUrl = "https://cryptophotonic-runtime.<account>.workers.dev"
+curl.exe "$WorkerBaseUrl/health"
+```
+
+9. Test `/api/crypto/events`:
+
+```powershell
+curl.exe "$WorkerBaseUrl/api/crypto/events"
+```
+
+10. Post a synthetic test event:
+
+```powershell
+curl.exe -X POST "$WorkerBaseUrl/api/crypto/test-event" `
+  -H "content-type: application/json" `
+  --data-binary "@test-payloads/test-event.sample.json"
+```
+
+11. Post the synthetic Helius webhook sample with a placeholder authorization header. Replace the placeholder only in your local shell, never in source:
+
+```powershell
+$WebhookAuthHeader = "replace-with-local-webhook-auth-header"
+curl.exe -X POST "$WorkerBaseUrl/webhooks/helius" `
+  -H "content-type: application/json" `
+  -H "Authorization: $WebhookAuthHeader" `
+  --data-binary "@test-payloads/helius-webhook.sample.json"
+```
+
+12. Verify the event appears in the sanitized feed:
+
+```powershell
+curl.exe "$WorkerBaseUrl/api/crypto/events?wallet=CryptoPhotonicControlledWallet1111111111111111111&limit=5"
+```
+
+## First Live Test Sequence
+
+Use this exact order for the first real smoke test:
+
+1. Deploy the Worker with `ENVIRONMENT = "production"` and one controlled wallet in `CRYPTO_HELIUS_ALLOWED_WALLETS`.
+2. Confirm `GET /health` returns runtime status and no secrets.
+3. Confirm `GET /api/crypto/events` returns a sanitized feed response.
+4. Add one allowed wallet only. Keep the first live test to that single controlled wallet.
+5. Set `HELIUS_WEBHOOK_AUTH_HEADER` with `wrangler secret put HELIUS_WEBHOOK_AUTH_HEADER`.
+6. Configure the Helius webhook manually in the Helius dashboard with the deployed `/webhooks/helius` URL, enhanced webhook type, the same one wallet, and the same auth header value.
+7. Send or observe one transaction for that wallet.
+8. Confirm the Worker feed receives one sanitized event at `/api/crypto/events`.
+9. Configure the frontend Worker endpoint as same-origin `/api/crypto/events` or as the deployed HTTPS Worker URL.
+10. Turn CryptoPhotonic Live Mode ON only after the feed endpoint is reachable.
+
+## Deployed Smoke Test Commands
+
+Run these from `worker/crypto-runtime` in Windows PowerShell after deployment:
+
+```powershell
+cd worker/crypto-runtime
+wrangler deploy
+$WorkerBaseUrl = "https://cryptophotonic-runtime.<account>.workers.dev"
+$WebhookAuthHeader = "replace-with-local-webhook-auth-header"
+
+curl.exe "$WorkerBaseUrl/health"
+curl.exe "$WorkerBaseUrl/api/crypto/events"
+curl.exe -X POST "$WorkerBaseUrl/api/crypto/test-event" `
+  -H "content-type: application/json" `
+  --data-binary "@test-payloads/test-event.sample.json"
+curl.exe -X POST "$WorkerBaseUrl/webhooks/helius" `
+  -H "content-type: application/json" `
+  -H "Authorization: $WebhookAuthHeader" `
+  --data-binary "@test-payloads/helius-webhook.sample.json"
+curl.exe "$WorkerBaseUrl/api/crypto/events?wallet=CryptoPhotonicControlledWallet1111111111111111111&limit=5"
+```
+
 Do not deploy this as a broad production live-data endpoint. The current Helius path is for a small controlled first-data phase only and requires webhook authorization, the 1 to 3 wallet allowlist, bounded payloads, dedupe, and sanitized storage.
+
+## Deployment Troubleshooting
+
+- `401 invalid_webhook_auth`: the Helius dashboard `authHeader` value does not exactly match `HELIUS_WEBHOOK_AUTH_HEADER`, or the manual smoke test omitted the `Authorization` header.
+- `403 webhook_event_out_of_scope`: the webhook payload did not include any wallet from `CRYPTO_HELIUS_ALLOWED_WALLETS`. Start with the default controlled placeholder locally, then use one real controlled wallet only for the first live test.
+- `503 webhook_not_configured`: `HELIUS_WEBHOOK_AUTH_HEADER` is missing in a non-local deployment. Set it with `wrangler secret put HELIUS_WEBHOOK_AUTH_HEADER` and redeploy if needed.
+- Worker feed unavailable in UI: check the Worker URL directly with `curl.exe "$WorkerBaseUrl/api/crypto/events"` before turning Live Mode ON.
+- GitHub Pages same-origin `/api/crypto/events` not available: GitHub Pages cannot serve the Worker route. Use an explicit deployed HTTPS Worker endpoint or move to a host that can route `/api/crypto/events` to the Worker.
+- CORS issue: direct browser reads from GitHub Pages require the Worker to return CORS headers that allow the page origin. Confirm curl succeeds first, then inspect the browser console.
+- KV not configured or memory fallback: without `CRYPTO_EVENTS_KV`, events are held in runtime memory and may disappear across isolates or restarts. Configure KV before relying on deployed feed persistence.
+- Duplicate events: repeated signatures are deduped. A second POST of the same sample payload can return duplicate metadata and may not add a new feed item.
 
 ## Frontend Feed Deployment Options
 

@@ -1,0 +1,36 @@
+{
+  "id": "dev-smoke-test-event-001",
+  "chain": "solana-dev-synthetic",
+  "signature": "synthetic_test_event_signature_001",
+  "timestamp": "2026-05-06T12:00:00.000Z",
+  "transaction_type": "token_transfer",
+  "source": "synthetic-dev-fixture",
+  "wallets": [
+    {
+      "address": "CryptoPhotonicControlledWallet1111111111111111111",
+      "role": "observer"
+    },
+    {
+      "address": "SyntheticCounterpartyWallet111111111111111111",
+      "role": "counterparty"
+    }
+  ],
+  "tokens": [
+    {
+      "symbol": "CPHOTON",
+      "mint": "SyntheticCryptoPhotonicMint111111111111111",
+      "decimals": 6
+    }
+  ],
+  "transfers": [
+    {
+      "token_symbol": "CPHOTON",
+      "amount": "1.25",
+      "from": "SyntheticCounterpartyWallet111111111111111111",
+      "to": "CryptoPhotonicControlledWallet1111111111111111111"
+    }
+  ],
+  "metadata": {
+    "fixture": true
+  }
+}

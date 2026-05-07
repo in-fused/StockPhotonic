@@ -1,0 +1,37 @@
+[
+  {
+    "signature": "synthetic_helius_signature_001",
+    "timestamp": 1778068800,
+    "type": "TRANSFER",
+    "source": "SYSTEM_PROGRAM",
+    "fee": 5000,
+    "feePayer": "CryptoPhotonicControlledWallet1111111111111111111",
+    "accountData": [
+      {
+        "account": "CryptoPhotonicControlledWallet1111111111111111111",
+        "nativeBalanceChange": -1000000
+      },
+      {
+        "account": "SyntheticCounterpartyWallet111111111111111111",
+        "nativeBalanceChange": 1000000
+      }
+    ],
+    "nativeTransfers": [
+      {
+        "fromUserAccount": "CryptoPhotonicControlledWallet1111111111111111111",
+        "toUserAccount": "SyntheticCounterpartyWallet111111111111111111",
+        "amount": 1000000
+      }
+    ],
+    "tokenTransfers": [
+      {
+        "fromUserAccount": "SyntheticCounterpartyWallet111111111111111111",
+        "toUserAccount": "CryptoPhotonicControlledWallet1111111111111111111",
+        "mint": "SyntheticCryptoPhotonicMint111111111111111",
+        "tokenAmount": 1.25,
+        "tokenSymbol": "CPHOTON",
+        "decimals": 6
+      }
+    ]
+  }
+]

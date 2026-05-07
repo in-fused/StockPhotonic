@@ -40,6 +40,8 @@
         datasetSource: null,
         datasetSourceKind: 'built_in',
         dataset: null,
+        dataMode: 'generated_fixture',
+        modeVersion: 0,
         generatedManifest: null,
         generatedFixtures: [],
         activeGeneratedFixture: null,
@@ -68,7 +70,9 @@
             lastLoadedAt: 0,
             lastError: '',
             eventCount: 0,
-            mergedEventCount: 0
+            mergedEventCount: 0,
+            graphDepth: 1,
+            lastRawDataset: null
         },
         filters: {
             transactionType: 'all',
@@ -123,14 +127,35 @@
     const GENERATED_FIXTURE_DIR = 'data/crypto/generated/';
     const WORKER_FEED_LIMIT = 50;
     const LIVE_POLL_MS = { min: 3000, max: 5000, default: 4000 };
+    const DATA_MODES = Object.freeze({
+        GENERATED: 'generated_fixture',
+        WALLET: 'wallet_lookup',
+        LIVE: 'live_feed'
+    });
     const SOURCE_LABELS = {
         generated: 'Generated Fixture',
-        solana_sample: 'Sample',
-        legacy_sample: 'Sample',
-        built_in: 'Sample',
-        worker_feed: 'Worker Feed',
-        worker_wallet_lookup: 'Worker Wallet Lookup'
+        solana_sample: 'Generated Fixture',
+        legacy_sample: 'Generated Fixture',
+        built_in: 'Generated Fixture',
+        worker_feed: 'Worker Feed (Realtime)',
+        worker_wallet_lookup: 'Wallet Lookup (Live Pull)'
     };
+    const NOISE_ADDRESS_PREFIXES = [
+        'computebudget111111111111111111111111111111',
+        'tokenkegqfezyinwajbnbgkpfxcwubvf9ss623vq5da',
+        'tokenzqdbnjbkpecb7cb21qvwxqvfkkcwfbzrg',
+        'sysvar',
+        '11111111111111111111111111111111',
+        'addresslookuptab1e1111111111111111111111111',
+        'bpfloader',
+        'bpfloaderupgradeab1e11111111111111111111111',
+        'vot111111111111111111111111111111111111111',
+        'vote111111111111111111111111111111111111111',
+        'stake11111111111111111111111111111111111111',
+        'atokengpvbdgvxr1bv2hvzbswhbnequgkycwvdsxf',
+        'memosq4gqxgabhysygxbdlqnysncmyzry2k69ydt4c',
+        'metaqbxxuerdq28cj1rbawkyqm3ybzjb6a8bt518x1s'
+    ];
 
     async function initialize(options = {}) {
         if (state.initialized) return state.graph;
@@ -403,6 +428,16 @@
     }
 
     function setLiveModeEnabled(enabled) {
+        if (enabled) {
+            switchDataMode(DATA_MODES.LIVE);
+            return state.live;
+        }
+
+        if (state.dataMode === DATA_MODES.LIVE) {
+            switchDataMode(DATA_MODES.GENERATED);
+            return state.live;
+        }
+
         if (enabled && !state.live.endpointValid) {
             state.live.enabled = false;
             state.live.workerAvailable = false;
@@ -425,7 +460,7 @@
 
     function updateLivePolling() {
         stopLivePolling();
-        if (!state.live.enabled || !state.live.endpointValid || !state.active || !state.initialized) return;
+        if (state.dataMode !== DATA_MODES.LIVE || !state.live.enabled || !state.live.endpointValid || !state.active || !state.initialized) return;
 
         state.live.pollTimerId = window.setInterval(() => {
             pollWorkerFeed({ animateNew: true });
@@ -439,9 +474,10 @@
     }
 
     async function pollWorkerFeed(options = {}) {
-        if (!state.live.enabled || !state.live.endpointValid || state.live.inFlight) return null;
+        if (state.dataMode !== DATA_MODES.LIVE || !state.live.enabled || !state.live.endpointValid || state.live.inFlight) return null;
 
         state.live.inFlight = true;
+        const requestModeVersion = state.modeVersion;
         try {
             const separator = state.live.endpoint.includes('?') ? '&' : '?';
             const response = await fetch(`${state.live.endpoint}${separator}limit=${WORKER_FEED_LIMIT}`, {
@@ -456,6 +492,7 @@
 
             const payload = await response.json();
             const events = Array.isArray(payload?.events) ? payload.events : [];
+            if (state.dataMode !== DATA_MODES.LIVE || requestModeVersion !== state.modeVersion) return null;
             state.live.workerAvailable = true;
             state.live.lastError = '';
             state.live.lastPollAt = Date.now();
@@ -470,13 +507,15 @@
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             return result;
         } catch (error) {
-            state.live.workerAvailable = false;
-            state.live.lastError = error?.message || 'Worker feed unavailable';
-            state.live.lastPollAt = Date.now();
-            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            if (requestModeVersion === state.modeVersion && state.dataMode === DATA_MODES.LIVE) {
+                state.live.workerAvailable = false;
+                state.live.lastError = error?.message || 'Worker feed unavailable';
+                state.live.lastPollAt = Date.now();
+                renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            }
             return null;
         } finally {
-            state.live.inFlight = false;
+            if (requestModeVersion === state.modeVersion || state.dataMode !== DATA_MODES.LIVE) state.live.inFlight = false;
         }
     }
 
@@ -508,10 +547,11 @@
         };
     }
 
-    function convertWorkerEventsToDataset(events = []) {
+    function convertWorkerEventsToDataset(events = [], options = {}) {
         const wallets = [];
         const tokens = [];
         const transactions = [];
+        const trackedWallet = core.normalizeAddress(options.trackedWallet || '');
 
         events.forEach(event => {
             const eventKey = getWorkerEventDedupeKey(event);
@@ -577,7 +617,7 @@
                     source_program: event.source || event.ingestion_source || 'secure_runtime_feed',
                     source_label: core.formatSourceLabel(event.source || event.ingestion_source || 'Worker Feed'),
                     direction: '',
-                    tracked_wallet_role: '',
+                    tracked_wallet_role: getTrackedWalletRole(trackedWallet, sourceWallet, destinationWallet),
                     metadata: {
                         dedupe_key: eventKey,
                         live_transfer_dedupe_key: transferDedupeKey,
@@ -585,7 +625,8 @@
                         ingestion_source: event.ingestion_source || '',
                         received_at: event.received_at || '',
                         source_format: 'worker_feed_event',
-                        live_feed: true,
+                        live_feed: options.sourceKind !== 'wallet_lookup',
+                        wallet_lookup: options.sourceKind === 'wallet_lookup',
                         sanitized: true,
                         production_meaning: false,
                         live_blockchain_fetching: false,
@@ -597,11 +638,16 @@
 
         return {
             metadata: {
-                name: 'CryptoPhotonic Worker Feed Merge',
+                name: options.sourceKind === 'wallet_lookup'
+                    ? 'CryptoPhotonic Wallet Lookup'
+                    : 'CryptoPhotonic Worker Feed Merge',
                 environment: 'secure_runtime_feed',
                 chain: 'solana',
                 adapter: 'worker_event_feed',
-                source: 'secure_runtime_feed',
+                source: options.sourceKind === 'wallet_lookup' ? 'wallet_lookup_live_pull' : 'secure_runtime_feed',
+                wallet: trackedWallet,
+                wallet_lookup_mode: options.sourceKind === 'wallet_lookup',
+                wallet_lookup_tracked_wallet: trackedWallet,
                 production_meaning: false,
                 live_blockchain_fetching: false,
                 sanitized: true
@@ -754,6 +800,9 @@
     }
 
     function resetLiveMergeState() {
+        stopLivePolling();
+        state.live.enabled = false;
+        state.live.inFlight = false;
         state.live.workerAvailable = false;
         state.live.lastError = '';
         state.live.eventCount = 0;
@@ -775,19 +824,26 @@
         state.walletLookup.lastError = '';
         state.walletLookup.eventCount = 0;
         state.walletLookup.mergedEventCount = 0;
+        state.walletLookup.lastRawDataset = null;
     }
 
     function getCurrentSourceLabel() {
-        if (state.walletLookup.eventCount > 0 || state.walletLookup.mergedEventCount > 0) {
+        if (state.dataMode === DATA_MODES.WALLET) {
             return SOURCE_LABELS.worker_wallet_lookup;
         }
-        if (state.live.workerAvailable || state.live.mergedEventCount > 0) {
+        if (state.dataMode === DATA_MODES.LIVE) {
             return SOURCE_LABELS.worker_feed;
         }
         return SOURCE_LABELS[state.datasetSourceKind] || SOURCE_LABELS.built_in;
     }
 
     function getSourceBoundaryCopy() {
+        if (state.dataMode === DATA_MODES.WALLET) {
+            return 'Wallet lookup replaces the active graph with a filtered one-hop view from the secure Worker.';
+        }
+        if (state.dataMode === DATA_MODES.LIVE) {
+            return 'Live Feed shows only sanitized Worker events. No provider keys or browser provider calls are used.';
+        }
         if (!state.live.endpointValid) {
             return 'Generated fixtures are local files. Track Wallet asks the secure Worker to fetch recent activity.';
         }
@@ -972,8 +1028,9 @@
                         <div class="text-white/38">DATA SOURCE</div>
                         <div class="${sourceTone}">Source: ${escapeHtml(sourceLabel)}</div>
                     </div>
-                    ${selector}
+                    ${renderDataModeSwitch()}
                 </div>
+                ${selector}
                 <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-white/56">
                     <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Fixture Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
                     <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
@@ -981,6 +1038,22 @@
                 </div>
                 <div class="mt-2 text-yellow-100/76">${escapeHtml(getSourceBoundaryCopy())}</div>
                 ${renderWalletLookupControls()}
+            </div>
+        `;
+    }
+
+    function renderDataModeSwitch() {
+        const modes = [
+            [DATA_MODES.GENERATED, 'Generated Fixture'],
+            [DATA_MODES.WALLET, 'Wallet Lookup'],
+            [DATA_MODES.LIVE, 'Live Feed']
+        ];
+        return `
+            <div class="flex flex-wrap gap-1.5" role="group" aria-label="CryptoPhotonic data mode">
+                ${modes.map(([mode, label]) => {
+                    const active = state.dataMode === mode;
+                    return `<button type="button" data-crypto-mode="${escapeAttr(mode)}" aria-pressed="${active ? 'true' : 'false'}" class="rounded-full border ${active ? 'border-emerald-200/40 bg-emerald-300/16 text-emerald-50/90' : 'border-cyan-200/15 bg-slate-950/45 text-cyan-50/70'} px-2.5 py-1 hover:border-cyan-100/35">${escapeHtml(label)}</button>`;
+                }).join('')}
             </div>
         `;
     }
@@ -1002,9 +1075,9 @@
         ].join('');
 
         return `
-            <label class="flex items-center gap-2 text-white/52">
+            <label class="mt-2 flex items-center gap-2 text-white/52 ${state.dataMode === DATA_MODES.GENERATED ? '' : 'opacity-55'}">
                 <span>Generated Fixture</span>
-                <select id="crypto-generated-fixture-select" class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none">
+                <select id="crypto-generated-fixture-select" ${state.dataMode === DATA_MODES.GENERATED ? '' : 'disabled'} class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none disabled:opacity-50">
                     ${options}
                 </select>
             </label>
@@ -1021,6 +1094,11 @@
                     <input id="crypto-wallet-lookup-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${escapeAttr(value)}" placeholder="Solana wallet address" class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1.5 text-cyan-50/82 outline-none placeholder:text-white/28">
                 </label>
                 <button id="crypto-wallet-lookup-submit" type="submit" ${state.walletLookup.inFlight ? 'disabled' : ''} class="rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Recent Activity</button>
+                <button id="crypto-wallet-lookup-refresh" type="button" ${state.walletLookup.inFlight || !(state.walletLookup.lastWallet || value) ? 'disabled' : ''} class="rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
+                <label class="flex items-center gap-1.5 text-white/52 pb-1">
+                    <input id="crypto-wallet-depth-toggle" type="checkbox" ${state.walletLookup.graphDepth > 1 ? 'checked' : ''} ${state.dataMode === DATA_MODES.WALLET ? '' : 'disabled'} class="accent-cyan-300">
+                    <span>2-hop</span>
+                </label>
                 <div id="crypto-wallet-lookup-status" class="text-white/48">${escapeHtml(status)}</div>
             </form>
         `;
@@ -1030,7 +1108,7 @@
         if (state.walletLookup.inFlight) return 'Loading from secure Worker';
         if (state.walletLookup.lastError) return state.walletLookup.lastError;
         if (state.walletLookup.eventCount > 0) {
-            return `${state.walletLookup.eventCount} returned / ${state.walletLookup.mergedEventCount} merged`;
+            return `${state.walletLookup.eventCount} returned / ${state.walletLookup.mergedEventCount} shown`;
         }
         return 'No wallet lookup loaded';
     }
@@ -1042,7 +1120,7 @@
         const sourceLabel = getCurrentSourceLabel();
         const motionLabel = state.flowMotion.enabled ? 'Motion On' : 'Motion Off';
         const queueLabel = state.flowReplay.playing ? 'Pause Queue' : 'Start Queue';
-        const liveLabel = state.live.enabled ? 'Worker Feed: ON' : 'Worker Feed: OFF';
+        const liveLabel = state.dataMode === DATA_MODES.LIVE ? 'Live Feed Active' : 'Use Live Feed';
         const liveStatus = getLiveStatusLabel();
         return `
             <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
@@ -1145,6 +1223,11 @@
     }
 
     function bindStatusControls(status) {
+        status.querySelectorAll('[data-crypto-mode]').forEach(button => {
+            button.addEventListener('click', () => {
+                switchDataMode(button.dataset.cryptoMode);
+            });
+        });
         status.querySelector('#crypto-generated-fixture-select')?.addEventListener('change', event => {
             const path = event.target.value;
             if (path) switchGeneratedFixture(path);
@@ -1157,8 +1240,14 @@
             event.preventDefault();
             loadWalletActivity(state.walletLookup.walletInput || status.querySelector('#crypto-wallet-lookup-input')?.value || '');
         });
+        status.querySelector('#crypto-wallet-lookup-refresh')?.addEventListener('click', () => {
+            loadWalletActivity(state.walletLookup.lastWallet || state.walletLookup.walletInput || status.querySelector('#crypto-wallet-lookup-input')?.value || '', { refresh: true });
+        });
+        status.querySelector('#crypto-wallet-depth-toggle')?.addEventListener('change', event => {
+            setWalletLookupDepth(event.target.checked ? 2 : 1);
+        });
         status.querySelector('#crypto-live-mode-toggle')?.addEventListener('click', () => {
-            setLiveModeEnabled(!state.live.enabled);
+            setLiveModeEnabled(state.dataMode !== DATA_MODES.LIVE);
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         });
         status.querySelector('#crypto-flow-queue-toggle')?.addEventListener('click', () => {
@@ -1196,13 +1285,68 @@
         });
     }
 
+    async function switchDataMode(mode) {
+        if (!Object.values(DATA_MODES).includes(mode)) return state.dataMode;
+        if (mode === state.dataMode) {
+            if (mode === DATA_MODES.LIVE && state.live.enabled) pollWorkerFeed({ animateNew: false });
+            return state.dataMode;
+        }
+
+        resetFlowQueueState();
+        state.dataMode = mode;
+        state.modeVersion += 1;
+        const requestModeVersion = state.modeVersion;
+
+        if (mode === DATA_MODES.GENERATED) {
+            state.live.enabled = false;
+            stopLivePolling();
+            applyEmptyModeDataset(DATA_MODES.GENERATED);
+            const dataset = await loadSampleDataset();
+            if (state.dataMode !== DATA_MODES.GENERATED || requestModeVersion !== state.modeVersion) return state.dataMode;
+            applyDataset(dataset);
+            return state.dataMode;
+        }
+
+        if (mode === DATA_MODES.WALLET) {
+            const walletValue = state.walletLookup.walletInput || state.walletLookup.lastWallet || '';
+            resetWalletLookupState();
+            state.walletLookup.walletInput = walletValue;
+            applyEmptyModeDataset(DATA_MODES.WALLET, {
+                wallet: walletValue
+            });
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return state.dataMode;
+        }
+
+        resetLiveMergeState();
+        applyEmptyModeDataset(DATA_MODES.LIVE);
+        if (!state.live.endpointValid) {
+            state.live.enabled = false;
+            state.live.workerAvailable = false;
+            state.live.lastError = 'Worker feed endpoint unavailable';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return state.dataMode;
+        }
+
+        state.live.enabled = true;
+        updateLivePolling();
+        pollWorkerFeed({ animateNew: false });
+        return state.dataMode;
+    }
+
     async function switchGeneratedFixture(path) {
-        if (!isSafeGeneratedFixturePath(path) || path === state.datasetSource) return;
+        if (!isSafeGeneratedFixturePath(path) || (path === state.datasetSource && state.dataMode === DATA_MODES.GENERATED)) return;
+        state.dataMode = DATA_MODES.GENERATED;
+        state.modeVersion += 1;
+        const requestModeVersion = state.modeVersion;
+        resetFlowQueueState();
+        applyEmptyModeDataset(DATA_MODES.GENERATED);
         const dataset = await loadSampleDataset({ generatedFixturePath: path });
+        if (state.dataMode !== DATA_MODES.GENERATED || requestModeVersion !== state.modeVersion) return;
         applyDataset(dataset);
     }
 
-    async function loadWalletActivity(wallet) {
+    async function loadWalletActivity(wallet, options = {}) {
         const normalizedWallet = String(wallet || '').trim();
         state.walletLookup.walletInput = normalizedWallet;
         if (!isValidSolanaWalletAddress(normalizedWallet)) {
@@ -1210,6 +1354,18 @@
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             return null;
         }
+
+        state.dataMode = DATA_MODES.WALLET;
+        state.modeVersion += 1;
+        state.live.enabled = false;
+        stopLivePolling();
+        resetFlowQueueState();
+        state.walletLookup.eventCount = 0;
+        state.walletLookup.mergedEventCount = 0;
+        state.walletLookup.lastRawDataset = null;
+        applyEmptyModeDataset(DATA_MODES.WALLET, { wallet: normalizedWallet }, {
+            preserveWalletInput: true
+        });
 
         const endpoint = resolveWalletLookupEndpoint();
         if (!endpoint) {
@@ -1220,6 +1376,7 @@
 
         state.walletLookup.inFlight = true;
         state.walletLookup.lastError = '';
+        const requestModeVersion = state.modeVersion;
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
 
         try {
@@ -1236,22 +1393,278 @@
             }
 
             const events = Array.isArray(payload?.events) ? payload.events : [];
-            const result = mergeWorkerFeedEvents(events, { animateNew: true });
+            if (state.dataMode !== DATA_MODES.WALLET || requestModeVersion !== state.modeVersion) return null;
+            const rawDataset = convertWorkerEventsToDataset(events, {
+                trackedWallet: normalizedWallet,
+                sourceKind: 'wallet_lookup'
+            });
+            const walletDataset = filterWalletLookupDataset(rawDataset, normalizedWallet, state.walletLookup.graphDepth);
+            applyWalletLookupDataset(walletDataset, normalizedWallet);
             state.walletLookup.lastWallet = normalizedWallet;
             state.walletLookup.lastLoadedAt = Date.now();
             state.walletLookup.eventCount = events.length;
-            state.walletLookup.mergedEventCount += result?.mergedEvents || 0;
-            state.walletLookup.lastError = events.length ? '' : 'No recent sanitized activity returned';
+            state.walletLookup.mergedEventCount = walletDataset.transactions.length;
+            state.walletLookup.lastRawDataset = rawDataset;
+            state.walletLookup.lastError = events.length && walletDataset.transactions.length
+                ? ''
+                : events.length
+                    ? 'Recent activity was filtered to remove program/noise accounts'
+                    : 'No recent sanitized activity returned';
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
-            return result;
+            return {
+                events: events.length,
+                transactions: walletDataset.transactions.length,
+                refreshed: Boolean(options.refresh)
+            };
         } catch (error) {
-            state.walletLookup.lastError = error?.message || 'Worker wallet lookup unavailable';
-            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            if (requestModeVersion === state.modeVersion && state.dataMode === DATA_MODES.WALLET) {
+                state.walletLookup.lastError = error?.message || 'Worker wallet lookup unavailable';
+                renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            }
             return null;
         } finally {
-            state.walletLookup.inFlight = false;
-            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            if (requestModeVersion === state.modeVersion) {
+                state.walletLookup.inFlight = false;
+                renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            }
         }
+    }
+
+    function applyWalletLookupDataset(dataset = {}, trackedWallet = '') {
+        state.datasetSource = 'worker_wallet_lookup';
+        state.datasetSourceKind = 'worker_wallet_lookup';
+        state.dataMode = DATA_MODES.WALLET;
+        state.dataset = cloneDataset(dataset);
+        const graph = graphEngine.buildGraph(dataset);
+        state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
+        state.graph.flowReplayEnabled = true;
+        state.graph.flowQueueEnabled = true;
+        if (state.graph.flowReplay) {
+            state.graph.flowReplay.enabled = true;
+            state.graph.flowReplay.mode = 'wallet_lookup_replacement_queue';
+            state.graph.flowReplay.future_note = 'Wallet lookup replaces the active dataset instead of merging with fixtures.';
+        }
+        if (state.graph.flowQueue) {
+            state.graph.flowQueue.enabled = true;
+            state.graph.flowQueue.mode = 'wallet_lookup_replacement_queue';
+        }
+        state.flowReplayEnabled = true;
+        state.filters = { transactionType: 'all', token: 'all', direction: 'all' };
+        state.manualNodePositions.clear();
+        resetFlowQueueState();
+        applyWalletLookupFocusLayout();
+        prepareFlowMotion();
+        rebuildInteractionIndex();
+        const trackedNodeId = getWalletNodeIdForAddress(trackedWallet);
+        state.selectedId = trackedNodeId || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
+        updateStats();
+        resizeAndRender();
+        renderDetails();
+        updateFlowAnimationLoop();
+    }
+
+    function filterWalletLookupDataset(dataset = {}, trackedWallet = '', depth = 1) {
+        const normalized = core.normalizeDataset(dataset);
+        const tracked = core.normalizeAddress(trackedWallet || normalized.metadata?.wallet || normalized.metadata?.wallet_lookup_tracked_wallet || '');
+        const maxDepth = depth > 1 ? 2 : 1;
+        const meaningfulTransactions = normalized.transactions.filter(transaction => {
+            if (!transaction.source_wallet || !transaction.destination_wallet) return false;
+            if (isNoiseWalletAddress(transaction.source_wallet, tracked)) return false;
+            if (isNoiseWalletAddress(transaction.destination_wallet, tracked)) return false;
+            if (isProgramLikeTransaction(transaction, tracked)) return false;
+            return true;
+        });
+
+        const degree = buildAddressDegreeMap(meaningfulTransactions);
+        const degreeFilteredTransactions = meaningfulTransactions.filter(transaction => {
+            return !isHighConnectionNoise(transaction.source_wallet, tracked, degree)
+                && !isHighConnectionNoise(transaction.destination_wallet, tracked, degree);
+        });
+        const distances = buildWalletDistances(degreeFilteredTransactions, tracked, maxDepth);
+        const scopedTransactions = degreeFilteredTransactions.filter(transaction => {
+            const sourceDepth = distances.get(core.normalizeAddress(transaction.source_wallet));
+            const targetDepth = distances.get(core.normalizeAddress(transaction.destination_wallet));
+            if (!Number.isFinite(sourceDepth) || !Number.isFinite(targetDepth)) return false;
+            if (maxDepth <= 1) return sourceDepth === 0 || targetDepth === 0;
+            return Math.min(sourceDepth, targetDepth) < maxDepth && Math.max(sourceDepth, targetDepth) <= maxDepth;
+        });
+
+        const usedWallets = new Set([tracked].filter(Boolean));
+        const usedTokens = new Set();
+        const usedHashes = new Set();
+        scopedTransactions.forEach(transaction => {
+            usedWallets.add(core.normalizeAddress(transaction.source_wallet));
+            usedWallets.add(core.normalizeAddress(transaction.destination_wallet));
+            if (transaction.token_mint) usedTokens.add(core.normalizeAddress(transaction.token_mint));
+            if (transaction.transaction_hash) usedHashes.add(transaction.transaction_hash);
+        });
+
+        const walletByAddress = new Map(normalized.wallets.map(wallet => [core.normalizeAddress(wallet.address), wallet]));
+        if (tracked && !walletByAddress.has(tracked)) {
+            walletByAddress.set(tracked, {
+                address: tracked,
+                chain: 'solana',
+                label: 'Tracked Wallet',
+                label_source: 'wallet_lookup_input',
+                confidence: 0.9,
+                metadata: { wallet_lookup: true }
+            });
+        }
+
+        return {
+            metadata: {
+                ...(normalized.metadata || {}),
+                source: 'wallet_lookup_live_pull',
+                source_label: SOURCE_LABELS.worker_wallet_lookup,
+                wallet: tracked,
+                wallet_lookup_mode: true,
+                wallet_lookup_tracked_wallet: tracked,
+                wallet_lookup_depth: maxDepth,
+                wallet_lookup_filtered_transactions: scopedTransactions.length,
+                wallet_lookup_noise_removed: Math.max(0, normalized.transactions.length - scopedTransactions.length),
+                live_blockchain_fetching: false,
+                production_meaning: false,
+                sanitized: true
+            },
+            wallets: [...usedWallets]
+                .map(address => walletByAddress.get(address) || {
+                    address,
+                    chain: 'solana',
+                    label: core.shortAddress(address),
+                    label_source: 'wallet_lookup_transfer',
+                    confidence: 0.72,
+                    metadata: { wallet_lookup: true }
+                })
+                .filter(wallet => wallet.address),
+            tokens: normalized.tokens.filter(token => usedTokens.has(core.normalizeAddress(token.token_mint))),
+            entities: [],
+            transactions: scopedTransactions.map(transaction => ({
+                ...transaction,
+                label_source: transaction.label_source || 'wallet_lookup',
+                tracked_wallet_role: transaction.tracked_wallet_role || getTrackedWalletRole(tracked, transaction.source_wallet, transaction.destination_wallet),
+                direction: transaction.direction || getTransactionDirectionForWallet(transaction, tracked),
+                metadata: {
+                    ...(transaction.metadata || {}),
+                    wallet_lookup: true,
+                    tracked_wallet: tracked,
+                    tracked_wallet_role: transaction.tracked_wallet_role || getTrackedWalletRole(tracked, transaction.source_wallet, transaction.destination_wallet),
+                    direction: transaction.direction || getTransactionDirectionForWallet(transaction, tracked)
+                }
+            })),
+            transaction_groups: normalized.transaction_groups.filter(group => usedHashes.has(group.signature || group.transaction_hash))
+        };
+    }
+
+    function setWalletLookupDepth(depth) {
+        state.walletLookup.graphDepth = depth > 1 ? 2 : 1;
+        if (state.dataMode !== DATA_MODES.WALLET || !state.walletLookup.lastRawDataset || !state.walletLookup.lastWallet) {
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return state.walletLookup.graphDepth;
+        }
+
+        const dataset = filterWalletLookupDataset(
+            state.walletLookup.lastRawDataset,
+            state.walletLookup.lastWallet,
+            state.walletLookup.graphDepth
+        );
+        applyWalletLookupDataset(dataset, state.walletLookup.lastWallet);
+        state.walletLookup.mergedEventCount = dataset.transactions.length;
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        return state.walletLookup.graphDepth;
+    }
+
+    function buildAddressDegreeMap(transactions = []) {
+        const neighbors = new Map();
+        transactions.forEach(transaction => {
+            const source = core.normalizeAddress(transaction.source_wallet);
+            const target = core.normalizeAddress(transaction.destination_wallet);
+            if (!source || !target || source === target) return;
+            if (!neighbors.has(source)) neighbors.set(source, new Set());
+            if (!neighbors.has(target)) neighbors.set(target, new Set());
+            neighbors.get(source).add(target);
+            neighbors.get(target).add(source);
+        });
+        return new Map([...neighbors.entries()].map(([address, links]) => [address, links.size]));
+    }
+
+    function buildWalletDistances(transactions = [], trackedWallet = '', maxDepth = 1) {
+        const tracked = core.normalizeAddress(trackedWallet);
+        const distances = new Map();
+        if (!tracked) return distances;
+
+        const adjacency = new Map();
+        transactions.forEach(transaction => {
+            const source = core.normalizeAddress(transaction.source_wallet);
+            const target = core.normalizeAddress(transaction.destination_wallet);
+            if (!source || !target) return;
+            if (!adjacency.has(source)) adjacency.set(source, new Set());
+            if (!adjacency.has(target)) adjacency.set(target, new Set());
+            adjacency.get(source).add(target);
+            adjacency.get(target).add(source);
+        });
+
+        distances.set(tracked, 0);
+        const queue = [tracked];
+        while (queue.length) {
+            const current = queue.shift();
+            const distance = distances.get(current) || 0;
+            if (distance >= maxDepth) continue;
+            (adjacency.get(current) || []).forEach(next => {
+                if (distances.has(next)) return;
+                distances.set(next, distance + 1);
+                queue.push(next);
+            });
+        }
+        return distances;
+    }
+
+    function isHighConnectionNoise(address, trackedWallet, degree) {
+        const normalized = core.normalizeAddress(address);
+        return normalized !== core.normalizeAddress(trackedWallet) && (degree.get(normalized) || 0) > 15;
+    }
+
+    function isNoiseWalletAddress(address, trackedWallet = '') {
+        const normalized = core.normalizeAddress(address);
+        if (!normalized || normalized === core.normalizeAddress(trackedWallet)) return false;
+        return NOISE_ADDRESS_PREFIXES.some(prefix => normalized.startsWith(prefix));
+    }
+
+    function isProgramLikeTransaction(transaction = {}, trackedWallet = '') {
+        const source = core.normalizeAddress(transaction.source_wallet);
+        const target = core.normalizeAddress(transaction.destination_wallet);
+        if (source === core.normalizeAddress(trackedWallet) || target === core.normalizeAddress(trackedWallet)) {
+            return false;
+        }
+        const programText = [
+            transaction.source_program,
+            transaction.source_label,
+            transaction.label_source,
+            transaction.metadata?.source_program,
+            transaction.metadata?.program_id,
+            transaction.metadata?.program,
+            transaction.metadata?.role
+        ].join(' ').toLowerCase();
+        return /\b(program|sysvar|computebudget|tokenkeg)\b/.test(programText)
+            && (isNoiseWalletAddress(source, trackedWallet) || isNoiseWalletAddress(target, trackedWallet));
+    }
+
+    function getTrackedWalletRole(trackedWallet = '', sourceWallet = '', destinationWallet = '') {
+        const tracked = core.normalizeAddress(trackedWallet);
+        if (!tracked) return '';
+        const source = core.normalizeAddress(sourceWallet);
+        const destination = core.normalizeAddress(destinationWallet);
+        if (source === tracked && destination === tracked) return 'internal_mixed';
+        if (source === tracked) return 'source';
+        if (destination === tracked) return 'destination';
+        return '';
+    }
+
+    function getTransactionDirectionForWallet(transaction = {}, trackedWallet = '') {
+        const role = getTrackedWalletRole(trackedWallet, transaction.source_wallet, transaction.destination_wallet);
+        if (role === 'source') return 'outbound';
+        if (role === 'destination') return 'inbound';
+        if (role === 'internal_mixed') return 'internal_mixed';
+        return 'counterparty';
     }
 
     function resolveWalletLookupEndpoint() {
@@ -1292,19 +1705,56 @@
         return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(String(value || '').trim());
     }
 
-    function applyDataset(dataset = {}) {
+    function applyEmptyModeDataset(mode, metadata = {}, options = {}) {
+        const sourceKind = mode === DATA_MODES.LIVE ? 'worker_feed' : mode === DATA_MODES.WALLET ? 'worker_wallet_lookup' : 'generated';
+        state.datasetSource = sourceKind;
+        state.datasetSourceKind = sourceKind;
+        if (mode !== DATA_MODES.LIVE) resetLiveMergeState();
+        if (mode !== DATA_MODES.WALLET && !options.preserveWalletInput) resetWalletLookupState();
+        applyDataset(createEmptyDataset(mode, metadata), {
+            resetLive: false,
+            resetWallet: false
+        });
+    }
+
+    function createEmptyDataset(mode, metadata = {}) {
+        const isWallet = mode === DATA_MODES.WALLET;
+        const isLive = mode === DATA_MODES.LIVE;
+        return {
+            metadata: {
+                name: isWallet ? 'CryptoPhotonic Wallet Lookup' : isLive ? 'CryptoPhotonic Worker Feed' : 'CryptoPhotonic Empty Fixture',
+                environment: isLive || isWallet ? 'secure_runtime_feed' : 'sample',
+                chain: 'solana',
+                adapter: isLive || isWallet ? 'worker_event_feed' : 'local_fixture',
+                source: isWallet ? 'wallet_lookup_live_pull' : isLive ? 'secure_runtime_feed' : 'generated_fixture',
+                wallet: core.normalizeAddress(metadata.wallet || ''),
+                wallet_lookup_mode: isWallet,
+                wallet_lookup_tracked_wallet: isWallet ? core.normalizeAddress(metadata.wallet || '') : '',
+                wallet_lookup_depth: state.walletLookup.graphDepth,
+                live_worker_feed_enabled: isLive,
+                live_blockchain_fetching: false,
+                production_meaning: false,
+                sanitized: true
+            },
+            wallets: [],
+            tokens: [],
+            entities: [],
+            transactions: [],
+            transaction_groups: []
+        };
+    }
+
+    function applyDataset(dataset = {}, options = {}) {
         state.dataset = cloneDataset(dataset);
-        resetLiveMergeState();
-        resetWalletLookupState();
+        if (options.resetLive !== false) resetLiveMergeState();
+        if (options.resetWallet !== false) resetWalletLookupState();
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
-        state.flowReplay.playing = false;
-        state.flowReplay.index = 0;
-        state.flowReplay.activeFlowId = null;
-        state.flowReplay.lastStepAt = 0;
+        resetFlowQueueState();
         state.filters = { transactionType: 'all', token: 'all', direction: 'all' };
         state.manualNodePositions.clear();
+        applyWalletLookupFocusLayout();
         prepareFlowMotion();
         rebuildInteractionIndex();
         state.selectedId = state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
@@ -1327,6 +1777,7 @@
         state.canvas.style.height = `${size.height}px`;
         state.ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
         state.graph = layoutEngine.layoutGraph(state.graph, size);
+        applyWalletLookupFocusLayout();
         applyManualNodePositions();
         clampViewport();
         prepareFlowMotion();
@@ -1433,7 +1884,7 @@
     }
 
     function getRelationshipWallet() {
-        const metadataWallet = core.normalizeAddress(state.graph?.metadata?.generated_wallet || state.graph?.metadata?.wallet || '');
+        const metadataWallet = core.normalizeAddress(state.graph?.metadata?.wallet_lookup_tracked_wallet || state.graph?.metadata?.generated_wallet || state.graph?.metadata?.wallet || '');
         if (metadataWallet) return metadataWallet;
         const selected = state.graph?.nodeById.get(state.selectedId);
         return selected?.type === core.NODE_TYPES.WALLET ? core.normalizeAddress(selected.address) : '';
@@ -1495,8 +1946,67 @@
         if (edge.type === core.EDGE_TYPES.FLOW) {
             drawArrow(ctx, control, target, edge.color || '#22d3ee', style.arrowSize);
             drawFlowPulse(ctx, edge, source, control, target, distance, interaction);
+            drawWalletLookupEdgeLabel(ctx, edge, source, target, control, interaction);
         }
         ctx.restore();
+    }
+
+    function drawWalletLookupEdgeLabel(ctx, edge, source, target, control, interaction) {
+        if (state.dataMode !== DATA_MODES.WALLET || edge.type !== core.EDGE_TYPES.FLOW) return;
+        if (!shouldDrawWalletLookupEdgeLabel(edge, interaction)) return;
+        const point = pointOnQuadratic(source, control, target, 0.5);
+        const fromTo = `${shortLongValue(source.address || source.id)} \u2192 ${shortLongValue(target.address || target.id)}`;
+        const amount = edge.amount_display || core.formatTokenAmount?.(edge.amount, edge.symbol) || '';
+        const majorEdge = edge.is_large_value || interaction.connectedEdgeIds.has(edge.id) || interaction.replayActiveFlowId === edge.id || state.flowMotion.topFlowIds.has(edge.id);
+        const tokenAmount = majorEdge ? [edge.symbol, amount].filter(Boolean).join(' ') : '';
+
+        ctx.save();
+        ctx.translate(point.x, point.y);
+        ctx.font = '700 10px Inter, sans-serif';
+        const firstWidth = ctx.measureText(fromTo).width;
+        ctx.font = '600 9px Inter, sans-serif';
+        const secondWidth = tokenAmount ? ctx.measureText(tokenAmount).width : 0;
+        const boxWidth = Math.max(firstWidth, secondWidth) + 14;
+        const boxHeight = tokenAmount ? 32 : 20;
+        roundedRectPath(ctx, -boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight, 8);
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.78)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(103, 232, 249, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ecfeff';
+        ctx.font = '700 10px Inter, sans-serif';
+        ctx.fillText(fromTo, 0, tokenAmount ? -6 : 0);
+        if (tokenAmount) {
+            ctx.fillStyle = 'rgba(253, 224, 71, 0.88)';
+            ctx.font = '600 9px Inter, sans-serif';
+            ctx.fillText(tokenAmount, 0, 8);
+        }
+        ctx.restore();
+    }
+
+    function shouldDrawWalletLookupEdgeLabel(edge, interaction) {
+        if (interaction.connectedEdgeIds.has(edge.id) || interaction.replayActiveFlowId === edge.id) return true;
+        const visible = getVisibleFlowEdges();
+        if (visible.length <= 8) return true;
+        return Boolean(edge.is_large_value || state.flowMotion.topFlowIds.has(edge.id));
+    }
+
+    function roundedRectPath(ctx, x, y, width, height, radius) {
+        const r = Math.min(radius, width / 2, height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + width - r, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+        ctx.lineTo(x + width, y + height - r);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+        ctx.lineTo(x + r, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
     }
 
     function drawFlowPulse(ctx, edge, source, control, target, distance, interaction) {
@@ -1600,17 +2110,18 @@
         const connected = interaction.connectedNodeIds.has(node.id);
         const focusVisible = interaction.hasFocus;
         const muted = focusVisible && !connected;
-        const radius = node.radius + (selected ? 5 : hovered ? 3 : 0);
+        const trackedWallet = isTrackedWalletNode(node);
+        const radius = node.radius + (trackedWallet ? 7 : 0) + (selected ? 5 : hovered ? 3 : 0);
         const showLabel = shouldShowNodeLabel(node, { selected, hovered, connected, interaction });
         const labelAlpha = showLabel ? (muted ? 0.3 : 0.92) : 0;
 
         ctx.save();
         ctx.shadowColor = node.color;
-        ctx.shadowBlur = selected ? 30 : hovered ? 22 : connected ? 13 : 7;
+        ctx.shadowBlur = trackedWallet ? 42 : selected ? 30 : hovered ? 22 : connected ? 13 : 7;
         ctx.globalAlpha = muted ? (interaction.hasSelected ? 0.28 : 0.42) : 1;
         ctx.fillStyle = 'rgba(2, 6, 23, 0.92)';
-        ctx.strokeStyle = selected || hovered ? '#ffffff' : node.color;
-        ctx.lineWidth = selected ? 3.4 : hovered ? 2.6 : connected ? 1.8 : 1.1;
+        ctx.strokeStyle = trackedWallet ? '#ecfeff' : selected || hovered ? '#ffffff' : node.color;
+        ctx.lineWidth = trackedWallet ? 4.2 : selected ? 3.4 : hovered ? 2.6 : connected ? 1.8 : 1.1;
         if (isHubNode(node)) {
             ctx.globalAlpha = muted ? 0.34 : 0.88;
             ctx.strokeStyle = node.color;
@@ -1639,8 +2150,8 @@
         }
 
         ctx.globalAlpha = labelAlpha;
-        ctx.fillStyle = selected || hovered ? '#ffffff' : 'rgba(226, 232, 240, 0.82)';
-        ctx.font = isHubNode(node) ? '700 12px Inter, sans-serif' : node.type === core.NODE_TYPES.TOKEN ? '600 11px Inter, sans-serif' : '500 10px Inter, sans-serif';
+        ctx.fillStyle = trackedWallet || selected || hovered ? '#ffffff' : 'rgba(226, 232, 240, 0.82)';
+        ctx.font = trackedWallet ? '700 12px Inter, sans-serif' : isHubNode(node) ? '700 12px Inter, sans-serif' : node.type === core.NODE_TYPES.TOKEN ? '600 11px Inter, sans-serif' : '500 10px Inter, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.fillText(labelForNode(node), node.x, node.y + radius + 8);
@@ -1850,7 +2361,7 @@
         const typeLabel = edge.transaction_type_label || '';
         const sourceLabel = edge.source_label || '';
         const label = edge.type === core.EDGE_TYPES.FLOW
-            ? `${compactNodeLabel(source)} -> ${compactNodeLabel(target)}`
+            ? `FROM ${compactNodeLabel(source)} \u2192 TO ${compactNodeLabel(target)}`
             : `${compactNodeLabel(source)} / ${compactNodeLabel(target)}`;
         return `
             <div class="crypto-edge-summary rounded-2xl p-3">
@@ -1997,19 +2508,28 @@
     function labelForNode(node = {}) {
         if (node.type === core.NODE_TYPES.TOKEN) return node.symbol || node.name || 'Token';
         if (isHubNode(node)) return node.label || 'Entity Hub';
-        const tracked = core.normalizeAddress(state.graph?.metadata?.generated_wallet || state.graph?.metadata?.wallet || '');
+        const tracked = core.normalizeAddress(state.graph?.metadata?.wallet_lookup_tracked_wallet || state.graph?.metadata?.generated_wallet || state.graph?.metadata?.wallet || '');
         if (tracked && core.normalizeAddress(node.address) === tracked) return 'Tracked Wallet';
+        if (state.dataMode === DATA_MODES.WALLET) return shortLongValue(node.address || node.id);
         return node.label || core.shortAddress(node.address);
     }
 
     function shouldShowNodeLabel(node, context) {
         if (!node) return false;
+        if (isTrackedWalletNode(node)) return true;
+        if (state.dataMode === DATA_MODES.WALLET && node.type === core.NODE_TYPES.WALLET) return true;
         if (context.selected || context.hovered) return true;
         if (isHubNode(node)) return true;
 
         const isMajor = node.label_priority === 'major';
         if (!context.interaction.hasFocus) return isMajor;
         return context.connected && isMajor;
+    }
+
+    function isTrackedWalletNode(node = {}) {
+        if (node.type !== core.NODE_TYPES.WALLET) return false;
+        const tracked = core.normalizeAddress(state.graph?.metadata?.wallet_lookup_tracked_wallet || state.graph?.metadata?.wallet || state.walletLookup.lastWallet);
+        return Boolean(tracked && core.normalizeAddress(node.address) === tracked);
     }
 
     function shortHash(hash) {
@@ -2167,10 +2687,80 @@
         if (!state.graph) return;
         state.manualNodePositions.clear();
         state.graph = layoutEngine.layoutGraph(state.graph, getCanvasSize());
+        applyWalletLookupFocusLayout();
         prepareFlowMotion();
         rebuildInteractionIndex();
         render();
         renderDetails();
+    }
+
+    function resetFlowQueueState() {
+        state.flowReplay.playing = false;
+        state.flowReplay.index = 0;
+        state.flowReplay.activeFlowId = null;
+        state.flowReplay.lastStepAt = 0;
+        state.live.pendingFlowIds = [];
+        if (state.live.pulseTimerId) {
+            window.clearTimeout(state.live.pulseTimerId);
+            state.live.pulseTimerId = null;
+        }
+        state.flowMotion.topFlowIds = new Set();
+        state.flowQueue = state.flowReplay;
+    }
+
+    function applyWalletLookupFocusLayout() {
+        if (state.dataMode !== DATA_MODES.WALLET || !state.graph?.nodes?.length) return;
+        const trackedWallet = core.normalizeAddress(state.graph.metadata?.wallet_lookup_tracked_wallet || state.graph.metadata?.wallet || state.walletLookup.lastWallet);
+        const trackedNode = getWalletNodeForAddress(trackedWallet);
+        if (!trackedNode) return;
+
+        const { width, height } = state.graph.bounds || getCanvasSize();
+        const center = { x: width * 0.5, y: height * 0.48 };
+        trackedNode.x = center.x;
+        trackedNode.y = center.y;
+        trackedNode.label_priority = 'major';
+        trackedNode.radius = Math.max(trackedNode.radius || 0, 44);
+        trackedNode.color = '#67e8f9';
+        trackedNode.is_tracked_wallet = true;
+
+        const valueByNeighbor = new Map();
+        (state.graph.flowEdges || []).forEach(edge => {
+            const neighborId = edge.source === trackedNode.id ? edge.target : edge.target === trackedNode.id ? edge.source : '';
+            if (!neighborId) return;
+            valueByNeighbor.set(neighborId, (valueByNeighbor.get(neighborId) || 0) + (Number(edge.usd_value) || 1));
+        });
+
+        const directWallets = [...valueByNeighbor.keys()]
+            .map(id => state.graph.nodeById.get(id))
+            .filter(node => node?.type === core.NODE_TYPES.WALLET)
+            .sort((a, b) => (valueByNeighbor.get(b.id) || 0) - (valueByNeighbor.get(a.id) || 0) || labelForNode(a).localeCompare(labelForNode(b)));
+        const radius = clamp(Math.min(width, height) * 0.31, 142, 255);
+        directWallets.forEach((node, index) => {
+            const angle = directWallets.length === 1
+                ? -Math.PI / 2
+                : -Math.PI / 2 + (Math.PI * 2 * index) / directWallets.length;
+            node.x = center.x + Math.cos(angle) * radius;
+            node.y = center.y + Math.sin(angle) * radius * 0.82;
+            node.label_priority = index < 12 ? 'major' : node.label_priority;
+        });
+
+        const tokenNodes = state.graph.tokenNodes || [];
+        const tokenRadius = radius + 92;
+        tokenNodes.forEach((node, index) => {
+            const angle = -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(1, tokenNodes.length);
+            node.x = center.x + Math.cos(angle) * tokenRadius;
+            node.y = center.y + Math.sin(angle) * tokenRadius * 0.76;
+        });
+    }
+
+    function getWalletNodeForAddress(address = '') {
+        const normalized = core.normalizeAddress(address);
+        if (!normalized) return null;
+        return (state.graph?.walletNodes || []).find(node => core.normalizeAddress(node.address) === normalized) || null;
+    }
+
+    function getWalletNodeIdForAddress(address = '') {
+        return getWalletNodeForAddress(address)?.id || '';
     }
 
     function prepareFlowMotion() {

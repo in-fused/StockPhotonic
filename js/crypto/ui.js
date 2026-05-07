@@ -36,9 +36,27 @@
         resizeObserver: null,
         datasetSource: null,
         datasetSourceKind: 'built_in',
+        dataset: null,
         generatedManifest: null,
         generatedFixtures: [],
         activeGeneratedFixture: null,
+        live: {
+            enabled: false,
+            endpoint: '/api/crypto/events',
+            pollMs: 4000,
+            pollTimerId: null,
+            inFlight: false,
+            hasFetched: false,
+            workerAvailable: false,
+            lastPollAt: 0,
+            lastEventAt: '',
+            lastError: '',
+            eventCount: 0,
+            mergedEventCount: 0,
+            seenDedupeKeys: new Set(),
+            pendingFlowIds: [],
+            pulseTimerId: null
+        },
         filters: {
             transactionType: 'all',
             token: 'all',
@@ -90,16 +108,20 @@
         transactionGroups: 5
     };
     const GENERATED_FIXTURE_DIR = 'data/crypto/generated/';
+    const WORKER_FEED_LIMIT = 50;
+    const LIVE_POLL_MS = { min: 3000, max: 5000, default: 4000 };
     const SOURCE_LABELS = {
-        generated: 'Generated Fixture',
-        solana_sample: 'Solana Sample Fixture',
-        legacy_sample: 'Legacy Sample Fixture',
-        built_in: 'Built-in Sample'
+        generated: 'Local Runner',
+        solana_sample: 'Sample',
+        legacy_sample: 'Sample',
+        built_in: 'Sample',
+        worker_feed: 'Worker Feed'
     };
 
     async function initialize(options = {}) {
         if (state.initialized) return state.graph;
 
+        configureLiveFeed(options);
         state.root = document.getElementById(options.rootId || 'crypto-photonic-view');
         state.canvas = document.getElementById(options.canvasId || 'crypto-flow-canvas');
         state.detailPanel = document.getElementById(options.detailPanelId || 'crypto-detail-panel');
@@ -123,6 +145,7 @@
         }
 
         const dataset = await loadSampleDataset();
+        state.dataset = cloneDataset(dataset);
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
@@ -136,12 +159,14 @@
         resizeAndRender();
         renderDetails();
         updateFlowAnimationLoop();
+        updateLivePolling();
         return state.graph;
     }
 
     function setActive(active) {
         state.active = Boolean(active);
         updateFlowAnimationLoop();
+        updateLivePolling();
         if (!state.active || !state.initialized) return;
         resizeAndRender();
         renderDetails();
@@ -287,6 +312,467 @@
         }
     }
 
+    function configureLiveFeed(options = {}) {
+        const requestedEndpoint = String(options.workerFeedEndpoint || options.liveFeedEndpoint || '').trim();
+        if (requestedEndpoint.startsWith('/api/crypto/events')) {
+            state.live.endpoint = requestedEndpoint;
+        }
+
+        const requestedPollMs = Number(options.workerFeedPollMs ?? options.livePollMs ?? window.CryptoPhotonicLivePollMs);
+        state.live.pollMs = clamp(
+            Number.isFinite(requestedPollMs) ? requestedPollMs : LIVE_POLL_MS.default,
+            LIVE_POLL_MS.min,
+            LIVE_POLL_MS.max
+        );
+    }
+
+    function setLiveModeEnabled(enabled) {
+        state.live.enabled = Boolean(enabled);
+        if (!state.live.enabled) {
+            stopLivePolling();
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return state.live;
+        }
+
+        updateLivePolling();
+        pollWorkerFeed({ animateNew: state.live.hasFetched });
+        return state.live;
+    }
+
+    function updateLivePolling() {
+        stopLivePolling();
+        if (!state.live.enabled || !state.active || !state.initialized) return;
+
+        state.live.pollTimerId = window.setInterval(() => {
+            pollWorkerFeed({ animateNew: true });
+        }, state.live.pollMs);
+    }
+
+    function stopLivePolling() {
+        if (!state.live.pollTimerId) return;
+        window.clearInterval(state.live.pollTimerId);
+        state.live.pollTimerId = null;
+    }
+
+    async function pollWorkerFeed(options = {}) {
+        if (!state.live.enabled || state.live.inFlight) return null;
+
+        state.live.inFlight = true;
+        try {
+            const separator = state.live.endpoint.includes('?') ? '&' : '?';
+            const response = await fetch(`${state.live.endpoint}${separator}limit=${WORKER_FEED_LIMIT}`, {
+                cache: 'no-store',
+                headers: { accept: 'application/json' }
+            });
+            if (!response.ok) throw new Error(`Worker feed returned ${response.status}`);
+
+            const payload = await response.json();
+            const events = Array.isArray(payload?.events) ? payload.events : [];
+            state.live.workerAvailable = true;
+            state.live.lastError = '';
+            state.live.lastPollAt = Date.now();
+            state.live.eventCount = events.length;
+            const newestTimestamp = getNewestEventTimestamp(events);
+            if (newestTimestamp) state.live.lastEventAt = newestTimestamp;
+
+            const result = mergeWorkerFeedEvents(events, {
+                animateNew: options.animateNew !== false && state.live.hasFetched
+            });
+            state.live.hasFetched = true;
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return result;
+        } catch (error) {
+            state.live.workerAvailable = false;
+            state.live.lastError = 'Worker feed unavailable';
+            state.live.lastPollAt = Date.now();
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return null;
+        } finally {
+            state.live.inFlight = false;
+        }
+    }
+
+    function mergeWorkerFeedEvents(events = [], options = {}) {
+        if (!Array.isArray(events) || !events.length || !state.dataset) {
+            return { mergedEvents: 0, mergedTransactions: 0, flowIds: [] };
+        }
+
+        const newEvents = events.filter(event => {
+            const key = getWorkerEventDedupeKey(event);
+            if (!key || state.live.seenDedupeKeys.has(key)) return false;
+            state.live.seenDedupeKeys.add(key);
+            return true;
+        });
+        if (!newEvents.length) return { mergedEvents: 0, mergedTransactions: 0, flowIds: [] };
+
+        const incomingDataset = convertWorkerEventsToDataset(newEvents);
+        if (!incomingDataset.transactions.length) {
+            return { mergedEvents: newEvents.length, mergedTransactions: 0, flowIds: [] };
+        }
+
+        state.live.mergedEventCount += newEvents.length;
+        state.dataset = mergeGraphDatasets(state.dataset, incomingDataset);
+        rebuildGraphAfterLiveMerge(incomingDataset.transactions, { animateNew: options.animateNew });
+        return {
+            mergedEvents: newEvents.length,
+            mergedTransactions: incomingDataset.transactions.length,
+            flowIds: incomingDataset.transactions.map(transaction => getFlowEdgeIdForTransaction(transaction))
+        };
+    }
+
+    function convertWorkerEventsToDataset(events = []) {
+        const wallets = [];
+        const tokens = [];
+        const transactions = [];
+
+        events.forEach(event => {
+            const eventKey = getWorkerEventDedupeKey(event);
+            const chain = core.normalizeChain(event.chain || 'solana');
+            const eventTokens = Array.isArray(event.tokens) ? event.tokens : [];
+            const tokenBySymbol = new Map();
+            const firstToken = eventTokens[0] || {};
+            eventTokens.forEach(token => {
+                const normalizedToken = normalizeWorkerToken(token, chain, event);
+                if (normalizedToken.token_mint) tokens.push(normalizedToken);
+                if (normalizedToken.symbol) tokenBySymbol.set(normalizedToken.symbol.toLowerCase(), normalizedToken);
+            });
+
+            const eventWallets = Array.isArray(event.wallets) ? event.wallets : [];
+            eventWallets.forEach(wallet => {
+                const normalizedWallet = normalizeWorkerWallet(wallet, chain, event);
+                if (normalizedWallet.address) wallets.push(normalizedWallet);
+            });
+
+            const transfers = Array.isArray(event.transfers) ? event.transfers : [];
+            const fallbackTransfer = getFallbackWorkerTransfer(eventWallets);
+            const graphTransfers = transfers.length ? transfers : fallbackTransfer ? [fallbackTransfer] : [];
+            graphTransfers.forEach((transfer, transferIndex) => {
+                const sourceWallet = core.normalizeAddress(transfer.from || transfer.source_wallet || transfer.source);
+                const destinationWallet = core.normalizeAddress(transfer.to || transfer.destination_wallet || transfer.destination || transfer.target);
+                if (!sourceWallet || !destinationWallet) return;
+
+                wallets.push(normalizeWorkerWallet({ address: sourceWallet, role: 'sender' }, chain, event));
+                wallets.push(normalizeWorkerWallet({ address: destinationWallet, role: 'receiver' }, chain, event));
+
+                const symbol = String(transfer.token_symbol || transfer.symbol || firstToken.symbol || '').trim();
+                const token = symbol ? tokenBySymbol.get(symbol.toLowerCase()) : null;
+                const tokenMint = core.normalizeAddress(token?.token_mint || firstToken.mint || firstToken.token_mint || `${chain}:${symbol || 'token'}`);
+                if (tokenMint && !token) {
+                    tokens.push(normalizeWorkerToken({
+                        symbol: symbol || 'TOKEN',
+                        mint: tokenMint,
+                        decimals: firstToken.decimals
+                    }, chain, event));
+                }
+
+                const amount = parseWorkerAmount(transfer.amount);
+                const typeInfo = core.interpretTransactionType(event.transaction_type || 'token_transfer');
+                const transferDedupeKey = `${eventKey}:${transferIndex}`;
+                transactions.push({
+                    id: `live:${safeLiveId(transferDedupeKey)}`,
+                    transaction_type: event.transaction_type || typeInfo.raw || 'token_transfer',
+                    transaction_type_key: typeInfo.key,
+                    transaction_type_label: typeInfo.label,
+                    transaction_hash: String(event.signature || event.id || eventKey || '').trim(),
+                    chain,
+                    source_wallet: sourceWallet,
+                    destination_wallet: destinationWallet,
+                    token_mint: tokenMint,
+                    contract_address: tokenMint,
+                    symbol,
+                    amount,
+                    amount_display: String(transfer.amount || (symbol ? core.formatTokenAmount(amount, symbol) : amount)).trim(),
+                    usd_value: Number(event.usd_value || transfer.usd_value) || 0,
+                    timestamp: event.timestamp || event.received_at || new Date().toISOString(),
+                    confidence: getWorkerEventConfidence(event),
+                    label_source: event.ingestion_source || event.source || 'worker_feed',
+                    source_program: event.source || event.ingestion_source || 'secure_runtime_feed',
+                    source_label: core.formatSourceLabel(event.source || event.ingestion_source || 'Worker Feed'),
+                    direction: '',
+                    tracked_wallet_role: '',
+                    metadata: {
+                        dedupe_key: eventKey,
+                        live_transfer_dedupe_key: transferDedupeKey,
+                        source_event_id: event.id || '',
+                        ingestion_source: event.ingestion_source || '',
+                        received_at: event.received_at || '',
+                        source_format: 'worker_feed_event',
+                        live_feed: true,
+                        sanitized: true,
+                        production_meaning: false,
+                        live_blockchain_fetching: false,
+                        amount_display: String(transfer.amount || '').trim()
+                    }
+                });
+            });
+        });
+
+        return {
+            metadata: {
+                name: 'CryptoPhotonic Worker Feed Merge',
+                environment: 'secure_runtime_feed',
+                chain: 'solana',
+                adapter: 'worker_event_feed',
+                source: 'secure_runtime_feed',
+                production_meaning: false,
+                live_blockchain_fetching: false,
+                sanitized: true
+            },
+            wallets,
+            tokens,
+            entities: [],
+            transactions,
+            transaction_groups: []
+        };
+    }
+
+    function normalizeWorkerWallet(wallet = {}, chain = 'solana', event = {}) {
+        const address = core.normalizeAddress(wallet.address || wallet.wallet_address);
+        const role = String(wallet.role || '').trim();
+        return {
+            address,
+            chain,
+            label: role ? `${core.formatSourceLabel(role)} ${core.shortAddress(address)}` : core.shortAddress(address),
+            label_source: event.ingestion_source || event.source || 'worker_feed',
+            confidence: getWorkerEventConfidence(event),
+            metadata: {
+                role,
+                source_event_id: event.id || '',
+                live_feed: true
+            }
+        };
+    }
+
+    function normalizeWorkerToken(token = {}, chain = 'solana', event = {}) {
+        const tokenMint = core.normalizeAddress(token.mint || token.token_mint || token.contract_address || token.address);
+        const symbol = String(token.symbol || 'TOKEN').trim();
+        return {
+            symbol,
+            name: symbol || 'Token',
+            token_mint: tokenMint,
+            contract_address: tokenMint,
+            chain,
+            decimals: Number(token.decimals) || 0,
+            label_source: event.ingestion_source || event.source || 'worker_feed',
+            confidence: getWorkerEventConfidence(event),
+            metadata: {
+                source_event_id: event.id || '',
+                live_feed: true
+            }
+        };
+    }
+
+    function getFallbackWorkerTransfer(wallets = []) {
+        const sourceWallet = wallets.find(wallet => /sender|source|from/i.test(wallet.role || '')) || wallets[0];
+        const destinationWallet = wallets.find(wallet => /receiver|destination|target|to/i.test(wallet.role || '')) || wallets.find(wallet => wallet !== sourceWallet);
+        if (!sourceWallet || !destinationWallet) return null;
+        return {
+            from: sourceWallet.address,
+            to: destinationWallet.address,
+            amount: ''
+        };
+    }
+
+    function mergeGraphDatasets(baseDataset = {}, incomingDataset = {}) {
+        const base = cloneDataset(baseDataset);
+        const incoming = core.normalizeDataset(incomingDataset);
+        return {
+            metadata: {
+                ...(base.metadata || {}),
+                source: 'secure_runtime_feed',
+                live_worker_feed_enabled: true,
+                live_worker_feed_merged_events: state.live.mergedEventCount,
+                live_blockchain_fetching: false,
+                production_meaning: false,
+                sanitized: true
+            },
+            wallets: mergeByKey(base.wallets || [], incoming.wallets, walletMergeKey),
+            tokens: mergeByKey(base.tokens || [], incoming.tokens, tokenMergeKey),
+            entities: mergeByKey([
+                ...(base.entities || []),
+                ...(base.hubs || []),
+                ...(base.entity_hubs || [])
+            ], incoming.entities, entityMergeKey),
+            transactions: mergeByKey(base.transactions || [], incoming.transactions, transactionMergeKey),
+            transaction_groups: mergeByKey(base.transaction_groups || [], incoming.transaction_groups, groupMergeKey)
+        };
+    }
+
+    function rebuildGraphAfterLiveMerge(incomingTransactions = [], options = {}) {
+        const previousSelectedId = state.selectedId;
+        const graph = graphEngine.buildGraph(state.dataset);
+        state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
+        state.graph.flowReplayEnabled = true;
+        state.graph.flowQueueEnabled = true;
+        if (state.graph.flowReplay) {
+            state.graph.flowReplay.enabled = true;
+            state.graph.flowReplay.mode = 'worker_feed_live_queue';
+            state.graph.flowReplay.future_note = 'Sanitized Worker feed events are appended without browser provider calls.';
+        }
+        if (state.graph.flowQueue) {
+            state.graph.flowQueue.enabled = true;
+            state.graph.flowQueue.mode = 'worker_feed_live_queue';
+        }
+        state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
+        state.flowReplay.playing = false;
+        state.flowReplay.activeFlowId = null;
+        state.flowReplay.index = clamp(state.flowReplay.index, 0, Math.max(0, (state.graph.flowReplay?.ordered_flows || []).length - 1));
+        applyManualNodePositions();
+        prepareFlowMotion();
+        rebuildInteractionIndex();
+        state.selectedId = previousSelectedId && state.graph.nodeById.has(previousSelectedId)
+            ? previousSelectedId
+            : state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
+
+        const liveFlowIds = incomingTransactions
+            .map(transaction => getFlowEdgeIdForTransaction(transaction))
+            .filter(id => state.graph.flowEdges.some(edge => edge.id === id));
+        if (options.animateNew) enqueueLiveFlowPulses(liveFlowIds);
+
+        updateStats();
+        render();
+        renderDetails();
+        updateFlowAnimationLoop();
+    }
+
+    function enqueueLiveFlowPulses(flowIds = []) {
+        const ids = [...new Set(flowIds)].filter(Boolean);
+        if (!ids.length) return;
+        state.live.pendingFlowIds.push(...ids);
+        if (!state.flowReplay.activeFlowId) activateNextLivePulse();
+    }
+
+    function activateNextLivePulse() {
+        if (state.live.pulseTimerId) {
+            window.clearTimeout(state.live.pulseTimerId);
+            state.live.pulseTimerId = null;
+        }
+
+        const nextFlowId = state.live.pendingFlowIds.shift();
+        if (!nextFlowId) {
+            state.flowReplay.activeFlowId = null;
+            render();
+            return;
+        }
+
+        const orderedFlows = state.graph?.flowReplay?.ordered_flows || [];
+        const nextIndex = orderedFlows.findIndex(flow => flow.id === nextFlowId);
+        if (nextIndex >= 0) state.flowReplay.index = nextIndex;
+        state.flowReplay.activeFlowId = nextFlowId;
+        state.flowReplay.lastStepAt = performance.now();
+        updateFlowAnimationLoop();
+        render();
+        state.live.pulseTimerId = window.setTimeout(activateNextLivePulse, state.flowReplay.stepMs);
+    }
+
+    function resetLiveMergeState() {
+        state.live.workerAvailable = false;
+        state.live.lastError = '';
+        state.live.eventCount = 0;
+        state.live.mergedEventCount = 0;
+        state.live.hasFetched = false;
+        state.live.lastEventAt = '';
+        state.live.seenDedupeKeys.clear();
+        state.live.pendingFlowIds = [];
+        if (state.live.pulseTimerId) {
+            window.clearTimeout(state.live.pulseTimerId);
+            state.live.pulseTimerId = null;
+        }
+    }
+
+    function getCurrentSourceLabel() {
+        if (state.live.workerAvailable || state.live.mergedEventCount > 0) {
+            return SOURCE_LABELS.worker_feed;
+        }
+        return SOURCE_LABELS[state.datasetSourceKind] || SOURCE_LABELS.built_in;
+    }
+
+    function getSourceBoundaryCopy() {
+        if (state.live.workerAvailable) {
+            return 'Browser fetches only sanitized Worker feed events. No provider keys or direct provider calls are used.';
+        }
+        if (state.datasetSourceKind === 'generated') {
+            return 'Browser does not call Helius. Generated files come from local runner.';
+        }
+        return 'Worker feed unavailable or off. Sample fixture fallback remains active.';
+    }
+
+    function getLiveStatusLabel() {
+        if (!state.live.enabled) return `Live Mode OFF / polls every ${Math.round(state.live.pollMs / 1000)}s when enabled`;
+        if (state.live.inFlight) return 'Polling Worker Feed';
+        if (state.live.workerAvailable) {
+            const merged = `${state.live.mergedEventCount} merged`;
+            return `Worker Feed OK / ${merged}`;
+        }
+        return state.live.lastError || 'Waiting for Worker Feed';
+    }
+
+    function getWorkerEventDedupeKey(event = {}) {
+        return String(event.dedupe_key || event.id || event.signature || '').trim();
+    }
+
+    function getWorkerEventConfidence(event = {}) {
+        if (event.ingestion_source === 'helius_webhook') return 0.82;
+        if (event.ingestion_source === 'fixture_fallback') return 0.42;
+        if (event.ingestion_source === 'local_test_event') return 0.58;
+        return 0.5;
+    }
+
+    function getNewestEventTimestamp(events = []) {
+        return events
+            .map(event => event.timestamp || event.received_at || '')
+            .filter(Boolean)
+            .sort((a, b) => timestampValue(b) - timestampValue(a))[0] || '';
+    }
+
+    function parseWorkerAmount(value) {
+        const number = Number(String(value ?? '').replaceAll(',', '').trim());
+        return Number.isFinite(number) ? number : 0;
+    }
+
+    function safeLiveId(value) {
+        return String(value || 'event').replace(/[^a-z0-9:_-]+/gi, '-').slice(0, 140);
+    }
+
+    function getFlowEdgeIdForTransaction(transaction = {}) {
+        return `${core.EDGE_TYPES.FLOW}:${transaction.id || transaction.transaction_hash || ''}`;
+    }
+
+    function mergeByKey(baseItems = [], incomingItems = [], getKey) {
+        const byKey = new Map();
+        [...baseItems, ...incomingItems].forEach(item => {
+            const key = getKey(item);
+            if (!key) return;
+            byKey.set(key, { ...(byKey.get(key) || {}), ...item });
+        });
+        return [...byKey.values()];
+    }
+
+    function walletMergeKey(wallet = {}) {
+        return `wallet:${core.normalizeChain(wallet.chain)}:${core.normalizeAddress(wallet.address || wallet.wallet_address)}`;
+    }
+
+    function tokenMergeKey(token = {}) {
+        return `token:${core.normalizeChain(token.chain)}:${core.normalizeAddress(token.token_mint || token.contract_address || token.address)}`;
+    }
+
+    function entityMergeKey(entity = {}) {
+        return entity.id || `entity:${core.normalizeChain(entity.chain)}:${String(entity.label || entity.name || '').toLowerCase()}`;
+    }
+
+    function transactionMergeKey(transaction = {}) {
+        const metadata = transaction.metadata || {};
+        return metadata.live_transfer_dedupe_key || metadata.dedupe_key || transaction.dedupe_key || transaction.id || transaction.transaction_hash;
+    }
+
+    function groupMergeKey(group = {}) {
+        return group.id || group.signature || group.transaction_hash;
+    }
+
+    function cloneDataset(dataset = {}) {
+        return JSON.parse(JSON.stringify(dataset || {}));
+    }
+
     async function normalizeSolanaFixture(payload = {}, sourcePath = '') {
         const hasRawSolanaTransactions = Array.isArray(payload.solana_transactions)
             || Array.isArray(payload.enhancedTransactions)
@@ -363,20 +849,20 @@
     }
 
     function renderGeneratedDataManager(metadata = {}, isGeneratedFixture = false, isSolana = false) {
-        const sourceLabel = SOURCE_LABELS[state.datasetSourceKind] || SOURCE_LABELS.built_in;
+        const sourceLabel = getCurrentSourceLabel();
         const activeFixture = state.activeGeneratedFixture || {};
         const generatedWallet = activeFixture.wallet || metadata.generated_wallet || metadata.wallet || '';
         const generatedAt = activeFixture.generated_at || metadata.generated_at || '';
         const transactionCount = activeFixture.transaction_count ?? metadata.generated_transaction_count ?? metadata.transaction_count ?? null;
         const selector = renderGeneratedFixtureSelector();
-        const sourceTone = isGeneratedFixture ? 'text-emerald-100/82' : isSolana ? 'text-cyan-50/78' : 'text-white/68';
+        const sourceTone = state.live.workerAvailable ? 'text-emerald-100/82' : isGeneratedFixture ? 'text-emerald-100/82' : isSolana ? 'text-cyan-50/78' : 'text-white/68';
 
         return `
             <div class="rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <div class="text-white/38">DATA SOURCE</div>
-                        <div class="${sourceTone}">${escapeHtml(sourceLabel)}</div>
+                        <div class="${sourceTone}">Source: ${escapeHtml(sourceLabel)}</div>
                     </div>
                     ${selector}
                 </div>
@@ -385,7 +871,7 @@
                     <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
                     <div>Tx: ${escapeHtml(transactionCount ?? '-')}</div>
                 </div>
-                <div class="mt-2 text-yellow-100/76">Browser does not call Helius. Generated files come from local runner.</div>
+                <div class="mt-2 text-yellow-100/76">${escapeHtml(getSourceBoundaryCopy())}</div>
             </div>
         `;
     }
@@ -420,17 +906,20 @@
         const orderedCount = state.graph?.flowQueue?.ordered_flow_ids?.length
             || state.graph?.flowReplay?.ordered_flow_ids?.length
             || 0;
-        const sourceLabel = SOURCE_LABELS[state.datasetSourceKind] || SOURCE_LABELS.built_in;
+        const sourceLabel = getCurrentSourceLabel();
         const motionLabel = state.flowMotion.enabled ? 'Motion On' : 'Motion Off';
         const queueLabel = state.flowReplay.playing ? 'Pause Queue' : 'Start Queue';
+        const liveLabel = state.live.enabled ? 'Live Mode: ON' : 'Live Mode: OFF';
+        const liveStatus = getLiveStatusLabel();
         return `
             <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <div class="text-white/38">LIVE FLOW QUEUE</div>
-                        <div class="text-white/66">${escapeHtml(orderedCount)} ordered flows / ${escapeHtml(motionLabel)} / ${escapeHtml(sourceLabel)} / Local Offline</div>
+                        <div class="text-white/66">${escapeHtml(orderedCount)} ordered flows / ${escapeHtml(motionLabel)} / Source: ${escapeHtml(sourceLabel)} / ${escapeHtml(liveStatus)}</div>
                     </div>
                     <div class="flex flex-wrap gap-1.5">
+                        <button id="crypto-live-mode-toggle" type="button" aria-pressed="${state.live.enabled ? 'true' : 'false'}" class="rounded-full border ${state.live.enabled ? 'border-emerald-200/35 bg-emerald-300/15 text-emerald-50/86' : 'border-cyan-200/15 bg-cyan-300/10 text-cyan-50/78'} px-2.5 py-1 hover:border-cyan-100/35">${escapeHtml(liveLabel)}</button>
                         <button id="crypto-flow-queue-toggle" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(queueLabel)}</button>
                         <button id="crypto-flow-queue-step" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">Step</button>
                         <button id="crypto-flow-motion-toggle" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(motionLabel)}</button>
@@ -527,6 +1016,10 @@
             const path = event.target.value;
             if (path) switchGeneratedFixture(path);
         });
+        status.querySelector('#crypto-live-mode-toggle')?.addEventListener('click', () => {
+            setLiveModeEnabled(!state.live.enabled);
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        });
         status.querySelector('#crypto-flow-queue-toggle')?.addEventListener('click', () => {
             toggleFlowReplay();
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -569,6 +1062,8 @@
     }
 
     function applyDataset(dataset = {}) {
+        state.dataset = cloneDataset(dataset);
+        resetLiveMergeState();
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
@@ -586,6 +1081,7 @@
         resizeAndRender();
         renderDetails();
         updateFlowAnimationLoop();
+        updateLivePolling();
     }
 
     function resizeAndRender() {
@@ -1841,6 +2337,12 @@
         stepFlowReplay,
         getFlowQueue: () => state.flowQueue,
         setFlowAnimationEnabled,
+        setLiveModeEnabled,
+        setLivePollInterval: pollMs => {
+            state.live.pollMs = clamp(Number(pollMs) || LIVE_POLL_MS.default, LIVE_POLL_MS.min, LIVE_POLL_MS.max);
+            updateLivePolling();
+            return state.live.pollMs;
+        },
         getState: () => ({ ...state })
     };
 })();

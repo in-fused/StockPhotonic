@@ -124,6 +124,10 @@
         multiHopPaths: 3,
         transactionGroups: 5
     };
+    const WALLET_INTELLIGENCE_LIMITS = {
+        counterparties: 4,
+        tokens: 4
+    };
     const GENERATED_FIXTURE_DIR = 'data/crypto/generated/';
     const WORKER_FEED_LIMIT = 50;
     const LIVE_POLL_MS = { min: 3000, max: 5000, default: 4000 };
@@ -1004,6 +1008,7 @@
         status.className = 'grid gap-2 text-[10px] font-mono tracking-[1.1px] text-cyan-50/78 max-w-3xl grow md:grow-0';
         status.innerHTML = `
             ${renderGeneratedDataManager(metadata, isGeneratedFixture, isSolana)}
+            ${renderWalletIntelligencePanel()}
             ${renderFlowFilters()}
             ${renderFlowQueueStatus()}
         `;
@@ -1111,6 +1116,297 @@
             return `${state.walletLookup.eventCount} returned / ${state.walletLookup.mergedEventCount} shown`;
         }
         return 'No wallet lookup loaded';
+    }
+
+    function renderWalletIntelligencePanel() {
+        if (state.dataMode !== DATA_MODES.WALLET) return '';
+        const intelligence = buildWalletIntelligence();
+        const emptyState = getWalletLookupEmptyState(intelligence);
+        const depthNote = getWalletDepthExpansionNote();
+        return `
+            <div class="rounded-2xl border border-emerald-200/15 bg-emerald-300/10 px-3 py-2">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <div class="text-white/38">WALLET INTELLIGENCE</div>
+                        <div class="text-cyan-50/76 max-w-2xl">This view shows direct wallet activity returned by the secure Worker. Infrastructure/program accounts are filtered to keep the graph readable.</div>
+                    </div>
+                    <div class="text-emerald-100/80">${escapeHtml(intelligence.lookupStatus)}</div>
+                </div>
+                ${emptyState ? `<div class="mt-2 rounded-xl border border-yellow-200/15 bg-yellow-300/10 px-3 py-2 text-yellow-50/78">${escapeHtml(emptyState)}</div>` : ''}
+                ${depthNote ? `<div class="mt-2 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/70">${escapeHtml(depthNote)}</div>` : ''}
+                <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    ${renderWalletMetric('Tracked', intelligence.trackedWallet ? shortLongValue(intelligence.trackedWallet) : '-', intelligence.trackedWallet)}
+                    ${renderWalletMetric('Source', intelligence.sourceLabel)}
+                    ${renderWalletMetric('Events', intelligence.returnedEvents)}
+                    ${renderWalletMetric('Visible Legs', intelligence.visibleLegs)}
+                    ${renderWalletMetric('Filtered', intelligence.filteredLegs)}
+                    ${renderWalletMetric('Depth', `${intelligence.graphDepth}-hop`)}
+                    ${renderWalletMetric('Loaded', intelligence.lastLoadedLabel)}
+                    ${renderWalletMetric('Counterparties', intelligence.counterparties.length)}
+                </div>
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div class="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                        <div class="text-white/38 mb-1">FLOW HIGHLIGHTS</div>
+                        <div class="grid gap-1 text-white/64">
+                            <div>Top Inbound: ${escapeHtml(intelligence.topInboundToken)}</div>
+                            <div>Top Outbound: ${escapeHtml(intelligence.topOutboundToken)}</div>
+                            <div>Largest Flow: ${escapeHtml(intelligence.largestFlow)}</div>
+                            <div>Repeated Counterparty: ${escapeHtml(intelligence.mostRepeatedCounterparty)}</div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                        <div class="text-white/38 mb-1">TOP COUNTERPARTIES</div>
+                        <div class="grid gap-1.5">
+                            ${intelligence.counterparties.slice(0, WALLET_INTELLIGENCE_LIMITS.counterparties).map(renderCounterpartyRankRow).join('') || '<div class="text-white/38">No visible counterparties yet.</div>'}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                    <div class="text-white/38 mb-1">TOKEN FLOW SUMMARY</div>
+                    <div class="grid gap-1.5">
+                        ${intelligence.tokens.slice(0, WALLET_INTELLIGENCE_LIMITS.tokens).map(renderTokenFlowSummaryRow).join('') || '<div class="text-white/38">No visible token flows yet.</div>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderWalletMetric(label, value, title = '') {
+        const raw = String(value ?? '-');
+        return `
+            <div class="rounded-xl border border-white/10 bg-slate-950/30 px-2.5 py-2" title="${escapeAttr(title || raw)}">
+                <div class="text-white/34">${escapeHtml(label)}</div>
+                <div class="mt-0.5 text-cyan-50/78 break-all">${escapeHtml(raw || '-')}</div>
+            </div>
+        `;
+    }
+
+    function renderCounterpartyRankRow(item) {
+        const tokens = item.tokens.length ? item.tokens.join(', ') : '-';
+        const value = item.totalUsd > 0 ? core.formatUsd(item.totalUsd) : '-';
+        return `
+            <div class="grid grid-cols-[minmax(72px,1fr)_auto] gap-2 rounded-lg border border-white/10 bg-slate-950/28 px-2 py-1.5">
+                <div title="${escapeAttr(item.address)}">
+                    <div class="text-cyan-50/76">${escapeHtml(shortLongValue(item.address))}</div>
+                    <div class="text-white/42">${escapeHtml(item.relationship)} / ${escapeHtml(tokens)}</div>
+                </div>
+                <div class="text-right text-white/58">
+                    <div>${escapeHtml(item.count)}x</div>
+                    <div>${escapeHtml(value)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTokenFlowSummaryRow(item) {
+        const amount = item.amountAvailable ? `${formatCompactNumber(item.totalAmount)} ${item.symbol}` : '-';
+        const value = item.totalUsd > 0 ? core.formatUsd(item.totalUsd) : '-';
+        return `
+            <div class="grid grid-cols-[minmax(64px,1fr)_auto] gap-2 rounded-lg border border-white/10 bg-slate-950/28 px-2 py-1.5">
+                <div title="${escapeAttr(item.mint || item.symbol)}">
+                    <div class="text-cyan-50/76">${escapeHtml(item.symbol)}</div>
+                    <div class="text-white/42">${escapeHtml(item.inbound)} in / ${escapeHtml(item.outbound)} out / amount ${escapeHtml(amount)}</div>
+                </div>
+                <div class="text-right text-white/58">${escapeHtml(value)}</div>
+            </div>
+        `;
+    }
+
+    function buildWalletIntelligence() {
+        const metadata = state.graph?.metadata || {};
+        const trackedWallet = core.normalizeAddress(
+            metadata.wallet_lookup_tracked_wallet
+            || metadata.wallet
+            || state.walletLookup.lastWallet
+            || state.walletLookup.walletInput
+            || ''
+        );
+        const visibleFlows = getVisibleFlowEdges();
+        const sourceLabel = metadata.source_label || getCurrentSourceLabel();
+        const filteredLegs = getWalletFilteredLegCount(metadata);
+        const tokenSummary = buildWalletTokenFlowSummary(visibleFlows);
+        const counterparties = buildWalletCounterpartyRanking(visibleFlows, trackedWallet);
+        const largest = getLargestVisibleFlowLabel(visibleFlows);
+        const repeated = getMostRepeatedCounterpartyLabel(counterparties);
+        return {
+            trackedWallet,
+            sourceLabel,
+            returnedEvents: state.walletLookup.eventCount || 0,
+            visibleLegs: visibleFlows.length,
+            filteredLegs,
+            graphDepth: Number(metadata.wallet_lookup_depth || state.walletLookup.graphDepth) || 1,
+            lastLoadedLabel: state.walletLookup.lastLoadedAt ? formatDateTime(state.walletLookup.lastLoadedAt) : '-',
+            topInboundToken: getTopTokenLabel(tokenSummary, 'inbound'),
+            topOutboundToken: getTopTokenLabel(tokenSummary, 'outbound'),
+            largestFlow: largest,
+            mostRepeatedCounterparty: repeated,
+            lookupStatus: state.walletLookup.inFlight ? 'Loading' : state.walletLookup.lastWallet ? 'Loaded' : 'Waiting',
+            counterparties,
+            tokens: tokenSummary
+        };
+    }
+
+    function getWalletFilteredLegCount(metadata = {}) {
+        const explicit = Number(metadata.wallet_lookup_noise_removed);
+        if (Number.isFinite(explicit)) return Math.max(0, explicit);
+        const rawCount = Number(state.walletLookup.lastRawDataset?.transactions?.length);
+        if (Number.isFinite(rawCount)) return Math.max(0, rawCount - (state.graph?.flowEdges?.length || 0));
+        return 0;
+    }
+
+    function buildWalletTokenFlowSummary(edges = []) {
+        const byToken = new Map();
+        edges.forEach(edge => {
+            const symbol = String(edge.symbol || shortLongValue(edge.token_mint) || 'Token').trim() || 'Token';
+            const key = `${edge.token_mint || ''}|${symbol}`;
+            const current = byToken.get(key) || {
+                symbol,
+                mint: edge.token_mint || '',
+                inbound: 0,
+                outbound: 0,
+                mixed: 0,
+                totalAmount: 0,
+                amountAvailable: false,
+                totalUsd: 0,
+                count: 0
+            };
+            const direction = getEdgeDirection(edge);
+            if (direction === 'inbound') current.inbound += 1;
+            else if (direction === 'outbound') current.outbound += 1;
+            else current.mixed += 1;
+            const amount = Number(edge.amount);
+            if (Number.isFinite(amount) && amount > 0) {
+                current.totalAmount += amount;
+                current.amountAvailable = true;
+            }
+            current.totalUsd += Math.max(0, Number(edge.usd_value) || 0);
+            current.count += 1;
+            byToken.set(key, current);
+        });
+
+        return [...byToken.values()]
+            .sort((a, b) => b.totalUsd - a.totalUsd || b.count - a.count || a.symbol.localeCompare(b.symbol));
+    }
+
+    function buildWalletCounterpartyRanking(edges = [], trackedWallet = '') {
+        const tracked = core.normalizeAddress(trackedWallet);
+        const latestTimestamp = Math.max(0, ...edges.map(edge => timestampValue(edge.timestamp)));
+        const byAddress = new Map();
+
+        edges.forEach(edge => {
+            const source = core.normalizeAddress(edge.source_wallet);
+            const target = core.normalizeAddress(edge.destination_wallet);
+            if (!source || !target) return;
+
+            if (source && source !== tracked) {
+                addCounterpartyInteraction(byAddress, source, getCounterpartyDirection(source, source, target, tracked), edge, latestTimestamp);
+            }
+            if (target && target !== tracked && target !== source) {
+                addCounterpartyInteraction(byAddress, target, getCounterpartyDirection(target, source, target, tracked), edge, latestTimestamp);
+            }
+        });
+
+        return [...byAddress.values()]
+            .map(item => ({
+                ...item,
+                relationship: getCounterpartyRelationshipLabel(item),
+                tokens: [...item.tokens].sort()
+            }))
+            .sort((a, b) => b.score - a.score || b.count - a.count || a.address.localeCompare(b.address));
+    }
+
+    function addCounterpartyInteraction(byAddress, address, direction, edge, latestTimestamp) {
+        const current = byAddress.get(address) || {
+            address,
+            inbound: 0,
+            outbound: 0,
+            mixed: 0,
+            count: 0,
+            totalUsd: 0,
+            latestTimestamp: 0,
+            tokens: new Set(),
+            score: 0
+        };
+        if (direction === 'inbound') current.inbound += 1;
+        else if (direction === 'outbound') current.outbound += 1;
+        else current.mixed += 1;
+        current.count += 1;
+        current.totalUsd += Math.max(0, Number(edge.usd_value) || 0);
+        current.latestTimestamp = Math.max(current.latestTimestamp, timestampValue(edge.timestamp));
+        if (edge.symbol || edge.token_mint) current.tokens.add(edge.symbol || shortLongValue(edge.token_mint));
+        const recencyScore = latestTimestamp > 0 && current.latestTimestamp > 0 ? current.latestTimestamp / latestTimestamp : 0;
+        current.score = current.count * 100
+            + Math.log10(current.totalUsd + 1) * 28
+            + recencyScore * 18;
+        byAddress.set(address, current);
+    }
+
+    function getCounterpartyDirection(address, source, target, tracked) {
+        if (!tracked) return 'mixed';
+        if (source === tracked && target === address) return 'outbound';
+        if (target === tracked && source === address) return 'inbound';
+        return 'mixed';
+    }
+
+    function getCounterpartyRelationshipLabel(item = {}) {
+        const hasInbound = item.inbound > 0;
+        const hasOutbound = item.outbound > 0;
+        if ((hasInbound && hasOutbound) || item.mixed > 0) return 'mixed';
+        if (hasInbound) return 'inbound';
+        if (hasOutbound) return 'outbound';
+        return 'mixed';
+    }
+
+    function getTopTokenLabel(tokens = [], direction) {
+        const ranked = tokens
+            .filter(item => Number(item[direction]) > 0)
+            .sort((a, b) => (b[direction] || 0) - (a[direction] || 0) || b.totalUsd - a.totalUsd || a.symbol.localeCompare(b.symbol));
+        if (!ranked.length) return '-';
+        const top = ranked[0];
+        const value = top.totalUsd > 0 ? ` / ${core.formatUsd(top.totalUsd)}` : '';
+        return `${top.symbol} (${top[direction]} leg${top[direction] === 1 ? '' : 's'}${value})`;
+    }
+
+    function getLargestVisibleFlowLabel(edges = []) {
+        if (!edges.length) return '-';
+        const largestByUsd = [...edges].sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0))[0];
+        if ((largestByUsd.usd_value || 0) > 0) {
+            return `${largestByUsd.symbol || 'Token'} ${core.formatUsd(largestByUsd.usd_value)}`;
+        }
+        const largestByAmount = [...edges].sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))[0];
+        const amount = largestByAmount.amount_display || core.formatTokenAmount?.(largestByAmount.amount, largestByAmount.symbol) || '';
+        return amount ? `${largestByAmount.symbol || 'Token'} ${amount}` : '-';
+    }
+
+    function getMostRepeatedCounterpartyLabel(counterparties = []) {
+        const repeated = [...counterparties].sort((a, b) => b.count - a.count || b.totalUsd - a.totalUsd)[0];
+        if (!repeated) return '-';
+        return `${shortLongValue(repeated.address)} (${repeated.count}x)`;
+    }
+
+    function getWalletLookupEmptyState(intelligence = buildWalletIntelligence()) {
+        if (state.walletLookup.inFlight) return '';
+        if (!state.walletLookup.lastWallet && !state.walletLookup.eventCount) {
+            return 'No wallet loaded yet. Enter a wallet address to replace the graph with recent Worker activity.';
+        }
+        if (state.walletLookup.lastWallet && state.walletLookup.eventCount === 0 && state.walletLookup.lastLoadedAt) {
+            return 'The Worker returned no recent sanitized activity for this wallet.';
+        }
+        if (state.walletLookup.eventCount > 0 && intelligence.visibleLegs === 0) {
+            return 'Recent activity existed, but visible transfer legs were filtered out as infrastructure/noise or by the active filters.';
+        }
+        return '';
+    }
+
+    function getWalletDepthExpansionNote() {
+        if (state.dataMode !== DATA_MODES.WALLET || state.walletLookup.graphDepth <= 1 || !state.walletLookup.lastRawDataset || !state.walletLookup.lastWallet) return '';
+        const oneHop = filterWalletLookupDataset(state.walletLookup.lastRawDataset, state.walletLookup.lastWallet, 1);
+        const twoHop = filterWalletLookupDataset(state.walletLookup.lastRawDataset, state.walletLookup.lastWallet, 2);
+        if ((twoHop.transactions || []).length <= (oneHop.transactions || []).length
+            && (twoHop.wallets || []).length <= (oneHop.wallets || []).length) {
+            return '2-hop is active, but no additional meaningful wallet nodes survived the noise filter.';
+        }
+        return '';
     }
 
     function renderFlowQueueStatus() {
@@ -2269,7 +2565,9 @@
         if (!state.detailPanel || !state.graph) return;
         const node = state.graph.nodeById.get(state.selectedId) || state.graph.nodes[0];
         if (!node) {
-            state.detailPanel.innerHTML = '<div class="text-sm text-white/45">No crypto graph node selected.</div>';
+            state.detailPanel.innerHTML = state.dataMode === DATA_MODES.WALLET
+                ? renderWalletLookupEmptyDetails()
+                : '<div class="text-sm text-white/45">No crypto graph node selected.</div>';
             return;
         }
 
@@ -2281,10 +2579,14 @@
         const relatedPaths = uniqueRelatedPaths(getRelatedPaths(node.id));
         const insight = buildNodeFlowInsight(node, displayedRelatedFlows);
         const relatedGroups = getRelatedTransactionGroups(node, displayedRelatedFlows);
+        const contextCopy = state.dataMode === DATA_MODES.WALLET
+            ? 'Secure Worker wallet lookup graph. Program and infrastructure-like accounts are filtered; address relationships are not identity claims.'
+            : 'Local fixture graph. Source/program labels are hints from sanitized data, not identity claims.';
         state.detailPanel.innerHTML = `
             <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">${escapeHtml(isHubNode(node) ? 'ENTITY HUB' : node.type.toUpperCase())} NODE</div>
             <h3 class="font-display text-2xl mt-1">${escapeHtml(labelForNode(node))}</h3>
-            <div class="text-[11px] text-white/42 mt-2">Local fixture graph. Source/program labels are hints from sanitized data, not identity claims.</div>
+            <div class="text-[11px] text-white/42 mt-2">${escapeHtml(contextCopy)}</div>
+            ${state.dataMode === DATA_MODES.WALLET ? renderWalletDetailReadout() : ''}
             ${renderDetailSection('Summary', `
                 ${detailRow('Chain', node.chain || '-')}
                 ${isHubNode(node) ? detailRow('Hub Category', formatHubCategory(node.category)) : ''}
@@ -2310,11 +2612,11 @@
                 ${detailRow(node.type === core.NODE_TYPES.TOKEN ? 'Token Exposure' : isHubNode(node) ? 'Hub Exposure' : 'Exposure', core.formatUsd(node.exposure_usd || 0))}
             `)}
             ${isHubNode(node) ? `
-                ${renderCardSection('Connected Wallets', connectedWallets, DETAIL_LIMITS.connectedWallets, renderNodeSummary, 'No connected sample wallets.')}
+                ${renderCardSection('Connected Wallets', connectedWallets, DETAIL_LIMITS.connectedWallets, renderNodeSummary, state.dataMode === DATA_MODES.WALLET ? 'No connected wallet lookup addresses.' : 'No connected sample wallets.')}
             ` : ''}
-            ${renderCardSection('Direct Flows', displayedRelatedFlows, DETAIL_LIMITS.directFlows, edge => renderEdgeSummary(edge, node.id), 'No related sample flows.')}
+            ${renderCardSection('Direct Flows', displayedRelatedFlows, DETAIL_LIMITS.directFlows, edge => renderEdgeSummary(edge, node.id), state.dataMode === DATA_MODES.WALLET ? 'No visible wallet lookup transfer legs for this selection.' : 'No related sample flows.')}
             ${renderCardSection('Transaction Groups', relatedGroups, DETAIL_LIMITS.transactionGroups, renderTransactionGroupSummary, 'No transaction groups match this selection.')}
-            ${renderCardSection('Token Exposure', relatedExposureEdges, DETAIL_LIMITS.tokenExposure, edge => renderEdgeSummary(edge, node.id), 'No token exposure links for this sample node.')}
+            ${renderCardSection('Token Exposure', relatedExposureEdges, DETAIL_LIMITS.tokenExposure, edge => renderEdgeSummary(edge, node.id), state.dataMode === DATA_MODES.WALLET ? 'No token exposure links for this wallet lookup node.' : 'No token exposure links for this sample node.')}
             ${renderCardSection('Multi-Hop Paths', relatedPaths, DETAIL_LIMITS.multiHopPaths, renderPathSummary, 'No multi-hop wallet paths include this node.')}
         `;
     }
@@ -2328,6 +2630,41 @@
                 <div class="grid gap-2 text-xs text-white/68">${rows}</div>
             </section>
         `;
+    }
+
+    function renderWalletLookupEmptyDetails() {
+        const intelligence = buildWalletIntelligence();
+        const message = getWalletLookupEmptyState(intelligence) || 'Wallet lookup is ready for a Worker response.';
+        const depthNote = getWalletDepthExpansionNote();
+        return `
+            <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">WALLET LOOKUP</div>
+            <h3 class="font-display text-2xl mt-1">No Visible Wallet Flows</h3>
+            <div class="text-[11px] text-white/42 mt-2">This panel summarizes the replacement wallet graph returned by the secure Worker.</div>
+            <section class="mt-5 pt-4 border-t border-white/10">
+                <div class="text-sm text-white/72">${escapeHtml(message)}</div>
+                ${depthNote ? `<div class="text-xs text-cyan-50/62 mt-2">${escapeHtml(depthNote)}</div>` : ''}
+            </section>
+            ${renderDetailSection('Lookup Summary', `
+                ${detailRow('Tracked Wallet', intelligence.trackedWallet || '-', { shorten: true })}
+                ${detailRow('Returned Events', intelligence.returnedEvents)}
+                ${detailRow('Visible Transfer Legs', intelligence.visibleLegs)}
+                ${detailRow('Filtered / Noise Removed', intelligence.filteredLegs)}
+                ${detailRow('Graph Depth', `${intelligence.graphDepth}-hop`)}
+                ${detailRow('Last Loaded', intelligence.lastLoadedLabel)}
+            `)}
+        `;
+    }
+
+    function renderWalletDetailReadout() {
+        const intelligence = buildWalletIntelligence();
+        return renderDetailSection('Wallet Lookup Readout', `
+            ${detailRow('Returned / Visible', `${intelligence.returnedEvents} events / ${intelligence.visibleLegs} visible legs`)}
+            ${detailRow('Filtered / Noise Removed', intelligence.filteredLegs)}
+            ${detailRow('Top Inbound Token', intelligence.topInboundToken)}
+            ${detailRow('Top Outbound Token', intelligence.topOutboundToken)}
+            ${detailRow('Largest Visible Flow', intelligence.largestFlow)}
+            ${detailRow('Most Repeated Counterparty', intelligence.mostRepeatedCounterparty)}
+        `);
     }
 
     function renderCardSection(title, items, limit, renderItem, emptyMessage) {
@@ -2412,7 +2749,7 @@
             <div class="crypto-edge-summary rounded-2xl p-3">
                 <div class="text-[10px] font-mono text-cyan-100/70">${escapeHtml(path.hops)} HOP${path.hops === 1 ? '' : 'S'}</div>
                 <div class="text-xs text-white/72 mt-1" title="${escapeAttr(fullLabels)}">${escapeHtml(labels)}</div>
-                <div class="text-[11px] text-white/42 mt-1">${core.formatUsd(path.usd_value || 0)} sample flow path</div>
+                <div class="text-[11px] text-white/42 mt-1">${core.formatUsd(path.usd_value || 0)} ${escapeHtml(state.dataMode === DATA_MODES.WALLET ? 'wallet lookup' : 'sample')} flow path</div>
             </div>
         `;
     }
@@ -3140,6 +3477,17 @@
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return String(value || '');
         return date.toISOString().slice(0, 10);
+    }
+
+    function formatDateTime(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value || '');
+        return date.toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
     }
 
     function timestampValue(value) {

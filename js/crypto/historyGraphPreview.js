@@ -178,6 +178,78 @@
         }, null, 2);
     }
 
+    function buildPreviewDataset(transactions = [], options = {}) {
+        const builder = namespace.historyDatasetBuilder?.buildHistoryDataset;
+        if (builder) return builder(transactions, options);
+        return buildFallbackPreviewDataset(transactions, options);
+    }
+
+    function getPreviewDatasetMetrics(dataset = {}) {
+        const metricsBuilder = namespace.historyDatasetBuilder?.getDatasetMetrics;
+        if (metricsBuilder) return metricsBuilder(dataset);
+        const metadata = dataset.metadata || {};
+        return {
+            version: metadata.version || `${HISTORY_GRAPH_PREVIEW_VERSION}_dataset_fallback`,
+            previewOnly: metadata.preview_only === true,
+            notMerged: metadata.not_merged === true,
+            activeGraphUnchanged: metadata.active_graph_unchanged === true,
+            wallets: Array.isArray(dataset.wallets) ? dataset.wallets.length : 0,
+            tokens: Array.isArray(dataset.tokens) ? dataset.tokens.length : 0,
+            transactions: Array.isArray(dataset.transactions) ? dataset.transactions.length : 0,
+            transactionGroups: Array.isArray(dataset.transaction_groups) ? dataset.transaction_groups.length : 0,
+            stagedRowsReceived: Number(metadata.counts?.stagedRowsReceived) || 0,
+            stagedRowsProcessed: Number(metadata.counts?.stagedRowsProcessed) || 0,
+            transferRowsIncluded: Number(metadata.counts?.transferRowsIncluded) || 0,
+            duplicateTransferRowsSkipped: Number(metadata.counts?.duplicateTransferRowsSkipped) || 0,
+            rowsMissingTimestamp: Number(metadata.counts?.rowsMissingTimestamp) || 0,
+            rowsMissingWalletData: Number(metadata.counts?.rowsMissingWalletData) || 0,
+            rowsMissingTokenData: Number(metadata.counts?.rowsMissingTokenData) || 0,
+            warnings: Array.isArray(metadata.warnings) ? metadata.warnings.slice() : [],
+            boundary: metadata.boundary || 'Preview dataset only. Active graph unchanged.'
+        };
+    }
+
+    function buildPreviewDatasetText(dataset = {}) {
+        const textBuilder = namespace.historyDatasetBuilder?.buildHistoryDatasetText;
+        if (textBuilder) return textBuilder(dataset);
+        return JSON.stringify(dataset || {}, null, 2);
+    }
+
+    function buildFallbackPreviewDataset(transactions = [], options = {}) {
+        const rows = Array.isArray(transactions) ? transactions : [];
+        return {
+            metadata: {
+                version: `${HISTORY_GRAPH_PREVIEW_VERSION}_dataset_fallback`,
+                source: 'wallet_history_staged_preview_dataset_fallback',
+                generated_at: new Date().toISOString(),
+                wallet: options.trackedWallet || '',
+                preview_only: true,
+                not_merged: true,
+                merged_into_active_graph: false,
+                active_graph_unchanged: true,
+                graph_ready_staging_only: true,
+                browser_provider_calls: false,
+                api_key_exposure: false,
+                boundary: 'Fallback dataset shell only. Load historyDatasetBuilder.js for normalized graph-ready rows.',
+                no_claims: {
+                    identity: false,
+                    ownership: false,
+                    risk: false,
+                    criminality: false,
+                    investment: false
+                },
+                warnings: rows.length
+                    ? ['History dataset builder module was unavailable; normalized graph-ready rows were not generated.']
+                    : ['No staged history rows are loaded yet.']
+            },
+            wallets: [],
+            tokens: [],
+            entities: [],
+            transactions: [],
+            transaction_groups: []
+        };
+    }
+
     function addTransactionWallets(walletSet, transaction = {}) {
         [
             transaction.wallet,
@@ -387,6 +459,9 @@
         LARGE_EVENT_WARNING_THRESHOLD,
         buildPreviewSummary,
         buildReplayPlan,
-        buildReplayPlanText
+        buildReplayPlanText,
+        buildPreviewDataset,
+        getPreviewDatasetMetrics,
+        buildPreviewDatasetText
     };
 })();

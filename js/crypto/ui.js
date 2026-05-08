@@ -81,6 +81,7 @@
             controller: null,
             moduleLoadPromise: null,
             previewModuleLoadPromise: null,
+            datasetBuilderLoadPromise: null,
             inFlight: false,
             lastError: '',
             lastMessage: '',
@@ -99,7 +100,10 @@
         },
         historyPreview: {
             plan: null,
+            dataset: null,
+            datasetMetrics: null,
             generatedAt: 0,
+            datasetGeneratedAt: 0,
             lastMessage: ''
         },
         filters: {
@@ -916,7 +920,10 @@
         state.history.providerLabel = '';
         state.history.providerCapabilities = null;
         state.historyPreview.plan = null;
+        state.historyPreview.dataset = null;
+        state.historyPreview.datasetMetrics = null;
         state.historyPreview.generatedAt = 0;
+        state.historyPreview.datasetGeneratedAt = 0;
         state.historyPreview.lastMessage = '';
     }
 
@@ -1623,19 +1630,25 @@
     function renderWalletHistoryGraphPreviewPanel() {
         const summary = buildHistoryGraphPreviewSummary();
         const plan = state.historyPreview.plan;
+        const datasetMetrics = state.historyPreview.datasetMetrics;
         const planStale = plan && Number(plan.stagedEventCount || 0) !== Number(summary.transferEventCount || 0);
+        const datasetStale = datasetMetrics && Number(datasetMetrics.stagedRowsReceived || 0) !== Number((state.history.loadedTransactions || []).length);
         const previewDisabled = state.history.inFlight;
-        const clearDisabled = state.history.inFlight || !plan;
+        const datasetDisabled = state.history.inFlight;
+        const clearDisabled = state.history.inFlight || (!plan && !state.historyPreview.dataset);
+        const datasetCopyDisabled = state.history.inFlight || !state.historyPreview.dataset;
         const copyDisabled = state.history.inFlight || !plan;
         return `
             <section class="mt-3 rounded-xl border border-fuchsia-200/18 bg-fuchsia-300/8 p-3">
                 <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                     <div class="min-w-0">
                         <div class="text-white/38">HISTORY GRAPH PREVIEW / REPLAY SANDBOX</div>
-                        <div class="mt-1 text-sm font-display text-cyan-50/86">Lifetime Replay Planning</div>
-                        <div class="mt-1 max-w-3xl text-white/58 leading-relaxed">Preview only. Staged history is summarized into a planning model and is not merged with the active Wallet Lookup graph. This panel makes no identity, ownership, risk, or investment claims; future lifetime replay needs progressive graph expansion before older pages can be drawn.</div>
+                        <div class="mt-1 text-sm font-display text-cyan-50/86">Graph-Ready Staging</div>
+                        <div class="mt-1 max-w-3xl text-white/58 leading-relaxed">Graph-ready staging only. Build Preview Dataset converts loaded history rows into a copyable dataset artifact, but it does not draw, animate, or merge with the active Wallet Lookup graph. This panel makes no identity, ownership, risk, criminality, or investment claims; a future phase will add opt-in visual preview and replay.</div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 xl:min-w-[460px]">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2 xl:min-w-[720px]">
+                        <button id="crypto-history-preview-build-dataset" type="button" ${datasetDisabled ? 'disabled' : ''} title="Build a graph-ready preview dataset from staged history without rendering or merging it." class="min-h-10 rounded-xl border border-emerald-200/22 bg-emerald-300/12 px-3 py-2 text-emerald-50/84 hover:border-emerald-100/38 disabled:opacity-50 disabled:cursor-not-allowed">Build Preview Dataset</button>
+                        <button id="crypto-history-preview-copy-dataset" type="button" ${datasetCopyDisabled ? 'disabled' : ''} title="Copy the graph-ready preview dataset JSON. The active graph remains unchanged." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy Preview Dataset JSON</button>
                         <button id="crypto-history-preview-plan" type="button" ${previewDisabled ? 'disabled' : ''} title="Generate a staged lifetime replay plan without animating or changing the active graph." class="min-h-10 rounded-xl border border-fuchsia-200/24 bg-fuchsia-300/12 px-3 py-2 text-fuchsia-50/86 hover:border-fuchsia-100/40 disabled:opacity-50 disabled:cursor-not-allowed">Preview Lifetime Replay</button>
                         <button id="crypto-history-preview-clear" type="button" ${clearDisabled ? 'disabled' : ''} title="Clear the replay preview plan without clearing staged history or changing the graph." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/70 hover:border-cyan-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Clear Preview</button>
                         <button id="crypto-history-preview-copy" type="button" ${copyDisabled ? 'disabled' : ''} title="Copy the staged replay plan as JSON." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy Replay Plan</button>
@@ -1651,6 +1664,13 @@
                     ${renderWalletHistoryMetric('Readiness', `${summary.replayReadinessScore}/100`, summary.replayReadinessLabel)}
                 </div>
                 <div class="mt-3 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)] gap-2.5">
+                    <div class="min-w-0 rounded-lg border border-white/10 bg-slate-950/28 p-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="text-white/38">DATASET READINESS</div>
+                            <div class="text-white/42">${escapeHtml(datasetMetrics ? (datasetStale ? 'Refresh dataset' : 'Built') : 'Not built')}</div>
+                        </div>
+                        ${datasetMetrics ? renderHistoryPreviewDatasetMetrics(datasetMetrics, datasetStale) : `<div class="mt-2 text-white/54 leading-relaxed">${escapeHtml(getHistoryPreviewDatasetNotice(summary))}</div>`}
+                    </div>
                     <div class="min-w-0 rounded-lg border border-white/10 bg-slate-950/28 p-3">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="text-white/38">REPLAY READINESS</div>
@@ -1681,12 +1701,40 @@
                     </div>
                     <div class="rounded-lg border border-cyan-200/14 bg-cyan-300/8 px-3 py-2.5">
                         <div class="text-white/38">BOUNDARY</div>
-                        <div class="mt-2 text-cyan-50/72 leading-relaxed">Preview summary only. The active graph, Wallet Intelligence, Timeline, Flow Inspector, Report, History Browser, and mobile graph controls continue to use the current Wallet Lookup replacement graph.</div>
-                        <div class="mt-2 text-white/46">${escapeHtml(state.historyPreview.lastMessage || 'Generate a replay plan when staged history is ready to inspect.')}</div>
+                        <div class="mt-2 text-cyan-50/72 leading-relaxed">Graph-ready staging only. The active graph, Wallet Intelligence, Timeline, Flow Inspector, Report, History Browser, and mobile graph controls continue to use the current Wallet Lookup replacement graph. Future visual preview and lifetime replay remain opt-in work for a later phase.</div>
+                        <div class="mt-2 text-white/46">${escapeHtml(state.historyPreview.lastMessage || 'Build a preview dataset when staged history is ready to inspect.')}</div>
                     </div>
                 </div>
             </section>
         `;
+    }
+
+    function renderHistoryPreviewDatasetMetrics(metrics = {}, stale = false) {
+        const warning = (metrics.warnings || [])[0] || '';
+        const staleCopy = stale
+            ? '<div class="mt-2 rounded-lg border border-yellow-200/18 bg-yellow-300/10 px-3 py-2 text-yellow-50/78 leading-relaxed">Staged history changed after this dataset was built. Build Preview Dataset again before copying.</div>'
+            : '';
+        return `
+            <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                ${renderWalletHistoryMetric('Wallets', metrics.wallets, 'Deduped preview wallet nodes.')}
+                ${renderWalletHistoryMetric('Tokens', metrics.tokens, 'Deduped preview token nodes.')}
+                ${renderWalletHistoryMetric('Transfers', metrics.transactions, 'Graph-ready transfer rows with source and destination wallets.')}
+                ${renderWalletHistoryMetric('Groups', metrics.transactionGroups, 'Signature-based transaction groups inferred safely.')}
+                ${renderWalletHistoryMetric('Rows', `${metrics.stagedRowsProcessed}/${metrics.stagedRowsReceived}`, 'Processed staged rows / received staged rows.')}
+                ${renderWalletHistoryMetric('Duplicates', metrics.duplicateTransferRowsSkipped, 'Duplicate staged transfer rows skipped.')}
+                ${renderWalletHistoryMetric('Missing Wallets', metrics.transferRowsOmittedMissingWallets, 'Transfer candidates omitted because graph endpoints were missing.')}
+                ${renderWalletHistoryMetric('Preview Only', metrics.previewOnly && metrics.notMerged ? 'Yes' : 'Check', metrics.boundary || 'Dataset is preview-only and not merged.')}
+            </div>
+            <div class="mt-2 text-white/54 leading-relaxed">${escapeHtml(metrics.boundary || 'Preview dataset built. Active graph unchanged.')}</div>
+            ${warning ? `<div class="mt-2 rounded-lg border border-yellow-200/18 bg-yellow-300/10 px-3 py-2 text-yellow-50/78 leading-relaxed">${escapeHtml(warning)}</div>` : ''}
+            ${staleCopy}
+        `;
+    }
+
+    function getHistoryPreviewDatasetNotice(summary = {}) {
+        if (state.history.inFlight) return 'History is loading. Build the preview dataset after the Worker page is staged.';
+        if (!summary.transactionCount) return 'No staged history yet. Load wallet activity or history pages before building a graph-ready preview dataset.';
+        return 'Build Preview Dataset will prepare wallets, tokens, transactions, and safely inferred transaction groups for JSON copy only. It will not render, merge, or animate the dataset.';
     }
 
     function renderHistoryReplayPlanDetails(plan = {}, stale = false) {
@@ -1897,18 +1945,25 @@
     }
 
     function buildHistoryGraphPreviewSummary() {
+        const options = getHistoryPreviewBuildOptions();
+        const builder = namespace.historyGraphPreview?.buildPreviewSummary;
+        if (builder) return builder(state.history.loadedTransactions, options);
+        return buildFallbackHistoryGraphPreviewSummary(state.history.loadedTransactions, options);
+    }
+
+    function getHistoryPreviewBuildOptions() {
         const trackedWallet = state.history.controller?.wallet || state.walletLookup.lastWallet || state.walletLookup.walletInput || '';
-        const options = {
+        return {
             trackedWallet,
+            provider: state.history.provider || '',
+            providerLabel: state.history.providerLabel || '',
             providerConfigured: state.history.providerConfigured,
             pagesLoaded: state.history.pagesLoaded,
             providerPagesLoaded: state.history.providerPagesLoaded,
             nextCursor: state.history.nextCursor,
-            moreAvailable: state.history.moreAvailable
+            moreAvailable: state.history.moreAvailable,
+            maxRows: HISTORY_PREVIEW_TRANSACTION_LIMIT
         };
-        const builder = namespace.historyGraphPreview?.buildPreviewSummary;
-        if (builder) return builder(state.history.loadedTransactions, options);
-        return buildFallbackHistoryGraphPreviewSummary(state.history.loadedTransactions, options);
     }
 
     function buildFallbackHistoryGraphPreviewSummary(transactions = [], options = {}) {
@@ -2896,6 +2951,12 @@
         status.querySelector('#crypto-wallet-history-copy')?.addEventListener('click', event => {
             copyWalletHistorySnapshot(event.currentTarget);
         });
+        status.querySelector('#crypto-history-preview-build-dataset')?.addEventListener('click', () => {
+            buildHistoryPreviewDataset();
+        });
+        status.querySelector('#crypto-history-preview-copy-dataset')?.addEventListener('click', event => {
+            copyHistoryPreviewDataset(event.currentTarget);
+        });
         status.querySelector('#crypto-history-preview-plan')?.addEventListener('click', () => {
             previewLifetimeReplay();
         });
@@ -3184,7 +3245,10 @@
             resetHistoryState(wallet);
         }
         state.historyPreview.plan = null;
+        state.historyPreview.dataset = null;
+        state.historyPreview.datasetMetrics = null;
         state.historyPreview.generatedAt = 0;
+        state.historyPreview.datasetGeneratedAt = 0;
         state.historyPreview.lastMessage = 'Replay preview cleared with staged history; the Wallet Lookup graph was not changed.';
         state.history.lastMessage = 'Loaded history staging cleared; the Wallet Lookup graph was not changed.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -3233,6 +3297,106 @@
         return JSON.stringify(snapshot, null, 2);
     }
 
+    async function buildHistoryPreviewDataset() {
+        await loadHistoryGraphPreviewModule();
+        const builder = namespace.historyGraphPreview?.buildPreviewDataset
+            || namespace.historyDatasetBuilder?.buildHistoryDataset;
+        const dataset = builder
+            ? builder(state.history.loadedTransactions, getHistoryPreviewBuildOptions())
+            : buildFallbackHistoryPreviewDataset();
+        const metrics = getHistoryPreviewDatasetMetrics(dataset);
+        state.historyPreview.dataset = dataset;
+        state.historyPreview.datasetMetrics = metrics;
+        state.historyPreview.datasetGeneratedAt = Date.now();
+        state.historyPreview.lastMessage = metrics.transactions
+            ? 'Preview dataset built from staged history only. Active graph unchanged; no render, merge, or replay started.'
+            : 'Preview dataset shell built. Load staged history with wallet data before graph-ready transfer rows can be included.';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        return dataset;
+    }
+
+    async function copyHistoryPreviewDataset(button) {
+        const original = button?.textContent || 'Copy Preview Dataset JSON';
+        const dataset = state.historyPreview.dataset;
+        if (!dataset) {
+            state.historyPreview.lastMessage = 'Build Preview Dataset before copying JSON.';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return;
+        }
+        const textBuilder = namespace.historyGraphPreview?.buildPreviewDatasetText
+            || namespace.historyDatasetBuilder?.buildHistoryDatasetText;
+        const text = textBuilder ? textBuilder(dataset) : JSON.stringify(dataset, null, 2);
+        try {
+            await writeTextToClipboard(text);
+            state.historyPreview.lastMessage = 'Preview dataset JSON copied. It remains graph-ready staging only; active graph unchanged.';
+            if (button) button.textContent = 'Copied';
+        } catch (error) {
+            state.historyPreview.lastMessage = 'Clipboard unavailable. Preview dataset JSON was not copied.';
+            if (button) button.textContent = 'Copy Failed';
+        }
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        window.setTimeout(() => {
+            if (button) button.textContent = original;
+        }, 1400);
+    }
+
+    function getHistoryPreviewDatasetMetrics(dataset = {}) {
+        const metricsBuilder = namespace.historyGraphPreview?.getPreviewDatasetMetrics
+            || namespace.historyDatasetBuilder?.getDatasetMetrics;
+        if (metricsBuilder) return metricsBuilder(dataset);
+        const metadata = dataset.metadata || {};
+        return {
+            previewOnly: metadata.preview_only === true,
+            notMerged: metadata.not_merged === true,
+            activeGraphUnchanged: metadata.active_graph_unchanged === true,
+            wallets: Array.isArray(dataset.wallets) ? dataset.wallets.length : 0,
+            tokens: Array.isArray(dataset.tokens) ? dataset.tokens.length : 0,
+            transactions: Array.isArray(dataset.transactions) ? dataset.transactions.length : 0,
+            transactionGroups: Array.isArray(dataset.transaction_groups) ? dataset.transaction_groups.length : 0,
+            stagedRowsReceived: Number(metadata.counts?.stagedRowsReceived) || 0,
+            stagedRowsProcessed: Number(metadata.counts?.stagedRowsProcessed) || 0,
+            duplicateTransferRowsSkipped: Number(metadata.counts?.duplicateTransferRowsSkipped) || 0,
+            transferRowsOmittedMissingWallets: Number(metadata.counts?.transferRowsOmittedMissingWallets) || 0,
+            warnings: Array.isArray(metadata.warnings) ? metadata.warnings : [],
+            boundary: metadata.boundary || 'Preview dataset only. Active graph unchanged.'
+        };
+    }
+
+    function buildFallbackHistoryPreviewDataset() {
+        return {
+            metadata: {
+                version: 'd110_history_dataset_builder_unavailable',
+                generated_at: new Date().toISOString(),
+                preview_only: true,
+                not_merged: true,
+                merged_into_active_graph: false,
+                active_graph_unchanged: true,
+                graph_ready_staging_only: true,
+                browser_provider_calls: false,
+                api_key_exposure: false,
+                boundary: 'Dataset builder module unavailable. Active graph unchanged.',
+                no_claims: {
+                    identity: false,
+                    ownership: false,
+                    risk: false,
+                    criminality: false,
+                    investment: false
+                },
+                counts: {
+                    stagedRowsReceived: (state.history.loadedTransactions || []).length,
+                    stagedRowsProcessed: 0,
+                    transferRowsIncluded: 0
+                },
+                warnings: ['History dataset builder module unavailable; no graph-ready transfer rows were prepared.']
+            },
+            wallets: [],
+            tokens: [],
+            entities: [],
+            transactions: [],
+            transaction_groups: []
+        };
+    }
+
     async function previewLifetimeReplay() {
         await loadHistoryGraphPreviewModule();
         const summary = buildHistoryGraphPreviewSummary();
@@ -3249,8 +3413,11 @@
 
     function clearHistoryGraphPreview() {
         state.historyPreview.plan = null;
+        state.historyPreview.dataset = null;
+        state.historyPreview.datasetMetrics = null;
         state.historyPreview.generatedAt = 0;
-        state.historyPreview.lastMessage = 'Replay preview cleared. Staged history and the active graph were not changed.';
+        state.historyPreview.datasetGeneratedAt = 0;
+        state.historyPreview.lastMessage = 'Preview artifacts cleared. Staged history and the active graph were not changed.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
     }
 
@@ -3321,15 +3488,28 @@
     }
 
     function loadHistoryGraphPreviewModule() {
-        if (namespace.historyGraphPreview?.buildPreviewSummary) return Promise.resolve(true);
+        if (namespace.historyGraphPreview?.buildPreviewSummary && namespace.historyDatasetBuilder?.buildHistoryDataset) return Promise.resolve(true);
         if (state.history.previewModuleLoadPromise) return state.history.previewModuleLoadPromise;
-        state.history.previewModuleLoadPromise = loadCryptoScript('js/crypto/historyGraphPreview.js')
+        state.history.previewModuleLoadPromise = loadHistoryDatasetBuilderModule()
+            .then(() => loadCryptoScript('js/crypto/historyGraphPreview.js'))
             .then(() => Boolean(namespace.historyGraphPreview?.buildPreviewSummary))
             .catch(error => {
                 state.historyPreview.lastMessage = error?.message || 'History graph preview module unavailable';
                 return false;
             });
         return state.history.previewModuleLoadPromise;
+    }
+
+    function loadHistoryDatasetBuilderModule() {
+        if (namespace.historyDatasetBuilder?.buildHistoryDataset) return Promise.resolve(true);
+        if (state.history.datasetBuilderLoadPromise) return state.history.datasetBuilderLoadPromise;
+        state.history.datasetBuilderLoadPromise = loadCryptoScript('js/crypto/historyDatasetBuilder.js')
+            .then(() => Boolean(namespace.historyDatasetBuilder?.buildHistoryDataset))
+            .catch(error => {
+                state.historyPreview.lastMessage = error?.message || 'History dataset builder module unavailable';
+                return false;
+            });
+        return state.history.datasetBuilderLoadPromise;
     }
 
     function loadCryptoScript(src) {

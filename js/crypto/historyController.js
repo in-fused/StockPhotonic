@@ -33,6 +33,7 @@
             this.lastError = '';
             this.lastMessage = '';
             this.lastStatus = 'idle';
+            this.lastMetadata = {};
             this.providerConfigured = false;
             this.providerPagesLoaded = 0;
             this.totalLoadedTransactions = 0;
@@ -85,6 +86,7 @@
 
         recordPage(page = {}, options = {}) {
             const normalized = normalizeHistoryPage(page);
+            const previousNextCursor = this.nextCursor ?? null;
             const pageCursor = normalized.cursor ?? this.nextCursor ?? null;
             const pageRecord = {
                 ...normalized,
@@ -100,11 +102,17 @@
                 nextCursor: pageRecord.nextCursor,
                 loadedAt: pageRecord.loadedAt
             });
-            this.nextCursor = pageRecord.nextCursor ?? null;
-            this.moreAvailable = Boolean(pageRecord.moreAvailable && this.nextCursor);
+            if (pageRecord.status === 'ok') {
+                this.nextCursor = pageRecord.nextCursor ?? null;
+                this.moreAvailable = Boolean(pageRecord.moreAvailable && this.nextCursor);
+            } else {
+                this.nextCursor = previousNextCursor;
+                this.moreAvailable = Boolean(previousNextCursor);
+            }
             this.totalLoadedTransactions += recordNewTransactions(pageRecord.transactions, this.seenTransactionKeys, this.loadedTransactions);
             this.lastMessage = pageRecord.message || '';
             this.lastStatus = pageRecord.status || 'ok';
+            this.lastMetadata = pageRecord.metadata || {};
             this.providerConfigured = pageRecord.metadata?.provider_configured === true
                 || (!options.seeded && pageRecord.status === 'ok');
             this.lastError = pageRecord.status === 'ok' ? '' : this.lastMessage || pageRecord.status;
@@ -127,6 +135,7 @@
                 lastError: this.lastError,
                 lastMessage: this.lastMessage,
                 lastStatus: this.lastStatus,
+                lastMetadata: this.lastMetadata,
                 providerConfigured: this.providerConfigured,
                 totalLoadedTransactions: this.totalLoadedTransactions,
                 loadedTransactions: this.loadedTransactions.slice(0, this.pageLimit),

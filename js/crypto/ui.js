@@ -96,6 +96,7 @@
             backendProviderConnected: false,
             providerConfigured: false,
             lastStatus: 'idle',
+            lastMetadata: {},
             provider: '',
             providerLabel: '',
             providerCapabilities: null
@@ -936,6 +937,7 @@
         state.history.backendProviderConnected = false;
         state.history.providerConfigured = false;
         state.history.lastStatus = 'idle';
+        state.history.lastMetadata = {};
         state.history.provider = '';
         state.history.providerLabel = '';
         state.history.providerCapabilities = null;
@@ -1462,8 +1464,9 @@
         if (state.history.lastError) return `History: ${state.history.lastError}`;
         if (state.history.pagesLoaded > 0) {
             const next = state.history.nextCursor ? shortLongValue(state.history.nextCursor) : 'none';
-            const configured = state.history.providerConfigured ? 'provider configured' : 'provider unconfigured';
-            return `History: ${state.history.pagesLoaded} page${state.history.pagesLoaded === 1 ? '' : 's'} loaded / ${state.history.totalLoadedTransactions} tx tracked / next cursor ${next} / ${configured}`;
+            const providerState = getWalletHistoryProviderStateDisplay().toLowerCase();
+            const cacheState = getWalletHistoryCacheDisplay().toLowerCase();
+            return `History: ${state.history.pagesLoaded} page${state.history.pagesLoaded === 1 ? '' : 's'} loaded / ${state.history.totalLoadedTransactions} tx tracked / next cursor ${next} / provider ${providerState} / cache ${cacheState}`;
         }
         if (state.dataMode === DATA_MODES.WALLET) {
             return state.history.backendProviderConnected
@@ -1656,9 +1659,10 @@
                         <button id="crypto-wallet-history-copy" type="button" ${copyDisabled ? 'disabled' : ''} title="Copy a compact staged history snapshot." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy History Snapshot</button>
                     </div>
                 </div>
-                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
                     ${renderWalletHistoryMetric('Provider', getWalletHistoryProviderDisplay(), 'Backend Worker adapter or provider surface reported by the history controller.')}
-                    ${renderWalletHistoryMetric('Configured', state.history.providerConfigured ? 'Configured' : 'Unconfigured', getWalletHistoryConfigurationTitle())}
+                    ${renderWalletHistoryMetric('Provider State', getWalletHistoryProviderStateDisplay(), getWalletHistoryConfigurationTitle())}
+                    ${renderWalletHistoryMetric('Cache', getWalletHistoryCacheDisplay(), getWalletHistoryCacheTitle())}
                     ${renderWalletHistoryMetric('Pages', state.history.pagesLoaded, 'All staged pages, including the initial wallet lookup page when available.')}
                     ${renderWalletHistoryMetric('Provider Pages', state.history.providerPagesLoaded, 'Pages loaded by the dedicated wallet-history endpoint after the initial lookup.')}
                     ${renderWalletHistoryMetric('Unique Tx', state.history.totalLoadedTransactions, 'Unique staged transaction/event keys tracked by the HistoryController.')}
@@ -2238,8 +2242,36 @@
         return label.length > 28 ? shortLongValue(label) : label;
     }
 
+    function getWalletHistoryProviderStateDisplay() {
+        if (state.history.inFlight) return 'Loading';
+        if (state.history.lastStatus === 'provider_rate_limited') return 'Rate-limited';
+        if (state.history.lastStatus === 'provider_unavailable') return 'Unavailable';
+        if (state.history.lastStatus === 'provider_not_configured' || state.history.lastStatus === 'provider_placeholder') return 'Unconfigured';
+        if (state.history.providerConfigured) return 'Configured';
+        if (state.history.backendProviderConnected) return 'Unknown';
+        return 'Unconnected';
+    }
+
+    function getWalletHistoryCacheDisplay() {
+        const metadata = state.history.lastMetadata || {};
+        if (metadata.cache_hit === true) return 'Hit';
+        if (metadata.cache_status === 'miss') return 'Miss';
+        if (metadata.cache_status === 'bypass') return 'Bypass';
+        return 'Not reported';
+    }
+
+    function getWalletHistoryCacheTitle() {
+        const metadata = state.history.lastMetadata || {};
+        const ttl = metadata.cache_ttl_seconds ? ` TTL ${metadata.cache_ttl_seconds}s.` : '';
+        const rate = metadata.rate_limit_status ? ` Rate: ${metadata.rate_limit_status}.` : '';
+        return `Worker reported cache status: ${metadata.cache_status || 'not reported'}.${ttl}${rate}`;
+    }
+
     function getWalletHistoryConfigurationTitle() {
         if (state.history.providerConfigured) return 'Provider reported configured through the Worker response.';
+        if (state.history.lastStatus === 'provider_rate_limited') return 'Provider is configured, but the Worker or upstream provider is rate-limiting history pagination.';
+        if (state.history.lastStatus === 'provider_unavailable') return 'Provider is configured, but the Worker could not load this history page.';
+        if (state.history.lastStatus === 'provider_not_configured') return 'Configure the Worker wallet history provider and secrets before loading real history pages.';
         if (isLanaPlaceholderHistoryState()) return 'lana placeholder is staged only; no browser-side provider call is made.';
         return 'Provider is unavailable, unconfigured, or not reported by the Worker yet.';
     }
@@ -2257,6 +2289,9 @@
     function getWalletHistoryNotice() {
         if (state.history.inFlight) return 'Loading the next staged history page through the Worker wallet-history endpoint.';
         if (state.history.lastError) return state.history.lastError;
+        if (state.history.lastStatus === 'provider_rate_limited') return state.history.lastMessage || 'History provider is rate-limited. Wait briefly before loading another staged page.';
+        if (state.history.lastStatus === 'provider_unavailable') return state.history.lastMessage || 'History provider is configured, but this page could not be loaded.';
+        if (state.history.lastStatus === 'provider_not_configured') return state.history.lastMessage || 'Worker history provider is not configured.';
         if (isLanaPlaceholderHistoryState()) return 'lana placeholder history is not a browser provider. Configure it behind the Worker before loading real pages.';
         if (!state.history.backendProviderConnected) return 'History provider is unavailable in the browser until the Worker adapter is connected; direct provider calls remain disabled.';
         if (state.history.pagesLoaded && !state.history.loadedTransactions.length) return 'History page loaded, but it did not contain inspectable transactions.';
@@ -2369,6 +2404,8 @@
             provider: state.history.provider || '',
             providerLabel: state.history.providerLabel || '',
             providerConfigured: state.history.providerConfigured,
+            providerState: getWalletHistoryProviderStateDisplay(),
+            cache: getWalletHistoryCacheDisplay(),
             pagesLoaded: state.history.pagesLoaded,
             providerPagesLoaded: state.history.providerPagesLoaded,
             nextCursor: state.history.nextCursor,
@@ -4293,6 +4330,7 @@
         state.history.lastError = snapshot.lastError || '';
         state.history.lastMessage = snapshot.lastMessage || '';
         state.history.lastStatus = snapshot.lastStatus || 'idle';
+        state.history.lastMetadata = snapshot.lastMetadata || {};
         state.history.providerConfigured = Boolean(snapshot.providerConfigured);
         state.history.provider = snapshot.provider || '';
         state.history.providerLabel = snapshot.providerLabel || snapshot.providerCapabilities?.label || snapshot.provider || '';

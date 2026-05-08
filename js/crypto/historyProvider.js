@@ -87,6 +87,19 @@
             });
             const payload = await response.json().catch(() => null);
             if (!response.ok) {
+                if (payload && typeof payload === 'object' && (payload.status || payload.message)) {
+                    return normalizeHistoryPage({
+                        ...payload,
+                        wallet: payload.wallet || normalizedWallet,
+                        cursor,
+                        provider: payload.provider || this.id,
+                        metadata: {
+                            ...(payload.metadata || {}),
+                            worker_endpoint_contract: '/api/crypto/wallet-history',
+                            browser_provider_calls: false
+                        }
+                    });
+                }
                 throw new Error(payload?.message || `Worker wallet history returned ${response.status}`);
             }
 

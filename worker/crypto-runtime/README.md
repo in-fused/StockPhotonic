@@ -143,6 +143,15 @@ Supported Worker-side provider candidates:
 
 If `CRYPTO_WALLET_HISTORY_PROVIDER` or provider-specific config is missing, the endpoint returns a structured `provider_not_configured` page with empty events. Invalid wallets return `400 invalid_event_query`; unsupported providers return `400 unsupported_provider`.
 
+History page guardrails:
+
+- Frontend-requested `limit` is capped to the Worker maximum and reported as `metadata.limit_capped` when adjusted.
+- Successful normalized history pages are cached by provider, wallet, cursor, and limit for 45 seconds. Cache entries contain only the normalized response body, never provider URLs, API keys, bearer tokens, or raw provider payloads.
+- Cache metadata is returned as `metadata.cache_status` and `metadata.cache_hit` so the staged UI can show hit/miss state.
+- Provider fetches are rate-limited per provider/wallet window before calling Helius or a generic endpoint. The default is 12 provider fetches per 60 seconds; override with `CRYPTO_WALLET_HISTORY_RATE_LIMIT_FETCHES` if needed.
+- Worker-side guardrails and upstream `429` responses return a normalized `provider_rate_limited` page with a structured message and `metadata.retry_after_seconds`.
+- Provider outages or malformed provider responses return `provider_unavailable`. Missing provider setup returns `provider_not_configured`. These guardrail/error pages are not cached as successful history pages.
+
 ## Controlled Watchlist
 
 The Helius route is intentionally limited to 1 to 3 wallets. The source contains a static placeholder watchlist, and deployments can set `CRYPTO_HELIUS_ALLOWED_WALLETS` to a comma-separated list of up to three controlled wallet addresses. Events with no wallet match are rejected and not stored.

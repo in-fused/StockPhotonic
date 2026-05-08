@@ -82,6 +82,7 @@
             moduleLoadPromise: null,
             previewModuleLoadPromise: null,
             datasetBuilderLoadPromise: null,
+            graphRendererLoadPromise: null,
             inFlight: false,
             lastError: '',
             lastMessage: '',
@@ -104,6 +105,9 @@
             datasetMetrics: null,
             generatedAt: 0,
             datasetGeneratedAt: 0,
+            graphVisible: false,
+            graphRenderResult: null,
+            graphRenderedAt: 0,
             lastMessage: ''
         },
         filters: {
@@ -166,6 +170,11 @@
     const GENERATED_FIXTURE_DIR = 'data/crypto/generated/';
     const WORKER_FEED_LIMIT = 50;
     const HISTORY_PREVIEW_TRANSACTION_LIMIT = 5000;
+    const HISTORY_PREVIEW_GRAPH_LIMITS = Object.freeze({
+        maxTransactions: 220,
+        maxNodes: 180,
+        maxEdges: 280
+    });
     const LIVE_POLL_MS = { min: 3000, max: 5000, default: 4000 };
     const DATA_MODES = Object.freeze({
         GENERATED: 'generated_fixture',
@@ -924,6 +933,9 @@
         state.historyPreview.datasetMetrics = null;
         state.historyPreview.generatedAt = 0;
         state.historyPreview.datasetGeneratedAt = 0;
+        state.historyPreview.graphVisible = false;
+        state.historyPreview.graphRenderResult = null;
+        state.historyPreview.graphRenderedAt = 0;
         state.historyPreview.lastMessage = '';
     }
 
@@ -1268,6 +1280,7 @@
         panelHeader.appendChild(status);
         state.statusPanel = status;
         bindStatusControls(status);
+        renderHistoryGraphPreviewCanvas(status);
     }
 
     function renderGeneratedDataManager(metadata = {}, isGeneratedFixture = false, isSolana = false) {
@@ -1638,17 +1651,20 @@
         const clearDisabled = state.history.inFlight || (!plan && !state.historyPreview.dataset);
         const datasetCopyDisabled = state.history.inFlight || !state.historyPreview.dataset;
         const copyDisabled = state.history.inFlight || !plan;
+        const graphToggleDisabled = state.history.inFlight;
+        const graphToggleLabel = state.historyPreview.graphVisible ? 'Hide Preview Graph' : 'Show Preview Graph';
         return `
             <section class="mt-3 rounded-xl border border-fuchsia-200/18 bg-fuchsia-300/8 p-3">
                 <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                     <div class="min-w-0">
                         <div class="text-white/38">HISTORY GRAPH PREVIEW / REPLAY SANDBOX</div>
                         <div class="mt-1 text-sm font-display text-cyan-50/86">Graph-Ready Staging</div>
-                        <div class="mt-1 max-w-3xl text-white/58 leading-relaxed">Graph-ready staging only. Build Preview Dataset converts loaded history rows into a copyable dataset artifact, but it does not draw, animate, or merge with the active Wallet Lookup graph. This panel makes no identity, ownership, risk, criminality, or investment claims; a future phase will add opt-in visual preview and replay.</div>
+                        <div class="mt-1 max-w-3xl text-white/58 leading-relaxed">Graph-ready staging only. Build Preview Dataset converts loaded history rows into a copyable dataset artifact. Show Preview Graph renders a capped, static canvas from that dataset without drawing into, animating, or merging with the active Wallet Lookup graph. This panel makes no identity, ownership, risk, criminality, or investment claims.</div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-2 xl:min-w-[720px]">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 xl:min-w-[620px]">
                         <button id="crypto-history-preview-build-dataset" type="button" ${datasetDisabled ? 'disabled' : ''} title="Build a graph-ready preview dataset from staged history without rendering or merging it." class="min-h-10 rounded-xl border border-emerald-200/22 bg-emerald-300/12 px-3 py-2 text-emerald-50/84 hover:border-emerald-100/38 disabled:opacity-50 disabled:cursor-not-allowed">Build Preview Dataset</button>
                         <button id="crypto-history-preview-copy-dataset" type="button" ${datasetCopyDisabled ? 'disabled' : ''} title="Copy the graph-ready preview dataset JSON. The active graph remains unchanged." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy Preview Dataset JSON</button>
+                        <button id="crypto-history-preview-graph-toggle" type="button" ${graphToggleDisabled ? 'disabled' : ''} title="Render or hide a static preview-only graph canvas from the staged dataset. This does not change the active Wallet Lookup graph." class="min-h-10 rounded-xl border border-sky-200/22 bg-sky-300/10 px-3 py-2 text-sky-50/84 hover:border-sky-100/38 disabled:opacity-50 disabled:cursor-not-allowed">${escapeHtml(graphToggleLabel)}</button>
                         <button id="crypto-history-preview-plan" type="button" ${previewDisabled ? 'disabled' : ''} title="Generate a staged lifetime replay plan without animating or changing the active graph." class="min-h-10 rounded-xl border border-fuchsia-200/24 bg-fuchsia-300/12 px-3 py-2 text-fuchsia-50/86 hover:border-fuchsia-100/40 disabled:opacity-50 disabled:cursor-not-allowed">Preview Lifetime Replay</button>
                         <button id="crypto-history-preview-clear" type="button" ${clearDisabled ? 'disabled' : ''} title="Clear the replay preview plan without clearing staged history or changing the graph." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/70 hover:border-cyan-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Clear Preview</button>
                         <button id="crypto-history-preview-copy" type="button" ${copyDisabled ? 'disabled' : ''} title="Copy the staged replay plan as JSON." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy Replay Plan</button>
@@ -1682,6 +1698,7 @@
                         <div class="mt-2 text-white/54 leading-relaxed">${escapeHtml(getHistoryGraphPreviewNotice(summary, planStale))}</div>
                         ${plan ? renderHistoryReplayPlanDetails(plan, planStale) : ''}
                     </div>
+                    ${renderHistoryPreviewGraphCanvasPanel(summary, datasetMetrics, datasetStale)}
                     <div class="min-w-0 rounded-lg border border-white/10 bg-slate-950/28 p-3">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="text-white/38">HIGH-ACTIVITY COUNTERPARTIES</div>
@@ -1731,10 +1748,73 @@
         `;
     }
 
+    function renderHistoryPreviewGraphCanvasPanel(summary = {}, datasetMetrics = null, datasetStale = false) {
+        const visible = state.historyPreview.graphVisible;
+        const result = state.historyPreview.graphRenderResult;
+        const sourceTransfers = Number(datasetMetrics?.transactions || summary.transferEventCount || 0);
+        const capped = sourceTransfers > HISTORY_PREVIEW_GRAPH_LIMITS.maxTransactions;
+        const status = visible
+            ? result
+                ? `${result.renderedNodes || 0} nodes / ${result.renderedEdges || 0} edges / ${result.renderedTransfers || 0} transfers rendered`
+                : 'Rendering when the panel is attached'
+            : 'Hidden';
+        const warnings = [
+            'Preview only.',
+            'Not merged into the active Wallet Lookup graph.',
+            'Not full history; only staged pages are available.',
+            capped ? `Large dataset: render capped at ${HISTORY_PREVIEW_GRAPH_LIMITS.maxTransactions} transfers.` : ''
+        ].filter(Boolean);
+        const canvasMarkup = visible
+            ? `
+                <div class="mt-3 overflow-hidden rounded-lg border border-sky-200/16 bg-slate-950/48 h-[260px] sm:h-[320px] lg:h-[360px]">
+                    <canvas id="crypto-history-preview-canvas" class="block h-full w-full pointer-events-none" aria-label="Static preview-only history graph"></canvas>
+                </div>
+                <div id="crypto-history-preview-render-status" class="mt-2 text-white/48 leading-relaxed">${escapeHtml(getHistoryPreviewGraphRenderStatusText(result, datasetStale))}</div>
+                <div id="crypto-history-preview-render-warnings" class="mt-2 grid gap-1.5">${renderHistoryPreviewGraphWarnings(result?.warnings || [])}</div>
+            `
+            : `
+                <div class="mt-3 rounded-lg border border-sky-200/12 bg-slate-950/34 px-3 py-5 text-center text-white/46 leading-relaxed">
+                    Use Show Preview Graph to render the staged D110 dataset into this separate static canvas.
+                </div>
+            `;
+
+        return `
+            <div class="min-w-0 rounded-lg border border-sky-200/16 bg-sky-300/8 p-3 xl:col-span-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <div class="text-white/38">HISTORY GRAPH PREVIEW</div>
+                        <div class="mt-0.5 text-sky-50/74">${escapeHtml(status)}</div>
+                    </div>
+                    <div class="text-white/38">${escapeHtml(visible ? 'Static / non-interactive' : 'Preview canvas idle')}</div>
+                </div>
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5">
+                    ${warnings.map(item => `<div class="rounded-md border border-yellow-200/14 bg-yellow-300/8 px-2 py-1.5 text-yellow-50/74 leading-snug">${escapeHtml(item)}</div>`).join('')}
+                </div>
+                ${canvasMarkup}
+            </div>
+        `;
+    }
+
+    function getHistoryPreviewGraphRenderStatusText(result = null, datasetStale = false) {
+        if (datasetStale) return 'Dataset changed after the preview dataset was built. Rebuild and show again for a current preview.';
+        if (!state.historyPreview.dataset) return 'Build Preview Dataset before rendering the preview graph.';
+        if (!result) return 'Preview graph renderer is preparing the static canvas.';
+        if (!result.renderedTransfers) return 'No graph-ready transfer rows are available to render yet.';
+        return 'Static preview canvas rendered from the capped preview dataset only. The active Wallet Lookup graph was not changed.';
+    }
+
+    function renderHistoryPreviewGraphWarnings(warnings = []) {
+        const items = warnings.slice(0, 3);
+        if (!items.length) return '<div class="text-white/38">No renderer cap warnings beyond the preview-only boundary.</div>';
+        return items
+            .map(item => `<div class="rounded-md border border-yellow-200/14 bg-yellow-300/8 px-2 py-1.5 text-yellow-50/74 leading-snug">${escapeHtml(item)}</div>`)
+            .join('');
+    }
+
     function getHistoryPreviewDatasetNotice(summary = {}) {
         if (state.history.inFlight) return 'History is loading. Build the preview dataset after the Worker page is staged.';
         if (!summary.transactionCount) return 'No staged history yet. Load wallet activity or history pages before building a graph-ready preview dataset.';
-        return 'Build Preview Dataset will prepare wallets, tokens, transactions, and safely inferred transaction groups for JSON copy only. It will not render, merge, or animate the dataset.';
+        return 'Build Preview Dataset prepares wallets, tokens, transactions, and safely inferred transaction groups. Show Preview Graph can render that artifact separately without merging or animating the active graph.';
     }
 
     function renderHistoryReplayPlanDetails(plan = {}, stale = false) {
@@ -2957,6 +3037,9 @@
         status.querySelector('#crypto-history-preview-copy-dataset')?.addEventListener('click', event => {
             copyHistoryPreviewDataset(event.currentTarget);
         });
+        status.querySelector('#crypto-history-preview-graph-toggle')?.addEventListener('click', () => {
+            toggleHistoryPreviewGraph();
+        });
         status.querySelector('#crypto-history-preview-plan')?.addEventListener('click', () => {
             previewLifetimeReplay();
         });
@@ -3249,6 +3332,9 @@
         state.historyPreview.datasetMetrics = null;
         state.historyPreview.generatedAt = 0;
         state.historyPreview.datasetGeneratedAt = 0;
+        state.historyPreview.graphVisible = false;
+        state.historyPreview.graphRenderResult = null;
+        state.historyPreview.graphRenderedAt = 0;
         state.historyPreview.lastMessage = 'Replay preview cleared with staged history; the Wallet Lookup graph was not changed.';
         state.history.lastMessage = 'Loaded history staging cleared; the Wallet Lookup graph was not changed.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -3297,7 +3383,7 @@
         return JSON.stringify(snapshot, null, 2);
     }
 
-    async function buildHistoryPreviewDataset() {
+    async function buildHistoryPreviewDataset(options = {}) {
         await loadHistoryGraphPreviewModule();
         const builder = namespace.historyGraphPreview?.buildPreviewDataset
             || namespace.historyDatasetBuilder?.buildHistoryDataset;
@@ -3308,11 +3394,88 @@
         state.historyPreview.dataset = dataset;
         state.historyPreview.datasetMetrics = metrics;
         state.historyPreview.datasetGeneratedAt = Date.now();
+        state.historyPreview.graphRenderResult = null;
+        state.historyPreview.graphRenderedAt = 0;
         state.historyPreview.lastMessage = metrics.transactions
-            ? 'Preview dataset built from staged history only. Active graph unchanged; no render, merge, or replay started.'
+            ? 'Preview dataset built from staged history only. Active graph unchanged; render is available only in the separate preview canvas.'
             : 'Preview dataset shell built. Load staged history with wallet data before graph-ready transfer rows can be included.';
-        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        if (!options.skipRenderStatus) renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         return dataset;
+    }
+
+    async function toggleHistoryPreviewGraph() {
+        if (state.historyPreview.graphVisible) {
+            state.historyPreview.graphVisible = false;
+            state.historyPreview.lastMessage = 'Preview graph hidden. Dataset staging and the active Wallet Lookup graph were not changed.';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return;
+        }
+
+        state.historyPreview.graphVisible = true;
+        if (!state.historyPreview.dataset) {
+            await buildHistoryPreviewDataset({ skipRenderStatus: true });
+        }
+        state.historyPreview.lastMessage = state.historyPreview.datasetMetrics?.transactions
+            ? 'Preview graph shown in a separate static canvas. Active Wallet Lookup graph unchanged.'
+            : 'Preview graph panel shown, but no graph-ready transfer rows are available yet.';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+    }
+
+    async function renderHistoryGraphPreviewCanvas(root = state.statusPanel) {
+        if (!state.historyPreview.graphVisible) return null;
+        const canvas = root?.querySelector?.('#crypto-history-preview-canvas');
+        if (!canvas || !state.historyPreview.dataset) {
+            updateHistoryGraphPreviewRenderStatus(null);
+            return null;
+        }
+
+        await loadHistoryGraphRendererModule();
+        const renderer = namespace.historyGraphRenderer?.renderPreviewDataset;
+        if (!renderer) {
+            const result = {
+                renderedNodes: 0,
+                renderedEdges: 0,
+                renderedTransfers: 0,
+                warnings: ['History graph renderer module unavailable.'],
+                previewOnly: true,
+                notMerged: true
+            };
+            state.historyPreview.graphRenderResult = result;
+            updateHistoryGraphPreviewRenderStatus(result);
+            return result;
+        }
+
+        try {
+            const result = renderer(canvas, state.historyPreview.dataset, HISTORY_PREVIEW_GRAPH_LIMITS);
+            state.historyPreview.graphRenderResult = result;
+            state.historyPreview.graphRenderedAt = Date.now();
+            updateHistoryGraphPreviewRenderStatus(result);
+            return result;
+        } catch (error) {
+            const result = {
+                renderedNodes: 0,
+                renderedEdges: 0,
+                renderedTransfers: 0,
+                warnings: [error?.message || 'Preview graph render failed.'],
+                previewOnly: true,
+                notMerged: true
+            };
+            state.historyPreview.graphRenderResult = result;
+            state.historyPreview.graphRenderedAt = Date.now();
+            updateHistoryGraphPreviewRenderStatus(result);
+            return result;
+        }
+    }
+
+    function updateHistoryGraphPreviewRenderStatus(result = state.historyPreview.graphRenderResult) {
+        const status = document.getElementById('crypto-history-preview-render-status');
+        if (status) {
+            const datasetStale = state.historyPreview.datasetMetrics
+                && Number(state.historyPreview.datasetMetrics.stagedRowsReceived || 0) !== Number((state.history.loadedTransactions || []).length);
+            status.textContent = getHistoryPreviewGraphRenderStatusText(result, datasetStale);
+        }
+        const warnings = document.getElementById('crypto-history-preview-render-warnings');
+        if (warnings) warnings.innerHTML = renderHistoryPreviewGraphWarnings(result?.warnings || []);
     }
 
     async function copyHistoryPreviewDataset(button) {
@@ -3417,6 +3580,9 @@
         state.historyPreview.datasetMetrics = null;
         state.historyPreview.generatedAt = 0;
         state.historyPreview.datasetGeneratedAt = 0;
+        state.historyPreview.graphVisible = false;
+        state.historyPreview.graphRenderResult = null;
+        state.historyPreview.graphRenderedAt = 0;
         state.historyPreview.lastMessage = 'Preview artifacts cleared. Staged history and the active graph were not changed.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
     }
@@ -3510,6 +3676,18 @@
                 return false;
             });
         return state.history.datasetBuilderLoadPromise;
+    }
+
+    function loadHistoryGraphRendererModule() {
+        if (namespace.historyGraphRenderer?.renderPreviewDataset) return Promise.resolve(true);
+        if (state.history.graphRendererLoadPromise) return state.history.graphRendererLoadPromise;
+        state.history.graphRendererLoadPromise = loadCryptoScript('js/crypto/historyGraphRenderer.js')
+            .then(() => Boolean(namespace.historyGraphRenderer?.renderPreviewDataset))
+            .catch(error => {
+                state.historyPreview.lastMessage = error?.message || 'History graph renderer module unavailable';
+                return false;
+            });
+        return state.history.graphRendererLoadPromise;
     }
 
     function loadCryptoScript(src) {

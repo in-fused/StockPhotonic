@@ -1760,7 +1760,7 @@
                     </div>
                     <div class="rounded-lg border border-cyan-200/14 bg-cyan-300/8 px-3 py-2.5">
                         <div class="text-white/38">BOUNDARY</div>
-                        <div class="mt-2 text-cyan-50/72 leading-relaxed">Graph-ready staging only. The active graph, Wallet Intelligence, Timeline, Flow Inspector, Report, History Browser, and mobile graph controls continue to use the current Wallet Lookup replacement graph. Future visual preview and lifetime replay remain opt-in work for a later phase.</div>
+                        <div class="mt-2 text-cyan-50/72 leading-relaxed">Graph-ready staging only. The active graph, Wallet Intelligence, Timeline, Flow Inspector, Report, History Browser, and mobile graph controls continue to use the current Wallet Lookup replacement graph. Static preview and replay controls remain opt-in and draw only inside this separate preview canvas.</div>
                         <div class="mt-2 text-white/46">${escapeHtml(state.historyPreview.lastMessage || 'Build a preview dataset when staged history is ready to inspect.')}</div>
                     </div>
                 </div>
@@ -1835,30 +1835,42 @@
                 <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5">
                     ${warnings.map(item => `<div class="rounded-md border border-yellow-200/14 bg-yellow-300/8 px-2 py-1.5 text-yellow-50/74 leading-snug">${escapeHtml(item)}</div>`).join('')}
                 </div>
-                ${renderHistoryReplayControls(datasetMetrics, datasetStale)}
+                ${renderHistoryReplayControls(summary, datasetMetrics, datasetStale)}
                 ${canvasMarkup}
             </div>
         `;
     }
 
-    function renderHistoryReplayControls(datasetMetrics = null, datasetStale = false) {
+    function renderHistoryReplayControls(summary = {}, datasetMetrics = null, datasetStale = false) {
         const status = getHistoryReplayStatus();
         const hasDataset = Boolean(state.historyPreview.dataset && datasetMetrics);
-        const totalSteps = Number(status.totalSteps || 0);
-        const currentStep = Number(status.currentStep || 0);
+        const totalSteps = getHistoryReplayTotalSteps(status, datasetMetrics);
+        const currentStep = Math.max(0, Math.min(totalSteps, Number(status.currentStep || 0)));
         const speed = state.historyPreview.replaySpeed || status.speed || 'standard';
         const disabled = state.history.inFlight || datasetStale;
         const pauseDisabled = disabled || !status.playing;
-        const stepDisabled = disabled || !hasDataset;
+        const stepDisabled = disabled || !hasDataset || !totalSteps;
         const resetDisabled = disabled || (!hasDataset && !state.historyPreview.replayStatus);
+        const previousDisabled = stepDisabled || currentStep <= 0;
+        const nextDisabled = stepDisabled || currentStep >= totalSteps;
+        const jumpStartDisabled = stepDisabled || currentStep <= 0;
+        const jumpEndDisabled = stepDisabled || currentStep >= totalSteps;
         const timestamp = status.timestamp ? formatPreviewTimestamp(status.timestamp) : 'No timestamp';
         const signature = status.signature ? shortLongValue(status.signature) : 'No signature';
         const stepCopy = totalSteps ? `${currentStep}/${totalSteps}` : hasDataset ? '0/0' : 'Dataset required';
+        const amountToken = getHistoryReplayAmountTokenLabel(status);
+        const direction = getHistoryReplayDirectionLabel(status.direction);
+        const replayState = getHistoryReplayStateLabel(status, hasDataset, datasetStale);
+        const stateClasses = getHistoryReplayStateClasses(status, hasDataset, datasetStale);
+        const jumpChips = buildHistoryReplayJumpChips(summary, status, totalSteps);
         return `
             <div class="mt-3 rounded-lg border border-fuchsia-200/16 bg-fuchsia-300/10 p-3">
                 <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                     <div class="min-w-0">
-                        <div class="text-white/38">LIFETIME REPLAY PROTOTYPE</div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="text-white/38">LIFETIME REPLAY PROTOTYPE</div>
+                            <div id="crypto-history-replay-state-pill" class="rounded-full border ${stateClasses} px-2.5 py-1 text-[10px] font-mono">${escapeHtml(replayState)}</div>
+                        </div>
                         <div id="crypto-history-replay-status" class="mt-1 text-fuchsia-50/78">${escapeHtml(getHistoryReplayStatusText(status, hasDataset, datasetStale))}</div>
                         <div class="mt-1 text-white/48 leading-relaxed">Opt-in animation uses only the preview dataset and draws only into the History Graph Preview canvas. It is not full wallet history unless enough pages are loaded, is never merged with the active graph, and makes no identity, ownership, risk, or investment claims.</div>
                     </div>
@@ -1869,11 +1881,26 @@
                         <button id="crypto-history-replay-reset" type="button" ${resetDisabled ? 'disabled' : ''} title="Reset the preview-only replay canvas to the tracked wallet root." class="min-h-10 rounded-xl border border-yellow-200/18 bg-yellow-300/8 px-3 py-2 text-yellow-50/78 hover:border-yellow-100/32 disabled:opacity-50 disabled:cursor-not-allowed">Reset Replay</button>
                     </div>
                 </div>
+                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <button id="crypto-history-replay-prev-event" type="button" ${previousDisabled ? 'disabled' : ''} title="Move to the previous replay event in the preview canvas." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/72 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Previous Event</button>
+                    <button id="crypto-history-replay-next-event" type="button" ${nextDisabled ? 'disabled' : ''} title="Move to the next replay event in the preview canvas." class="min-h-10 rounded-xl border border-cyan-200/18 bg-cyan-300/8 px-3 py-2 text-cyan-50/78 hover:border-cyan-100/32 disabled:opacity-50 disabled:cursor-not-allowed">Next Event</button>
+                    <button id="crypto-history-replay-jump-start" type="button" ${jumpStartDisabled ? 'disabled' : ''} title="Jump to the start of the preview replay." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/72 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Jump to Start</button>
+                    <button id="crypto-history-replay-jump-end" type="button" ${jumpEndDisabled ? 'disabled' : ''} title="Jump to the final staged preview event." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/72 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Jump to End</button>
+                </div>
+                <label class="mt-3 block rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2.5">
+                    <div class="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                        <span class="text-white/38">Replay Scrubber</span>
+                        <span id="crypto-history-replay-scrubber-label" class="font-mono text-[10px] text-fuchsia-50/74">${escapeHtml(stepCopy)}</span>
+                    </div>
+                    <input id="crypto-history-replay-scrubber" type="range" min="0" max="${escapeAttr(totalSteps)}" step="1" value="${escapeAttr(currentStep)}" ${stepDisabled ? 'disabled' : ''} aria-label="Replay scrubber" class="block min-h-11 w-full cursor-pointer accent-fuchsia-300 disabled:cursor-not-allowed disabled:opacity-50" />
+                </label>
                 <div class="mt-3 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-2">
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
                         ${renderWalletHistoryMetric('Step', stepCopy, 'Current replay step / total preview-dataset steps.')}
                         ${renderWalletHistoryMetric('Timestamp', timestamp, status.timestamp || 'No timestamp available for the current replay step.')}
                         ${renderWalletHistoryMetric('Signature', signature, status.signature || 'No signature available for the current replay step.')}
+                        ${renderWalletHistoryMetric('Amount / Token', amountToken, status.amountDisplay || status.token || 'No amount or token available for the current replay step.')}
+                        ${renderWalletHistoryMetric('Direction', direction, status.direction || 'No direction available for the current replay step.')}
                         ${renderWalletHistoryMetric('Speed', HISTORY_REPLAY_SPEEDS[speed] || 'Standard', 'Replay speed preset.')}
                     </div>
                     <div class="flex flex-wrap items-center gap-1.5">
@@ -1882,6 +1909,12 @@
                             <button type="button" data-crypto-history-replay-speed="${escapeAttr(value)}" ${disabled ? 'disabled' : ''} title="Set replay speed to ${escapeAttr(label)}." class="min-h-9 rounded-xl border ${value === speed ? 'border-fuchsia-100/42 bg-fuchsia-300/18 text-fuchsia-50/88' : 'border-white/10 bg-white/[0.035] text-white/62'} px-3 py-1.5 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">${escapeHtml(label)}</button>
                         `).join('')}
                     </div>
+                </div>
+                <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                    <span class="text-white/38 mr-1">Key jumps</span>
+                    ${jumpChips.map(chip => `
+                        <button type="button" data-crypto-history-replay-jump-step="${escapeAttr(chip.step)}" ${chip.disabled ? 'disabled' : ''} title="${escapeAttr(chip.title)}" class="min-h-9 rounded-full border ${chip.disabled ? 'border-white/10 bg-white/[0.025] text-white/36' : 'border-fuchsia-200/22 bg-fuchsia-300/10 text-fuchsia-50/82 hover:border-fuchsia-100/38'} px-3 py-1.5 disabled:cursor-not-allowed">${escapeHtml(chip.label)}</button>
+                    `).join('')}
                 </div>
                 <div id="crypto-history-replay-live-status" class="mt-2 text-white/48 leading-relaxed">${escapeHtml(getHistoryReplayLiveStatusText(status))}</div>
             </div>
@@ -1896,11 +1929,180 @@
             totalSteps: Number(status.totalSteps) || 0,
             timestamp: status.timestamp || '',
             signature: status.signature || '',
+            amount: Number(status.amount) || 0,
+            amountDisplay: status.amountDisplay || '',
+            token: status.token || '',
+            direction: status.direction || '',
+            sourceWallet: status.sourceWallet || '',
+            destinationWallet: status.destinationWallet || '',
+            currentEvent: status.currentEvent || null,
+            eventSummaries: Array.isArray(status.eventSummaries) ? status.eventSummaries : [],
             speed: status.speed || state.historyPreview.replaySpeed || 'standard',
             speedLabel: status.speedLabel || HISTORY_REPLAY_SPEEDS[status.speed || state.historyPreview.replaySpeed] || 'Standard',
             done: Boolean(status.done),
             warning: status.warning || ''
         };
+    }
+
+    function getHistoryReplayTotalSteps(status = getHistoryReplayStatus(), datasetMetrics = state.historyPreview.datasetMetrics) {
+        const statusTotal = Number(status.totalSteps) || 0;
+        if (statusTotal) return statusTotal;
+        const datasetTotal = Number(datasetMetrics?.transactions) || Number(state.historyPreview.dataset?.transactions?.length) || 0;
+        return Math.max(0, Math.min(datasetTotal, HISTORY_PREVIEW_GRAPH_LIMITS.maxTransactions));
+    }
+
+    function getHistoryReplayStateLabel(status = getHistoryReplayStatus(), hasDataset = Boolean(state.historyPreview.dataset), datasetStale = false) {
+        if (datasetStale) return 'Refresh Dataset';
+        if (!hasDataset) return 'Dataset Required';
+        if (status.playing) return 'Playing';
+        if (status.done) return 'Ended';
+        if ((Number(status.currentStep) || 0) > 0) return 'Paused';
+        return 'Ready';
+    }
+
+    function getHistoryReplayStateClasses(status = getHistoryReplayStatus(), hasDataset = Boolean(state.historyPreview.dataset), datasetStale = false) {
+        if (datasetStale || !hasDataset) return 'border-yellow-200/24 bg-yellow-300/10 text-yellow-50/82';
+        if (status.playing) return 'border-cyan-200/32 bg-cyan-300/14 text-cyan-50/88';
+        if (status.done) return 'border-emerald-200/24 bg-emerald-300/10 text-emerald-50/82';
+        return 'border-fuchsia-200/24 bg-fuchsia-300/12 text-fuchsia-50/84';
+    }
+
+    function getHistoryReplayAmountTokenLabel(status = getHistoryReplayStatus()) {
+        const amount = String(status.amountDisplay || '').trim()
+            || (Number(status.amount) ? String(status.amount) : '');
+        const token = String(status.token || '').trim();
+        if (amount && token && !amount.toLowerCase().includes(token.toLowerCase())) return `${amount} ${token}`;
+        return amount || token || 'No amount/token';
+    }
+
+    function getHistoryReplayDirectionLabel(direction = '') {
+        const text = String(direction || '').trim();
+        if (!text) return 'No direction';
+        return text.replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    function buildHistoryReplayJumpChips(summary = {}, status = getHistoryReplayStatus(), totalSteps = 0) {
+        const events = getHistoryReplayEvents(status);
+        const chips = [];
+        const addChip = (key, label, event, title) => {
+            const step = Math.max(0, Math.min(totalSteps || events.length, Number(event?.step) || 0));
+            chips.push({
+                key,
+                label,
+                step,
+                title: event ? title : `${label} is not available from the current preview dataset.`,
+                disabled: !event || !step
+            });
+        };
+
+        const funding = summary.firstFundingCandidate
+            ? findHistoryReplayEvent(events, {
+                signature: summary.firstFundingCandidate.signature,
+                timestamp: summary.firstFundingCandidate.timestamp,
+                wallet: summary.firstFundingCandidate.wallet,
+                token: summary.firstFundingCandidate.token
+            })
+            : null;
+        addChip('funding', 'First Funding', funding, summary.firstFundingCandidate ? getPreviewFundingTitle(summary.firstFundingCandidate) : '');
+
+        const largest = getLargestHistoryReplayEvent(events);
+        addChip('largest', 'Largest Flow', largest, largest ? getHistoryReplayEventTitle(largest) : '');
+
+        const counterparty = (summary.highActivityCounterparties || [])[0] || null;
+        const counterpartyEvent = counterparty
+            ? findHistoryReplayEvent(events, { wallet: counterparty.address })
+            : null;
+        addChip('counterparty', 'Most Active', counterpartyEvent, counterparty ? `${counterparty.eventCount || 0} staged events for ${counterparty.address}` : '');
+
+        const earliest = getTimelineHistoryReplayEvent(events, 'earliest');
+        addChip('earliest', 'Earliest', earliest, earliest ? getHistoryReplayEventTitle(earliest) : '');
+
+        const latest = getTimelineHistoryReplayEvent(events, 'latest');
+        addChip('latest', 'Latest', latest, latest ? getHistoryReplayEventTitle(latest) : '');
+
+        return chips;
+    }
+
+    function getHistoryReplayEvents(status = getHistoryReplayStatus()) {
+        const source = Array.isArray(status.eventSummaries) && status.eventSummaries.length
+            ? status.eventSummaries
+            : buildHistoryReplayEventsFromDataset();
+        return source.map((event, index) => ({
+            ...event,
+            step: Math.max(1, Number(event.step) || index + 1),
+            timestampMs: getHistoryTimestampMs(event.timestamp),
+            amountValue: getHistoryReplayEventAmountValue(event),
+            sourceWallet: event.sourceWallet || event.source_wallet || '',
+            destinationWallet: event.destinationWallet || event.destination_wallet || '',
+            signature: event.signature || event.transaction_hash || ''
+        }));
+    }
+
+    function buildHistoryReplayEventsFromDataset() {
+        return (state.historyPreview.dataset?.transactions || [])
+            .slice(0, HISTORY_PREVIEW_GRAPH_LIMITS.maxTransactions)
+            .map((transaction, index) => ({
+                step: index + 1,
+                timestamp: transaction.timestamp || '',
+                signature: transaction.transaction_hash || transaction.signature || '',
+                amount: transaction.amount || 0,
+                amountDisplay: transaction.amount_display || transaction.amountDisplay || '',
+                token: transaction.symbol || transaction.token_mint || '',
+                direction: transaction.direction || transaction.metadata?.direction || '',
+                sourceWallet: transaction.source_wallet || '',
+                destinationWallet: transaction.destination_wallet || ''
+            }))
+            .sort((a, b) => getHistoryTimestampMs(a.timestamp) - getHistoryTimestampMs(b.timestamp) || a.step - b.step)
+            .map((event, index) => ({ ...event, step: index + 1 }));
+    }
+
+    function findHistoryReplayEvent(events = [], criteria = {}) {
+        const signature = String(criteria.signature || '').trim();
+        const wallet = String(criteria.wallet || '').trim();
+        const token = String(criteria.token || '').trim();
+        const timestampMs = getHistoryTimestampMs(criteria.timestamp);
+        if (signature) {
+            const match = events.find(event => event.signature === signature);
+            if (match) return match;
+        }
+        return events.find(event => {
+            const touchesWallet = !wallet || event.sourceWallet === wallet || event.destinationWallet === wallet;
+            const matchesToken = !token || event.token === token;
+            const matchesTime = !timestampMs || Math.abs((event.timestampMs || 0) - timestampMs) <= 1000;
+            return touchesWallet && matchesToken && matchesTime;
+        }) || null;
+    }
+
+    function getLargestHistoryReplayEvent(events = []) {
+        return events
+            .filter(event => Number.isFinite(event.amountValue) && event.amountValue > 0)
+            .sort((a, b) => b.amountValue - a.amountValue || (a.timestampMs || 0) - (b.timestampMs || 0))[0] || null;
+    }
+
+    function getTimelineHistoryReplayEvent(events = [], mode = 'earliest') {
+        const timestamped = events.filter(event => event.timestampMs);
+        if (!timestamped.length) return null;
+        return timestamped.sort((a, b) => mode === 'latest'
+            ? b.timestampMs - a.timestampMs || b.step - a.step
+            : a.timestampMs - b.timestampMs || a.step - b.step)[0] || null;
+    }
+
+    function getHistoryReplayEventAmountValue(event = {}) {
+        const amount = Number(event.amount);
+        if (Number.isFinite(amount) && amount > 0) return amount;
+        const displayNumber = Number(String(event.amountDisplay || '').replace(/[^0-9.-]/g, ''));
+        return Number.isFinite(displayNumber) ? displayNumber : 0;
+    }
+
+    function getHistoryReplayEventTitle(event = {}) {
+        const parts = [
+            `Step ${event.step || 0}`,
+            event.timestamp ? formatPreviewTimestamp(event.timestamp) : '',
+            getHistoryReplayAmountTokenLabel(event),
+            event.direction ? getHistoryReplayDirectionLabel(event.direction) : '',
+            event.signature ? shortLongValue(event.signature) : ''
+        ].filter(Boolean);
+        return parts.join(' / ');
     }
 
     function getHistoryReplayStatusText(status = getHistoryReplayStatus(), hasDataset = Boolean(state.historyPreview.dataset), datasetStale = false) {
@@ -1918,8 +2120,10 @@
         const current = Number(status.currentStep) || 0;
         const timestamp = status.timestamp ? formatPreviewTimestamp(status.timestamp) : 'No timestamp';
         const signature = status.signature ? shortLongValue(status.signature) : 'No signature';
+        const amount = getHistoryReplayAmountTokenLabel(status);
+        const direction = getHistoryReplayDirectionLabel(status.direction);
         const speed = status.speedLabel || HISTORY_REPLAY_SPEEDS[status.speed] || 'Standard';
-        return `Step ${current}/${total}. Timestamp: ${timestamp}. Signature: ${signature}. Speed: ${speed}.`;
+        return `Step ${current}/${total}. Timestamp: ${timestamp}. Signature: ${signature}. Amount/token: ${amount}. Direction: ${direction}. Speed: ${speed}.`;
     }
 
     function getHistoryPreviewGraphRenderStatusText(result = null, datasetStale = false) {
@@ -3192,10 +3396,35 @@
             pauseHistoryReplay();
         });
         status.querySelector('#crypto-history-replay-step')?.addEventListener('click', () => {
-            stepHistoryReplay();
+            stepHistoryReplay(1);
         });
         status.querySelector('#crypto-history-replay-reset')?.addEventListener('click', () => {
             resetHistoryReplay();
+        });
+        status.querySelector('#crypto-history-replay-prev-event')?.addEventListener('click', () => {
+            stepHistoryReplay(-1);
+        });
+        status.querySelector('#crypto-history-replay-next-event')?.addEventListener('click', () => {
+            stepHistoryReplay(1);
+        });
+        status.querySelector('#crypto-history-replay-jump-start')?.addEventListener('click', () => {
+            seekHistoryReplayStep(0, { label: 'Replay jumped to the start of the preview canvas only.' });
+        });
+        status.querySelector('#crypto-history-replay-jump-end')?.addEventListener('click', () => {
+            seekHistoryReplayStep(getHistoryReplayTotalSteps(), { label: 'Replay jumped to the final staged preview event only.' });
+        });
+        status.querySelector('#crypto-history-replay-scrubber')?.addEventListener('input', event => {
+            seekHistoryReplayStep(Number(event.target.value) || 0, {
+                label: 'Replay scrubber moved the separate preview canvas only.',
+                quiet: true
+            });
+        });
+        status.querySelectorAll('[data-crypto-history-replay-jump-step]').forEach(button => {
+            button.addEventListener('click', () => {
+                seekHistoryReplayStep(Number(button.dataset.cryptoHistoryReplayJumpStep) || 0, {
+                    label: 'Replay jumped to the selected key event in the preview canvas only.'
+                });
+            });
         });
         status.querySelectorAll('[data-crypto-history-replay-speed]').forEach(button => {
             button.addEventListener('click', () => {
@@ -3668,15 +3897,38 @@
         return animator?.getStatus?.() || null;
     }
 
-    async function stepHistoryReplay() {
+    async function stepHistoryReplay(direction = 1) {
         if (!state.historyPreview.dataset) {
             await buildHistoryPreviewDataset({ skipRenderStatus: true });
         }
         state.historyPreview.graphVisible = true;
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         const animator = await initializeHistoryReplayAnimator(state.statusPanel);
-        animator?.step?.(1);
+        animator?.step?.(direction);
         return animator?.getStatus?.() || null;
+    }
+
+    async function seekHistoryReplayStep(stepIndex = 0, options = {}) {
+        if (!state.historyPreview.dataset) {
+            await buildHistoryPreviewDataset({ skipRenderStatus: true });
+        }
+        const wasPlaying = Boolean(state.historyPreview.replayAnimator?.getStatus?.().playing || state.historyPreview.replayStatus?.playing);
+        const needsRender = !state.historyPreview.graphVisible || !document.getElementById('crypto-history-preview-canvas');
+        state.historyPreview.graphVisible = true;
+        if (needsRender) {
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        }
+        const animator = await initializeHistoryReplayAnimator(state.statusPanel);
+        if (!animator?.seek) return null;
+        const total = getHistoryReplayTotalSteps(animator.getStatus?.() || getHistoryReplayStatus());
+        const safeStep = Math.max(0, Math.min(total, Math.round(Number(stepIndex) || 0)));
+        let status = animator.seek(safeStep);
+        if (wasPlaying && safeStep < total) {
+            status = animator.start({ resume: true, stepIndex: safeStep });
+        }
+        if (!options.quiet && options.label) state.historyPreview.lastMessage = options.label;
+        updateHistoryReplayStatus(status);
+        return status;
     }
 
     async function resetHistoryReplay() {
@@ -3764,8 +4016,31 @@
         }
         const liveStatus = document.getElementById('crypto-history-replay-live-status');
         if (liveStatus) liveStatus.textContent = getHistoryReplayLiveStatusText(normalized);
+        const totalSteps = getHistoryReplayTotalSteps(normalized);
+        const currentStep = Math.max(0, Math.min(totalSteps, Number(normalized.currentStep) || 0));
+        const scrubber = document.getElementById('crypto-history-replay-scrubber');
+        if (scrubber) {
+            scrubber.max = String(totalSteps);
+            scrubber.value = String(currentStep);
+            scrubber.disabled = Boolean(state.history.inFlight || datasetStale || !state.historyPreview.dataset || !totalSteps);
+        }
+        const scrubberLabel = document.getElementById('crypto-history-replay-scrubber-label');
+        if (scrubberLabel) scrubberLabel.textContent = totalSteps ? `${currentStep}/${totalSteps}` : '0/0';
+        const statePill = document.getElementById('crypto-history-replay-state-pill');
+        if (statePill) {
+            statePill.textContent = getHistoryReplayStateLabel(normalized, Boolean(state.historyPreview.dataset), datasetStale);
+            statePill.className = `rounded-full border ${getHistoryReplayStateClasses(normalized, Boolean(state.historyPreview.dataset), datasetStale)} px-2.5 py-1 text-[10px] font-mono`;
+        }
         const pauseButton = document.getElementById('crypto-history-replay-pause');
         if (pauseButton) pauseButton.disabled = !normalized.playing || Boolean(state.history.inFlight || datasetStale);
+        const previousButton = document.getElementById('crypto-history-replay-prev-event');
+        if (previousButton) previousButton.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || currentStep <= 0);
+        const nextButton = document.getElementById('crypto-history-replay-next-event');
+        if (nextButton) nextButton.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || currentStep >= totalSteps);
+        const startButton = document.getElementById('crypto-history-replay-jump-start');
+        if (startButton) startButton.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || currentStep <= 0);
+        const endButton = document.getElementById('crypto-history-replay-jump-end');
+        if (endButton) endButton.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || currentStep >= totalSteps);
         updateInteractionDock();
     }
 

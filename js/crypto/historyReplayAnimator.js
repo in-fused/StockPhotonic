@@ -4,7 +4,7 @@
     const graphEngine = namespace.graph;
     const layoutEngine = namespace.layout;
 
-    const HISTORY_REPLAY_ANIMATOR_VERSION = 'd113_history_replay_animator_v1';
+    const HISTORY_REPLAY_ANIMATOR_VERSION = 'd115_history_replay_animator_v1';
     const DEFAULT_LIMITS = Object.freeze({
         maxTransactions: 180,
         maxNodes: 160,
@@ -41,6 +41,7 @@
             start,
             pause,
             step,
+            seek,
             reset,
             setSpeed,
             render,
@@ -106,6 +107,20 @@
             return getStatus();
         }
 
+        function seek(stepIndex = 0) {
+            const wasPlaying = state.playing;
+            state.stepIndex = clampInteger(stepIndex, state.stepIndex, 0, state.steps.length);
+            state.done = state.steps.length > 0 && state.stepIndex >= state.steps.length;
+            if (state.done) state.playing = false;
+            state.lastAdvanceAt = performanceNow();
+            if (state.playing && !wasPlaying) state.playing = false;
+            if (state.playing) scheduleFrame();
+            else cancelFrame();
+            render();
+            notifyStatus();
+            return getStatus();
+        }
+
         function reset() {
             state.playing = false;
             state.done = false;
@@ -138,7 +153,7 @@
         }
 
         function getStatus() {
-            const current = state.steps[Math.max(0, state.stepIndex - 1)] || state.steps[0] || {};
+            const current = state.stepIndex > 0 ? state.steps[Math.max(0, state.stepIndex - 1)] || {} : {};
             const speed = SPEEDS[state.speed] || SPEEDS.standard;
             return {
                 version: HISTORY_REPLAY_ANIMATOR_VERSION,
@@ -148,8 +163,16 @@
                 done: state.done,
                 currentStep: state.stepIndex,
                 totalSteps: state.steps.length,
-                timestamp: state.stepIndex > 0 ? current.timestamp || '' : '',
-                signature: state.stepIndex > 0 ? current.signature || '' : '',
+                timestamp: current.timestamp || '',
+                signature: current.signature || '',
+                amount: current.amount || 0,
+                amountDisplay: current.amountDisplay || '',
+                token: current.token || '',
+                direction: current.direction || '',
+                sourceWallet: current.sourceWallet || '',
+                destinationWallet: current.destinationWallet || '',
+                currentEvent: summarizeStep(current, state.stepIndex),
+                eventSummaries: state.steps.map((step, index) => summarizeStep(step, index + 1)),
                 speed: state.speed,
                 speedLabel: speed.label,
                 stepMs: speed.stepMs,
@@ -328,6 +351,12 @@
                     timestamp: edge.timestamp || transaction.timestamp || '',
                     timestampValue: timestampValue(edge.timestamp || transaction.timestamp),
                     signature: edge.transaction_hash || transaction.transaction_hash || '',
+                    amount: edge.amount || transaction.amount || 0,
+                    amountDisplay: edge.amount_display || transaction.amount_display || transaction.amountDisplay || '',
+                    token: edge.symbol || transaction.symbol || edge.token_mint || transaction.token_mint || '',
+                    direction: edge.direction || transaction.direction || transaction.metadata?.direction || '',
+                    sourceWallet: edge.source_wallet || transaction.source_wallet || '',
+                    destinationWallet: edge.destination_wallet || transaction.destination_wallet || '',
                     nodeIds: [...new Set([edge.source, edge.target, ...exposureEdges.flatMap(exposure => [exposure.source, exposure.target])])],
                     exposureEdgeIds: exposureEdges.map(exposure => exposure.id)
                 };
@@ -385,7 +414,8 @@
         drawRevealedNodes(ctx, graph, revealed, current, options);
 
         ctx.restore();
-        drawReplayProgress(ctx, size.width, size.height, options.stepIndex, options.steps.length);
+        drawReplayProgress(ctx, size.width, size.height, options.stepIndex, options.steps.length, options.playing);
+        drawReplayStatePill(ctx, size.width, size.height, options.playing, options.stepIndex, options.steps.length);
         drawWatermark(ctx, size.width, size.height);
     }
 
@@ -407,9 +437,9 @@
             const isCurrent = current?.edgeId === edge.id;
             const progress = isCurrent ? options.progress : 1;
             drawReplayEdge(ctx, edge, nodeById, {
-                alpha: isCurrent ? 0.9 : 0.52,
+                alpha: isCurrent ? 1 : 0.52,
                 progress,
-                color: isCurrent ? 'rgba(167, 139, 250, 0.9)' : 'rgba(125, 211, 252, 0.7)',
+                color: isCurrent ? 'rgba(244, 114, 182, 0.96)' : 'rgba(125, 211, 252, 0.7)',
                 dashed: false,
                 active: isCurrent
             });
@@ -454,8 +484,21 @@
         ctx.lineJoin = 'round';
         if (options.dashed) ctx.setLineDash([5, 8]);
         if (options.active) {
-            ctx.shadowColor = 'rgba(192, 132, 252, 0.68)';
-            ctx.shadowBlur = 12;
+            ctx.globalAlpha = Math.min(1, options.alpha * 0.55);
+            ctx.strokeStyle = 'rgba(251, 207, 232, 0.56)';
+            ctx.lineWidth += 7.5;
+            ctx.shadowColor = 'rgba(244, 114, 182, 0.86)';
+            ctx.shadowBlur = 22;
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            points.slice(1).forEach(point => ctx.lineTo(point.x, point.y));
+            ctx.stroke();
+            ctx.globalAlpha = options.alpha;
+            ctx.strokeStyle = options.color;
+            ctx.lineWidth = edge.type === core.EDGE_TYPES.FLOW
+                ? Math.max(2.6, Math.min(5.8, (edge.width || 1.4) + 2.2))
+                : 1.4;
+            ctx.shadowBlur = 16;
         }
         ctx.beginPath();
         ctx.moveTo(points[0].x, points[0].y);
@@ -501,17 +544,23 @@
         const token = node.type === core.NODE_TYPES.TOKEN;
         const root = options.root;
         const active = options.active;
-        const radius = Math.max(7, Math.min(23, (node.radius || 14) * 0.74)) + (root ? 5 : active ? 2 : 0);
+        const radius = Math.max(7, Math.min(23, (node.radius || 14) * 0.74)) + (root ? 5 : active ? 4 : 0);
         const pulse = options.playing ? 1 + Math.sin((options.now || 0) / 320) * 0.08 : 1;
         const color = root ? '#f0f9ff' : active ? '#f0abfc' : token ? '#facc15' : '#67e8f9';
 
         ctx.save();
         ctx.globalAlpha = root ? 0.98 : token ? 0.78 : 0.84;
         ctx.shadowColor = color;
-        ctx.shadowBlur = root ? 24 : active ? 18 : 8;
+        ctx.shadowBlur = root ? 28 : active ? 30 : 8;
+        if (active) {
+            ctx.fillStyle = 'rgba(244, 114, 182, 0.16)';
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius * 1.72, 0, Math.PI * 2);
+            ctx.fill();
+        }
         ctx.fillStyle = 'rgba(2, 6, 23, 0.9)';
         ctx.strokeStyle = color;
-        ctx.lineWidth = root ? 2.6 : active ? 1.8 : 1.15;
+        ctx.lineWidth = root ? 2.6 : active ? 2.55 : 1.15;
         ctx.beginPath();
         ctx.arc(node.x, node.y, radius * pulse, 0, Math.PI * 2);
         ctx.fill();
@@ -557,7 +606,7 @@
         }
     }
 
-    function drawReplayProgress(ctx, width, height, current, total) {
+    function drawReplayProgress(ctx, width, height, current, total, playing = false) {
         const barWidth = Math.min(width - 28, 360);
         const x = 14;
         const y = 14;
@@ -566,9 +615,30 @@
         ctx.fillStyle = 'rgba(15, 23, 42, 0.62)';
         roundedRect(ctx, x, y, barWidth, 6, 3);
         ctx.fill();
-        ctx.fillStyle = 'rgba(217, 70, 239, 0.74)';
+        ctx.fillStyle = playing ? 'rgba(34, 211, 238, 0.82)' : 'rgba(217, 70, 239, 0.74)';
         roundedRect(ctx, x, y, barWidth * (total ? current / total : 0), 6, 3);
         ctx.fill();
+        ctx.restore();
+    }
+
+    function drawReplayStatePill(ctx, width, height, playing = false, current = 0, total = 0) {
+        const label = playing ? 'PLAYING' : current >= total && total ? 'ENDED' : 'PAUSED';
+        const text = `${label} ${current}/${total}`;
+        const x = 14;
+        const y = 28;
+        ctx.save();
+        ctx.font = '700 10px JetBrains Mono, monospace';
+        const w = Math.min(width - 28, Math.max(118, ctx.measureText(text).width + 24));
+        roundedRect(ctx, x, y, w, 24, 12);
+        ctx.fillStyle = playing ? 'rgba(8, 145, 178, 0.38)' : 'rgba(76, 29, 149, 0.42)';
+        ctx.fill();
+        ctx.strokeStyle = playing ? 'rgba(103, 232, 249, 0.42)' : 'rgba(240, 171, 252, 0.38)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = playing ? 'rgba(207, 250, 254, 0.9)' : 'rgba(250, 232, 255, 0.86)';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, x + 12, y + 12);
         ctx.restore();
     }
 
@@ -776,6 +846,22 @@
     function addUsed(set, value) {
         const normalized = normalizeAddress(value);
         if (normalized) set.add(normalized);
+    }
+
+    function summarizeStep(step = {}, stepNumber = 0) {
+        return {
+            step: Math.max(0, Number(stepNumber) || 0),
+            index: step.index ?? null,
+            edgeId: step.edgeId || '',
+            timestamp: step.timestamp || '',
+            signature: step.signature || '',
+            amount: step.amount || 0,
+            amountDisplay: step.amountDisplay || '',
+            token: step.token || '',
+            direction: step.direction || '',
+            sourceWallet: step.sourceWallet || '',
+            destinationWallet: step.destinationWallet || ''
+        };
     }
 
     function shortValue(value) {

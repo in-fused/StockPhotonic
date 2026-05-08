@@ -83,6 +83,7 @@
             previewModuleLoadPromise: null,
             datasetBuilderLoadPromise: null,
             graphRendererLoadPromise: null,
+            replayAnimatorLoadPromise: null,
             inFlight: false,
             lastError: '',
             lastMessage: '',
@@ -108,6 +109,9 @@
             graphVisible: false,
             graphRenderResult: null,
             graphRenderedAt: 0,
+            replayAnimator: null,
+            replayStatus: null,
+            replaySpeed: 'standard',
             lastMessage: ''
         },
         filters: {
@@ -174,6 +178,11 @@
         maxTransactions: 220,
         maxNodes: 180,
         maxEdges: 280
+    });
+    const HISTORY_REPLAY_SPEEDS = Object.freeze({
+        inspect: 'Inspect',
+        standard: 'Standard',
+        fast: 'Fast'
     });
     const LIVE_POLL_MS = { min: 3000, max: 5000, default: 4000 };
     const DATA_MODES = Object.freeze({
@@ -936,6 +945,8 @@
         state.historyPreview.graphVisible = false;
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
+        detachHistoryReplayAnimator({ preserveStatus: false });
+        state.historyPreview.replaySpeed = 'standard';
         state.historyPreview.lastMessage = '';
     }
 
@@ -1266,7 +1277,11 @@
         if (!statusHost) return;
 
         const existing = document.getElementById('crypto-solana-status');
-        if (existing) existing.remove();
+        const replayWasPlaying = Boolean(state.historyPreview.replayAnimator?.getStatus?.().playing || state.historyPreview.replayStatus?.playing);
+        if (existing) {
+            detachHistoryReplayAnimator({ preserveStatus: true });
+            existing.remove();
+        }
 
         const status = document.createElement('div');
         status.id = 'crypto-solana-status';
@@ -1280,7 +1295,7 @@
         statusHost.appendChild(status);
         state.statusPanel = status;
         bindStatusControls(status);
-        renderHistoryGraphPreviewCanvas(status);
+        renderHistoryGraphPreviewCanvas(status, { resumeReplay: replayWasPlaying });
     }
 
     function renderGeneratedDataManager(metadata = {}, isGeneratedFixture = false, isSolana = false) {
@@ -1788,6 +1803,7 @@
             'Preview only.',
             'Not merged into the active Wallet Lookup graph.',
             'Not full history; only staged pages are available.',
+            'No identity, ownership, risk, criminality, or investment claims.',
             capped ? `Large dataset: render capped at ${HISTORY_PREVIEW_GRAPH_LIMITS.maxTransactions} transfers.` : ''
         ].filter(Boolean);
         const canvasMarkup = visible
@@ -1816,9 +1832,91 @@
                 <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5">
                     ${warnings.map(item => `<div class="rounded-md border border-yellow-200/14 bg-yellow-300/8 px-2 py-1.5 text-yellow-50/74 leading-snug">${escapeHtml(item)}</div>`).join('')}
                 </div>
+                ${renderHistoryReplayControls(datasetMetrics, datasetStale)}
                 ${canvasMarkup}
             </div>
         `;
+    }
+
+    function renderHistoryReplayControls(datasetMetrics = null, datasetStale = false) {
+        const status = getHistoryReplayStatus();
+        const hasDataset = Boolean(state.historyPreview.dataset && datasetMetrics);
+        const totalSteps = Number(status.totalSteps || 0);
+        const currentStep = Number(status.currentStep || 0);
+        const speed = state.historyPreview.replaySpeed || status.speed || 'standard';
+        const disabled = state.history.inFlight || datasetStale;
+        const pauseDisabled = disabled || !status.playing;
+        const stepDisabled = disabled || !hasDataset;
+        const resetDisabled = disabled || (!hasDataset && !state.historyPreview.replayStatus);
+        const timestamp = status.timestamp ? formatPreviewTimestamp(status.timestamp) : 'No timestamp';
+        const signature = status.signature ? shortLongValue(status.signature) : 'No signature';
+        const stepCopy = totalSteps ? `${currentStep}/${totalSteps}` : hasDataset ? '0/0' : 'Dataset required';
+        return `
+            <div class="mt-3 rounded-lg border border-fuchsia-200/16 bg-fuchsia-300/10 p-3">
+                <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                    <div class="min-w-0">
+                        <div class="text-white/38">LIFETIME REPLAY PROTOTYPE</div>
+                        <div id="crypto-history-replay-status" class="mt-1 text-fuchsia-50/78">${escapeHtml(getHistoryReplayStatusText(status, hasDataset, datasetStale))}</div>
+                        <div class="mt-1 text-white/48 leading-relaxed">Opt-in animation uses only the preview dataset and draws only into the History Graph Preview canvas. It is not full wallet history unless enough pages are loaded, is never merged with the active graph, and makes no identity, ownership, risk, or investment claims.</div>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 xl:min-w-[520px]">
+                        <button id="crypto-history-replay-start" type="button" ${disabled ? 'disabled' : ''} title="Start the preview-only replay animation in the separate History Graph Preview canvas." class="min-h-10 rounded-xl border border-fuchsia-200/24 bg-fuchsia-300/14 px-3 py-2 text-fuchsia-50/86 hover:border-fuchsia-100/40 disabled:opacity-50 disabled:cursor-not-allowed">Start Replay</button>
+                        <button id="crypto-history-replay-pause" type="button" ${pauseDisabled ? 'disabled' : ''} title="Pause the preview-only replay animation." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/72 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Pause Replay</button>
+                        <button id="crypto-history-replay-step" type="button" ${stepDisabled ? 'disabled' : ''} title="Reveal one replay step from the preview dataset." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Step Replay</button>
+                        <button id="crypto-history-replay-reset" type="button" ${resetDisabled ? 'disabled' : ''} title="Reset the preview-only replay canvas to the tracked wallet root." class="min-h-10 rounded-xl border border-yellow-200/18 bg-yellow-300/8 px-3 py-2 text-yellow-50/78 hover:border-yellow-100/32 disabled:opacity-50 disabled:cursor-not-allowed">Reset Replay</button>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        ${renderWalletHistoryMetric('Step', stepCopy, 'Current replay step / total preview-dataset steps.')}
+                        ${renderWalletHistoryMetric('Timestamp', timestamp, status.timestamp || 'No timestamp available for the current replay step.')}
+                        ${renderWalletHistoryMetric('Signature', signature, status.signature || 'No signature available for the current replay step.')}
+                        ${renderWalletHistoryMetric('Speed', HISTORY_REPLAY_SPEEDS[speed] || 'Standard', 'Replay speed preset.')}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-white/38 mr-1">Speed</span>
+                        ${Object.entries(HISTORY_REPLAY_SPEEDS).map(([value, label]) => `
+                            <button type="button" data-crypto-history-replay-speed="${escapeAttr(value)}" ${disabled ? 'disabled' : ''} title="Set replay speed to ${escapeAttr(label)}." class="min-h-9 rounded-xl border ${value === speed ? 'border-fuchsia-100/42 bg-fuchsia-300/18 text-fuchsia-50/88' : 'border-white/10 bg-white/[0.035] text-white/62'} px-3 py-1.5 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">${escapeHtml(label)}</button>
+                        `).join('')}
+                    </div>
+                </div>
+                <div id="crypto-history-replay-live-status" class="mt-2 text-white/48 leading-relaxed">${escapeHtml(getHistoryReplayLiveStatusText(status))}</div>
+            </div>
+        `;
+    }
+
+    function getHistoryReplayStatus() {
+        const status = state.historyPreview.replayAnimator?.getStatus?.() || state.historyPreview.replayStatus || {};
+        return {
+            playing: Boolean(status.playing),
+            currentStep: Number(status.currentStep) || 0,
+            totalSteps: Number(status.totalSteps) || 0,
+            timestamp: status.timestamp || '',
+            signature: status.signature || '',
+            speed: status.speed || state.historyPreview.replaySpeed || 'standard',
+            speedLabel: status.speedLabel || HISTORY_REPLAY_SPEEDS[status.speed || state.historyPreview.replaySpeed] || 'Standard',
+            done: Boolean(status.done),
+            warning: status.warning || ''
+        };
+    }
+
+    function getHistoryReplayStatusText(status = getHistoryReplayStatus(), hasDataset = Boolean(state.historyPreview.dataset), datasetStale = false) {
+        if (datasetStale) return 'Dataset changed after it was built. Rebuild Preview Dataset before replaying.';
+        if (!hasDataset) return 'Build Preview Dataset before starting the opt-in lifetime replay.';
+        if (!status.totalSteps) return 'Replay is ready to initialize, but the preview dataset has no graph-ready transfer steps yet.';
+        if (status.playing) return 'Replay running in the separate preview canvas only.';
+        if (status.done) return 'Replay complete for the currently staged preview dataset.';
+        if (status.currentStep > 0) return 'Replay paused. Step, reset, or resume from the current preview step.';
+        return 'Replay ready. Start or step through the staged wallet history preview.';
+    }
+
+    function getHistoryReplayLiveStatusText(status = getHistoryReplayStatus()) {
+        const total = Number(status.totalSteps) || 0;
+        const current = Number(status.currentStep) || 0;
+        const timestamp = status.timestamp ? formatPreviewTimestamp(status.timestamp) : 'No timestamp';
+        const signature = status.signature ? shortLongValue(status.signature) : 'No signature';
+        const speed = status.speedLabel || HISTORY_REPLAY_SPEEDS[status.speed] || 'Standard';
+        return `Step ${current}/${total}. Timestamp: ${timestamp}. Signature: ${signature}. Speed: ${speed}.`;
     }
 
     function getHistoryPreviewGraphRenderStatusText(result = null, datasetStale = false) {
@@ -3084,6 +3182,23 @@
         status.querySelector('#crypto-history-preview-copy')?.addEventListener('click', event => {
             copyHistoryReplayPlan(event.currentTarget);
         });
+        status.querySelector('#crypto-history-replay-start')?.addEventListener('click', () => {
+            startHistoryReplay();
+        });
+        status.querySelector('#crypto-history-replay-pause')?.addEventListener('click', () => {
+            pauseHistoryReplay();
+        });
+        status.querySelector('#crypto-history-replay-step')?.addEventListener('click', () => {
+            stepHistoryReplay();
+        });
+        status.querySelector('#crypto-history-replay-reset')?.addEventListener('click', () => {
+            resetHistoryReplay();
+        });
+        status.querySelectorAll('[data-crypto-history-replay-speed]').forEach(button => {
+            button.addEventListener('click', () => {
+                setHistoryReplaySpeed(button.dataset.cryptoHistoryReplaySpeed || 'standard');
+            });
+        });
         status.querySelector('#crypto-wallet-depth-toggle')?.addEventListener('change', event => {
             setWalletLookupDepth(event.target.checked ? 2 : 1);
         });
@@ -3370,6 +3485,8 @@
         state.historyPreview.graphVisible = false;
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
+        detachHistoryReplayAnimator({ preserveStatus: false });
+        state.historyPreview.replaySpeed = 'standard';
         state.historyPreview.lastMessage = 'Replay preview cleared with staged history; the Wallet Lookup graph was not changed.';
         state.history.lastMessage = 'Loaded history staging cleared; the Wallet Lookup graph was not changed.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -3431,6 +3548,7 @@
         state.historyPreview.datasetGeneratedAt = Date.now();
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
+        detachHistoryReplayAnimator({ preserveStatus: false });
         state.historyPreview.lastMessage = metrics.transactions
             ? 'Preview dataset built from staged history only. Active graph unchanged; render is available only in the separate preview canvas.'
             : 'Preview dataset shell built. Load staged history with wallet data before graph-ready transfer rows can be included.';
@@ -3440,6 +3558,7 @@
 
     async function toggleHistoryPreviewGraph() {
         if (state.historyPreview.graphVisible) {
+            detachHistoryReplayAnimator({ preserveStatus: true });
             state.historyPreview.graphVisible = false;
             state.historyPreview.lastMessage = 'Preview graph hidden. Dataset staging and the active Wallet Lookup graph were not changed.';
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -3456,12 +3575,24 @@
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
     }
 
-    async function renderHistoryGraphPreviewCanvas(root = state.statusPanel) {
+    async function renderHistoryGraphPreviewCanvas(root = state.statusPanel, options = {}) {
         if (!state.historyPreview.graphVisible) return null;
         const canvas = root?.querySelector?.('#crypto-history-preview-canvas');
         if (!canvas || !state.historyPreview.dataset) {
             updateHistoryGraphPreviewRenderStatus(null);
             return null;
+        }
+
+        if (state.historyPreview.replayStatus || state.historyPreview.replayAnimator) {
+            const animator = await initializeHistoryReplayAnimator(root, {
+                stepIndex: state.historyPreview.replayStatus?.currentStep || 0
+            });
+            if (animator && (options.resumeReplay || state.historyPreview.replayStatus?.playing)) {
+                animator.start({ resume: true, stepIndex: state.historyPreview.replayStatus?.currentStep || 0 });
+            } else {
+                animator?.render?.();
+            }
+            return animator?.getStatus?.() || null;
         }
 
         await loadHistoryGraphRendererModule();
@@ -3511,6 +3642,127 @@
         }
         const warnings = document.getElementById('crypto-history-preview-render-warnings');
         if (warnings) warnings.innerHTML = renderHistoryPreviewGraphWarnings(result?.warnings || []);
+    }
+
+    async function startHistoryReplay() {
+        if (state.history.inFlight) return null;
+        if (!state.historyPreview.dataset) {
+            await buildHistoryPreviewDataset({ skipRenderStatus: true });
+        }
+        state.historyPreview.graphVisible = true;
+        state.historyPreview.lastMessage = state.historyPreview.datasetMetrics?.transactions
+            ? 'Preview replay started in the separate History Graph Preview canvas. Active Wallet Lookup graph unchanged.'
+            : 'Replay canvas opened, but no graph-ready preview transfer steps are available yet.';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        const animator = await initializeHistoryReplayAnimator(state.statusPanel);
+        animator?.start?.();
+        return animator?.getStatus?.() || null;
+    }
+
+    async function pauseHistoryReplay() {
+        const animator = state.historyPreview.replayAnimator || await initializeHistoryReplayAnimator(state.statusPanel);
+        animator?.pause?.();
+        return animator?.getStatus?.() || null;
+    }
+
+    async function stepHistoryReplay() {
+        if (!state.historyPreview.dataset) {
+            await buildHistoryPreviewDataset({ skipRenderStatus: true });
+        }
+        state.historyPreview.graphVisible = true;
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        const animator = await initializeHistoryReplayAnimator(state.statusPanel);
+        animator?.step?.(1);
+        return animator?.getStatus?.() || null;
+    }
+
+    async function resetHistoryReplay() {
+        const animator = state.historyPreview.replayAnimator || await initializeHistoryReplayAnimator(state.statusPanel);
+        animator?.reset?.();
+        state.historyPreview.lastMessage = 'Replay reset to the tracked-wallet root inside the preview canvas only.';
+        updateHistoryReplayStatus(animator?.getStatus?.() || getHistoryReplayStatus());
+        return animator?.getStatus?.() || null;
+    }
+
+    async function setHistoryReplaySpeed(speed = 'standard') {
+        const safeSpeed = HISTORY_REPLAY_SPEEDS[speed] ? speed : 'standard';
+        state.historyPreview.replaySpeed = safeSpeed;
+        if (state.historyPreview.replayAnimator?.setSpeed) {
+            state.historyPreview.replayAnimator.setSpeed(safeSpeed);
+        } else {
+            state.historyPreview.replayStatus = {
+                ...(state.historyPreview.replayStatus || {}),
+                speed: safeSpeed,
+                speedLabel: HISTORY_REPLAY_SPEEDS[safeSpeed]
+            };
+            updateHistoryReplayStatus(state.historyPreview.replayStatus);
+        }
+        return safeSpeed;
+    }
+
+    async function initializeHistoryReplayAnimator(root = state.statusPanel, options = {}) {
+        const canvas = root?.querySelector?.('#crypto-history-preview-canvas') || document.getElementById('crypto-history-preview-canvas');
+        if (!canvas || !state.historyPreview.dataset) return null;
+        await loadHistoryGraphRendererModule();
+        await loadHistoryReplayAnimatorModule();
+        const factory = namespace.historyReplayAnimator?.createReplayAnimator;
+        if (!factory) {
+            updateHistoryReplayStatus({
+                currentStep: 0,
+                totalSteps: 0,
+                speed: state.historyPreview.replaySpeed,
+                speedLabel: HISTORY_REPLAY_SPEEDS[state.historyPreview.replaySpeed] || 'Standard',
+                warning: 'History replay animator module unavailable.'
+            });
+            return null;
+        }
+
+        if (state.historyPreview.replayAnimator?.canvas !== canvas) {
+            detachHistoryReplayAnimator({ preserveStatus: true });
+        }
+        if (!state.historyPreview.replayAnimator) {
+            state.historyPreview.replayAnimator = factory(canvas, state.historyPreview.dataset, {
+                ...HISTORY_PREVIEW_GRAPH_LIMITS,
+                speed: state.historyPreview.replaySpeed,
+                initialStep: options.stepIndex ?? state.historyPreview.replayStatus?.currentStep ?? 0,
+                onStatus: updateHistoryReplayStatus
+            });
+            state.historyPreview.replayStatus = state.historyPreview.replayAnimator.getStatus?.() || state.historyPreview.replayStatus;
+        }
+        return state.historyPreview.replayAnimator;
+    }
+
+    function detachHistoryReplayAnimator(options = {}) {
+        if (state.historyPreview.replayAnimator?.destroy) {
+            const status = state.historyPreview.replayAnimator.getStatus?.();
+            state.historyPreview.replayAnimator.destroy();
+            if (options.preserveStatus && status) state.historyPreview.replayStatus = status;
+        } else if (!options.preserveStatus) {
+            state.historyPreview.replayStatus = null;
+        }
+        state.historyPreview.replayAnimator = null;
+        if (!options.preserveStatus) state.historyPreview.replayStatus = null;
+    }
+
+    function updateHistoryReplayStatus(status = {}) {
+        const normalized = {
+            ...status,
+            speed: status.speed || state.historyPreview.replaySpeed || 'standard',
+            speedLabel: status.speedLabel || HISTORY_REPLAY_SPEEDS[status.speed || state.historyPreview.replaySpeed] || 'Standard'
+        };
+        state.historyPreview.replayStatus = normalized;
+        state.historyPreview.replaySpeed = normalized.speed;
+
+        const datasetStale = state.historyPreview.datasetMetrics
+            && Number(state.historyPreview.datasetMetrics.stagedRowsReceived || 0) !== Number((state.history.loadedTransactions || []).length);
+        const topStatus = document.getElementById('crypto-history-replay-status');
+        if (topStatus) {
+            topStatus.textContent = getHistoryReplayStatusText(normalized, Boolean(state.historyPreview.dataset), datasetStale);
+        }
+        const liveStatus = document.getElementById('crypto-history-replay-live-status');
+        if (liveStatus) liveStatus.textContent = getHistoryReplayLiveStatusText(normalized);
+        const pauseButton = document.getElementById('crypto-history-replay-pause');
+        if (pauseButton) pauseButton.disabled = !normalized.playing || Boolean(state.history.inFlight || datasetStale);
     }
 
     async function copyHistoryPreviewDataset(button) {
@@ -3618,6 +3870,8 @@
         state.historyPreview.graphVisible = false;
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
+        detachHistoryReplayAnimator({ preserveStatus: false });
+        state.historyPreview.replaySpeed = 'standard';
         state.historyPreview.lastMessage = 'Preview artifacts cleared. Staged history and the active graph were not changed.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
     }
@@ -3723,6 +3977,18 @@
                 return false;
             });
         return state.history.graphRendererLoadPromise;
+    }
+
+    function loadHistoryReplayAnimatorModule() {
+        if (namespace.historyReplayAnimator?.createReplayAnimator) return Promise.resolve(true);
+        if (state.history.replayAnimatorLoadPromise) return state.history.replayAnimatorLoadPromise;
+        state.history.replayAnimatorLoadPromise = loadCryptoScript('js/crypto/historyReplayAnimator.js')
+            .then(() => Boolean(namespace.historyReplayAnimator?.createReplayAnimator))
+            .catch(error => {
+                state.historyPreview.lastMessage = error?.message || 'History replay animator module unavailable';
+                return false;
+            });
+        return state.history.replayAnimatorLoadPromise;
     }
 
     function loadCryptoScript(src) {

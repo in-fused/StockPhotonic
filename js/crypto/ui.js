@@ -843,7 +843,7 @@
 
     function getSourceBoundaryCopy() {
         if (state.dataMode === DATA_MODES.WALLET) {
-            return 'Wallet lookup replaces the active graph with a filtered one-hop view from the secure Worker.';
+            return 'Wallet lookup replaces the active graph with a secure Worker response; it is not merged with generated fixtures.';
         }
         if (state.dataMode === DATA_MODES.LIVE) {
             return 'Live Feed shows only sanitized Worker events. No provider keys or browser provider calls are used.';
@@ -1162,10 +1162,11 @@
                     <div class="min-w-0">
                         <div class="text-white/38">WALLET INTELLIGENCE</div>
                         <div class="mt-1 text-sm font-display text-cyan-50/86">Wallet Lookup Readout</div>
-                        <div class="mt-1 max-w-2xl text-white/58 leading-relaxed">Secure Worker activity only. Program and infrastructure-like accounts are filtered; wallet/address relationships are directional flow observations, not identity claims.</div>
+                        <div class="mt-1 max-w-2xl text-white/58 leading-relaxed">Secure Worker activity only. The visible graph shows wallet/address relationships observed in transfer data; it does not make identity claims about people, entities, or ownership.</div>
                     </div>
                     ${renderWalletLookupStatusBadge(intelligence.lookupStatus)}
                 </div>
+                ${renderWalletLookupConfidenceStatus(intelligence)}
                 ${emptyState ? renderWalletEmptyStateCard(emptyState) : ''}
                 ${depthNote ? renderWalletDepthNoteCard(depthNote) : ''}
                 <div class="mt-3 grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] gap-2.5">
@@ -1179,7 +1180,7 @@
                             <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 ${renderWalletMetric('Returned', intelligence.returnedEvents, 'Worker returned events')}
                                 ${renderWalletMetric('Visible Legs', intelligence.visibleLegs, 'Transfer legs currently visible')}
-                                ${renderWalletMetric('Filtered', intelligence.filteredLegs, 'Noise or infrastructure-like legs removed')}
+                                ${renderWalletMetric('Noise Removed', intelligence.filteredLegs, getWalletFilteredLegCopy(intelligence.filteredLegs))}
                                 ${renderWalletMetric('Depth', `${intelligence.graphDepth}-hop`, 'Wallet lookup graph depth')}
                             </div>
                             <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1249,6 +1250,85 @@
                 ? 'border-emerald-200/35 bg-emerald-300/14 text-emerald-50/88'
                 : 'border-white/12 bg-white/[0.04] text-white/58';
         return `<div class="shrink-0 rounded-full border ${classes} px-3 py-1.5">${escapeHtml(status)}</div>`;
+    }
+
+    function renderWalletLookupConfidenceStatus(intelligence) {
+        const items = getWalletLookupQualityItems(intelligence);
+        return `
+            <section class="mt-3 rounded-xl border border-cyan-200/14 bg-slate-950/30 px-3 py-2.5">
+                <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                    <div class="min-w-0">
+                        <div class="text-white/38">DATA QUALITY</div>
+                        <div class="mt-1 text-cyan-50/78 leading-relaxed">${escapeHtml(getWalletFilteredLegCopy(intelligence.filteredLegs))}</div>
+                        <div class="mt-1 text-white/50 leading-relaxed">Filtered nodes are infrastructure or program-like accounts. Visible links remain address-to-address observations only.</div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-1.5 min-w-[0] lg:min-w-[260px]">
+                        ${items.map(renderWalletQualityBadge).join('')}
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+
+    function getWalletLookupQualityItems(intelligence) {
+        const metadata = state.graph?.metadata || {};
+        const hasWorkerResponse = Boolean(state.walletLookup.lastLoadedAt);
+        const workerError = Boolean(state.walletLookup.lastError) && !state.walletLookup.inFlight && !hasWorkerResponse;
+        const sanitized = metadata.sanitized === true || state.dataMode === DATA_MODES.WALLET;
+        const replacementMode = state.dataMode === DATA_MODES.WALLET && metadata.wallet_lookup_mode === true;
+        const filterApplied = hasWorkerResponse || state.walletLookup.inFlight;
+        return [
+            {
+                label: state.walletLookup.inFlight
+                    ? 'Requesting Worker'
+                    : hasWorkerResponse
+                        ? 'Secure Worker Response'
+                        : workerError
+                            ? 'Worker Response Blocked'
+                            : 'No Worker Response Yet',
+                tone: hasWorkerResponse ? 'good' : workerError ? 'warn' : 'idle',
+                detail: hasWorkerResponse
+                    ? `${intelligence.returnedEvents} returned event${intelligence.returnedEvents === 1 ? '' : 's'}`
+                    : state.walletLookup.inFlight
+                        ? 'Lookup in progress'
+                        : 'Enter a wallet to load activity'
+            },
+            {
+                label: sanitized ? 'Sanitized Graph' : 'Sanitization Unknown',
+                tone: sanitized ? 'good' : 'warn',
+                detail: sanitized ? 'Worker-derived fields only' : 'Review source metadata'
+            },
+            {
+                label: filterApplied ? 'Noise Filter Applied' : 'Noise Filter Ready',
+                tone: filterApplied ? 'good' : 'idle',
+                detail: `${intelligence.filteredLegs} leg${intelligence.filteredLegs === 1 ? '' : 's'} removed`
+            },
+            {
+                label: replacementMode ? 'Replacement Mode' : 'Mode Pending',
+                tone: replacementMode ? 'good' : 'idle',
+                detail: replacementMode ? 'Not merged with fixtures' : 'Wallet mode not active'
+            }
+        ];
+    }
+
+    function renderWalletQualityBadge(item) {
+        const classes = item.tone === 'good'
+            ? 'border-emerald-200/24 bg-emerald-300/12 text-emerald-50/86'
+            : item.tone === 'warn'
+                ? 'border-yellow-200/24 bg-yellow-300/12 text-yellow-50/84'
+                : 'border-white/12 bg-white/[0.035] text-white/62';
+        return `
+            <div class="min-w-0 rounded-lg border ${classes} px-2.5 py-2">
+                <div class="font-semibold leading-snug">${escapeHtml(item.label)}</div>
+                <div class="mt-0.5 text-white/48 leading-snug break-words">${escapeHtml(item.detail)}</div>
+            </div>
+        `;
+    }
+
+    function getWalletFilteredLegCopy(count) {
+        const value = Math.max(0, Number(count) || 0);
+        if (value === 0) return 'No infrastructure/noise transfer legs were removed from this graph.';
+        return `${value} infrastructure/noise transfer leg${value === 1 ? '' : 's'} removed before graphing.`;
     }
 
     function renderWalletAddressLine(label, address) {
@@ -1500,21 +1580,21 @@
         if (!state.walletLookup.lastWallet && !state.walletLookup.eventCount) {
             return {
                 title: 'No Wallet Loaded',
-                body: 'Enter a wallet address to replace the current graph with recent secure Worker activity.',
+                body: 'Enter a wallet address to request sanitized recent activity from the secure Worker. The graph will stay empty until a response is loaded, so no relationships are implied.',
                 tone: 'info'
             };
         }
         if (state.walletLookup.lastWallet && state.walletLookup.eventCount === 0 && state.walletLookup.lastLoadedAt) {
             return {
                 title: 'No Recent Activity Returned',
-                body: 'The Worker completed the lookup, but returned no recent sanitized activity for this wallet address.',
+                body: 'The secure Worker completed the lookup and returned no recent sanitized transfer activity for this wallet address. No wallet/address relationships are shown because none were returned.',
                 tone: 'warn'
             };
         }
         if (state.walletLookup.eventCount > 0 && intelligence.visibleLegs === 0) {
             return {
                 title: 'Activity Filtered Out',
-                body: 'Recent activity was returned, but no transfer legs remain visible after infrastructure/noise filtering and active flow filters.',
+                body: 'Recent activity was returned, but no transfer legs remain visible after infrastructure/program-like accounts and active flow filters were removed. This prevents noise from looking like a wallet relationship.',
                 tone: 'warn'
             };
         }
@@ -1941,6 +2021,10 @@
                 wallet_lookup_depth: maxDepth,
                 wallet_lookup_filtered_transactions: scopedTransactions.length,
                 wallet_lookup_noise_removed: Math.max(0, normalized.transactions.length - scopedTransactions.length),
+                wallet_lookup_noise_filtered: true,
+                wallet_lookup_replacement_mode: true,
+                wallet_lookup_fixture_merge: false,
+                worker_response_secure: true,
                 live_blockchain_fetching: false,
                 production_meaning: false,
                 sanitized: true
@@ -2150,6 +2234,11 @@
                 wallet_lookup_mode: isWallet,
                 wallet_lookup_tracked_wallet: isWallet ? core.normalizeAddress(metadata.wallet || '') : '',
                 wallet_lookup_depth: state.walletLookup.graphDepth,
+                wallet_lookup_noise_removed: 0,
+                wallet_lookup_noise_filtered: isWallet,
+                wallet_lookup_replacement_mode: isWallet,
+                wallet_lookup_fixture_merge: false,
+                worker_response_secure: isLive || isWallet,
                 live_worker_feed_enabled: isLive,
                 live_blockchain_fetching: false,
                 production_meaning: false,

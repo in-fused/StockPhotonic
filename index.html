@@ -755,7 +755,7 @@
 
         .crypto-data-source-snapshot {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(8.75rem, 1fr));
             gap: 0.35rem;
         }
 
@@ -764,6 +764,14 @@
             min-width: 0;
             overflow-wrap: anywhere;
             word-break: normal;
+        }
+
+        .crypto-data-source-snapshot > div {
+            border: 1px solid rgba(125, 211, 252, 0.12);
+            border-radius: 0.72rem;
+            background: rgba(2, 6, 23, 0.28);
+            padding: 0.48rem 0.55rem;
+            line-height: 1.35;
         }
 
         .crypto-intelligence-collapse .crypto-collapse-body,
@@ -2654,6 +2662,7 @@
             .crypto-mobile-investigation-drawer {
                 display: block;
                 bottom: calc(5.2rem + env(safe-area-inset-bottom));
+                max-width: calc(100vw - 1.5rem - env(safe-area-inset-left) - env(safe-area-inset-right));
             }
 
             #crypto-photonic-view.is-crypto-fullscreen {
@@ -2761,6 +2770,15 @@
             .crypto-card-heading {
                 overflow-wrap: anywhere;
                 word-break: break-word;
+            }
+
+            .crypto-data-source-snapshot {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .crypto-mobile-investigation-drawer.is-collapsed .crypto-mobile-drawer-selected,
+            .crypto-mobile-investigation-drawer.is-collapsed .crypto-mobile-drawer-empty {
+                display: none;
             }
         }
 
@@ -3522,7 +3540,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         window.CryptoPhotonicWorkerWalletActivityEndpoint =
             "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/wallet-activity";
     </script>
-    <script src="js/crypto/ui.js"></script>
+    <script src="js/crypto/ui.js?v=d124-qa3"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');

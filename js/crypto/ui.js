@@ -256,8 +256,8 @@
         solana_sample: 'Generated Fixture',
         legacy_sample: 'Generated Fixture',
         built_in: 'Generated Fixture',
-        worker_feed: 'Worker Feed (Realtime)',
-        worker_wallet_lookup: 'Wallet Lookup (Live Pull)'
+        worker_feed: 'Live Feed (Worker Events)',
+        worker_wallet_lookup: 'Wallet Lookup (Worker Replacement)'
     };
     const NOISE_ADDRESS_PREFIXES = [
         'computebudget111111111111111111111111111111',
@@ -1040,24 +1040,24 @@
 
     function getSourceBoundaryCopy() {
         if (state.dataMode === DATA_MODES.WALLET) {
-            return 'Wallet lookup replaces the active graph with a secure Worker response; it is not merged with generated fixtures.';
+            return 'Wallet Lookup replaces the active graph with one secure Worker response. It is not merged with generated fixtures, Live Feed events, or staged history.';
         }
         if (state.dataMode === DATA_MODES.LIVE) {
-            return 'Live Feed shows only sanitized Worker events. No provider keys or browser provider calls are used.';
+            return 'Live Feed shows only sanitized Worker events. No provider keys, wallet-history pages, or browser provider calls are used.';
         }
         if (!state.live.endpointValid) {
-            return 'Generated fixtures are local files. Track Wallet asks the secure Worker to fetch recent activity.';
+            return 'Generated Fixture uses local sample files. Load Activity in Wallet Lookup asks the secure Worker for recent activity.';
         }
         if (state.walletLookup.eventCount > 0 || state.walletLookup.mergedEventCount > 0) {
-            return 'Generated fixtures are local files. Track Wallet asks the secure Worker to fetch recent activity.';
+            return 'Generated Fixture uses local sample files. Wallet Lookup results stay separate and replace the graph only when loaded.';
         }
         if (state.live.workerAvailable) {
             return 'Browser fetches only sanitized Worker feed events. No provider keys or direct provider calls are used.';
         }
         if (state.datasetSourceKind === 'generated') {
-            return 'Generated fixtures are local files. Track Wallet asks the secure Worker to fetch recent activity.';
+            return 'Generated Fixture uses local sample files for repeatable QA. Wallet Lookup and Live Feed remain separate Worker-backed modes.';
         }
-        return 'Generated fixtures are local files. Track Wallet asks the secure Worker to fetch recent activity.';
+        return 'Generated Fixture uses local sample files. Wallet Lookup and Live Feed remain separate Worker-backed modes.';
     }
 
     function getLiveStatusLabel() {
@@ -1411,7 +1411,7 @@
             const visible = state.graph?.flowEdges?.length || 0;
             return `
                 <div class="crypto-data-source-snapshot mt-2 text-white/56">
-                    <div>Mode: Replacement wallet graph</div>
+                    <div>Mode: Worker replacement graph</div>
                     <div title="${escapeAttr(tracked || 'No tracked wallet loaded')}">Tracked: ${escapeHtml(tracked ? shortLongValue(tracked) : '-')}</div>
                     <div>Returned / Visible: ${escapeHtml(state.walletLookup.eventCount || 0)} / ${escapeHtml(visible)}</div>
                 </div>
@@ -1420,7 +1420,7 @@
         if (state.dataMode === DATA_MODES.LIVE) {
             return `
                 <div class="crypto-data-source-snapshot mt-2 text-white/56">
-                    <div>Mode: Live Worker feed</div>
+                    <div>Mode: Sanitized live feed</div>
                     <div>Events: ${escapeHtml(state.live.eventCount || 0)} returned / ${escapeHtml(state.live.mergedEventCount || 0)} shown</div>
                     <div>Last Poll: ${escapeHtml(state.live.lastPollAt ? formatDateTime(state.live.lastPollAt) : '-')}</div>
                 </div>
@@ -1428,6 +1428,7 @@
         }
         return `
             <div class="crypto-data-source-snapshot mt-2 text-white/56">
+                <div>Mode: Local QA fixture</div>
                 <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Fixture Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
                 <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
                 <div>Tx: ${escapeHtml(transactionCount ?? '-')}</div>
@@ -1442,9 +1443,9 @@
             [DATA_MODES.LIVE, 'Live Feed']
         ];
         const help = {
-            [DATA_MODES.GENERATED]: 'Use local reviewed fixtures to explore graph behavior without relying on Worker availability.',
+            [DATA_MODES.GENERATED]: 'Use local reviewed fixtures for repeatable QA without relying on Worker availability.',
             [DATA_MODES.WALLET]: 'Replace the active graph with recent activity returned by the secure Worker for one wallet.',
-            [DATA_MODES.LIVE]: 'Show sanitized events from the Worker feed; the browser does not call chain providers.'
+            [DATA_MODES.LIVE]: 'Show sanitized Worker feed events only; the browser does not call chain providers.'
         };
         return `
             <div class="crypto-mode-switch flex flex-wrap gap-1.5" role="group" aria-label="CryptoPhotonic data mode">
@@ -1489,7 +1490,7 @@
         return `
             <form id="crypto-wallet-lookup-form" class="mt-3 grid gap-2">
                 <div class="text-white/38">WALLET INVESTIGATION</div>
-                ${renderControlHelp('Load Activity asks the secure Worker for recent wallet activity and replaces the current graph. Refresh repeats the last lookup.')}
+                ${renderControlHelp('Load Activity asks the secure Worker for recent wallet activity and replaces the current graph. Refresh repeats the last lookup without merging generated fixture, live feed, or staged history data.')}
                 <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2 items-end">
                     <label class="grid gap-1 min-w-0 text-white/52">
                         <span title="Solana wallet address to investigate through the Worker wallet-activity endpoint.">Wallet Address</span>
@@ -1528,9 +1529,18 @@
         return `
             <div class="grid grid-cols-1 gap-2 items-center">
                 <div id="crypto-wallet-history-status" class="crypto-wallet-status-line rounded-xl border border-white/10 bg-slate-950/32 px-3 py-2 text-white/56">${escapeHtml(status)}</div>
-                <button id="crypto-wallet-history-load-more" type="button" ${disabled ? 'disabled' : ''} title="Load the next backend-provided wallet history page without changing the current graph rendering." class="min-h-10 rounded-xl border border-emerald-200/18 bg-emerald-300/10 px-3 py-2 text-emerald-50/82 hover:border-emerald-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load More History</button>
+                <button id="crypto-wallet-history-load-more" type="button" ${disabled ? 'disabled' : ''} title="${escapeAttr(disabled ? getWalletHistoryLoadMoreDisabledTitle() : 'Load the next backend-provided wallet history page into staging only. The current graph is unchanged.')}" class="min-h-10 rounded-xl border border-emerald-200/18 bg-emerald-300/10 px-3 py-2 text-emerald-50/82 hover:border-emerald-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load More History</button>
             </div>
         `;
+    }
+
+    function getWalletHistoryLoadMoreDisabledTitle() {
+        if (state.walletLookup.inFlight) return 'Wallet Lookup is still loading. Wait before staging more history.';
+        if (state.history.inFlight) return 'History is already loading through the Worker.';
+        if (!(state.walletLookup.lastWallet || state.walletLookup.walletInput)) return 'Enter and load a wallet before staging history.';
+        if (state.history.providerPagesLoaded > 0 && !state.history.moreAvailable) return 'No additional Worker history cursor is staged.';
+        if (!state.history.backendProviderConnected) return 'Worker wallet-history adapter is not connected; browser provider calls remain disabled.';
+        return 'History loading is unavailable for the current state.';
     }
 
     function getWalletHistoryStatusLabel() {
@@ -2237,7 +2247,7 @@
             <div class="crypto-tab-section">
                 ${renderGuidedActionGrid(buildHistoryGuidedActions(), {
                     title: 'History Staging Actions',
-                    subtitle: 'History stays staged; preview datasets are separate artifacts and never merge into the active graph.'
+                    subtitle: 'History stays staged through the Worker. Preview datasets are separate artifacts and never merge into the active graph.'
                 })}
                 ${renderWalletHistoryBrowserPanel()}
             </div>
@@ -2293,7 +2303,7 @@
             <div class="crypto-tab-section">
                 ${renderGuidedActionGrid(buildReplayGuidedActions(), {
                     title: 'Replay Investigation Actions',
-                    subtitle: 'Replay controls operate on the preview dataset canvas only; inspect events without adding them to the active graph.'
+                    subtitle: 'Replay controls operate on the preview dataset canvas only; inspected events are not added to the active graph.'
                 })}
                 ${renderWalletHistoryGraphPreviewPanel()}
             </div>
@@ -2325,7 +2335,7 @@
                 tone: hasDataset ? 'strong' : 'idle'
             },
             {
-                title: state.historyPreview.workspaceMode ? 'Exit Replay Mode' : 'Open Replay Workspace',
+                title: state.historyPreview.workspaceMode ? 'Exit Replay Workspace' : 'Open Replay Workspace',
                 detail: state.historyPreview.workspaceMode
                     ? 'Return the main stage to the active Wallet Lookup graph.'
                     : 'Use the large graph stage for preview-only replay.',
@@ -2941,12 +2951,14 @@
     }
 
     function getHistoryReplayStatusText(status = getHistoryReplayStatus(), hasDataset = Boolean(state.historyPreview.dataset), datasetStale = false) {
+        const totalSteps = getHistoryReplayTotalSteps(status);
+        const currentStep = Number(status.currentStep) || 0;
         if (datasetStale) return 'Dataset changed after it was built. Rebuild Preview Dataset before replaying.';
         if (!hasDataset) return 'Build Preview Dataset before starting the opt-in lifetime replay.';
-        if (!status.totalSteps) return 'Replay is ready to initialize, but the preview dataset has no graph-ready transfer steps yet.';
+        if (!totalSteps) return 'Replay is ready to initialize, but the preview dataset has no graph-ready transfer steps yet.';
         if (status.playing) return 'Replay running in the separate preview canvas only.';
         if (status.done) return 'Replay complete for the currently staged preview dataset.';
-        if (status.currentStep > 0) return 'Replay paused. Step, reset, or resume from the current preview step.';
+        if (currentStep > 0) return 'Replay paused. Step, reset, or resume from the current preview step.';
         return 'Replay ready. Start or step through the staged wallet history preview.';
     }
 
@@ -6141,8 +6153,7 @@
     }
 
     function getWalletLookupEdgeLabelStyle(edge, interaction) {
-        const force = interaction.connectedEdgeIds.has(edge.id)
-            || interaction.hoveredFlowId === edge.id
+        const force = interaction.hoveredFlowId === edge.id
             || interaction.selectedFlowId === edge.id
             || interaction.replayActiveFlowId === edge.id;
         const zoom = state.viewport.scale || 1;
@@ -6273,6 +6284,7 @@
         const boxes = [];
         const padding = state.viewport.scale < 0.75 ? 10 : 6;
         const margin = Math.max(8, width < 520 ? 12 : 8);
+        const maxLabels = getMaxVisibleGraphLabels();
         return {
             boxes,
             clampBox(box) {
@@ -6289,11 +6301,25 @@
                     width: box.width + padding * 2,
                     height: box.height + padding * 2
                 };
+                if (!options.force && boxes.length >= maxLabels) return false;
                 if (!options.force && boxes.some(existing => boxesOverlap(existing, paddedBox))) return false;
                 boxes.push(paddedBox);
                 return true;
             }
         };
+    }
+
+    function getMaxVisibleGraphLabels() {
+        const mobile = isMobileViewport();
+        const density = state.labelDensity;
+        if (state.dataMode === DATA_MODES.WALLET) {
+            if (density === 'minimal') return mobile ? 6 : 9;
+            if (density === 'detailed') return mobile ? 12 : 20;
+            return mobile ? 8 : 13;
+        }
+        if (density === 'minimal') return mobile ? 8 : 12;
+        if (density === 'detailed') return mobile ? 18 : 30;
+        return mobile ? 12 : 22;
     }
 
     function boxesOverlap(a, b) {
@@ -7780,7 +7806,7 @@
     }
 
     function detailRow(label, value, options = {}) {
-        const rawValue = String(value);
+        const rawValue = String(value ?? '-');
         const visibleValue = options.shorten ? shortLongValue(rawValue) : rawValue;
         return `
             <div class="crypto-detail-row rounded-xl px-3 py-2">

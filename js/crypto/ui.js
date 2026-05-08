@@ -86,11 +86,15 @@
             pagesLoaded: 0,
             providerPagesLoaded: 0,
             totalLoadedTransactions: 0,
+            loadedTransactions: [],
             moreAvailable: false,
             nextCursor: null,
             backendProviderConnected: false,
             providerConfigured: false,
-            lastStatus: 'idle'
+            lastStatus: 'idle',
+            provider: '',
+            providerLabel: '',
+            providerCapabilities: null
         },
         filters: {
             transactionType: 'all',
@@ -894,11 +898,15 @@
         state.history.pagesLoaded = 0;
         state.history.providerPagesLoaded = 0;
         state.history.totalLoadedTransactions = 0;
+        state.history.loadedTransactions = [];
         state.history.moreAvailable = false;
         state.history.nextCursor = null;
         state.history.backendProviderConnected = false;
         state.history.providerConfigured = false;
         state.history.lastStatus = 'idle';
+        state.history.provider = '';
+        state.history.providerLabel = '';
+        state.history.providerCapabilities = null;
     }
 
     function getCurrentSourceLabel() {
@@ -1390,9 +1398,7 @@
 
     function renderWalletHistoryControls() {
         if (state.dataMode !== DATA_MODES.WALLET) return '';
-        const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
-        const noMoreBackendPages = state.history.providerPagesLoaded > 0 && !state.history.moreAvailable;
-        const disabled = state.walletLookup.inFlight || state.history.inFlight || !hasWallet || noMoreBackendPages || !state.history.backendProviderConnected;
+        const disabled = isWalletHistoryLoadMoreDisabled();
         const status = getWalletHistoryStatusLabel();
         return `
             <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2 items-center">
@@ -1418,6 +1424,16 @@
         return 'History: wallet mode only';
     }
 
+    function isWalletHistoryLoadMoreDisabled() {
+        const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
+        const noMoreBackendPages = state.history.providerPagesLoaded > 0 && !state.history.moreAvailable;
+        return state.walletLookup.inFlight
+            || state.history.inFlight
+            || !hasWallet
+            || noMoreBackendPages
+            || !state.history.backendProviderConnected;
+    }
+
     function renderWalletIntelligencePanel() {
         if (state.dataMode !== DATA_MODES.WALLET) return '';
         const intelligence = buildWalletIntelligence();
@@ -1440,6 +1456,7 @@
                 ${renderWalletActionableInsights(intelligence)}
                 ${emptyState ? renderWalletEmptyStateCard(emptyState) : ''}
                 ${depthNote ? renderWalletDepthNoteCard(depthNote) : ''}
+                ${renderWalletHistoryBrowserPanel()}
                 <div class="mt-3 grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] gap-2.5">
                     <div class="grid gap-2.5 min-w-0">
                         <section class="rounded-xl border border-white/10 bg-white/[0.045] p-3">
@@ -1553,6 +1570,219 @@
                 <div class="mt-0.5 text-white/48 leading-snug">${escapeHtml(action.detail || '')}</div>
             </button>
         `;
+    }
+
+    function renderWalletHistoryBrowserPanel() {
+        const rows = getWalletHistoryBrowserRows(24);
+        const loadMoreDisabled = isWalletHistoryLoadMoreDisabled();
+        const clearDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.loadedTransactions.length);
+        const copyDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.lastMessage && !state.history.lastError);
+        return `
+            <section class="mt-3 rounded-xl border border-cyan-200/16 bg-slate-950/30 p-3">
+                <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                    <div class="min-w-0">
+                        <div class="text-white/38">WALLET HISTORY BROWSER</div>
+                        <div class="mt-1 text-sm font-display text-cyan-50/86">Replay Staging</div>
+                        <div class="mt-1 max-w-3xl text-white/56 leading-relaxed">Loaded history pages are staged for inspection only and are not merged into the graph. Lifetime replay will require progressive graph expansion before historical pages can become visible flow state.</div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 lg:min-w-[430px]">
+                        <button id="crypto-wallet-history-browser-load-more" type="button" ${loadMoreDisabled ? 'disabled' : ''} title="Load the next history page from the Worker wallet-history endpoint only." class="min-h-10 rounded-xl border border-emerald-200/22 bg-emerald-300/12 px-3 py-2 text-emerald-50/84 hover:border-emerald-100/38 disabled:opacity-50 disabled:cursor-not-allowed">Load More History</button>
+                        <button id="crypto-wallet-history-clear" type="button" ${clearDisabled ? 'disabled' : ''} title="Clear staged history rows without changing the current graph." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/70 hover:border-cyan-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Clear Loaded History</button>
+                        <button id="crypto-wallet-history-copy" type="button" ${copyDisabled ? 'disabled' : ''} title="Copy a compact staged history snapshot." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy History Snapshot</button>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+                    ${renderWalletHistoryMetric('Provider', getWalletHistoryProviderDisplay(), 'Backend Worker adapter or provider surface reported by the history controller.')}
+                    ${renderWalletHistoryMetric('Configured', state.history.providerConfigured ? 'Configured' : 'Unconfigured', getWalletHistoryConfigurationTitle())}
+                    ${renderWalletHistoryMetric('Pages', state.history.pagesLoaded, 'All staged pages, including the initial wallet lookup page when available.')}
+                    ${renderWalletHistoryMetric('Provider Pages', state.history.providerPagesLoaded, 'Pages loaded by the dedicated wallet-history endpoint after the initial lookup.')}
+                    ${renderWalletHistoryMetric('Unique Tx', state.history.totalLoadedTransactions, 'Unique staged transaction/event keys tracked by the HistoryController.')}
+                    ${renderWalletHistoryMetric('Next Cursor', state.history.nextCursor ? shortLongValue(state.history.nextCursor) : 'None', state.history.nextCursor || 'No additional cursor is staged.')}
+                    ${renderWalletHistoryMetric('Last Status', getWalletHistoryLastStatusDisplay(), getWalletHistoryLastMessage())}
+                </div>
+                <div class="mt-2 rounded-lg border ${state.history.lastError ? 'border-yellow-200/22 bg-yellow-300/10 text-yellow-50/82' : 'border-cyan-200/12 bg-cyan-300/8 text-cyan-50/72'} px-3 py-2 leading-relaxed">${escapeHtml(getWalletHistoryNotice())}</div>
+                <div class="mt-3 grid gap-2 max-h-[34rem] overflow-auto pr-1">
+                    ${rows.map(renderWalletHistoryBrowserRow).join('') || renderWalletInlineEmpty(getWalletHistoryEmptyMessage())}
+                </div>
+            </section>
+        `;
+    }
+
+    function renderWalletHistoryMetric(label, value, title = '') {
+        const raw = String(value ?? '-');
+        return `
+            <div class="min-w-0 rounded-lg border border-white/10 bg-white/[0.035] px-2.5 py-2" title="${escapeAttr(title || raw)}">
+                <div class="text-white/34">${escapeHtml(label)}</div>
+                <div class="mt-1 text-[11px] font-semibold text-cyan-50/82 break-words">${escapeHtml(raw || '-')}</div>
+            </div>
+        `;
+    }
+
+    function renderWalletHistoryBrowserRow(row = {}) {
+        return `
+            <div class="min-w-0 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2">
+                <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <span class="font-mono text-[10px] text-white/44">${escapeHtml(row.timestamp || '-')}</span>
+                            <span class="rounded-full border border-cyan-200/16 bg-cyan-300/10 px-2 py-0.5 text-[10px] text-cyan-50/78">${escapeHtml(row.type || 'Unknown / Unclassified')}</span>
+                            <span class="font-mono text-[10px] text-white/36" title="${escapeAttr(row.signatureFull || '')}">${escapeHtml(row.signature || '-')}</span>
+                        </div>
+                        <div class="mt-1 text-cyan-50/78 break-words">${escapeHtml(row.relationship || 'Wallet relationship unavailable')}</div>
+                    </div>
+                    <div class="sm:text-right text-white/48">
+                        <div class="break-words">${escapeHtml(row.tokens || 'Tokens unavailable')}</div>
+                        <div class="mt-0.5 text-[10px]">${escapeHtml(row.transferCount)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function getWalletHistoryBrowserRows(limit = 24) {
+        return (state.history.loadedTransactions || [])
+            .slice(0, limit)
+            .map((transaction, index) => summarizeWalletHistoryTransaction(transaction, index));
+    }
+
+    function summarizeWalletHistoryTransaction(transaction = {}, index = 0) {
+        const signature = getHistoryTransactionSignature(transaction, index);
+        const type = getHistoryTransactionTypeLabel(transaction);
+        const tokens = getHistoryTokenSymbols(transaction);
+        const transferCount = getHistoryTransferCount(transaction);
+        return {
+            timestamp: formatHistoryTimestamp(getHistoryTransactionTimestamp(transaction)),
+            type,
+            signatureFull: signature,
+            signature: signature ? shortHash(signature) : `row-${index + 1}`,
+            relationship: getHistoryWalletRelationship(transaction),
+            tokens: tokens.length ? tokens.join(', ') : '',
+            transferCount: transferCount == null
+                ? 'Transfer count unavailable'
+                : `${transferCount} transfer${transferCount === 1 ? '' : 's'}`
+        };
+    }
+
+    function getWalletHistoryProviderDisplay() {
+        const label = state.history.providerLabel || state.history.provider || 'Worker history provider';
+        return label.length > 28 ? shortLongValue(label) : label;
+    }
+
+    function getWalletHistoryConfigurationTitle() {
+        if (state.history.providerConfigured) return 'Provider reported configured through the Worker response.';
+        if (isLanaPlaceholderHistoryState()) return 'lana placeholder is staged only; no browser-side provider call is made.';
+        return 'Provider is unavailable, unconfigured, or not reported by the Worker yet.';
+    }
+
+    function getWalletHistoryLastStatusDisplay() {
+        if (state.history.inFlight) return 'loading';
+        if (state.history.lastError) return 'attention';
+        return state.history.lastStatus || 'idle';
+    }
+
+    function getWalletHistoryLastMessage() {
+        return state.history.lastError || state.history.lastMessage || 'No history status message yet.';
+    }
+
+    function getWalletHistoryNotice() {
+        if (state.history.inFlight) return 'Loading the next staged history page through the Worker wallet-history endpoint.';
+        if (state.history.lastError) return state.history.lastError;
+        if (isLanaPlaceholderHistoryState()) return 'lana placeholder history is not a browser provider. Configure it behind the Worker before loading real pages.';
+        if (!state.history.backendProviderConnected) return 'History provider is unavailable in the browser until the Worker adapter is connected; direct provider calls remain disabled.';
+        if (state.history.pagesLoaded && !state.history.loadedTransactions.length) return 'History page loaded, but it did not contain inspectable transactions.';
+        if (state.history.providerPagesLoaded > 0 && !state.history.moreAvailable) return 'No additional cursor is available from the staged history provider.';
+        if (!state.history.providerConfigured) return 'Provider configuration has not been confirmed by a history page yet.';
+        return state.history.lastMessage || 'History is staged for inspection only. The graph still reflects Wallet Lookup replacement data.';
+    }
+
+    function getWalletHistoryEmptyMessage() {
+        if (state.history.inFlight) return 'Loading staged history rows.';
+        if (state.history.pagesLoaded) return 'No inspectable transactions were returned in the loaded history pages.';
+        return 'Load wallet activity, then use Load More History to stage older pages for inspection.';
+    }
+
+    function isLanaPlaceholderHistoryState() {
+        const text = `${state.history.provider || ''} ${state.history.providerLabel || ''} ${state.history.lastMessage || ''}`.toLowerCase();
+        return text.includes('lana');
+    }
+
+    function getHistoryTransactionTimestamp(transaction = {}) {
+        return transaction.timestamp
+            || transaction.block_time
+            || transaction.blockTime
+            || transaction.time
+            || transaction.received_at
+            || transaction.created_at
+            || '';
+    }
+
+    function formatHistoryTimestamp(value) {
+        if (value == null || value === '') return '';
+        const numeric = Number(value);
+        const date = Number.isFinite(numeric)
+            ? new Date(numeric < 1000000000000 ? numeric * 1000 : numeric)
+            : new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value || '');
+        return date.toLocaleString(undefined, {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
+    }
+
+    function getHistoryTransactionTypeLabel(transaction = {}) {
+        const raw = transaction.transaction_type
+            || transaction.transactionType
+            || transaction.type
+            || transaction.event_type
+            || 'unknown';
+        return core.interpretTransactionType?.(raw)?.label || String(raw || 'Unknown / Unclassified').replaceAll('_', ' ');
+    }
+
+    function getHistoryTransactionSignature(transaction = {}, index = 0) {
+        return String(transaction.signature || transaction.transaction_hash || transaction.hash || transaction.id || `history-${index + 1}`).trim();
+    }
+
+    function getHistoryWalletRelationship(transaction = {}) {
+        const explicit = transaction.wallet_relationship
+            || transaction.relationship
+            || transaction.tracked_wallet_relationship
+            || transaction.tracked_wallet_role;
+        if (explicit) return String(explicit).replaceAll('_', ' ');
+        const tracked = core.normalizeAddress(state.history.controller?.wallet || state.walletLookup.lastWallet || state.walletLookup.walletInput || '');
+        const transfers = Array.isArray(transaction.transfers) ? transaction.transfers : [];
+        const firstTransfer = transfers[0] || transaction;
+        const source = firstTransfer.from || firstTransfer.source_wallet || firstTransfer.source;
+        const destination = firstTransfer.to || firstTransfer.destination_wallet || firstTransfer.destination || firstTransfer.target;
+        const role = getTrackedWalletRole(tracked, source, destination);
+        return role ? String(role).replaceAll('_', ' ') : '';
+    }
+
+    function getHistoryTokenSymbols(transaction = {}) {
+        const symbols = new Set();
+        [transaction.token_symbol, transaction.symbol, transaction.tokenSymbol].forEach(value => {
+            if (value) symbols.add(String(value).trim());
+        });
+        (Array.isArray(transaction.tokens) ? transaction.tokens : []).forEach(token => {
+            const symbol = token?.symbol || token?.token_symbol || token?.tokenSymbol;
+            if (symbol) symbols.add(String(symbol).trim());
+        });
+        (Array.isArray(transaction.transfers) ? transaction.transfers : []).forEach(transfer => {
+            const symbol = transfer?.token_symbol || transfer?.symbol || transfer?.tokenSymbol;
+            if (symbol) symbols.add(String(symbol).trim());
+        });
+        return [...symbols].filter(Boolean).slice(0, 5);
+    }
+
+    function getHistoryTransferCount(transaction = {}) {
+        const value = transaction.transfer_count ?? transaction.transferCount ?? transaction.transfers_count;
+        if (value != null && value !== '') {
+            const number = Number(value);
+            return Number.isFinite(number) ? number : null;
+        }
+        if (Array.isArray(transaction.transfers)) return transaction.transfers.length;
+        return null;
     }
 
     function renderWalletMetric(label, value, title = '') {
@@ -2407,6 +2637,15 @@
         status.querySelector('#crypto-wallet-history-load-more')?.addEventListener('click', () => {
             loadMoreWalletHistory();
         });
+        status.querySelector('#crypto-wallet-history-browser-load-more')?.addEventListener('click', () => {
+            loadMoreWalletHistory();
+        });
+        status.querySelector('#crypto-wallet-history-clear')?.addEventListener('click', () => {
+            clearLoadedWalletHistory();
+        });
+        status.querySelector('#crypto-wallet-history-copy')?.addEventListener('click', event => {
+            copyWalletHistorySnapshot(event.currentTarget);
+        });
         status.querySelector('#crypto-wallet-depth-toggle')?.addEventListener('change', event => {
             setWalletLookupDepth(event.target.checked ? 2 : 1);
         });
@@ -2677,6 +2916,60 @@
         }
     }
 
+    function clearLoadedWalletHistory() {
+        const wallet = state.walletLookup.lastWallet || state.walletLookup.walletInput || '';
+        if (state.history.controller?.reset) {
+            applyHistorySnapshot(state.history.controller.reset(wallet));
+        } else {
+            resetHistoryState(wallet);
+        }
+        state.history.lastMessage = 'Loaded history staging cleared; the Wallet Lookup graph was not changed.';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+    }
+
+    async function copyWalletHistorySnapshot(button) {
+        const original = button?.textContent || 'Copy History Snapshot';
+        try {
+            await writeTextToClipboard(buildWalletHistorySnapshotText());
+            state.history.lastMessage = 'History snapshot copied. Staged rows remain inspection-only.';
+            if (button) button.textContent = 'Copied';
+        } catch (error) {
+            state.history.lastMessage = 'Clipboard unavailable. History snapshot was not copied.';
+            if (button) button.textContent = 'Copy Failed';
+        }
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        window.setTimeout(() => {
+            if (button) button.textContent = original;
+        }, 1400);
+    }
+
+    function buildWalletHistorySnapshotText() {
+        const snapshot = {
+            name: 'CryptoPhotonic Wallet History Snapshot',
+            generatedAt: new Date().toISOString(),
+            boundary: 'History pages are staged for inspection only and are not merged into the graph.',
+            wallet: state.history.controller?.wallet || state.walletLookup.lastWallet || state.walletLookup.walletInput || '',
+            provider: state.history.provider || '',
+            providerLabel: state.history.providerLabel || '',
+            providerConfigured: state.history.providerConfigured,
+            pagesLoaded: state.history.pagesLoaded,
+            providerPagesLoaded: state.history.providerPagesLoaded,
+            totalUniqueTransactionsTracked: state.history.totalLoadedTransactions,
+            nextCursor: state.history.nextCursor || null,
+            lastStatus: getWalletHistoryLastStatusDisplay(),
+            lastMessage: getWalletHistoryLastMessage(),
+            rows: getWalletHistoryBrowserRows(100).map(row => ({
+                timestamp: row.timestamp,
+                transactionType: row.type,
+                signature: row.signatureFull,
+                walletRelationship: row.relationship,
+                tokenSymbols: row.tokens,
+                transferCount: row.transferCount
+            }))
+        };
+        return JSON.stringify(snapshot, null, 2);
+    }
+
     async function ensureHistoryController(wallet = '') {
         await loadHistoryModules();
         const Controller = namespace.historyController?.HistoryController;
@@ -2743,6 +3036,10 @@
         state.history.lastMessage = snapshot.lastMessage || '';
         state.history.lastStatus = snapshot.lastStatus || 'idle';
         state.history.providerConfigured = Boolean(snapshot.providerConfigured);
+        state.history.provider = snapshot.provider || '';
+        state.history.providerLabel = snapshot.providerLabel || snapshot.providerCapabilities?.label || snapshot.provider || '';
+        state.history.providerCapabilities = snapshot.providerCapabilities || null;
+        state.history.loadedTransactions = Array.isArray(snapshot.loadedTransactions) ? snapshot.loadedTransactions.slice(0, 100) : [];
         state.history.backendProviderConnected = Boolean(snapshot.provider && snapshot.providerCapabilities && snapshot.providerCapabilities.browserProviderCalls === false && !snapshot.providerCapabilities.backendOnly);
     }
 

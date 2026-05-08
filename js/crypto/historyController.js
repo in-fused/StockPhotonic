@@ -37,6 +37,7 @@
             this.providerPagesLoaded = 0;
             this.totalLoadedTransactions = 0;
             this.seenTransactionKeys = new Set();
+            this.loadedTransactions = [];
             return this.getSnapshot();
         }
 
@@ -101,7 +102,7 @@
             });
             this.nextCursor = pageRecord.nextCursor ?? null;
             this.moreAvailable = Boolean(pageRecord.moreAvailable && this.nextCursor);
-            this.totalLoadedTransactions += countNewTransactions(pageRecord.transactions, this.seenTransactionKeys);
+            this.totalLoadedTransactions += recordNewTransactions(pageRecord.transactions, this.seenTransactionKeys, this.loadedTransactions);
             this.lastMessage = pageRecord.message || '';
             this.lastStatus = pageRecord.status || 'ok';
             this.providerConfigured = pageRecord.metadata?.provider_configured === true
@@ -115,6 +116,7 @@
                 version: HISTORY_CONTROLLER_VERSION,
                 wallet: this.wallet,
                 provider: this.provider?.id || '',
+                providerLabel: this.provider?.label || '',
                 providerCapabilities: this.provider?.getCapabilities?.() || null,
                 pagesLoaded: this.pages.length,
                 providerPagesLoaded: this.providerPagesLoaded,
@@ -127,6 +129,7 @@
                 lastStatus: this.lastStatus,
                 providerConfigured: this.providerConfigured,
                 totalLoadedTransactions: this.totalLoadedTransactions,
+                loadedTransactions: this.loadedTransactions.slice(0, this.pageLimit),
                 pageLimit: this.pageLimit,
                 futureModes: {
                     lifetimeReplay: true,
@@ -137,12 +140,13 @@
         }
     }
 
-    function countNewTransactions(transactions = [], seenKeys) {
+    function recordNewTransactions(transactions = [], seenKeys, loadedTransactions) {
         let count = 0;
         transactions.forEach((transaction, index) => {
             const key = getTransactionKey(transaction, index);
             if (seenKeys.has(key)) return;
             seenKeys.add(key);
+            loadedTransactions.push(transaction);
             count += 1;
         });
         return count;

@@ -1025,6 +1025,7 @@
         const transactionCount = activeFixture.transaction_count ?? metadata.generated_transaction_count ?? metadata.transaction_count ?? null;
         const selector = renderGeneratedFixtureSelector();
         const sourceTone = state.live.workerAvailable ? 'text-emerald-100/82' : isGeneratedFixture ? 'text-emerald-100/82' : isSolana ? 'text-cyan-50/78' : 'text-white/68';
+        const sourceSnapshot = renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount);
 
         return `
             <div class="rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2">
@@ -1036,13 +1037,39 @@
                     ${renderDataModeSwitch()}
                 </div>
                 ${selector}
-                <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-white/56">
-                    <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Fixture Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
-                    <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
-                    <div>Tx: ${escapeHtml(transactionCount ?? '-')}</div>
-                </div>
+                ${sourceSnapshot}
                 <div class="mt-2 text-yellow-100/76">${escapeHtml(getSourceBoundaryCopy())}</div>
                 ${renderWalletLookupControls()}
+            </div>
+        `;
+    }
+
+    function renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount) {
+        if (state.dataMode === DATA_MODES.WALLET) {
+            const tracked = state.walletLookup.lastWallet || state.walletLookup.walletInput || state.graph?.metadata?.wallet_lookup_tracked_wallet || '';
+            const visible = state.graph?.flowEdges?.length || 0;
+            return `
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-white/56">
+                    <div>Mode: Replacement wallet graph</div>
+                    <div title="${escapeAttr(tracked || 'No tracked wallet loaded')}">Tracked: ${escapeHtml(tracked ? shortLongValue(tracked) : '-')}</div>
+                    <div>Returned / Visible: ${escapeHtml(state.walletLookup.eventCount || 0)} / ${escapeHtml(visible)}</div>
+                </div>
+            `;
+        }
+        if (state.dataMode === DATA_MODES.LIVE) {
+            return `
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-white/56">
+                    <div>Mode: Live Worker feed</div>
+                    <div>Events: ${escapeHtml(state.live.eventCount || 0)} returned / ${escapeHtml(state.live.mergedEventCount || 0)} shown</div>
+                    <div>Last Poll: ${escapeHtml(state.live.lastPollAt ? formatDateTime(state.live.lastPollAt) : '-')}</div>
+                </div>
+            `;
+        }
+        return `
+            <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-1 text-white/56">
+                <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Fixture Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
+                <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
+                <div>Tx: ${escapeHtml(transactionCount ?? '-')}</div>
             </div>
         `;
     }
@@ -1093,18 +1120,24 @@
         const status = getWalletLookupStatusLabel();
         const value = state.walletLookup.walletInput || state.walletLookup.lastWallet || '';
         return `
-            <form id="crypto-wallet-lookup-form" class="mt-3 flex flex-wrap items-end gap-2">
-                <label class="grid gap-1 min-w-[240px] grow text-white/52">
-                    <span>Track Wallet</span>
-                    <input id="crypto-wallet-lookup-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${escapeAttr(value)}" placeholder="Solana wallet address" class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1.5 text-cyan-50/82 outline-none placeholder:text-white/28">
-                </label>
-                <button id="crypto-wallet-lookup-submit" type="submit" ${state.walletLookup.inFlight ? 'disabled' : ''} class="rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Recent Activity</button>
-                <button id="crypto-wallet-lookup-refresh" type="button" ${state.walletLookup.inFlight || !(state.walletLookup.lastWallet || value) ? 'disabled' : ''} class="rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
-                <label class="flex items-center gap-1.5 text-white/52 pb-1">
-                    <input id="crypto-wallet-depth-toggle" type="checkbox" ${state.walletLookup.graphDepth > 1 ? 'checked' : ''} ${state.dataMode === DATA_MODES.WALLET ? '' : 'disabled'} class="accent-cyan-300">
-                    <span>2-hop</span>
-                </label>
-                <div id="crypto-wallet-lookup-status" class="text-white/48">${escapeHtml(status)}</div>
+            <form id="crypto-wallet-lookup-form" class="mt-3 grid gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2 items-end">
+                    <label class="grid gap-1 min-w-0 text-white/52">
+                        <span>Track Wallet</span>
+                        <input id="crypto-wallet-lookup-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${escapeAttr(value)}" placeholder="Solana wallet address" class="w-full min-h-10 bg-slate-950/80 border border-cyan-200/15 rounded-xl px-3 py-2 text-cyan-50/82 outline-none placeholder:text-white/28">
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                        <button id="crypto-wallet-lookup-submit" type="submit" ${state.walletLookup.inFlight ? 'disabled' : ''} class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Activity</button>
+                        <button id="crypto-wallet-lookup-refresh" type="button" ${state.walletLookup.inFlight || !(state.walletLookup.lastWallet || value) ? 'disabled' : ''} class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <label class="flex min-h-10 items-center gap-2 rounded-xl border border-cyan-200/15 bg-slate-950/35 px-3 py-2 text-white/58">
+                        <input id="crypto-wallet-depth-toggle" type="checkbox" ${state.walletLookup.graphDepth > 1 ? 'checked' : ''} ${state.dataMode === DATA_MODES.WALLET ? '' : 'disabled'} class="h-4 w-4 accent-cyan-300">
+                        <span>Include 2-hop wallet addresses</span>
+                    </label>
+                    <div id="crypto-wallet-lookup-status" class="min-w-0 rounded-xl border border-white/10 bg-slate-950/32 px-3 py-2 text-white/56 break-words">${escapeHtml(status)}</div>
+                </div>
             </form>
         `;
     }
@@ -1121,52 +1154,68 @@
     function renderWalletIntelligencePanel() {
         if (state.dataMode !== DATA_MODES.WALLET) return '';
         const intelligence = buildWalletIntelligence();
-        const emptyState = getWalletLookupEmptyState(intelligence);
+        const emptyState = getWalletLookupEmptyStateDetails(intelligence);
         const depthNote = getWalletDepthExpansionNote();
         return `
-            <div class="rounded-2xl border border-emerald-200/15 bg-emerald-300/10 px-3 py-2">
-                <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div>
+            <div class="rounded-2xl border border-emerald-200/18 bg-emerald-300/10 p-3 sm:p-4">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="min-w-0">
                         <div class="text-white/38">WALLET INTELLIGENCE</div>
-                        <div class="text-cyan-50/76 max-w-2xl">This view shows direct wallet activity returned by the secure Worker. Infrastructure/program accounts are filtered to keep the graph readable.</div>
+                        <div class="mt-1 text-sm font-display text-cyan-50/86">Wallet Lookup Readout</div>
+                        <div class="mt-1 max-w-2xl text-white/58 leading-relaxed">Secure Worker activity only. Program and infrastructure-like accounts are filtered; wallet/address relationships are directional flow observations, not identity claims.</div>
                     </div>
-                    <div class="text-emerald-100/80">${escapeHtml(intelligence.lookupStatus)}</div>
+                    ${renderWalletLookupStatusBadge(intelligence.lookupStatus)}
                 </div>
-                ${emptyState ? `<div class="mt-2 rounded-xl border border-yellow-200/15 bg-yellow-300/10 px-3 py-2 text-yellow-50/78">${escapeHtml(emptyState)}</div>` : ''}
-                ${depthNote ? `<div class="mt-2 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/70">${escapeHtml(depthNote)}</div>` : ''}
-                <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                    ${renderWalletMetric('Tracked', intelligence.trackedWallet ? shortLongValue(intelligence.trackedWallet) : '-', intelligence.trackedWallet)}
-                    ${renderWalletMetric('Source', intelligence.sourceLabel)}
-                    ${renderWalletMetric('Events', intelligence.returnedEvents)}
-                    ${renderWalletMetric('Visible Legs', intelligence.visibleLegs)}
-                    ${renderWalletMetric('Filtered', intelligence.filteredLegs)}
-                    ${renderWalletMetric('Depth', `${intelligence.graphDepth}-hop`)}
-                    ${renderWalletMetric('Loaded', intelligence.lastLoadedLabel)}
-                    ${renderWalletMetric('Counterparties', intelligence.counterparties.length)}
-                </div>
-                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div class="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
-                        <div class="text-white/38 mb-1">FLOW HIGHLIGHTS</div>
-                        <div class="grid gap-1 text-white/64">
-                            <div>Top Inbound: ${escapeHtml(intelligence.topInboundToken)}</div>
-                            <div>Top Outbound: ${escapeHtml(intelligence.topOutboundToken)}</div>
-                            <div>Largest Flow: ${escapeHtml(intelligence.largestFlow)}</div>
-                            <div>Repeated Counterparty: ${escapeHtml(intelligence.mostRepeatedCounterparty)}</div>
+                ${emptyState ? renderWalletEmptyStateCard(emptyState) : ''}
+                ${depthNote ? renderWalletDepthNoteCard(depthNote) : ''}
+                <div class="mt-3 grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] gap-2.5">
+                    <div class="grid gap-2.5 min-w-0">
+                        <section class="rounded-xl border border-white/10 bg-white/[0.045] p-3">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="text-white/38">LOOKUP STATUS</div>
+                                <div class="text-white/44">${escapeHtml(intelligence.lastLoadedLabel)}</div>
+                            </div>
+                            ${renderWalletAddressLine('Tracked Wallet', intelligence.trackedWallet)}
+                            <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                ${renderWalletMetric('Returned', intelligence.returnedEvents, 'Worker returned events')}
+                                ${renderWalletMetric('Visible Legs', intelligence.visibleLegs, 'Transfer legs currently visible')}
+                                ${renderWalletMetric('Filtered', intelligence.filteredLegs, 'Noise or infrastructure-like legs removed')}
+                                ${renderWalletMetric('Depth', `${intelligence.graphDepth}-hop`, 'Wallet lookup graph depth')}
+                            </div>
+                            <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                ${renderWalletMetric('Source', intelligence.sourceLabel)}
+                                ${renderWalletMetric('Ranked Addresses', intelligence.counterparties.length)}
+                            </div>
+                        </section>
+                        <section class="rounded-xl border border-white/10 bg-white/[0.045] p-3">
+                            <div class="text-white/38">FLOW HIGHLIGHTS</div>
+                            <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                ${renderWalletHighlightMetric('Top Received Token', intelligence.topInboundToken)}
+                                ${renderWalletHighlightMetric('Top Sent Token', intelligence.topOutboundToken)}
+                                ${renderWalletHighlightMetric('Largest Flow', intelligence.largestFlow)}
+                                ${renderWalletHighlightMetric('Repeated Address', intelligence.mostRepeatedCounterparty)}
+                            </div>
+                        </section>
+                    </div>
+                    <section class="rounded-xl border border-white/10 bg-white/[0.045] p-3 min-w-0">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="text-white/38">TOP COUNTERPARTIES</div>
+                            <div class="text-white/38">${escapeHtml(Math.min(intelligence.counterparties.length, WALLET_INTELLIGENCE_LIMITS.counterparties))} shown</div>
                         </div>
-                    </div>
-                    <div class="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
-                        <div class="text-white/38 mb-1">TOP COUNTERPARTIES</div>
-                        <div class="grid gap-1.5">
-                            ${intelligence.counterparties.slice(0, WALLET_INTELLIGENCE_LIMITS.counterparties).map(renderCounterpartyRankRow).join('') || '<div class="text-white/38">No visible counterparties yet.</div>'}
+                        <div class="mt-2 grid gap-2">
+                            ${intelligence.counterparties.slice(0, WALLET_INTELLIGENCE_LIMITS.counterparties).map(renderCounterpartyRankRow).join('') || renderWalletInlineEmpty('No visible counterparty wallet addresses after filters.')}
                         </div>
-                    </div>
+                    </section>
                 </div>
-                <div class="mt-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
-                    <div class="text-white/38 mb-1">TOKEN FLOW SUMMARY</div>
-                    <div class="grid gap-1.5">
-                        ${intelligence.tokens.slice(0, WALLET_INTELLIGENCE_LIMITS.tokens).map(renderTokenFlowSummaryRow).join('') || '<div class="text-white/38">No visible token flows yet.</div>'}
+                <section class="mt-2.5 rounded-xl border border-white/10 bg-white/[0.045] p-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="text-white/38">TOKEN FLOW SUMMARY</div>
+                        <div class="text-white/38">${escapeHtml(Math.min(intelligence.tokens.length, WALLET_INTELLIGENCE_LIMITS.tokens))} tokens shown</div>
                     </div>
-                </div>
+                    <div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2">
+                        ${intelligence.tokens.slice(0, WALLET_INTELLIGENCE_LIMITS.tokens).map(renderTokenFlowSummaryRow).join('') || renderWalletInlineEmpty('No token flow summary is available for the visible wallet graph.')}
+                    </div>
+                </section>
             </div>
         `;
     }
@@ -1174,24 +1223,80 @@
     function renderWalletMetric(label, value, title = '') {
         const raw = String(value ?? '-');
         return `
-            <div class="rounded-xl border border-white/10 bg-slate-950/30 px-2.5 py-2" title="${escapeAttr(title || raw)}">
+            <div class="min-w-0 rounded-xl border border-white/10 bg-slate-950/34 px-2.5 py-2" title="${escapeAttr(title || raw)}">
                 <div class="text-white/34">${escapeHtml(label)}</div>
-                <div class="mt-0.5 text-cyan-50/78 break-all">${escapeHtml(raw || '-')}</div>
+                <div class="mt-1 text-sm font-semibold text-cyan-50/84 break-words">${escapeHtml(raw || '-')}</div>
             </div>
         `;
+    }
+
+    function renderWalletHighlightMetric(label, value) {
+        const raw = String(value ?? '-');
+        return `
+            <div class="min-w-0 rounded-xl border border-cyan-200/10 bg-slate-950/28 px-3 py-2.5" title="${escapeAttr(raw)}">
+                <div class="text-white/38">${escapeHtml(label)}</div>
+                <div class="mt-1 text-cyan-50/82 leading-snug break-words">${escapeHtml(raw || '-')}</div>
+            </div>
+        `;
+    }
+
+    function renderWalletLookupStatusBadge(status) {
+        const loaded = status === 'Loaded';
+        const loading = status === 'Loading';
+        const classes = loading
+            ? 'border-cyan-200/30 bg-cyan-300/14 text-cyan-50/86'
+            : loaded
+                ? 'border-emerald-200/35 bg-emerald-300/14 text-emerald-50/88'
+                : 'border-white/12 bg-white/[0.04] text-white/58';
+        return `<div class="shrink-0 rounded-full border ${classes} px-3 py-1.5">${escapeHtml(status)}</div>`;
+    }
+
+    function renderWalletAddressLine(label, address) {
+        const value = address ? shortLongValue(address) : '-';
+        return `
+            <div class="mt-2 min-w-0 rounded-xl border border-cyan-200/10 bg-slate-950/32 px-3 py-2" title="${escapeAttr(address || value)}">
+                <div class="text-white/34">${escapeHtml(label)}</div>
+                <div class="mt-1 font-mono text-[11px] text-cyan-50/82 break-words">${escapeHtml(value)}</div>
+            </div>
+        `;
+    }
+
+    function renderWalletEmptyStateCard(emptyState) {
+        const tone = emptyState.tone === 'warn'
+            ? 'border-yellow-200/20 bg-yellow-300/10 text-yellow-50/82'
+            : 'border-cyan-200/16 bg-cyan-300/10 text-cyan-50/78';
+        return `
+            <div class="mt-3 rounded-xl border ${tone} px-3 py-2.5">
+                <div class="font-semibold">${escapeHtml(emptyState.title)}</div>
+                <div class="mt-1 text-white/62 leading-relaxed">${escapeHtml(emptyState.body)}</div>
+            </div>
+        `;
+    }
+
+    function renderWalletDepthNoteCard(note) {
+        return `
+            <div class="mt-2 rounded-xl border border-cyan-200/16 bg-cyan-300/10 px-3 py-2.5 text-cyan-50/74 leading-relaxed">
+                <span class="font-semibold text-cyan-50/88">2-hop check:</span> ${escapeHtml(note)}
+            </div>
+        `;
+    }
+
+    function renderWalletInlineEmpty(message) {
+        return `<div class="rounded-lg border border-white/10 bg-slate-950/24 px-3 py-2 text-white/42 leading-relaxed">${escapeHtml(message)}</div>`;
     }
 
     function renderCounterpartyRankRow(item) {
         const tokens = item.tokens.length ? item.tokens.join(', ') : '-';
         const value = item.totalUsd > 0 ? core.formatUsd(item.totalUsd) : '-';
         return `
-            <div class="grid grid-cols-[minmax(72px,1fr)_auto] gap-2 rounded-lg border border-white/10 bg-slate-950/28 px-2 py-1.5">
-                <div title="${escapeAttr(item.address)}">
-                    <div class="text-cyan-50/76">${escapeHtml(shortLongValue(item.address))}</div>
-                    <div class="text-white/42">${escapeHtml(item.relationship)} / ${escapeHtml(tokens)}</div>
+            <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-lg border border-white/10 bg-slate-950/28 px-3 py-2">
+                <div class="min-w-0" title="${escapeAttr(item.address)}">
+                    <div class="font-mono text-[11px] text-cyan-50/80 break-words">${escapeHtml(shortLongValue(item.address))}</div>
+                    <div class="mt-1 text-white/48 leading-snug">${escapeHtml(item.relationship)}</div>
+                    <div class="mt-1 text-white/36 break-words">${escapeHtml(tokens)}</div>
                 </div>
-                <div class="text-right text-white/58">
-                    <div>${escapeHtml(item.count)}x</div>
+                <div class="sm:text-right text-white/62">
+                    <div class="text-cyan-50/78">${escapeHtml(item.count)} leg${item.count === 1 ? '' : 's'}</div>
                     <div>${escapeHtml(value)}</div>
                 </div>
             </div>
@@ -1202,12 +1307,13 @@
         const amount = item.amountAvailable ? `${formatCompactNumber(item.totalAmount)} ${item.symbol}` : '-';
         const value = item.totalUsd > 0 ? core.formatUsd(item.totalUsd) : '-';
         return `
-            <div class="grid grid-cols-[minmax(64px,1fr)_auto] gap-2 rounded-lg border border-white/10 bg-slate-950/28 px-2 py-1.5">
-                <div title="${escapeAttr(item.mint || item.symbol)}">
-                    <div class="text-cyan-50/76">${escapeHtml(item.symbol)}</div>
-                    <div class="text-white/42">${escapeHtml(item.inbound)} in / ${escapeHtml(item.outbound)} out / amount ${escapeHtml(amount)}</div>
+            <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2 rounded-lg border border-white/10 bg-slate-950/28 px-3 py-2">
+                <div class="min-w-0" title="${escapeAttr(item.mint || item.symbol)}">
+                    <div class="text-cyan-50/80 break-words">${escapeHtml(item.symbol)}</div>
+                    <div class="mt-1 text-white/44 leading-snug">${escapeHtml(item.inbound)} received / ${escapeHtml(item.outbound)} sent / ${escapeHtml(item.mixed)} mixed</div>
+                    <div class="mt-1 text-white/34 break-words">Amount ${escapeHtml(amount)}</div>
                 </div>
-                <div class="text-right text-white/58">${escapeHtml(value)}</div>
+                <div class="sm:text-right text-white/62">${escapeHtml(value)}</div>
             </div>
         `;
     }
@@ -1351,10 +1457,10 @@
     function getCounterpartyRelationshipLabel(item = {}) {
         const hasInbound = item.inbound > 0;
         const hasOutbound = item.outbound > 0;
-        if ((hasInbound && hasOutbound) || item.mixed > 0) return 'mixed';
-        if (hasInbound) return 'inbound';
-        if (hasOutbound) return 'outbound';
-        return 'mixed';
+        if ((hasInbound && hasOutbound) || item.mixed > 0) return 'Mixed wallet flow';
+        if (hasInbound) return 'Sent to tracked wallet';
+        if (hasOutbound) return 'Received from tracked wallet';
+        return 'Wallet flow observed';
     }
 
     function getTopTokenLabel(tokens = [], direction) {
@@ -1364,7 +1470,8 @@
         if (!ranked.length) return '-';
         const top = ranked[0];
         const value = top.totalUsd > 0 ? ` / ${core.formatUsd(top.totalUsd)}` : '';
-        return `${top.symbol} (${top[direction]} leg${top[direction] === 1 ? '' : 's'}${value})`;
+        const label = direction === 'inbound' ? 'received' : 'sent';
+        return `${top.symbol} (${top[direction]} ${label} leg${top[direction] === 1 ? '' : 's'}${value})`;
     }
 
     function getLargestVisibleFlowLabel(edges = []) {
@@ -1385,15 +1492,31 @@
     }
 
     function getWalletLookupEmptyState(intelligence = buildWalletIntelligence()) {
+        return getWalletLookupEmptyStateDetails(intelligence)?.body || '';
+    }
+
+    function getWalletLookupEmptyStateDetails(intelligence = buildWalletIntelligence()) {
         if (state.walletLookup.inFlight) return '';
         if (!state.walletLookup.lastWallet && !state.walletLookup.eventCount) {
-            return 'No wallet loaded yet. Enter a wallet address to replace the graph with recent Worker activity.';
+            return {
+                title: 'No Wallet Loaded',
+                body: 'Enter a wallet address to replace the current graph with recent secure Worker activity.',
+                tone: 'info'
+            };
         }
         if (state.walletLookup.lastWallet && state.walletLookup.eventCount === 0 && state.walletLookup.lastLoadedAt) {
-            return 'The Worker returned no recent sanitized activity for this wallet.';
+            return {
+                title: 'No Recent Activity Returned',
+                body: 'The Worker completed the lookup, but returned no recent sanitized activity for this wallet address.',
+                tone: 'warn'
+            };
         }
         if (state.walletLookup.eventCount > 0 && intelligence.visibleLegs === 0) {
-            return 'Recent activity existed, but visible transfer legs were filtered out as infrastructure/noise or by the active filters.';
+            return {
+                title: 'Activity Filtered Out',
+                body: 'Recent activity was returned, but no transfer legs remain visible after infrastructure/noise filtering and active flow filters.',
+                tone: 'warn'
+            };
         }
         return '';
     }
@@ -3487,6 +3610,18 @@
             day: 'numeric',
             hour: 'numeric',
             minute: '2-digit'
+        });
+    }
+
+    function formatCompactNumber(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return '-';
+
+        const absolute = Math.abs(number);
+        if (absolute >= 1000000) return `${(number / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
+        if (absolute >= 1000) return `${(number / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+        return number.toLocaleString(undefined, {
+            maximumFractionDigits: absolute < 1 && absolute > 0 ? 4 : 2
         });
     }
 

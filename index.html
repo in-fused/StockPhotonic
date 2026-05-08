@@ -16,6 +16,44 @@
             --neon-green: #00ff9f;
             --neon-gold: #ffd700;
             --neon-orange: #ff6b00;
+            --surface-border: rgba(125, 211, 252, 0.16);
+            --surface-border-strong: rgba(0, 249, 255, 0.24);
+            --surface-panel: rgba(6, 8, 18, 0.82);
+            --surface-panel-soft: rgba(255, 255, 255, 0.04);
+            --surface-radius: 1rem;
+            --surface-radius-lg: 1.15rem;
+            --scrollbar-track: rgba(2, 6, 23, 0.72);
+            --scrollbar-thumb: linear-gradient(180deg, rgba(0, 249, 255, 0.62), rgba(255, 0, 170, 0.42));
+        }
+
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.54) rgba(2, 6, 23, 0.84);
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.46) rgba(2, 6, 23, 0.78);
+        }
+
+        *::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        *::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 999px;
+        }
+
+        *::-webkit-scrollbar-thumb {
+            border: 2px solid rgba(2, 6, 23, 0.86);
+            background: var(--scrollbar-thumb);
+            border-radius: 999px;
+        }
+
+        *::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, rgba(0, 249, 255, 0.82), rgba(255, 0, 170, 0.62));
         }
 
         /* Phase D112 layout system: graph-first, compact controls, scrollable intelligence. */
@@ -90,6 +128,130 @@
             border-radius: 1rem !important;
         }
 
+        .interaction-dock {
+            position: sticky;
+            top: calc(4.9rem + env(safe-area-inset-top));
+            z-index: 38;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+            padding: 0.55rem;
+            border: 1px solid var(--surface-border-strong);
+            border-radius: var(--surface-radius-lg);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.11), rgba(255, 0, 170, 0.06)),
+                rgba(3, 7, 18, 0.84);
+            box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34), 0 0 26px rgba(0, 249, 255, 0.08);
+            backdrop-filter: blur(22px) saturate(118%);
+        }
+
+        .interaction-dock-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 8.5rem;
+            padding: 0 0.45rem;
+            color: rgba(165, 243, 252, 0.76);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .interaction-dock-actions {
+            display: flex;
+            flex: 1;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.4rem;
+            min-width: 0;
+        }
+
+        .interaction-dock-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            min-height: 2.35rem;
+            padding: 0.48rem 0.75rem;
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            border-radius: 999px;
+            background: rgba(2, 6, 23, 0.58);
+            color: rgba(224, 242, 254, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.66rem;
+            letter-spacing: 0.8px;
+            line-height: 1;
+            white-space: nowrap;
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+        }
+
+        .interaction-dock-button:hover,
+        .interaction-dock-button:focus-visible {
+            border-color: rgba(0, 249, 255, 0.54);
+            background: rgba(8, 145, 178, 0.18);
+            color: #ffffff;
+            outline: none;
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.12);
+        }
+
+        .interaction-dock-button:active {
+            transform: translateY(1px);
+        }
+
+        .interaction-dock-button.is-active,
+        .interaction-dock-button[aria-pressed="true"] {
+            border-color: rgba(0, 249, 255, 0.62);
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.18), rgba(255, 0, 170, 0.12));
+            color: #ffffff;
+            box-shadow: 0 0 22px rgba(0, 249, 255, 0.16);
+        }
+
+        .interaction-dock-button:disabled,
+        .interaction-dock-button.is-disabled {
+            cursor: not-allowed;
+            opacity: 0.44;
+        }
+
+        .interaction-dock-button.is-hidden {
+            display: none;
+        }
+
+        .interaction-dock-split {
+            display: inline-flex;
+            gap: 0.25rem;
+            padding: 0.18rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .graph-intelligence-controls #focus-mode-toggle,
+        .graph-intelligence-controls #perspective-toggle,
+        .graph-intelligence-controls #orb-map-toggle,
+        .graph-intelligence-controls #graph-fullscreen-toggle,
+        .graph-intelligence-controls #stock-help-guide {
+            display: none !important;
+        }
+
+        .graph-intelligence-controls #perspective-reset,
+        .graph-intelligence-controls #orb-spread-clusters,
+        .graph-intelligence-controls #orb-reset-layout,
+        .graph-intelligence-controls #sec-preview-toggle {
+            opacity: 0.78;
+        }
+
+        .graph-intelligence-controls #perspective-reset:hover,
+        .graph-intelligence-controls #orb-spread-clusters:hover,
+        .graph-intelligence-controls #orb-reset-layout:hover,
+        .graph-intelligence-controls #sec-preview-toggle:hover {
+            opacity: 1;
+        }
+
         #portfolio-input {
             min-height: 2.35rem;
             max-height: 3.2rem;
@@ -125,6 +287,18 @@
             margin-bottom: 0.75rem;
         }
 
+        .crypto-workspace-toolbar #crypto-fullscreen-toggle,
+        .crypto-workspace-toolbar .help-trigger,
+        .crypto-workspace-toolbar #crypto-reset-view {
+            display: none !important;
+        }
+
+        .crypto-workspace-toolbar #crypto-reset-layout {
+            border-color: rgba(125, 211, 252, 0.12);
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(224, 242, 254, 0.62);
+        }
+
         .crypto-canvas-wrap {
             height: clamp(540px, calc(100dvh - 18rem), 740px) !important;
             min-height: 520px !important;
@@ -154,6 +328,10 @@
 
         .crypto-control-group {
             padding: 0.7rem !important;
+            border-color: var(--surface-border) !important;
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.045), rgba(255, 255, 255, 0.024)),
+                rgba(2, 6, 23, 0.40) !important;
         }
 
         .crypto-control-group .control-help {
@@ -204,6 +382,41 @@
             min-height: 220px;
             padding: 1rem !important;
             border-radius: 1.1rem !important;
+            border-color: var(--surface-border) !important;
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.055), rgba(255, 255, 255, 0.026)),
+                rgba(3, 7, 18, 0.66) !important;
+            line-height: 1.5;
+        }
+
+        .crypto-status-panel,
+        .crypto-status-stack,
+        .crypto-intelligence-collapse,
+        .crypto-history-collapse,
+        .crypto-history-preview-collapse {
+            min-width: 0;
+        }
+
+        .crypto-intelligence-collapse .crypto-collapse-body,
+        .crypto-history-collapse .crypto-collapse-body,
+        .crypto-history-preview-collapse .crypto-collapse-body {
+            max-height: min(64dvh, 42rem);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 0.45rem;
+            scrollbar-gutter: stable;
+        }
+
+        .crypto-history-collapse .crypto-collapse-body,
+        .crypto-history-preview-collapse .crypto-collapse-body {
+            max-height: min(70dvh, 46rem);
+        }
+
+        .crypto-history-collapse section,
+        .crypto-history-preview-collapse section,
+        .crypto-intelligence-collapse section,
+        .crypto-intelligence-collapse > .crypto-collapse-body > div {
+            border-radius: var(--surface-radius) !important;
         }
 
         @media (min-width: 1024px) {
@@ -1585,6 +1798,57 @@
                 flex-wrap: nowrap !important;
             }
 
+            .interaction-dock {
+                position: fixed;
+                left: calc(0.65rem + env(safe-area-inset-left));
+                right: calc(0.65rem + env(safe-area-inset-right));
+                bottom: calc(0.65rem + env(safe-area-inset-bottom));
+                top: auto;
+                z-index: 60;
+                align-items: stretch;
+                gap: 0.45rem;
+                margin: 0;
+                padding: 0.45rem;
+                border-radius: 1rem;
+            }
+
+            .interaction-dock-label {
+                display: none;
+            }
+
+            .interaction-dock-actions {
+                justify-content: flex-start;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding-bottom: 0.08rem;
+                scrollbar-width: none;
+            }
+
+            .interaction-dock-actions::-webkit-scrollbar {
+                display: none;
+            }
+
+            .interaction-dock-button {
+                min-width: 2.75rem;
+                min-height: 2.65rem;
+                padding: 0.45rem 0.62rem;
+                font-size: 0.6rem;
+            }
+
+            .interaction-dock-button span {
+                display: none;
+            }
+
+            .interaction-dock-split {
+                flex: 0 0 auto;
+            }
+
+            #stock-photonic-surface,
+            #crypto-photonic-view {
+                padding-bottom: calc(5.65rem + env(safe-area-inset-bottom)) !important;
+            }
+
             .graph-container {
                 height: clamp(390px, 58dvh, 620px) !important;
                 min-height: 390px !important;
@@ -1601,6 +1865,10 @@
             .crypto-canvas-wrap {
                 height: clamp(410px, 62dvh, 640px) !important;
                 min-height: 410px !important;
+            }
+
+            .mobile-graph-overlay {
+                bottom: calc(5.1rem + env(safe-area-inset-bottom)) !important;
             }
         }
     </style>
@@ -1675,6 +1943,45 @@
                 <span>Source Workbench</span>
             </button>
         </div>
+
+        <nav id="stock-interaction-dock" class="interaction-dock stock-interaction-dock" aria-label="StockPhotonic interaction dock">
+            <div class="interaction-dock-label">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Interaction Dock</span>
+            </div>
+            <div class="interaction-dock-actions">
+                <div class="interaction-dock-split" role="group" aria-label="Stock view reset controls">
+                    <button type="button" onclick="fitGraph()" class="interaction-dock-button" title="Fit visible StockPhotonic graph" aria-label="Fit visible StockPhotonic graph">
+                        <i class="fa-solid fa-compress-arrows-alt"></i>
+                        <span>Fit</span>
+                    </button>
+                    <button type="button" onclick="resetAll()" class="interaction-dock-button" title="Reset StockPhotonic filters, layout, and view" aria-label="Reset StockPhotonic filters, layout, and view">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>Reset</span>
+                    </button>
+                </div>
+                <button id="stock-dock-fullscreen" type="button" onclick="toggleGraphFullscreen()" aria-pressed="false" class="interaction-dock-button" title="Open StockPhotonic fullscreen graph" aria-label="Toggle StockPhotonic fullscreen graph">
+                    <i class="fa-solid fa-expand"></i>
+                    <span>Fullscreen</span>
+                </button>
+                <button type="button" onclick="openPhotonicHelp('stock')" class="interaction-dock-button" title="Open StockPhotonic guide" aria-label="Open StockPhotonic guide">
+                    <i class="fa-regular fa-circle-question"></i>
+                    <span>Help</span>
+                </button>
+                <button id="stock-dock-focus" type="button" onclick="toggleFocusMode()" aria-pressed="false" class="interaction-dock-button" title="Toggle Focus Mode" aria-label="Toggle Focus Mode">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span>Focus</span>
+                </button>
+                <button id="stock-dock-perspective" type="button" onclick="togglePerspectiveMode()" aria-pressed="false" class="interaction-dock-button" title="Toggle Perspective Mode" aria-label="Toggle Perspective Mode">
+                    <i class="fa-solid fa-cubes"></i>
+                    <span>Perspective</span>
+                </button>
+                <button id="stock-dock-orb" type="button" onclick="toggleOrbMap()" aria-pressed="false" class="interaction-dock-button" title="Toggle Orb Map" aria-label="Toggle Orb Map">
+                    <i class="fa-solid fa-globe"></i>
+                    <span>Orb</span>
+                </button>
+            </div>
+        </nav>
 
         <section id="graph-intelligence-view" role="tabpanel" aria-labelledby="graph-intelligence-tab">
             <div class="graph-intelligence-controls glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10">
@@ -2144,6 +2451,41 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <div title="CryptoPhotonic browser code never calls Solana providers directly; Worker responses are sanitized before graphing." class="text-[10px] font-mono tracking-[1.2px] text-yellow-100/75 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1.5">NO BROWSER PROVIDER CALLS</div>
                 </div>
             </div>
+
+            <nav id="crypto-interaction-dock" class="interaction-dock crypto-interaction-dock" aria-label="CryptoPhotonic interaction dock">
+                <div class="interaction-dock-label">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                    <span>Interaction Dock</span>
+                </div>
+                <div class="interaction-dock-actions">
+                    <div class="interaction-dock-split" role="group" aria-label="Crypto view controls">
+                        <button type="button" onclick="window.CryptoPhotonic?.ui?.resetView?.()" class="interaction-dock-button" title="Reset CryptoPhotonic pan and zoom" aria-label="Reset CryptoPhotonic view">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>Reset View</span>
+                        </button>
+                        <button type="button" onclick="window.CryptoPhotonic?.ui?.centerTrackedWallet?.()" class="interaction-dock-button" title="Center tracked wallet or selected node" aria-label="Center tracked wallet or selected node">
+                            <i class="fa-solid fa-crosshairs"></i>
+                            <span>Center Wallet</span>
+                        </button>
+                    </div>
+                    <button id="crypto-dock-fullscreen" type="button" onclick="window.CryptoPhotonic?.ui?.setFullscreen?.(!window.CryptoPhotonic?.ui?.getState?.().fullscreen)" aria-pressed="false" class="interaction-dock-button" title="Open CryptoPhotonic fullscreen graph" aria-label="Toggle CryptoPhotonic fullscreen graph">
+                        <i class="fa-solid fa-expand"></i>
+                        <span>Fullscreen</span>
+                    </button>
+                    <button type="button" onclick="openPhotonicHelp('crypto')" class="interaction-dock-button" title="Open CryptoPhotonic guide" aria-label="Open CryptoPhotonic guide">
+                        <i class="fa-regular fa-circle-question"></i>
+                        <span>Help</span>
+                    </button>
+                    <button id="crypto-dock-load-activity" type="button" onclick="window.CryptoPhotonic?.ui?.loadWalletActivityFromDock?.()" class="interaction-dock-button is-hidden" title="Load activity for the wallet address in Wallet Lookup mode" aria-label="Load wallet activity">
+                        <i class="fa-solid fa-cloud-arrow-down"></i>
+                        <span>Load Activity</span>
+                    </button>
+                    <button id="crypto-dock-replay-toggle" type="button" onclick="window.CryptoPhotonic?.ui?.toggleHistoryReplayFromDock?.()" class="interaction-dock-button is-hidden" title="Start or pause the preview-only lifetime replay" aria-label="Start or pause preview lifetime replay">
+                        <i class="fa-solid fa-play"></i>
+                        <span>Start Replay</span>
+                    </button>
+                </div>
+            </nav>
 
             <div class="crypto-layout-grid grid grid-cols-1 lg:grid-cols-12 gap-5">
                 <div class="crypto-graph-column lg:col-span-8">
@@ -2645,6 +2987,51 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             });
         }
 
+        function syncDockButton(buttonId, active, options = {}) {
+            const button = document.getElementById(buttonId);
+            if (!button) return;
+            const isActive = Boolean(active);
+            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            button.classList.toggle('is-active', isActive);
+            if ('disabled' in options) {
+                button.disabled = Boolean(options.disabled);
+                button.classList.toggle('is-disabled', Boolean(options.disabled));
+                button.setAttribute('aria-disabled', Boolean(options.disabled) ? 'true' : 'false');
+            }
+            if (options.title) button.title = options.title;
+            const icon = button.querySelector('i');
+            if (icon && options.iconActive && options.iconInactive) {
+                icon.classList.toggle(options.iconInactive, !isActive);
+                icon.classList.toggle(options.iconActive, isActive);
+            }
+            const label = button.querySelector('span');
+            if (label && options.label) label.innerText = options.label;
+        }
+
+        function syncStockInteractionDock() {
+            syncDockButton('stock-dock-fullscreen', graphFullscreenActive, {
+                title: graphFullscreenActive ? 'Exit StockPhotonic fullscreen graph' : 'Open StockPhotonic fullscreen graph',
+                iconActive: 'fa-compress',
+                iconInactive: 'fa-expand',
+                label: graphFullscreenActive ? 'Exit Fullscreen' : 'Fullscreen'
+            });
+            syncDockButton('stock-dock-focus', focusModeEnabled, {
+                title: focusModeEnabled ? 'Focus Mode on: selected networks stay prominent.' : 'Focus Mode off: show the full visible graph.'
+            });
+            syncDockButton('stock-dock-perspective', perspectiveEnabled, {
+                title: perspectiveEnabled ? 'Perspective Mode on: Shift-drag or middle-drag to rotate.' : 'Perspective Mode off: flat 2D graph rendering.'
+            });
+            const orbUnsupported = orbMapController && !orbMapController.isSupported?.();
+            syncDockButton('stock-dock-orb', orbMapEnabled, {
+                disabled: orbUnsupported,
+                title: orbUnsupported
+                    ? 'Orb Map unavailable: normal 2D graph remains active.'
+                    : orbMapEnabled
+                        ? 'Orb Map on: drag to rotate, scroll to zoom, click a company to select it.'
+                        : 'Orb Map off: normal 2D graph rendering.'
+            });
+        }
+
         function getStockHelpGuide() {
             return {
                 eyebrow: 'STOCKPHOTONIC GUIDE',
@@ -2728,12 +3115,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const sourceView = document.getElementById('source-workbench-view');
             const graphTab = document.getElementById('graph-intelligence-tab');
             const sourceTab = document.getElementById('source-workbench-tab');
+            const stockDock = document.getElementById('stock-interaction-dock');
 
             currentAppView = nextView;
             graphView?.classList.toggle('hidden', !isGraphView);
             sourceView?.classList.toggle('hidden', !isSourceView);
             graphTab?.setAttribute('aria-selected', String(isGraphView));
             sourceTab?.setAttribute('aria-selected', String(isSourceView));
+            stockDock?.classList.toggle('hidden', !isGraphView);
 
             if (isGraphView) {
                 window.requestAnimationFrame(() => {
@@ -2803,6 +3192,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 mobileIcon.classList.toggle('fa-expand', !active);
                 mobileIcon.classList.toggle('fa-compress', active);
             }
+            syncStockInteractionDock();
         }
 
         function updateHudToggleButton(button, hidden) {
@@ -2953,6 +3343,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     ? 'Orb Map on: drag to rotate, scroll to zoom, click a company to select it.'
                     : 'Orb Map off: normal 2D graph rendering.';
             updateOrbMapSpreadControl(status);
+            syncStockInteractionDock();
         }
 
         function updateOrbMapSpreadControl(status = null) {
@@ -4978,6 +5369,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 toggle: document.getElementById('focus-mode-toggle'),
                 focusModeEnabled
             });
+            syncStockInteractionDock();
         }
         function setSignalStrengthThreshold(value) {
             stopOrbitForInteraction();
@@ -5895,6 +6287,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     ? 'Reset Perspective bearing and pitch'
                     : 'Turn on Perspective Mode to reset bearing and pitch';
             }
+            syncStockInteractionDock();
         }
 
         function getOrbitOffset() {

@@ -274,6 +274,7 @@
         renderDetails();
         updateFlowAnimationLoop();
         updateLivePolling();
+        updateInteractionDock();
         return state.graph;
     }
 
@@ -284,6 +285,7 @@
         if (!state.active || !state.initialized) return;
         resizeAndRender();
         renderDetails();
+        updateInteractionDock();
     }
 
     async function loadSampleDataset(options = {}) {
@@ -1296,6 +1298,7 @@
         state.statusPanel = status;
         bindStatusControls(status);
         renderHistoryGraphPreviewCanvas(status, { resumeReplay: replayWasPlaying });
+        updateInteractionDock();
     }
 
     function renderGeneratedDataManager(metadata = {}, isGeneratedFixture = false, isSolana = false) {
@@ -3763,6 +3766,7 @@
         if (liveStatus) liveStatus.textContent = getHistoryReplayLiveStatusText(normalized);
         const pauseButton = document.getElementById('crypto-history-replay-pause');
         if (pauseButton) pauseButton.disabled = !normalized.playing || Boolean(state.history.inFlight || datasetStale);
+        updateInteractionDock();
     }
 
     async function copyHistoryPreviewDataset(button) {
@@ -5976,6 +5980,7 @@
             mobileIcon.classList.toggle('fa-expand', !state.fullscreen);
             mobileIcon.classList.toggle('fa-compress', state.fullscreen);
         }
+        updateInteractionDock();
     }
 
     function resetFlowQueueState() {
@@ -6404,6 +6409,83 @@
         if (element) element.innerText = value;
     }
 
+    function updateInteractionDock() {
+        const fullscreenButton = document.getElementById('crypto-dock-fullscreen');
+        if (fullscreenButton) {
+            fullscreenButton.setAttribute('aria-pressed', state.fullscreen ? 'true' : 'false');
+            fullscreenButton.classList.toggle('is-active', state.fullscreen);
+            fullscreenButton.title = state.fullscreen
+                ? 'Exit CryptoPhotonic fullscreen graph'
+                : 'Open CryptoPhotonic fullscreen graph';
+            const icon = fullscreenButton.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-expand', !state.fullscreen);
+                icon.classList.toggle('fa-compress', state.fullscreen);
+            }
+            const label = fullscreenButton.querySelector('span');
+            if (label) label.textContent = state.fullscreen ? 'Exit Fullscreen' : 'Fullscreen';
+        }
+
+        const walletMode = state.dataMode === DATA_MODES.WALLET;
+        const loadButton = document.getElementById('crypto-dock-load-activity');
+        if (loadButton) {
+            loadButton.classList.toggle('is-hidden', !walletMode);
+            loadButton.disabled = !walletMode || state.walletLookup.inFlight;
+            loadButton.classList.toggle('is-disabled', loadButton.disabled);
+            loadButton.setAttribute('aria-disabled', loadButton.disabled ? 'true' : 'false');
+            loadButton.title = state.walletLookup.inFlight
+                ? 'Wallet activity is already loading.'
+                : 'Load activity for the wallet address in Wallet Lookup mode.';
+        }
+
+        const replayButton = document.getElementById('crypto-dock-replay-toggle');
+        if (replayButton) {
+            const status = getHistoryReplayStatus();
+            const hasDataset = Boolean(state.historyPreview.dataset);
+            const datasetStale = state.historyPreview.datasetMetrics
+                && Number(state.historyPreview.datasetMetrics.stagedRowsReceived || 0) !== Number((state.history.loadedTransactions || []).length);
+            const disabled = state.history.inFlight || Boolean(datasetStale);
+            replayButton.classList.toggle('is-hidden', !hasDataset);
+            replayButton.disabled = !hasDataset || disabled;
+            replayButton.classList.toggle('is-disabled', replayButton.disabled);
+            replayButton.classList.toggle('is-active', Boolean(status.playing));
+            replayButton.setAttribute('aria-pressed', status.playing ? 'true' : 'false');
+            replayButton.setAttribute('aria-disabled', replayButton.disabled ? 'true' : 'false');
+            replayButton.title = datasetStale
+                ? 'Rebuild Preview Dataset before replaying.'
+                : status.playing
+                    ? 'Pause the preview-only lifetime replay.'
+                    : 'Start the preview-only lifetime replay.';
+            const icon = replayButton.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-play', !status.playing);
+                icon.classList.toggle('fa-pause', status.playing);
+            }
+            const label = replayButton.querySelector('span');
+            if (label) label.textContent = status.playing ? 'Pause Replay' : 'Start Replay';
+        }
+    }
+
+    function loadWalletActivityFromDock() {
+        if (state.dataMode !== DATA_MODES.WALLET) return false;
+        const input = document.getElementById('crypto-wallet-lookup-input');
+        const wallet = input?.value || state.walletLookup.walletInput || state.walletLookup.lastWallet || '';
+        loadWalletActivity(wallet);
+        return true;
+    }
+
+    async function toggleHistoryReplayFromDock() {
+        if (!state.historyPreview.dataset) return false;
+        const status = getHistoryReplayStatus();
+        if (status.playing) {
+            await pauseHistoryReplay();
+        } else {
+            await startHistoryReplay();
+        }
+        updateInteractionDock();
+        return true;
+    }
+
     function typeOrder(type) {
         if (type === core.NODE_TYPES.HUB || type === core.NODE_TYPES.ENTITY) return 0;
         if (type === core.NODE_TYPES.TOKEN) return 2;
@@ -6474,6 +6556,9 @@
         pauseFlowReplay: () => setFlowReplayPlaying(false),
         toggleFlowReplay,
         stepFlowReplay,
+        loadWalletActivityFromDock,
+        toggleHistoryReplayFromDock,
+        updateInteractionDock,
         getFlowQueue: () => state.flowQueue,
         setFlowAnimationEnabled,
         setLiveModeEnabled,

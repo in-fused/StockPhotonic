@@ -6,12 +6,14 @@ on:
       - "data/crypto/test-fixtures/*.json"
       - "js/crypto/*.js"
       - "js/crypto/**/*.js"
+      - "scripts/crypto/**/*.js"
       - ".github/workflows/crypto-js-syntax.yml"
   push:
     paths:
       - "data/crypto/test-fixtures/*.json"
       - "js/crypto/*.js"
       - "js/crypto/**/*.js"
+      - "scripts/crypto/**/*.js"
       - ".github/workflows/crypto-js-syntax.yml"
 
 permissions:
@@ -43,6 +45,7 @@ jobs:
             "js/crypto/layout.js"
             "js/crypto/solanaAdapter.js"
             "js/crypto/ui.js"
+            "scripts/crypto/validate_wallet_intelligence_fixture.js"
           )
 
           for file in "${files[@]}"; do
@@ -52,163 +55,4 @@ jobs:
 
       - name: Validate Wallet Lookup mocked fixture
         shell: bash
-        run: |
-          set -euo pipefail
-
-          node <<'NODE'
-          const fs = require('fs');
-          const path = 'data/crypto/test-fixtures/wallet-activity-response-d97.json';
-          const fixture = JSON.parse(fs.readFileSync(path, 'utf8'));
-          const expected = fixture.expected_wallet_intelligence || {};
-          const trackedWallet = normalizeAddress(fixture.metadata?.wallet || expected.tracked_wallet);
-          const noisePrefixes = [
-            'computebudget111111111111111111111111111111',
-            'tokenkegqfezyinwajbnbgkpfxcwubvf9ss623vq5da',
-            'tokenzqdbnjbkpecb7cb21qvwxqvfkkcwfbzrg',
-            'sysvar',
-            '11111111111111111111111111111111',
-            'addresslookuptab1e1111111111111111111111111',
-            'bpfloader',
-            'bpfloaderupgradeab1e11111111111111111111111',
-            'vot111111111111111111111111111111111111111',
-            'vote111111111111111111111111111111111111111',
-            'stake11111111111111111111111111111111111111',
-            'atokengpvbdgvxr1bv2hvzbswhbnequgkycwvdsxf',
-            'memosq4gqxgabhysygxbdlqnysncmyzry2k69ydt4c',
-            'metaqbxxuerdq28cj1rbawkyqm3ybzjb6a8bt518x1s'
-          ];
-
-          function normalizeAddress(value) {
-            return String(value || '').trim().toLowerCase();
-          }
-
-          function assert(condition, message) {
-            if (!condition) throw new Error(message);
-          }
-
-          function getDirection(source, target) {
-            const sourceAddress = normalizeAddress(source);
-            const targetAddress = normalizeAddress(target);
-            if (targetAddress === trackedWallet) return 'inbound';
-            if (sourceAddress === trackedWallet) return 'outbound';
-            return 'mixed';
-          }
-
-          function isNoiseWalletAddress(address) {
-            const normalized = normalizeAddress(address);
-            if (!normalized || normalized === trackedWallet) return false;
-            return noisePrefixes.some(prefix => normalized.startsWith(prefix));
-          }
-
-          function getCounterparty(leg) {
-            return normalizeAddress(leg.source_wallet) === trackedWallet ? leg.destination_wallet : leg.source_wallet;
-          }
-
-          const events = Array.isArray(fixture.events) ? fixture.events : [];
-          const rawLegs = events.flatMap((event, eventIndex) => {
-            const tokens = Array.isArray(event.tokens) ? event.tokens : [];
-            const firstToken = tokens[0] || {};
-            const transfers = Array.isArray(event.transfers) ? event.transfers : [];
-            return transfers.map((transfer, transferIndex) => {
-              const source = transfer.from || transfer.source_wallet || transfer.source;
-              const target = transfer.to || transfer.destination_wallet || transfer.destination || transfer.target;
-              return {
-                id: `${event.id || eventIndex}:${transferIndex}`,
-                source_wallet: source,
-                destination_wallet: target,
-                symbol: String(transfer.token_symbol || transfer.symbol || firstToken.symbol || '').trim(),
-                amount: Number(transfer.amount) || 0,
-                usd_value: Number(transfer.usd_value ?? event.usd_value) || 0,
-                timestamp: event.timestamp || event.received_at || '',
-                direction: getDirection(source, target)
-              };
-            });
-          });
-
-          const visibleLegs = rawLegs.filter(leg => {
-            if (!leg.source_wallet || !leg.destination_wallet) return false;
-            if (isNoiseWalletAddress(leg.source_wallet) || isNoiseWalletAddress(leg.destination_wallet)) return false;
-            return normalizeAddress(leg.source_wallet) === trackedWallet || normalizeAddress(leg.destination_wallet) === trackedWallet;
-          });
-
-          const tokenSummary = [...visibleLegs.reduce((summary, leg) => {
-            const symbol = leg.symbol || 'Token';
-            const item = summary.get(symbol) || {
-              symbol,
-              inbound: 0,
-              outbound: 0,
-              mixed: 0,
-              count: 0,
-              total_usd: 0
-            };
-            if (leg.direction === 'inbound') item.inbound += 1;
-            else if (leg.direction === 'outbound') item.outbound += 1;
-            else item.mixed += 1;
-            item.count += 1;
-            item.total_usd += Math.max(0, leg.usd_value);
-            summary.set(symbol, item);
-            return summary;
-          }, new Map()).values()].sort((a, b) => b.total_usd - a.total_usd || b.count - a.count || a.symbol.localeCompare(b.symbol));
-
-          function topToken(direction) {
-            const ranked = tokenSummary
-              .filter(item => item[direction] > 0)
-              .sort((a, b) => b[direction] - a[direction] || b.total_usd - a.total_usd || a.symbol.localeCompare(b.symbol));
-            return ranked[0]?.symbol || '';
-          }
-
-          const largestFlow = visibleLegs.slice().sort((a, b) => b.usd_value - a.usd_value)[0] || null;
-          const counterparties = visibleLegs.reduce((summary, leg) => {
-            const counterparty = getCounterparty(leg);
-            const key = normalizeAddress(counterparty);
-            const item = summary.get(key) || {
-              address: counterparty,
-              inbound: 0,
-              outbound: 0,
-              mixed: 0,
-              count: 0,
-              total_usd: 0
-            };
-            if (leg.direction === 'inbound') item.inbound += 1;
-            else if (leg.direction === 'outbound') item.outbound += 1;
-            else item.mixed += 1;
-            item.count += 1;
-            item.total_usd += Math.max(0, leg.usd_value);
-            summary.set(key, item);
-            return summary;
-          }, new Map());
-          const repeatedCounterparty = [...counterparties.values()].sort((a, b) => b.count - a.count || b.total_usd - a.total_usd)[0] || null;
-
-          assert(fixture.metadata?.sanitized === true, 'Fixture must be marked sanitized');
-          assert(fixture.metadata?.fake === true, 'Fixture must be marked fake');
-          assert(rawLegs.some(leg => leg.direction === 'inbound'), 'Fixture must include an inbound leg');
-          assert(rawLegs.some(leg => leg.direction === 'outbound'), 'Fixture must include an outbound leg');
-          assert(tokenSummary.length >= 2, 'Fixture must derive multiple token symbols');
-          for (const noiseCase of expected.noise_cases || []) {
-            assert(rawLegs.some(leg => normalizeAddress(leg.source_wallet) === normalizeAddress(noiseCase.address) || normalizeAddress(leg.destination_wallet) === normalizeAddress(noiseCase.address)), `Missing raw noise case ${noiseCase.address}`);
-            assert(!visibleLegs.some(leg => normalizeAddress(leg.source_wallet) === normalizeAddress(noiseCase.address) || normalizeAddress(leg.destination_wallet) === normalizeAddress(noiseCase.address)), `Noise case survived filtering ${noiseCase.address}`);
-          }
-          assert(rawLegs.length === expected.raw_legs, `Expected ${expected.raw_legs} raw legs, derived ${rawLegs.length}`);
-          assert(visibleLegs.length === expected.visible_legs, `Expected ${expected.visible_legs} visible legs, derived ${visibleLegs.length}`);
-          assert(rawLegs.length - visibleLegs.length === expected.filtered_legs, `Expected ${expected.filtered_legs} filtered legs`);
-          assert(topToken('inbound') === expected.top_inbound_token, 'Top inbound token mismatch');
-          assert(topToken('outbound') === expected.top_outbound_token, 'Top outbound token mismatch');
-          assert(largestFlow?.symbol === expected.largest_flow?.symbol, 'Largest flow symbol mismatch');
-          assert(largestFlow?.usd_value === expected.largest_flow?.usd_value, 'Largest flow USD mismatch');
-          assert(largestFlow?.direction === expected.largest_flow?.direction, 'Largest flow direction mismatch');
-          assert(normalizeAddress(getCounterparty(largestFlow)) === normalizeAddress(expected.largest_flow?.counterparty), 'Largest flow counterparty mismatch');
-          assert(normalizeAddress(repeatedCounterparty?.address) === normalizeAddress(expected.repeated_counterparty?.address), 'Repeated counterparty mismatch');
-          assert(repeatedCounterparty?.count === expected.repeated_counterparty?.count, 'Repeated counterparty count mismatch');
-          assert(repeatedCounterparty?.inbound === expected.repeated_counterparty?.directions?.inbound, 'Repeated counterparty inbound count mismatch');
-          assert(repeatedCounterparty?.outbound === expected.repeated_counterparty?.directions?.outbound, 'Repeated counterparty outbound count mismatch');
-          assert(tokenSummary.length === expected.token_flow_summary.length, 'Token flow summary length mismatch');
-          for (const expectedToken of expected.token_flow_summary) {
-            const actual = tokenSummary.find(item => item.symbol === expectedToken.symbol);
-            assert(actual, `Missing token summary for ${expectedToken.symbol}`);
-            for (const key of ['inbound', 'outbound', 'mixed', 'count', 'total_usd']) {
-              assert(actual[key] === expectedToken[key], `${expectedToken.symbol} ${key} mismatch`);
-            }
-          }
-
-          console.log(`Validated ${path}: ${visibleLegs.length} visible / ${rawLegs.length - visibleLegs.length} filtered legs`);
-          NODE
+        run: node scripts/crypto/validate_wallet_intelligence_fixture.js

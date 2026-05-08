@@ -58,13 +58,23 @@
         }
 
         .graph-container {
+            position: relative;
             box-shadow: 0 0 60px rgba(0, 249, 255, 0.08);
             border: 1px solid rgba(0, 249, 255, 0.1);
+            min-height: 520px;
+            max-width: 100%;
+        }
+
+        #graph-canvas,
+        #crypto-flow-canvas,
+        #orb-map-canvas {
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            overscroll-behavior: contain;
         }
 
         #graph-canvas {
-            touch-action: none;
-            user-select: none;
             background:
                 linear-gradient(rgba(0, 249, 255, 0.035) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 249, 255, 0.035) 1px, transparent 1px),
@@ -106,8 +116,6 @@
             width: calc(100% - 1.5rem);
             height: calc(100% - 1.5rem);
             border-radius: 1.5rem;
-            touch-action: none;
-            user-select: none;
             z-index: 2;
             background:
                 radial-gradient(circle at 50% 48%, rgba(251, 191, 36, 0.11), rgba(0, 249, 255, 0.045) 42%, rgba(5, 5, 8, 0.92) 78%),
@@ -132,6 +140,53 @@
         .perspective-reset-control:disabled {
             cursor: not-allowed;
             opacity: 0.44;
+        }
+
+        .mobile-graph-overlay {
+            position: absolute;
+            left: max(0.85rem, env(safe-area-inset-left));
+            right: max(0.85rem, env(safe-area-inset-right));
+            bottom: max(0.85rem, env(safe-area-inset-bottom));
+            z-index: 18;
+            display: none;
+            pointer-events: none;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 0.65rem;
+        }
+
+        .mobile-graph-hint {
+            max-width: min(48vw, 18rem);
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            background: rgba(3, 7, 18, 0.72);
+            color: rgba(224, 242, 254, 0.82);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(16px);
+            line-height: 1.25;
+            pointer-events: none;
+        }
+
+        .mobile-graph-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 0.42rem;
+            pointer-events: auto;
+        }
+
+        .mobile-graph-action {
+            min-width: 2.75rem;
+            min-height: 2.75rem;
+            border: 1px solid rgba(125, 211, 252, 0.22);
+            background: rgba(3, 7, 18, 0.76);
+            color: rgba(236, 254, 255, 0.92);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(16px);
+        }
+
+        .mobile-graph-action:active {
+            transform: translateY(1px);
+            background: rgba(8, 145, 178, 0.24);
         }
 
         .signal-control {
@@ -673,6 +728,7 @@
         }
 
         .crypto-canvas-wrap {
+            position: relative;
             height: min(66vh, 680px);
             min-height: 520px;
             border: 1px solid rgba(0, 249, 255, 0.12);
@@ -684,8 +740,7 @@
         }
 
         #crypto-flow-canvas {
-            touch-action: none;
-            user-select: none;
+            display: block;
         }
 
         .control-section-title,
@@ -936,6 +991,12 @@
         }
 
         @media (max-width: 768px) {
+            html,
+            body {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
             .page-shell {
                 padding-left: 1rem;
                 padding-right: 1rem;
@@ -960,11 +1021,57 @@
             }
 
             .graph-container {
-                height: 62vh !important;
+                height: clamp(420px, 66dvh, 680px) !important;
+                min-height: 420px;
+                border-radius: 1.15rem !important;
+                padding: 0.5rem !important;
+            }
+
+            #graph-canvas,
+            .orb-map-canvas,
+            .crypto-canvas-wrap,
+            #crypto-flow-canvas {
+                border-radius: 1rem !important;
+            }
+
+            .mobile-graph-overlay {
+                display: flex;
+            }
+
+            .mobile-graph-hint {
+                max-width: 52%;
+                font-size: 0.62rem;
+            }
+
+            .mobile-graph-actions {
+                max-width: 46%;
+            }
+
+            .crypto-surface {
+                min-height: calc(100dvh - 4rem);
+            }
+
+            .crypto-panel {
+                padding: 0.85rem !important;
+                border-radius: 1.1rem !important;
+            }
+
+            .crypto-panel > .flex {
+                align-items: flex-start;
+            }
+
+            .crypto-canvas-wrap {
+                height: clamp(430px, 64dvh, 680px);
+                min-height: 430px;
+            }
+
+            #crypto-detail-panel {
+                min-height: 260px;
+                max-height: none;
             }
 
             #graph-intelligence-view.is-graph-fullscreen {
-                padding: 0.75rem;
+                padding: calc(0.75rem + env(safe-area-inset-top)) calc(0.75rem + env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) calc(0.75rem + env(safe-area-inset-left));
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
             }
@@ -990,12 +1097,12 @@
             }
 
             #graph-intelligence-view.is-graph-fullscreen .graph-container {
-                height: clamp(460px, 68dvh, 760px) !important;
+                height: clamp(500px, 72dvh, 820px) !important;
                 min-height: 460px;
             }
 
             #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-container {
-                height: calc(100dvh - 1.5rem) !important;
+                height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
                 min-height: 0;
             }
 
@@ -1032,23 +1139,40 @@
             }
 
             #crypto-photonic-view.is-crypto-fullscreen {
-                padding: 0.75rem;
+                padding: calc(0.75rem + env(safe-area-inset-top)) calc(0.75rem + env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) calc(0.75rem + env(safe-area-inset-left));
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
             }
 
+            #crypto-photonic-view.is-crypto-fullscreen > .flex {
+                margin-bottom: 0.6rem;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen > .flex h1 {
+                font-size: 2rem;
+                line-height: 1.05;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen > .flex p {
+                display: none;
+            }
+
             #crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
                 height: auto;
-                min-height: calc(100dvh - 1.5rem);
+                min-height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
             }
 
             #crypto-photonic-view.is-crypto-fullscreen .crypto-canvas-wrap {
-                height: clamp(460px, 68dvh, 760px);
-                min-height: 460px;
+                height: clamp(520px, 74dvh, 820px);
+                min-height: 500px;
             }
 
             #crypto-photonic-view.is-crypto-fullscreen #crypto-detail-panel {
-                max-height: min(46dvh, 30rem);
+                max-height: min(42dvh, 28rem);
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-panel > .grid {
+                gap: 0.75rem;
             }
 
             .photonic-help-backdrop {
@@ -1068,7 +1192,7 @@
             .graph-overlay-stats {
                 left: 0.75rem;
                 right: 0.75rem;
-                bottom: 0.75rem;
+                bottom: 4.25rem;
                 max-width: calc(100% - 1.5rem);
             }
 
@@ -1086,6 +1210,28 @@
         }
 
         @media (max-width: 480px) {
+            .mobile-graph-overlay {
+                left: max(0.5rem, env(safe-area-inset-left));
+                right: max(0.5rem, env(safe-area-inset-right));
+                bottom: max(0.5rem, env(safe-area-inset-bottom));
+                gap: 0.45rem;
+            }
+
+            .mobile-graph-hint {
+                max-width: 44%;
+                padding: 0.45rem 0.55rem;
+            }
+
+            .mobile-graph-actions {
+                max-width: 54%;
+                gap: 0.32rem;
+            }
+
+            .mobile-graph-action {
+                min-width: 2.55rem;
+                min-height: 2.55rem;
+            }
+
             #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button {
                 flex: 1 1 calc(50% - 0.35rem);
             }
@@ -1327,6 +1473,20 @@
                     <div class="glass rounded-3xl p-3 graph-container relative overflow-hidden" style="height: 680px;">
                         <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
                         <canvas id="orb-map-canvas" class="orb-map-canvas hidden cursor-grab" aria-label="Orb Map graph view"></canvas>
+                        <div class="mobile-graph-overlay stock-mobile-graph-overlay" aria-label="Mobile StockPhotonic graph controls">
+                            <div class="mobile-graph-hint rounded-2xl px-3 py-2 text-[10px] font-mono">Pinch to zoom &bull; Drag to pan &bull; Tap nodes/flows</div>
+                            <div class="mobile-graph-actions">
+                                <button type="button" onclick="mobileResetGraphView()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Reset and fit the StockPhotonic graph view" aria-label="Reset StockPhotonic graph view">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                </button>
+                                <button type="button" onclick="fitGraph()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Fit visible StockPhotonic graph" aria-label="Fit StockPhotonic graph">
+                                    <i class="fa-solid fa-compress-arrows-alt"></i>
+                                </button>
+                                <button id="stock-mobile-fullscreen-toggle" type="button" onclick="toggleGraphFullscreen()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Toggle StockPhotonic fullscreen graph" aria-label="Toggle StockPhotonic fullscreen graph">
+                                    <i class="fa-solid fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
                         <div id="sec-production-legend" class="sec-production-legend hidden rounded-2xl px-3 py-2 text-[10px] font-mono text-yellow-100/80 tracking-[1.1px]">
                             <div class="flex items-center gap-2">
                                 <span class="sec-production-line-swatch"></span>
@@ -1634,6 +1794,20 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 <div class="lg:col-span-8">
                     <div class="crypto-canvas-wrap rounded-3xl overflow-hidden">
                         <canvas id="crypto-flow-canvas" class="w-full h-full"></canvas>
+                        <div class="mobile-graph-overlay crypto-mobile-graph-overlay" aria-label="Mobile CryptoPhotonic graph controls">
+                            <div class="mobile-graph-hint rounded-2xl px-3 py-2 text-[10px] font-mono">Pinch to zoom &bull; Drag to pan &bull; Tap nodes/flows</div>
+                            <div class="mobile-graph-actions">
+                                <button id="crypto-mobile-reset-view" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Reset CryptoPhotonic graph view" aria-label="Reset CryptoPhotonic graph view">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                </button>
+                                <button id="crypto-mobile-center-wallet" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Center tracked wallet or selected node" aria-label="Center tracked wallet or selected node">
+                                    <i class="fa-solid fa-crosshairs"></i>
+                                </button>
+                                <button id="crypto-mobile-fullscreen-toggle" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Toggle CryptoPhotonic fullscreen graph" aria-label="Toggle CryptoPhotonic fullscreen graph">
+                                    <i class="fa-solid fa-expand"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <aside class="lg:col-span-4">
@@ -1945,6 +2119,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             lastMoveAt: 0,
             moved: false
         };
+        const touchPointers = new Map();
+        const pinchState = {
+            active: false,
+            ids: [],
+            startDistance: 0,
+            startScale: 1,
+            startWorld: { x: 0, y: 0 }
+        };
 
         const viewController = graphViewport.createViewController({
             getScale: () => scale,
@@ -2253,6 +2435,16 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }
             const label = button.querySelector('span');
             if (label) label.innerText = active ? 'Exit Fullscreen' : 'Fullscreen';
+
+            const mobileButton = document.getElementById('stock-mobile-fullscreen-toggle');
+            const mobileIcon = mobileButton?.querySelector('i');
+            mobileButton?.setAttribute('aria-pressed', active ? 'true' : 'false');
+            mobileButton?.setAttribute('title', active ? 'Exit StockPhotonic fullscreen graph' : 'Open StockPhotonic fullscreen graph');
+            mobileButton?.classList.toggle('is-active', active);
+            if (mobileIcon) {
+                mobileIcon.classList.toggle('fa-expand', !active);
+                mobileIcon.classList.toggle('fa-compress', active);
+            }
         }
 
         function updateHudToggleButton(button, hidden) {
@@ -2954,6 +3146,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             const canvas = document.getElementById('graph-canvas');
             const screen = getEventPoint(event);
+            if (event.pointerType === 'touch') {
+                touchPointers.set(event.pointerId, screen);
+                canvas.setPointerCapture(event.pointerId);
+                if (touchPointers.size >= 2) {
+                    beginGraphPinchGesture();
+                    event.preventDefault();
+                    return;
+                }
+            }
             const rotateGesture = isPerspectiveRotateGesture(event);
             const node = rotateGesture ? null : findNodeAt(screen.x, screen.y);
             cancelViewAnimation();
@@ -2979,6 +3180,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function onPointerMove(event) {
             const screen = getEventPoint(event);
             const frameNow = performance.now();
+            if (event.pointerType === 'touch' && touchPointers.has(event.pointerId)) {
+                touchPointers.set(event.pointerId, screen);
+                if (pinchState.active) {
+                    updateGraphPinchGesture();
+                    event.preventDefault();
+                    return;
+                }
+            }
 
             if (!pointerState.active || pointerState.pointerId !== event.pointerId) {
                 const nextHover = findNodeAt(screen.x, screen.y);
@@ -3036,6 +3245,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function onPointerUp(event) {
+            if (event.pointerType === 'touch' && endGraphTouchPointer(event)) {
+                event.preventDefault();
+                return;
+            }
             if (!pointerState.active || pointerState.pointerId !== event.pointerId) return;
 
             const canvas = document.getElementById('graph-canvas');
@@ -3069,6 +3282,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function onPointerCancel(event) {
+            if (event?.pointerType === 'touch') {
+                touchPointers.delete(event.pointerId);
+                if (pinchState.active && touchPointers.size < 2) endGraphPinchGesture();
+            }
             pointerState.active = false;
             pointerState.pointerId = null;
             pointerState.mode = 'idle';
@@ -3078,6 +3295,78 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 canvas.releasePointerCapture(event.pointerId);
             }
             updateGraphCanvasCursor('idle');
+        }
+
+        function beginGraphPinchGesture() {
+            const metrics = getGraphPinchMetrics();
+            if (!metrics) return;
+            cancelViewAnimation();
+            pointerState.active = false;
+            pointerState.pointerId = null;
+            pointerState.mode = 'pinch-zoom';
+            pointerState.node = null;
+            pinchState.active = true;
+            pinchState.ids = metrics.ids;
+            pinchState.startDistance = metrics.distance;
+            pinchState.startScale = scale;
+            pinchState.startWorld = screenToWorld(metrics.midpoint.x, metrics.midpoint.y);
+            updateGraphCanvasCursor('pinch-zoom');
+        }
+
+        function updateGraphPinchGesture() {
+            const metrics = getGraphPinchMetrics(pinchState.ids);
+            if (!metrics || !pinchState.startDistance) return;
+            const zoomRatio = metrics.distance / pinchState.startDistance;
+            const nextScale = clamp(pinchState.startScale * zoomRatio, MIN_SCALE, MAX_SCALE);
+            const anchoredView = getViewForScreenAnchor(pinchState.startWorld, metrics.midpoint, nextScale);
+            setView(nextScale, anchoredView.offsetX, anchoredView.offsetY);
+            requestDraw();
+        }
+
+        function endGraphTouchPointer(event) {
+            const hadPointer = touchPointers.delete(event.pointerId);
+            const wasPinching = pinchState.active;
+            const canvas = document.getElementById('graph-canvas');
+            if (canvas?.hasPointerCapture?.(event.pointerId)) {
+                canvas.releasePointerCapture(event.pointerId);
+            }
+            if (!wasPinching) return false;
+            if (touchPointers.size >= 2) {
+                beginGraphPinchGesture();
+            } else {
+                endGraphPinchGesture();
+            }
+            return hadPointer || wasPinching;
+        }
+
+        function endGraphPinchGesture() {
+            pinchState.active = false;
+            pinchState.ids = [];
+            pinchState.startDistance = 0;
+            pointerState.active = false;
+            pointerState.pointerId = null;
+            pointerState.mode = 'idle';
+            pointerState.node = null;
+            updateGraphCanvasCursor('idle');
+            requestDraw();
+        }
+
+        function getGraphPinchMetrics(preferredIds = null) {
+            const ids = (preferredIds || [...touchPointers.keys()])
+                .filter(id => touchPointers.has(id))
+                .slice(0, 2);
+            if (ids.length < 2) return null;
+            const first = touchPointers.get(ids[0]);
+            const second = touchPointers.get(ids[1]);
+            const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
+            return {
+                ids,
+                distance,
+                midpoint: {
+                    x: (first.x + second.x) / 2,
+                    y: (first.y + second.y) / 2
+                }
+            };
         }
 
         function onPointerLeave() {
@@ -3129,7 +3418,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             canvas.classList.toggle('cursor-grabbing', mode !== 'idle' && mode !== 'pan-pending' && mode !== 'node-pending');
             canvas.style.cursor = mode === 'perspective-rotate' || mode === 'rotate-pending'
                 ? 'grabbing'
-                : mode === 'canvas-pan' || mode === 'node-drag'
+                : mode === 'canvas-pan' || mode === 'node-drag' || mode === 'pinch-zoom'
                     ? 'grabbing'
                     : 'grab';
         }
@@ -4393,6 +4682,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             updateSearchMatches();
             closeSearchPanel();
             clearSelection(false);
+            resetGraphViewState();
+            fitGraph();
+        }
+
+        function mobileResetGraphView() {
+            stopOrbitForInteraction();
             resetGraphViewState();
             fitGraph();
         }

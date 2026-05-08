@@ -85,6 +85,8 @@
             layoutDensity: 'balanced',
             sectorAdjustments: new Map(),
             tuningSector: null,
+            touchPointers: new Map(),
+            pinch: null,
             pointer: {
                 active: false,
                 pointerId: null,
@@ -191,6 +193,17 @@
         canvas.addEventListener('pointerdown', event => {
             if (!state.enabled || (event.pointerType === 'mouse' && event.button !== 0)) return;
             const point = getCanvasPoint(canvas, event);
+            if (event.pointerType === 'touch') {
+                state.touchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+                canvas.setPointerCapture?.(event.pointerId);
+                if (state.touchPointers.size >= 2) {
+                    beginPinch(state);
+                    markInteraction(state, event.timeStamp);
+                    scheduleAnimation(state, options);
+                    event.preventDefault();
+                    return;
+                }
+            }
             const tuningTarget = event.shiftKey ? findNodeAt(state, point.x, point.y) : null;
             state.pointer.active = true;
             state.pointer.pointerId = event.pointerId;
@@ -219,6 +232,16 @@
 
         canvas.addEventListener('pointermove', event => {
             if (!state.enabled) return;
+            if (event.pointerType === 'touch' && state.touchPointers.has(event.pointerId)) {
+                state.touchPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+                if (state.pinch) {
+                    updatePinch(state);
+                    markInteraction(state, event.timeStamp);
+                    scheduleAnimation(state, options);
+                    event.preventDefault();
+                    return;
+                }
+            }
             if (state.pointer.active && state.pointer.pointerId === event.pointerId) {
                 const dx = event.clientX - state.pointer.lastX;
                 const dy = event.clientY - state.pointer.lastY;
@@ -257,6 +280,10 @@
         });
 
         canvas.addEventListener('pointerup', event => {
+            if (event.pointerType === 'touch' && endTouchPointer(state, canvas, event, options)) {
+                event.preventDefault();
+                return;
+            }
             if (!state.pointer.active || state.pointer.pointerId !== event.pointerId) return;
             const wasTuning = state.pointer.mode === 'sector-tune';
             const point = getCanvasPoint(canvas, event);
@@ -286,6 +313,10 @@
         });
 
         canvas.addEventListener('pointercancel', event => {
+            if (event.pointerType === 'touch') {
+                state.touchPointers.delete(event.pointerId);
+                if (state.pinch && state.touchPointers.size < 2) endPinch(state);
+            }
             state.pointer.active = false;
             state.pointer.pointerId = null;
             state.pointer.mode = 'rotate';
@@ -298,6 +329,12 @@
             canvas.classList.add('cursor-grab');
             canvas.classList.remove('cursor-grabbing');
             scheduleAnimation(state, options);
+        });
+        canvas.addEventListener('lostpointercapture', event => {
+            if (event.pointerType === 'touch') {
+                state.touchPointers.delete(event.pointerId);
+                if (state.pinch && state.touchPointers.size < 2) endPinch(state);
+            }
         });
 
         canvas.addEventListener('pointerleave', () => {
@@ -318,6 +355,69 @@
         }, { passive: false });
 
         canvas.addEventListener('contextmenu', event => event.preventDefault());
+    }
+
+    function beginPinch(state) {
+        const metrics = getPinchMetrics(state);
+        if (!metrics) return;
+        state.pointer.active = false;
+        state.pointer.pointerId = null;
+        state.pinch = {
+            ids: metrics.ids,
+            startDistance: metrics.distance,
+            startZoom: state.targetZoom
+        };
+        state.rotationVelocityX = 0;
+        state.rotationVelocityY = 0;
+    }
+
+    function updatePinch(state) {
+        const metrics = getPinchMetrics(state, state.pinch?.ids);
+        if (!metrics || !state.pinch?.startDistance) return;
+        const zoomRatio = metrics.distance / state.pinch.startDistance;
+        state.targetZoom = clamp(state.pinch.startZoom * zoomRatio, MIN_ZOOM, MAX_ZOOM);
+        state.zoom = clamp(state.zoom + (state.targetZoom - state.zoom) * 0.45, MIN_ZOOM, MAX_ZOOM);
+    }
+
+    function endTouchPointer(state, canvas, event, options) {
+        const hadPointer = state.touchPointers.delete(event.pointerId);
+        const wasPinching = Boolean(state.pinch);
+        if (canvas?.hasPointerCapture?.(event.pointerId)) {
+            canvas.releasePointerCapture(event.pointerId);
+        }
+        if (!wasPinching) return false;
+        if (state.touchPointers.size >= 2) {
+            beginPinch(state);
+        } else {
+            endPinch(state);
+        }
+        markInteraction(state, event.timeStamp);
+        scheduleAnimation(state, options);
+        return hadPointer || wasPinching;
+    }
+
+    function endPinch(state) {
+        state.pinch = null;
+        state.pointer.active = false;
+        state.pointer.pointerId = null;
+        state.pointer.mode = 'rotate';
+        state.pointer.tuningSector = null;
+        state.tuningSector = null;
+        state.rotationVelocityX = 0;
+        state.rotationVelocityY = 0;
+    }
+
+    function getPinchMetrics(state, preferredIds = null) {
+        const ids = (preferredIds || [...state.touchPointers.keys()])
+            .filter(id => state.touchPointers.has(id))
+            .slice(0, 2);
+        if (ids.length < 2) return null;
+        const first = state.touchPointers.get(ids[0]);
+        const second = state.touchPointers.get(ids[1]);
+        return {
+            ids,
+            distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y))
+        };
     }
 
     function markInteraction(state) {

@@ -105,6 +105,8 @@
             y: 0,
             scale: 1
         },
+        touchPointers: new Map(),
+        pinch: null,
         drag: null,
         manualNodePositions: new Map()
     };
@@ -182,10 +184,16 @@
         state.canvas.addEventListener('pointermove', handleCanvasPointerMove);
         state.canvas.addEventListener('pointerup', handleCanvasPointerUp);
         state.canvas.addEventListener('pointercancel', handleCanvasPointerCancel);
+        state.canvas.addEventListener('lostpointercapture', handleCanvasPointerCancel);
         state.canvas.addEventListener('mouseleave', handleCanvasLeave);
         document.getElementById('crypto-reset-view')?.addEventListener('click', resetView);
         document.getElementById('crypto-reset-layout')?.addEventListener('click', resetLayout);
         document.getElementById('crypto-fullscreen-toggle')?.addEventListener('click', () => {
+            setFullscreen(!state.fullscreen);
+        });
+        document.getElementById('crypto-mobile-reset-view')?.addEventListener('click', resetView);
+        document.getElementById('crypto-mobile-center-wallet')?.addEventListener('click', centerTrackedWallet);
+        document.getElementById('crypto-mobile-fullscreen-toggle')?.addEventListener('click', () => {
             setFullscreen(!state.fullscreen);
         });
         document.addEventListener('keydown', event => {
@@ -3033,6 +3041,16 @@
         if (!state.graph || !state.canvas) return;
         markFlowInteraction();
         const screenPoint = getScreenPoint(event);
+        if (!screenPoint) return;
+        if (event.pointerType === 'touch') {
+            state.touchPointers.set(event.pointerId, screenPoint);
+            state.canvas.setPointerCapture?.(event.pointerId);
+            if (state.touchPointers.size >= 2) {
+                beginPinchGesture();
+                event.preventDefault();
+                return;
+            }
+        }
         const worldPoint = screenToWorld(screenPoint);
         const node = getNodeAtWorldPoint(worldPoint);
         const edge = node ? null : getFlowEdgeAtWorldPoint(worldPoint);
@@ -3050,12 +3068,21 @@
             moved: false
         };
         state.canvas.style.cursor = 'grabbing';
+        event.preventDefault();
     }
 
     function handleCanvasPointerMove(event) {
         if (!state.graph || !state.canvas) return;
         const screenPoint = getScreenPoint(event);
         if (!screenPoint) return;
+        if (event.pointerType === 'touch' && state.touchPointers.has(event.pointerId)) {
+            state.touchPointers.set(event.pointerId, screenPoint);
+            if (state.pinch) {
+                updatePinchGesture();
+                event.preventDefault();
+                return;
+            }
+        }
 
         if (state.drag?.pointerId === event.pointerId) {
             markFlowInteraction();
@@ -3072,6 +3099,7 @@
                 render();
             }
             state.drag.lastScreen = screenPoint;
+            event.preventDefault();
             return;
         }
 
@@ -3080,6 +3108,10 @@
 
     function handleCanvasPointerUp(event) {
         if (!state.graph || !state.canvas) return;
+        if (event.pointerType === 'touch' && endTouchPointer(event)) {
+            event.preventDefault();
+            return;
+        }
         markFlowInteraction();
         const drag = state.drag;
         if (drag?.pointerId === event.pointerId) {
@@ -3097,6 +3129,7 @@
             }
 
             updateHoverFromScreenPoint(getScreenPoint(event));
+            event.preventDefault();
             return;
         }
 
@@ -3104,11 +3137,83 @@
     }
 
     function handleCanvasPointerCancel(event) {
-        if (!state.canvas || state.drag?.pointerId !== event.pointerId) return;
+        if (!state.canvas) return;
+        if (event?.pointerType === 'touch') {
+            state.touchPointers.delete(event.pointerId);
+            if (state.pinch && state.touchPointers.size < 2) endPinchGesture();
+        }
+        if (state.drag?.pointerId !== event.pointerId && !state.pinch) return;
         markFlowInteraction();
         state.canvas.releasePointerCapture?.(event.pointerId);
         state.drag = null;
         state.canvas.style.cursor = state.hoveredId ? 'grab' : 'grab';
+    }
+
+    function beginPinchGesture() {
+        const metrics = getPinchMetrics();
+        if (!metrics) return;
+        markFlowInteraction();
+        state.drag = null;
+        state.pinch = {
+            ids: metrics.ids,
+            startDistance: metrics.distance,
+            startScale: state.viewport.scale,
+            startWorld: screenToWorld(metrics.midpoint)
+        };
+        state.canvas.style.cursor = 'grabbing';
+    }
+
+    function updatePinchGesture() {
+        const metrics = getPinchMetrics(state.pinch?.ids);
+        if (!metrics || !state.pinch?.startDistance) return;
+        markFlowInteraction();
+        const zoomRatio = metrics.distance / state.pinch.startDistance;
+        const nextScale = clamp(state.pinch.startScale * zoomRatio, ZOOM_LIMITS.min, ZOOM_LIMITS.max);
+        state.viewport.scale = nextScale;
+        state.viewport.x = metrics.midpoint.x - state.pinch.startWorld.x * nextScale;
+        state.viewport.y = metrics.midpoint.y - state.pinch.startWorld.y * nextScale;
+        clampViewport();
+        render();
+    }
+
+    function endTouchPointer(event) {
+        const hadPointer = state.touchPointers.delete(event.pointerId);
+        const wasPinching = Boolean(state.pinch);
+        if (state.canvas?.hasPointerCapture?.(event.pointerId)) {
+            state.canvas.releasePointerCapture(event.pointerId);
+        }
+        if (!wasPinching) return false;
+        if (state.touchPointers.size >= 2) {
+            beginPinchGesture();
+        } else {
+            endPinchGesture();
+        }
+        return hadPointer || wasPinching;
+    }
+
+    function endPinchGesture() {
+        state.pinch = null;
+        state.drag = null;
+        if (state.canvas) state.canvas.style.cursor = 'grab';
+        render();
+    }
+
+    function getPinchMetrics(preferredIds = null) {
+        const ids = (preferredIds || [...state.touchPointers.keys()])
+            .filter(id => state.touchPointers.has(id))
+            .slice(0, 2);
+        if (ids.length < 2) return null;
+        const first = state.touchPointers.get(ids[0]);
+        const second = state.touchPointers.get(ids[1]);
+        const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
+        return {
+            ids,
+            distance,
+            midpoint: {
+                x: (first.x + second.x) / 2,
+                y: (first.y + second.y) / 2
+            }
+        };
     }
 
     function handleCanvasLeave() {
@@ -3691,6 +3796,31 @@
         render();
     }
 
+    function centerTrackedWallet() {
+        if (!state.graph) return;
+        const trackedWallet = core.normalizeAddress(
+            state.graph.metadata?.wallet_lookup_tracked_wallet
+            || state.graph.metadata?.wallet
+            || state.walletLookup.lastWallet
+            || ''
+        );
+        const node = getWalletNodeForAddress(trackedWallet)
+            || state.graph.nodeById.get(state.selectedId)
+            || state.graph.nodes[0];
+        if (!node) return;
+
+        const { width, height } = state.graph.bounds || getCanvasSize();
+        const nextScale = clamp(Math.max(state.viewport.scale, 1), ZOOM_LIMITS.min, ZOOM_LIMITS.max);
+        state.viewport.scale = nextScale;
+        state.viewport.x = width * 0.5 - node.x * nextScale;
+        state.viewport.y = height * 0.48 - node.y * nextScale;
+        clampViewport();
+        state.selectedId = node.id;
+        state.selectedFlowId = null;
+        render();
+        renderDetails();
+    }
+
     function resetLayout() {
         if (!state.graph) return;
         state.manualNodePositions.clear();
@@ -3719,19 +3849,30 @@
 
     function updateFullscreenButton() {
         const button = document.getElementById('crypto-fullscreen-toggle');
-        if (!button) return;
-        button.setAttribute('aria-pressed', state.fullscreen ? 'true' : 'false');
-        button.classList.toggle('is-active', state.fullscreen);
-        button.title = state.fullscreen
-            ? 'Exit expanded Crypto graph view'
-            : 'Expand the Crypto graph canvas for fullscreen investigation';
-        const icon = button.querySelector('i');
-        if (icon) {
-            icon.classList.toggle('fa-expand', !state.fullscreen);
-            icon.classList.toggle('fa-compress', state.fullscreen);
+        if (button) {
+            button.setAttribute('aria-pressed', state.fullscreen ? 'true' : 'false');
+            button.classList.toggle('is-active', state.fullscreen);
+            button.title = state.fullscreen
+                ? 'Exit expanded Crypto graph view'
+                : 'Expand the Crypto graph canvas for fullscreen investigation';
+            const icon = button.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-expand', !state.fullscreen);
+                icon.classList.toggle('fa-compress', state.fullscreen);
+            }
+            const label = button.querySelector('span');
+            if (label) label.innerText = state.fullscreen ? 'Exit Fullscreen' : 'Expand Graph';
         }
-        const label = button.querySelector('span');
-        if (label) label.innerText = state.fullscreen ? 'Exit Fullscreen' : 'Expand Graph';
+
+        const mobileButton = document.getElementById('crypto-mobile-fullscreen-toggle');
+        const mobileIcon = mobileButton?.querySelector('i');
+        mobileButton?.setAttribute('aria-pressed', state.fullscreen ? 'true' : 'false');
+        mobileButton?.setAttribute('title', state.fullscreen ? 'Exit CryptoPhotonic fullscreen graph' : 'Open CryptoPhotonic fullscreen graph');
+        mobileButton?.classList.toggle('is-active', state.fullscreen);
+        if (mobileIcon) {
+            mobileIcon.classList.toggle('fa-expand', !state.fullscreen);
+            mobileIcon.classList.toggle('fa-compress', state.fullscreen);
+        }
     }
 
     function resetFlowQueueState() {
@@ -4223,6 +4364,7 @@
         setActive,
         render,
         resetView,
+        centerTrackedWallet,
         resetLayout,
         setFullscreen,
         playFlowReplay: () => setFlowReplayPlaying(true),

@@ -688,6 +688,133 @@
             user-select: none;
         }
 
+        .control-section-title,
+        .control-help {
+            color: rgba(165, 243, 252, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.66rem;
+            letter-spacing: 1.15px;
+            line-height: 1.45;
+        }
+
+        .control-section-title {
+            flex: 1 0 100%;
+            margin-top: 0.15rem;
+            text-transform: uppercase;
+        }
+
+        .control-help {
+            color: rgba(226, 232, 240, 0.58);
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .stock-control-break {
+            flex-basis: 100%;
+            height: 0;
+        }
+
+        .help-trigger {
+            border-color: rgba(125, 211, 252, 0.24) !important;
+            background: rgba(14, 165, 233, 0.10);
+        }
+
+        body.crypto-graph-fullscreen-active {
+            overflow: hidden;
+        }
+
+        body.crypto-graph-fullscreen-active > header,
+        body.crypto-graph-fullscreen-active > .page-shell:not(#crypto-photonic-view) {
+            display: none;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 95;
+            width: 100vw;
+            height: 100dvh;
+            max-width: none;
+            padding: 0.85rem;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 12% 9%, rgba(0, 249, 255, 0.16), transparent 32rem),
+                radial-gradient(circle at 82% 17%, rgba(34, 197, 94, 0.10), transparent 26rem),
+                rgba(3, 7, 18, 0.98);
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen > .flex {
+            margin-bottom: 0.75rem;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
+            height: calc(100dvh - 7.4rem);
+            display: flex;
+            flex-direction: column;
+            border-radius: 1.15rem;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen .crypto-panel > .grid {
+            flex: 1;
+            min-height: 0;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen .crypto-canvas-wrap {
+            height: 100%;
+            min-height: 0;
+            border-radius: 1rem;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen #crypto-detail-panel {
+            max-height: 100%;
+            border-radius: 1rem;
+        }
+
+        .photonic-help-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.68);
+            backdrop-filter: blur(18px);
+        }
+
+        .photonic-help-backdrop.is-open {
+            display: flex;
+        }
+
+        .photonic-help-modal {
+            width: min(760px, calc(100vw - 2rem));
+            max-height: min(82dvh, 760px);
+            overflow-y: auto;
+            border: 1px solid rgba(125, 211, 252, 0.22);
+            background:
+                linear-gradient(145deg, rgba(0, 249, 255, 0.10), rgba(255, 255, 255, 0.045)),
+                rgba(3, 7, 18, 0.94);
+            box-shadow: 0 26px 80px rgba(0, 0, 0, 0.55), 0 0 34px rgba(0, 249, 255, 0.10);
+        }
+
+        .photonic-help-modal h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.65rem, 4vw, 2.35rem);
+            line-height: 1.05;
+        }
+
+        .photonic-help-list {
+            display: grid;
+            gap: 0.55rem;
+            color: rgba(226, 232, 240, 0.74);
+            font-size: 0.88rem;
+            line-height: 1.55;
+        }
+
+        .photonic-help-list strong {
+            color: rgba(236, 254, 255, 0.92);
+        }
+
         .crypto-stat-pill,
         .crypto-detail-row,
         .crypto-edge-summary {
@@ -904,6 +1031,36 @@
                 justify-content: center;
             }
 
+            #crypto-photonic-view.is-crypto-fullscreen {
+                padding: 0.75rem;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
+                height: auto;
+                min-height: calc(100dvh - 1.5rem);
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-canvas-wrap {
+                height: clamp(460px, 68dvh, 760px);
+                min-height: 460px;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen #crypto-detail-panel {
+                max-height: min(46dvh, 30rem);
+            }
+
+            .photonic-help-backdrop {
+                align-items: stretch;
+                padding: 0.75rem;
+            }
+
+            .photonic-help-modal {
+                width: 100%;
+                max-height: calc(100dvh - 1.5rem);
+            }
+
             .connection-row {
                 border-radius: 1rem;
             }
@@ -1020,16 +1177,19 @@
 
         <section id="graph-intelligence-view" role="tabpanel" aria-labelledby="graph-intelligence-tab">
             <div class="graph-intelligence-controls glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10">
+                <div class="control-section-title">Data / Filters</div>
+                <div class="control-help basis-full">Find companies, narrow the market universe, and choose the graph layout before using advanced view controls.</div>
                 <div class="flex-1 min-w-[220px] relative">
                     <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-white/35"></i>
                     <input id="search-input" type="text" placeholder="Search ticker or company..."
                            class="w-full bg-black/40 border border-white/20 focus:border-cyan-400 outline-none text-white placeholder:text-white/40 pl-11 py-3 rounded-3xl text-sm"
                            autocomplete="off"
+                           title="Search the loaded StockPhotonic company graph by ticker or company name."
                            oninput="filterGraph()">
                     <div id="search-panel" class="search-panel hidden absolute left-0 right-0 top-full mt-2 rounded-3xl p-2 z-50"></div>
                 </div>
 
-                <select id="sector-filter" onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                <select id="sector-filter" title="Show all sectors or narrow the graph to one sector." onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
                     <option value="">All Sectors</option>
                 </select>
 
@@ -1037,13 +1197,17 @@
                     <option value="">All Industry Groups</option>
                 </select>
 
-                <select id="layout-mode" onchange="setLayoutMode(this.value)" class="bg-black/40 border border-cyan-400/25 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                <select id="layout-mode" title="Sector Layout groups by sector, Hub Layout centers one selected company, and Company Nexus separates relationship types around a selected company." onchange="setLayoutMode(this.value)" class="bg-black/40 border border-cyan-400/25 text-white text-sm rounded-3xl px-4 py-3 outline-none">
                     <option value="sector">Sector Layout</option>
                     <option value="hub">Hub Layout</option>
                     <option value="nexus">Company Nexus View</option>
                 </select>
 
-                <button id="focus-mode-toggle" onclick="toggleFocusMode()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                <div class="stock-control-break"></div>
+                <div class="control-section-title">Graph View Controls</div>
+                <div class="control-help basis-full">Use these controls to change how the same stock graph is viewed. They do not alter the underlying dataset.</div>
+
+                <button id="focus-mode-toggle" onclick="toggleFocusMode()" aria-pressed="false" title="Dim unrelated nodes and keep the selected company network prominent." class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
                     <i class="fa-solid fa-bullseye"></i>
                     <span>Focus Mode</span>
                 </button>
@@ -1073,14 +1237,23 @@
                     <span>Reset Orb Layout</span>
                 </button>
 
-                <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
-                    <i class="fa-solid fa-file-shield"></i>
-                    <span>SEC Preview On</span>
-                </button>
-
-                <button id="graph-fullscreen-toggle" type="button" onclick="toggleGraphFullscreen()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Toggle 2D graph fullscreen">
+                <button id="graph-fullscreen-toggle" type="button" onclick="toggleGraphFullscreen()" aria-pressed="false" class="focus-button px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Expand the StockPhotonic graph workspace to fullscreen">
                     <i class="fa-solid fa-expand"></i>
                     <span>Fullscreen</span>
+                </button>
+
+                <button id="stock-help-guide" type="button" onclick="openPhotonicHelp('stock')" class="help-trigger focus-button px-4 py-3 text-xs rounded-3xl border flex items-center gap-x-2" title="Open a plain-English guide for StockPhotonic controls and graph meaning.">
+                    <i class="fa-regular fa-circle-question"></i>
+                    <span>How to Use</span>
+                </button>
+
+                <div class="stock-control-break"></div>
+                <div class="control-section-title">Signals / Portfolio</div>
+                <div class="control-help basis-full">SEC preview, signal threshold, and portfolio exposure help inspect relationship confidence and relevance without changing production data.</div>
+
+                <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" title="Show or hide reviewed SEC-backed preview relationships in the graph." class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
+                    <i class="fa-solid fa-file-shield"></i>
+                    <span>SEC Preview On</span>
                 </button>
 
                 <button id="graph-hud-toggle" type="button" onclick="toggleGraphHud()" aria-pressed="false" class="fullscreen-hud-toggle focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 items-center gap-x-2" title="Hide fullscreen HUD">
@@ -1445,9 +1618,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <div class="text-sm text-white/50 mt-1">Reviewed fixture data under <span class="font-mono text-cyan-50/78">data/crypto/</span></div>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <button id="crypto-reset-view" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/78 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">RESET VIEW</button>
-                    <button id="crypto-reset-layout" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/78 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">RESET LAYOUT</button>
-                    <div class="text-[10px] font-mono tracking-[1.2px] text-yellow-100/75 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1.5">NO LIVE CHAIN FETCHING</div>
+                    <button id="crypto-fullscreen-toggle" type="button" aria-pressed="false" title="Expand the Crypto graph canvas for fullscreen investigation" class="rounded-full border border-cyan-200/20 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/82 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">
+                        <i class="fa-solid fa-expand mr-1"></i><span>Expand Graph</span>
+                    </button>
+                    <button type="button" onclick="openPhotonicHelp('crypto')" title="Open a plain-English guide for CryptoPhotonic controls and graph meaning." class="help-trigger rounded-full border px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/82 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">
+                        <i class="fa-regular fa-circle-question mr-1"></i><span>How to Use</span>
+                    </button>
+                    <button id="crypto-reset-view" type="button" title="Return Crypto pan and zoom to the default graph view." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/78 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">RESET VIEW</button>
+                    <button id="crypto-reset-layout" type="button" title="Rebuild Crypto node positions while preserving the current data mode and filters." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/78 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">RESET LAYOUT</button>
+                    <div title="CryptoPhotonic browser code never calls Solana providers directly; Worker responses are sanitized before graphing." class="text-[10px] font-mono tracking-[1.2px] text-yellow-100/75 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1.5">NO BROWSER PROVIDER CALLS</div>
                 </div>
             </div>
 
@@ -1469,6 +1648,21 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             </div>
         </section>
     </main>
+
+    <div id="photonic-help-backdrop" class="photonic-help-backdrop" role="presentation">
+        <section class="photonic-help-modal rounded-3xl p-5 md:p-6" role="dialog" aria-modal="true" aria-labelledby="photonic-help-title">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <div id="photonic-help-eyebrow" class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">VIEW GUIDE</div>
+                    <h3 id="photonic-help-title" class="mt-1 text-white">How to Use This View</h3>
+                </div>
+                <button type="button" onclick="closePhotonicHelp()" class="focus-button rounded-full border border-white/15 px-3 py-2 text-xs text-white/70" aria-label="Close help guide">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="photonic-help-content" class="photonic-help-list mt-5"></div>
+        </section>
+    </div>
 
     <script src="js/core/config.js"></script>
     <script src="js/utils/math.js"></script>
@@ -1845,6 +2039,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const cryptoTab = document.getElementById('crypto-product-tab');
 
             currentProductView = nextView;
+            if (isCryptoView) {
+                exitActiveFullscreenModes({ fit: false });
+            } else {
+                cryptoPhotonicUi.setFullscreen?.(false);
+            }
             document.body.classList.toggle('is-crypto-active', isCryptoView);
             stockSurface?.classList.toggle('hidden', isCryptoView);
             cryptoSurface?.classList.toggle('hidden', !isCryptoView);
@@ -1866,6 +2065,118 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     requestDraw();
                 }
             });
+        }
+
+        function openPhotonicHelp(view = currentProductView) {
+            const normalizedView = view === 'crypto' ? 'crypto' : 'stock';
+            const backdrop = document.getElementById('photonic-help-backdrop');
+            const title = document.getElementById('photonic-help-title');
+            const eyebrow = document.getElementById('photonic-help-eyebrow');
+            const content = document.getElementById('photonic-help-content');
+            if (!backdrop || !title || !content) return;
+
+            const guide = normalizedView === 'crypto' ? getCryptoHelpGuide() : getStockHelpGuide();
+            title.innerText = guide.title;
+            if (eyebrow) eyebrow.innerText = guide.eyebrow;
+            content.innerHTML = guide.sections.map(section => `
+                <section class="rounded-2xl border border-white/10 bg-white/[0.035] p-3">
+                    <div class="text-[10px] font-mono tracking-[1.25px] text-cyan-100/70">${section.label}</div>
+                    <div class="mt-1">${section.body}</div>
+                </section>
+            `).join('');
+            backdrop.classList.add('is-open');
+            backdrop.querySelector('button')?.focus();
+        }
+
+        function closePhotonicHelp() {
+            document.getElementById('photonic-help-backdrop')?.classList.remove('is-open');
+        }
+
+        function setupHelpGuide() {
+            const backdrop = document.getElementById('photonic-help-backdrop');
+            backdrop?.addEventListener('click', event => {
+                if (event.target === backdrop) closePhotonicHelp();
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && backdrop?.classList.contains('is-open')) {
+                    event.preventDefault();
+                    closePhotonicHelp();
+                }
+            });
+        }
+
+        function getStockHelpGuide() {
+            return {
+                eyebrow: 'STOCKPHOTONIC GUIDE',
+                title: 'How to Use StockPhotonic',
+                sections: [
+                    {
+                        label: 'WHAT THIS VIEW IS FOR',
+                        body: 'StockPhotonic is for exploring curated company relationships across the loaded US market graph. It helps compare companies, sectors, relationship strength, SEC-backed edges, and portfolio exposure in one visual workspace.'
+                    },
+                    {
+                        label: 'MAJOR CONTROLS',
+                        body: '<strong>Search</strong> finds a ticker or company. <strong>Sector</strong> and <strong>Industry Group</strong> narrow what is visible. <strong>Layout</strong> changes graph organization: Sector groups by market sector, Hub centers one company, and Company Nexus separates supplier, partner, capital, competitive, and other relationships around a selected company.'
+                    },
+                    {
+                        label: 'GRAPH VIEW CONTROLS',
+                        body: '<strong>Focus Mode</strong> dims unrelated nodes. <strong>Perspective Mode</strong> adds depth to the same 2D graph. <strong>Orb Map</strong> shows the graph as a spatial cluster view, with Spread and Reset Orb Layout for density tuning. <strong>Fullscreen</strong> expands the graph workspace; Fit and Reset remain available.'
+                    },
+                    {
+                        label: 'RECOMMENDED FIRST ACTION',
+                        body: 'Search for a ticker you know, then switch between Sector Layout and Company Nexus View. Use Focus Mode after selecting a company to reduce visual noise.'
+                    },
+                    {
+                        label: 'NODES AND EDGES',
+                        body: 'Nodes are companies. Edges are curated relationship records, including supply, partnership, competitive, capital, and SEC-backed preview relationships when enabled. Edge strength and badges reflect dataset fields, not a live market price feed.'
+                    },
+                    {
+                        label: 'WHAT THIS DOES NOT CLAIM',
+                        body: 'The graph is an intelligence map, not investment advice, not a complete market universe, and not a guarantee that every relationship is current beyond the visible source and validation metadata.'
+                    }
+                ]
+            };
+        }
+
+        function getCryptoHelpGuide() {
+            return {
+                eyebrow: 'CRYPTOPHOTONIC GUIDE',
+                title: 'How to Use CryptoPhotonic',
+                sections: [
+                    {
+                        label: 'WHAT THIS VIEW IS FOR',
+                        body: 'CryptoPhotonic is for inspecting wallet, token, and transfer-flow relationships. It separates local fixtures, replacement wallet lookup, and the sanitized Worker live feed so each graph source is clear.'
+                    },
+                    {
+                        label: 'DATA SOURCE / MODE',
+                        body: '<strong>Generated Fixture</strong> loads stable local sample data for repeatable testing and demos. <strong>Wallet Lookup</strong> replaces the active graph with one wallet activity response from the secure Worker. <strong>Live Feed</strong> shows sanitized Worker events only.'
+                    },
+                    {
+                        label: 'WALLET INVESTIGATION',
+                        body: '<strong>Load Activity</strong> asks the Worker for recent activity for the entered wallet. <strong>Refresh</strong> repeats the last lookup. <strong>Include 2-hop wallet addresses</strong> is advanced: it includes meaningful second-hop addresses when they survive the noise filter.'
+                    },
+                    {
+                        label: 'FILTERS, PLAYBACK, AND MOTION',
+                        body: '<strong>Flow Filters</strong> hide visible transfer legs by type, token, or direction without reloading data. <strong>Switch to Live Feed</strong> changes to Worker events. <strong>Play Flow Queue</strong>, <strong>Step Flow</strong>, and <strong>Motion: On/Off</strong> replay or animate visible transfer legs without changing data.'
+                    },
+                    {
+                        label: 'GRAPH MEANING',
+                        body: 'Wallet nodes represent addresses. Token nodes represent token exposure. Flow edges represent observed transfer legs after normalization and filtering. The Timeline lists visible legs after active filters. The Selected Flow Inspector explains amount, token, direction, source, and timestamp for the selected edge.'
+                    },
+                    {
+                        label: 'DATA QUALITY AND BOUNDARIES',
+                        body: 'Data Quality badges show Worker response state, sanitized graph state, noise filtering, and replacement mode. Worker responses are sanitized before graphing, and this browser code does not call Helius, Solana RPC, or any provider directly.'
+                    },
+                    {
+                        label: 'WHAT THIS DOES NOT CLAIM',
+                        body: 'CryptoPhotonic shows address-to-address observations. It does not claim personal identity, ownership, intent, illicit behavior, complete transaction history, or investment advice.'
+                    },
+                    {
+                        label: 'RECOMMENDED FIRST ACTION',
+                        body: 'Start with Generated Fixture to learn the controls. Then enter a wallet and use Load Activity to replace the graph with Worker-returned activity. Use filters and the timeline before drawing conclusions.'
+                    }
+                ]
+            };
         }
 
         function setAppView(view) {
@@ -5313,6 +5624,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         setupFullscreenSafety();
+        setupHelpGuide();
         setupOrbMap();
         loadSourceCandidatePreview();
         loadData();

@@ -38,6 +38,7 @@
         detailPanel: null,
         statusPanel: null,
         resizeObserver: null,
+        fullscreen: false,
         datasetSource: null,
         datasetSourceKind: 'built_in',
         dataset: null,
@@ -184,6 +185,14 @@
         state.canvas.addEventListener('mouseleave', handleCanvasLeave);
         document.getElementById('crypto-reset-view')?.addEventListener('click', resetView);
         document.getElementById('crypto-reset-layout')?.addEventListener('click', resetLayout);
+        document.getElementById('crypto-fullscreen-toggle')?.addEventListener('click', () => {
+            setFullscreen(!state.fullscreen);
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key !== 'Escape' || !state.fullscreen) return;
+            event.preventDefault();
+            setFullscreen(false);
+        });
         window.addEventListener('resize', resizeAndRender);
 
         if (window.ResizeObserver) {
@@ -1204,14 +1213,15 @@
         const sourceSnapshot = renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount);
 
         return `
-            <div class="rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2">
+            <div class="crypto-control-group rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <div class="text-white/38">DATA SOURCE</div>
+                        <div class="text-white/38">DATA SOURCE / MODE</div>
                         <div class="${sourceTone}">Source: ${escapeHtml(sourceLabel)}</div>
                     </div>
                     ${renderDataModeSwitch()}
                 </div>
+                ${renderControlHelp('Choose the source before investigating. Generated Fixture is local sample data, Wallet Lookup replaces the graph with a secure Worker response, and Live Feed shows sanitized Worker events only.')}
                 ${selector}
                 ${sourceSnapshot}
                 <div class="mt-2 text-yellow-100/76">${escapeHtml(getSourceBoundaryCopy())}</div>
@@ -1256,11 +1266,16 @@
             [DATA_MODES.WALLET, 'Wallet Lookup'],
             [DATA_MODES.LIVE, 'Live Feed']
         ];
+        const help = {
+            [DATA_MODES.GENERATED]: 'Use local reviewed fixtures to explore graph behavior without relying on Worker availability.',
+            [DATA_MODES.WALLET]: 'Replace the active graph with recent activity returned by the secure Worker for one wallet.',
+            [DATA_MODES.LIVE]: 'Show sanitized events from the Worker feed; the browser does not call chain providers.'
+        };
         return `
             <div class="flex flex-wrap gap-1.5" role="group" aria-label="CryptoPhotonic data mode">
                 ${modes.map(([mode, label]) => {
                     const active = state.dataMode === mode;
-                    return `<button type="button" data-crypto-mode="${escapeAttr(mode)}" aria-pressed="${active ? 'true' : 'false'}" class="rounded-full border ${active ? 'border-emerald-200/40 bg-emerald-300/16 text-emerald-50/90' : 'border-cyan-200/15 bg-slate-950/45 text-cyan-50/70'} px-2.5 py-1 hover:border-cyan-100/35">${escapeHtml(label)}</button>`;
+                    return `<button type="button" data-crypto-mode="${escapeAttr(mode)}" aria-pressed="${active ? 'true' : 'false'}" title="${escapeAttr(help[mode])}" class="rounded-full border ${active ? 'border-emerald-200/40 bg-emerald-300/16 text-emerald-50/90' : 'border-cyan-200/15 bg-slate-950/45 text-cyan-50/70'} px-2.5 py-1 hover:border-cyan-100/35">${escapeHtml(label)}</button>`;
                 }).join('')}
             </div>
         `;
@@ -1284,11 +1299,12 @@
 
         return `
             <label class="mt-2 flex items-center gap-2 text-white/52 ${state.dataMode === DATA_MODES.GENERATED ? '' : 'opacity-55'}">
-                <span>Generated Fixture</span>
+                <span title="Local fixture retained for repeatable demos, development, and Worker outage fallback.">Generated Fixture</span>
                 <select id="crypto-generated-fixture-select" ${state.dataMode === DATA_MODES.GENERATED ? '' : 'disabled'} class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none disabled:opacity-50">
                     ${options}
                 </select>
             </label>
+            ${renderControlHelp('Generated fixtures stay available so graph layout, filters, replay, and wallet intelligence can be tested with stable local data.')}
         `;
     }
 
@@ -1297,18 +1313,20 @@
         const value = state.walletLookup.walletInput || state.walletLookup.lastWallet || '';
         return `
             <form id="crypto-wallet-lookup-form" class="mt-3 grid gap-2">
+                <div class="text-white/38">WALLET INVESTIGATION</div>
+                ${renderControlHelp('Load Activity asks the secure Worker for recent wallet activity and replaces the current graph. Refresh repeats the last lookup.')}
                 <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2 items-end">
                     <label class="grid gap-1 min-w-0 text-white/52">
-                        <span>Track Wallet</span>
+                        <span title="Solana wallet address to investigate through the Worker wallet-activity endpoint.">Wallet Address</span>
                         <input id="crypto-wallet-lookup-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${escapeAttr(value)}" placeholder="Solana wallet address" class="w-full min-h-10 bg-slate-950/80 border border-cyan-200/15 rounded-xl px-3 py-2 text-cyan-50/82 outline-none placeholder:text-white/28">
                     </label>
                     <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                        <button id="crypto-wallet-lookup-submit" type="submit" ${state.walletLookup.inFlight ? 'disabled' : ''} class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Activity</button>
-                        <button id="crypto-wallet-lookup-refresh" type="button" ${state.walletLookup.inFlight || !(state.walletLookup.lastWallet || value) ? 'disabled' : ''} class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
+                        <button id="crypto-wallet-lookup-submit" type="submit" ${state.walletLookup.inFlight ? 'disabled' : ''} title="Load recent sanitized wallet activity from the Worker and replace the active graph." class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Activity</button>
+                        <button id="crypto-wallet-lookup-refresh" type="button" ${state.walletLookup.inFlight || !(state.walletLookup.lastWallet || value) ? 'disabled' : ''} title="Run the last wallet lookup again without changing the entered address." class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
                     </div>
                 </div>
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <label class="flex min-h-10 items-center gap-2 rounded-xl border border-cyan-200/15 bg-slate-950/35 px-3 py-2 text-white/58">
+                    <label class="flex min-h-10 items-center gap-2 rounded-xl border border-cyan-200/15 bg-slate-950/35 px-3 py-2 text-white/58" title="Advanced: include meaningful addresses one additional transfer hop away when the Worker response contains them.">
                         <input id="crypto-wallet-depth-toggle" type="checkbox" ${state.walletLookup.graphDepth > 1 ? 'checked' : ''} ${state.dataMode === DATA_MODES.WALLET ? '' : 'disabled'} class="h-4 w-4 accent-cyan-300">
                         <span>Include 2-hop wallet addresses</span>
                     </label>
@@ -1437,7 +1455,7 @@
                     <div class="min-w-0">
                         <div class="text-white/38">DATA QUALITY</div>
                         <div class="mt-1 text-cyan-50/78 leading-relaxed">${escapeHtml(getWalletFilteredLegCopy(intelligence.filteredLegs))}</div>
-                        <div class="mt-1 text-white/50 leading-relaxed">Filtered nodes are infrastructure or program-like accounts. Visible links remain address-to-address observations only.</div>
+                        <div class="mt-1 text-white/50 leading-relaxed">Badges explain whether the graph came from a Worker response, whether sanitized fields are in use, and whether wallet lookup replacement mode is active. Visible links remain address-to-address observations only.</div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-1.5 min-w-[0] lg:min-w-[260px]">
                         ${items.map(renderWalletQualityBadge).join('')}
@@ -1582,7 +1600,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <div class="text-white/38">VISIBLE FLOW TIMELINE</div>
-                        <div class="mt-0.5 text-white/54">Matches active filters; newest or highest-value visible transfer legs first.</div>
+                        <div class="mt-0.5 text-white/54">Timeline lists visible transfer legs after filters; newest or highest-value legs appear first and selecting one opens its inspector.</div>
                     </div>
                     <div class="text-white/38">${escapeHtml(flows.length)} shown / ${escapeHtml(visibleCount)} visible</div>
                 </div>
@@ -1901,24 +1919,25 @@
             || state.graph?.flowReplay?.ordered_flow_ids?.length
             || 0;
         const sourceLabel = getCurrentSourceLabel();
-        const motionLabel = state.flowMotion.enabled ? 'Motion On' : 'Motion Off';
-        const queueLabel = state.flowReplay.playing ? 'Pause Queue' : 'Start Queue';
-        const liveLabel = state.dataMode === DATA_MODES.LIVE ? 'Live Feed Active' : 'Use Live Feed';
+        const motionLabel = state.flowMotion.enabled ? 'Motion: On' : 'Motion: Off';
+        const queueLabel = state.flowReplay.playing ? 'Pause Flow Queue' : 'Play Flow Queue';
+        const liveLabel = state.dataMode === DATA_MODES.LIVE ? 'Live Feed Active' : 'Switch to Live Feed';
         const liveStatus = getLiveStatusLabel();
         return `
-            <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+            <div class="crypto-control-group rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <div class="text-white/38">WORKER FLOW QUEUE</div>
+                        <div class="text-white/38">PLAYBACK / MOTION</div>
                         <div class="text-white/66">${escapeHtml(orderedCount)} ordered flows / ${escapeHtml(motionLabel)} / Source: ${escapeHtml(sourceLabel)} / ${escapeHtml(liveStatus)}</div>
                     </div>
                     <div class="flex flex-wrap gap-1.5">
-                        <button id="crypto-live-mode-toggle" type="button" aria-pressed="${state.live.enabled ? 'true' : 'false'}" class="rounded-full border ${state.live.enabled ? 'border-emerald-200/35 bg-emerald-300/15 text-emerald-50/86' : 'border-cyan-200/15 bg-cyan-300/10 text-cyan-50/78'} px-2.5 py-1 hover:border-cyan-100/35">${escapeHtml(liveLabel)}</button>
-                        <button id="crypto-flow-queue-toggle" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(queueLabel)}</button>
-                        <button id="crypto-flow-queue-step" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">Step</button>
-                        <button id="crypto-flow-motion-toggle" type="button" class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(motionLabel)}</button>
+                        <button id="crypto-live-mode-toggle" type="button" aria-pressed="${state.live.enabled ? 'true' : 'false'}" title="Switch to the sanitized Worker event feed. No browser provider calls are made." class="rounded-full border ${state.live.enabled ? 'border-emerald-200/35 bg-emerald-300/15 text-emerald-50/86' : 'border-cyan-200/15 bg-cyan-300/10 text-cyan-50/78'} px-2.5 py-1 hover:border-cyan-100/35">${escapeHtml(liveLabel)}</button>
+                        <button id="crypto-flow-queue-toggle" type="button" title="Play or pause the ordered transfer-flow replay queue." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(queueLabel)}</button>
+                        <button id="crypto-flow-queue-step" type="button" title="Advance the queue by one visible flow." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">Step Flow</button>
+                        <button id="crypto-flow-motion-toggle" type="button" title="Turn animated flow pulses on or off without changing graph data." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(motionLabel)}</button>
                     </div>
                 </div>
+                ${renderControlHelp('Advanced controls for replaying ordered transfer legs. Play Flow Queue animates the queue, Step Flow advances once, and Motion only changes animation.')}
             </div>
         `;
     }
@@ -1929,7 +1948,7 @@
         const tokenOptions = buildTokenFilterOptions();
         const current = state.filters;
         return `
-            <div class="rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
+            <div class="crypto-control-group rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <div class="text-white/38">FLOW FILTERS</div>
@@ -1961,8 +1980,13 @@
                         </label>
                     </div>
                 </div>
+                ${renderControlHelp('Filters hide transfer legs by type, token, or direction. They do not reload data or change the underlying Worker or fixture response.')}
             </div>
         `;
+    }
+
+    function renderControlHelp(message) {
+        return `<div class="control-help mt-2">${escapeHtml(message)}</div>`;
     }
 
     function buildTransactionTypeOptions() {
@@ -3187,7 +3211,7 @@
 
     function renderSelectedFlowInspector(edge, options = {}) {
         const title = options.title || 'Selected Flow Inspector';
-        const subtitle = options.subtitle || '';
+        const subtitle = options.subtitle || 'Explains the selected visible transfer leg, including normalized amount, token, direction, source, and timestamp.';
         const sourceAddress = getFlowSourceAddress(edge);
         const targetAddress = getFlowTargetAddress(edge);
         const sourceNode = state.graph.nodeById.get(edge.source);
@@ -3676,6 +3700,38 @@
         rebuildInteractionIndex();
         render();
         renderDetails();
+    }
+
+    function setFullscreen(enabled) {
+        const active = Boolean(enabled);
+        if (state.fullscreen === active) return;
+        state.fullscreen = active;
+        state.root?.classList.toggle('is-crypto-fullscreen', active);
+        document.body.classList.toggle('crypto-graph-fullscreen-active', active);
+        updateFullscreenButton();
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(() => {
+                resizeAndRender();
+                renderDetails();
+            });
+        });
+    }
+
+    function updateFullscreenButton() {
+        const button = document.getElementById('crypto-fullscreen-toggle');
+        if (!button) return;
+        button.setAttribute('aria-pressed', state.fullscreen ? 'true' : 'false');
+        button.classList.toggle('is-active', state.fullscreen);
+        button.title = state.fullscreen
+            ? 'Exit expanded Crypto graph view'
+            : 'Expand the Crypto graph canvas for fullscreen investigation';
+        const icon = button.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('fa-expand', !state.fullscreen);
+            icon.classList.toggle('fa-compress', state.fullscreen);
+        }
+        const label = button.querySelector('span');
+        if (label) label.innerText = state.fullscreen ? 'Exit Fullscreen' : 'Expand Graph';
     }
 
     function resetFlowQueueState() {
@@ -4168,6 +4224,7 @@
         render,
         resetView,
         resetLayout,
+        setFullscreen,
         playFlowReplay: () => setFlowReplayPlaying(true),
         pauseFlowReplay: () => setFlowReplayPlaying(false),
         toggleFlowReplay,

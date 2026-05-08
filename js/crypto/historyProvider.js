@@ -52,6 +52,68 @@
         }
     }
 
+    class WorkerWalletHistoryProvider extends WalletHistoryProvider {
+        constructor(options = {}) {
+            super({
+                id: options.id || 'worker-wallet-history-provider',
+                label: options.label || 'Worker Wallet History Provider',
+                providerKind: 'worker',
+                supportsPagination: true,
+                backendOnly: false
+            });
+            this.endpoint = String(options.endpoint || '/api/crypto/wallet-history').trim();
+            this.limit = Math.max(1, Math.min(50, Number(options.limit) || 10));
+        }
+
+        async getHistoryPage(wallet, cursor = null) {
+            const normalizedWallet = String(wallet || '').trim();
+            if (!normalizedWallet) {
+                throw new Error('Wallet history requires a wallet address');
+            }
+            if (!this.endpoint) {
+                throw new Error('Worker wallet history endpoint unavailable');
+            }
+
+            const separator = this.endpoint.includes('?') ? '&' : '?';
+            const params = new URLSearchParams({
+                wallet: normalizedWallet,
+                limit: String(this.limit)
+            });
+            if (cursor) params.set('cursor', String(cursor));
+
+            const response = await fetch(`${this.endpoint}${separator}${params.toString()}`, {
+                cache: 'no-store',
+                headers: { accept: 'application/json' }
+            });
+            const payload = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error(payload?.message || `Worker wallet history returned ${response.status}`);
+            }
+
+            return normalizeHistoryPage({
+                ...(payload || {}),
+                wallet: payload?.wallet || normalizedWallet,
+                cursor,
+                provider: payload?.provider || this.id,
+                metadata: {
+                    ...(payload?.metadata || {}),
+                    worker_endpoint_contract: '/api/crypto/wallet-history',
+                    browser_provider_calls: false
+                }
+            });
+        }
+
+        getCapabilities() {
+            return {
+                ...super.getCapabilities(),
+                endpointContract: '/api/crypto/wallet-history',
+                workerBacked: true,
+                browserProviderCalls: false,
+                apiKeyExposure: false
+            };
+        }
+    }
+
     class HeliusHistoryProvider extends BackendOnlyStubProvider {
         constructor(options = {}) {
             super({
@@ -105,6 +167,7 @@
     namespace.historyProvider = {
         HISTORY_PROVIDER_VERSION,
         WalletHistoryProvider,
+        WorkerWalletHistoryProvider,
         HeliusHistoryProvider,
         PlaceholderExternalProvider,
         normalizeHistoryPage

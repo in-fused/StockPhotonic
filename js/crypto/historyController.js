@@ -32,6 +32,9 @@
             this.loading = false;
             this.lastError = '';
             this.lastMessage = '';
+            this.lastStatus = 'idle';
+            this.providerConfigured = false;
+            this.providerPagesLoaded = 0;
             this.totalLoadedTransactions = 0;
             this.seenTransactionKeys = new Set();
             return this.getSnapshot();
@@ -60,7 +63,7 @@
                 this.lastMessage = 'Load more is prepared, but browser code will not call Helius, lana.ai, RPC, or other providers directly.';
                 return this.getSnapshot();
             }
-            if (this.pages.length && !this.moreAvailable) {
+            if (this.providerPagesLoaded > 0 && !this.moreAvailable) {
                 this.lastMessage = 'No additional history cursor is available yet';
                 return this.getSnapshot();
             }
@@ -90,6 +93,7 @@
             };
 
             this.pages.push(pageRecord);
+            if (!options.seeded) this.providerPagesLoaded += 1;
             this.cursors.push({
                 cursor: pageRecord.cursor,
                 nextCursor: pageRecord.nextCursor,
@@ -99,6 +103,9 @@
             this.moreAvailable = Boolean(pageRecord.moreAvailable && this.nextCursor);
             this.totalLoadedTransactions += countNewTransactions(pageRecord.transactions, this.seenTransactionKeys);
             this.lastMessage = pageRecord.message || '';
+            this.lastStatus = pageRecord.status || 'ok';
+            this.providerConfigured = pageRecord.metadata?.provider_configured === true
+                || (!options.seeded && pageRecord.status === 'ok');
             this.lastError = pageRecord.status === 'ok' ? '' : this.lastMessage || pageRecord.status;
             return this.getSnapshot();
         }
@@ -110,12 +117,15 @@
                 provider: this.provider?.id || '',
                 providerCapabilities: this.provider?.getCapabilities?.() || null,
                 pagesLoaded: this.pages.length,
+                providerPagesLoaded: this.providerPagesLoaded,
                 cursors: this.cursors.slice(),
                 nextCursor: this.nextCursor,
                 moreAvailable: this.moreAvailable,
                 loading: this.loading,
                 lastError: this.lastError,
                 lastMessage: this.lastMessage,
+                lastStatus: this.lastStatus,
+                providerConfigured: this.providerConfigured,
                 totalLoadedTransactions: this.totalLoadedTransactions,
                 pageLimit: this.pageLimit,
                 futureModes: {

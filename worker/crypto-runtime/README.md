@@ -7,6 +7,7 @@ This Worker is the secure runtime foundation for CryptoPhotonic. It is isolated 
 - `GET /health` returns runtime status with no secrets and no provider calls.
 - `GET /api/crypto/events` returns sanitized events through the secure runtime feed contract.
 - `GET /api/crypto/wallet-activity?wallet=<address>&limit=<n>` performs one controlled server-side Helius Enhanced Transactions address-history lookup, stores/dedupes sanitized events, and returns browser-safe events only.
+- `GET /api/crypto/wallet-history?wallet=<address>&cursor=<optional>&limit=<n>` returns a non-storing normalized wallet history page contract for frontend pagination state. It calls only Worker-side provider adapters and returns `provider_not_configured` when no provider is configured.
 - `POST /api/crypto/test-event` accepts local/dev event-like JSON payloads, rejects unsafe provider or secret-shaped fields, normalizes the event, stores it through the configured adapter, and never echoes unsafe input.
 - `POST /webhooks/helius` accepts bounded Helius webhook deliveries, verifies the configured authorization header when not running locally, reduces payloads to the CryptoPhotonic event shape, enforces the controlled wallet watchlist, dedupes retries, and stores only sanitized fields.
 - `POST /api/crypto/dev/clear-events` clears test events only when `ENVIRONMENT` is `local` or `development`.
@@ -107,6 +108,40 @@ Limits and free-tier controls:
 - Events are deduped by normalized signature before storage.
 
 Wallet lookup complements webhook tracking. Webhooks are push-based configured watchlist ingestion at `/webhooks/helius`; wallet lookup is a controlled pull for recent activity entered in the UI. Both routes store the same sanitized event shape, and both keep provider secrets out of the browser.
+
+## Wallet History Endpoint
+
+`GET /api/crypto/wallet-history?wallet=<address>&cursor=<optional>&limit=<n>` is the backend pagination contract used by the CryptoPhotonic Load More History control. The browser calls only this Worker route. The endpoint does not write to KV/D1, does not merge pages into the graph, does not expose provider URLs or secrets, and always returns a normalized page:
+
+```json
+{
+  "wallet": "<PUBLIC_WALLET>",
+  "provider": "helius",
+  "cursor": null,
+  "nextCursor": "<PROVIDER_CURSOR_OR_NULL>",
+  "events": [],
+  "moreAvailable": false,
+  "status": "ok",
+  "message": "Wallet history page loaded from the Worker-side Helius adapter.",
+  "metadata": {
+    "sanitized": true,
+    "production_meaning": false,
+    "live_blockchain_fetching": false,
+    "browser_provider_calls": false,
+    "provider_secret_exposed": false,
+    "raw_provider_payload_exposed": false,
+    "endpoint_contract": "/api/crypto/wallet-history"
+  }
+}
+```
+
+Supported Worker-side provider candidates:
+
+- `helius`: implemented against public Helius Enhanced Transactions address history docs. Configure `CRYPTO_WALLET_HISTORY_PROVIDER=helius` and set `HELIUS_API_KEY` as a Wrangler secret. The adapter uses `before-signature` cursors, `limit`, descending sort order, and `token-accounts=balanceChanged` unless `CRYPTO_HELIUS_HISTORY_TOKEN_ACCOUNTS` is set to `none`, `balanceChanged`, or `all`.
+- `lana`: placeholder only. D107 found no public lana.ai wallet history API documentation, so the Worker returns `provider_placeholder` and performs no lana.ai request.
+- `generic`: implemented as a Worker-side HTTPS endpoint adapter for a future documented provider or owned backend. Configure `CRYPTO_WALLET_HISTORY_PROVIDER=generic`, `CRYPTO_WALLET_HISTORY_URL`, and optionally `CRYPTO_WALLET_HISTORY_BEARER_TOKEN`. The browser never sees these values.
+
+If `CRYPTO_WALLET_HISTORY_PROVIDER` or provider-specific config is missing, the endpoint returns a structured `provider_not_configured` page with empty events. Invalid wallets return `400 invalid_event_query`; unsupported providers return `400 unsupported_provider`.
 
 ## Controlled Watchlist
 
@@ -435,6 +470,7 @@ The current `src/storage.js` adapter documents the future interface through `lis
 ## Security Rules
 
 - Browser code must not call Helius, Jupiter, or private RPC providers directly.
+- Browser wallet history pagination must call only `/api/crypto/wallet-history`; Helius, lana.ai, generic external provider URLs, bearer tokens, and RPC details stay Worker-side.
 - Worker responses must not expose API keys, authorization headers, bearer tokens, private RPC URLs, raw provider payloads, signing keys, or request headers.
 - `POST /api/crypto/test-event` is only a local/dev ingestion path for sanitized test payloads.
 - `POST /webhooks/helius` must use a Helius `authHeader` value mirrored into `HELIUS_WEBHOOK_AUTH_HEADER` before non-local deployments accept events.

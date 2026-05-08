@@ -23,6 +23,7 @@
 
     const DEFAULT_WORKER_FEED_ENDPOINT = '/api/crypto/events';
     const DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT = '/api/crypto/wallet-activity';
+    const DEFAULT_WORKER_WALLET_HISTORY_ENDPOINT = '/api/crypto/wallet-history';
 
     const state = {
         initialized: false,
@@ -83,10 +84,13 @@
             lastError: '',
             lastMessage: '',
             pagesLoaded: 0,
+            providerPagesLoaded: 0,
             totalLoadedTransactions: 0,
             moreAvailable: false,
             nextCursor: null,
-            backendProviderConnected: false
+            backendProviderConnected: false,
+            providerConfigured: false,
+            lastStatus: 'idle'
         },
         filters: {
             transactionType: 'all',
@@ -888,10 +892,13 @@
         state.history.lastError = '';
         state.history.lastMessage = '';
         state.history.pagesLoaded = 0;
+        state.history.providerPagesLoaded = 0;
         state.history.totalLoadedTransactions = 0;
         state.history.moreAvailable = false;
         state.history.nextCursor = null;
         state.history.backendProviderConnected = false;
+        state.history.providerConfigured = false;
+        state.history.lastStatus = 'idle';
     }
 
     function getCurrentSourceLabel() {
@@ -1384,7 +1391,8 @@
     function renderWalletHistoryControls() {
         if (state.dataMode !== DATA_MODES.WALLET) return '';
         const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
-        const disabled = state.walletLookup.inFlight || state.history.inFlight || !hasWallet || !state.history.moreAvailable || !state.history.backendProviderConnected;
+        const noMoreBackendPages = state.history.providerPagesLoaded > 0 && !state.history.moreAvailable;
+        const disabled = state.walletLookup.inFlight || state.history.inFlight || !hasWallet || noMoreBackendPages || !state.history.backendProviderConnected;
         const status = getWalletHistoryStatusLabel();
         return `
             <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2 items-center">
@@ -1398,12 +1406,14 @@
         if (state.history.inFlight) return 'History: loading next backend page';
         if (state.history.lastError) return `History: ${state.history.lastError}`;
         if (state.history.pagesLoaded > 0) {
-            const more = state.history.moreAvailable ? 'more available' : 'no additional cursor';
-            const backend = state.history.backendProviderConnected ? 'backend adapter connected' : 'backend adapter pending';
-            return `History: ${state.history.pagesLoaded} page${state.history.pagesLoaded === 1 ? '' : 's'} loaded / ${state.history.totalLoadedTransactions} tx tracked / ${more} / ${backend}`;
+            const next = state.history.nextCursor ? shortLongValue(state.history.nextCursor) : 'none';
+            const configured = state.history.providerConfigured ? 'provider configured' : 'provider unconfigured';
+            return `History: ${state.history.pagesLoaded} page${state.history.pagesLoaded === 1 ? '' : 's'} loaded / ${state.history.totalLoadedTransactions} tx tracked / next cursor ${next} / ${configured}`;
         }
         if (state.dataMode === DATA_MODES.WALLET) {
-            return 'History: ready for backend pagination after wallet lookup / backend adapter pending';
+            return state.history.backendProviderConnected
+                ? 'History: ready to call Worker wallet-history / provider state unknown'
+                : 'History: ready for backend pagination after wallet lookup / backend adapter pending';
         }
         return 'History: wallet mode only';
     }
@@ -2671,13 +2681,26 @@
         await loadHistoryModules();
         const Controller = namespace.historyController?.HistoryController;
         if (!Controller) return null;
+        const provider = createWorkerHistoryProvider();
         if (!state.history.controller) {
-            state.history.controller = new Controller({ wallet });
+            state.history.controller = new Controller({ wallet, provider });
         } else if (wallet && state.history.controller.wallet !== wallet && !state.history.pagesLoaded) {
             state.history.controller.reset(wallet);
         }
+        state.history.controller.setProvider?.(provider);
         applyHistorySnapshot(state.history.controller.getSnapshot());
         return state.history.controller;
+    }
+
+    function createWorkerHistoryProvider() {
+        const Provider = namespace.historyProvider?.WorkerWalletHistoryProvider;
+        if (!Provider) return null;
+        const endpoint = resolveWalletHistoryEndpoint();
+        if (!endpoint) return null;
+        return new Provider({
+            endpoint,
+            limit: 10
+        });
     }
 
     function loadHistoryModules() {
@@ -2712,11 +2735,14 @@
 
     function applyHistorySnapshot(snapshot = {}) {
         state.history.pagesLoaded = Math.max(0, Number(snapshot.pagesLoaded) || 0);
+        state.history.providerPagesLoaded = Math.max(0, Number(snapshot.providerPagesLoaded) || 0);
         state.history.totalLoadedTransactions = Math.max(0, Number(snapshot.totalLoadedTransactions) || 0);
         state.history.moreAvailable = Boolean(snapshot.moreAvailable);
         state.history.nextCursor = snapshot.nextCursor ?? null;
         state.history.lastError = snapshot.lastError || '';
         state.history.lastMessage = snapshot.lastMessage || '';
+        state.history.lastStatus = snapshot.lastStatus || 'idle';
+        state.history.providerConfigured = Boolean(snapshot.providerConfigured);
         state.history.backendProviderConnected = Boolean(snapshot.provider && snapshot.providerCapabilities && snapshot.providerCapabilities.browserProviderCalls === false && !snapshot.providerCapabilities.backendOnly);
     }
 
@@ -3002,6 +3028,53 @@
             })) return '';
             parsed.pathname = parsed.pathname.slice(0, -DEFAULT_WORKER_FEED_ENDPOINT.length)
                 + DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT;
+            parsed.search = '';
+            parsed.hash = '';
+            if (parsed.origin === window.location.origin) return parsed.pathname;
+            return parsed.protocol === 'https:' ? parsed.href : '';
+        } catch (error) {
+            return '';
+        }
+    }
+
+    function resolveWalletHistoryEndpoint() {
+        const configuredValue = [
+            window.CryptoPhotonicWorkerWalletHistoryEndpoint,
+            state.root?.dataset?.workerWalletHistoryEndpoint
+        ].find(value => typeof value === 'string' && value.trim());
+        if (configuredValue) {
+            const configuredEndpoint = resolveWorkerEndpoint({
+                configuredValue,
+                defaultEndpoint: DEFAULT_WORKER_WALLET_HISTORY_ENDPOINT
+            });
+            return configuredEndpoint.valid ? configuredEndpoint.endpoint : '';
+        }
+
+        const fromLookupEndpoint = deriveSiblingWorkerEndpoint(
+            resolveWalletLookupEndpoint(),
+            DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT,
+            DEFAULT_WORKER_WALLET_HISTORY_ENDPOINT
+        );
+        if (fromLookupEndpoint) return fromLookupEndpoint;
+
+        return deriveSiblingWorkerEndpoint(
+            state.live.endpoint,
+            DEFAULT_WORKER_FEED_ENDPOINT,
+            DEFAULT_WORKER_WALLET_HISTORY_ENDPOINT
+        );
+    }
+
+    function deriveSiblingWorkerEndpoint(endpoint, expectedPath, nextPath) {
+        if (!endpoint) return '';
+        try {
+            const parsed = endpoint.startsWith('/')
+                ? new URL(endpoint, window.location.origin)
+                : new URL(endpoint);
+            if (!isSafeWorkerUrl(parsed, {
+                expectedPath,
+                allowExternal: true
+            })) return '';
+            parsed.pathname = parsed.pathname.slice(0, -expectedPath.length) + nextPath;
             parsed.search = '';
             parsed.hash = '';
             if (parsed.origin === window.location.origin) return parsed.pathname;

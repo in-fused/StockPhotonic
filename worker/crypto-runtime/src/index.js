@@ -9,6 +9,8 @@ const DEFAULT_EVENT_LIMIT = 50;
 const MAX_EVENT_LIMIT = 100;
 const DEFAULT_WALLET_ACTIVITY_LIMIT = 10;
 const MAX_WALLET_ACTIVITY_LIMIT = 25;
+const DEFAULT_WALLET_HISTORY_LIMIT = 10;
+const MAX_WALLET_HISTORY_LIMIT = 50;
 const WALLET_LOOKUP_COOLDOWN_MS = 60 * 1000;
 const WALLET_LOOKUP_CACHE_KEY_PREFIX = "crypto-wallet-lookup:";
 const MAX_WALLET_LOOKUP_CACHE_ITEMS = 100;
@@ -16,6 +18,25 @@ const MAX_TEST_EVENT_BATCH = 10;
 const MAX_HELIUS_WEBHOOK_BATCH = 10;
 const MAX_JSON_BODY_BYTES = 256 * 1024;
 const HELIUS_ADDRESS_HISTORY_ENDPOINT = "https://api-mainnet.helius-rpc.com/v0/addresses";
+const DEFAULT_HELIUS_HISTORY_TOKEN_ACCOUNTS = "balanceChanged";
+const SUPPORTED_HELIUS_HISTORY_TOKEN_ACCOUNTS = new Set(["none", "balanceChanged", "all"]);
+const WALLET_HISTORY_PROVIDER_CANDIDATES = Object.freeze([
+  {
+    id: "helius",
+    label: "Helius Enhanced Transactions address history",
+    readiness: "implemented_when_HELIUS_API_KEY_and_CRYPTO_WALLET_HISTORY_PROVIDER_are_configured",
+  },
+  {
+    id: "lana",
+    label: "lana.ai wallet history",
+    readiness: "placeholder_only_no_public_api_docs_found_d107",
+  },
+  {
+    id: "generic",
+    label: "Generic Worker-side external wallet history endpoint",
+    readiness: "implemented_when_CRYPTO_WALLET_HISTORY_URL_is_configured",
+  },
+]);
 const HELIUS_ALLOWED_WALLETS = [
   "CryptoPhotonicControlledWallet1111111111111111111",
 ];
@@ -145,6 +166,12 @@ export default {
         });
       }
 
+      if (request.method === "GET" && url.pathname === "/api/crypto/wallet-history") {
+        const query = parseWalletHistoryQuery(url);
+        const page = await fetchWalletHistoryPage(query, env);
+        return json(page, page.httpStatus || 200);
+      }
+
       if (request.method === "POST" && url.pathname === "/api/crypto/test-event") {
         const payload = await readJson(request);
         const events = normalizeTestEventPayload(payload);
@@ -268,6 +295,16 @@ class WalletLookupProviderError extends Error {
     super(message);
     this.name = "WalletLookupProviderError";
     this.status = status;
+  }
+}
+
+class WalletHistoryProviderError extends Error {
+  constructor(message, status = 502, code = "wallet_history_provider_unavailable", provider = "") {
+    super(message);
+    this.name = "WalletHistoryProviderError";
+    this.status = status;
+    this.code = code;
+    this.provider = provider;
   }
 }
 
@@ -679,6 +716,500 @@ function parseWalletActivityLimit(value, issues) {
   return limit;
 }
 
+function parseWalletHistoryQuery(url) {
+  const allowedParams = new Set(["wallet", "cursor", "limit"]);
+  const issues = [];
+
+  for (const key of url.searchParams.keys()) {
+    if (!allowedParams.has(key)) {
+      issues.push({
+        param: key,
+        reason: "unsupported_query_param",
+      });
+    }
+  }
+
+  const wallet = parseSolanaWalletAddress(url.searchParams.get("wallet"), issues);
+  const cursor = parseWalletHistoryCursor(url.searchParams.get("cursor"), issues);
+  const limit = parseWalletHistoryLimit(url.searchParams.get("limit"), issues);
+
+  if (issues.length > 0) {
+    throw new InvalidEventQueryError("Wallet history query parameters are invalid.", issues);
+  }
+
+  return {
+    wallet,
+    cursor,
+    limit,
+  };
+}
+
+function parseWalletHistoryCursor(value, issues) {
+  if (value === null) {
+    return null;
+  }
+
+  const cursor = String(value || "").trim();
+  if (!cursor || cursor.length > 160 || !/^[A-Za-z0-9._:-]+$/.test(cursor)) {
+    issues.push({
+      param: "cursor",
+      reason: "must_be_safe_cursor_token_up_to_160_chars",
+    });
+    return null;
+  }
+
+  return cursor;
+}
+
+function parseWalletHistoryLimit(value, issues) {
+  if (value === null) {
+    return DEFAULT_WALLET_HISTORY_LIMIT;
+  }
+
+  if (!/^\d+$/.test(value)) {
+    issues.push({
+      param: "limit",
+      reason: "must_be_integer",
+    });
+    return DEFAULT_WALLET_HISTORY_LIMIT;
+  }
+
+  const limit = Number(value);
+  if (limit < 1 || limit > MAX_WALLET_HISTORY_LIMIT) {
+    issues.push({
+      param: "limit",
+      reason: `must_be_between_1_and_${MAX_WALLET_HISTORY_LIMIT}`,
+    });
+    return DEFAULT_WALLET_HISTORY_LIMIT;
+  }
+
+  return limit;
+}
+
+async function fetchWalletHistoryPage(query, env = {}) {
+  const provider = createWalletHistoryProvider(env);
+  if (!provider.configured) {
+    return walletHistoryProviderNotConfiguredPage(query, provider);
+  }
+
+  return provider.fetchPage(query);
+}
+
+function createWalletHistoryProvider(env = {}) {
+  const providerId = normalizeProviderId(env.CRYPTO_WALLET_HISTORY_PROVIDER || env.CRYPTO_HISTORY_PROVIDER);
+
+  if (!providerId) {
+    return {
+      id: "none",
+      configured: false,
+      message: "No wallet history provider is configured. Set CRYPTO_WALLET_HISTORY_PROVIDER to helius, lana, or generic before using backend history pagination.",
+      metadata: {
+        provider_configured: false,
+        missing: ["CRYPTO_WALLET_HISTORY_PROVIDER"],
+      },
+    };
+  }
+
+  if (providerId === "helius") {
+    const heliusApiKey = safeString(env.HELIUS_API_KEY);
+    if (!heliusApiKey) {
+      return {
+        id: "helius",
+        configured: false,
+        message: "Helius wallet history is selected, but HELIUS_API_KEY is not configured as a Worker secret.",
+        metadata: {
+          provider_configured: false,
+          missing: ["HELIUS_API_KEY"],
+        },
+      };
+    }
+
+    return {
+      id: "helius",
+      configured: true,
+      fetchPage: (query) => fetchHeliusWalletHistoryPage(query, env, heliusApiKey),
+    };
+  }
+
+  if (providerId === "lana") {
+    return {
+      id: "lana",
+      configured: false,
+      message: "lana.ai is registered as a placeholder candidate only. No public wallet history API docs were found for D107, so the Worker will not call lana.ai.",
+      metadata: {
+        provider_configured: false,
+        public_docs_found: false,
+        no_provider_call_performed: true,
+      },
+    };
+  }
+
+  if (providerId === "generic") {
+    const endpoint = parseGenericHistoryEndpoint(env.CRYPTO_WALLET_HISTORY_URL);
+    if (!endpoint) {
+      return {
+        id: "generic",
+        configured: false,
+        message: "Generic wallet history is selected, but CRYPTO_WALLET_HISTORY_URL is not configured as a safe HTTPS Worker-side endpoint.",
+        metadata: {
+          provider_configured: false,
+          missing: ["CRYPTO_WALLET_HISTORY_URL"],
+        },
+      };
+    }
+
+    return {
+      id: "generic",
+      configured: true,
+      fetchPage: (query) => fetchGenericWalletHistoryPage(query, env, endpoint),
+    };
+  }
+
+  throw new WalletHistoryProviderError(
+    `Unsupported wallet history provider "${providerId}". Supported providers are helius, lana, and generic.`,
+    400,
+    "unsupported_provider",
+    providerId,
+  );
+}
+
+function normalizeProviderId(value) {
+  const provider = safeString(value);
+  if (!provider) {
+    return "";
+  }
+
+  const normalized = provider.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  if (normalized === "helius" || normalized === "helius_history" || normalized === "helius_wallet_history") {
+    return "helius";
+  }
+  if (normalized === "lana" || normalized === "lana_ai" || normalized === "lana_wallet_history") {
+    return "lana";
+  }
+  if (normalized === "generic" || normalized === "external" || normalized === "generic_external" || normalized === "external_wallet_history") {
+    return "generic";
+  }
+
+  return normalized;
+}
+
+function walletHistoryProviderNotConfiguredPage(query, provider) {
+  return normalizeWalletHistoryResponse({
+    wallet: query.wallet,
+    provider: provider.id,
+    cursor: query.cursor,
+    nextCursor: null,
+    events: [],
+    moreAvailable: false,
+    status: provider.id === "lana" ? "provider_placeholder" : "provider_not_configured",
+    message: provider.message,
+    metadata: {
+      ...provider.metadata,
+      provider_candidates: WALLET_HISTORY_PROVIDER_CANDIDATES,
+      limit: query.limit,
+    },
+  });
+}
+
+async function fetchHeliusWalletHistoryPage(query, env, heliusApiKey) {
+  const providerUrl = new URL(`${HELIUS_ADDRESS_HISTORY_ENDPOINT}/${encodeURIComponent(query.wallet)}/transactions`);
+  const tokenAccounts = getHeliusHistoryTokenAccounts(env);
+  providerUrl.searchParams.set("api-key", heliusApiKey);
+  providerUrl.searchParams.set("limit", String(query.limit));
+  providerUrl.searchParams.set("sort-order", "desc");
+  providerUrl.searchParams.set("token-accounts", tokenAccounts);
+  if (query.cursor) {
+    providerUrl.searchParams.set("before-signature", query.cursor);
+  }
+
+  let response;
+  try {
+    response = await fetch(providerUrl.toString(), {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+      },
+    });
+  } catch {
+    return walletHistoryProviderUnavailablePage(query, {
+      provider: "helius",
+      message: "Helius wallet history request failed before a response was returned.",
+    });
+  }
+
+  if (!response.ok) {
+    return walletHistoryProviderUnavailablePage(query, {
+      provider: "helius",
+      message: `Helius wallet history returned ${response.status}.`,
+      statusCode: response.status,
+    });
+  }
+
+  const payload = await response.json().catch(() => null);
+  if (!Array.isArray(payload)) {
+    return walletHistoryProviderUnavailablePage(query, {
+      provider: "helius",
+      message: "Helius wallet history returned an unexpected response shape.",
+    });
+  }
+
+  const transactions = payload.slice(0, query.limit);
+  const events = normalizeHeliusWalletHistoryPayload(transactions, {
+    wallet: query.wallet,
+    receivedAt: new Date().toISOString(),
+  });
+  const nextCursor = getLastTransactionSignature(transactions);
+
+  return normalizeWalletHistoryResponse({
+    wallet: query.wallet,
+    provider: "helius",
+    cursor: query.cursor,
+    nextCursor: transactions.length >= query.limit ? nextCursor : null,
+    events,
+    moreAvailable: Boolean(transactions.length >= query.limit && nextCursor),
+    status: "ok",
+    message: transactions.length
+      ? "Wallet history page loaded from the Worker-side Helius adapter."
+      : "Wallet history provider returned no transactions for this page.",
+    metadata: {
+      provider_configured: true,
+      provider_candidates: WALLET_HISTORY_PROVIDER_CANDIDATES,
+      source: "helius_wallet_history",
+      limit: query.limit,
+      count: events.length,
+      token_accounts: tokenAccounts,
+      cursor_kind: query.cursor ? "before_signature" : "initial",
+      provider_fetch_performed: true,
+    },
+  });
+}
+
+function normalizeHeliusWalletHistoryPayload(payload, options) {
+  const transactions = getHeliusTransactions(payload, {
+    maxBatch: MAX_WALLET_HISTORY_LIMIT,
+    label: "Helius wallet history",
+    allowEmpty: true,
+  });
+
+  return transactions.slice(0, MAX_WALLET_HISTORY_LIMIT).map((transaction, index) => {
+    const event = reduceHeliusTransaction(transaction, index, options.receivedAt, {
+      trackedWallet: options.wallet,
+      source: "worker-wallet-history",
+    });
+
+    return normalizeEvent(event, {
+      ingestionSource: "helius_wallet_history",
+      receivedAt: options.receivedAt,
+    });
+  });
+}
+
+function getHeliusHistoryTokenAccounts(env = {}) {
+  const configured = safeString(env.CRYPTO_HELIUS_HISTORY_TOKEN_ACCOUNTS) || DEFAULT_HELIUS_HISTORY_TOKEN_ACCOUNTS;
+  return SUPPORTED_HELIUS_HISTORY_TOKEN_ACCOUNTS.has(configured)
+    ? configured
+    : DEFAULT_HELIUS_HISTORY_TOKEN_ACCOUNTS;
+}
+
+function getLastTransactionSignature(transactions) {
+  const last = Array.isArray(transactions) ? transactions[transactions.length - 1] : null;
+  return safeString(last?.signature);
+}
+
+function parseGenericHistoryEndpoint(value) {
+  const endpoint = safeString(value);
+  if (!endpoint) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(endpoint);
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.search || parsed.hash) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchGenericWalletHistoryPage(query, env, endpoint) {
+  const providerUrl = new URL(endpoint.toString());
+  providerUrl.searchParams.set("wallet", query.wallet);
+  providerUrl.searchParams.set("limit", String(query.limit));
+  if (query.cursor) {
+    providerUrl.searchParams.set("cursor", query.cursor);
+  }
+
+  const headers = {
+    accept: "application/json",
+  };
+  const bearerToken = safeString(env.CRYPTO_WALLET_HISTORY_BEARER_TOKEN);
+  if (bearerToken) {
+    headers.authorization = `Bearer ${bearerToken}`;
+  }
+
+  let response;
+  try {
+    response = await fetch(providerUrl.toString(), {
+      method: "GET",
+      headers,
+    });
+  } catch {
+    return walletHistoryProviderUnavailablePage(query, {
+      provider: "generic",
+      message: "Generic wallet history request failed before a response was returned.",
+    });
+  }
+
+  if (!response.ok) {
+    return walletHistoryProviderUnavailablePage(query, {
+      provider: "generic",
+      message: `Generic wallet history provider returned ${response.status}.`,
+      statusCode: response.status,
+    });
+  }
+
+  const payload = await response.json().catch(() => null);
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return walletHistoryProviderUnavailablePage(query, {
+      provider: "generic",
+      message: "Generic wallet history provider returned an unexpected response shape.",
+    });
+  }
+
+  const normalized = normalizeGenericHistoryEvents(payload, {
+    wallet: query.wallet,
+    receivedAt: new Date().toISOString(),
+  });
+
+  return normalizeWalletHistoryResponse({
+    wallet: query.wallet,
+    provider: "generic",
+    cursor: query.cursor,
+    nextCursor: safeString(payload.nextCursor || payload.next_cursor),
+    events: normalized.events,
+    moreAvailable: Boolean(payload.moreAvailable ?? payload.hasMore ?? payload.has_more ?? payload.nextCursor ?? payload.next_cursor),
+    status: "ok",
+    message: safeString(payload.message) || "Wallet history page loaded from a Worker-side generic adapter.",
+    metadata: {
+      provider_configured: true,
+      provider_candidates: WALLET_HISTORY_PROVIDER_CANDIDATES,
+      source: "generic_wallet_history",
+      limit: query.limit,
+      count: normalized.events.length,
+      skipped_unsafe_items: normalized.skipped,
+      provider_fetch_performed: true,
+    },
+  });
+}
+
+function normalizeGenericHistoryEvents(payload, options) {
+  const items = Array.isArray(payload.events)
+    ? payload.events
+    : Array.isArray(payload.transactions)
+      ? payload.transactions
+      : [];
+  const events = [];
+  let skipped = 0;
+
+  for (const [index, item] of items.slice(0, MAX_WALLET_HISTORY_LIMIT).entries()) {
+    try {
+      events.push(normalizeEvent(reduceGenericHistoryItem(item, index, options), {
+        ingestionSource: "external_wallet_history",
+        receivedAt: options.receivedAt,
+      }));
+    } catch {
+      skipped += 1;
+    }
+  }
+
+  return {
+    events,
+    skipped,
+  };
+}
+
+function reduceGenericHistoryItem(item, index, options) {
+  if (!item || typeof item !== "object" || Array.isArray(item)) {
+    throw new InvalidEventInputError("Generic wallet history item must be an object.");
+  }
+
+  const signature = safeString(item.signature || item.transaction_hash || item.hash || item.id);
+  return {
+    id: safeString(item.id) || `external-history-${index}`,
+    chain: safeString(item.chain) || "solana",
+    signature,
+    timestamp: normalizeHeliusTimestamp(item.timestamp || item.blockTime || item.block_time, options.receivedAt),
+    transaction_type: safeString(item.transaction_type || item.type) || "unknown",
+    source: "generic-wallet-history",
+    wallets: safeObjectList(item.wallets).map((wallet) => ({
+      address: safeString(wallet.address || wallet.wallet_address),
+      role: safeString(wallet.role) || "unknown",
+    })),
+    tokens: safeObjectList(item.tokens).map((token) => ({
+      symbol: safeString(token.symbol),
+      mint: safeString(token.mint || token.address),
+      decimals: token.decimals,
+    })),
+    transfers: safeObjectList(item.transfers).map((transfer) => ({
+      token_symbol: safeString(transfer.token_symbol || transfer.symbol),
+      amount: safeString(transfer.amount),
+      from: safeString(transfer.from || transfer.source_wallet),
+      to: safeString(transfer.to || transfer.destination_wallet),
+    })),
+  };
+}
+
+function walletHistoryProviderUnavailablePage(query, options) {
+  return normalizeWalletHistoryResponse({
+    wallet: query.wallet,
+    provider: options.provider,
+    cursor: query.cursor,
+    nextCursor: null,
+    events: [],
+    moreAvailable: false,
+    status: "provider_unavailable",
+    message: options.message,
+    metadata: {
+      provider_configured: true,
+      provider_candidates: WALLET_HISTORY_PROVIDER_CANDIDATES,
+      limit: query.limit,
+      provider_status: options.statusCode || null,
+      provider_fetch_performed: true,
+    },
+  });
+}
+
+function normalizeWalletHistoryResponse(page) {
+  const events = Array.isArray(page.events)
+    ? page.events
+    : Array.isArray(page.transactions)
+      ? page.transactions
+      : [];
+
+  return {
+    wallet: safeString(page.wallet) || "",
+    provider: safeString(page.provider) || "none",
+    cursor: page.cursor ?? null,
+    nextCursor: page.nextCursor ?? null,
+    events,
+    moreAvailable: Boolean(page.moreAvailable && page.nextCursor),
+    status: safeString(page.status) || "ok",
+    message: safeString(page.message) || "",
+    metadata: {
+      sanitized: true,
+      production_meaning: false,
+      live_blockchain_fetching: false,
+      browser_provider_calls: false,
+      provider_secret_exposed: false,
+      raw_provider_payload_exposed: false,
+      endpoint_contract: "/api/crypto/wallet-history",
+      ...(page.metadata || {}),
+    },
+  };
+}
+
 async function fetchHeliusAddressHistory(options) {
   const providerUrl = new URL(`${HELIUS_ADDRESS_HISTORY_ENDPOINT}/${encodeURIComponent(options.wallet)}/transactions`);
   providerUrl.searchParams.set("api-key", options.heliusApiKey);
@@ -947,6 +1478,25 @@ function handleError(error) {
     return json({
       error: "wallet_lookup_provider_unavailable",
       message: error.message,
+    }, error.status);
+  }
+
+  if (error instanceof WalletHistoryProviderError) {
+    return json({
+      error: error.code || "wallet_history_provider_unavailable",
+      provider: error.provider || "",
+      status: error.code || "wallet_history_provider_unavailable",
+      message: error.message,
+      metadata: {
+        sanitized: true,
+        production_meaning: false,
+        live_blockchain_fetching: false,
+        browser_provider_calls: false,
+        provider_secret_exposed: false,
+        raw_provider_payload_exposed: false,
+        endpoint_contract: "/api/crypto/wallet-history",
+        provider_candidates: WALLET_HISTORY_PROVIDER_CANDIDATES,
+      },
     }, error.status);
   }
 

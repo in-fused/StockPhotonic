@@ -219,6 +219,8 @@ function sanitizeIngestionSource(value) {
     || normalized === "fixture_fallback"
     || normalized === "helius_webhook"
     || normalized === "helius_wallet_lookup"
+    || normalized === "helius_wallet_history"
+    || normalized === "external_wallet_history"
   ) {
     return normalized;
   }

@@ -18,6 +18,277 @@
             --neon-orange: #ff6b00;
         }
 
+        /* Phase D112 layout system: graph-first, compact controls, scrollable intelligence. */
+        header .page-shell {
+            padding-top: 0.85rem !important;
+            padding-bottom: 0.85rem !important;
+        }
+
+        #stock-photonic-surface,
+        #crypto-photonic-view {
+            padding-top: 1rem !important;
+        }
+
+        #stock-photonic-surface > .flex:first-child,
+        #crypto-photonic-view > .flex:first-child {
+            align-items: center;
+            margin-bottom: 0.85rem !important;
+        }
+
+        #stock-photonic-surface > .flex:first-child h1,
+        #crypto-photonic-view > .flex:first-child h1 {
+            font-size: clamp(2rem, 4vw, 3.4rem);
+            line-height: 0.96;
+        }
+
+        #stock-photonic-surface > .flex:first-child p,
+        #crypto-photonic-view > .flex:first-child p {
+            margin-top: 0.35rem;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            max-width: 56rem;
+        }
+
+        .product-view-switch,
+        .app-view-tabs {
+            margin-bottom: 0.85rem !important;
+        }
+
+        .graph-intelligence-controls {
+            margin-bottom: 0.85rem !important;
+            padding: 0.75rem !important;
+            gap: 0.55rem !important;
+            border-radius: 1.25rem !important;
+        }
+
+        .graph-intelligence-controls .control-section-title,
+        .graph-intelligence-controls .control-help {
+            display: none;
+        }
+
+        .graph-intelligence-controls .stock-control-break {
+            display: none;
+        }
+
+        .graph-intelligence-controls input,
+        .graph-intelligence-controls select,
+        .graph-intelligence-controls .focus-button,
+        .graph-intelligence-controls .signal-control {
+            min-height: 2.35rem;
+        }
+
+        .graph-intelligence-controls input,
+        .graph-intelligence-controls select,
+        .graph-intelligence-controls .focus-button {
+            padding-top: 0.55rem !important;
+            padding-bottom: 0.55rem !important;
+            border-radius: 1rem !important;
+        }
+
+        .graph-intelligence-controls .signal-control {
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 1rem !important;
+        }
+
+        #portfolio-input {
+            min-height: 2.35rem;
+            max-height: 3.2rem;
+        }
+
+        .graph-intelligence-layout,
+        .crypto-layout-grid {
+            align-items: stretch;
+        }
+
+        .graph-container {
+            min-height: 560px;
+        }
+
+        #sidebar,
+        #empty-sidebar,
+        #crypto-detail-panel,
+        #crypto-status-panel {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.38) rgba(255, 255, 255, 0.045);
+        }
+
+        .crypto-surface {
+            min-height: auto;
+        }
+
+        .crypto-panel {
+            padding: 0.85rem !important;
+            border-radius: 1.25rem !important;
+        }
+
+        .crypto-workspace-toolbar {
+            margin-bottom: 0.75rem;
+        }
+
+        .crypto-canvas-wrap {
+            height: clamp(540px, calc(100dvh - 18rem), 740px) !important;
+            min-height: 520px !important;
+            border-radius: 1.25rem !important;
+        }
+
+        .crypto-sidebar-stack {
+            display: grid;
+            align-content: start;
+            gap: 0.75rem;
+            max-height: clamp(540px, calc(100dvh - 18rem), 740px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 0.25rem;
+            scrollbar-gutter: stable;
+        }
+
+        .crypto-status-stack {
+            gap: 0.6rem;
+            max-width: none;
+        }
+
+        .crypto-control-group,
+        .crypto-collapse {
+            border-radius: 1rem !important;
+        }
+
+        .crypto-control-group {
+            padding: 0.7rem !important;
+        }
+
+        .crypto-control-group .control-help {
+            display: none;
+        }
+
+        .crypto-collapse {
+            border: 1px solid rgba(125, 211, 252, 0.16);
+            background: rgba(255, 255, 255, 0.035);
+            overflow: hidden;
+        }
+
+        .crypto-collapse > summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            cursor: pointer;
+            list-style: none;
+            padding: 0.8rem 0.9rem;
+            color: rgba(207, 250, 254, 0.88);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.68rem;
+            letter-spacing: 1.15px;
+            text-transform: uppercase;
+        }
+
+        .crypto-collapse > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .crypto-collapse > summary::after {
+            content: "+";
+            color: rgba(165, 243, 252, 0.72);
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .crypto-collapse[open] > summary::after {
+            content: "-";
+        }
+
+        .crypto-collapse-body {
+            padding: 0 0.75rem 0.75rem;
+        }
+
+        #crypto-detail-panel {
+            min-height: 220px;
+            padding: 1rem !important;
+            border-radius: 1.1rem !important;
+        }
+
+        @media (min-width: 1024px) {
+            .graph-intelligence-layout,
+            .crypto-layout-grid {
+                display: grid !important;
+                grid-template-columns: minmax(0, 70fr) minmax(20rem, 30fr) !important;
+                gap: 1rem !important;
+            }
+
+            .graph-stage-column,
+            .graph-sidebar-column,
+            .crypto-graph-column,
+            .crypto-side-column {
+                grid-column: auto !important;
+            }
+
+            .graph-container {
+                height: clamp(580px, calc(100dvh - 20rem), 760px) !important;
+            }
+
+            .graph-sidebar-column #sidebar,
+            .graph-sidebar-column #empty-sidebar {
+                max-height: clamp(580px, calc(100dvh - 20rem), 760px);
+                padding: 1rem !important;
+                border-radius: 1.1rem !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #stock-photonic-surface,
+            #crypto-photonic-view {
+                padding-top: 0.8rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child,
+            #crypto-photonic-view > .flex:first-child {
+                gap: 0.65rem;
+                margin-bottom: 0.7rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child p,
+            #crypto-photonic-view > .flex:first-child p {
+                display: none;
+            }
+
+            .graph-intelligence-controls {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding: 0.6rem !important;
+                scrollbar-width: thin;
+            }
+
+            .graph-intelligence-controls > * {
+                flex-shrink: 0;
+            }
+
+            .graph-intelligence-controls .flex-1 {
+                min-width: 15rem;
+            }
+
+            .graph-intelligence-layout,
+            .crypto-layout-grid {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) !important;
+                gap: 0.85rem !important;
+            }
+
+            .graph-stage-column,
+            .crypto-graph-column {
+                order: 1;
+            }
+
+            .graph-sidebar-column,
+            .crypto-side-column {
+                order: 2;
+            }
+
+            .crypto-sidebar-stack {
+                max-height: none;
+                overflow: visible;
+                padding-right: 0;
+            }
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -1248,6 +1519,90 @@
             }
 
         }
+
+        @media (max-width: 768px) {
+            header .page-shell {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0.6rem !important;
+                padding: 0.55rem 0.85rem !important;
+            }
+
+            header .page-shell > div:first-child,
+            header .page-shell > div:first-child > div {
+                min-width: 0;
+            }
+
+            header .w-11 {
+                width: 2rem !important;
+                height: 2rem !important;
+                border-radius: 0.8rem !important;
+                flex: 0 0 auto;
+            }
+
+            header .fa-atom {
+                font-size: 1.25rem !important;
+            }
+
+            header .neon-text {
+                font-size: 1.25rem !important;
+                line-height: 1 !important;
+                white-space: nowrap;
+            }
+
+            header .neon-text + div,
+            header [data-stock-only] {
+                display: none !important;
+            }
+
+            .product-view-switch,
+            .app-view-tabs {
+                width: 100% !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                margin-bottom: 0.45rem !important;
+                padding: 0.35rem !important;
+            }
+
+            .product-view-tab,
+            .app-view-tab {
+                min-height: 2.25rem !important;
+                justify-content: center;
+                padding: 0.5rem 0.65rem !important;
+                font-size: 0.62rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child,
+            #crypto-photonic-view > .flex:first-child {
+                display: none !important;
+            }
+
+            .graph-intelligence-controls {
+                max-height: 4.2rem;
+                margin-bottom: 0.5rem !important;
+                overflow-x: auto;
+                overflow-y: hidden;
+                flex-wrap: nowrap !important;
+            }
+
+            .graph-container {
+                height: clamp(390px, 58dvh, 620px) !important;
+                min-height: 390px !important;
+            }
+
+            .crypto-workspace-toolbar {
+                margin-bottom: 0.5rem !important;
+            }
+
+            .crypto-workspace-toolbar > div:first-child > div:last-child {
+                display: none;
+            }
+
+            .crypto-canvas-wrap {
+                height: clamp(410px, 62dvh, 640px) !important;
+                min-height: 410px !important;
+            }
+        }
     </style>
 </head>
 <body class="photonic-bg">
@@ -1772,7 +2127,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         </div>
 
         <section class="crypto-panel rounded-3xl p-4 md:p-5">
-            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div class="crypto-workspace-toolbar flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div>
                     <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">LOCAL GRAPH WORKSPACE</div>
                     <div class="text-sm text-white/50 mt-1">Reviewed fixture data under <span class="font-mono text-cyan-50/78">data/crypto/</span></div>
@@ -1790,8 +2145,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                <div class="lg:col-span-8">
+            <div class="crypto-layout-grid grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div class="crypto-graph-column lg:col-span-8">
                     <div class="crypto-canvas-wrap rounded-3xl overflow-hidden">
                         <canvas id="crypto-flow-canvas" class="w-full h-full"></canvas>
                         <div class="mobile-graph-overlay crypto-mobile-graph-overlay" aria-label="Mobile CryptoPhotonic graph controls">
@@ -1810,12 +2165,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         </div>
                     </div>
                 </div>
-                <aside class="lg:col-span-4">
-                    <div id="crypto-detail-panel" class="glass rounded-3xl p-6 border border-white/10 h-full min-h-[320px] overflow-y-auto">
-                        <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
-                            <i class="fa-solid fa-wallet text-5xl text-white/20 mb-4"></i>
-                            <div class="font-semibold text-white/60">Crypto graph inactive</div>
-                            <div class="text-xs text-white/35 mt-2 max-w-xs">Select CryptoPhotonic to initialize the isolated sample graph.</div>
+                <aside class="crypto-side-column lg:col-span-4">
+                    <div class="crypto-sidebar-stack">
+                        <div id="crypto-status-panel" class="crypto-status-panel"></div>
+                        <div id="crypto-detail-panel" class="glass rounded-3xl p-6 border border-white/10 min-h-[320px] overflow-y-auto">
+                            <div class="h-full min-h-[220px] flex flex-col items-center justify-center text-center">
+                                <i class="fa-solid fa-wallet text-5xl text-white/20 mb-4"></i>
+                                <div class="font-semibold text-white/60">Crypto graph inactive</div>
+                                <div class="text-xs text-white/35 mt-2 max-w-xs">Select CryptoPhotonic to initialize the isolated sample graph.</div>
+                            </div>
                         </div>
                     </div>
                 </aside>

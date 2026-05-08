@@ -1262,22 +1262,22 @@
                 : 'Solana-first offline fixture mode for wallet, SPL token, and swap-like flow graphs';
         }
 
-        const panelHeader = state.root.querySelector('.crypto-panel > div:first-child');
-        if (!panelHeader) return;
+        const statusHost = document.getElementById('crypto-status-panel') || state.root.querySelector('.crypto-panel > div:first-child');
+        if (!statusHost) return;
 
         const existing = document.getElementById('crypto-solana-status');
         if (existing) existing.remove();
 
         const status = document.createElement('div');
         status.id = 'crypto-solana-status';
-        status.className = 'grid gap-2 text-[10px] font-mono tracking-[1.1px] text-cyan-50/78 max-w-3xl grow md:grow-0';
+        status.className = 'crypto-status-stack grid gap-2 text-[10px] font-mono tracking-[1.1px] text-cyan-50/78';
         status.innerHTML = `
             ${renderGeneratedDataManager(metadata, isGeneratedFixture, isSolana)}
             ${renderWalletIntelligencePanel()}
             ${renderFlowFilters()}
             ${renderFlowQueueStatus()}
         `;
-        panelHeader.appendChild(status);
+        statusHost.appendChild(status);
         state.statusPanel = status;
         bindStatusControls(status);
         renderHistoryGraphPreviewCanvas(status);
@@ -1471,6 +1471,12 @@
         const emptyState = getWalletLookupEmptyStateDetails(intelligence);
         const depthNote = getWalletDepthExpansionNote();
         return `
+            <details class="crypto-collapse crypto-intelligence-collapse" open>
+                <summary>
+                    <span>Wallet Intelligence</span>
+                    <span>${escapeHtml(intelligence.visibleLegs)} visible legs</span>
+                </summary>
+                <div class="crypto-collapse-body">
             <div class="rounded-2xl border border-emerald-200/18 bg-emerald-300/10 p-3 sm:p-4">
                 <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                     <div class="min-w-0">
@@ -1539,6 +1545,8 @@
                 </section>
                 ${renderWalletTimelineSection(intelligence.timeline)}
             </div>
+                </div>
+            </details>
         `;
     }
 
@@ -1609,8 +1617,15 @@
         const loadMoreDisabled = isWalletHistoryLoadMoreDisabled();
         const clearDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.loadedTransactions.length);
         const copyDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.lastMessage && !state.history.lastError);
+        const openAttr = state.history.inFlight || state.history.pagesLoaded || state.history.loadedTransactions.length ? 'open' : '';
         return `
-            <section class="mt-3 rounded-xl border border-cyan-200/16 bg-slate-950/30 p-3">
+            <details class="crypto-collapse crypto-history-collapse mt-3" ${openAttr}>
+                <summary>
+                    <span>History</span>
+                    <span>${escapeHtml(state.history.totalLoadedTransactions || 0)} tx</span>
+                </summary>
+                <div class="crypto-collapse-body">
+            <section class="rounded-xl border border-cyan-200/16 bg-slate-950/30 p-3">
                 <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
                     <div class="min-w-0">
                         <div class="text-white/38">WALLET HISTORY BROWSER</div>
@@ -1637,6 +1652,8 @@
                     ${rows.map(renderWalletHistoryBrowserRow).join('') || renderWalletInlineEmpty(getWalletHistoryEmptyMessage())}
                 </div>
             </section>
+                </div>
+            </details>
         `;
     }
 
@@ -1653,8 +1670,15 @@
         const copyDisabled = state.history.inFlight || !plan;
         const graphToggleDisabled = state.history.inFlight;
         const graphToggleLabel = state.historyPreview.graphVisible ? 'Hide Preview Graph' : 'Show Preview Graph';
+        const openAttr = state.historyPreview.graphVisible || state.historyPreview.dataset || plan ? 'open' : '';
         return `
-            <section class="mt-3 rounded-xl border border-fuchsia-200/18 bg-fuchsia-300/8 p-3">
+            <details class="crypto-collapse crypto-history-preview-collapse mt-3" ${openAttr}>
+                <summary>
+                    <span>History Preview</span>
+                    <span>${escapeHtml(summary.transferEventCount || 0)} events</span>
+                </summary>
+                <div class="crypto-collapse-body">
+            <section class="rounded-xl border border-fuchsia-200/18 bg-fuchsia-300/8 p-3">
                 <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                     <div class="min-w-0">
                         <div class="text-white/38">HISTORY GRAPH PREVIEW / REPLAY SANDBOX</div>
@@ -1723,6 +1747,8 @@
                     </div>
                 </div>
             </section>
+                </div>
+            </details>
         `;
     }
 
@@ -2357,8 +2383,15 @@
 
     function renderWalletTimelineSection(flows = []) {
         const visibleCount = getVisibleFlowEdges().length;
+        const openAttr = state.selectedFlowId ? 'open' : '';
         return `
-            <section class="mt-2.5 rounded-xl border border-cyan-200/14 bg-slate-950/28 p-3">
+            <details class="crypto-collapse crypto-timeline-collapse mt-2.5" ${openAttr}>
+                <summary>
+                    <span>Timeline</span>
+                    <span>${escapeHtml(flows.length)} shown</span>
+                </summary>
+                <div class="crypto-collapse-body">
+            <section class="rounded-xl border border-cyan-200/14 bg-slate-950/28 p-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <div class="text-white/38">VISIBLE FLOW TIMELINE</div>
@@ -2370,6 +2403,8 @@
                     ${flows.map(renderWalletTimelineItem).join('') || renderWalletInlineEmpty('No visible transfer legs match the active flow filters.')}
                 </div>
             </section>
+                </div>
+            </details>
         `;
     }
 

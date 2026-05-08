@@ -38,6 +38,7 @@
         root: null,
         detailPanel: null,
         statusPanel: null,
+        investigationTab: 'summary',
         resizeObserver: null,
         fullscreen: false,
         datasetSource: null,
@@ -1289,17 +1290,16 @@
 
         const status = document.createElement('div');
         status.id = 'crypto-solana-status';
-        status.className = 'crypto-status-stack grid gap-2 text-[10px] font-mono tracking-[1.1px] text-cyan-50/78';
+        status.className = 'crypto-status-stack grid gap-2 text-sm text-cyan-50/78';
         status.innerHTML = `
             ${renderGeneratedDataManager(metadata, isGeneratedFixture, isSolana)}
-            ${renderWalletIntelligencePanel()}
             ${renderFlowFilters()}
             ${renderFlowQueueStatus()}
         `;
         statusHost.appendChild(status);
         state.statusPanel = status;
         bindStatusControls(status);
-        renderHistoryGraphPreviewCanvas(status, { resumeReplay: replayWasPlaying });
+        renderDetails({ resumeReplay: replayWasPlaying });
         updateInteractionDock();
     }
 
@@ -1571,6 +1571,217 @@
         `;
     }
 
+    function renderInvestigationWorkspace() {
+        const activeTab = getInvestigationTab();
+        return `
+            <section class="crypto-investigation-workspace" aria-label="CryptoPhotonic investigation workspace">
+                <div class="crypto-investigation-header">
+                    <div class="min-w-0">
+                        <div class="crypto-kicker">INVESTIGATION WORKSPACE</div>
+                        <h2>Wallet Lookup Workspace</h2>
+                        <p>${escapeHtml(getInvestigationWorkspaceSubtitle())}</p>
+                    </div>
+                    ${state.dataMode === DATA_MODES.WALLET ? renderWalletInvestigationReportAction() : ''}
+                </div>
+                <div class="crypto-investigation-tabs" role="tablist" aria-label="Investigation sections">
+                    ${getInvestigationTabs().map(tab => renderInvestigationTabButton(tab, activeTab)).join('')}
+                </div>
+                <div class="crypto-investigation-content" role="tabpanel" aria-labelledby="crypto-investigation-tab-${escapeAttr(activeTab)}">
+                    ${renderInvestigationTabContent(activeTab)}
+                </div>
+            </section>
+        `;
+    }
+
+    function getInvestigationTabs() {
+        return [
+            { id: 'summary', label: 'Summary' },
+            { id: 'flows', label: 'Flows' },
+            { id: 'history', label: 'History' },
+            { id: 'replay', label: 'Replay' },
+            { id: 'details', label: 'Details' }
+        ];
+    }
+
+    function getInvestigationTab() {
+        const tabs = new Set(getInvestigationTabs().map(tab => tab.id));
+        if (!tabs.has(state.investigationTab)) state.investigationTab = 'summary';
+        return state.investigationTab;
+    }
+
+    function setInvestigationTab(tab) {
+        const tabs = new Set(getInvestigationTabs().map(item => item.id));
+        state.investigationTab = tabs.has(tab) ? tab : 'summary';
+        renderDetails();
+        return state.investigationTab;
+    }
+
+    function renderInvestigationTabButton(tab, activeTab) {
+        const active = tab.id === activeTab;
+        return `
+            <button id="crypto-investigation-tab-${escapeAttr(tab.id)}" type="button" role="tab" aria-selected="${active ? 'true' : 'false'}" data-crypto-investigation-tab="${escapeAttr(tab.id)}" class="crypto-investigation-tab">
+                ${escapeHtml(tab.label)}
+            </button>
+        `;
+    }
+
+    function getInvestigationWorkspaceSubtitle() {
+        if (state.dataMode === DATA_MODES.WALLET) {
+            const intelligence = buildWalletIntelligence();
+            return `${intelligence.visibleLegs} visible flow legs from the current Worker wallet lookup. History and replay stay staged and preview-only.`;
+        }
+        if (state.dataMode === DATA_MODES.LIVE) return 'Live Feed mode is active. Use Wallet Lookup for staged history and replay investigation tools.';
+        return 'Generated Fixture mode is active. Use Wallet Lookup to replace the graph with a Worker response and unlock history/replay drill-downs.';
+    }
+
+    function renderInvestigationTabContent(tab) {
+        if (tab === 'flows') return renderWalletFlowsWorkspacePanel();
+        if (tab === 'history') return renderWalletHistoryWorkspacePanel();
+        if (tab === 'replay') return renderWalletReplayWorkspacePanel();
+        if (tab === 'details') return renderInvestigationDetailsPanelContent();
+        return renderWalletSummaryWorkspacePanel();
+    }
+
+    function renderWalletSummaryWorkspacePanel() {
+        if (state.dataMode !== DATA_MODES.WALLET) return renderNonWalletSummaryWorkspacePanel();
+        const intelligence = buildWalletIntelligence();
+        const emptyState = getWalletLookupEmptyStateDetails(intelligence);
+        const topCounterparty = intelligence.mostActiveCounterparty
+            ? `${shortLongValue(intelligence.mostActiveCounterparty.address)} (${intelligence.mostActiveCounterparty.count}x)`
+            : '-';
+        const topToken = intelligence.mostActiveToken
+            ? `${intelligence.mostActiveToken.symbol} (${intelligence.mostActiveToken.count} leg${intelligence.mostActiveToken.count === 1 ? '' : 's'})`
+            : '-';
+        return `
+            <div class="crypto-tab-section crypto-summary-section">
+                ${emptyState ? renderWalletEmptyStateCard(emptyState) : ''}
+                <div class="crypto-summary-grid">
+                    ${renderWorkspaceMetric('Tracked Wallet', intelligence.trackedWallet || '-', { mono: true, title: intelligence.trackedWallet || '' })}
+                    ${renderWorkspaceMetric('Source', intelligence.sourceLabel)}
+                    ${renderWorkspaceMetric('Last Loaded', intelligence.lastLoadedLabel)}
+                    ${renderWorkspaceMetric('Visible Flows', intelligence.visibleLegs)}
+                    ${renderWorkspaceMetric('Noise Removed', intelligence.filteredLegs, { title: getWalletFilteredLegCopy(intelligence.filteredLegs) })}
+                    ${renderWorkspaceMetric('Dominant Direction', intelligence.dominantDirection?.label || '-')}
+                    ${renderWorkspaceMetric('Top Counterparty', topCounterparty, { mono: Boolean(intelligence.mostActiveCounterparty), title: intelligence.mostActiveCounterparty?.address || topCounterparty })}
+                    ${renderWorkspaceMetric('Top Token', topToken)}
+                    ${renderWorkspaceMetric('Largest Normalized Flow', intelligence.largestFlow)}
+                    ${renderWorkspaceMetric('Provider', getWalletHistoryProviderStateDisplay())}
+                    ${renderWorkspaceMetric('History Cache', getWalletHistoryCacheDisplay(), { title: getWalletHistoryCacheTitle() })}
+                    ${renderWorkspaceMetric('Replay Status', getHistoryReplayStateLabel(getHistoryReplayStatus(), Boolean(state.historyPreview.dataset), isHistoryPreviewDatasetStale()))}
+                </div>
+                <div class="crypto-summary-note">
+                    ${escapeHtml(getWalletHistoryNotice())}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderNonWalletSummaryWorkspacePanel() {
+        const visibleFlows = getVisibleFlowEdges();
+        return `
+            <div class="crypto-tab-section">
+                <div class="crypto-empty-state">
+                    <div class="crypto-kicker">GRAPH-FIRST MODE</div>
+                    <h3>${escapeHtml(getCurrentSourceLabel())}</h3>
+                    <p>Use Wallet Lookup to replace the graph with a secure Worker response. History, replay, and report tools stay separate from Generated Fixture and Live Feed data.</p>
+                </div>
+                <div class="crypto-summary-grid">
+                    ${renderWorkspaceMetric('Source', getCurrentSourceLabel())}
+                    ${renderWorkspaceMetric('Visible Flows', visibleFlows.length)}
+                    ${renderWorkspaceMetric('Wallet Nodes', state.graph?.walletNodes?.length || 0)}
+                    ${renderWorkspaceMetric('Token Nodes', state.graph?.tokenNodes?.length || 0)}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderWalletFlowsWorkspacePanel() {
+        if (state.dataMode !== DATA_MODES.WALLET) {
+            return `
+                <div class="crypto-tab-section">
+                    <div class="crypto-empty-state">
+                        <div class="crypto-kicker">FLOWS</div>
+                        <h3>Wallet Lookup required</h3>
+                        <p>Switch to Wallet Lookup and load a wallet to rank counterparties, summarize token movement, and inspect the visible flow timeline.</p>
+                    </div>
+                </div>
+            `;
+        }
+        const intelligence = buildWalletIntelligence();
+        const depthNote = getWalletDepthExpansionNote();
+        return `
+            <div class="crypto-tab-section">
+                ${renderWalletActionableInsights(intelligence)}
+                ${depthNote ? renderWalletDepthNoteCard(depthNote) : ''}
+                <section class="crypto-workspace-card">
+                    <div class="crypto-card-heading">
+                        <span>Top Counterparties</span>
+                        <span>${escapeHtml(Math.min(intelligence.counterparties.length, WALLET_INTELLIGENCE_LIMITS.counterparties))} shown</span>
+                    </div>
+                    <div class="crypto-card-list">
+                        ${intelligence.counterparties.slice(0, WALLET_INTELLIGENCE_LIMITS.counterparties).map(renderCounterpartyRankRow).join('') || renderWalletInlineEmpty('No visible counterparty wallet addresses after filters.')}
+                    </div>
+                </section>
+                <section class="crypto-workspace-card">
+                    <div class="crypto-card-heading">
+                        <span>Token Flow Summary</span>
+                        <span>${escapeHtml(Math.min(intelligence.tokens.length, WALLET_INTELLIGENCE_LIMITS.tokens))} tokens shown</span>
+                    </div>
+                    <div class="crypto-two-column-list">
+                        ${intelligence.tokens.slice(0, WALLET_INTELLIGENCE_LIMITS.tokens).map(renderTokenFlowSummaryRow).join('') || renderWalletInlineEmpty('No token flow summary is available for the visible wallet graph.')}
+                    </div>
+                </section>
+                ${renderWalletTimelineSection(intelligence.timeline)}
+            </div>
+        `;
+    }
+
+    function renderWalletHistoryWorkspacePanel() {
+        if (state.dataMode !== DATA_MODES.WALLET) {
+            return `
+                <div class="crypto-tab-section">
+                    <div class="crypto-empty-state">
+                        <div class="crypto-kicker">HISTORY</div>
+                        <h3>Staged history is wallet-only</h3>
+                        <p>Load a Wallet Lookup response first. Additional pages are staged through the Worker wallet-history endpoint and are never merged into the active graph.</p>
+                    </div>
+                </div>
+            `;
+        }
+        return `<div class="crypto-tab-section">${renderWalletHistoryBrowserPanel()}</div>`;
+    }
+
+    function renderWalletReplayWorkspacePanel() {
+        if (state.dataMode !== DATA_MODES.WALLET) {
+            return `
+                <div class="crypto-tab-section">
+                    <div class="crypto-empty-state">
+                        <div class="crypto-kicker">REPLAY</div>
+                        <h3>Preview-only replay is wallet-only</h3>
+                        <p>Build a preview dataset from staged Wallet Lookup history before rendering the separate static graph or animation canvas.</p>
+                    </div>
+                </div>
+            `;
+        }
+        return `<div class="crypto-tab-section">${renderWalletHistoryGraphPreviewPanel()}</div>`;
+    }
+
+    function renderWorkspaceMetric(label, value, options = {}) {
+        const raw = String(value ?? '-');
+        const valueClass = options.mono ? 'crypto-metric-value is-mono' : 'crypto-metric-value';
+        return `
+            <div class="crypto-workspace-metric" title="${escapeAttr(options.title || raw)}">
+                <div class="crypto-metric-label">${escapeHtml(label)}</div>
+                <div class="${valueClass}">${escapeHtml(raw || '-')}</div>
+            </div>
+        `;
+    }
+
+    function isHistoryPreviewDatasetStale() {
+        return Boolean(state.historyPreview.datasetMetrics
+            && Number(state.historyPreview.datasetMetrics.stagedRowsReceived || 0) !== Number((state.history.loadedTransactions || []).length));
+    }
+
     function renderWalletActionableInsights(intelligence) {
         const cards = getWalletInsightCards(intelligence);
         const nextActions = intelligence.nextActions || [];
@@ -1583,7 +1794,7 @@
                     </div>
                     <div class="text-white/38">${escapeHtml(intelligence.visibleLegs)} visible leg${intelligence.visibleLegs === 1 ? '' : 's'}</div>
                 </div>
-                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     ${cards.map(renderWalletInsightCard).join('')}
                 </div>
                 <div class="mt-3 rounded-lg border border-cyan-200/12 bg-cyan-300/8 px-3 py-2.5">
@@ -1638,28 +1849,21 @@
         const loadMoreDisabled = isWalletHistoryLoadMoreDisabled();
         const clearDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.loadedTransactions.length);
         const copyDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.lastMessage && !state.history.lastError);
-        const openAttr = state.history.inFlight || state.history.pagesLoaded || state.history.loadedTransactions.length ? 'open' : '';
         return `
-            <details class="crypto-collapse crypto-history-collapse mt-3" ${openAttr}>
-                <summary>
-                    <span>History</span>
-                    <span>${escapeHtml(state.history.totalLoadedTransactions || 0)} tx</span>
-                </summary>
-                <div class="crypto-collapse-body">
             <section class="rounded-xl border border-cyan-200/16 bg-slate-950/30 p-3">
-                <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
+                <div class="flex flex-col gap-2">
                     <div class="min-w-0">
                         <div class="text-white/38">WALLET HISTORY BROWSER</div>
                         <div class="mt-1 text-sm font-display text-cyan-50/86">Replay Staging</div>
                         <div class="mt-1 max-w-3xl text-white/56 leading-relaxed">Loaded history pages are staged for inspection only and are not merged into the graph. Lifetime replay will require progressive graph expansion before historical pages can become visible flow state.</div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 lg:min-w-[430px]">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button id="crypto-wallet-history-browser-load-more" type="button" ${loadMoreDisabled ? 'disabled' : ''} title="Load the next history page from the Worker wallet-history endpoint only." class="min-h-10 rounded-xl border border-emerald-200/22 bg-emerald-300/12 px-3 py-2 text-emerald-50/84 hover:border-emerald-100/38 disabled:opacity-50 disabled:cursor-not-allowed">Load More History</button>
                         <button id="crypto-wallet-history-clear" type="button" ${clearDisabled ? 'disabled' : ''} title="Clear staged history rows without changing the current graph." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/70 hover:border-cyan-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Clear Loaded History</button>
                         <button id="crypto-wallet-history-copy" type="button" ${copyDisabled ? 'disabled' : ''} title="Copy a compact staged history snapshot." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy History Snapshot</button>
                     </div>
                 </div>
-                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     ${renderWalletHistoryMetric('Provider', getWalletHistoryProviderDisplay(), 'Backend Worker adapter or provider surface reported by the history controller.')}
                     ${renderWalletHistoryMetric('Provider State', getWalletHistoryProviderStateDisplay(), getWalletHistoryConfigurationTitle())}
                     ${renderWalletHistoryMetric('Cache', getWalletHistoryCacheDisplay(), getWalletHistoryCacheTitle())}
@@ -1674,8 +1878,6 @@
                     ${rows.map(renderWalletHistoryBrowserRow).join('') || renderWalletInlineEmpty(getWalletHistoryEmptyMessage())}
                 </div>
             </section>
-                </div>
-            </details>
         `;
     }
 
@@ -1692,22 +1894,15 @@
         const copyDisabled = state.history.inFlight || !plan;
         const graphToggleDisabled = state.history.inFlight;
         const graphToggleLabel = state.historyPreview.graphVisible ? 'Hide Preview Graph' : 'Show Preview Graph';
-        const openAttr = state.historyPreview.graphVisible || state.historyPreview.dataset || plan ? 'open' : '';
         return `
-            <details class="crypto-collapse crypto-history-preview-collapse mt-3" ${openAttr}>
-                <summary>
-                    <span>History Preview</span>
-                    <span>${escapeHtml(summary.transferEventCount || 0)} events</span>
-                </summary>
-                <div class="crypto-collapse-body">
             <section class="rounded-xl border border-fuchsia-200/18 bg-fuchsia-300/8 p-3">
-                <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                <div class="flex flex-col gap-3">
                     <div class="min-w-0">
                         <div class="text-white/38">HISTORY GRAPH PREVIEW / REPLAY SANDBOX</div>
                         <div class="mt-1 text-sm font-display text-cyan-50/86">Graph-Ready Staging</div>
                         <div class="mt-1 max-w-3xl text-white/58 leading-relaxed">Graph-ready staging only. Build Preview Dataset converts loaded history rows into a copyable dataset artifact. Show Preview Graph renders a capped, static canvas from that dataset without drawing into, animating, or merging with the active Wallet Lookup graph. This panel makes no identity, ownership, risk, criminality, or investment claims.</div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 xl:min-w-[620px]">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button id="crypto-history-preview-build-dataset" type="button" ${datasetDisabled ? 'disabled' : ''} title="Build a graph-ready preview dataset from staged history without rendering or merging it." class="min-h-10 rounded-xl border border-emerald-200/22 bg-emerald-300/12 px-3 py-2 text-emerald-50/84 hover:border-emerald-100/38 disabled:opacity-50 disabled:cursor-not-allowed">Build Preview Dataset</button>
                         <button id="crypto-history-preview-copy-dataset" type="button" ${datasetCopyDisabled ? 'disabled' : ''} title="Copy the graph-ready preview dataset JSON. The active graph remains unchanged." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy Preview Dataset JSON</button>
                         <button id="crypto-history-preview-graph-toggle" type="button" ${graphToggleDisabled ? 'disabled' : ''} title="Render or hide a static preview-only graph canvas from the staged dataset. This does not change the active Wallet Lookup graph." class="min-h-10 rounded-xl border border-sky-200/22 bg-sky-300/10 px-3 py-2 text-sky-50/84 hover:border-sky-100/38 disabled:opacity-50 disabled:cursor-not-allowed">${escapeHtml(graphToggleLabel)}</button>
@@ -1716,7 +1911,7 @@
                         <button id="crypto-history-preview-copy" type="button" ${copyDisabled ? 'disabled' : ''} title="Copy the staged replay plan as JSON." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy Replay Plan</button>
                     </div>
                 </div>
-                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     ${renderWalletHistoryMetric('Unique Wallets', summary.uniqueWalletCount, 'Distinct wallet/address values seen in staged history only.')}
                     ${renderWalletHistoryMetric('Unique Tokens', summary.uniqueTokenCount, 'Distinct token symbols or mints seen in staged history only.')}
                     ${renderWalletHistoryMetric('Events', summary.transferEventCount, 'Estimated transfer/event count from staged history rows.')}
@@ -1725,7 +1920,7 @@
                     ${renderWalletHistoryMetric('Funding', getPreviewFundingLabel(summary.firstFundingCandidate), getPreviewFundingTitle(summary.firstFundingCandidate))}
                     ${renderWalletHistoryMetric('Readiness', `${summary.replayReadinessScore}/100`, summary.replayReadinessLabel)}
                 </div>
-                <div class="mt-3 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)] gap-2.5">
+                <div class="mt-3 grid grid-cols-1 gap-2.5">
                     <div class="min-w-0 rounded-lg border border-white/10 bg-slate-950/28 p-3">
                         <div class="flex flex-wrap items-center justify-between gap-2">
                             <div class="text-white/38">DATASET READINESS</div>
@@ -1755,7 +1950,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2">
+                <div class="mt-2 grid grid-cols-1 gap-2">
                     <div class="rounded-lg border border-yellow-200/14 bg-yellow-300/8 px-3 py-2.5">
                         <div class="text-white/38">MISSING DATA FOR INCEPTION REPLAY</div>
                         <div class="mt-2 grid gap-1.5">
@@ -1769,8 +1964,6 @@
                     </div>
                 </div>
             </section>
-                </div>
-            </details>
         `;
     }
 
@@ -1780,7 +1973,7 @@
             ? '<div class="mt-2 rounded-lg border border-yellow-200/18 bg-yellow-300/10 px-3 py-2 text-yellow-50/78 leading-relaxed">Staged history changed after this dataset was built. Build Preview Dataset again before copying.</div>'
             : '';
         return `
-            <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 ${renderWalletHistoryMetric('Wallets', metrics.wallets, 'Deduped preview wallet nodes.')}
                 ${renderWalletHistoryMetric('Tokens', metrics.tokens, 'Deduped preview token nodes.')}
                 ${renderWalletHistoryMetric('Transfers', metrics.transactions, 'Graph-ready transfer rows with source and destination wallets.')}
@@ -1828,7 +2021,7 @@
             `;
 
         return `
-            <div class="min-w-0 rounded-lg border border-sky-200/16 bg-sky-300/8 p-3 xl:col-span-2">
+            <div class="min-w-0 rounded-lg border border-sky-200/16 bg-sky-300/8 p-3">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
                         <div class="text-white/38">HISTORY GRAPH PREVIEW</div>
@@ -1836,7 +2029,7 @@
                     </div>
                     <div class="text-white/38">${escapeHtml(visible ? 'Static / non-interactive' : 'Preview canvas idle')}</div>
                 </div>
-                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-1.5">
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                     ${warnings.map(item => `<div class="rounded-md border border-yellow-200/14 bg-yellow-300/8 px-2 py-1.5 text-yellow-50/74 leading-snug">${escapeHtml(item)}</div>`).join('')}
                 </div>
                 ${renderHistoryReplayControls(summary, datasetMetrics, datasetStale)}
@@ -1869,7 +2062,7 @@
         const jumpChips = buildHistoryReplayJumpChips(summary, status, totalSteps);
         return `
             <div class="mt-3 rounded-lg border border-fuchsia-200/16 bg-fuchsia-300/10 p-3">
-                <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                <div class="flex flex-col gap-3">
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2">
                             <div class="text-white/38">LIFETIME REPLAY PROTOTYPE</div>
@@ -1878,14 +2071,14 @@
                         <div id="crypto-history-replay-status" class="mt-1 text-fuchsia-50/78">${escapeHtml(getHistoryReplayStatusText(status, hasDataset, datasetStale))}</div>
                         <div class="mt-1 text-white/48 leading-relaxed">Opt-in animation uses only the preview dataset and draws only into the History Graph Preview canvas. It is not full wallet history unless enough pages are loaded, is never merged with the active graph, and makes no identity, ownership, risk, or investment claims.</div>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 xl:min-w-[520px]">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button id="crypto-history-replay-start" type="button" ${disabled ? 'disabled' : ''} title="Start the preview-only replay animation in the separate History Graph Preview canvas." class="min-h-10 rounded-xl border border-fuchsia-200/24 bg-fuchsia-300/14 px-3 py-2 text-fuchsia-50/86 hover:border-fuchsia-100/40 disabled:opacity-50 disabled:cursor-not-allowed">Start Replay</button>
                         <button id="crypto-history-replay-pause" type="button" ${pauseDisabled ? 'disabled' : ''} title="Pause the preview-only replay animation." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/72 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Pause Replay</button>
                         <button id="crypto-history-replay-step" type="button" ${stepDisabled ? 'disabled' : ''} title="Reveal one replay step from the preview dataset." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Step Replay</button>
                         <button id="crypto-history-replay-reset" type="button" ${resetDisabled ? 'disabled' : ''} title="Reset the preview-only replay canvas to the tracked wallet root." class="min-h-10 rounded-xl border border-yellow-200/18 bg-yellow-300/8 px-3 py-2 text-yellow-50/78 hover:border-yellow-100/32 disabled:opacity-50 disabled:cursor-not-allowed">Reset Replay</button>
                     </div>
                 </div>
-                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <button id="crypto-history-replay-prev-event" type="button" ${previousDisabled ? 'disabled' : ''} title="Move to the previous replay event in the preview canvas." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/72 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Previous Event</button>
                     <button id="crypto-history-replay-next-event" type="button" ${nextDisabled ? 'disabled' : ''} title="Move to the next replay event in the preview canvas." class="min-h-10 rounded-xl border border-cyan-200/18 bg-cyan-300/8 px-3 py-2 text-cyan-50/78 hover:border-cyan-100/32 disabled:opacity-50 disabled:cursor-not-allowed">Next Event</button>
                     <button id="crypto-history-replay-jump-start" type="button" ${jumpStartDisabled ? 'disabled' : ''} title="Jump to the start of the preview replay." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/72 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Jump to Start</button>
@@ -1898,8 +2091,8 @@
                     </div>
                     <input id="crypto-history-replay-scrubber" type="range" min="0" max="${escapeAttr(totalSteps)}" step="1" value="${escapeAttr(currentStep)}" ${stepDisabled ? 'disabled' : ''} aria-label="Replay scrubber" class="block min-h-11 w-full cursor-pointer accent-fuchsia-300 disabled:cursor-not-allowed disabled:opacity-50" />
                 </label>
-                <div class="mt-3 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-2">
-                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
+                <div class="mt-3 grid grid-cols-1 gap-2">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         ${renderWalletHistoryMetric('Step', stepCopy, 'Current replay step / total preview-dataset steps.')}
                         ${renderWalletHistoryMetric('Timestamp', timestamp, status.timestamp || 'No timestamp available for the current replay step.')}
                         ${renderWalletHistoryMetric('Signature', signature, status.signature || 'No signature available for the current replay step.')}
@@ -2160,7 +2353,7 @@
                     <div class="text-white/38">STAGED PLAN</div>
                     <div class="text-white/42">${escapeHtml(stale ? 'Refresh recommended' : 'Current staged rows')}</div>
                 </div>
-                <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     ${renderWalletHistoryMetric('Steps', plan.estimatedReplaySteps, 'Estimated replay chunks for staged events.')}
                     ${renderWalletHistoryMetric('Chunk', plan.suggestedChunkSize, 'Suggested events per replay chunk.')}
                     ${renderWalletHistoryMetric('Staged Events', plan.stagedEventCount, 'Events included when the plan was generated.')}
@@ -2762,7 +2955,7 @@
         const selected = state.selectedFlowId === edge.id;
         return `
             <button type="button" data-crypto-flow-id="${escapeAttr(edge.id)}" class="w-full text-left rounded-lg border ${selected ? 'border-cyan-200/38 bg-cyan-300/12' : 'border-white/10 bg-white/[0.035]'} px-3 py-2 hover:border-cyan-100/30">
-                <div class="grid grid-cols-1 md:grid-cols-[7rem_5.5rem_minmax(0,1fr)_auto] gap-1.5 md:gap-3 md:items-center">
+                <div class="grid grid-cols-1 gap-1.5">
                     <div class="text-[10px] font-mono text-white/44">${escapeHtml(timeLabel)}</div>
                     <div class="text-[10px] font-mono text-cyan-50/72">${escapeHtml(direction)}</div>
                     <div class="min-w-0">
@@ -3718,6 +3911,7 @@
 
     async function loadMoreWalletHistory() {
         const wallet = state.walletLookup.lastWallet || state.walletLookup.walletInput || '';
+        state.investigationTab = 'history';
         state.history.inFlight = true;
         state.history.lastError = '';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -3741,6 +3935,7 @@
 
     function clearLoadedWalletHistory() {
         const wallet = state.walletLookup.lastWallet || state.walletLookup.walletInput || '';
+        state.investigationTab = 'history';
         if (state.history.controller?.reset) {
             applyHistorySnapshot(state.history.controller.reset(wallet));
         } else {
@@ -3763,6 +3958,7 @@
 
     async function copyWalletHistorySnapshot(button) {
         const original = button?.textContent || 'Copy History Snapshot';
+        state.investigationTab = 'history';
         try {
             await writeTextToClipboard(buildWalletHistorySnapshotText());
             state.history.lastMessage = 'History snapshot copied. Staged rows remain inspection-only.';
@@ -3805,6 +4001,7 @@
     }
 
     async function buildHistoryPreviewDataset(options = {}) {
+        state.investigationTab = 'replay';
         await loadHistoryGraphPreviewModule();
         const builder = namespace.historyGraphPreview?.buildPreviewDataset
             || namespace.historyDatasetBuilder?.buildHistoryDataset;
@@ -3826,6 +4023,7 @@
     }
 
     async function toggleHistoryPreviewGraph() {
+        state.investigationTab = 'replay';
         if (state.historyPreview.graphVisible) {
             detachHistoryReplayAnimator({ preserveStatus: true });
             state.historyPreview.graphVisible = false;
@@ -3844,7 +4042,7 @@
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
     }
 
-    async function renderHistoryGraphPreviewCanvas(root = state.statusPanel, options = {}) {
+    async function renderHistoryGraphPreviewCanvas(root = state.detailPanel, options = {}) {
         if (!state.historyPreview.graphVisible) return null;
         const canvas = root?.querySelector?.('#crypto-history-preview-canvas');
         if (!canvas || !state.historyPreview.dataset) {
@@ -3915,6 +4113,7 @@
 
     async function startHistoryReplay() {
         if (state.history.inFlight) return null;
+        state.investigationTab = 'replay';
         if (!state.historyPreview.dataset) {
             await buildHistoryPreviewDataset({ skipRenderStatus: true });
         }
@@ -3923,29 +4122,31 @@
             ? 'Preview replay started in the separate History Graph Preview canvas. Active Wallet Lookup graph unchanged.'
             : 'Replay canvas opened, but no graph-ready preview transfer steps are available yet.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
-        const animator = await initializeHistoryReplayAnimator(state.statusPanel);
+        const animator = await initializeHistoryReplayAnimator(state.detailPanel);
         animator?.start?.();
         return animator?.getStatus?.() || null;
     }
 
     async function pauseHistoryReplay() {
-        const animator = state.historyPreview.replayAnimator || await initializeHistoryReplayAnimator(state.statusPanel);
+        const animator = state.historyPreview.replayAnimator || await initializeHistoryReplayAnimator(state.detailPanel);
         animator?.pause?.();
         return animator?.getStatus?.() || null;
     }
 
     async function stepHistoryReplay(direction = 1) {
+        state.investigationTab = 'replay';
         if (!state.historyPreview.dataset) {
             await buildHistoryPreviewDataset({ skipRenderStatus: true });
         }
         state.historyPreview.graphVisible = true;
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
-        const animator = await initializeHistoryReplayAnimator(state.statusPanel);
+        const animator = await initializeHistoryReplayAnimator(state.detailPanel);
         animator?.step?.(direction);
         return animator?.getStatus?.() || null;
     }
 
     async function seekHistoryReplayStep(stepIndex = 0, options = {}) {
+        state.investigationTab = 'replay';
         if (!state.historyPreview.dataset) {
             await buildHistoryPreviewDataset({ skipRenderStatus: true });
         }
@@ -3955,7 +4156,7 @@
         if (needsRender) {
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         }
-        const animator = await initializeHistoryReplayAnimator(state.statusPanel);
+        const animator = await initializeHistoryReplayAnimator(state.detailPanel);
         if (!animator?.seek) return null;
         const total = getHistoryReplayTotalSteps(animator.getStatus?.() || getHistoryReplayStatus());
         const safeStep = Math.max(0, Math.min(total, Math.round(Number(stepIndex) || 0)));
@@ -3969,7 +4170,8 @@
     }
 
     async function resetHistoryReplay() {
-        const animator = state.historyPreview.replayAnimator || await initializeHistoryReplayAnimator(state.statusPanel);
+        state.investigationTab = 'replay';
+        const animator = state.historyPreview.replayAnimator || await initializeHistoryReplayAnimator(state.detailPanel);
         animator?.reset?.();
         state.historyPreview.lastMessage = 'Replay reset to the tracked-wallet root inside the preview canvas only.';
         updateHistoryReplayStatus(animator?.getStatus?.() || getHistoryReplayStatus());
@@ -3992,7 +4194,7 @@
         return safeSpeed;
     }
 
-    async function initializeHistoryReplayAnimator(root = state.statusPanel, options = {}) {
+    async function initializeHistoryReplayAnimator(root = state.detailPanel, options = {}) {
         const canvas = root?.querySelector?.('#crypto-history-preview-canvas') || document.getElementById('crypto-history-preview-canvas');
         if (!canvas || !state.historyPreview.dataset) return null;
         await loadHistoryGraphRendererModule();
@@ -4083,6 +4285,7 @@
 
     async function copyHistoryPreviewDataset(button) {
         const original = button?.textContent || 'Copy Preview Dataset JSON';
+        state.investigationTab = 'replay';
         const dataset = state.historyPreview.dataset;
         if (!dataset) {
             state.historyPreview.lastMessage = 'Build Preview Dataset before copying JSON.';
@@ -4164,6 +4367,7 @@
     }
 
     async function previewLifetimeReplay() {
+        state.investigationTab = 'replay';
         await loadHistoryGraphPreviewModule();
         const summary = buildHistoryGraphPreviewSummary();
         const builder = namespace.historyGraphPreview?.buildReplayPlan;
@@ -4178,6 +4382,7 @@
     }
 
     function clearHistoryGraphPreview() {
+        state.investigationTab = 'replay';
         state.historyPreview.plan = null;
         state.historyPreview.dataset = null;
         state.historyPreview.datasetMetrics = null;
@@ -4194,6 +4399,7 @@
 
     async function copyHistoryReplayPlan(button) {
         const original = button?.textContent || 'Copy Replay Plan';
+        state.investigationTab = 'replay';
         const summary = buildHistoryGraphPreviewSummary();
         const plan = state.historyPreview.plan || buildFallbackReplayPlan(summary);
         const textBuilder = namespace.historyGraphPreview?.buildReplayPlanText;
@@ -4858,6 +5064,7 @@
         if (!edge) return null;
         state.selectedFlowId = edge.id;
         state.selectedId = null;
+        state.investigationTab = 'details';
         state.flowReplay.activeFlowId = edge.id;
         state.flowReplay.lastStepAt = performance.now();
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -4872,6 +5079,7 @@
         if (!node) return null;
         state.selectedId = node.id;
         state.selectedFlowId = null;
+        state.investigationTab = 'details';
         state.flowReplay.activeFlowId = null;
         render();
         renderDetails();
@@ -5290,6 +5498,7 @@
             if (drag.mode === 'node' && !drag.moved && drag.nodeId) {
                 state.selectedId = drag.nodeId;
                 state.selectedFlowId = null;
+                state.investigationTab = 'details';
                 render();
                 renderDetails();
             }
@@ -5394,20 +5603,32 @@
         render();
     }
 
-    function renderDetails() {
+    function renderDetails(options = {}) {
         if (!state.detailPanel || !state.graph) return;
+        state.detailPanel.innerHTML = renderInvestigationWorkspace();
+        bindInvestigationWorkspaceControls(state.detailPanel);
+        renderHistoryGraphPreviewCanvas(state.detailPanel, options);
+    }
+
+    function bindInvestigationWorkspaceControls(root) {
+        root.querySelectorAll('[data-crypto-investigation-tab]').forEach(button => {
+            button.addEventListener('click', () => {
+                setInvestigationTab(button.dataset.cryptoInvestigationTab || 'summary');
+            });
+        });
+        bindStatusControls(root);
+    }
+
+    function renderInvestigationDetailsPanelContent() {
+        if (!state.graph) return '<div class="text-sm text-white/45">No crypto graph is loaded.</div>';
         const selectedFlow = getSelectedFlowEdge();
         if (selectedFlow) {
-            state.detailPanel.innerHTML = renderSelectedFlowDetailPanel(selectedFlow);
-            return;
+            return renderSelectedFlowDetailPanel(selectedFlow);
         }
 
-        const node = state.graph.nodeById.get(state.selectedId) || state.graph.nodes[0];
+        const node = state.selectedId ? state.graph.nodeById.get(state.selectedId) : null;
         if (!node) {
-            state.detailPanel.innerHTML = state.dataMode === DATA_MODES.WALLET
-                ? renderWalletLookupEmptyDetails()
-                : '<div class="text-sm text-white/45">No crypto graph node selected.</div>';
-            return;
+            return renderInvestigationDetailsEmptyState();
         }
 
         const relatedFlows = getRelatedEdges(node.id, core.EDGE_TYPES.FLOW);
@@ -5422,7 +5643,7 @@
         const contextCopy = state.dataMode === DATA_MODES.WALLET
             ? 'Secure Worker wallet lookup graph. Program and infrastructure-like accounts are filtered; address relationships are not identity claims.'
             : 'Local fixture graph. Source/program labels are hints from sanitized data, not identity claims.';
-        state.detailPanel.innerHTML = `
+        return `
             <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">${escapeHtml(isHubNode(node) ? 'ENTITY HUB' : node.type.toUpperCase())} NODE</div>
             <h3 class="font-display text-2xl mt-1">${escapeHtml(labelForNode(node))}</h3>
             <div class="text-[11px] text-white/42 mt-2">${escapeHtml(contextCopy)}</div>
@@ -5459,6 +5680,24 @@
             ${renderCardSection('Transaction Groups', relatedGroups, DETAIL_LIMITS.transactionGroups, renderTransactionGroupSummary, 'No transaction groups match this selection.')}
             ${renderCardSection('Token Exposure', relatedExposureEdges, DETAIL_LIMITS.tokenExposure, edge => renderEdgeSummary(edge, node.id), state.dataMode === DATA_MODES.WALLET ? 'No token exposure links for this wallet lookup node.' : 'No token exposure links for this sample node.')}
             ${renderCardSection('Multi-Hop Paths', relatedPaths, DETAIL_LIMITS.multiHopPaths, renderPathSummary, 'No multi-hop wallet paths include this node.')}
+        `;
+    }
+
+    function renderInvestigationDetailsEmptyState() {
+        const intelligence = state.dataMode === DATA_MODES.WALLET ? buildWalletIntelligence() : null;
+        return `
+            <div class="crypto-empty-state">
+                <div class="crypto-kicker">DETAILS</div>
+                <h3>No graph selection</h3>
+                <p>Click a wallet, token, hub, or visible transfer edge in the graph to open its inspector here. Flow selections show normalized amount, token, direction, source, destination, timestamp, and transaction context.</p>
+            </div>
+            ${intelligence ? renderDetailSection('Current Lookup', `
+                ${detailRow('Tracked Wallet', intelligence.trackedWallet || '-', { shorten: true })}
+                ${detailRow('Returned Events', intelligence.returnedEvents)}
+                ${detailRow('Visible Transfer Legs', intelligence.visibleLegs)}
+                ${detailRow('Filtered / Noise Removed', intelligence.filteredLegs)}
+                ${detailRow('Last Loaded', intelligence.lastLoadedLabel)}
+            `) : ''}
         `;
     }
 

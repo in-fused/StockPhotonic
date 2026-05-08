@@ -29,6 +29,7 @@
         active: false,
         graph: null,
         selectedId: null,
+        selectedFlowId: null,
         hoveredId: null,
         interactionIndex: null,
         canvas: null,
@@ -126,7 +127,8 @@
     };
     const WALLET_INTELLIGENCE_LIMITS = {
         counterparties: 4,
-        tokens: 4
+        tokens: 4,
+        timeline: 8
     };
     const GENERATED_FIXTURE_DIR = 'data/crypto/generated/';
     const WORKER_FEED_LIMIT = 50;
@@ -751,6 +753,7 @@
 
     function rebuildGraphAfterLiveMerge(incomingTransactions = [], options = {}) {
         const previousSelectedId = state.selectedId;
+        const previousSelectedFlowId = state.selectedFlowId;
         const graph = graphEngine.buildGraph(state.dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         state.graph.flowReplayEnabled = true;
@@ -774,6 +777,9 @@
         state.selectedId = previousSelectedId && state.graph.nodeById.has(previousSelectedId)
             ? previousSelectedId
             : state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
+        state.selectedFlowId = previousSelectedFlowId && state.graph.flowEdges.some(edge => edge.id === previousSelectedFlowId)
+            ? previousSelectedFlowId
+            : null;
 
         const liveFlowIds = incomingTransactions
             .map(transaction => getFlowEdgeIdForTransaction(transaction))
@@ -1387,6 +1393,7 @@
                         ${intelligence.tokens.slice(0, WALLET_INTELLIGENCE_LIMITS.tokens).map(renderTokenFlowSummaryRow).join('') || renderWalletInlineEmpty('No token flow summary is available for the visible wallet graph.')}
                     </div>
                 </section>
+                ${renderWalletTimelineSection(intelligence.timeline)}
             </div>
         `;
     }
@@ -1568,6 +1575,52 @@
         `;
     }
 
+    function renderWalletTimelineSection(flows = []) {
+        const visibleCount = getVisibleFlowEdges().length;
+        return `
+            <section class="mt-2.5 rounded-xl border border-cyan-200/14 bg-slate-950/28 p-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <div class="text-white/38">VISIBLE FLOW TIMELINE</div>
+                        <div class="mt-0.5 text-white/54">Matches active filters; newest or highest-value visible transfer legs first.</div>
+                    </div>
+                    <div class="text-white/38">${escapeHtml(flows.length)} shown / ${escapeHtml(visibleCount)} visible</div>
+                </div>
+                <div class="mt-2 grid gap-2">
+                    ${flows.map(renderWalletTimelineItem).join('') || renderWalletInlineEmpty('No visible transfer legs match the active flow filters.')}
+                </div>
+            </section>
+        `;
+    }
+
+    function renderWalletTimelineItem(edge, index) {
+        const sourceAddress = getFlowSourceAddress(edge);
+        const targetAddress = getFlowTargetAddress(edge);
+        const timeLabel = getFlowTimelineTimeLabel(edge, index);
+        const direction = formatFlowDirection(getEdgeDirection(edge));
+        const amount = getNormalizedFlowAmountDisplay(edge);
+        const symbol = String(edge.symbol || shortLongValue(edge.token_mint) || 'Token').trim() || 'Token';
+        const typeLabel = edge.transaction_type_label || core.interpretTransactionType?.(edge.transaction_type).label || 'Unknown / Unclassified';
+        const hash = shortHash(edge.transaction_hash);
+        const selected = state.selectedFlowId === edge.id;
+        return `
+            <button type="button" data-crypto-flow-id="${escapeAttr(edge.id)}" class="w-full text-left rounded-lg border ${selected ? 'border-cyan-200/38 bg-cyan-300/12' : 'border-white/10 bg-white/[0.035]'} px-3 py-2 hover:border-cyan-100/30">
+                <div class="grid grid-cols-1 md:grid-cols-[7rem_5.5rem_minmax(0,1fr)_auto] gap-1.5 md:gap-3 md:items-center">
+                    <div class="text-[10px] font-mono text-white/44">${escapeHtml(timeLabel)}</div>
+                    <div class="text-[10px] font-mono text-cyan-50/72">${escapeHtml(direction)}</div>
+                    <div class="min-w-0">
+                        <div class="text-cyan-50/84 break-words">${escapeHtml(amount)} <span class="text-white/46">${escapeHtml(symbol)}</span></div>
+                        <div class="mt-0.5 font-mono text-[11px] text-white/48 break-words" title="${escapeAttr(`${sourceAddress} -> ${targetAddress}`)}">${escapeHtml(shortLongValue(sourceAddress))} &rarr; ${escapeHtml(shortLongValue(targetAddress))}</div>
+                    </div>
+                    <div class="md:text-right text-white/46">
+                        <div class="text-[10px] font-mono">${escapeHtml(typeLabel)}</div>
+                        ${hash ? `<div class="mt-0.5 text-[10px] font-mono text-white/32">${escapeHtml(hash)}</div>` : ''}
+                    </div>
+                </div>
+            </button>
+        `;
+    }
+
     function buildWalletIntelligence() {
         const metadata = state.graph?.metadata || {};
         const trackedWallet = core.normalizeAddress(
@@ -1598,8 +1651,23 @@
             mostRepeatedCounterparty: repeated,
             lookupStatus: state.walletLookup.inFlight ? 'Loading' : state.walletLookup.lastWallet ? 'Loaded' : 'Waiting',
             counterparties,
-            tokens: tokenSummary
+            tokens: tokenSummary,
+            timeline: buildWalletTimelineFlows(visibleFlows)
         };
+    }
+
+    function buildWalletTimelineFlows(edges = []) {
+        return edges
+            .slice()
+            .sort((a, b) => compareTimelineFlows(a, b))
+            .slice(0, WALLET_INTELLIGENCE_LIMITS.timeline);
+    }
+
+    function compareTimelineFlows(a, b) {
+        const aTime = timestampValue(a.timestamp);
+        const bTime = timestampValue(b.timestamp);
+        if (aTime || bTime) return bTime - aTime || (b.usd_value || 0) - (a.usd_value || 0);
+        return (b.usd_value || 0) - (a.usd_value || 0) || getFlowGraphOrder(a) - getFlowGraphOrder(b);
     }
 
     function getWalletFilteredLegCount(metadata = {}) {
@@ -1740,6 +1808,45 @@
         if (!amount) return symbol;
         if (!symbol) return amount;
         return amount.toLowerCase().includes(symbol.toLowerCase()) ? amount : `${symbol} ${amount}`;
+    }
+
+    function getNormalizedFlowAmountDisplay(edge = {}) {
+        const symbol = String(edge.symbol || '').trim();
+        const amount = String(edge.amount_display || core.formatTokenAmount?.(edge.amount, symbol) || '').trim();
+        return amount || symbol || '-';
+    }
+
+    function getFlowSourceAddress(edge = {}) {
+        const node = state.graph?.nodeById.get(edge.source);
+        return edge.source_wallet || node?.address || edge.source || '';
+    }
+
+    function getFlowTargetAddress(edge = {}) {
+        const node = state.graph?.nodeById.get(edge.target);
+        return edge.destination_wallet || node?.address || edge.target || '';
+    }
+
+    function getFlowTimelineTimeLabel(edge = {}, index = 0) {
+        if (edge.timestamp) return formatDateTime(edge.timestamp);
+        const order = getFlowGraphOrder(edge);
+        return `Order #${Number.isFinite(order) ? order + 1 : index + 1}`;
+    }
+
+    function getFlowGraphOrder(edge = {}) {
+        return (state.graph?.flowEdges || []).findIndex(item => item.id === edge.id);
+    }
+
+    function formatFlowDirection(direction) {
+        if (direction === 'inbound') return 'Inbound';
+        if (direction === 'outbound') return 'Outbound';
+        return 'Mixed';
+    }
+
+    function formatFlowDirectionRelativeToTracked(edge = {}) {
+        const direction = getEdgeDirection(edge);
+        if (direction === 'inbound') return 'Inbound to tracked wallet';
+        if (direction === 'outbound') return 'Outbound from tracked wallet';
+        return getRelationshipWallet() ? 'Mixed / not directly tracked' : 'Mixed / no tracked wallet metadata';
     }
 
     function getMostRepeatedCounterpartyLabel(counterparties = []) {
@@ -1938,8 +2045,14 @@
             setFlowAnimationEnabled(!state.flowMotion.enabled);
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         });
+        status.querySelectorAll('[data-crypto-flow-id]').forEach(button => {
+            button.addEventListener('click', () => {
+                selectFlow(button.dataset.cryptoFlowId || '');
+            });
+        });
         status.querySelector('#crypto-filter-transaction-type')?.addEventListener('change', event => {
             state.filters.transactionType = event.target.value || 'all';
+            syncSelectedFlowWithFilters();
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             updateStats();
             render();
@@ -1947,6 +2060,7 @@
         });
         status.querySelector('#crypto-filter-token')?.addEventListener('change', event => {
             state.filters.token = event.target.value || 'all';
+            syncSelectedFlowWithFilters();
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             updateStats();
             render();
@@ -1954,6 +2068,7 @@
         });
         status.querySelector('#crypto-filter-direction')?.addEventListener('change', event => {
             state.filters.direction = event.target.value || 'all';
+            syncSelectedFlowWithFilters();
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             updateStats();
             render();
@@ -2126,6 +2241,7 @@
         }
         state.flowReplayEnabled = true;
         state.filters = { transactionType: 'all', token: 'all', direction: 'all' };
+        state.selectedFlowId = null;
         state.manualNodePositions.clear();
         resetFlowQueueState();
         applyWalletLookupFocusLayout();
@@ -2438,6 +2554,7 @@
         state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
         resetFlowQueueState();
         state.filters = { transactionType: 'all', token: 'all', direction: 'all' };
+        state.selectedFlowId = null;
         state.manualNodePositions.clear();
         applyWalletLookupFocusLayout();
         prepareFlowMotion();
@@ -2554,6 +2671,29 @@
         if (token) return `${token.token_mint || ''}|${token.symbol || ''}` === state.filters.token;
         return `${edge.token_mint || ''}|${edge.symbol || ''}` === state.filters.token
             || `${edge.target || ''}|${edge.symbol || ''}` === state.filters.token;
+    }
+
+    function selectFlow(flowId) {
+        const edge = (state.graph?.flowEdges || []).find(item => item.id === flowId && edgeMatchesActiveFilters(item));
+        if (!edge) return null;
+        state.selectedFlowId = edge.id;
+        state.selectedId = null;
+        state.flowReplay.activeFlowId = edge.id;
+        state.flowReplay.lastStepAt = performance.now();
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        render();
+        renderDetails();
+        updateFlowAnimationLoop();
+        return edge;
+    }
+
+    function syncSelectedFlowWithFilters() {
+        if (!state.selectedFlowId) return;
+        const edge = (state.graph?.flowEdges || []).find(item => item.id === state.selectedFlowId);
+        if (!edge || !edgeMatchesActiveFilters(edge)) {
+            state.selectedFlowId = null;
+            state.flowReplay.activeFlowId = null;
+        }
     }
 
     function getEdgeDirection(edge) {
@@ -2871,12 +3011,14 @@
         const screenPoint = getScreenPoint(event);
         const worldPoint = screenToWorld(screenPoint);
         const node = getNodeAtWorldPoint(worldPoint);
+        const edge = node ? null : getFlowEdgeAtWorldPoint(worldPoint);
 
         state.canvas.setPointerCapture?.(event.pointerId);
         state.drag = {
             pointerId: event.pointerId,
-            mode: node ? 'node' : 'pan',
+            mode: node ? 'node' : edge ? 'edge' : 'pan',
             nodeId: node?.id || null,
+            edgeId: edge?.id || null,
             startScreen: screenPoint,
             lastScreen: screenPoint,
             startNode: node ? { x: node.x, y: node.y } : null,
@@ -2922,8 +3064,12 @@
 
             if (drag.mode === 'node' && !drag.moved && drag.nodeId) {
                 state.selectedId = drag.nodeId;
+                state.selectedFlowId = null;
                 render();
                 renderDetails();
+            }
+            if (drag.mode === 'edge' && !drag.moved && drag.edgeId) {
+                selectFlow(drag.edgeId);
             }
 
             updateHoverFromScreenPoint(getScreenPoint(event));
@@ -2952,6 +3098,12 @@
 
     function renderDetails() {
         if (!state.detailPanel || !state.graph) return;
+        const selectedFlow = getSelectedFlowEdge();
+        if (selectedFlow) {
+            state.detailPanel.innerHTML = renderSelectedFlowDetailPanel(selectedFlow);
+            return;
+        }
+
         const node = state.graph.nodeById.get(state.selectedId) || state.graph.nodes[0];
         if (!node) {
             state.detailPanel.innerHTML = state.dataMode === DATA_MODES.WALLET
@@ -2968,6 +3120,7 @@
         const relatedPaths = uniqueRelatedPaths(getRelatedPaths(node.id));
         const insight = buildNodeFlowInsight(node, displayedRelatedFlows);
         const relatedGroups = getRelatedTransactionGroups(node, displayedRelatedFlows);
+        const primaryFlow = getPrimaryInspectorFlowForNode(node, displayedRelatedFlows);
         const contextCopy = state.dataMode === DATA_MODES.WALLET
             ? 'Secure Worker wallet lookup graph. Program and infrastructure-like accounts are filtered; address relationships are not identity claims.'
             : 'Local fixture graph. Source/program labels are hints from sanitized data, not identity claims.';
@@ -3000,6 +3153,7 @@
                 ${isHubNode(node) ? detailRow('Transaction Count', node.transaction_count || 0) : ''}
                 ${detailRow(node.type === core.NODE_TYPES.TOKEN ? 'Token Exposure' : isHubNode(node) ? 'Hub Exposure' : 'Exposure', core.formatUsd(node.exposure_usd || 0))}
             `)}
+            ${primaryFlow ? renderSelectedFlowInspector(primaryFlow, { title: 'Selected Flow Inspector', subtitle: 'Most relevant visible transfer leg connected to this selection.' }) : ''}
             ${isHubNode(node) ? `
                 ${renderCardSection('Connected Wallets', connectedWallets, DETAIL_LIMITS.connectedWallets, renderNodeSummary, state.dataMode === DATA_MODES.WALLET ? 'No connected wallet lookup addresses.' : 'No connected sample wallets.')}
             ` : ''}
@@ -3008,6 +3162,76 @@
             ${renderCardSection('Token Exposure', relatedExposureEdges, DETAIL_LIMITS.tokenExposure, edge => renderEdgeSummary(edge, node.id), state.dataMode === DATA_MODES.WALLET ? 'No token exposure links for this wallet lookup node.' : 'No token exposure links for this sample node.')}
             ${renderCardSection('Multi-Hop Paths', relatedPaths, DETAIL_LIMITS.multiHopPaths, renderPathSummary, 'No multi-hop wallet paths include this node.')}
         `;
+    }
+
+    function renderSelectedFlowDetailPanel(edge) {
+        const source = state.graph.nodeById.get(edge.source);
+        const target = state.graph.nodeById.get(edge.target);
+        return `
+            <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">TRANSFER FLOW</div>
+            <h3 class="font-display text-2xl mt-1">Selected Flow</h3>
+            <div class="text-[11px] text-white/42 mt-2">Visible transfer leg from the current graph and active filters. This is an address-to-address observation, not an identity claim.</div>
+            <section class="mt-5 rounded-2xl border border-cyan-200/16 bg-cyan-300/10 p-3">
+                <div class="text-[10px] font-mono text-white/40">FLOW</div>
+                <div class="mt-2 text-sm text-cyan-50/86 break-words" title="${escapeAttr(`${labelForNode(source)} -> ${labelForNode(target)}`)}">${escapeHtml(compactNodeLabel(source))} &rarr; ${escapeHtml(compactNodeLabel(target))}</div>
+                <div class="mt-1 text-xs text-white/48">${escapeHtml(getNormalizedFlowAmountDisplay(edge))} / ${escapeHtml(edge.symbol || shortLongValue(edge.token_mint) || 'Token')}</div>
+            </section>
+            ${renderSelectedFlowInspector(edge, { title: 'Selected Flow Inspector', subtitle: 'Clicked visible transfer edge.' })}
+            ${renderDetailSection('Selection Context', `
+                ${detailRow('Source Node', compactNodeLabel(source))}
+                ${detailRow('Destination Node', compactNodeLabel(target))}
+                ${detailRow('Visible Under Filters', edgeMatchesActiveFilters(edge) ? 'Yes' : 'No')}
+            `)}
+        `;
+    }
+
+    function renderSelectedFlowInspector(edge, options = {}) {
+        const title = options.title || 'Selected Flow Inspector';
+        const subtitle = options.subtitle || '';
+        const sourceAddress = getFlowSourceAddress(edge);
+        const targetAddress = getFlowTargetAddress(edge);
+        const sourceNode = state.graph.nodeById.get(edge.source);
+        const targetNode = state.graph.nodeById.get(edge.target);
+        const tokenLabel = edge.token_mint
+            ? `${edge.symbol || 'Token'} / ${shortLongValue(edge.token_mint)}`
+            : edge.symbol || 'Token';
+        const sourceLabel = edge.source_label || edge.source_program || edge.label_source || '-';
+        return `
+            <section class="mt-5 pt-4 border-t border-white/10">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <div class="text-[10px] font-mono tracking-[1.3px] text-white/45">${escapeHtml(title)}</div>
+                    ${edge.transaction_hash ? `<div class="text-[10px] font-mono text-white/34">${escapeHtml(shortHash(edge.transaction_hash))}</div>` : ''}
+                </div>
+                ${subtitle ? `<div class="mb-2 text-[11px] text-white/42">${escapeHtml(subtitle)}</div>` : ''}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-white/68">
+                    ${detailRow('Normalized Amount', getNormalizedFlowAmountDisplay(edge))}
+                    ${detailRow('USD Value', edge.usd_value ? core.formatUsd(edge.usd_value) : '-')}
+                    ${detailRow('Source Wallet', sourceAddress || compactNodeLabel(sourceNode), { shorten: true })}
+                    ${detailRow('Destination Wallet', targetAddress || compactNodeLabel(targetNode), { shorten: true })}
+                    ${detailRow('Token / Mint', tokenLabel, { shorten: Boolean(edge.token_mint) })}
+                    ${detailRow('Direction vs Tracked', formatFlowDirectionRelativeToTracked(edge))}
+                    ${detailRow('Transaction Type', edge.transaction_type_label || core.interpretTransactionType?.(edge.transaction_type).label || 'Unknown / Unclassified')}
+                    ${detailRow('Source Label', sourceLabel)}
+                    ${detailRow('Timestamp', edge.timestamp ? formatDateTime(edge.timestamp) : '-')}
+                </div>
+            </section>
+        `;
+    }
+
+    function getSelectedFlowEdge() {
+        if (!state.selectedFlowId) return null;
+        return (state.graph?.flowEdges || []).find(edge => edge.id === state.selectedFlowId && edgeMatchesActiveFilters(edge)) || null;
+    }
+
+    function getPrimaryInspectorFlowForNode(node, flows = []) {
+        if (!node || !flows.length) return null;
+        const activeReplay = state.flowReplay.activeFlowId
+            ? flows.find(edge => edge.id === state.flowReplay.activeFlowId)
+            : null;
+        if (activeReplay) return activeReplay;
+        return flows
+            .slice()
+            .sort((a, b) => compareTimelineFlows(a, b))[0] || null;
     }
 
     function renderDetailSection(title, rowsHtml) {
@@ -3313,6 +3537,40 @@
             .slice()
             .sort((a, b) => (b.radius || 0) - (a.radius || 0))
             .find(node => Math.hypot(node.x - point.x, node.y - point.y) <= (node.radius || 18) + 10 / state.viewport.scale);
+    }
+
+    function getFlowEdgeAtWorldPoint(point) {
+        if (!point || !state.graph) return null;
+        const tolerance = Math.max(7, 13 / (state.viewport.scale || 1));
+        return getVisibleFlowEdges()
+            .slice()
+            .sort((a, b) => (b.width || 0) - (a.width || 0) || (b.usd_value || 0) - (a.usd_value || 0))
+            .map(edge => ({
+                edge,
+                distance: distanceToFlowEdge(point, edge)
+            }))
+            .filter(item => Number.isFinite(item.distance) && item.distance <= tolerance)
+            .sort((a, b) => a.distance - b.distance || (b.edge.usd_value || 0) - (a.edge.usd_value || 0))[0]?.edge || null;
+    }
+
+    function distanceToFlowEdge(point, edge) {
+        const source = state.graph.nodeById.get(edge.source);
+        const target = state.graph.nodeById.get(edge.target);
+        if (!source || !target) return Number.POSITIVE_INFINITY;
+        const dx = target.x - source.x;
+        const dy = target.y - source.y;
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        const normal = { x: -dy / distance, y: dx / distance };
+        const control = {
+            x: (source.x + target.x) / 2 + normal.x * 24,
+            y: (source.y + target.y) / 2 + normal.y * 24
+        };
+        let minDistance = Number.POSITIVE_INFINITY;
+        for (let step = 0; step <= 18; step += 1) {
+            const curvePoint = pointOnQuadratic(source, control, target, step / 18);
+            minDistance = Math.min(minDistance, Math.hypot(point.x - curvePoint.x, point.y - curvePoint.y));
+        }
+        return minDistance;
     }
 
     function getScreenPoint(event) {
@@ -3663,6 +3921,9 @@
         const connectedNodeIds = new Set(activeIds);
         const connectedEdgeIds = new Set();
         const index = state.interactionIndex;
+        const selectedFlowEdge = state.selectedFlowId
+            ? (state.graph.flowEdges || []).find(edge => edge.id === state.selectedFlowId && edgeMatchesActiveFilters(edge))
+            : null;
         const replayActiveFlowId = state.flowReplay.activeFlowId;
         const replayActiveEdge = replayActiveFlowId
             ? (state.graph.flowEdges || []).find(edge => edge.id === replayActiveFlowId)
@@ -3680,12 +3941,17 @@
             connectedNodeIds.add(replayActiveEdge.source);
             connectedNodeIds.add(replayActiveEdge.target);
         }
+        if (selectedFlowEdge) {
+            connectedEdgeIds.add(selectedFlowEdge.id);
+            connectedNodeIds.add(selectedFlowEdge.source);
+            connectedNodeIds.add(selectedFlowEdge.target);
+        }
 
         return {
             activeIds,
             connectedNodeIds,
             connectedEdgeIds,
-            hasFocus: activeIds.size > 0,
+            hasFocus: activeIds.size > 0 || Boolean(selectedFlowEdge),
             hasSelected: Boolean(state.selectedId),
             replayActiveFlowId,
             hasReplayFocus: Boolean(replayActiveEdge)

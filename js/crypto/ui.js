@@ -136,6 +136,8 @@
         WALLET: 'wallet_lookup',
         LIVE: 'live_feed'
     });
+    const LAMPORTS_PER_SOL = 1000000000;
+    const RAW_SOL_LAMPORT_HEURISTIC_MIN = 1000000;
     const SOURCE_LABELS = {
         generated: 'Generated Fixture',
         solana_sample: 'Generated Fixture',
@@ -597,7 +599,14 @@
                     }, chain, event));
                 }
 
-                const amount = parseWorkerAmount(transfer.amount);
+                const amountInfo = normalizeWorkerTransferAmount(transfer, {
+                    event,
+                    symbol,
+                    token,
+                    firstToken,
+                    chain,
+                    tokenMint
+                });
                 const typeInfo = core.interpretTransactionType(event.transaction_type || 'token_transfer');
                 const transferDedupeKey = `${eventKey}:${transferIndex}`;
                 transactions.push({
@@ -612,8 +621,8 @@
                     token_mint: tokenMint,
                     contract_address: tokenMint,
                     symbol,
-                    amount,
-                    amount_display: String(transfer.amount || (symbol ? core.formatTokenAmount(amount, symbol) : amount)).trim(),
+                    amount: amountInfo.amount,
+                    amount_display: amountInfo.display,
                     usd_value: Number(event.usd_value || transfer.usd_value) || 0,
                     timestamp: event.timestamp || event.received_at || new Date().toISOString(),
                     confidence: getWorkerEventConfidence(event),
@@ -634,7 +643,11 @@
                         sanitized: true,
                         production_meaning: false,
                         live_blockchain_fetching: false,
-                        amount_display: String(transfer.amount || '').trim()
+                        amount_display: amountInfo.display,
+                        raw_amount: amountInfo.rawAmount,
+                        amount_unit: amountInfo.unit,
+                        amount_normalized: amountInfo.normalized,
+                        decimals: amountInfo.decimals
                     }
                 });
             });
@@ -894,8 +907,165 @@
     }
 
     function parseWorkerAmount(value) {
-        const number = Number(String(value ?? '').replaceAll(',', '').trim());
+        if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+        const match = String(value ?? '').replaceAll(',', '').trim().match(/-?\d+(?:\.\d+)?/);
+        const number = Number(match?.[0]);
         return Number.isFinite(number) ? number : 0;
+    }
+
+    function normalizeWorkerTransferAmount(transfer = {}, context = {}) {
+        const symbol = String(context.symbol || transfer.token_symbol || transfer.symbol || '').trim();
+        const decimals = getWorkerTransferDecimals(transfer, context);
+        const unit = String(transfer.unit || transfer.amount_unit || transfer.amountUnit || '').trim().toLowerCase();
+        const displayHint = String(transfer.amount_display || transfer.amountDisplay || '').trim();
+        const lamports = firstDefined(
+            transfer.lamports,
+            transfer.raw_lamports,
+            transfer.amount_lamports,
+            transfer.rawAmountLamports
+        );
+        const rawTokenAmount = getWorkerRawTokenAmount(transfer);
+        const tokenAmount = firstDefined(transfer.tokenAmount, transfer.token_amount);
+        const rawCandidate = firstDefined(lamports, rawTokenAmount, tokenAmount, transfer.amount);
+        const rawText = String(rawCandidate ?? '').trim();
+
+        if (lamports != null) {
+            return buildWorkerAmountInfo(parseWorkerAmount(lamports) / LAMPORTS_PER_SOL, symbol || 'SOL', {
+                rawAmount: lamports,
+                unit: 'lamports',
+                decimals: 9,
+                normalized: true,
+                displayHint
+            });
+        }
+
+        if (rawTokenAmount != null && hasUsableDecimals(decimals)) {
+            return buildWorkerAmountInfo(parseWorkerAmount(rawTokenAmount) / (10 ** decimals), symbol, {
+                rawAmount: rawTokenAmount,
+                unit: 'raw_token_amount',
+                decimals,
+                normalized: true,
+                displayHint
+            });
+        }
+
+        if (rawTokenAmount != null) {
+            return buildWorkerAmountInfo(parseWorkerAmount(rawTokenAmount), symbol, {
+                rawAmount: rawTokenAmount,
+                unit: 'raw_token_amount_missing_decimals',
+                decimals,
+                normalized: false
+            });
+        }
+
+        if (tokenAmount != null) {
+            return buildWorkerAmountInfo(parseWorkerAmount(tokenAmount), symbol, {
+                rawAmount: tokenAmount,
+                unit: unit || 'token_amount',
+                decimals,
+                normalized: true,
+                displayHint
+            });
+        }
+
+        const amount = parseWorkerAmount(transfer.amount);
+        if (unit === 'lamports' || unit === 'raw_lamports') {
+            return buildWorkerAmountInfo(amount / LAMPORTS_PER_SOL, symbol || 'SOL', {
+                rawAmount: transfer.amount,
+                unit,
+                decimals: 9,
+                normalized: true,
+                displayHint
+            });
+        }
+
+        if ((unit === 'raw' || unit === 'base_units' || unit === 'raw_token_amount') && hasUsableDecimals(decimals)) {
+            return buildWorkerAmountInfo(amount / (10 ** decimals), symbol, {
+                rawAmount: transfer.amount,
+                unit,
+                decimals,
+                normalized: true,
+                displayHint
+            });
+        }
+
+        if (shouldTreatWorkerAmountAsNativeLamports(amount, rawText, symbol, context.event)) {
+            return buildWorkerAmountInfo(amount / LAMPORTS_PER_SOL, symbol || 'SOL', {
+                rawAmount: transfer.amount,
+                unit: 'lamports_inferred',
+                decimals: 9,
+                normalized: true,
+                displayHint
+            });
+        }
+
+        return buildWorkerAmountInfo(amount, symbol, {
+            rawAmount: transfer.amount,
+            unit: unit || 'normalized',
+            decimals,
+            normalized: true,
+            displayHint
+        });
+    }
+
+    function buildWorkerAmountInfo(amount, symbol, options = {}) {
+        const safeAmount = Number.isFinite(Number(amount)) ? Number(amount) : 0;
+        const unit = String(options.unit || '');
+        const useDisplayHint = options.displayHint && !/raw|lamports/i.test(unit);
+        const display = useDisplayHint ? options.displayHint : (symbol || safeAmount ? core.formatTokenAmount?.(safeAmount, symbol) || String(safeAmount) : '');
+        return {
+            amount: safeAmount,
+            display: String(display || '').trim(),
+            rawAmount: options.rawAmount ?? null,
+            unit,
+            decimals: Number.isFinite(Number(options.decimals)) ? Number(options.decimals) : null,
+            normalized: options.normalized === true
+        };
+    }
+
+    function getWorkerTransferDecimals(transfer = {}, context = {}) {
+        const values = [
+            transfer.decimals,
+            transfer.token_decimals,
+            transfer.rawTokenAmount?.decimals,
+            transfer.raw_token_amount?.decimals,
+            context.token?.decimals,
+            context.firstToken?.decimals
+        ];
+        for (const value of values) {
+            const number = Number(value);
+            if (Number.isInteger(number) && number >= 0 && number <= 18) return number;
+        }
+        if (isSolSymbol(context.symbol || transfer.token_symbol || transfer.symbol)) return 9;
+        return null;
+    }
+
+    function getWorkerRawTokenAmount(transfer = {}) {
+        if (transfer.rawTokenAmount && typeof transfer.rawTokenAmount === 'object') return transfer.rawTokenAmount.tokenAmount ?? transfer.rawTokenAmount.amount;
+        if (transfer.raw_token_amount && typeof transfer.raw_token_amount === 'object') return transfer.raw_token_amount.tokenAmount ?? transfer.raw_token_amount.amount;
+        return firstDefined(transfer.rawTokenAmount, transfer.raw_token_amount, transfer.raw_amount, transfer.rawAmount);
+    }
+
+    function shouldTreatWorkerAmountAsNativeLamports(amount, rawText, symbol, event = {}) {
+        if (!isSolSymbol(symbol)) return false;
+        if (!Number.isFinite(amount) || amount <= 0) return false;
+        if (rawText.includes('.')) return false;
+        const sourceText = `${event.ingestion_source || ''} ${event.source || ''}`.toLowerCase();
+        if (sourceText.includes('helius')) return true;
+        return amount >= RAW_SOL_LAMPORT_HEURISTIC_MIN;
+    }
+
+    function hasUsableDecimals(value) {
+        const number = Number(value);
+        return Number.isInteger(number) && number >= 0 && number <= 18;
+    }
+
+    function isSolSymbol(symbol = '') {
+        return String(symbol || '').trim().toUpperCase() === 'SOL';
+    }
+
+    function firstDefined(...values) {
+        return values.find(value => value !== undefined && value !== null && value !== '');
     }
 
     function safeLiveId(value) {
@@ -1561,8 +1731,15 @@
             return `${largestByUsd.symbol || 'Token'} ${core.formatUsd(largestByUsd.usd_value)}`;
         }
         const largestByAmount = [...edges].sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))[0];
-        const amount = largestByAmount.amount_display || core.formatTokenAmount?.(largestByAmount.amount, largestByAmount.symbol) || '';
-        return amount ? `${largestByAmount.symbol || 'Token'} ${amount}` : '-';
+        return formatFlowAmountLabel(largestByAmount) || '-';
+    }
+
+    function formatFlowAmountLabel(edge = {}) {
+        const symbol = String(edge.symbol || '').trim();
+        const amount = String(edge.amount_display || core.formatTokenAmount?.(edge.amount, symbol) || '').trim();
+        if (!amount) return symbol;
+        if (!symbol) return amount;
+        return amount.toLowerCase().includes(symbol.toLowerCase()) ? amount : `${symbol} ${amount}`;
     }
 
     function getMostRepeatedCounterpartyLabel(counterparties = []) {
@@ -2464,9 +2641,9 @@
         if (!shouldDrawWalletLookupEdgeLabel(edge, interaction)) return;
         const point = pointOnQuadratic(source, control, target, 0.5);
         const fromTo = `${shortLongValue(source.address || source.id)} \u2192 ${shortLongValue(target.address || target.id)}`;
-        const amount = edge.amount_display || core.formatTokenAmount?.(edge.amount, edge.symbol) || '';
+        const amount = formatFlowAmountLabel(edge);
         const majorEdge = edge.is_large_value || interaction.connectedEdgeIds.has(edge.id) || interaction.replayActiveFlowId === edge.id || state.flowMotion.topFlowIds.has(edge.id);
-        const tokenAmount = majorEdge ? [edge.symbol, amount].filter(Boolean).join(' ') : '';
+        const tokenAmount = majorEdge ? amount : '';
 
         ctx.save();
         ctx.translate(point.x, point.y);

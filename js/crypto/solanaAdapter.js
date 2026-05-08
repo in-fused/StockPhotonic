@@ -659,6 +659,7 @@
                 transfers.push({
                     ...item,
                     type: key,
+                    source_format: 'event_swap',
                     symbol: item.symbol || (key.startsWith('native') ? 'SOL' : item.tokenSymbol),
                     mint: item.mint || item.tokenMint || (key.startsWith('native') ? NATIVE_SOL_MINT : undefined)
                 });
@@ -703,10 +704,11 @@
     }
 
     function normalizeNativeSolAmount(transfer = {}) {
-        const raw = transfer.lamports ?? transfer.amount ?? transfer.tokenAmount;
+        const rawLamports = firstPresent(transfer.lamports, transfer.raw_lamports, transfer.amount_lamports);
+        const raw = firstPresent(rawLamports, transfer.amount, transfer.tokenAmount);
         const unit = String(transfer.unit || transfer.amount_unit || '').trim().toLowerCase();
         const value = normalizeNumber(raw);
-        const amount = unit === 'sol' || transfer.amountInSol === true || transfer.solAmount != null
+        const amount = unit === 'sol' || transfer.amountInSol === true || transfer.solAmount != null || hasDecimalAmount(raw)
             ? normalizeNumber(transfer.solAmount ?? raw)
             : value / LAMPORTS_PER_SOL;
         return {
@@ -718,13 +720,20 @@
     function normalizeSplTokenAmount(transfer = {}, decimals = null, symbol = '') {
         const tokenAmount = transfer.tokenAmount ?? transfer.token_amount;
         if (tokenAmount != null) {
-            const amount = normalizeNumber(tokenAmount);
+            const amount = shouldNormalizeEventSwapTokenAmount(transfer, decimals, tokenAmount)
+                ? normalizeNumber(tokenAmount) / (10 ** Number(decimals))
+                : normalizeNumber(tokenAmount);
             return { amount, display: formatTokenAmount(amount, symbol) };
         }
 
         const rawTokenAmount = transfer.rawTokenAmount?.tokenAmount ?? transfer.raw_token_amount?.tokenAmount;
-        if (rawTokenAmount != null && Number.isFinite(Number(decimals))) {
+        if (rawTokenAmount != null && isValidDecimals(decimals)) {
             const amount = normalizeNumber(rawTokenAmount) / (10 ** Number(decimals));
+            return { amount, display: formatTokenAmount(amount, symbol) };
+        }
+
+        if (rawTokenAmount != null) {
+            const amount = normalizeNumber(rawTokenAmount);
             return { amount, display: formatTokenAmount(amount, symbol) };
         }
 
@@ -754,7 +763,27 @@
             const number = Number(value);
             if (Number.isFinite(number)) return number;
         }
-        return 0;
+        return null;
+    }
+
+    function firstPresent(...values) {
+        return values.find(value => value !== undefined && value !== null && value !== '');
+    }
+
+    function hasDecimalAmount(value) {
+        return String(value ?? '').includes('.');
+    }
+
+    function isValidDecimals(value) {
+        const number = Number(value);
+        return Number.isInteger(number) && number >= 0 && number <= 18;
+    }
+
+    function shouldNormalizeEventSwapTokenAmount(transfer = {}, decimals = null, tokenAmount = null) {
+        if (transfer.source_format !== 'event_swap' || !isValidDecimals(decimals)) return false;
+        if (hasDecimalAmount(tokenAmount)) return false;
+        const value = Math.abs(normalizeNumber(tokenAmount));
+        return value > 0;
     }
 
     function formatTokenAmount(value, symbol = '') {
@@ -763,7 +792,7 @@
 
     function getRawAmountForMetadata(transfer = {}, format = '') {
         if (format === 'native_transfer') return transfer.lamports ?? transfer.amount ?? null;
-        return transfer.rawTokenAmount?.tokenAmount ?? transfer.raw_token_amount?.tokenAmount ?? transfer.amount ?? null;
+        return transfer.rawTokenAmount?.tokenAmount ?? transfer.raw_token_amount?.tokenAmount ?? transfer.tokenAmount ?? transfer.token_amount ?? transfer.amount ?? null;
     }
 
     function trackedWalletRole(trackedWallet, sourceWallet, destinationWallet, feePayer = '') {

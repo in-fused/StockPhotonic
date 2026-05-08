@@ -1369,6 +1369,7 @@
                     ${renderWalletLookupStatusBadge(intelligence.lookupStatus)}
                 </div>
                 ${renderWalletLookupConfidenceStatus(intelligence)}
+                ${renderWalletActionableInsights(intelligence)}
                 ${emptyState ? renderWalletEmptyStateCard(emptyState) : ''}
                 ${depthNote ? renderWalletDepthNoteCard(depthNote) : ''}
                 <div class="mt-3 grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] gap-2.5">
@@ -1421,6 +1422,68 @@
                 </section>
                 ${renderWalletTimelineSection(intelligence.timeline)}
             </div>
+        `;
+    }
+
+    function renderWalletActionableInsights(intelligence) {
+        const cards = getWalletInsightCards(intelligence);
+        const nextActions = intelligence.nextActions || [];
+        return `
+            <section class="mt-3 rounded-xl border border-emerald-200/16 bg-slate-950/28 p-3">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <div class="text-white/38">ACTIONABLE INSIGHTS</div>
+                        <div class="mt-0.5 text-white/54">Derived from visible normalized wallet lookup flows only.</div>
+                    </div>
+                    <div class="text-white/38">${escapeHtml(intelligence.visibleLegs)} visible leg${intelligence.visibleLegs === 1 ? '' : 's'}</div>
+                </div>
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                    ${cards.map(renderWalletInsightCard).join('')}
+                </div>
+                <div class="mt-3 rounded-lg border border-cyan-200/12 bg-cyan-300/8 px-3 py-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="text-white/38">WHAT TO INSPECT NEXT</div>
+                        <div class="text-white/36">${escapeHtml(nextActions.length)} suggestion${nextActions.length === 1 ? '' : 's'}</div>
+                    </div>
+                    <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                        ${nextActions.map(renderWalletNextAction).join('') || renderWalletInlineEmpty('Load wallet activity or relax filters to reveal inspectable flows.')}
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+
+    function renderWalletInsightCard(card = {}) {
+        const tone = card.tone === 'strong'
+            ? 'border-emerald-200/20 bg-emerald-300/10'
+            : card.tone === 'warn'
+                ? 'border-yellow-200/20 bg-yellow-300/10'
+                : 'border-white/10 bg-white/[0.035]';
+        return `
+            <div class="min-w-0 rounded-lg border ${tone} px-3 py-2.5">
+                <div class="text-white/38">${escapeHtml(card.label || '-')}</div>
+                <div class="mt-1 text-sm font-semibold text-cyan-50/86 break-words">${escapeHtml(card.value || '-')}</div>
+                <div class="mt-1 text-white/48 leading-snug break-words">${escapeHtml(card.detail || '')}</div>
+            </div>
+        `;
+    }
+
+    function renderWalletNextAction(action = {}) {
+        const attrs = action.flowId
+            ? `data-crypto-flow-id="${escapeAttr(action.flowId)}"`
+            : action.walletAddress
+                ? `data-crypto-wallet-address="${escapeAttr(action.walletAddress)}"`
+                : action.tokenFilter
+                    ? `data-crypto-token-filter="${escapeAttr(action.tokenFilter)}"`
+                    : action.depth
+                        ? `data-crypto-depth="${escapeAttr(action.depth)}"`
+                        : '';
+        const disabled = attrs ? '' : 'disabled';
+        return `
+            <button type="button" ${attrs} ${disabled} class="w-full text-left rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 hover:border-cyan-100/30 disabled:cursor-default disabled:opacity-70">
+                <div class="font-semibold text-cyan-50/84">${escapeHtml(action.title || 'Inspect flow')}</div>
+                <div class="mt-0.5 text-white/48 leading-snug">${escapeHtml(action.detail || '')}</div>
+            </button>
         `;
     }
 
@@ -1661,9 +1724,10 @@
         const filteredLegs = getWalletFilteredLegCount(metadata);
         const tokenSummary = buildWalletTokenFlowSummary(visibleFlows);
         const counterparties = buildWalletCounterpartyRanking(visibleFlows, trackedWallet);
-        const largest = getLargestVisibleFlowLabel(visibleFlows);
+        const largestFlowEdge = getLargestVisibleFlow(visibleFlows);
+        const largest = getLargestVisibleFlowLabel(visibleFlows, largestFlowEdge);
         const repeated = getMostRepeatedCounterpartyLabel(counterparties);
-        return {
+        const intelligence = {
             trackedWallet,
             sourceLabel,
             returnedEvents: state.walletLookup.eventCount || 0,
@@ -1673,12 +1737,211 @@
             lastLoadedLabel: state.walletLookup.lastLoadedAt ? formatDateTime(state.walletLookup.lastLoadedAt) : '-',
             topInboundToken: getTopTokenLabel(tokenSummary, 'inbound'),
             topOutboundToken: getTopTokenLabel(tokenSummary, 'outbound'),
+            dominantDirection: getWalletDominantDirection(visibleFlows),
+            mostActiveToken: getMostActiveTokenSummary(tokenSummary),
+            mostActiveCounterparty: counterparties[0] || null,
+            largestFlowEdge,
             largestFlow: largest,
             mostRepeatedCounterparty: repeated,
+            recentActivityDensity: getWalletRecentActivityDensity(visibleFlows),
+            filteredNoiseImpact: getWalletFilteredNoiseImpact(filteredLegs, visibleFlows.length),
+            depthOpportunity: getWalletDepthOpportunity(),
             lookupStatus: state.walletLookup.inFlight ? 'Loading' : state.walletLookup.lastWallet ? 'Loaded' : 'Waiting',
             counterparties,
             tokens: tokenSummary,
             timeline: buildWalletTimelineFlows(visibleFlows)
+        };
+        intelligence.nextActions = buildWalletNextActions(intelligence);
+        return intelligence;
+    }
+
+    function getWalletInsightCards(intelligence = {}) {
+        const counterparty = intelligence.mostActiveCounterparty;
+        const token = intelligence.mostActiveToken;
+        return [
+            {
+                label: 'Dominant Direction',
+                value: intelligence.dominantDirection?.label || '-',
+                detail: intelligence.dominantDirection?.detail || 'No visible transfer direction yet.',
+                tone: intelligence.dominantDirection?.dominant ? 'strong' : 'idle'
+            },
+            {
+                label: 'Most Active Counterparty',
+                value: counterparty ? shortLongValue(counterparty.address) : '-',
+                detail: counterparty ? `${counterparty.count} visible leg${counterparty.count === 1 ? '' : 's'} / ${counterparty.relationship}` : 'No repeated visible counterparty address.',
+                tone: counterparty?.count > 1 ? 'strong' : 'idle'
+            },
+            {
+                label: 'Most Active Token',
+                value: token?.symbol || '-',
+                detail: token ? `${token.count} leg${token.count === 1 ? '' : 's'} / ${token.directionLabel}` : 'No token activity visible under current filters.',
+                tone: token?.count > 1 ? 'strong' : 'idle'
+            },
+            {
+                label: 'Largest Normalized Flow',
+                value: intelligence.largestFlow || '-',
+                detail: intelligence.largestFlowEdge ? formatFlowDirectionRelativeToTracked(intelligence.largestFlowEdge) : 'No visible normalized flow to inspect.',
+                tone: intelligence.largestFlowEdge ? 'strong' : 'idle'
+            },
+            {
+                label: 'Recent Activity Density',
+                value: intelligence.recentActivityDensity?.label || '-',
+                detail: intelligence.recentActivityDensity?.detail || 'No timestamps available.',
+                tone: intelligence.recentActivityDensity?.tone || 'idle'
+            },
+            {
+                label: 'Filtered-Noise Impact',
+                value: intelligence.filteredNoiseImpact?.label || '-',
+                detail: intelligence.filteredNoiseImpact?.detail || getWalletFilteredLegCopy(intelligence.filteredLegs),
+                tone: intelligence.filteredLegs > 0 ? 'warn' : 'idle'
+            }
+        ];
+    }
+
+    function buildWalletNextActions(intelligence = {}) {
+        const actions = [];
+        const repeated = (intelligence.counterparties || []).find(item => item.count > 1) || intelligence.mostActiveCounterparty;
+        if (repeated) {
+            actions.push({
+                title: 'Inspect repeated counterparty',
+                detail: `${shortLongValue(repeated.address)} appears in ${repeated.count} visible leg${repeated.count === 1 ? '' : 's'}.`,
+                walletAddress: repeated.address
+            });
+        }
+
+        if (intelligence.largestFlowEdge) {
+            actions.push({
+                title: 'Check largest flow',
+                detail: `${getLargestVisibleFlowLabel([intelligence.largestFlowEdge], intelligence.largestFlowEdge)} opens in the selected-flow inspector.`,
+                flowId: intelligence.largestFlowEdge.id
+            });
+        }
+
+        const token = intelligence.mostActiveToken;
+        if (token?.filterKey) {
+            actions.push({
+                title: 'Review token summary',
+                detail: `Filter visible flows to ${token.symbol} and compare received vs sent legs.`,
+                tokenFilter: token.filterKey
+            });
+        }
+
+        if (intelligence.depthOpportunity?.useful) {
+            actions.push({
+                title: 'Toggle 2-hop only if useful',
+                detail: intelligence.depthOpportunity.detail,
+                depth: 2
+            });
+        }
+
+        return actions.slice(0, 4);
+    }
+
+    function getWalletDominantDirection(edges = []) {
+        const counts = { inbound: 0, outbound: 0, mixed: 0 };
+        edges.forEach(edge => {
+            const direction = getEdgeDirection(edge);
+            if (direction === 'inbound') counts.inbound += 1;
+            else if (direction === 'outbound') counts.outbound += 1;
+            else counts.mixed += 1;
+        });
+
+        const total = counts.inbound + counts.outbound + counts.mixed;
+        if (!total) {
+            return {
+                label: 'No visible flow',
+                detail: 'No visible transfer legs match the current filters.',
+                dominant: false
+            };
+        }
+
+        const ranked = [
+            ['inbound', counts.inbound],
+            ['outbound', counts.outbound],
+            ['mixed', counts.mixed]
+        ].sort((a, b) => b[1] - a[1]);
+        const [direction, count] = ranked[0];
+        const share = count / total;
+        const dominant = share >= 0.6 && count >= 2;
+        const label = dominant
+            ? `Mostly ${direction === 'mixed' ? 'mixed' : direction}`
+            : 'Mixed';
+        return {
+            label,
+            detail: `${counts.inbound} inbound / ${counts.outbound} outbound / ${counts.mixed} mixed visible legs.`,
+            dominant
+        };
+    }
+
+    function getMostActiveTokenSummary(tokens = []) {
+        const top = tokens
+            .slice()
+            .sort((a, b) => b.count - a.count || b.totalUsd - a.totalUsd || a.symbol.localeCompare(b.symbol))[0];
+        if (!top) return null;
+        const directions = [
+            top.inbound ? `${top.inbound} received` : '',
+            top.outbound ? `${top.outbound} sent` : '',
+            top.mixed ? `${top.mixed} mixed` : ''
+        ].filter(Boolean).join(' / ');
+        return {
+            ...top,
+            filterKey: `${top.mint || ''}|${top.symbol || ''}`,
+            directionLabel: directions || 'direction unavailable'
+        };
+    }
+
+    function getWalletRecentActivityDensity(edges = []) {
+        const timestamps = edges
+            .map(edge => timestampValue(edge.timestamp))
+            .filter(value => value > 0)
+            .sort((a, b) => b - a);
+        if (!timestamps.length) {
+            return {
+                label: 'No timestamps',
+                detail: 'Timeline falls back to graph order and value ranking.',
+                tone: 'idle'
+            };
+        }
+
+        const newest = timestamps[0];
+        const oldest = timestamps[timestamps.length - 1];
+        const dayMs = 24 * 60 * 60 * 1000;
+        const latestDayCount = timestamps.filter(value => newest - value <= dayMs).length;
+        const spanDays = Math.max(1, Math.ceil((newest - oldest) / dayMs));
+        return {
+            label: `${latestDayCount} in latest 24h`,
+            detail: `${timestamps.length} timestamped leg${timestamps.length === 1 ? '' : 's'} across ${spanDays} day${spanDays === 1 ? '' : 's'}.`,
+            tone: latestDayCount >= 3 ? 'strong' : 'idle'
+        };
+    }
+
+    function getWalletFilteredNoiseImpact(filteredLegs, visibleLegs) {
+        const filtered = Math.max(0, Number(filteredLegs) || 0);
+        const visible = Math.max(0, Number(visibleLegs) || 0);
+        const total = filtered + visible;
+        if (!total) {
+            return {
+                label: 'No flow legs',
+                detail: 'No returned transfer legs are visible yet.'
+            };
+        }
+        const percent = Math.round((filtered / total) * 100);
+        return {
+            label: filtered ? `${percent}% hidden` : 'No hidden legs',
+            detail: filtered ? `${filtered} of ${total} normalized legs were removed as infrastructure/noise.` : 'All normalized legs remain visible under the noise filter.'
+        };
+    }
+
+    function getWalletDepthOpportunity() {
+        if (state.dataMode !== DATA_MODES.WALLET || state.walletLookup.graphDepth > 1 || !state.walletLookup.lastRawDataset || !state.walletLookup.lastWallet) return null;
+        const oneHop = filterWalletLookupDataset(state.walletLookup.lastRawDataset, state.walletLookup.lastWallet, 1);
+        const twoHop = filterWalletLookupDataset(state.walletLookup.lastRawDataset, state.walletLookup.lastWallet, 2);
+        const additionalFlows = Math.max(0, (twoHop.transactions || []).length - (oneHop.transactions || []).length);
+        const additionalWallets = Math.max(0, (twoHop.wallets || []).length - (oneHop.wallets || []).length);
+        if (!additionalFlows && !additionalWallets) return null;
+        return {
+            useful: true,
+            detail: `2-hop can add ${additionalWallets} wallet${additionalWallets === 1 ? '' : 's'} and ${additionalFlows} flow${additionalFlows === 1 ? '' : 's'} after filtering.`
         };
     }
 
@@ -1818,14 +2081,21 @@
         return `${top.symbol} (${top[direction]} ${label} leg${top[direction] === 1 ? '' : 's'}${value})`;
     }
 
-    function getLargestVisibleFlowLabel(edges = []) {
-        if (!edges.length) return '-';
+    function getLargestVisibleFlow(edges = []) {
+        if (!edges.length) return null;
         const largestByUsd = [...edges].sort((a, b) => (b.usd_value || 0) - (a.usd_value || 0))[0];
+        if ((largestByUsd.usd_value || 0) > 0) return largestByUsd;
+        return [...edges].sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))[0] || null;
+    }
+
+    function getLargestVisibleFlowLabel(edges = [], knownLargest = null) {
+        if (!edges.length && !knownLargest) return '-';
+        const largestByUsd = knownLargest || getLargestVisibleFlow(edges);
+        if (!largestByUsd) return '-';
         if ((largestByUsd.usd_value || 0) > 0) {
             return `${largestByUsd.symbol || 'Token'} ${core.formatUsd(largestByUsd.usd_value)}`;
         }
-        const largestByAmount = [...edges].sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))[0];
-        return formatFlowAmountLabel(largestByAmount) || '-';
+        return formatFlowAmountLabel(largestByUsd) || '-';
     }
 
     function formatFlowAmountLabel(edge = {}) {
@@ -2080,6 +2350,21 @@
         status.querySelectorAll('[data-crypto-flow-id]').forEach(button => {
             button.addEventListener('click', () => {
                 selectFlow(button.dataset.cryptoFlowId || '');
+            });
+        });
+        status.querySelectorAll('[data-crypto-wallet-address]').forEach(button => {
+            button.addEventListener('click', () => {
+                selectWalletAddress(button.dataset.cryptoWalletAddress || '');
+            });
+        });
+        status.querySelectorAll('[data-crypto-token-filter]').forEach(button => {
+            button.addEventListener('click', () => {
+                setTokenFilter(button.dataset.cryptoTokenFilter || 'all');
+            });
+        });
+        status.querySelectorAll('[data-crypto-depth]').forEach(button => {
+            button.addEventListener('click', () => {
+                setWalletLookupDepth(Number(button.dataset.cryptoDepth) || 1);
             });
         });
         status.querySelector('#crypto-filter-transaction-type')?.addEventListener('change', event => {
@@ -2717,6 +3002,27 @@
         renderDetails();
         updateFlowAnimationLoop();
         return edge;
+    }
+
+    function selectWalletAddress(address = '') {
+        const node = getWalletNodeForAddress(address);
+        if (!node) return null;
+        state.selectedId = node.id;
+        state.selectedFlowId = null;
+        state.flowReplay.activeFlowId = null;
+        render();
+        renderDetails();
+        return node;
+    }
+
+    function setTokenFilter(filterValue = 'all') {
+        state.filters.token = filterValue || 'all';
+        syncSelectedFlowWithFilters();
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        updateStats();
+        render();
+        renderDetails();
+        return state.filters.token;
     }
 
     function syncSelectedFlowWithFilters() {

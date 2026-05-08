@@ -157,7 +157,20 @@
         pinch: null,
         drag: null,
         lastClick: null,
-        manualNodePositions: new Map()
+        manualNodePositions: new Map(),
+        renderPerf: {
+            rafId: null,
+            inRender: false,
+            pending: false
+        },
+        hoverPerf: {
+            lastAt: 0,
+            lastPoint: null,
+            key: '',
+            overlayKey: '',
+            throttleMs: 42
+        },
+        lastPointerType: 'mouse'
     };
     state.flowQueue = state.flowReplay;
 
@@ -165,6 +178,18 @@
     const DRAG_SELECT_THRESHOLD = 5;
     const QUICK_INSPECT_MS = 320;
     const QUICK_INSPECT_DISTANCE = 10;
+    const TOUCH_HIT_TARGET = {
+        nodeExtraPx: 24,
+        flowExtraPx: 28,
+        stableExtraPx: 12,
+        hoverThrottleMs: 70
+    };
+    const DESKTOP_HIT_TARGET = {
+        nodeExtraPx: 11,
+        flowExtraPx: 14,
+        stableExtraPx: 6,
+        hoverThrottleMs: 42
+    };
     const FLOW_ANIMATION = {
         maxPulsedEdges: 7,
         frameMs: 33,
@@ -5460,48 +5485,77 @@
         };
     }
 
-    function render() {
+    function scheduleRender() {
         if (!state.ctx || !state.graph) return;
-
-        const { width, height } = state.graph.bounds;
-        const ctx = state.ctx;
-        updateFlowReplay(performance.now());
-        state.flowMotion.now = performance.now();
-        const interaction = getInteractionState();
-        interaction.labelLayout = createLabelLayout(width, height);
-        ctx.clearRect(0, 0, width, height);
-        drawBackdrop(ctx, width, height);
-
-        ctx.save();
-        ctx.translate(state.viewport.x, state.viewport.y);
-        ctx.scale(state.viewport.scale, state.viewport.scale);
-
-        const nodeById = state.graph.nodeById;
-        getVisibleEdges()
-            .filter(edge => edge.type !== core.EDGE_TYPES.LABEL)
-            .sort((a, b) => edgeLayerOrder(a) - edgeLayerOrder(b) || (a.width || 0) - (b.width || 0))
-            .forEach(edge => drawEdge(ctx, edge, nodeById, interaction, { drawFlowLabels: false }));
-
-        getVisibleEdges()
-            .filter(edge => edge.type === core.EDGE_TYPES.LABEL)
-            .forEach(edge => drawEdge(ctx, edge, nodeById, interaction));
-
-        state.graph.nodes
-            .slice()
-            .sort((a, b) => typeOrder(a.type) - typeOrder(b.type))
-            .forEach(node => drawNode(ctx, node, interaction));
-
-        getVisibleFlowEdges()
-            .slice()
-            .sort((a, b) => getFlowLabelPriority(b, interaction) - getFlowLabelPriority(a, interaction))
-            .forEach(edge => drawFlowEdgeLabel(ctx, edge, nodeById, interaction));
-
-        ctx.restore();
+        if (state.renderPerf.rafId) {
+            state.renderPerf.pending = true;
+            return;
+        }
+        state.renderPerf.rafId = requestAnimationFrame(() => {
+            state.renderPerf.rafId = null;
+            state.renderPerf.pending = false;
+            render();
+        });
     }
 
-    function getVisibleEdges() {
+    function render() {
+        if (!state.ctx || !state.graph || state.renderPerf.inRender) {
+            if (state.renderPerf.inRender) scheduleRender();
+            return;
+        }
+
+        state.renderPerf.inRender = true;
+        try {
+            const { width, height } = state.graph.bounds;
+            const ctx = state.ctx;
+            updateFlowReplay(performance.now());
+            state.flowMotion.now = performance.now();
+            const visibleFlowEdges = getVisibleFlowEdges();
+            const visibleEdges = getVisibleEdges(visibleFlowEdges);
+            const interaction = getInteractionState(visibleFlowEdges);
+            interaction.visibleFlowEdges = visibleFlowEdges;
+            interaction.visibleFlowCount = visibleFlowEdges.length;
+            interaction.labelLayout = createLabelLayout(width, height);
+            ctx.clearRect(0, 0, width, height);
+            drawBackdrop(ctx, width, height);
+
+            ctx.save();
+            ctx.translate(state.viewport.x, state.viewport.y);
+            ctx.scale(state.viewport.scale, state.viewport.scale);
+
+            const nodeById = state.graph.nodeById;
+            visibleEdges
+                .filter(edge => edge.type !== core.EDGE_TYPES.LABEL)
+                .sort((a, b) => edgeLayerOrder(a) - edgeLayerOrder(b) || (a.width || 0) - (b.width || 0))
+                .forEach(edge => drawEdge(ctx, edge, nodeById, interaction, { drawFlowLabels: false }));
+
+            visibleEdges
+                .filter(edge => edge.type === core.EDGE_TYPES.LABEL)
+                .forEach(edge => drawEdge(ctx, edge, nodeById, interaction));
+
+            state.graph.nodes
+                .slice()
+                .sort((a, b) => typeOrder(a.type) - typeOrder(b.type))
+                .forEach(node => drawNode(ctx, node, interaction));
+
+            visibleFlowEdges
+                .slice()
+                .sort((a, b) => getFlowLabelPriority(b, interaction) - getFlowLabelPriority(a, interaction))
+                .forEach(edge => drawFlowEdgeLabel(ctx, edge, nodeById, interaction));
+
+            ctx.restore();
+        } finally {
+            state.renderPerf.inRender = false;
+        }
+        if (state.renderPerf.pending) {
+            state.renderPerf.pending = false;
+            scheduleRender();
+        }
+    }
+
+    function getVisibleEdges(visibleFlowEdges = getVisibleFlowEdges()) {
         if (!state.graph) return [];
-        const visibleFlowIds = new Set(getVisibleFlowEdges().map(edge => edge.id));
+        const visibleFlowIds = new Set(visibleFlowEdges.map(edge => edge.id));
         const hasFlowFilter = hasActiveFlowFilter();
         return (state.graph.edges || []).filter(edge => {
             if (edge.type === core.EDGE_TYPES.FLOW) return visibleFlowIds.has(edge.id);
@@ -5744,6 +5798,18 @@
         ctx.moveTo(source.x, source.y);
         ctx.quadraticCurveTo(control.x, control.y, target.x, target.y);
         ctx.stroke();
+        if (style.selected && edge.type === core.EDGE_TYPES.FLOW) {
+            ctx.save();
+            ctx.globalAlpha = Math.min(1, style.opacity * 0.92);
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(254, 243, 199, 0.92)';
+            ctx.lineWidth = Math.max(2.2, style.width * 0.42);
+            ctx.beginPath();
+            ctx.moveTo(source.x, source.y);
+            ctx.quadraticCurveTo(control.x, control.y, target.x, target.y);
+            ctx.stroke();
+            ctx.restore();
+        }
         ctx.setLineDash([]);
 
         if (edge.type === core.EDGE_TYPES.FLOW) {
@@ -5828,7 +5894,7 @@
         const zoom = state.viewport.scale || 1;
         const density = state.labelDensity;
         const major = isMajorFlowLabel(edge, interaction);
-        const visible = getVisibleFlowEdges();
+        const visible = interaction.visibleFlowEdges || getVisibleFlowEdges();
 
         if (force) {
             return { visible: true, alpha: 1, showAmount: true, force: true };
@@ -5926,7 +5992,7 @@
                     width: metrics.width,
                     height: metrics.height
                 };
-            if (!layout || layout.register(box, { force: metrics.force })) {
+            if (!layout || layout.register(box)) {
                 return {
                     x: box.x + box.width / 2,
                     y: box.y + box.height / 2
@@ -5951,8 +6017,8 @@
 
     function createLabelLayout(width, height) {
         const boxes = [];
-        const padding = state.viewport.scale < 0.75 ? 8 : 5;
-        const margin = 8;
+        const padding = state.viewport.scale < 0.75 ? 10 : 6;
+        const margin = Math.max(8, width < 520 ? 12 : 8);
         return {
             boxes,
             clampBox(box) {
@@ -6202,19 +6268,11 @@
         const labelText = labelForNode(node);
         const labelWidth = Math.min(ctx.measureText(labelText).width, getMaxNodeLabelWidth(node));
         const labelHeight = 15;
-        let labelBox = {
-            x: node.x - labelWidth / 2,
-            y: node.y + radius + 7,
-            width: labelWidth,
-            height: labelHeight
-        };
         const forceLabel = trackedWallet || selected || hovered || selectedFlowEndpoint;
-        if (interaction.labelLayout) {
-            labelBox = interaction.labelLayout.clampBox(labelBox);
-            if (!interaction.labelLayout.register(labelBox, { force: forceLabel })) {
-                ctx.restore();
-                return;
-            }
+        const labelBox = placeNodeLabel(node, radius, labelWidth, labelHeight, interaction, forceLabel);
+        if (!labelBox) {
+            ctx.restore();
+            return;
         }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
@@ -6222,9 +6280,34 @@
         ctx.restore();
     }
 
+    function placeNodeLabel(node, radius, labelWidth, labelHeight, interaction, forceLabel = false) {
+        const layout = interaction.labelLayout;
+        const gap = Math.max(7, state.viewport.scale < 0.75 ? 10 : 7);
+        const candidates = [
+            { x: node.x - labelWidth / 2, y: node.y + radius + gap },
+            { x: node.x - labelWidth / 2, y: node.y - radius - labelHeight - gap },
+            { x: node.x + radius + gap, y: node.y - labelHeight / 2 },
+            { x: node.x - radius - labelWidth - gap, y: node.y - labelHeight / 2 }
+        ];
+        let fallback = null;
+
+        for (const candidate of candidates) {
+            const box = layout
+                ? layout.clampBox({ ...candidate, width: labelWidth, height: labelHeight })
+                : { ...candidate, width: labelWidth, height: labelHeight };
+            fallback ||= box;
+            if (!layout || layout.register(box)) return box;
+        }
+
+        if (!forceLabel || !layout || !fallback) return null;
+        layout.register(fallback, { force: true });
+        return fallback;
+    }
+
     function handleCanvasWheel(event) {
         if (!state.graph || !state.canvas) return;
         event.preventDefault();
+        state.lastPointerType = 'wheel';
         markFlowInteraction();
 
         const point = getScreenPoint(event);
@@ -6241,11 +6324,12 @@
         state.viewport.x = point.x - worldPoint.x * nextScale;
         state.viewport.y = point.y - worldPoint.y * nextScale;
         clampViewport();
-        render();
+        scheduleRender();
     }
 
     function handleCanvasPointerDown(event) {
         if (!state.graph || !state.canvas) return;
+        state.lastPointerType = event.pointerType || 'mouse';
         markFlowInteraction();
         hideHoverOverlay();
         const screenPoint = getScreenPoint(event);
@@ -6260,13 +6344,14 @@
             }
         }
         const worldPoint = screenToWorld(screenPoint);
-        const node = getNodeAtWorldPoint(worldPoint);
-        const edge = node ? null : getFlowEdgeAtWorldPoint(worldPoint);
+        const node = getNodeAtWorldPoint(worldPoint, { pointerType: event.pointerType });
+        const edge = node ? null : getFlowEdgeAtWorldPoint(worldPoint, { pointerType: event.pointerType });
 
         state.canvas.setPointerCapture?.(event.pointerId);
+        const touchTapOnlyNode = event.pointerType === 'touch' && node;
         state.drag = {
             pointerId: event.pointerId,
-            mode: node ? 'node' : edge ? 'edge' : 'pan',
+            mode: touchTapOnlyNode ? 'pan' : node ? 'node' : edge ? 'edge' : 'pan',
             nodeId: node?.id || null,
             edgeId: edge?.id || null,
             startScreen: screenPoint,
@@ -6275,12 +6360,13 @@
             startViewport: { ...state.viewport },
             moved: false
         };
-        state.canvas.style.cursor = 'grabbing';
+        setGraphInteractionMode(state.drag.mode === 'node' ? 'dragging-node' : 'panning');
         event.preventDefault();
     }
 
     function handleCanvasPointerMove(event) {
         if (!state.graph || !state.canvas) return;
+        state.lastPointerType = event.pointerType || state.lastPointerType || 'mouse';
         const screenPoint = getScreenPoint(event);
         if (!screenPoint) return;
         if (event.pointerType === 'touch' && state.touchPointers.has(event.pointerId)) {
@@ -6304,18 +6390,19 @@
                 state.viewport.x = state.drag.startViewport.x + dx;
                 state.viewport.y = state.drag.startViewport.y + dy;
                 clampViewport();
-                render();
+                scheduleRender();
             }
             state.drag.lastScreen = screenPoint;
             event.preventDefault();
             return;
         }
 
-        updateHoverFromScreenPoint(screenPoint);
+        updateHoverFromScreenPoint(screenPoint, { pointerType: event.pointerType });
     }
 
     function handleCanvasPointerUp(event) {
         if (!state.graph || !state.canvas) return;
+        state.lastPointerType = event.pointerType || state.lastPointerType || 'mouse';
         if (event.pointerType === 'touch' && endTouchPointer(event)) {
             event.preventDefault();
             return;
@@ -6325,9 +6412,10 @@
         if (drag?.pointerId === event.pointerId) {
             state.canvas.releasePointerCapture?.(event.pointerId);
             state.drag = null;
+            setGraphInteractionMode(null);
 
-            if (drag.mode === 'node' && !drag.moved && drag.nodeId) {
-                const openDetails = registerQuickInspect('node', drag.nodeId, getScreenPoint(event));
+            if (!drag.moved && drag.nodeId) {
+                const openDetails = registerQuickInspect('node', drag.nodeId, getScreenPoint(event), event.pointerType);
                 state.selectedId = drag.nodeId;
                 state.selectedFlowId = null;
                 state.historyPreview.selectedEvent = null;
@@ -6335,18 +6423,19 @@
                 render();
                 renderDetails();
             }
-            if (drag.mode === 'edge' && !drag.moved && drag.edgeId) {
+            if (!drag.moved && drag.edgeId) {
                 selectFlow(drag.edgeId, {
-                    openDetails: registerQuickInspect('flow', drag.edgeId, getScreenPoint(event))
+                    openDetails: registerQuickInspect('flow', drag.edgeId, getScreenPoint(event), event.pointerType)
                 });
             }
 
-            updateHoverFromScreenPoint(getScreenPoint(event));
+            updateHoverFromScreenPoint(getScreenPoint(event), { pointerType: event.pointerType, force: true });
             event.preventDefault();
             return;
         }
 
-        updateHoverFromScreenPoint(getScreenPoint(event));
+        setGraphInteractionMode(null);
+        updateHoverFromScreenPoint(getScreenPoint(event), { pointerType: event.pointerType, force: true });
     }
 
     function handleCanvasPointerCancel(event) {
@@ -6359,7 +6448,7 @@
         markFlowInteraction();
         state.canvas.releasePointerCapture?.(event.pointerId);
         state.drag = null;
-        state.canvas.style.cursor = state.hoveredId ? 'grab' : 'grab';
+        setGraphInteractionMode(null);
         hideHoverOverlay();
     }
 
@@ -6374,7 +6463,7 @@
             startScale: state.viewport.scale,
             startWorld: screenToWorld(metrics.midpoint)
         };
-        state.canvas.style.cursor = 'grabbing';
+        setGraphInteractionMode('pinching');
     }
 
     function updatePinchGesture() {
@@ -6387,7 +6476,7 @@
         state.viewport.x = metrics.midpoint.x - state.pinch.startWorld.x * nextScale;
         state.viewport.y = metrics.midpoint.y - state.pinch.startWorld.y * nextScale;
         clampViewport();
-        render();
+        scheduleRender();
     }
 
     function endTouchPointer(event) {
@@ -6408,9 +6497,9 @@
     function endPinchGesture() {
         state.pinch = null;
         state.drag = null;
-        if (state.canvas) state.canvas.style.cursor = 'grab';
+        setGraphInteractionMode(null);
         hideHoverOverlay();
-        render();
+        scheduleRender();
     }
 
     function getPinchMetrics(preferredIds = null) {
@@ -6434,12 +6523,12 @@
     function handleCanvasLeave() {
         if (!state.canvas || state.drag) return;
         markFlowInteraction();
-        state.canvas.style.cursor = 'grab';
+        setGraphInteractionMode(null);
         hideHoverOverlay();
         if (!state.hoveredId && !state.hoveredFlowId) return;
         state.hoveredId = null;
         state.hoveredFlowId = null;
-        render();
+        scheduleRender();
     }
 
     function renderDetails(options = {}) {
@@ -7540,14 +7629,34 @@
         node.x = position.x;
         node.y = position.y;
         state.manualNodePositions.set(node.id, { x: node.x, y: node.y });
-        render();
+        scheduleRender();
     }
 
-    function updateHoverFromScreenPoint(screenPoint) {
+    function updateHoverFromScreenPoint(screenPoint, options = {}) {
         if (!screenPoint || !state.canvas) return;
+        const pointerType = options.pointerType || state.lastPointerType || 'mouse';
+        if (pointerType === 'touch') {
+            hideHoverOverlay();
+            return;
+        }
+        const now = performance.now();
+        const hitTarget = getHitTargetProfile(pointerType);
+        if (!options.force && state.hoverPerf.lastPoint && now - state.hoverPerf.lastAt < hitTarget.hoverThrottleMs) {
+            const drift = Math.hypot(screenPoint.x - state.hoverPerf.lastPoint.x, screenPoint.y - state.hoverPerf.lastPoint.y);
+            if (drift < 4) return;
+        }
+        state.hoverPerf.lastAt = now;
+        state.hoverPerf.lastPoint = { ...screenPoint };
+
         const worldPoint = screenToWorld(screenPoint);
-        const hovered = getNodeAtWorldPoint(worldPoint);
-        const hoveredFlow = hovered ? null : getFlowEdgeAtWorldPoint(worldPoint);
+        const hovered = getNodeAtWorldPoint(worldPoint, {
+            pointerType,
+            preferredId: state.hoveredId || state.selectedId
+        });
+        const hoveredFlow = hovered ? null : getFlowEdgeAtWorldPoint(worldPoint, {
+            pointerType,
+            preferredId: state.hoveredFlowId || state.selectedFlowId
+        });
         const nextHoveredId = hovered?.id || null;
         const nextHoveredFlowId = hoveredFlow?.id || null;
         state.canvas.style.cursor = hovered ? 'grab' : hoveredFlow ? 'pointer' : 'grab';
@@ -7555,10 +7664,11 @@
         if (nextHoveredId === state.hoveredId && nextHoveredFlowId === state.hoveredFlowId) return;
         state.hoveredId = nextHoveredId;
         state.hoveredFlowId = nextHoveredFlowId;
-        render();
+        scheduleRender();
     }
 
-    function registerQuickInspect(type, id, screenPoint) {
+    function registerQuickInspect(type, id, screenPoint, pointerType = state.lastPointerType) {
+        if (pointerType === 'touch') return false;
         const now = performance.now();
         const previous = state.lastClick;
         state.lastClick = {
@@ -7570,6 +7680,17 @@
         if (!previous || previous.type !== type || previous.id !== id || !previous.screenPoint || !screenPoint) return false;
         const closeEnough = Math.hypot(previous.screenPoint.x - screenPoint.x, previous.screenPoint.y - screenPoint.y) <= QUICK_INSPECT_DISTANCE;
         return closeEnough && now - previous.at <= QUICK_INSPECT_MS;
+    }
+
+    function setGraphInteractionMode(mode) {
+        const wrapper = state.canvas?.parentElement;
+        if (state.canvas) {
+            state.canvas.style.cursor = mode ? 'grabbing' : state.hoveredFlowId ? 'pointer' : 'grab';
+        }
+        if (!wrapper) return;
+        wrapper.classList.toggle('is-panning', mode === 'panning');
+        wrapper.classList.toggle('is-dragging-node', mode === 'dragging-node');
+        wrapper.classList.toggle('is-pinching', mode === 'pinching');
     }
 
     function createHoverOverlay() {
@@ -7589,10 +7710,14 @@
             hideHoverOverlay();
             return;
         }
-        overlay.innerHTML = node ? renderNodeHoverOverlay(node) : renderFlowHoverOverlay(edge);
-        overlay.classList.add('is-visible');
+        const overlayKey = node ? `node:${node.id}` : `flow:${edge.id}`;
+        if (state.hoverPerf.overlayKey !== overlayKey) {
+            overlay.innerHTML = node ? renderNodeHoverOverlay(node) : renderFlowHoverOverlay(edge);
+            state.hoverPerf.overlayKey = overlayKey;
+        }
         overlay.setAttribute('aria-hidden', 'false');
         positionHoverOverlay(screenPoint);
+        overlay.classList.add('is-visible');
     }
 
     function hideHoverOverlay() {
@@ -7600,6 +7725,7 @@
         if (!overlay) return;
         overlay.classList.remove('is-visible');
         overlay.setAttribute('aria-hidden', 'true');
+        state.hoverPerf.overlayKey = '';
     }
 
     function positionHoverOverlay(screenPoint) {
@@ -7655,29 +7781,54 @@
         return state.dataMode === DATA_MODES.WALLET ? 'Counterparty wallet' : 'Wallet';
     }
 
-    function getNodeAtWorldPoint(point) {
-        if (!point) return null;
-        return state.graph.nodes
-            .slice()
-            .sort((a, b) => (b.radius || 0) - (a.radius || 0))
-            .find(node => Math.hypot(node.x - point.x, node.y - point.y) <= (node.radius || 18) + 10 / state.viewport.scale);
+    function getHitTargetProfile(pointerType = state.lastPointerType) {
+        return pointerType === 'touch' ? TOUCH_HIT_TARGET : DESKTOP_HIT_TARGET;
     }
 
-    function getFlowEdgeAtWorldPoint(point) {
+    function getNodeAtWorldPoint(point, options = {}) {
+        if (!point) return null;
+        const hitTarget = getHitTargetProfile(options.pointerType);
+        const scale = state.viewport.scale || 1;
+        return state.graph.nodes
+            .slice()
+            .map(node => {
+                const stable = node.id === options.preferredId || node.id === state.selectedId;
+                const radius = (node.radius || 18) + (hitTarget.nodeExtraPx + (stable ? hitTarget.stableExtraPx : 0)) / scale;
+                return {
+                    node,
+                    stable,
+                    radius,
+                    distance: Math.hypot(node.x - point.x, node.y - point.y)
+                };
+            })
+            .filter(item => item.distance <= item.radius)
+            .sort((a, b) => Number(b.stable) - Number(a.stable)
+                || (a.distance / Math.max(1, a.radius)) - (b.distance / Math.max(1, b.radius))
+                || (b.node.radius || 0) - (a.node.radius || 0))[0]?.node || null;
+    }
+
+    function getFlowEdgeAtWorldPoint(point, options = {}) {
         if (!point || !state.graph) return null;
-        const tolerance = Math.max(7, 13 / (state.viewport.scale || 1));
+        const hitTarget = getHitTargetProfile(options.pointerType);
+        const tolerance = Math.max(8, hitTarget.flowExtraPx / (state.viewport.scale || 1));
         return getVisibleFlowEdges()
             .slice()
             .sort((a, b) => (b.width || 0) - (a.width || 0) || (b.usd_value || 0) - (a.usd_value || 0))
             .map(edge => ({
                 edge,
-                distance: distanceToFlowEdge(point, edge)
+                stable: edge.id === options.preferredId || edge.id === state.selectedFlowId,
+                distance: distanceToFlowEdge(point, edge, options)
             }))
-            .filter(item => Number.isFinite(item.distance) && item.distance <= tolerance)
-            .sort((a, b) => a.distance - b.distance || (b.edge.usd_value || 0) - (a.edge.usd_value || 0))[0]?.edge || null;
+            .filter(item => {
+                const edgeTolerance = tolerance + (item.stable ? hitTarget.stableExtraPx / (state.viewport.scale || 1) : 0);
+                return Number.isFinite(item.distance) && item.distance <= edgeTolerance;
+            })
+            .sort((a, b) => Number(b.stable) - Number(a.stable)
+                || a.distance - b.distance
+                || (b.edge.usd_value || 0) - (a.edge.usd_value || 0))[0]?.edge || null;
     }
 
-    function distanceToFlowEdge(point, edge) {
+    function distanceToFlowEdge(point, edge, options = {}) {
         const source = state.graph.nodeById.get(edge.source);
         const target = state.graph.nodeById.get(edge.target);
         if (!source || !target) return Number.POSITIVE_INFINITY;
@@ -7690,8 +7841,9 @@
             y: (source.y + target.y) / 2 + normal.y * getEdgeBend(edge)
         };
         let minDistance = Number.POSITIVE_INFINITY;
-        for (let step = 0; step <= 18; step += 1) {
-            const curvePoint = pointOnQuadratic(source, control, target, step / 18);
+        const steps = options.pointerType === 'touch' ? 24 : 18;
+        for (let step = 0; step <= steps; step += 1) {
+            const curvePoint = pointOnQuadratic(source, control, target, step / steps);
             minDistance = Math.min(minDistance, Math.hypot(point.x - curvePoint.x, point.y - curvePoint.y));
         }
         return minDistance;
@@ -8111,16 +8263,17 @@
         state.interactionIndex = { edgesByNode, neighborsByNode, pathsByNode };
     }
 
-    function getInteractionState() {
+    function getInteractionState(visibleFlowEdges = getVisibleFlowEdges()) {
         const activeIds = new Set([state.selectedId, state.hoveredId].filter(Boolean));
         const connectedNodeIds = new Set(activeIds);
         const connectedEdgeIds = new Set();
         const index = state.interactionIndex;
+        const visibleFlowById = new Map(visibleFlowEdges.map(edge => [edge.id, edge]));
         const selectedFlowEdge = state.selectedFlowId
-            ? (state.graph.flowEdges || []).find(edge => edge.id === state.selectedFlowId && edgeMatchesActiveFilters(edge))
+            ? visibleFlowById.get(state.selectedFlowId)
             : null;
         const hoveredFlowEdge = state.hoveredFlowId
-            ? (state.graph.flowEdges || []).find(edge => edge.id === state.hoveredFlowId && edgeMatchesActiveFilters(edge))
+            ? visibleFlowById.get(state.hoveredFlowId)
             : null;
         const replayActiveFlowId = state.flowReplay.activeFlowId;
         const replayActiveEdge = replayActiveFlowId
@@ -8154,7 +8307,7 @@
             connectedNodeIds.add(hoveredFlowEdge.target);
         }
         if (hasTokenIsolation) {
-            getVisibleFlowEdges().forEach(edge => {
+            visibleFlowEdges.forEach(edge => {
                 if (!edgeMatchesTokenIsolation(edge)) return;
                 tokenIsolationEdgeIds.add(edge.id);
                 tokenIsolationNodeIds.add(edge.source);

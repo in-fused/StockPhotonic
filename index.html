@@ -2400,6 +2400,102 @@
                 bottom: calc(5.1rem + env(safe-area-inset-bottom)) !important;
             }
         }
+
+        #crypto-flow-canvas {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .crypto-canvas-wrap.is-panning,
+        .crypto-canvas-wrap.is-dragging-node,
+        .crypto-canvas-wrap.is-pinching {
+            border-color: rgba(103, 232, 249, 0.34);
+            box-shadow: inset 0 0 0 1px rgba(103, 232, 249, 0.10), 0 0 34px rgba(34, 211, 238, 0.08);
+        }
+
+        .crypto-canvas-wrap.is-panning #crypto-flow-canvas,
+        .crypto-canvas-wrap.is-dragging-node #crypto-flow-canvas,
+        .crypto-canvas-wrap.is-pinching #crypto-flow-canvas {
+            cursor: grabbing;
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .crypto-graph-hover-overlay {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .crypto-interaction-dock {
+                z-index: 72;
+            }
+
+            .crypto-mobile-graph-overlay {
+                top: calc(0.6rem + env(safe-area-inset-top));
+                bottom: auto !important;
+                align-items: flex-start;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-hint {
+                max-width: min(52vw, 15rem);
+                line-height: 1.25;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-actions {
+                width: auto;
+                max-width: none;
+                margin-left: auto;
+            }
+
+            .crypto-sidebar-stack {
+                max-height: none;
+                overflow: visible;
+                padding-right: 0;
+            }
+
+            .crypto-investigation-tabs {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .crypto-investigation-tab {
+                min-width: 0;
+            }
+
+            .crypto-summary-grid,
+            .crypto-two-column-list,
+            .crypto-guided-action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #crypto-detail-panel {
+                min-height: 300px;
+                padding: 0.9rem !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .crypto-mobile-graph-overlay {
+                left: max(0.55rem, env(safe-area-inset-left));
+                right: max(0.55rem, env(safe-area-inset-right));
+                gap: 0.4rem;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-hint {
+                max-width: 42vw;
+                padding: 0.42rem 0.5rem;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-actions {
+                gap: 0.28rem;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-action {
+                min-width: 2.4rem;
+                min-height: 2.4rem;
+            }
+        }
     </style>
 </head>
 <body class="photonic-bg">

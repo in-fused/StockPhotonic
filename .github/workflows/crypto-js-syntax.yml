@@ -1,0 +1,49 @@
+name: CryptoPhotonic JS Syntax
+
+on:
+  pull_request:
+    paths:
+      - "js/crypto/*.js"
+      - "js/crypto/**/*.js"
+      - ".github/workflows/crypto-js-syntax.yml"
+  push:
+    paths:
+      - "js/crypto/*.js"
+      - "js/crypto/**/*.js"
+      - ".github/workflows/crypto-js-syntax.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    name: Syntax-check CryptoPhotonic frontend JS
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          files=(
+            "js/crypto/core.js"
+            "js/crypto/graph.js"
+            "js/crypto/layout.js"
+            "js/crypto/solanaAdapter.js"
+            "js/crypto/ui.js"
+          )
+
+          for file in "${files[@]}"; do
+            echo "Checking ${file}"
+            node --check "${file}"
+          done

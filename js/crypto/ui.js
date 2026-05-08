@@ -76,6 +76,18 @@
             graphDepth: 1,
             lastRawDataset: null
         },
+        history: {
+            controller: null,
+            moduleLoadPromise: null,
+            inFlight: false,
+            lastError: '',
+            lastMessage: '',
+            pagesLoaded: 0,
+            totalLoadedTransactions: 0,
+            moreAvailable: false,
+            nextCursor: null,
+            backendProviderConnected: false
+        },
         filters: {
             transactionType: 'all',
             token: 'all',
@@ -865,6 +877,21 @@
         state.walletLookup.eventCount = 0;
         state.walletLookup.mergedEventCount = 0;
         state.walletLookup.lastRawDataset = null;
+        resetHistoryState();
+    }
+
+    function resetHistoryState(wallet = '') {
+        if (state.history.controller?.reset) {
+            state.history.controller.reset(wallet);
+        }
+        state.history.inFlight = false;
+        state.history.lastError = '';
+        state.history.lastMessage = '';
+        state.history.pagesLoaded = 0;
+        state.history.totalLoadedTransactions = 0;
+        state.history.moreAvailable = false;
+        state.history.nextCursor = null;
+        state.history.backendProviderConnected = false;
     }
 
     function getCurrentSourceLabel() {
@@ -1340,6 +1367,7 @@
                     </label>
                     <div id="crypto-wallet-lookup-status" class="min-w-0 rounded-xl border border-white/10 bg-slate-950/32 px-3 py-2 text-white/56 break-words">${escapeHtml(status)}</div>
                 </div>
+                ${renderWalletHistoryControls()}
             </form>
         `;
     }
@@ -1351,6 +1379,33 @@
             return `${state.walletLookup.eventCount} returned / ${state.walletLookup.mergedEventCount} shown`;
         }
         return 'No wallet lookup loaded';
+    }
+
+    function renderWalletHistoryControls() {
+        if (state.dataMode !== DATA_MODES.WALLET) return '';
+        const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
+        const disabled = state.walletLookup.inFlight || state.history.inFlight || !hasWallet || !state.history.moreAvailable || !state.history.backendProviderConnected;
+        const status = getWalletHistoryStatusLabel();
+        return `
+            <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2 items-center">
+                <div id="crypto-wallet-history-status" class="min-w-0 rounded-xl border border-white/10 bg-slate-950/32 px-3 py-2 text-white/56 break-words">${escapeHtml(status)}</div>
+                <button id="crypto-wallet-history-load-more" type="button" ${disabled ? 'disabled' : ''} title="Load the next backend-provided wallet history page without changing the current graph rendering." class="min-h-10 rounded-xl border border-emerald-200/18 bg-emerald-300/10 px-3 py-2 text-emerald-50/82 hover:border-emerald-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load More History</button>
+            </div>
+        `;
+    }
+
+    function getWalletHistoryStatusLabel() {
+        if (state.history.inFlight) return 'History: loading next backend page';
+        if (state.history.lastError) return `History: ${state.history.lastError}`;
+        if (state.history.pagesLoaded > 0) {
+            const more = state.history.moreAvailable ? 'more available' : 'no additional cursor';
+            const backend = state.history.backendProviderConnected ? 'backend adapter connected' : 'backend adapter pending';
+            return `History: ${state.history.pagesLoaded} page${state.history.pagesLoaded === 1 ? '' : 's'} loaded / ${state.history.totalLoadedTransactions} tx tracked / ${more} / ${backend}`;
+        }
+        if (state.dataMode === DATA_MODES.WALLET) {
+            return 'History: ready for backend pagination after wallet lookup / backend adapter pending';
+        }
+        return 'History: wallet mode only';
     }
 
     function renderWalletIntelligencePanel() {
@@ -2339,6 +2394,9 @@
         status.querySelector('#crypto-wallet-lookup-refresh')?.addEventListener('click', () => {
             loadWalletActivity(state.walletLookup.lastWallet || state.walletLookup.walletInput || status.querySelector('#crypto-wallet-lookup-input')?.value || '', { refresh: true });
         });
+        status.querySelector('#crypto-wallet-history-load-more')?.addEventListener('click', () => {
+            loadMoreWalletHistory();
+        });
         status.querySelector('#crypto-wallet-depth-toggle')?.addEventListener('change', event => {
             setWalletLookupDepth(event.target.checked ? 2 : 1);
         });
@@ -2527,6 +2585,7 @@
             state.walletLookup.eventCount = events.length;
             state.walletLookup.mergedEventCount = walletDataset.transactions.length;
             state.walletLookup.lastRawDataset = rawDataset;
+            await seedWalletHistoryFromWorkerPayload(payload, events, normalizedWallet);
             state.walletLookup.lastError = events.length && walletDataset.transactions.length
                 ? ''
                 : events.length
@@ -2550,6 +2609,130 @@
                 renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             }
         }
+    }
+
+    async function seedWalletHistoryFromWorkerPayload(payload = {}, events = [], wallet = '') {
+        try {
+            const controller = await ensureHistoryController(wallet);
+            if (!controller) {
+                applyHistorySnapshot({
+                    pagesLoaded: events.length ? 1 : 0,
+                    totalLoadedTransactions: events.length,
+                    moreAvailable: false,
+                    nextCursor: null,
+                    lastError: '',
+                    lastMessage: 'History controller unavailable; current wallet lookup remains unchanged'
+                });
+                return;
+            }
+            const nextCursor = getHistoryNextCursor(payload);
+            controller.seedPage({
+                provider: 'worker_wallet_lookup',
+                wallet,
+                cursor: getHistoryCurrentCursor(payload),
+                nextCursor,
+                transactions: events,
+                moreAvailable: Boolean(nextCursor),
+                status: 'ok',
+                message: nextCursor
+                    ? 'Initial Worker wallet page is tracked; backend pagination cursor is available'
+                    : 'Initial Worker wallet page is tracked; no pagination cursor returned'
+            }, { replace: true, wallet });
+            applyHistorySnapshot(controller.getSnapshot());
+        } catch (error) {
+            state.history.lastError = error?.message || 'History controller unavailable';
+        }
+    }
+
+    async function loadMoreWalletHistory() {
+        const wallet = state.walletLookup.lastWallet || state.walletLookup.walletInput || '';
+        state.history.inFlight = true;
+        state.history.lastError = '';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        try {
+            const controller = await ensureHistoryController(wallet);
+            if (!controller) {
+                state.history.lastError = 'History controller unavailable';
+                return null;
+            }
+            const snapshot = await controller.loadNextPage({ wallet });
+            applyHistorySnapshot(snapshot);
+            return snapshot;
+        } catch (error) {
+            state.history.lastError = error?.message || 'History load unavailable';
+            return null;
+        } finally {
+            state.history.inFlight = false;
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        }
+    }
+
+    async function ensureHistoryController(wallet = '') {
+        await loadHistoryModules();
+        const Controller = namespace.historyController?.HistoryController;
+        if (!Controller) return null;
+        if (!state.history.controller) {
+            state.history.controller = new Controller({ wallet });
+        } else if (wallet && state.history.controller.wallet !== wallet && !state.history.pagesLoaded) {
+            state.history.controller.reset(wallet);
+        }
+        applyHistorySnapshot(state.history.controller.getSnapshot());
+        return state.history.controller;
+    }
+
+    function loadHistoryModules() {
+        if (namespace.historyProvider?.WalletHistoryProvider && namespace.historyController?.HistoryController) {
+            return Promise.resolve(true);
+        }
+        if (state.history.moduleLoadPromise) return state.history.moduleLoadPromise;
+        state.history.moduleLoadPromise = Promise.resolve()
+            .then(() => loadCryptoScript('js/crypto/historyProvider.js'))
+            .then(() => loadCryptoScript('js/crypto/historyController.js'))
+            .then(() => Boolean(namespace.historyController?.HistoryController))
+            .catch(error => {
+                state.history.lastError = error?.message || 'History modules unavailable';
+                return false;
+            });
+        return state.history.moduleLoadPromise;
+    }
+
+    function loadCryptoScript(src) {
+        if (!document?.createElement || !document?.head) return Promise.resolve(false);
+        const existing = [...document.scripts || []].find(script => script.getAttribute('src')?.split('?')[0] === src);
+        if (existing) return Promise.resolve(true);
+        return new Promise(resolve => {
+            const script = document.createElement('script');
+            script.src = `${src}?v=${Date.now()}`;
+            script.async = false;
+            script.onload = () => resolve(true);
+            script.onerror = () => resolve(false);
+            document.head.appendChild(script);
+        });
+    }
+
+    function applyHistorySnapshot(snapshot = {}) {
+        state.history.pagesLoaded = Math.max(0, Number(snapshot.pagesLoaded) || 0);
+        state.history.totalLoadedTransactions = Math.max(0, Number(snapshot.totalLoadedTransactions) || 0);
+        state.history.moreAvailable = Boolean(snapshot.moreAvailable);
+        state.history.nextCursor = snapshot.nextCursor ?? null;
+        state.history.lastError = snapshot.lastError || '';
+        state.history.lastMessage = snapshot.lastMessage || '';
+        state.history.backendProviderConnected = Boolean(snapshot.provider && snapshot.providerCapabilities && snapshot.providerCapabilities.browserProviderCalls === false && !snapshot.providerCapabilities.backendOnly);
+    }
+
+    function getHistoryCurrentCursor(payload = {}) {
+        return payload.cursor ?? payload.current_cursor ?? payload.page?.cursor ?? null;
+    }
+
+    function getHistoryNextCursor(payload = {}) {
+        return payload.nextCursor
+            ?? payload.next_cursor
+            ?? payload.cursor_next
+            ?? payload.pagination?.nextCursor
+            ?? payload.pagination?.next_cursor
+            ?? payload.page?.nextCursor
+            ?? payload.page?.next_cursor
+            ?? null;
     }
 
     function applyWalletLookupDataset(dataset = {}, trackedWallet = '') {

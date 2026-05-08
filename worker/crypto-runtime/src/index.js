@@ -175,7 +175,7 @@ export default {
         });
       }
 
-      if (request.method === "GET" && url.pathname === "/api/crypto/wallet-history") {
+      if (request.method === "GET" && isWalletHistoryEndpointPath(url.pathname)) {
         const query = parseWalletHistoryQuery(url);
         const page = await fetchWalletHistoryPage(query, env);
         return json(page, page.httpStatus || 200);
@@ -801,6 +801,10 @@ function parseWalletHistoryLimit(value, issues) {
     requestedLimit: safeRequestedLimit,
     capped: limit !== safeRequestedLimit,
   };
+}
+
+function isWalletHistoryEndpointPath(pathname) {
+  return pathname === "/api/crypto/wallet-history" || pathname === "/api/crypto/wallet-history/";
 }
 
 async function fetchWalletHistoryPage(query, env = {}) {

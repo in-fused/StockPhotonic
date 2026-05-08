@@ -438,8 +438,8 @@
         }
 
         .crypto-investigation-tabs {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
+            display: flex;
+            flex-wrap: wrap;
             gap: 0.35rem;
             margin-top: 0.85rem;
             padding: 0.25rem;
@@ -453,7 +453,8 @@
             align-items: center;
             justify-content: center;
             gap: 0.35rem;
-            min-width: 0;
+            flex: 1 1 5.8rem;
+            min-width: max-content;
             min-height: 2.35rem;
             border-radius: 0.75rem;
             border: 1px solid transparent;
@@ -462,6 +463,8 @@
             font-size: 0.78rem;
             font-weight: 650;
             line-height: 1.15;
+            white-space: nowrap;
+            word-break: keep-all;
             transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
         }
 
@@ -696,10 +699,13 @@
             }
 
             .crypto-investigation-tabs {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                scrollbar-width: thin;
             }
 
             .crypto-investigation-tab {
+                flex: 0 0 auto;
                 min-height: 2.7rem;
                 font-size: 0.82rem;
             }
@@ -725,6 +731,39 @@
         .crypto-history-collapse,
         .crypto-history-preview-collapse {
             min-width: 0;
+        }
+
+        .crypto-status-panel,
+        .crypto-status-stack,
+        .crypto-control-group,
+        .crypto-collapse,
+        .crypto-collapse-body {
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-control-group select,
+        .crypto-control-group input,
+        .crypto-control-group button {
+            max-width: 100%;
+        }
+
+        .crypto-mode-switch,
+        .crypto-data-source-snapshot {
+            min-width: 0;
+        }
+
+        .crypto-data-source-snapshot {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.35rem;
+        }
+
+        .crypto-data-source-snapshot > div,
+        .crypto-wallet-status-line {
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: normal;
         }
 
         .crypto-intelligence-collapse .crypto-collapse-body,
@@ -1565,7 +1604,8 @@
             background-size: 46px 46px, 46px 46px, 100% 100%;
         }
 
-        #crypto-flow-canvas {
+        #crypto-flow-canvas,
+        #crypto-history-workspace-canvas {
             display: block;
             cursor: grab;
             touch-action: none;
@@ -1573,6 +1613,76 @@
 
         #crypto-flow-canvas:active {
             cursor: grabbing;
+        }
+
+        .crypto-history-workspace-canvas {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 50% 45%, rgba(217, 70, 239, 0.10), transparent 34rem),
+                rgba(2, 6, 23, 0.68);
+        }
+
+        .crypto-replay-workspace-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 18;
+            display: none;
+            pointer-events: none;
+            padding: 1rem;
+        }
+
+        .crypto-replay-workspace-panel {
+            width: min(36rem, calc(100% - 1rem));
+            border: 1px solid rgba(217, 70, 239, 0.24);
+            border-radius: 1rem;
+            background: rgba(2, 6, 23, 0.84);
+            box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42), 0 0 34px rgba(217, 70, 239, 0.10);
+            backdrop-filter: blur(16px);
+            padding: 0.85rem;
+            color: rgba(236, 254, 255, 0.90);
+            pointer-events: auto;
+        }
+
+        .crypto-replay-workspace-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .crypto-replay-workspace-actions button {
+            min-height: 2.5rem;
+            border-radius: 0.75rem;
+            padding: 0.55rem 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(226, 232, 240, 0.78);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .crypto-replay-workspace-actions button.is-primary {
+            border-color: rgba(217, 70, 239, 0.38);
+            background: rgba(217, 70, 239, 0.16);
+            color: rgba(253, 244, 255, 0.94);
+        }
+
+        #crypto-photonic-view.is-replay-workspace #crypto-flow-canvas,
+        #crypto-photonic-view.is-replay-workspace #crypto-graph-hover-overlay,
+        #crypto-photonic-view.is-replay-workspace .crypto-mobile-graph-overlay {
+            display: none;
+        }
+
+        #crypto-photonic-view.is-replay-workspace #crypto-history-workspace-canvas {
+            display: block;
+        }
+
+        #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-overlay {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
         }
 
         .crypto-graph-hover-overlay {
@@ -1943,6 +2053,29 @@
             .crypto-canvas-wrap {
                 height: clamp(430px, 64dvh, 680px);
                 min-height: 430px;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-canvas-wrap {
+                height: clamp(520px, 68dvh, 760px);
+                min-height: 500px;
+            }
+
+            .crypto-replay-workspace-overlay {
+                padding: 0.65rem;
+            }
+
+            .crypto-replay-workspace-panel {
+                width: 100%;
+                max-height: calc(100% - 1rem);
+                overflow-y: auto;
+            }
+
+            .crypto-replay-workspace-actions button {
+                flex: 1 1 100%;
+            }
+
+            .crypto-data-source-snapshot {
+                grid-template-columns: 1fr;
             }
 
             #crypto-detail-panel {
@@ -2880,6 +3013,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         <i class="fa-solid fa-cloud-arrow-down"></i>
                         <span>Load Activity</span>
                     </button>
+                    <button id="crypto-dock-replay-workspace" type="button" onclick="window.CryptoPhotonic?.ui?.toggleReplayWorkspaceMode?.()" aria-pressed="false" class="interaction-dock-button" title="Open preview-only replay workspace" aria-label="Toggle preview replay workspace">
+                        <i class="fa-solid fa-clapperboard"></i>
+                        <span>Replay Mode</span>
+                    </button>
                     <button id="crypto-dock-replay-toggle" type="button" onclick="window.CryptoPhotonic?.ui?.toggleHistoryReplayFromDock?.()" class="interaction-dock-button is-hidden" title="Start or pause the preview-only lifetime replay" aria-label="Start or pause preview lifetime replay">
                         <i class="fa-solid fa-play"></i>
                         <span>Start Replay</span>
@@ -2891,6 +3028,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 <div class="crypto-graph-column lg:col-span-8">
                     <div class="crypto-canvas-wrap rounded-3xl overflow-hidden">
                         <canvas id="crypto-flow-canvas" class="w-full h-full"></canvas>
+                        <canvas id="crypto-history-workspace-canvas" class="crypto-history-workspace-canvas w-full h-full" aria-label="Preview-only replay workspace graph"></canvas>
+                        <div id="crypto-replay-workspace-overlay" class="crypto-replay-workspace-overlay" aria-live="polite"></div>
                         <div id="crypto-graph-hover-overlay" class="crypto-graph-hover-overlay" aria-hidden="true"></div>
                         <div class="mobile-graph-overlay crypto-mobile-graph-overlay" aria-label="Mobile CryptoPhotonic graph controls">
                             <div class="mobile-graph-hint rounded-2xl px-3 py-2 text-[10px] font-mono">Pinch to zoom &bull; Drag to pan &bull; Tap nodes/flows</div>

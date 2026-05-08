@@ -80,6 +80,7 @@
         history: {
             controller: null,
             moduleLoadPromise: null,
+            previewModuleLoadPromise: null,
             inFlight: false,
             lastError: '',
             lastMessage: '',
@@ -95,6 +96,11 @@
             provider: '',
             providerLabel: '',
             providerCapabilities: null
+        },
+        historyPreview: {
+            plan: null,
+            generatedAt: 0,
+            lastMessage: ''
         },
         filters: {
             transactionType: 'all',
@@ -155,6 +161,7 @@
     };
     const GENERATED_FIXTURE_DIR = 'data/crypto/generated/';
     const WORKER_FEED_LIMIT = 50;
+    const HISTORY_PREVIEW_TRANSACTION_LIMIT = 5000;
     const LIVE_POLL_MS = { min: 3000, max: 5000, default: 4000 };
     const DATA_MODES = Object.freeze({
         GENERATED: 'generated_fixture',
@@ -196,6 +203,7 @@
         state.detailPanel = document.getElementById(options.detailPanelId || 'crypto-detail-panel');
         if (!state.root || !state.canvas || !state.detailPanel) return null;
         configureLiveFeed(options);
+        loadHistoryGraphPreviewModule();
 
         state.ctx = state.canvas.getContext('2d');
         state.canvas.style.cursor = 'grab';
@@ -907,6 +915,9 @@
         state.history.provider = '';
         state.history.providerLabel = '';
         state.history.providerCapabilities = null;
+        state.historyPreview.plan = null;
+        state.historyPreview.generatedAt = 0;
+        state.historyPreview.lastMessage = '';
     }
 
     function getCurrentSourceLabel() {
@@ -1457,6 +1468,7 @@
                 ${emptyState ? renderWalletEmptyStateCard(emptyState) : ''}
                 ${depthNote ? renderWalletDepthNoteCard(depthNote) : ''}
                 ${renderWalletHistoryBrowserPanel()}
+                ${renderWalletHistoryGraphPreviewPanel()}
                 <div class="mt-3 grid grid-cols-1 xl:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)] gap-2.5">
                     <div class="grid gap-2.5 min-w-0">
                         <section class="rounded-xl border border-white/10 bg-white/[0.045] p-3">
@@ -1605,6 +1617,105 @@
                     ${rows.map(renderWalletHistoryBrowserRow).join('') || renderWalletInlineEmpty(getWalletHistoryEmptyMessage())}
                 </div>
             </section>
+        `;
+    }
+
+    function renderWalletHistoryGraphPreviewPanel() {
+        const summary = buildHistoryGraphPreviewSummary();
+        const plan = state.historyPreview.plan;
+        const planStale = plan && Number(plan.stagedEventCount || 0) !== Number(summary.transferEventCount || 0);
+        const previewDisabled = state.history.inFlight;
+        const clearDisabled = state.history.inFlight || !plan;
+        const copyDisabled = state.history.inFlight || !plan;
+        return `
+            <section class="mt-3 rounded-xl border border-fuchsia-200/18 bg-fuchsia-300/8 p-3">
+                <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+                    <div class="min-w-0">
+                        <div class="text-white/38">HISTORY GRAPH PREVIEW / REPLAY SANDBOX</div>
+                        <div class="mt-1 text-sm font-display text-cyan-50/86">Lifetime Replay Planning</div>
+                        <div class="mt-1 max-w-3xl text-white/58 leading-relaxed">Preview only. Staged history is summarized into a planning model and is not merged with the active Wallet Lookup graph. This panel makes no identity, ownership, risk, or investment claims; future lifetime replay needs progressive graph expansion before older pages can be drawn.</div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 xl:min-w-[460px]">
+                        <button id="crypto-history-preview-plan" type="button" ${previewDisabled ? 'disabled' : ''} title="Generate a staged lifetime replay plan without animating or changing the active graph." class="min-h-10 rounded-xl border border-fuchsia-200/24 bg-fuchsia-300/12 px-3 py-2 text-fuchsia-50/86 hover:border-fuchsia-100/40 disabled:opacity-50 disabled:cursor-not-allowed">Preview Lifetime Replay</button>
+                        <button id="crypto-history-preview-clear" type="button" ${clearDisabled ? 'disabled' : ''} title="Clear the replay preview plan without clearing staged history or changing the graph." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/70 hover:border-cyan-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Clear Preview</button>
+                        <button id="crypto-history-preview-copy" type="button" ${copyDisabled ? 'disabled' : ''} title="Copy the staged replay plan as JSON." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy Replay Plan</button>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+                    ${renderWalletHistoryMetric('Unique Wallets', summary.uniqueWalletCount, 'Distinct wallet/address values seen in staged history only.')}
+                    ${renderWalletHistoryMetric('Unique Tokens', summary.uniqueTokenCount, 'Distinct token symbols or mints seen in staged history only.')}
+                    ${renderWalletHistoryMetric('Events', summary.transferEventCount, 'Estimated transfer/event count from staged history rows.')}
+                    ${renderWalletHistoryMetric('Earliest', formatPreviewTimestamp(summary.earliestTimestamp), summary.earliestTimestamp || 'No timestamp available.')}
+                    ${renderWalletHistoryMetric('Latest', formatPreviewTimestamp(summary.latestTimestamp), summary.latestTimestamp || 'No timestamp available.')}
+                    ${renderWalletHistoryMetric('Funding', getPreviewFundingLabel(summary.firstFundingCandidate), getPreviewFundingTitle(summary.firstFundingCandidate))}
+                    ${renderWalletHistoryMetric('Readiness', `${summary.replayReadinessScore}/100`, summary.replayReadinessLabel)}
+                </div>
+                <div class="mt-3 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)] gap-2.5">
+                    <div class="min-w-0 rounded-lg border border-white/10 bg-slate-950/28 p-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="text-white/38">REPLAY READINESS</div>
+                            <div class="text-white/42">${escapeHtml(summary.replayReadinessLabel)}</div>
+                        </div>
+                        <div class="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                            <div class="h-full bg-fuchsia-300/70" style="width:${escapeAttr(Math.max(0, Math.min(100, summary.replayReadinessScore)))}%"></div>
+                        </div>
+                        <div class="mt-2 text-white/54 leading-relaxed">${escapeHtml(getHistoryGraphPreviewNotice(summary, planStale))}</div>
+                        ${plan ? renderHistoryReplayPlanDetails(plan, planStale) : ''}
+                    </div>
+                    <div class="min-w-0 rounded-lg border border-white/10 bg-slate-950/28 p-3">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="text-white/38">HIGH-ACTIVITY COUNTERPARTIES</div>
+                            <div class="text-white/36">${escapeHtml(Math.min(summary.highActivityCounterparties.length, 5))} shown</div>
+                        </div>
+                        <div class="mt-2 grid gap-2">
+                            ${summary.highActivityCounterparties.slice(0, 5).map(renderHistoryPreviewCounterparty).join('') || renderWalletInlineEmpty('No counterparties can be ranked from staged history yet.')}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-2">
+                    <div class="rounded-lg border border-yellow-200/14 bg-yellow-300/8 px-3 py-2.5">
+                        <div class="text-white/38">MISSING DATA FOR INCEPTION REPLAY</div>
+                        <div class="mt-2 grid gap-1.5">
+                            ${summary.missingData.map(item => `<div class="text-yellow-50/76 leading-snug">${escapeHtml(item)}</div>`).join('') || `<div class="text-emerald-50/76">No blocking staged-history fields detected. Progressive expansion is still required before graph replay.</div>`}
+                        </div>
+                    </div>
+                    <div class="rounded-lg border border-cyan-200/14 bg-cyan-300/8 px-3 py-2.5">
+                        <div class="text-white/38">BOUNDARY</div>
+                        <div class="mt-2 text-cyan-50/72 leading-relaxed">Preview summary only. The active graph, Wallet Intelligence, Timeline, Flow Inspector, Report, History Browser, and mobile graph controls continue to use the current Wallet Lookup replacement graph.</div>
+                        <div class="mt-2 text-white/46">${escapeHtml(state.historyPreview.lastMessage || 'Generate a replay plan when staged history is ready to inspect.')}</div>
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+
+    function renderHistoryReplayPlanDetails(plan = {}, stale = false) {
+        const warning = plan.warning ? `<div class="mt-2 rounded-lg border border-yellow-200/18 bg-yellow-300/10 px-3 py-2 text-yellow-50/78 leading-relaxed">${escapeHtml(plan.warning)}</div>` : '';
+        return `
+            <div class="mt-3 rounded-lg border border-fuchsia-200/16 bg-fuchsia-300/10 px-3 py-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="text-white/38">STAGED PLAN</div>
+                    <div class="text-white/42">${escapeHtml(stale ? 'Refresh recommended' : 'Current staged rows')}</div>
+                </div>
+                <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    ${renderWalletHistoryMetric('Steps', plan.estimatedReplaySteps, 'Estimated replay chunks for staged events.')}
+                    ${renderWalletHistoryMetric('Chunk', plan.suggestedChunkSize, 'Suggested events per replay chunk.')}
+                    ${renderWalletHistoryMetric('Staged Events', plan.stagedEventCount, 'Events included when the plan was generated.')}
+                    ${renderWalletHistoryMetric('Speeds', (plan.suggestedSpeedOptions || []).map(item => item.label).join(', ') || '-', 'Suggested replay speed presets.')}
+                </div>
+                ${warning}
+            </div>
+        `;
+    }
+
+    function renderHistoryPreviewCounterparty(item = {}) {
+        const tokens = Array.isArray(item.tokens) && item.tokens.length ? item.tokens.join(', ') : '-';
+        return `
+            <div class="min-w-0 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2" title="${escapeAttr(item.address || '')}">
+                <div class="font-mono text-[11px] text-cyan-50/82 break-words">${escapeHtml(shortLongValue(item.address || '-'))}</div>
+                <div class="mt-1 text-white/50">${escapeHtml(item.eventCount || 0)} staged event${item.eventCount === 1 ? '' : 's'} / inbound ${escapeHtml(item.inboundToTracked || 0)} / outbound ${escapeHtml(item.outboundFromTracked || 0)}</div>
+                <div class="mt-1 text-white/36 break-words">Tokens: ${escapeHtml(tokens)}</div>
+            </div>
         `;
     }
 
@@ -1783,6 +1894,145 @@
         }
         if (Array.isArray(transaction.transfers)) return transaction.transfers.length;
         return null;
+    }
+
+    function buildHistoryGraphPreviewSummary() {
+        const trackedWallet = state.history.controller?.wallet || state.walletLookup.lastWallet || state.walletLookup.walletInput || '';
+        const options = {
+            trackedWallet,
+            providerConfigured: state.history.providerConfigured,
+            pagesLoaded: state.history.pagesLoaded,
+            providerPagesLoaded: state.history.providerPagesLoaded,
+            nextCursor: state.history.nextCursor,
+            moreAvailable: state.history.moreAvailable
+        };
+        const builder = namespace.historyGraphPreview?.buildPreviewSummary;
+        if (builder) return builder(state.history.loadedTransactions, options);
+        return buildFallbackHistoryGraphPreviewSummary(state.history.loadedTransactions, options);
+    }
+
+    function buildFallbackHistoryGraphPreviewSummary(transactions = [], options = {}) {
+        const rows = Array.isArray(transactions) ? transactions : [];
+        const wallets = new Set();
+        const tokens = new Set();
+        const timestamps = [];
+        let transferEventCount = 0;
+
+        rows.forEach((transaction, index) => {
+            [transaction.wallet, transaction.source_wallet, transaction.destination_wallet, transaction.from, transaction.to].forEach(value => {
+                const normalized = String(value || '').trim();
+                if (normalized) wallets.add(normalized);
+            });
+            getHistoryTokenSymbols(transaction).forEach(symbol => tokens.add(symbol));
+            const timestamp = getHistoryTransactionTimestamp(transaction);
+            const timestampMs = getHistoryTimestampMs(timestamp);
+            if (timestampMs) timestamps.push(timestampMs);
+            transferEventCount += Math.max(1, getHistoryTransferCount(transaction) || 1);
+            if (!wallets.size) wallets.add(`history-row-${index + 1}`);
+        });
+
+        const score = rows.length
+            ? Math.min(65, 18 + Math.min(22, transferEventCount * 2) + (timestamps.length ? 18 : 0) + (tokens.size ? 7 : 0))
+            : 0;
+        const missingData = [];
+        if (!rows.length) missingData.push('No staged history rows are loaded yet.');
+        if (!timestamps.length) missingData.push('Timestamps are required to order lifetime replay steps.');
+        if (!options.trackedWallet) missingData.push('Tracked wallet metadata is required for inception replay.');
+        if (!options.providerConfigured) missingData.push('History provider configuration has not been confirmed by a Worker history page.');
+        missingData.push('Progressive graph expansion is required before drawing staged history.');
+
+        return {
+            version: 'd109_history_graph_preview_fallback',
+            previewOnly: true,
+            mergedIntoActiveGraph: false,
+            generatedAt: new Date().toISOString(),
+            trackedWallet: options.trackedWallet || '',
+            providerConfigured: Boolean(options.providerConfigured),
+            pagesLoaded: Math.max(0, Number(options.pagesLoaded) || 0),
+            providerPagesLoaded: Math.max(0, Number(options.providerPagesLoaded) || 0),
+            transactionCount: rows.length,
+            transferEventCount,
+            uniqueWalletCount: wallets.size,
+            uniqueTokenCount: tokens.size,
+            earliestTimestamp: timestamps.length ? new Date(Math.min(...timestamps)).toISOString() : '',
+            latestTimestamp: timestamps.length ? new Date(Math.max(...timestamps)).toISOString() : '',
+            timestampCoveragePct: transferEventCount ? Math.round((timestamps.length / transferEventCount) * 100) : 0,
+            firstFundingCandidate: null,
+            highActivityCounterparties: [],
+            replayReadinessScore: score,
+            replayReadinessLabel: score ? 'Preview module loading' : 'No staged history',
+            missingData,
+            warnings: transferEventCount > 1000 ? ['Large staged history. Use conservative chunks before future replay.'] : []
+        };
+    }
+
+    function buildFallbackReplayPlan(summary = {}) {
+        const eventCount = Math.max(0, Number(summary.transferEventCount) || Number(summary.transactionCount) || 0);
+        const chunk = eventCount <= 50 ? 10 : eventCount <= 500 ? 25 : eventCount <= 2000 ? 50 : 100;
+        return {
+            version: 'd109_history_graph_preview_fallback',
+            previewOnly: true,
+            generatedAt: new Date().toISOString(),
+            wallet: summary.trackedWallet || '',
+            estimatedReplaySteps: eventCount ? Math.ceil(eventCount / chunk) : 0,
+            suggestedChunkSize: chunk,
+            suggestedSpeedOptions: [
+                { label: 'Inspect', delayMs: 1600 },
+                { label: 'Standard', delayMs: 850 },
+                { label: 'Fast Scan', delayMs: 260 }
+            ],
+            stagedEventCount: eventCount,
+            stagedTransactionCount: Math.max(0, Number(summary.transactionCount) || 0),
+            warning: eventCount > 1000 ? 'Large staged history. Future replay should use indexed chunks and explicit confirmation.' : '',
+            missingDataNeeded: summary.missingData || [],
+            phases: [
+                'Validate staged history ordering.',
+                'Chunk staged events without merging into the active graph.',
+                'Expand graph progressively before drawing lifetime replay.'
+            ],
+            boundary: 'Preview plan only. It is not animated and is not merged with the active Wallet Lookup graph.'
+        };
+    }
+
+    function getHistoryTimestampMs(value) {
+        if (value == null || value === '') return 0;
+        const numeric = Number(value);
+        const date = Number.isFinite(numeric)
+            ? new Date(numeric < 1000000000000 ? numeric * 1000 : numeric)
+            : new Date(value);
+        const ms = date.getTime();
+        return Number.isFinite(ms) ? ms : 0;
+    }
+
+    function formatPreviewTimestamp(value) {
+        if (!value) return '-';
+        return formatHistoryTimestamp(value) || '-';
+    }
+
+    function getPreviewFundingLabel(candidate = null) {
+        if (!candidate) return 'Not inferable';
+        return candidate.wallet ? shortLongValue(candidate.wallet) : 'Candidate';
+    }
+
+    function getPreviewFundingTitle(candidate = null) {
+        if (!candidate) return 'First funding candidate cannot be inferred from the current staged rows.';
+        const parts = [
+            `Wallet: ${candidate.wallet || '-'}`,
+            `Direction: ${String(candidate.direction || '-').replaceAll('_', ' ')}`,
+            `Time: ${candidate.timestamp || '-'}`,
+            `Token: ${candidate.token || '-'}`,
+            `Signature: ${candidate.signature || '-'}`
+        ];
+        return parts.join(' / ');
+    }
+
+    function getHistoryGraphPreviewNotice(summary = {}, stale = false) {
+        if (state.history.inFlight) return 'History is loading. The preview will update after the Worker page is staged.';
+        if (stale) return 'A replay plan exists, but staged history changed after it was generated. Preview Lifetime Replay will refresh the plan.';
+        if (!summary.transactionCount) return 'No history loaded. The sandbox is visible so the replay boundary and missing data are explicit before pagination starts.';
+        if (!summary.earliestTimestamp && !summary.latestTimestamp) return 'History is staged, but no timestamps are available. Replay ordering will need timestamp coverage before animation.';
+        if ((summary.warnings || []).length) return summary.warnings[0];
+        return 'Staged history has been summarized for future replay planning only. No active graph nodes or flow edges were added.';
     }
 
     function renderWalletMetric(label, value, title = '') {
@@ -2646,6 +2896,15 @@
         status.querySelector('#crypto-wallet-history-copy')?.addEventListener('click', event => {
             copyWalletHistorySnapshot(event.currentTarget);
         });
+        status.querySelector('#crypto-history-preview-plan')?.addEventListener('click', () => {
+            previewLifetimeReplay();
+        });
+        status.querySelector('#crypto-history-preview-clear')?.addEventListener('click', () => {
+            clearHistoryGraphPreview();
+        });
+        status.querySelector('#crypto-history-preview-copy')?.addEventListener('click', event => {
+            copyHistoryReplayPlan(event.currentTarget);
+        });
         status.querySelector('#crypto-wallet-depth-toggle')?.addEventListener('change', event => {
             setWalletLookupDepth(event.target.checked ? 2 : 1);
         });
@@ -2740,6 +2999,7 @@
             const walletValue = state.walletLookup.walletInput || state.walletLookup.lastWallet || '';
             resetWalletLookupState();
             state.walletLookup.walletInput = walletValue;
+            loadHistoryGraphPreviewModule();
             applyEmptyModeDataset(DATA_MODES.WALLET, {
                 wallet: walletValue
             });
@@ -2923,6 +3183,9 @@
         } else {
             resetHistoryState(wallet);
         }
+        state.historyPreview.plan = null;
+        state.historyPreview.generatedAt = 0;
+        state.historyPreview.lastMessage = 'Replay preview cleared with staged history; the Wallet Lookup graph was not changed.';
         state.history.lastMessage = 'Loaded history staging cleared; the Wallet Lookup graph was not changed.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
     }
@@ -2970,13 +3233,56 @@
         return JSON.stringify(snapshot, null, 2);
     }
 
+    async function previewLifetimeReplay() {
+        await loadHistoryGraphPreviewModule();
+        const summary = buildHistoryGraphPreviewSummary();
+        const builder = namespace.historyGraphPreview?.buildReplayPlan;
+        state.historyPreview.plan = builder
+            ? builder(summary, { trackedWallet: summary.trackedWallet })
+            : buildFallbackReplayPlan(summary);
+        state.historyPreview.generatedAt = Date.now();
+        state.historyPreview.lastMessage = summary.transferEventCount
+            ? 'Replay plan generated from staged history only. No graph merge or animation was started.'
+            : 'Replay readiness checklist generated. Load history pages before planning a real lifetime replay.';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+    }
+
+    function clearHistoryGraphPreview() {
+        state.historyPreview.plan = null;
+        state.historyPreview.generatedAt = 0;
+        state.historyPreview.lastMessage = 'Replay preview cleared. Staged history and the active graph were not changed.';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+    }
+
+    async function copyHistoryReplayPlan(button) {
+        const original = button?.textContent || 'Copy Replay Plan';
+        const summary = buildHistoryGraphPreviewSummary();
+        const plan = state.historyPreview.plan || buildFallbackReplayPlan(summary);
+        const textBuilder = namespace.historyGraphPreview?.buildReplayPlanText;
+        const text = textBuilder
+            ? textBuilder(summary, plan)
+            : JSON.stringify({ name: 'CryptoPhotonic Lifetime Replay Preview Plan', summary, plan }, null, 2);
+        try {
+            await writeTextToClipboard(text);
+            state.historyPreview.lastMessage = 'Replay plan copied. It remains preview-only and graph-neutral.';
+            if (button) button.textContent = 'Copied';
+        } catch (error) {
+            state.historyPreview.lastMessage = 'Clipboard unavailable. Replay plan was not copied.';
+            if (button) button.textContent = 'Copy Failed';
+        }
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        window.setTimeout(() => {
+            if (button) button.textContent = original;
+        }, 1400);
+    }
+
     async function ensureHistoryController(wallet = '') {
         await loadHistoryModules();
         const Controller = namespace.historyController?.HistoryController;
         if (!Controller) return null;
         const provider = createWorkerHistoryProvider();
         if (!state.history.controller) {
-            state.history.controller = new Controller({ wallet, provider });
+            state.history.controller = new Controller({ wallet, provider, pageLimit: HISTORY_PREVIEW_TRANSACTION_LIMIT });
         } else if (wallet && state.history.controller.wallet !== wallet && !state.history.pagesLoaded) {
             state.history.controller.reset(wallet);
         }
@@ -2998,18 +3304,32 @@
 
     function loadHistoryModules() {
         if (namespace.historyProvider?.WalletHistoryProvider && namespace.historyController?.HistoryController) {
+            loadHistoryGraphPreviewModule();
             return Promise.resolve(true);
         }
         if (state.history.moduleLoadPromise) return state.history.moduleLoadPromise;
         state.history.moduleLoadPromise = Promise.resolve()
             .then(() => loadCryptoScript('js/crypto/historyProvider.js'))
             .then(() => loadCryptoScript('js/crypto/historyController.js'))
+            .then(() => loadHistoryGraphPreviewModule())
             .then(() => Boolean(namespace.historyController?.HistoryController))
             .catch(error => {
                 state.history.lastError = error?.message || 'History modules unavailable';
                 return false;
             });
         return state.history.moduleLoadPromise;
+    }
+
+    function loadHistoryGraphPreviewModule() {
+        if (namespace.historyGraphPreview?.buildPreviewSummary) return Promise.resolve(true);
+        if (state.history.previewModuleLoadPromise) return state.history.previewModuleLoadPromise;
+        state.history.previewModuleLoadPromise = loadCryptoScript('js/crypto/historyGraphPreview.js')
+            .then(() => Boolean(namespace.historyGraphPreview?.buildPreviewSummary))
+            .catch(error => {
+                state.historyPreview.lastMessage = error?.message || 'History graph preview module unavailable';
+                return false;
+            });
+        return state.history.previewModuleLoadPromise;
     }
 
     function loadCryptoScript(src) {
@@ -3039,7 +3359,7 @@
         state.history.provider = snapshot.provider || '';
         state.history.providerLabel = snapshot.providerLabel || snapshot.providerCapabilities?.label || snapshot.provider || '';
         state.history.providerCapabilities = snapshot.providerCapabilities || null;
-        state.history.loadedTransactions = Array.isArray(snapshot.loadedTransactions) ? snapshot.loadedTransactions.slice(0, 100) : [];
+        state.history.loadedTransactions = Array.isArray(snapshot.loadedTransactions) ? snapshot.loadedTransactions.slice(0, HISTORY_PREVIEW_TRANSACTION_LIMIT) : [];
         state.history.backendProviderConnected = Boolean(snapshot.provider && snapshot.providerCapabilities && snapshot.providerCapabilities.browserProviderCalls === false && !snapshot.providerCapabilities.backendOnly);
     }
 

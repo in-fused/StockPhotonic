@@ -146,6 +146,8 @@
             topFlowIds: new Set(),
             userInteractingUntil: 0
         },
+        labelDensity: 'balanced',
+        labelDensityUserSet: false,
         viewport: {
             x: 0,
             y: 0,
@@ -200,6 +202,24 @@
         GENERATED: 'generated_fixture',
         WALLET: 'wallet_lookup',
         LIVE: 'live_feed'
+    });
+    const LABEL_DENSITY_ORDER = Object.freeze(['minimal', 'balanced', 'detailed']);
+    const LABEL_DENSITY_MODES = Object.freeze({
+        minimal: {
+            label: 'Minimal',
+            icon: 'fa-compress',
+            title: 'Minimal labels: tracked wallet, selections, and only the strongest flow labels.'
+        },
+        balanced: {
+            label: 'Balanced',
+            icon: 'fa-tags',
+            title: 'Balanced labels: readable wallet lookup labels with major flows and hover detail.'
+        },
+        detailed: {
+            label: 'Detailed',
+            icon: 'fa-layer-group',
+            title: 'Detailed labels: more labels when zoomed in, still collision-aware.'
+        }
     });
     const LAMPORTS_PER_SOL = 1000000000;
     const RAW_SOL_LAMPORT_HEURISTIC_MIN = 1000000;
@@ -258,6 +278,7 @@
         document.getElementById('crypto-mobile-fullscreen-toggle')?.addEventListener('click', () => {
             setFullscreen(!state.fullscreen);
         });
+        document.getElementById('crypto-mobile-label-density-toggle')?.addEventListener('click', cycleLabelDensity);
         document.getElementById('crypto-replay-workspace-exit')?.addEventListener('click', () => setReplayWorkspaceMode(false));
         document.getElementById('crypto-replay-workspace-build')?.addEventListener('click', () => buildHistoryPreviewDataset());
         document.addEventListener('keydown', event => {
@@ -294,6 +315,7 @@
         updateFlowAnimationLoop();
         updateLivePolling();
         updateInteractionDock();
+        syncLabelDensityControls();
         return state.graph;
     }
 
@@ -4174,6 +4196,7 @@
         }
 
         state.dataMode = DATA_MODES.WALLET;
+        applyDefaultLabelDensityForDataMode(DATA_MODES.WALLET);
         state.modeVersion += 1;
         state.live.enabled = false;
         stopLivePolling();
@@ -5445,6 +5468,7 @@
         updateFlowReplay(performance.now());
         state.flowMotion.now = performance.now();
         const interaction = getInteractionState();
+        interaction.labelLayout = createLabelLayout(width, height);
         ctx.clearRect(0, 0, width, height);
         drawBackdrop(ctx, width, height);
 
@@ -5456,7 +5480,7 @@
         getVisibleEdges()
             .filter(edge => edge.type !== core.EDGE_TYPES.LABEL)
             .sort((a, b) => edgeLayerOrder(a) - edgeLayerOrder(b) || (a.width || 0) - (b.width || 0))
-            .forEach(edge => drawEdge(ctx, edge, nodeById, interaction));
+            .forEach(edge => drawEdge(ctx, edge, nodeById, interaction, { drawFlowLabels: false }));
 
         getVisibleEdges()
             .filter(edge => edge.type === core.EDGE_TYPES.LABEL)
@@ -5466,6 +5490,11 @@
             .slice()
             .sort((a, b) => typeOrder(a.type) - typeOrder(b.type))
             .forEach(node => drawNode(ctx, node, interaction));
+
+        getVisibleFlowEdges()
+            .slice()
+            .sort((a, b) => getFlowLabelPriority(b, interaction) - getFlowLabelPriority(a, interaction))
+            .forEach(edge => drawFlowEdgeLabel(ctx, edge, nodeById, interaction));
 
         ctx.restore();
     }
@@ -5579,6 +5608,40 @@
         return state.focusSelection;
     }
 
+    function normalizeLabelDensity(mode) {
+        const key = String(mode || '').toLowerCase();
+        return LABEL_DENSITY_MODES[key] ? key : 'balanced';
+    }
+
+    function getLabelDensityMode() {
+        return LABEL_DENSITY_MODES[state.labelDensity] || LABEL_DENSITY_MODES.balanced;
+    }
+
+    function setLabelDensity(mode, options = {}) {
+        const nextMode = normalizeLabelDensity(mode);
+        state.labelDensity = nextMode;
+        if (!options.systemDefault) state.labelDensityUserSet = true;
+        render();
+        syncLabelDensityControls();
+        updateInteractionDock();
+        if (state.historyPreview.graphVisible) {
+            renderHistoryGraphPreviewCanvas(getHistoryPreviewRenderRoot(), { resumeReplay: false });
+        }
+        return state.labelDensity;
+    }
+
+    function cycleLabelDensity() {
+        const currentIndex = LABEL_DENSITY_ORDER.indexOf(state.labelDensity);
+        const nextIndex = currentIndex < 0 ? 1 : (currentIndex + 1) % LABEL_DENSITY_ORDER.length;
+        return setLabelDensity(LABEL_DENSITY_ORDER[nextIndex]);
+    }
+
+    function applyDefaultLabelDensityForDataMode(mode) {
+        if (state.labelDensityUserSet) return;
+        state.labelDensity = mode === DATA_MODES.WALLET ? 'balanced' : 'balanced';
+        syncLabelDensityControls();
+    }
+
     function syncSelectedFlowWithFilters() {
         if (!state.selectedFlowId) return;
         const edge = (state.graph?.flowEdges || []).find(item => item.id === state.selectedFlowId);
@@ -5631,7 +5694,7 @@
         }
     }
 
-    function drawEdge(ctx, edge, nodeById, interaction) {
+    function drawEdge(ctx, edge, nodeById, interaction, options = {}) {
         const source = nodeById.get(edge.source);
         const target = nodeById.get(edge.target);
         if (!source || !target) return;
@@ -5686,52 +5749,238 @@
         if (edge.type === core.EDGE_TYPES.FLOW) {
             drawArrow(ctx, control, target, style.selected ? '#fef3c7' : strokeColor, style.arrowSize, style.selected || style.glowTrack);
             drawFlowPulse(ctx, edge, source, control, target, distance, interaction);
-            drawWalletLookupEdgeLabel(ctx, edge, source, target, control, interaction);
+            if (options.drawFlowLabels !== false) {
+                drawWalletLookupEdgeLabel(ctx, edge, source, target, control, interaction);
+            }
         }
         ctx.restore();
     }
 
+    function drawFlowEdgeLabel(ctx, edge, nodeById, interaction) {
+        if (state.dataMode !== DATA_MODES.WALLET || edge.type !== core.EDGE_TYPES.FLOW) return;
+        const source = nodeById.get(edge.source);
+        const target = nodeById.get(edge.target);
+        if (!source || !target) return;
+        const dx = target.x - source.x;
+        const dy = target.y - source.y;
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        const normal = { x: -dy / distance, y: dx / distance };
+        const bend = getEdgeBend(edge);
+        const control = {
+            x: (source.x + target.x) / 2 + normal.x * bend,
+            y: (source.y + target.y) / 2 + normal.y * bend
+        };
+        drawWalletLookupEdgeLabel(ctx, edge, source, target, control, interaction);
+    }
+
     function drawWalletLookupEdgeLabel(ctx, edge, source, target, control, interaction) {
         if (state.dataMode !== DATA_MODES.WALLET || edge.type !== core.EDGE_TYPES.FLOW) return;
-        if (!shouldDrawWalletLookupEdgeLabel(edge, interaction)) return;
-        const point = pointOnQuadratic(source, control, target, 0.5);
-        const fromTo = `${shortLongValue(source.address || source.id)} \u2192 ${shortLongValue(target.address || target.id)}`;
+        const labelStyle = getWalletLookupEdgeLabelStyle(edge, interaction);
+        if (!labelStyle.visible) return;
+        const fromTo = `${shortLongValue(source.address || edge.source_wallet || source.id)} \u2192 ${shortLongValue(target.address || edge.destination_wallet || target.id)}`;
         const amount = formatFlowAmountLabel(edge);
-        const majorEdge = edge.is_large_value || interaction.connectedEdgeIds.has(edge.id) || interaction.replayActiveFlowId === edge.id || state.flowMotion.topFlowIds.has(edge.id);
-        const tokenAmount = majorEdge ? amount : '';
+        const tokenAmount = labelStyle.showAmount ? amount : '';
 
         ctx.save();
-        ctx.translate(point.x, point.y);
         ctx.font = '700 10px Inter, sans-serif';
         const firstWidth = ctx.measureText(fromTo).width;
         ctx.font = '600 9px Inter, sans-serif';
         const secondWidth = tokenAmount ? ctx.measureText(tokenAmount).width : 0;
-        const boxWidth = Math.max(firstWidth, secondWidth) + 14;
-        const boxHeight = tokenAmount ? 32 : 20;
+        const boxWidth = Math.min(Math.max(firstWidth, secondWidth) + 14, getMaxFlowLabelWidth());
+        const boxHeight = tokenAmount ? 30 : 19;
+        const labelPosition = placeFlowLabel(edge, source, target, control, {
+            width: boxWidth,
+            height: boxHeight,
+            force: labelStyle.force,
+            interaction
+        });
+        if (!labelPosition) {
+            ctx.restore();
+            return;
+        }
+
+        ctx.globalAlpha *= labelStyle.alpha;
+        ctx.translate(labelPosition.x, labelPosition.y);
         roundedRectPath(ctx, -boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight, 8);
-        ctx.fillStyle = 'rgba(2, 6, 23, 0.78)';
+        ctx.fillStyle = labelStyle.force ? 'rgba(2, 6, 23, 0.9)' : 'rgba(2, 6, 23, 0.7)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(103, 232, 249, 0.35)';
+        ctx.strokeStyle = labelStyle.force ? 'rgba(253, 224, 71, 0.56)' : 'rgba(103, 232, 249, 0.24)';
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillStyle = '#ecfeff';
         ctx.font = '700 10px Inter, sans-serif';
-        ctx.fillText(fromTo, 0, tokenAmount ? -6 : 0);
+        ctx.fillText(fromTo, 0, tokenAmount ? -6 : 0, boxWidth - 10);
         if (tokenAmount) {
             ctx.fillStyle = 'rgba(253, 224, 71, 0.88)';
             ctx.font = '600 9px Inter, sans-serif';
-            ctx.fillText(tokenAmount, 0, 8);
+            ctx.fillText(tokenAmount, 0, 8, boxWidth - 10);
         }
         ctx.restore();
     }
 
-    function shouldDrawWalletLookupEdgeLabel(edge, interaction) {
-        if (interaction.connectedEdgeIds.has(edge.id) || interaction.replayActiveFlowId === edge.id) return true;
+    function getWalletLookupEdgeLabelStyle(edge, interaction) {
+        const force = interaction.connectedEdgeIds.has(edge.id)
+            || interaction.hoveredFlowId === edge.id
+            || interaction.selectedFlowId === edge.id
+            || interaction.replayActiveFlowId === edge.id;
+        const zoom = state.viewport.scale || 1;
+        const density = state.labelDensity;
+        const major = isMajorFlowLabel(edge, interaction);
         const visible = getVisibleFlowEdges();
-        if (visible.length <= 8) return true;
-        return Boolean(edge.is_large_value || state.flowMotion.topFlowIds.has(edge.id));
+
+        if (force) {
+            return { visible: true, alpha: 1, showAmount: true, force: true };
+        }
+
+        if (zoom < 0.58 && !major) {
+            return { visible: false, alpha: 0, showAmount: false, force: false };
+        }
+
+        if (density === 'minimal') {
+            const visibleTop = visible.length <= 5 && major;
+            return {
+                visible: visibleTop || (major && zoom >= 1.05),
+                alpha: zoom < 0.82 ? 0.48 : 0.72,
+                showAmount: major && zoom >= 0.84,
+                force: false
+            };
+        }
+
+        if (density === 'detailed') {
+            const lowPriorityVisible = visible.length <= 14 && zoom >= 0.98;
+            return {
+                visible: major || lowPriorityVisible,
+                alpha: major ? (zoom < 0.72 ? 0.5 : 0.86) : 0.44,
+                showAmount: major,
+                force: false
+            };
+        }
+
+        const balancedVisible = major || (visible.length <= 7 && zoom >= 0.9);
+        return {
+            visible: balancedVisible,
+            alpha: major ? (zoom < 0.72 ? 0.52 : 0.78) : 0.42,
+            showAmount: major && zoom >= 0.72,
+            force: false
+        };
+    }
+
+    function shouldDrawWalletLookupEdgeLabel(edge, interaction) {
+        return getWalletLookupEdgeLabelStyle(edge, interaction).visible;
+    }
+
+    function isMajorFlowLabel(edge, interaction) {
+        return Boolean(edge.is_large_value
+            || state.flowMotion.topFlowIds.has(edge.id)
+            || interaction.connectedEdgeIds.has(edge.id)
+            || interaction.replayActiveFlowId === edge.id);
+    }
+
+    function getFlowLabelPriority(edge, interaction) {
+        if (interaction.selectedFlowId === edge.id || interaction.hoveredFlowId === edge.id) return 1000;
+        if (interaction.replayActiveFlowId === edge.id) return 900;
+        if (interaction.connectedEdgeIds.has(edge.id)) return 800;
+        if (edge.is_large_value) return 700 + (Number(edge.usd_value) || 0);
+        if (state.flowMotion.topFlowIds.has(edge.id)) return 500 + (Number(edge.usd_value) || 0);
+        return Number(edge.usd_value) || 0;
+    }
+
+    function getMaxFlowLabelWidth() {
+        const width = state.graph?.bounds?.width || getCanvasSize().width;
+        const mobileMax = width < 520 ? 146 : 190;
+        if (state.labelDensity === 'minimal') return Math.min(150, mobileMax);
+        if (state.labelDensity === 'detailed') return Math.min(220, Math.max(160, mobileMax + 24));
+        return Math.min(186, mobileMax);
+    }
+
+    function placeFlowLabel(edge, source, target, control, metrics) {
+        const layout = metrics.interaction?.labelLayout;
+        const distance = Math.max(1, Math.hypot(target.x - source.x, target.y - source.y));
+        const normal = { x: -(target.y - source.y) / distance, y: (target.x - source.x) / distance };
+        const lane = (hashString(edge.id || `${edge.source}:${edge.target}`) % 7) - 3;
+        const baseT = 0.42 + (((hashString(`${edge.id}:label-t`) % 25) - 12) / 100);
+        const offsets = [
+            { t: baseT, n: lane * 5 },
+            { t: clamp(baseT + 0.16, 0.18, 0.82), n: lane * 5 + 10 },
+            { t: clamp(baseT - 0.16, 0.18, 0.82), n: lane * 5 - 10 },
+            { t: clamp(baseT + 0.28, 0.16, 0.84), n: lane * 5 + 18 },
+            { t: clamp(baseT - 0.28, 0.16, 0.84), n: lane * 5 - 18 }
+        ];
+
+        for (const candidate of offsets) {
+            const point = pointOnQuadratic(source, control, target, candidate.t);
+            const x = point.x + normal.x * candidate.n;
+            const y = point.y + normal.y * candidate.n;
+            const box = layout
+                ? layout.clampBox({
+                    x: x - metrics.width / 2,
+                    y: y - metrics.height / 2,
+                    width: metrics.width,
+                    height: metrics.height
+                })
+                : {
+                    x: x - metrics.width / 2,
+                    y: y - metrics.height / 2,
+                    width: metrics.width,
+                    height: metrics.height
+                };
+            if (!layout || layout.register(box, { force: metrics.force })) {
+                return {
+                    x: box.x + box.width / 2,
+                    y: box.y + box.height / 2
+                };
+            }
+        }
+
+        if (metrics.force && layout) {
+            const point = pointOnQuadratic(source, control, target, clamp(baseT, 0.18, 0.82));
+            const box = layout.clampBox({
+                x: point.x - metrics.width / 2,
+                y: point.y - metrics.height / 2,
+                width: metrics.width,
+                height: metrics.height
+            });
+            layout.register(box, { force: true });
+            return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+        }
+
+        return null;
+    }
+
+    function createLabelLayout(width, height) {
+        const boxes = [];
+        const padding = state.viewport.scale < 0.75 ? 8 : 5;
+        const margin = 8;
+        return {
+            boxes,
+            clampBox(box) {
+                return {
+                    ...box,
+                    x: clamp(box.x, margin, Math.max(margin, width - box.width - margin)),
+                    y: clamp(box.y, margin, Math.max(margin, height - box.height - margin))
+                };
+            },
+            register(box, options = {}) {
+                const paddedBox = {
+                    x: box.x - padding,
+                    y: box.y - padding,
+                    width: box.width + padding * 2,
+                    height: box.height + padding * 2
+                };
+                if (!options.force && boxes.some(existing => boxesOverlap(existing, paddedBox))) return false;
+                boxes.push(paddedBox);
+                return true;
+            }
+        };
+    }
+
+    function boxesOverlap(a, b) {
+        return a.x < b.x + b.width
+            && a.x + a.width > b.x
+            && a.y < b.y + b.height
+            && a.y + a.height > b.y;
     }
 
     function roundedRectPath(ctx, x, y, width, height, radius) {
@@ -5877,23 +6126,23 @@
         const selectedFlowEndpoint = Boolean(interaction.selectedFlowId && connected && !selected);
         const trackedWallet = isTrackedWalletNode(node);
         const radius = node.radius + (trackedWallet ? 7 : 0) + (selected ? 5 : hovered ? 3 : 0);
-        const showLabel = shouldShowNodeLabel(node, { selected, hovered, connected, interaction });
+        const showLabel = shouldShowNodeLabel(node, { selected, hovered, connected, selectedFlowEndpoint, trackedWallet, interaction });
         const labelAlpha = showLabel ? (muted ? 0.3 : 0.92) : 0;
 
         ctx.save();
         if ((selected || hovered || trackedWallet || selectedFlowEndpoint || (interaction.hasTokenIsolation && connected)) && !muted) {
             ctx.save();
-            ctx.globalAlpha = selected ? 0.36 : trackedWallet ? 0.28 : hovered ? 0.22 : selectedFlowEndpoint ? 0.2 : 0.14;
+            ctx.globalAlpha = selected ? 0.3 : trackedWallet ? 0.22 : hovered ? 0.18 : selectedFlowEndpoint ? 0.16 : 0.1;
             ctx.fillStyle = selected ? 'rgba(255, 255, 255, 0.92)' : node.color;
             ctx.shadowColor = selected ? '#67e8f9' : node.color;
-            ctx.shadowBlur = selected ? 38 : trackedWallet ? 32 : 22;
+            ctx.shadowBlur = selected ? 30 : trackedWallet ? 26 : 16;
             ctx.beginPath();
             ctx.arc(node.x, node.y, radius + (selected ? 13 : trackedWallet ? 11 : 8), 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         }
         ctx.shadowColor = node.color;
-        ctx.shadowBlur = trackedWallet ? 46 : selected ? 38 : hovered ? 22 : selectedFlowEndpoint ? 20 : connected ? 13 : 7;
+        ctx.shadowBlur = trackedWallet ? 30 : selected ? 28 : hovered ? 17 : selectedFlowEndpoint ? 15 : connected ? 8 : 3;
         ctx.globalAlpha = muted ? (interaction.hasSelected ? 0.28 : 0.42) : 1;
         ctx.fillStyle = 'rgba(2, 6, 23, 0.92)';
         ctx.strokeStyle = trackedWallet ? '#ecfeff' : selected ? '#fef3c7' : hovered ? '#ffffff' : selectedFlowEndpoint ? '#67e8f9' : node.color;
@@ -5950,9 +6199,26 @@
         ctx.globalAlpha = labelAlpha;
         ctx.fillStyle = trackedWallet || selected || hovered ? '#ffffff' : 'rgba(226, 232, 240, 0.82)';
         ctx.font = trackedWallet ? '700 12px Inter, sans-serif' : isHubNode(node) ? '700 12px Inter, sans-serif' : node.type === core.NODE_TYPES.TOKEN ? '600 11px Inter, sans-serif' : '500 10px Inter, sans-serif';
+        const labelText = labelForNode(node);
+        const labelWidth = Math.min(ctx.measureText(labelText).width, getMaxNodeLabelWidth(node));
+        const labelHeight = 15;
+        let labelBox = {
+            x: node.x - labelWidth / 2,
+            y: node.y + radius + 7,
+            width: labelWidth,
+            height: labelHeight
+        };
+        const forceLabel = trackedWallet || selected || hovered || selectedFlowEndpoint;
+        if (interaction.labelLayout) {
+            labelBox = interaction.labelLayout.clampBox(labelBox);
+            if (!interaction.labelLayout.register(labelBox, { force: forceLabel })) {
+                ctx.restore();
+                return;
+            }
+        }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillText(labelForNode(node), node.x, node.y + radius + 8);
+        ctx.fillText(labelText, labelBox.x + labelBox.width / 2, labelBox.y + 1, labelWidth);
         ctx.restore();
     }
 
@@ -7190,13 +7456,46 @@
     function shouldShowNodeLabel(node, context) {
         if (!node) return false;
         if (isTrackedWalletNode(node)) return true;
-        if (state.dataMode === DATA_MODES.WALLET && node.type === core.NODE_TYPES.WALLET) return true;
-        if (context.selected || context.hovered) return true;
-        if (isHubNode(node)) return true;
+        if (context.selected || context.hovered || context.selectedFlowEndpoint) return true;
 
+        const zoom = state.viewport.scale || 1;
+        const density = state.labelDensity;
         const isMajor = node.label_priority === 'major';
-        if (!context.interaction.hasFocus) return isMajor;
-        return context.connected && isMajor;
+        const connected = Boolean(context.connected);
+        const focused = Boolean(context.interaction.hasFocus);
+
+        if (state.dataMode === DATA_MODES.WALLET) {
+            if (density === 'minimal') {
+                if (isHubNode(node)) return connected && zoom >= 0.82;
+                return connected && isMajor && zoom >= 0.95;
+            }
+            if (density === 'balanced') {
+                if (isHubNode(node)) return zoom >= 0.72 || connected;
+                if (node.type === core.NODE_TYPES.TOKEN) return (isMajor && zoom >= 0.72) || (connected && zoom >= 0.64);
+                return isMajor && (!focused || connected) && zoom >= 0.68;
+            }
+            if (isHubNode(node) || node.type === core.NODE_TYPES.TOKEN) return zoom >= 0.58 || connected;
+            return zoom >= 0.92 || (connected && isMajor);
+        }
+
+        if (isHubNode(node)) return density !== 'minimal' || connected || zoom >= 0.95;
+
+        if (!focused) {
+            if (density === 'minimal') return isMajor && zoom >= 0.92;
+            if (density === 'detailed') return isMajor || zoom >= 1.1;
+            return isMajor && zoom >= 0.72;
+        }
+        return connected && (isMajor || density === 'detailed');
+    }
+
+    function getMaxNodeLabelWidth(node = {}) {
+        const width = state.graph?.bounds?.width || getCanvasSize().width;
+        if (isTrackedWalletNode(node)) return Math.min(132, Math.max(96, width * 0.24));
+        if (isHubNode(node)) return Math.min(150, Math.max(92, width * 0.25));
+        if (node.type === core.NODE_TYPES.TOKEN) return 90;
+        if (state.labelDensity === 'minimal') return 82;
+        if (state.labelDensity === 'detailed') return 118;
+        return 96;
     }
 
     function isTrackedWalletNode(node = {}) {
@@ -7325,10 +7624,13 @@
         const connections = state.interactionIndex?.neighborsByNode.get(node.id)?.size
             || state.interactionIndex?.edgesByNode.get(node.id)?.length
             || 0;
+        const exposure = Number(node.exposure_usd || node.aggregate_value_usd) > 0
+            ? ` / ${core.formatUsd(node.exposure_usd || node.aggregate_value_usd)}`
+            : '';
         return `
             <div class="crypto-hover-kicker">${escapeHtml(getNodeRoleLabel(node))}</div>
             <div class="crypto-hover-title">${escapeHtml(shortLongValue(node.address || node.token_mint || labelForNode(node) || node.id))}</div>
-            <div class="crypto-hover-meta">${escapeHtml(connections)} connection${connections === 1 ? '' : 's'}</div>
+            <div class="crypto-hover-meta">${escapeHtml(connections)} connection${connections === 1 ? '' : 's'}${escapeHtml(exposure)}</div>
         `;
     }
 
@@ -7337,10 +7639,12 @@
         const target = state.graph?.nodeById.get(edge.target);
         const direction = formatFlowDirectionRelativeToTracked(edge);
         const route = `${shortLongValue(getFlowSourceAddress(edge) || source?.id)} -> ${shortLongValue(getFlowTargetAddress(edge) || target?.id)}`;
+        const value = Number(edge.usd_value) > 0 ? ` / ${core.formatUsd(edge.usd_value)}` : '';
+        const kind = edge.transaction_type_label || edge.flow_role || 'Flow';
         return `
             <div class="crypto-hover-kicker">${escapeHtml(direction)}</div>
             <div class="crypto-hover-title">${escapeHtml(getNormalizedFlowAmountDisplay(edge))} ${escapeHtml(edge.symbol || '')}</div>
-            <div class="crypto-hover-meta">${escapeHtml(route)}</div>
+            <div class="crypto-hover-meta">${escapeHtml(kind)}${escapeHtml(value)} / ${escapeHtml(route)}</div>
         `;
     }
 
@@ -8089,6 +8393,8 @@
             if (label) label.textContent = state.focusSelection ? 'Focus On' : 'Focus Off';
         }
 
+        syncLabelDensityControls();
+
         const walletMode = state.dataMode === DATA_MODES.WALLET;
         const loadButton = document.getElementById('crypto-dock-load-activity');
         if (loadButton) {
@@ -8143,6 +8449,27 @@
             const label = replayButton.querySelector('span');
             if (label) label.textContent = status.playing ? 'Pause Replay' : 'Start Replay';
         }
+    }
+
+    function syncLabelDensityControls() {
+        const mode = getLabelDensityMode();
+        const buttons = [
+            document.getElementById('crypto-dock-label-density'),
+            document.getElementById('crypto-mobile-label-density-toggle')
+        ].filter(Boolean);
+        buttons.forEach(button => {
+            button.classList.toggle('is-active', state.labelDensity !== 'balanced');
+            button.setAttribute('aria-pressed', state.labelDensity !== 'balanced' ? 'true' : 'false');
+            button.title = `Label Density: ${mode.label}. ${mode.title}`;
+            button.setAttribute('aria-label', `Cycle graph label density. Current mode: ${mode.label}`);
+            const icon = button.querySelector('i');
+            if (icon) {
+                Object.values(LABEL_DENSITY_MODES).forEach(item => icon.classList.remove(item.icon));
+                icon.classList.add('fa-solid', mode.icon);
+            }
+            const label = button.querySelector('span');
+            if (label) label.textContent = `Labels: ${mode.label}`;
+        });
     }
 
     function loadWalletActivityFromDock() {
@@ -8232,6 +8559,8 @@
         resetLayout,
         setFullscreen,
         toggleFocusSelection,
+        setLabelDensity,
+        cycleLabelDensity,
         setTokenIsolation,
         playFlowReplay: () => setFlowReplayPlaying(true),
         pauseFlowReplay: () => setFlowReplayPlaying(false),

@@ -42,7 +42,9 @@
         root: null,
         detailPanel: null,
         statusPanel: null,
+        mobileDrawer: null,
         investigationTab: 'summary',
+        mobileDrawerState: 'collapsed',
         resizeObserver: null,
         fullscreen: false,
         datasetSource: null,
@@ -229,6 +231,7 @@
         LIVE: 'live_feed'
     });
     const LABEL_DENSITY_ORDER = Object.freeze(['minimal', 'balanced', 'detailed']);
+    const MOBILE_DRAWER_STATES = Object.freeze(['collapsed', 'half', 'expanded']);
     const LABEL_DENSITY_MODES = Object.freeze({
         minimal: {
             label: 'Minimal',
@@ -281,6 +284,7 @@
         state.detailPanel = document.getElementById(options.detailPanelId || 'crypto-detail-panel');
         if (!state.root || !state.canvas || !state.detailPanel) return null;
         state.hoverOverlay = document.getElementById('crypto-graph-hover-overlay') || createHoverOverlay();
+        state.mobileDrawer = document.getElementById('crypto-mobile-investigation-drawer');
         configureLiveFeed(options);
         loadHistoryGraphPreviewModule();
 
@@ -304,6 +308,9 @@
             setFullscreen(!state.fullscreen);
         });
         document.getElementById('crypto-mobile-label-density-toggle')?.addEventListener('click', cycleLabelDensity);
+        document.getElementById('crypto-mobile-focus-selection')?.addEventListener('click', toggleFocusSelection);
+        document.getElementById('crypto-mobile-open-details')?.addEventListener('click', openMobileDetailsPanel);
+        document.getElementById('crypto-mobile-replay-workspace')?.addEventListener('click', () => setReplayWorkspaceMode(!state.historyPreview.workspaceMode));
         document.getElementById('crypto-replay-workspace-exit')?.addEventListener('click', () => setReplayWorkspaceMode(false));
         document.getElementById('crypto-replay-workspace-build')?.addEventListener('click', () => buildHistoryPreviewDataset());
         document.addEventListener('keydown', event => {
@@ -316,10 +323,10 @@
             event.preventDefault();
             setFullscreen(false);
         });
-        window.addEventListener('resize', resizeAndRender);
+        window.addEventListener('resize', handleWindowResize);
 
         if (window.ResizeObserver) {
-            state.resizeObserver = new ResizeObserver(resizeAndRender);
+            state.resizeObserver = new ResizeObserver(handleWindowResize);
             state.resizeObserver.observe(state.canvas.parentElement || state.canvas);
         }
 
@@ -328,6 +335,7 @@
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
+        applyDefaultLabelDensityForDataMode(state.dataMode);
         prepareFlowMotion();
         rebuildInteractionIndex();
         state.selectedId = state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
@@ -1773,6 +1781,225 @@
         return '';
     }
 
+    function renderMobileInvestigationDrawer() {
+        const drawer = state.mobileDrawer;
+        if (!drawer || !state.graph) return;
+        const drawerState = normalizeMobileDrawerState(state.mobileDrawerState);
+        state.mobileDrawerState = drawerState;
+        drawer.dataset.state = drawerState;
+        MOBILE_DRAWER_STATES.forEach(stateName => {
+            drawer.classList.toggle(`is-${stateName}`, drawerState === stateName);
+        });
+        drawer.setAttribute('aria-expanded', drawerState === 'expanded' ? 'true' : 'false');
+
+        const selection = getMobileSelectedSummary();
+        const activeTab = getInvestigationTab();
+        drawer.innerHTML = `
+            <div class="crypto-mobile-drawer-inner">
+                <button type="button" class="crypto-mobile-drawer-handle" data-crypto-mobile-drawer-cycle aria-label="Change investigation drawer height"></button>
+                <div class="crypto-mobile-drawer-topline">
+                    <div class="crypto-mobile-drawer-title">
+                        <div class="crypto-mobile-drawer-kicker">${escapeHtml(selection.kicker)}</div>
+                        <div class="crypto-mobile-drawer-name">${escapeHtml(selection.title)}</div>
+                        <div class="crypto-mobile-drawer-meta">${escapeHtml(selection.meta)}</div>
+                    </div>
+                    <div class="crypto-mobile-drawer-state-controls" role="group" aria-label="Drawer height">
+                        ${MOBILE_DRAWER_STATES.map(stateName => `
+                            <button type="button" class="crypto-mobile-drawer-button" data-crypto-mobile-drawer-state="${escapeAttr(stateName)}" aria-pressed="${drawerState === stateName ? 'true' : 'false'}">${escapeHtml(getMobileDrawerStateLabel(stateName))}</button>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="crypto-mobile-drawer-shortcuts" role="group" aria-label="Investigation shortcuts">
+                    ${renderMobileDrawerShortcut('summary', 'Summary', activeTab)}
+                    ${renderMobileDrawerShortcut('details', 'Details', activeTab)}
+                    ${renderMobileDrawerShortcut('flows', 'Flows', activeTab)}
+                </div>
+                ${selection.hasSelection ? renderMobileDrawerSelection(selection) : renderMobileDrawerEmpty(selection)}
+            </div>
+        `;
+        bindMobileInvestigationDrawerControls(drawer);
+    }
+
+    function bindMobileInvestigationDrawerControls(drawer) {
+        drawer.querySelectorAll('[data-crypto-mobile-drawer-state]').forEach(button => {
+            button.addEventListener('click', () => setMobileDrawerState(button.dataset.cryptoMobileDrawerState || 'half'));
+        });
+        drawer.querySelector('[data-crypto-mobile-drawer-cycle]')?.addEventListener('click', () => {
+            const index = MOBILE_DRAWER_STATES.indexOf(state.mobileDrawerState);
+            setMobileDrawerState(MOBILE_DRAWER_STATES[(index + 1) % MOBILE_DRAWER_STATES.length] || 'half');
+        });
+        drawer.querySelectorAll('[data-crypto-investigation-tab-target]').forEach(button => {
+            button.addEventListener('click', () => {
+                setInvestigationTab(button.dataset.cryptoInvestigationTabTarget || 'summary');
+                if (button.dataset.cryptoInvestigationTabTarget === 'details') setMobileDrawerState('expanded');
+            });
+        });
+        drawer.querySelectorAll('[data-crypto-mobile-open-details]').forEach(button => {
+            button.addEventListener('click', openMobileDetailsPanel);
+        });
+        drawer.querySelectorAll('[data-crypto-copy-value]').forEach(button => {
+            button.addEventListener('click', () => copyGuidedValue(button.dataset.cryptoCopyValue || '', button));
+        });
+    }
+
+    function renderMobileDrawerShortcut(tab, label, activeTab) {
+        return `
+            <button type="button" class="crypto-mobile-drawer-button" data-crypto-investigation-tab-target="${escapeAttr(tab)}" aria-pressed="${activeTab === tab ? 'true' : 'false'}">
+                ${escapeHtml(label)}
+            </button>
+        `;
+    }
+
+    function renderMobileDrawerSelection(selection) {
+        return `
+            <section class="crypto-mobile-drawer-selected" aria-label="Selected object summary">
+                <div class="crypto-mobile-drawer-summary-grid">
+                    ${selection.stats.map(item => `
+                        <div class="crypto-mobile-drawer-stat">
+                            <span>${escapeHtml(item.label)}</span>
+                            <strong>${escapeHtml(item.value)}</strong>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="crypto-mobile-drawer-actions">
+                    <button type="button" class="crypto-mobile-drawer-button" data-crypto-mobile-open-details="true">Full Details</button>
+                    ${selection.copyActions.map(action => `
+                        <button type="button" class="crypto-mobile-drawer-button" data-crypto-copy-value="${escapeAttr(action.value)}">${escapeHtml(action.label)}</button>
+                    `).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    function renderMobileDrawerEmpty(selection) {
+        return `
+            <div class="crypto-mobile-drawer-empty">
+                ${escapeHtml(selection.emptyCopy)}
+            </div>
+        `;
+    }
+
+    function getMobileSelectedSummary() {
+        const selectedFlow = getSelectedFlowEdge();
+        if (selectedFlow) return getMobileFlowSummary(selectedFlow);
+
+        const node = state.selectedId ? state.graph?.nodeById.get(state.selectedId) : null;
+        if (node) return getMobileNodeSummary(node);
+
+        if (state.historyPreview.selectedEvent) {
+            return getMobileReplayEventSummary(state.historyPreview.selectedEvent);
+        }
+
+        const flowCount = getVisibleFlowEdges().length;
+        return {
+            hasSelection: false,
+            kicker: 'INVESTIGATION DRAWER',
+            title: `${flowCount} visible flow${flowCount === 1 ? '' : 's'}`,
+            meta: 'Tap a node or transfer leg to pin its summary here.',
+            emptyCopy: 'Summary, Details, and Flows stay one tap away while the graph remains the main touch target.',
+            stats: [],
+            copyActions: []
+        };
+    }
+
+    function getMobileFlowSummary(edge) {
+        const source = state.graph?.nodeById.get(edge.source);
+        const target = state.graph?.nodeById.get(edge.target);
+        const signature = edge.transaction_hash || edge.signature || '';
+        return {
+            hasSelection: true,
+            kicker: 'SELECTED FLOW',
+            title: `${getNormalizedFlowAmountDisplay(edge)} ${edge.symbol || ''}`.trim(),
+            meta: `${compactNodeLabel(source)} -> ${compactNodeLabel(target)}`,
+            stats: [
+                { label: 'Direction', value: formatFlowDirectionRelativeToTracked(edge) },
+                { label: 'Value', value: edge.usd_value ? core.formatUsd(edge.usd_value) : '-' },
+                { label: 'Type', value: edge.transaction_type_label || edge.flow_role || 'Flow' },
+                { label: 'Signature', value: signature ? shortHash(signature) : '-' }
+            ],
+            copyActions: [
+                { label: 'Copy Summary', value: buildSelectedFlowSummary(edge) },
+                signature ? { label: 'Copy Signature', value: signature } : null,
+                { label: 'Copy Source', value: getFlowSourceAddress(edge) },
+                { label: 'Copy Destination', value: getFlowTargetAddress(edge) }
+            ].filter(action => action?.value)
+        };
+    }
+
+    function getMobileNodeSummary(node) {
+        const address = node.address || node.token_mint || '';
+        const relatedFlows = getRelatedEdges(node.id, core.EDGE_TYPES.FLOW).filter(edgeMatchesActiveFilters);
+        const relatedHubFlows = isHubNode(node) ? getRelatedHubFlows(node).filter(edgeMatchesActiveFilters) : [];
+        const visibleFlowCount = mergeUniqueEdges([...relatedFlows, ...relatedHubFlows]).length;
+        const exposure = Number(node.exposure_usd || node.aggregate_value_usd) > 0
+            ? core.formatUsd(node.exposure_usd || node.aggregate_value_usd)
+            : '-';
+        return {
+            hasSelection: true,
+            kicker: getNodeRoleLabel(node).toUpperCase(),
+            title: compactNodeLabel(node),
+            meta: address ? shortLongValue(address) : describeWalletRelationship(node),
+            stats: [
+                { label: 'Role', value: describeWalletRelationship(node) },
+                { label: 'Flows', value: `${visibleFlowCount}` },
+                { label: 'Exposure', value: exposure },
+                { label: 'Chain', value: node.chain || 'solana' }
+            ],
+            copyActions: [
+                address ? { label: node.type === core.NODE_TYPES.TOKEN ? 'Copy Mint' : 'Copy Address', value: address } : null
+            ].filter(Boolean)
+        };
+    }
+
+    function getMobileReplayEventSummary(event = {}) {
+        const signature = event.signature || event.transaction_hash || '';
+        const sourceWallet = event.sourceWallet || event.source_wallet || '';
+        const destinationWallet = event.destinationWallet || event.destination_wallet || '';
+        return {
+            hasSelection: true,
+            kicker: 'REPLAY EVENT',
+            title: `Step ${event.step || '-'} / ${getHistoryReplayAmountTokenLabel(event)}`,
+            meta: 'Preview dataset only. Active graph unchanged.',
+            stats: [
+                { label: 'Direction', value: getHistoryReplayDirectionLabel(event.direction) },
+                { label: 'Time', value: event.timestamp ? formatPreviewTimestamp(event.timestamp) : '-' },
+                { label: 'Source', value: sourceWallet ? shortLongValue(sourceWallet) : '-' },
+                { label: 'Destination', value: destinationWallet ? shortLongValue(destinationWallet) : '-' }
+            ],
+            copyActions: [
+                { label: 'Copy Event', value: buildReplayEventSummary(event) },
+                signature ? { label: 'Copy Signature', value: signature } : null
+            ].filter(Boolean)
+        };
+    }
+
+    function setMobileDrawerState(nextState, options = {}) {
+        state.mobileDrawerState = normalizeMobileDrawerState(nextState);
+        if (!options.skipRender) renderMobileInvestigationDrawer();
+        return state.mobileDrawerState;
+    }
+
+    function openMobileDrawerForSelection(preferredState = 'half') {
+        if (!isMobileViewport()) return;
+        setMobileDrawerState(preferredState, { skipRender: true });
+    }
+
+    function normalizeMobileDrawerState(nextState) {
+        return MOBILE_DRAWER_STATES.includes(nextState) ? nextState : 'collapsed';
+    }
+
+    function getMobileDrawerStateLabel(stateName) {
+        if (stateName === 'expanded') return 'Full';
+        if (stateName === 'half') return 'Half';
+        return 'Min';
+    }
+
+    function openMobileDetailsPanel() {
+        setInvestigationTab('details');
+        setMobileDrawerState('expanded');
+        return state.investigationTab;
+    }
+
     function renderWalletSummaryWorkspacePanel() {
         if (state.dataMode !== DATA_MODES.WALLET) return renderNonWalletSummaryWorkspacePanel();
         const intelligence = buildWalletIntelligence();
@@ -2505,6 +2732,10 @@
         };
     }
 
+    function hasHistoryPreviewDataset() {
+        return Boolean(state.historyPreview.dataset || state.historyPreview.plan || state.historyPreview.datasetMetrics);
+    }
+
     function inspectCurrentHistoryReplayEvent() {
         const event = getCurrentHistoryReplayEvent();
         if (!event) {
@@ -2517,6 +2748,7 @@
         state.flowReplay.activeFlowId = null;
         state.historyPreview.selectedEvent = event;
         state.investigationTab = 'details';
+        openMobileDrawerForSelection('expanded');
         render();
         renderDetails();
         return event;
@@ -5445,6 +5677,7 @@
         state.tokenIsolation = 'all';
         state.historyPreview.selectedEvent = null;
         state.manualNodePositions.clear();
+        applyDefaultLabelDensityForDataMode(state.dataMode);
         hideHoverOverlay();
         applyWalletLookupFocusLayout();
         prepareFlowMotion();
@@ -5483,6 +5716,13 @@
             width: Math.max(320, Math.floor(parent?.clientWidth || state.canvas?.clientWidth || 900)),
             height: Math.max(420, Math.floor(parent?.clientHeight || state.canvas?.clientHeight || 560))
         };
+    }
+
+    function handleWindowResize() {
+        applyDefaultLabelDensityForDataMode(state.dataMode);
+        resizeAndRender();
+        renderMobileInvestigationDrawer();
+        updateInteractionDock();
     }
 
     function scheduleRender() {
@@ -5616,10 +5856,12 @@
         if (options.openDetails) state.investigationTab = 'details';
         state.flowReplay.activeFlowId = edge.id;
         state.flowReplay.lastStepAt = performance.now();
+        openMobileDrawerForSelection(options.openDetails ? 'expanded' : 'half');
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         render();
         renderDetails();
         updateFlowAnimationLoop();
+        updateInteractionDock();
         return edge;
     }
 
@@ -5631,8 +5873,10 @@
         state.historyPreview.selectedEvent = null;
         if (options.openDetails) state.investigationTab = 'details';
         state.flowReplay.activeFlowId = null;
+        openMobileDrawerForSelection(options.openDetails ? 'expanded' : 'half');
         render();
         renderDetails();
+        updateInteractionDock();
         return node;
     }
 
@@ -5692,8 +5936,18 @@
 
     function applyDefaultLabelDensityForDataMode(mode) {
         if (state.labelDensityUserSet) return;
-        state.labelDensity = mode === DATA_MODES.WALLET ? 'balanced' : 'balanced';
+        state.labelDensity = getResponsiveDefaultLabelDensity(mode);
         syncLabelDensityControls();
+    }
+
+    function getResponsiveDefaultLabelDensity(mode = state.dataMode) {
+        if (isMobileViewport()) return 'minimal';
+        return mode === DATA_MODES.WALLET ? 'balanced' : 'balanced';
+    }
+
+    function isMobileViewport() {
+        return Boolean(window.matchMedia?.('(max-width: 768px)').matches)
+            || (state.canvas?.parentElement?.clientWidth || state.canvas?.clientWidth || window.innerWidth || 0) < 640;
     }
 
     function syncSelectedFlowWithFilters() {
@@ -6420,8 +6674,10 @@
                 state.selectedFlowId = null;
                 state.historyPreview.selectedEvent = null;
                 if (openDetails) state.investigationTab = 'details';
+                openMobileDrawerForSelection(openDetails ? 'expanded' : 'half');
                 render();
                 renderDetails();
+                updateInteractionDock();
             }
             if (!drag.moved && drag.edgeId) {
                 selectFlow(drag.edgeId, {
@@ -6537,6 +6793,7 @@
         bindInvestigationWorkspaceControls(state.detailPanel);
         updateReplayWorkspaceShell();
         renderHistoryGraphPreviewCanvas(getHistoryPreviewRenderRoot(), options);
+        renderMobileInvestigationDrawer();
     }
 
     function getHistoryPreviewRenderRoot() {
@@ -7986,6 +8243,12 @@
         state.fullscreen = active;
         state.root?.classList.toggle('is-crypto-fullscreen', active);
         document.body.classList.toggle('crypto-graph-fullscreen-active', active);
+        if (active) {
+            applyDefaultLabelDensityForDataMode(state.dataMode);
+            if (isMobileViewport() && state.mobileDrawerState === 'collapsed') {
+                setMobileDrawerState('half', { skipRender: true });
+            }
+        }
         updateFullscreenButton();
         window.requestAnimationFrame(() => {
             window.requestAnimationFrame(() => {
@@ -8546,6 +8809,26 @@
             if (label) label.textContent = state.focusSelection ? 'Focus On' : 'Focus Off';
         }
 
+        const mobileFocusButton = document.getElementById('crypto-mobile-focus-selection');
+        if (mobileFocusButton) {
+            mobileFocusButton.classList.toggle('is-active', state.focusSelection);
+            mobileFocusButton.setAttribute('aria-pressed', state.focusSelection ? 'true' : 'false');
+            mobileFocusButton.title = state.focusSelection
+                ? 'Focus Selection on: selected nodes and flows isolate direct context.'
+                : 'Focus Selection off: keep the full graph visible.';
+        }
+
+        const mobileDetailsButton = document.getElementById('crypto-mobile-open-details');
+        if (mobileDetailsButton) {
+            const hasSelection = Boolean(state.selectedId || state.selectedFlowId || state.historyPreview.selectedEvent);
+            mobileDetailsButton.classList.toggle('is-active', getInvestigationTab() === 'details' && hasSelection);
+            mobileDetailsButton.disabled = !state.graph;
+            mobileDetailsButton.classList.toggle('is-disabled', mobileDetailsButton.disabled);
+            mobileDetailsButton.title = hasSelection
+                ? 'Open full Details tab for the selected object.'
+                : 'Open Details tab. Tap a node or flow to pin an object first.';
+        }
+
         syncLabelDensityControls();
 
         const walletMode = state.dataMode === DATA_MODES.WALLET;
@@ -8574,6 +8857,24 @@
             }
             const label = replayWorkspaceButton.querySelector('span');
             if (label) label.textContent = state.historyPreview.workspaceMode ? 'Exit Replay' : 'Replay Mode';
+        }
+
+        const mobileReplayWorkspaceButton = document.getElementById('crypto-mobile-replay-workspace');
+        if (mobileReplayWorkspaceButton) {
+            const hasPreviewDataset = hasHistoryPreviewDataset();
+            mobileReplayWorkspaceButton.classList.toggle('is-hidden', !hasPreviewDataset);
+            mobileReplayWorkspaceButton.classList.toggle('is-active', state.historyPreview.workspaceMode);
+            mobileReplayWorkspaceButton.setAttribute('aria-pressed', state.historyPreview.workspaceMode ? 'true' : 'false');
+            mobileReplayWorkspaceButton.disabled = !hasPreviewDataset;
+            mobileReplayWorkspaceButton.classList.toggle('is-disabled', mobileReplayWorkspaceButton.disabled);
+            mobileReplayWorkspaceButton.title = state.historyPreview.workspaceMode
+                ? 'Exit preview replay workspace.'
+                : 'Open preview replay workspace. Active Wallet Lookup graph stays unchanged.';
+            const icon = mobileReplayWorkspaceButton.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-clapperboard', !state.historyPreview.workspaceMode);
+                icon.classList.toggle('fa-arrow-right-from-bracket', state.historyPreview.workspaceMode);
+            }
         }
 
         const replayButton = document.getElementById('crypto-dock-replay-toggle');

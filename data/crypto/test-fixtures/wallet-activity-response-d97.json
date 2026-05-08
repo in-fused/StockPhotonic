@@ -1,0 +1,294 @@
+{
+  "metadata": {
+    "name": "CryptoPhotonic D97 mocked wallet activity response",
+    "fixture_type": "worker_wallet_activity_response",
+    "environment": "local_data_quality_harness",
+    "chain": "solana",
+    "source": "mocked_worker_response",
+    "wallet": "TrackD97Fake1111111111111111111111111",
+    "generated_at": "2026-05-07T00:00:00Z",
+    "sanitized": true,
+    "fake": true,
+    "production_meaning": false,
+    "live_blockchain_fetching": false,
+    "disclaimer": "Synthetic fake Worker-response records for local regression validation only. No real wallet, token, or entity attribution is implied."
+  },
+  "events": [
+    {
+      "id": "mock-d97-wallet-activity-001",
+      "signature": "mockd97signature1111111111111111111111111111111111111111111111111111",
+      "chain": "solana",
+      "transaction_type": "TOKEN_TRANSFER",
+      "source": "MOCK_WORKER",
+      "ingestion_source": "mocked_wallet_lookup_fixture",
+      "timestamp": "2026-05-07T14:00:00Z",
+      "received_at": "2026-05-07T14:00:01Z",
+      "wallets": [
+        {
+          "address": "RepeatCptyD97Fake11111111111111111111",
+          "role": "sender"
+        },
+        {
+          "address": "TrackD97Fake1111111111111111111111111",
+          "role": "receiver"
+        }
+      ],
+      "tokens": [
+        {
+          "symbol": "sUSDC",
+          "mint": "MintSusdcD97Fake11111111111111111111111",
+          "decimals": 6
+        }
+      ],
+      "transfers": [
+        {
+          "from": "RepeatCptyD97Fake11111111111111111111",
+          "to": "TrackD97Fake1111111111111111111111111",
+          "symbol": "sUSDC",
+          "token_symbol": "sUSDC",
+          "amount": 1250,
+          "usd_value": 1250
+        }
+      ]
+    },
+    {
+      "id": "mock-d97-wallet-activity-002",
+      "signature": "mockd97signature2222222222222222222222222222222222222222222222222222",
+      "chain": "solana",
+      "transaction_type": "TOKEN_TRANSFER",
+      "source": "MOCK_WORKER",
+      "ingestion_source": "mocked_wallet_lookup_fixture",
+      "timestamp": "2026-05-07T14:04:00Z",
+      "received_at": "2026-05-07T14:04:01Z",
+      "wallets": [
+        {
+          "address": "TrackD97Fake1111111111111111111111111",
+          "role": "sender"
+        },
+        {
+          "address": "RepeatCptyD97Fake11111111111111111111",
+          "role": "receiver"
+        }
+      ],
+      "tokens": [
+        {
+          "symbol": "sBONK",
+          "mint": "MintSbonkD97Fake1111111111111111111111",
+          "decimals": 5
+        }
+      ],
+      "transfers": [
+        {
+          "from": "TrackD97Fake1111111111111111111111111",
+          "to": "RepeatCptyD97Fake11111111111111111111",
+          "symbol": "sBONK",
+          "token_symbol": "sBONK",
+          "amount": 300000,
+          "usd_value": 900
+        }
+      ]
+    },
+    {
+      "id": "mock-d97-wallet-activity-003",
+      "signature": "mockd97signature3333333333333333333333333333333333333333333333333333",
+      "chain": "solana",
+      "transaction_type": "TOKEN_TRANSFER",
+      "source": "MOCK_WORKER",
+      "ingestion_source": "mocked_wallet_lookup_fixture",
+      "timestamp": "2026-05-07T14:08:00Z",
+      "received_at": "2026-05-07T14:08:01Z",
+      "wallets": [
+        {
+          "address": "RepeatCptyD97Fake11111111111111111111",
+          "role": "sender"
+        },
+        {
+          "address": "TrackD97Fake1111111111111111111111111",
+          "role": "receiver"
+        }
+      ],
+      "tokens": [
+        {
+          "symbol": "sUSDC",
+          "mint": "MintSusdcD97Fake11111111111111111111111",
+          "decimals": 6
+        }
+      ],
+      "transfers": [
+        {
+          "from": "RepeatCptyD97Fake11111111111111111111",
+          "to": "TrackD97Fake1111111111111111111111111",
+          "symbol": "sUSDC",
+          "token_symbol": "sUSDC",
+          "amount": 500,
+          "usd_value": 500
+        }
+      ]
+    },
+    {
+      "id": "mock-d97-wallet-activity-004",
+      "signature": "mockd97signature4444444444444444444444444444444444444444444444444444",
+      "chain": "solana",
+      "transaction_type": "TOKEN_TRANSFER",
+      "source": "MOCK_WORKER",
+      "ingestion_source": "mocked_wallet_lookup_fixture",
+      "timestamp": "2026-05-07T14:12:00Z",
+      "received_at": "2026-05-07T14:12:01Z",
+      "wallets": [
+        {
+          "address": "TrackD97Fake1111111111111111111111111",
+          "role": "sender"
+        },
+        {
+          "address": "SendCptyD97Fake1111111111111111111111",
+          "role": "receiver"
+        }
+      ],
+      "tokens": [
+        {
+          "symbol": "sUSDC",
+          "mint": "MintSusdcD97Fake11111111111111111111111",
+          "decimals": 6
+        }
+      ],
+      "transfers": [
+        {
+          "from": "TrackD97Fake1111111111111111111111111",
+          "to": "SendCptyD97Fake1111111111111111111111",
+          "symbol": "sUSDC",
+          "token_symbol": "sUSDC",
+          "amount": 2000,
+          "usd_value": 2000
+        }
+      ]
+    },
+    {
+      "id": "mock-d97-wallet-activity-005",
+      "signature": "mockd97signature5555555555555555555555555555555555555555555555555555",
+      "chain": "solana",
+      "transaction_type": "TRANSFER",
+      "source": "MOCK_WORKER",
+      "ingestion_source": "mocked_wallet_lookup_fixture",
+      "timestamp": "2026-05-07T14:16:00Z",
+      "received_at": "2026-05-07T14:16:01Z",
+      "wallets": [
+        {
+          "address": "SenderCptyD97Fake11111111111111111111",
+          "role": "sender"
+        },
+        {
+          "address": "TrackD97Fake1111111111111111111111111",
+          "role": "receiver"
+        }
+      ],
+      "tokens": [
+        {
+          "symbol": "sSOL",
+          "mint": "solana:native-sol",
+          "decimals": 9
+        }
+      ],
+      "transfers": [
+        {
+          "from": "SenderCptyD97Fake11111111111111111111",
+          "to": "TrackD97Fake1111111111111111111111111",
+          "symbol": "sSOL",
+          "token_symbol": "sSOL",
+          "amount": 2.4,
+          "usd_value": 360
+        }
+      ]
+    },
+    {
+      "id": "mock-d97-wallet-activity-006",
+      "signature": "mockd97signature6666666666666666666666666666666666666666666666666666",
+      "chain": "solana",
+      "transaction_type": "TRANSFER",
+      "source": "COMPUTE_BUDGET_PROGRAM",
+      "ingestion_source": "mocked_wallet_lookup_fixture",
+      "timestamp": "2026-05-07T14:20:00Z",
+      "received_at": "2026-05-07T14:20:01Z",
+      "wallets": [
+        {
+          "address": "TrackD97Fake1111111111111111111111111",
+          "role": "sender"
+        },
+        {
+          "address": "ComputeBudget111111111111111111111111111111",
+          "role": "program"
+        }
+      ],
+      "tokens": [
+        {
+          "symbol": "sSOL",
+          "mint": "solana:native-sol",
+          "decimals": 9
+        }
+      ],
+      "transfers": [
+        {
+          "from": "TrackD97Fake1111111111111111111111111",
+          "to": "ComputeBudget111111111111111111111111111111",
+          "symbol": "sSOL",
+          "token_symbol": "sSOL",
+          "amount": 0.000005,
+          "usd_value": 0
+        }
+      ]
+    }
+  ],
+  "expected_wallet_intelligence": {
+    "tracked_wallet": "TrackD97Fake1111111111111111111111111",
+    "raw_legs": 6,
+    "visible_legs": 5,
+    "filtered_legs": 1,
+    "top_inbound_token": "sUSDC",
+    "top_outbound_token": "sUSDC",
+    "largest_flow": {
+      "symbol": "sUSDC",
+      "usd_value": 2000,
+      "direction": "outbound",
+      "counterparty": "SendCptyD97Fake1111111111111111111111"
+    },
+    "repeated_counterparty": {
+      "address": "RepeatCptyD97Fake11111111111111111111",
+      "count": 3,
+      "directions": {
+        "inbound": 2,
+        "outbound": 1
+      }
+    },
+    "token_flow_summary": [
+      {
+        "symbol": "sUSDC",
+        "inbound": 2,
+        "outbound": 1,
+        "mixed": 0,
+        "count": 3,
+        "total_usd": 3750
+      },
+      {
+        "symbol": "sBONK",
+        "inbound": 0,
+        "outbound": 1,
+        "mixed": 0,
+        "count": 1,
+        "total_usd": 900
+      },
+      {
+        "symbol": "sSOL",
+        "inbound": 1,
+        "outbound": 0,
+        "mixed": 0,
+        "count": 1,
+        "total_usd": 360
+      }
+    ],
+    "noise_cases": [
+      {
+        "address": "ComputeBudget111111111111111111111111111111",
+        "reason": "program_style_account_filtered"
+      }
+    ]
+  }
+}

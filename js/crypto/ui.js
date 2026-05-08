@@ -113,6 +113,7 @@
             graphRenderedAt: 0,
             replayAnimator: null,
             replayStatus: null,
+            selectedEvent: null,
             replaySpeed: 'standard',
             lastMessage: ''
         },
@@ -951,6 +952,7 @@
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
         detachHistoryReplayAnimator({ preserveStatus: false });
+        state.historyPreview.selectedEvent = null;
         state.historyPreview.replaySpeed = 'standard';
         state.historyPreview.lastMessage = '';
     }
@@ -1618,9 +1620,10 @@
 
     function renderInvestigationTabButton(tab, activeTab) {
         const active = tab.id === activeTab;
+        const hasSelection = tab.id === 'details' && Boolean(state.selectedId || state.selectedFlowId || state.historyPreview.selectedEvent);
         return `
-            <button id="crypto-investigation-tab-${escapeAttr(tab.id)}" type="button" role="tab" aria-selected="${active ? 'true' : 'false'}" data-crypto-investigation-tab="${escapeAttr(tab.id)}" class="crypto-investigation-tab">
-                ${escapeHtml(tab.label)}
+            <button id="crypto-investigation-tab-${escapeAttr(tab.id)}" type="button" role="tab" aria-selected="${active ? 'true' : 'false'}" data-has-selection="${hasSelection ? 'true' : 'false'}" data-crypto-investigation-tab="${escapeAttr(tab.id)}" class="crypto-investigation-tab">
+                ${escapeHtml(tab.label)}${hasSelection ? '<span class="crypto-tab-selection-dot" aria-hidden="true"></span>' : ''}
             </button>
         `;
     }
@@ -1642,6 +1645,64 @@
         return renderWalletSummaryWorkspacePanel();
     }
 
+    function renderGuidedActionGrid(actions = [], options = {}) {
+        const title = options.title || 'Guided Next Actions';
+        const subtitle = options.subtitle || '';
+        const available = actions.filter(Boolean);
+        return `
+            <section class="crypto-guided-actions crypto-workspace-card">
+                <div class="crypto-card-heading">
+                    <div>
+                        <span>${escapeHtml(title)}</span>
+                        ${subtitle ? `<div class="mt-1 text-white/48 leading-relaxed">${escapeHtml(subtitle)}</div>` : ''}
+                    </div>
+                    <span>${escapeHtml(available.length)} action${available.length === 1 ? '' : 's'}</span>
+                </div>
+                <div class="crypto-guided-action-grid">
+                    ${available.map(renderGuidedActionCard).join('') || renderWalletInlineEmpty('No guided actions are available for the current graph state.')}
+                </div>
+            </section>
+        `;
+    }
+
+    function renderGuidedActionCard(action = {}) {
+        const attrs = getGuidedActionAttributes(action);
+        const disabled = action.disabled || !attrs ? 'disabled' : '';
+        const tone = action.tone === 'strong'
+            ? 'is-strong'
+            : action.tone === 'warn'
+                ? 'is-warn'
+                : '';
+        return `
+            <button type="button" ${attrs} ${disabled} title="${escapeAttr(action.titleText || action.detail || action.title || '')}" class="crypto-guided-action ${tone}">
+                <span class="crypto-guided-action-label">${escapeHtml(action.title || 'Open')}</span>
+                <span class="crypto-guided-action-detail">${escapeHtml(action.detail || '')}</span>
+            </button>
+        `;
+    }
+
+    function getGuidedActionAttributes(action = {}) {
+        if (action.flowId) {
+            return `data-crypto-flow-id="${escapeAttr(action.flowId)}" data-crypto-open-details="true"`;
+        }
+        if (action.walletAddress) {
+            return `data-crypto-wallet-address="${escapeAttr(action.walletAddress)}" data-crypto-open-details="true"`;
+        }
+        if (action.tab) {
+            return `data-crypto-investigation-tab-target="${escapeAttr(action.tab)}"`;
+        }
+        if (action.historyAction) {
+            return `data-crypto-history-action="${escapeAttr(action.historyAction)}"`;
+        }
+        if (action.tokenFilter) {
+            return `data-crypto-token-filter="${escapeAttr(action.tokenFilter)}"`;
+        }
+        if (action.depth) {
+            return `data-crypto-depth="${escapeAttr(action.depth)}"`;
+        }
+        return '';
+    }
+
     function renderWalletSummaryWorkspacePanel() {
         if (state.dataMode !== DATA_MODES.WALLET) return renderNonWalletSummaryWorkspacePanel();
         const intelligence = buildWalletIntelligence();
@@ -1655,6 +1716,10 @@
         return `
             <div class="crypto-tab-section crypto-summary-section">
                 ${emptyState ? renderWalletEmptyStateCard(emptyState) : ''}
+                ${renderGuidedActionGrid(buildSummaryGuidedActions(intelligence), {
+                    title: 'Guided Investigation',
+                    subtitle: 'Start with the largest movement, the most repeated counterparty, then stage history and replay only when needed.'
+                })}
                 <div class="crypto-summary-grid">
                     ${renderWorkspaceMetric('Tracked Wallet', intelligence.trackedWallet || '-', { mono: true, title: intelligence.trackedWallet || '' })}
                     ${renderWorkspaceMetric('Source', intelligence.sourceLabel)}
@@ -1674,6 +1739,43 @@
                 </div>
             </div>
         `;
+    }
+
+    function buildSummaryGuidedActions(intelligence = {}) {
+        const actions = [];
+        actions.push({
+            title: 'Inspect largest flow',
+            detail: intelligence.largestFlowEdge
+                ? `${intelligence.largestFlow} / ${formatFlowDirectionRelativeToTracked(intelligence.largestFlowEdge)}`
+                : 'No visible flow is available under the current filters.',
+            flowId: intelligence.largestFlowEdge?.id || '',
+            disabled: !intelligence.largestFlowEdge,
+            tone: intelligence.largestFlowEdge ? 'strong' : 'idle'
+        });
+        actions.push({
+            title: 'Review top counterparty',
+            detail: intelligence.mostActiveCounterparty
+                ? `${shortLongValue(intelligence.mostActiveCounterparty.address)} / ${intelligence.mostActiveCounterparty.count} visible leg${intelligence.mostActiveCounterparty.count === 1 ? '' : 's'}`
+                : 'No counterparty address is ranked yet.',
+            walletAddress: intelligence.mostActiveCounterparty?.address || '',
+            disabled: !intelligence.mostActiveCounterparty,
+            tone: intelligence.mostActiveCounterparty ? 'strong' : 'idle'
+        });
+        actions.push({
+            title: 'Open History',
+            detail: state.history.pagesLoaded
+                ? `${state.history.totalLoadedTransactions || state.history.loadedTransactions.length} staged row${(state.history.totalLoadedTransactions || state.history.loadedTransactions.length) === 1 ? '' : 's'} available.`
+                : 'Load or review staged history without changing the graph.',
+            tab: 'history'
+        });
+        actions.push({
+            title: 'Open Replay',
+            detail: state.historyPreview.dataset
+                ? 'Preview dataset is ready for static graph or replay.'
+                : 'Build a preview dataset before animation.',
+            tab: 'replay'
+        });
+        return actions;
     }
 
     function renderNonWalletSummaryWorkspacePanel() {
@@ -1711,6 +1813,10 @@
         const depthNote = getWalletDepthExpansionNote();
         return `
             <div class="crypto-tab-section">
+                ${renderGuidedActionGrid(buildFlowsGuidedActions(intelligence), {
+                    title: 'Flow Drill-Down',
+                    subtitle: 'Use explicit inspect actions to open Details; list selections stay in this tab for comparison.'
+                })}
                 ${renderWalletActionableInsights(intelligence)}
                 ${depthNote ? renderWalletDepthNoteCard(depthNote) : ''}
                 <section class="crypto-workspace-card">
@@ -1736,6 +1842,46 @@
         `;
     }
 
+    function buildFlowsGuidedActions(intelligence = {}) {
+        const selectedFlow = getSelectedFlowEdge();
+        const selectedNode = state.selectedId ? state.graph?.nodeById.get(state.selectedId) : null;
+        const selectedAddress = selectedNode?.type === core.NODE_TYPES.WALLET ? selectedNode.address : '';
+        const actions = [];
+        actions.push({
+            title: selectedFlow ? 'Inspect selected flow' : 'Select largest flow',
+            detail: selectedFlow
+                ? `${getNormalizedFlowAmountDisplay(selectedFlow)} / ${formatFlowDirectionRelativeToTracked(selectedFlow)}`
+                : intelligence.largestFlowEdge
+                    ? `${intelligence.largestFlow} / ${formatFlowDirectionRelativeToTracked(intelligence.largestFlowEdge)}`
+                    : 'No visible flow can be selected yet.',
+            flowId: selectedFlow?.id || intelligence.largestFlowEdge?.id || '',
+            disabled: !(selectedFlow || intelligence.largestFlowEdge),
+            tone: selectedFlow || intelligence.largestFlowEdge ? 'strong' : 'idle'
+        });
+        actions.push({
+            title: selectedAddress ? 'Inspect selected counterparty' : 'Review top counterparty',
+            detail: selectedAddress
+                ? `${shortLongValue(selectedAddress)} is selected in the graph.`
+                : intelligence.mostActiveCounterparty
+                    ? `${shortLongValue(intelligence.mostActiveCounterparty.address)} / ${intelligence.mostActiveCounterparty.relationship}`
+                    : 'No ranked counterparty is available.',
+            walletAddress: selectedAddress || intelligence.mostActiveCounterparty?.address || '',
+            disabled: !(selectedAddress || intelligence.mostActiveCounterparty),
+            tone: selectedAddress || intelligence.mostActiveCounterparty ? 'strong' : 'idle'
+        });
+        actions.push({
+            title: 'Open selected details',
+            detail: selectedFlow
+                ? 'Details will show the selected flow profile and copy actions.'
+                : selectedNode
+                    ? 'Details will show the selected node profile and related visible flows.'
+                    : 'Select a node or flow first.',
+            tab: 'details',
+            disabled: !(selectedFlow || selectedNode)
+        });
+        return actions;
+    }
+
     function renderWalletHistoryWorkspacePanel() {
         if (state.dataMode !== DATA_MODES.WALLET) {
             return `
@@ -1748,7 +1894,48 @@
                 </div>
             `;
         }
-        return `<div class="crypto-tab-section">${renderWalletHistoryBrowserPanel()}</div>`;
+        return `
+            <div class="crypto-tab-section">
+                ${renderGuidedActionGrid(buildHistoryGuidedActions(), {
+                    title: 'History Staging Actions',
+                    subtitle: 'History stays staged; preview datasets are separate artifacts and never merge into the active graph.'
+                })}
+                ${renderWalletHistoryBrowserPanel()}
+            </div>
+        `;
+    }
+
+    function buildHistoryGuidedActions() {
+        const rowCount = state.history.loadedTransactions.length;
+        const hasDataset = Boolean(state.historyPreview.dataset);
+        return [
+            {
+                title: 'Build preview dataset',
+                detail: rowCount
+                    ? `${rowCount} staged row${rowCount === 1 ? '' : 's'} can be converted for preview.`
+                    : 'Build a dataset shell, then load history rows for transfer steps.',
+                historyAction: 'build-dataset',
+                disabled: state.history.inFlight,
+                tone: rowCount ? 'strong' : 'idle'
+            },
+            {
+                title: 'Open Replay',
+                detail: hasDataset
+                    ? 'Preview dataset is ready for static graph and replay controls.'
+                    : 'Open the replay sandbox when you are ready to build or render.',
+                tab: 'replay',
+                tone: hasDataset ? 'strong' : 'idle'
+            },
+            {
+                title: 'Load more history',
+                detail: state.history.moreAvailable
+                    ? 'Fetch the next Worker history page into staging only.'
+                    : 'No additional cursor is currently staged.',
+                historyAction: 'load-more',
+                disabled: isWalletHistoryLoadMoreDisabled(),
+                tone: state.history.moreAvailable ? 'strong' : 'idle'
+            }
+        ];
     }
 
     function renderWalletReplayWorkspacePanel() {
@@ -1763,7 +1950,50 @@
                 </div>
             `;
         }
-        return `<div class="crypto-tab-section">${renderWalletHistoryGraphPreviewPanel()}</div>`;
+        return `
+            <div class="crypto-tab-section">
+                ${renderGuidedActionGrid(buildReplayGuidedActions(), {
+                    title: 'Replay Investigation Actions',
+                    subtitle: 'Replay controls operate on the preview dataset canvas only; inspect events without adding them to the active graph.'
+                })}
+                ${renderWalletHistoryGraphPreviewPanel()}
+            </div>
+        `;
+    }
+
+    function buildReplayGuidedActions() {
+        const status = getHistoryReplayStatus();
+        const hasDataset = Boolean(state.historyPreview.dataset);
+        const currentStep = Number(status.currentStep) || 0;
+        const totalSteps = getHistoryReplayTotalSteps(status);
+        return [
+            {
+                title: 'Inspect current event',
+                detail: currentStep
+                    ? `Step ${currentStep}/${totalSteps || status.totalSteps || 0} / ${getHistoryReplayAmountTokenLabel(status)}`
+                    : 'Step, scrub, or start replay before inspecting an event.',
+                historyAction: 'inspect-replay-event',
+                disabled: !hasDataset || !currentStep,
+                tone: hasDataset && currentStep ? 'strong' : 'idle'
+            },
+            {
+                title: hasDataset ? 'Start preview replay' : 'Build preview dataset',
+                detail: hasDataset
+                    ? 'Animate the separate preview canvas without changing Wallet Lookup.'
+                    : 'Create graph-ready staged data before animation.',
+                historyAction: hasDataset ? 'start-replay' : 'build-dataset',
+                disabled: state.history.inFlight,
+                tone: hasDataset ? 'strong' : 'idle'
+            },
+            {
+                title: 'Open Details',
+                detail: state.historyPreview.selectedEvent
+                    ? 'Details is showing the last inspected preview event.'
+                    : 'Details will show graph selections or the inspected replay event.',
+                tab: 'details',
+                disabled: !(state.selectedId || state.selectedFlowId || state.historyPreview.selectedEvent)
+            }
+        ];
     }
 
     function renderWorkspaceMetric(label, value, options = {}) {
@@ -1827,9 +2057,9 @@
 
     function renderWalletNextAction(action = {}) {
         const attrs = action.flowId
-            ? `data-crypto-flow-id="${escapeAttr(action.flowId)}"`
+            ? `data-crypto-flow-id="${escapeAttr(action.flowId)}" data-crypto-open-details="true"`
             : action.walletAddress
-                ? `data-crypto-wallet-address="${escapeAttr(action.walletAddress)}"`
+                ? `data-crypto-wallet-address="${escapeAttr(action.walletAddress)}" data-crypto-open-details="true"`
                 : action.tokenFilter
                     ? `data-crypto-token-filter="${escapeAttr(action.tokenFilter)}"`
                     : action.depth
@@ -2138,6 +2368,48 @@
             speedLabel: status.speedLabel || HISTORY_REPLAY_SPEEDS[status.speed || state.historyPreview.replaySpeed] || 'Standard',
             done: Boolean(status.done),
             warning: status.warning || ''
+        };
+    }
+
+    function inspectCurrentHistoryReplayEvent() {
+        const event = getCurrentHistoryReplayEvent();
+        if (!event) {
+            state.historyPreview.lastMessage = 'No replay event is selected yet. Start, step, or scrub the preview replay first.';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return null;
+        }
+        state.selectedId = null;
+        state.selectedFlowId = null;
+        state.flowReplay.activeFlowId = null;
+        state.historyPreview.selectedEvent = event;
+        state.investigationTab = 'details';
+        render();
+        renderDetails();
+        return event;
+    }
+
+    function getCurrentHistoryReplayEvent() {
+        const status = getHistoryReplayStatus();
+        const currentStep = Number(status.currentStep) || 0;
+        if (!currentStep) return null;
+        const currentEvent = status.currentEvent || null;
+        const events = getHistoryReplayEvents(status);
+        const event = currentEvent
+            ? { ...currentEvent, step: currentStep }
+            : events.find(item => Number(item.step) === currentStep) || null;
+        if (!event) return null;
+        return {
+            ...event,
+            step: currentStep,
+            totalSteps: getHistoryReplayTotalSteps(status),
+            timestamp: event.timestamp || status.timestamp || '',
+            signature: event.signature || event.transaction_hash || status.signature || '',
+            amount: event.amount ?? status.amount,
+            amountDisplay: event.amountDisplay || event.amount_display || status.amountDisplay || '',
+            token: event.token || event.symbol || status.token || '',
+            direction: event.direction || status.direction || '',
+            sourceWallet: event.sourceWallet || event.source_wallet || status.sourceWallet || '',
+            destinationWallet: event.destinationWallet || event.destination_wallet || status.destinationWallet || ''
         };
     }
 
@@ -2896,6 +3168,7 @@
                 <div class="sm:text-right text-white/62">
                     <div class="text-cyan-50/78">${escapeHtml(item.count)} leg${item.count === 1 ? '' : 's'}</div>
                     <div>${escapeHtml(value)}</div>
+                    <button type="button" data-crypto-wallet-address="${escapeAttr(item.address)}" data-crypto-open-details="true" class="mt-2 rounded-lg border border-cyan-200/18 bg-cyan-300/10 px-2.5 py-1.5 text-xs text-cyan-50/78 hover:border-cyan-100/35">Inspect</button>
                 </div>
             </div>
         `;
@@ -3685,12 +3958,16 @@
         });
         status.querySelectorAll('[data-crypto-flow-id]').forEach(button => {
             button.addEventListener('click', () => {
-                selectFlow(button.dataset.cryptoFlowId || '');
+                selectFlow(button.dataset.cryptoFlowId || '', {
+                    openDetails: button.dataset.cryptoOpenDetails === 'true'
+                });
             });
         });
         status.querySelectorAll('[data-crypto-wallet-address]').forEach(button => {
             button.addEventListener('click', () => {
-                selectWalletAddress(button.dataset.cryptoWalletAddress || '');
+                selectWalletAddress(button.dataset.cryptoWalletAddress || '', {
+                    openDetails: button.dataset.cryptoOpenDetails === 'true'
+                });
             });
         });
         status.querySelectorAll('[data-crypto-token-filter]').forEach(button => {
@@ -3950,6 +4227,7 @@
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
         detachHistoryReplayAnimator({ preserveStatus: false });
+        state.historyPreview.selectedEvent = null;
         state.historyPreview.replaySpeed = 'standard';
         state.historyPreview.lastMessage = 'Replay preview cleared with staged history; the Wallet Lookup graph was not changed.';
         state.history.lastMessage = 'Loaded history staging cleared; the Wallet Lookup graph was not changed.';
@@ -4392,6 +4670,7 @@
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
         detachHistoryReplayAnimator({ preserveStatus: false });
+        state.historyPreview.selectedEvent = null;
         state.historyPreview.replaySpeed = 'standard';
         state.historyPreview.lastMessage = 'Preview artifacts cleared. Staged history and the active graph were not changed.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -4581,6 +4860,7 @@
         state.flowReplayEnabled = true;
         state.filters = { transactionType: 'all', token: 'all', direction: 'all' };
         state.selectedFlowId = null;
+        state.historyPreview.selectedEvent = null;
         state.manualNodePositions.clear();
         resetFlowQueueState();
         applyWalletLookupFocusLayout();
@@ -4941,6 +5221,7 @@
         resetFlowQueueState();
         state.filters = { transactionType: 'all', token: 'all', direction: 'all' };
         state.selectedFlowId = null;
+        state.historyPreview.selectedEvent = null;
         state.manualNodePositions.clear();
         applyWalletLookupFocusLayout();
         prepareFlowMotion();
@@ -5059,12 +5340,13 @@
             || `${edge.target || ''}|${edge.symbol || ''}` === state.filters.token;
     }
 
-    function selectFlow(flowId) {
+    function selectFlow(flowId, options = {}) {
         const edge = (state.graph?.flowEdges || []).find(item => item.id === flowId && edgeMatchesActiveFilters(item));
         if (!edge) return null;
         state.selectedFlowId = edge.id;
         state.selectedId = null;
-        state.investigationTab = 'details';
+        state.historyPreview.selectedEvent = null;
+        if (options.openDetails) state.investigationTab = 'details';
         state.flowReplay.activeFlowId = edge.id;
         state.flowReplay.lastStepAt = performance.now();
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -5074,12 +5356,13 @@
         return edge;
     }
 
-    function selectWalletAddress(address = '') {
+    function selectWalletAddress(address = '', options = {}) {
         const node = getWalletNodeForAddress(address);
         if (!node) return null;
         state.selectedId = node.id;
         state.selectedFlowId = null;
-        state.investigationTab = 'details';
+        state.historyPreview.selectedEvent = null;
+        if (options.openDetails) state.investigationTab = 'details';
         state.flowReplay.activeFlowId = null;
         render();
         renderDetails();
@@ -5498,7 +5781,7 @@
             if (drag.mode === 'node' && !drag.moved && drag.nodeId) {
                 state.selectedId = drag.nodeId;
                 state.selectedFlowId = null;
-                state.investigationTab = 'details';
+                state.historyPreview.selectedEvent = null;
                 render();
                 renderDetails();
             }
@@ -5616,6 +5899,21 @@
                 setInvestigationTab(button.dataset.cryptoInvestigationTab || 'summary');
             });
         });
+        root.querySelectorAll('[data-crypto-investigation-tab-target]').forEach(button => {
+            button.addEventListener('click', () => {
+                setInvestigationTab(button.dataset.cryptoInvestigationTabTarget || 'summary');
+            });
+        });
+        root.querySelectorAll('[data-crypto-copy-value]').forEach(button => {
+            button.addEventListener('click', () => {
+                copyGuidedValue(button.dataset.cryptoCopyValue || '', button);
+            });
+        });
+        root.querySelectorAll('[data-crypto-history-action]').forEach(button => {
+            button.addEventListener('click', () => {
+                runGuidedHistoryAction(button.dataset.cryptoHistoryAction || '');
+            });
+        });
         bindStatusControls(root);
     }
 
@@ -5627,6 +5925,9 @@
         }
 
         const node = state.selectedId ? state.graph.nodeById.get(state.selectedId) : null;
+        if (!node && state.historyPreview.selectedEvent) {
+            return renderSelectedReplayEventDetailPanel(state.historyPreview.selectedEvent);
+        }
         if (!node) {
             return renderInvestigationDetailsEmptyState();
         }
@@ -5643,10 +5944,20 @@
         const contextCopy = state.dataMode === DATA_MODES.WALLET
             ? 'Secure Worker wallet lookup graph. Program and infrastructure-like accounts are filtered; address relationships are not identity claims.'
             : 'Local fixture graph. Source/program labels are hints from sanitized data, not identity claims.';
+        const nodeAddress = node.address || node.token_mint || '';
+        const nodeCopyLabel = node.type === core.NODE_TYPES.TOKEN ? 'Copy token mint' : 'Copy selected address';
+        const selectionLabel = isHubNode(node) ? 'Selected hub node' : node.type === core.NODE_TYPES.TOKEN ? 'Selected token node' : 'Selected wallet node';
         return `
-            <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">${escapeHtml(isHubNode(node) ? 'ENTITY HUB' : node.type.toUpperCase())} NODE</div>
-            <h3 class="font-display text-2xl mt-1">${escapeHtml(labelForNode(node))}</h3>
-            <div class="text-[11px] text-white/42 mt-2">${escapeHtml(contextCopy)}</div>
+            ${renderDetailsSelectionHeader({
+                kicker: `${isHubNode(node) ? 'ENTITY HUB' : node.type.toUpperCase()} NODE`,
+                title: labelForNode(node),
+                status: selectionLabel,
+                body: contextCopy,
+                actions: [
+                    nodeAddress ? renderCopyButton(nodeCopyLabel, nodeAddress) : '',
+                    primaryFlow ? renderCopyButton('Copy connected flow summary', buildSelectedFlowSummary(primaryFlow)) : ''
+                ]
+            })}
             ${state.dataMode === DATA_MODES.WALLET ? renderWalletDetailReadout() : ''}
             ${renderDetailSection('Summary', `
                 ${detailRow('Chain', node.chain || '-')}
@@ -5689,8 +6000,12 @@
             <div class="crypto-empty-state">
                 <div class="crypto-kicker">DETAILS</div>
                 <h3>No graph selection</h3>
-                <p>Click a wallet, token, hub, or visible transfer edge in the graph to open its inspector here. Flow selections show normalized amount, token, direction, source, destination, timestamp, and transaction context.</p>
+                <p>Click a wallet, token, hub, or visible transfer edge in the graph to update this tab. Use Inspect actions when you want to jump here from Summary, Flows, History, or Replay.</p>
             </div>
+            ${renderGuidedActionGrid(buildDetailsEmptyGuidedActions(intelligence), {
+                title: 'Start Inspecting',
+                subtitle: 'Selections stay readable here with copy actions and source-boundary notes.'
+            })}
             ${intelligence ? renderDetailSection('Current Lookup', `
                 ${detailRow('Tracked Wallet', intelligence.trackedWallet || '-', { shorten: true })}
                 ${detailRow('Returned Events', intelligence.returnedEvents)}
@@ -5701,13 +6016,47 @@
         `;
     }
 
+    function buildDetailsEmptyGuidedActions(intelligence = null) {
+        if (!intelligence) return [
+            { title: 'Open Summary', detail: 'Review graph source and visible-flow counts.', tab: 'summary' },
+            { title: 'Open Flows', detail: 'Compare timeline, counterparties, and tokens.', tab: 'flows' }
+        ];
+        return [
+            {
+                title: 'Inspect largest flow',
+                detail: intelligence.largestFlowEdge ? intelligence.largestFlow : 'No visible flow is selected.',
+                flowId: intelligence.largestFlowEdge?.id || '',
+                disabled: !intelligence.largestFlowEdge,
+                tone: intelligence.largestFlowEdge ? 'strong' : 'idle'
+            },
+            {
+                title: 'Review top counterparty',
+                detail: intelligence.mostActiveCounterparty ? shortLongValue(intelligence.mostActiveCounterparty.address) : 'No counterparty is ranked.',
+                walletAddress: intelligence.mostActiveCounterparty?.address || '',
+                disabled: !intelligence.mostActiveCounterparty
+            },
+            { title: 'Open History', detail: 'Stage additional Worker history pages only.', tab: 'history' },
+            { title: 'Open Replay', detail: 'Use preview-only graph and animation tools.', tab: 'replay' }
+        ];
+    }
+
     function renderSelectedFlowDetailPanel(edge) {
         const source = state.graph.nodeById.get(edge.source);
         const target = state.graph.nodeById.get(edge.target);
+        const signature = edge.transaction_hash || edge.signature || '';
         return `
-            <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">TRANSFER FLOW</div>
-            <h3 class="font-display text-2xl mt-1">Selected Flow</h3>
-            <div class="text-[11px] text-white/42 mt-2">Visible transfer leg from the current graph and active filters. This is an address-to-address observation, not an identity claim.</div>
+            ${renderDetailsSelectionHeader({
+                kicker: 'TRANSFER FLOW',
+                title: 'Selected Flow',
+                status: 'Selected flow edge',
+                body: 'Visible transfer leg from the current graph and active filters. This is an address-to-address observation, not an identity claim.',
+                actions: [
+                    renderCopyButton('Copy selected flow summary', buildSelectedFlowSummary(edge)),
+                    signature ? renderCopyButton('Copy selected signature', signature) : '',
+                    renderCopyButton('Copy source address', getFlowSourceAddress(edge)),
+                    renderCopyButton('Copy destination address', getFlowTargetAddress(edge))
+                ]
+            })}
             <section class="mt-5 rounded-2xl border border-cyan-200/16 bg-cyan-300/10 p-3">
                 <div class="text-[10px] font-mono text-white/40">FLOW</div>
                 <div class="mt-2 text-sm text-cyan-50/86 break-words" title="${escapeAttr(`${labelForNode(source)} -> ${labelForNode(target)}`)}">${escapeHtml(compactNodeLabel(source))} &rarr; ${escapeHtml(compactNodeLabel(target))}</div>
@@ -5750,8 +6099,70 @@
                     ${detailRow('Transaction Type', edge.transaction_type_label || core.interpretTransactionType?.(edge.transaction_type).label || 'Unknown / Unclassified')}
                     ${detailRow('Source Label', sourceLabel)}
                     ${detailRow('Timestamp', edge.timestamp ? formatDateTime(edge.timestamp) : '-')}
+                    ${detailRow('Signature', edge.transaction_hash || edge.signature || '-', { shorten: true })}
+                    ${detailRow('Source / Boundary', getCurrentSourceLabel())}
                 </div>
             </section>
+        `;
+    }
+
+    function renderSelectedReplayEventDetailPanel(event = {}) {
+        const sourceWallet = event.sourceWallet || event.source_wallet || '';
+        const destinationWallet = event.destinationWallet || event.destination_wallet || '';
+        const signature = event.signature || event.transaction_hash || '';
+        return `
+            ${renderDetailsSelectionHeader({
+                kicker: 'PREVIEW REPLAY EVENT',
+                title: `Replay Step ${event.step || '-'}`,
+                status: 'Preview-only selected event',
+                body: 'This event comes from the staged history preview dataset. It is not merged into the active Wallet Lookup graph and does not create graph selection state.',
+                actions: [
+                    renderCopyButton('Copy replay event summary', buildReplayEventSummary(event)),
+                    signature ? renderCopyButton('Copy selected signature', signature) : '',
+                    sourceWallet ? renderCopyButton('Copy source address', sourceWallet) : '',
+                    destinationWallet ? renderCopyButton('Copy destination address', destinationWallet) : ''
+                ]
+            })}
+            ${renderDetailSection('Replay Event Profile', `
+                ${detailRow('Step', `${event.step || '-'}${event.totalSteps ? ` / ${event.totalSteps}` : ''}`)}
+                ${detailRow('Direction', getHistoryReplayDirectionLabel(event.direction))}
+                ${detailRow('Amount / Token', getHistoryReplayAmountTokenLabel(event))}
+                ${detailRow('Timestamp', event.timestamp ? formatPreviewTimestamp(event.timestamp) : '-')}
+                ${detailRow('Source Wallet', sourceWallet || '-', { shorten: true })}
+                ${detailRow('Destination Wallet', destinationWallet || '-', { shorten: true })}
+                ${detailRow('Signature', signature || '-', { shorten: true })}
+                ${detailRow('Source / Boundary', 'Preview dataset from staged Worker history. Active graph unchanged.')}
+            `)}
+            ${renderDetailSection('Relationship To Tracked Wallet', `
+                ${detailRow('Tracked Wallet', getRelationshipWallet() || state.walletLookup.lastWallet || '-', { shorten: true })}
+                ${detailRow('Interpretation', event.direction ? getHistoryReplayDirectionLabel(event.direction) : 'Replay direction unavailable')}
+                ${detailRow('Claims Boundary', 'Address-to-address observation only; no identity, ownership, risk, criminality, or investment claims.')}
+            `)}
+        `;
+    }
+
+    function renderDetailsSelectionHeader(options = {}) {
+        const actions = (options.actions || []).filter(Boolean).join('');
+        return `
+            <section class="crypto-details-selected">
+                <div class="crypto-details-selected-copy">
+                    <div class="crypto-kicker">${escapeHtml(options.kicker || 'DETAILS')}</div>
+                    <h3>${escapeHtml(options.title || 'Selected Object')}</h3>
+                    <div class="crypto-selection-pill">${escapeHtml(options.status || 'Selected')}</div>
+                    ${options.body ? `<p>${escapeHtml(options.body)}</p>` : ''}
+                </div>
+                ${actions ? `<div class="crypto-details-actions">${actions}</div>` : ''}
+            </section>
+        `;
+    }
+
+    function renderCopyButton(label, value) {
+        const text = String(value || '');
+        if (!text) return '';
+        return `
+            <button type="button" data-crypto-copy-value="${escapeAttr(text)}" class="crypto-copy-action">
+                ${escapeHtml(label)}
+            </button>
         `;
     }
 
@@ -5910,6 +6321,42 @@
         throw new Error('Clipboard unavailable');
     }
 
+    async function copyGuidedValue(value, button) {
+        const text = String(value || '');
+        if (!text) return false;
+        const original = button?.textContent || 'Copy';
+        try {
+            await writeTextToClipboard(text);
+            if (button) button.textContent = 'Copied';
+            return true;
+        } catch (error) {
+            if (button) button.textContent = 'Copy Failed';
+            return false;
+        } finally {
+            window.setTimeout(() => {
+                if (button) button.textContent = original;
+            }, 1400);
+        }
+    }
+
+    async function runGuidedHistoryAction(action) {
+        if (action === 'build-dataset') {
+            await buildHistoryPreviewDataset();
+            return;
+        }
+        if (action === 'load-more') {
+            await loadMoreWalletHistory();
+            return;
+        }
+        if (action === 'start-replay') {
+            await startHistoryReplay();
+            return;
+        }
+        if (action === 'inspect-replay-event') {
+            inspectCurrentHistoryReplayEvent();
+        }
+    }
+
     function fallbackCopyReportText(text) {
         const textarea = document.createElement('textarea');
         textarea.value = text;
@@ -6054,6 +6501,35 @@
             `- Timestamp: ${edge.timestamp ? formatReportDateTime(edge.timestamp) : '-'}`,
             `- Transaction hash: ${edge.transaction_hash || '-'}`
         ];
+    }
+
+    function buildSelectedFlowSummary(edge = {}) {
+        if (!edge) return '';
+        return formatSelectedFlowReportLines(edge)
+            .concat([
+                `- Source boundary: ${getCurrentSourceLabel()}`,
+                '- Sanitized boundary: visible graph fields only; no browser provider calls.',
+                '- Claims boundary: address-to-address observation only.'
+            ])
+            .join('\n');
+    }
+
+    function buildReplayEventSummary(event = {}) {
+        const sourceWallet = event.sourceWallet || event.source_wallet || '';
+        const destinationWallet = event.destinationWallet || event.destination_wallet || '';
+        const signature = event.signature || event.transaction_hash || '';
+        return [
+            'CryptoPhotonic preview replay event',
+            `- Step: ${event.step || '-'}${event.totalSteps ? ` / ${event.totalSteps}` : ''}`,
+            `- Source wallet: ${sourceWallet || '-'}`,
+            `- Destination wallet: ${destinationWallet || '-'}`,
+            `- Amount/token: ${getHistoryReplayAmountTokenLabel(event)}`,
+            `- Direction: ${getHistoryReplayDirectionLabel(event.direction)}`,
+            `- Timestamp: ${event.timestamp ? formatPreviewTimestamp(event.timestamp) : '-'}`,
+            `- Signature: ${signature || '-'}`,
+            '- Source boundary: staged history preview dataset only.',
+            '- Active graph unchanged; no merge behavior.'
+        ].join('\n');
     }
 
     function formatReportDateTime(value) {
@@ -6476,6 +6952,7 @@
         clampViewport();
         state.selectedId = node.id;
         state.selectedFlowId = null;
+        state.historyPreview.selectedEvent = null;
         render();
         renderDetails();
     }

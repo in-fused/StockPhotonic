@@ -32,9 +32,13 @@
         selectedId: null,
         selectedFlowId: null,
         hoveredId: null,
+        hoveredFlowId: null,
+        focusSelection: true,
+        tokenIsolation: 'all',
         interactionIndex: null,
         canvas: null,
         ctx: null,
+        hoverOverlay: null,
         root: null,
         detailPanel: null,
         statusPanel: null,
@@ -149,12 +153,15 @@
         touchPointers: new Map(),
         pinch: null,
         drag: null,
+        lastClick: null,
         manualNodePositions: new Map()
     };
     state.flowQueue = state.flowReplay;
 
     const ZOOM_LIMITS = { min: 0.48, max: 2.35 };
     const DRAG_SELECT_THRESHOLD = 5;
+    const QUICK_INSPECT_MS = 320;
+    const QUICK_INSPECT_DISTANCE = 10;
     const FLOW_ANIMATION = {
         maxPulsedEdges: 7,
         frameMs: 33,
@@ -227,6 +234,7 @@
         state.canvas = document.getElementById(options.canvasId || 'crypto-flow-canvas');
         state.detailPanel = document.getElementById(options.detailPanelId || 'crypto-detail-panel');
         if (!state.root || !state.canvas || !state.detailPanel) return null;
+        state.hoverOverlay = document.getElementById('crypto-graph-hover-overlay') || createHoverOverlay();
         configureLiveFeed(options);
         loadHistoryGraphPreviewModule();
 
@@ -1697,6 +1705,12 @@
         if (action.tokenFilter) {
             return `data-crypto-token-filter="${escapeAttr(action.tokenFilter)}"`;
         }
+        if (action.tokenIsolation) {
+            return `data-crypto-token-isolation="${escapeAttr(action.tokenIsolation)}"`;
+        }
+        if (action.clearTokenIsolation) {
+            return 'data-crypto-token-isolation="all"';
+        }
         if (action.depth) {
             return `data-crypto-depth="${escapeAttr(action.depth)}"`;
         }
@@ -1879,7 +1893,49 @@
             tab: 'details',
             disabled: !(selectedFlow || selectedNode)
         });
+        const tokenIsolation = getPreferredTokenIsolationAction(intelligence, selectedFlow, selectedNode);
+        actions.push(tokenIsolation);
         return actions;
+    }
+
+    function getPreferredTokenIsolationAction(intelligence = {}, selectedFlow = null, selectedNode = null) {
+        if (state.tokenIsolation !== 'all') {
+            return {
+                title: 'Show all tokens',
+                detail: `${getTokenIsolationLabel(state.tokenIsolation)} isolation is active; restore full flow context.`,
+                clearTokenIsolation: true
+            };
+        }
+        const tokenFromNode = getTokenIsolationFromNode(selectedNode);
+        const tokenKey = selectedFlow ? getTokenKeyForEdge(selectedFlow) : tokenFromNode.key || intelligence.mostActiveToken?.filterKey || '';
+        const tokenLabel = selectedFlow
+            ? (selectedFlow.symbol || shortLongValue(selectedFlow.token_mint) || 'selected token')
+            : tokenFromNode.label || intelligence.mostActiveToken?.symbol || '';
+        return {
+            title: 'Isolate token flows',
+            detail: tokenKey
+                ? `Fade other flow edges and focus ${tokenLabel || 'this token'}.`
+                : 'Select a token or flow before isolating token movement.',
+            tokenIsolation: tokenKey,
+            disabled: !tokenKey,
+            tone: tokenKey ? 'strong' : 'idle'
+        };
+    }
+
+    function getTokenIsolationFromNode(node = null) {
+        if (!node || node.type !== core.NODE_TYPES.TOKEN) return { key: '', label: '' };
+        return {
+            key: `${node.token_mint || ''}|${node.symbol || ''}`,
+            label: node.symbol || node.name || 'token'
+        };
+    }
+
+    function getTokenIsolationLabel(tokenKey = state.tokenIsolation) {
+        if (!tokenKey || tokenKey === 'all') return 'All tokens';
+        const [, symbol = ''] = String(tokenKey).split('|');
+        if (symbol) return symbol;
+        const tokenNode = (state.graph?.tokenNodes || []).find(node => `${node.token_mint || ''}|${node.symbol || ''}` === tokenKey);
+        return tokenNode?.symbol || shortLongValue(String(tokenKey).split('|')[0]) || 'Selected token';
     }
 
     function renderWalletHistoryWorkspacePanel() {
@@ -3975,6 +4031,11 @@
                 setTokenFilter(button.dataset.cryptoTokenFilter || 'all');
             });
         });
+        status.querySelectorAll('[data-crypto-token-isolation]').forEach(button => {
+            button.addEventListener('click', () => {
+                setTokenIsolation(button.dataset.cryptoTokenIsolation || 'all');
+            });
+        });
         status.querySelectorAll('[data-crypto-depth]').forEach(button => {
             button.addEventListener('click', () => {
                 setWalletLookupDepth(Number(button.dataset.cryptoDepth) || 1);
@@ -5221,8 +5282,12 @@
         resetFlowQueueState();
         state.filters = { transactionType: 'all', token: 'all', direction: 'all' };
         state.selectedFlowId = null;
+        state.hoveredId = null;
+        state.hoveredFlowId = null;
+        state.tokenIsolation = 'all';
         state.historyPreview.selectedEvent = null;
         state.manualNodePositions.clear();
+        hideHoverOverlay();
         applyWalletLookupFocusLayout();
         prepareFlowMotion();
         rebuildInteractionIndex();
@@ -5332,6 +5397,15 @@
         return true;
     }
 
+    function edgeMatchesTokenIsolation(edge) {
+        if (!edge || state.tokenIsolation === 'all') return true;
+        return getTokenKeyForEdge(edge) === state.tokenIsolation;
+    }
+
+    function getTokenKeyForEdge(edge = {}) {
+        return `${edge.token_mint || ''}|${edge.symbol || ''}`;
+    }
+
     function exposureEdgeMatchesFilters(edge) {
         if (state.filters.token === 'all') return true;
         const token = state.graph?.nodeById.get(edge.target);
@@ -5377,6 +5451,22 @@
         render();
         renderDetails();
         return state.filters.token;
+    }
+
+    function setTokenIsolation(filterValue = 'all') {
+        state.tokenIsolation = filterValue || 'all';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        render();
+        renderDetails();
+        updateInteractionDock();
+        return state.tokenIsolation;
+    }
+
+    function toggleFocusSelection() {
+        state.focusSelection = !state.focusSelection;
+        render();
+        updateInteractionDock();
+        return state.focusSelection;
     }
 
     function syncSelectedFlowWithFilters() {
@@ -5441,7 +5531,7 @@
         const dy = target.y - source.y;
         const distance = Math.max(1, Math.hypot(dx, dy));
         const normal = { x: -dy / distance, y: dx / distance };
-        const bend = edge.type === core.EDGE_TYPES.FLOW ? 24 : edge.type === core.EDGE_TYPES.EXPOSURE ? -18 : 0;
+        const bend = getEdgeBend(edge);
         const control = {
             x: (source.x + target.x) / 2 + normal.x * bend,
             y: (source.y + target.y) / 2 + normal.y * bend
@@ -5451,9 +5541,32 @@
         ctx.globalAlpha = style.opacity;
         ctx.shadowColor = style.shadowColor;
         ctx.shadowBlur = style.shadowBlur;
-        ctx.strokeStyle = edge.color || '#22d3ee';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        const strokeColor = edge.color || '#22d3ee';
+        const gradientStroke = edge.type === core.EDGE_TYPES.FLOW
+            ? ctx.createLinearGradient(source.x, source.y, target.x, target.y)
+            : null;
+        if (gradientStroke) {
+            gradientStroke.addColorStop(0, 'rgba(148, 163, 184, 0.34)');
+            gradientStroke.addColorStop(0.42, strokeColor);
+            gradientStroke.addColorStop(1, '#fef3c7');
+        }
+        ctx.strokeStyle = gradientStroke || strokeColor;
         ctx.lineWidth = style.width;
         ctx.setLineDash(edge.type === core.EDGE_TYPES.LABEL ? [4, 6] : edge.flow_role === 'swap_route' ? [9, 5] : []);
+        if (style.glowTrack && edge.type === core.EDGE_TYPES.FLOW) {
+            ctx.save();
+            ctx.globalAlpha = Math.min(1, style.opacity * 0.34);
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(236, 254, 255, 0.72)';
+            ctx.lineWidth = style.width + 6;
+            ctx.beginPath();
+            ctx.moveTo(source.x, source.y);
+            ctx.quadraticCurveTo(control.x, control.y, target.x, target.y);
+            ctx.stroke();
+            ctx.restore();
+        }
         ctx.beginPath();
         ctx.moveTo(source.x, source.y);
         ctx.quadraticCurveTo(control.x, control.y, target.x, target.y);
@@ -5461,7 +5574,7 @@
         ctx.setLineDash([]);
 
         if (edge.type === core.EDGE_TYPES.FLOW) {
-            drawArrow(ctx, control, target, edge.color || '#22d3ee', style.arrowSize);
+            drawArrow(ctx, control, target, style.selected ? '#fef3c7' : strokeColor, style.arrowSize, style.selected || style.glowTrack);
             drawFlowPulse(ctx, edge, source, control, target, distance, interaction);
             drawWalletLookupEdgeLabel(ctx, edge, source, target, control, interaction);
         }
@@ -5610,11 +5723,35 @@
         };
     }
 
-    function drawArrow(ctx, from, to, color, size = 8) {
+    function getEdgeBend(edge = {}) {
+        if (edge.type === core.EDGE_TYPES.EXPOSURE) return -18;
+        if (edge.type !== core.EDGE_TYPES.FLOW) return 0;
+        const lane = (hashString(edge.id || `${edge.source}:${edge.target}`) % 5) - 2;
+        return 25 + lane * 6;
+    }
+
+    function drawArrow(ctx, from, to, color, size = 8, emphasized = false) {
         const angle = Math.atan2(to.y - from.y, to.x - from.x);
+        const tip = {
+            x: to.x - Math.cos(angle) * 18,
+            y: to.y - Math.sin(angle) * 18
+        };
+        if (emphasized) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(236, 254, 255, 0.88)';
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 14;
+            ctx.beginPath();
+            ctx.moveTo(tip.x + Math.cos(angle) * 2, tip.y + Math.sin(angle) * 2);
+            ctx.lineTo(to.x - Math.cos(angle - 0.48) * (22 + size), to.y - Math.sin(angle - 0.48) * (22 + size));
+            ctx.lineTo(to.x - Math.cos(angle + 0.48) * (22 + size), to.y - Math.sin(angle + 0.48) * (22 + size));
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.moveTo(to.x - Math.cos(angle) * 18, to.y - Math.sin(angle) * 18);
+        ctx.moveTo(tip.x, tip.y);
         ctx.lineTo(to.x - Math.cos(angle - 0.46) * (18 + size), to.y - Math.sin(angle - 0.46) * (18 + size));
         ctx.lineTo(to.x - Math.cos(angle + 0.46) * (18 + size), to.y - Math.sin(angle + 0.46) * (18 + size));
         ctx.closePath();
@@ -5627,33 +5764,67 @@
         const connected = interaction.connectedNodeIds.has(node.id);
         const focusVisible = interaction.hasFocus;
         const muted = focusVisible && !connected;
+        const selectedFlowEndpoint = Boolean(interaction.selectedFlowId && connected && !selected);
         const trackedWallet = isTrackedWalletNode(node);
         const radius = node.radius + (trackedWallet ? 7 : 0) + (selected ? 5 : hovered ? 3 : 0);
         const showLabel = shouldShowNodeLabel(node, { selected, hovered, connected, interaction });
         const labelAlpha = showLabel ? (muted ? 0.3 : 0.92) : 0;
 
         ctx.save();
+        if ((selected || hovered || trackedWallet || selectedFlowEndpoint || (interaction.hasTokenIsolation && connected)) && !muted) {
+            ctx.save();
+            ctx.globalAlpha = selected ? 0.36 : trackedWallet ? 0.28 : hovered ? 0.22 : selectedFlowEndpoint ? 0.2 : 0.14;
+            ctx.fillStyle = selected ? 'rgba(255, 255, 255, 0.92)' : node.color;
+            ctx.shadowColor = selected ? '#67e8f9' : node.color;
+            ctx.shadowBlur = selected ? 38 : trackedWallet ? 32 : 22;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius + (selected ? 13 : trackedWallet ? 11 : 8), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
         ctx.shadowColor = node.color;
-        ctx.shadowBlur = trackedWallet ? 42 : selected ? 30 : hovered ? 22 : connected ? 13 : 7;
+        ctx.shadowBlur = trackedWallet ? 46 : selected ? 38 : hovered ? 22 : selectedFlowEndpoint ? 20 : connected ? 13 : 7;
         ctx.globalAlpha = muted ? (interaction.hasSelected ? 0.28 : 0.42) : 1;
         ctx.fillStyle = 'rgba(2, 6, 23, 0.92)';
-        ctx.strokeStyle = trackedWallet ? '#ecfeff' : selected || hovered ? '#ffffff' : node.color;
-        ctx.lineWidth = trackedWallet ? 4.2 : selected ? 3.4 : hovered ? 2.6 : connected ? 1.8 : 1.1;
+        ctx.strokeStyle = trackedWallet ? '#ecfeff' : selected ? '#fef3c7' : hovered ? '#ffffff' : selectedFlowEndpoint ? '#67e8f9' : node.color;
+        ctx.lineWidth = trackedWallet ? 4.4 : selected ? 4 : hovered ? 2.6 : selectedFlowEndpoint ? 2.7 : connected ? 1.8 : 1.1;
         if (isHubNode(node)) {
             ctx.globalAlpha = muted ? 0.34 : 0.88;
             ctx.strokeStyle = node.color;
-            ctx.lineWidth = selected || hovered ? 2.2 : 1.4;
+            ctx.lineWidth = selected ? 2.8 : hovered ? 2.2 : 1.4;
             ctx.beginPath();
             ctx.arc(node.x, node.y, radius + 6, 0, Math.PI * 2);
             ctx.stroke();
             ctx.globalAlpha = muted ? (interaction.hasSelected ? 0.28 : 0.42) : 1;
-            ctx.strokeStyle = selected || hovered ? '#ffffff' : node.color;
-            ctx.lineWidth = selected ? 3.4 : hovered ? 2.6 : connected ? 1.8 : 1.1;
+            ctx.strokeStyle = selected ? '#fef3c7' : hovered ? '#ffffff' : selectedFlowEndpoint ? '#67e8f9' : node.color;
+            ctx.lineWidth = selected ? 4 : hovered ? 2.6 : selectedFlowEndpoint ? 2.7 : connected ? 1.8 : 1.1;
         }
         ctx.beginPath();
         ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.stroke();
+
+        if (selected && !muted) {
+            ctx.save();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 0.92;
+            ctx.strokeStyle = '#67e8f9';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius + 6, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        } else if (hovered && !selected && !muted) {
+            ctx.save();
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 0.62;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.1;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius + 4, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
 
         ctx.shadowBlur = 0;
         ctx.fillStyle = node.color;
@@ -5700,6 +5871,7 @@
     function handleCanvasPointerDown(event) {
         if (!state.graph || !state.canvas) return;
         markFlowInteraction();
+        hideHoverOverlay();
         const screenPoint = getScreenPoint(event);
         if (!screenPoint) return;
         if (event.pointerType === 'touch') {
@@ -5779,14 +5951,18 @@
             state.drag = null;
 
             if (drag.mode === 'node' && !drag.moved && drag.nodeId) {
+                const openDetails = registerQuickInspect('node', drag.nodeId, getScreenPoint(event));
                 state.selectedId = drag.nodeId;
                 state.selectedFlowId = null;
                 state.historyPreview.selectedEvent = null;
+                if (openDetails) state.investigationTab = 'details';
                 render();
                 renderDetails();
             }
             if (drag.mode === 'edge' && !drag.moved && drag.edgeId) {
-                selectFlow(drag.edgeId);
+                selectFlow(drag.edgeId, {
+                    openDetails: registerQuickInspect('flow', drag.edgeId, getScreenPoint(event))
+                });
             }
 
             updateHoverFromScreenPoint(getScreenPoint(event));
@@ -5808,6 +5984,7 @@
         state.canvas.releasePointerCapture?.(event.pointerId);
         state.drag = null;
         state.canvas.style.cursor = state.hoveredId ? 'grab' : 'grab';
+        hideHoverOverlay();
     }
 
     function beginPinchGesture() {
@@ -5856,6 +6033,7 @@
         state.pinch = null;
         state.drag = null;
         if (state.canvas) state.canvas.style.cursor = 'grab';
+        hideHoverOverlay();
         render();
     }
 
@@ -5881,8 +6059,10 @@
         if (!state.canvas || state.drag) return;
         markFlowInteraction();
         state.canvas.style.cursor = 'grab';
-        if (!state.hoveredId) return;
+        hideHoverOverlay();
+        if (!state.hoveredId && !state.hoveredFlowId) return;
         state.hoveredId = null;
+        state.hoveredFlowId = null;
         render();
     }
 
@@ -5958,6 +6138,7 @@
                     primaryFlow ? renderCopyButton('Copy connected flow summary', buildSelectedFlowSummary(primaryFlow)) : ''
                 ]
             })}
+            ${renderDetailsFocusActionPanel(primaryFlow, node)}
             ${state.dataMode === DATA_MODES.WALLET ? renderWalletDetailReadout() : ''}
             ${renderDetailSection('Summary', `
                 ${detailRow('Chain', node.chain || '-')}
@@ -6040,6 +6221,22 @@
         ];
     }
 
+    function renderDetailsFocusActionPanel(edge = null, node = null) {
+        const action = getPreferredTokenIsolationAction(buildWalletIntelligence(), edge, node);
+        const focusAction = {
+            title: state.focusSelection ? 'Focus selection on' : 'Focus selection off',
+            detail: state.focusSelection
+                ? 'Selected nodes and flows isolate their direct context in the active graph.'
+                : 'Full graph context is visible; selections still glow without fading unrelated items.',
+            tab: 'details',
+            disabled: true
+        };
+        return renderGuidedActionGrid([action, focusAction], {
+            title: 'Graph Focus',
+            subtitle: 'Token isolation is a visual overlay on the active graph; replay preview data remains separate.'
+        });
+    }
+
     function renderSelectedFlowDetailPanel(edge) {
         const source = state.graph.nodeById.get(edge.source);
         const target = state.graph.nodeById.get(edge.target);
@@ -6057,6 +6254,7 @@
                     renderCopyButton('Copy destination address', getFlowTargetAddress(edge))
                 ]
             })}
+            ${renderDetailsFocusActionPanel(edge)}
             <section class="mt-5 rounded-2xl border border-cyan-200/16 bg-cyan-300/10 p-3">
                 <div class="text-[10px] font-mono text-white/40">FLOW</div>
                 <div class="mt-2 text-sm text-cyan-50/86 break-words" title="${escapeAttr(`${labelForNode(source)} -> ${labelForNode(target)}`)}">${escapeHtml(compactNodeLabel(source))} &rarr; ${escapeHtml(compactNodeLabel(target))}</div>
@@ -6787,12 +6985,109 @@
 
     function updateHoverFromScreenPoint(screenPoint) {
         if (!screenPoint || !state.canvas) return;
-        const hovered = getNodeAtWorldPoint(screenToWorld(screenPoint));
+        const worldPoint = screenToWorld(screenPoint);
+        const hovered = getNodeAtWorldPoint(worldPoint);
+        const hoveredFlow = hovered ? null : getFlowEdgeAtWorldPoint(worldPoint);
         const nextHoveredId = hovered?.id || null;
-        state.canvas.style.cursor = hovered ? 'grab' : 'grab';
-        if (nextHoveredId === state.hoveredId) return;
+        const nextHoveredFlowId = hoveredFlow?.id || null;
+        state.canvas.style.cursor = hovered ? 'grab' : hoveredFlow ? 'pointer' : 'grab';
+        updateHoverOverlay(hovered, hoveredFlow, screenPoint);
+        if (nextHoveredId === state.hoveredId && nextHoveredFlowId === state.hoveredFlowId) return;
         state.hoveredId = nextHoveredId;
+        state.hoveredFlowId = nextHoveredFlowId;
         render();
+    }
+
+    function registerQuickInspect(type, id, screenPoint) {
+        const now = performance.now();
+        const previous = state.lastClick;
+        state.lastClick = {
+            type,
+            id,
+            at: now,
+            screenPoint: screenPoint ? { ...screenPoint } : null
+        };
+        if (!previous || previous.type !== type || previous.id !== id || !previous.screenPoint || !screenPoint) return false;
+        const closeEnough = Math.hypot(previous.screenPoint.x - screenPoint.x, previous.screenPoint.y - screenPoint.y) <= QUICK_INSPECT_DISTANCE;
+        return closeEnough && now - previous.at <= QUICK_INSPECT_MS;
+    }
+
+    function createHoverOverlay() {
+        const overlay = document.createElement('div');
+        overlay.id = 'crypto-graph-hover-overlay';
+        overlay.className = 'crypto-graph-hover-overlay';
+        overlay.setAttribute('aria-hidden', 'true');
+        const parent = state.canvas?.parentElement;
+        if (parent) parent.appendChild(overlay);
+        return overlay;
+    }
+
+    function updateHoverOverlay(node, edge, screenPoint) {
+        const overlay = state.hoverOverlay;
+        if (!overlay || !state.canvas || state.drag || state.pinch) return;
+        if (!node && !edge) {
+            hideHoverOverlay();
+            return;
+        }
+        overlay.innerHTML = node ? renderNodeHoverOverlay(node) : renderFlowHoverOverlay(edge);
+        overlay.classList.add('is-visible');
+        overlay.setAttribute('aria-hidden', 'false');
+        positionHoverOverlay(screenPoint);
+    }
+
+    function hideHoverOverlay() {
+        const overlay = state.hoverOverlay;
+        if (!overlay) return;
+        overlay.classList.remove('is-visible');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function positionHoverOverlay(screenPoint) {
+        const overlay = state.hoverOverlay;
+        const parent = state.canvas?.parentElement;
+        if (!overlay || !parent || !screenPoint) return;
+        const padding = 10;
+        const offset = 16;
+        const parentWidth = parent.clientWidth || state.canvas.clientWidth || 320;
+        const parentHeight = parent.clientHeight || state.canvas.clientHeight || 420;
+        const width = overlay.offsetWidth || 210;
+        const height = overlay.offsetHeight || 82;
+        let left = screenPoint.x + offset;
+        let top = screenPoint.y + offset;
+        if (left + width + padding > parentWidth) left = screenPoint.x - width - offset;
+        if (top + height + padding > parentHeight) top = screenPoint.y - height - offset;
+        overlay.style.left = `${clamp(left, padding, Math.max(padding, parentWidth - width - padding))}px`;
+        overlay.style.top = `${clamp(top, padding, Math.max(padding, parentHeight - height - padding))}px`;
+    }
+
+    function renderNodeHoverOverlay(node = {}) {
+        const connections = state.interactionIndex?.neighborsByNode.get(node.id)?.size
+            || state.interactionIndex?.edgesByNode.get(node.id)?.length
+            || 0;
+        return `
+            <div class="crypto-hover-kicker">${escapeHtml(getNodeRoleLabel(node))}</div>
+            <div class="crypto-hover-title">${escapeHtml(shortLongValue(node.address || node.token_mint || labelForNode(node) || node.id))}</div>
+            <div class="crypto-hover-meta">${escapeHtml(connections)} connection${connections === 1 ? '' : 's'}</div>
+        `;
+    }
+
+    function renderFlowHoverOverlay(edge = {}) {
+        const source = state.graph?.nodeById.get(edge.source);
+        const target = state.graph?.nodeById.get(edge.target);
+        const direction = formatFlowDirectionRelativeToTracked(edge);
+        const route = `${shortLongValue(getFlowSourceAddress(edge) || source?.id)} -> ${shortLongValue(getFlowTargetAddress(edge) || target?.id)}`;
+        return `
+            <div class="crypto-hover-kicker">${escapeHtml(direction)}</div>
+            <div class="crypto-hover-title">${escapeHtml(getNormalizedFlowAmountDisplay(edge))} ${escapeHtml(edge.symbol || '')}</div>
+            <div class="crypto-hover-meta">${escapeHtml(route)}</div>
+        `;
+    }
+
+    function getNodeRoleLabel(node = {}) {
+        if (node.type === core.NODE_TYPES.TOKEN) return 'Token';
+        if (isTrackedWalletNode(node)) return 'Tracked wallet';
+        if (isHubNode(node)) return 'Entity context';
+        return state.dataMode === DATA_MODES.WALLET ? 'Counterparty wallet' : 'Wallet';
     }
 
     function getNodeAtWorldPoint(point) {
@@ -6826,8 +7121,8 @@
         const distance = Math.max(1, Math.hypot(dx, dy));
         const normal = { x: -dy / distance, y: dx / distance };
         const control = {
-            x: (source.x + target.x) / 2 + normal.x * 24,
-            y: (source.y + target.y) / 2 + normal.y * 24
+            x: (source.x + target.x) / 2 + normal.x * getEdgeBend(edge),
+            y: (source.y + target.y) / 2 + normal.y * getEdgeBend(edge)
         };
         let minDistance = Number.POSITIVE_INFINITY;
         for (let step = 0; step <= 18; step += 1) {
@@ -7052,7 +7347,8 @@
             .map(id => state.graph.nodeById.get(id))
             .filter(node => node?.type === core.NODE_TYPES.WALLET)
             .sort((a, b) => (valueByNeighbor.get(b.id) || 0) - (valueByNeighbor.get(a.id) || 0) || labelForNode(a).localeCompare(labelForNode(b)));
-        const radius = clamp(Math.min(width, height) * 0.31, 142, 255);
+        const spreadBoost = directWallets.length > 12 ? 0.06 : directWallets.length > 7 ? 0.035 : 0;
+        const radius = clamp(Math.min(width, height) * (0.31 + spreadBoost), 150, 286);
         directWallets.forEach((node, index) => {
             const angle = directWallets.length === 1
                 ? -Math.PI / 2
@@ -7063,7 +7359,7 @@
         });
 
         const tokenNodes = state.graph.tokenNodes || [];
-        const tokenRadius = radius + 92;
+        const tokenRadius = radius + (tokenNodes.length > 6 ? 118 : 98);
         tokenNodes.forEach((node, index) => {
             const angle = -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(1, tokenNodes.length);
             node.x = center.x + Math.cos(angle) * tokenRadius;
@@ -7258,10 +7554,17 @@
         const selectedFlowEdge = state.selectedFlowId
             ? (state.graph.flowEdges || []).find(edge => edge.id === state.selectedFlowId && edgeMatchesActiveFilters(edge))
             : null;
+        const hoveredFlowEdge = state.hoveredFlowId
+            ? (state.graph.flowEdges || []).find(edge => edge.id === state.hoveredFlowId && edgeMatchesActiveFilters(edge))
+            : null;
         const replayActiveFlowId = state.flowReplay.activeFlowId;
         const replayActiveEdge = replayActiveFlowId
             ? (state.graph.flowEdges || []).find(edge => edge.id === replayActiveFlowId)
             : null;
+        const replayFocusActive = Boolean(replayActiveEdge && (state.flowReplay.playing || state.focusSelection || replayActiveFlowId !== state.selectedFlowId));
+        const hasTokenIsolation = state.tokenIsolation !== 'all';
+        const tokenIsolationEdgeIds = new Set();
+        const tokenIsolationNodeIds = new Set();
 
         if (index) {
             activeIds.forEach(nodeId => {
@@ -7280,15 +7583,40 @@
             connectedNodeIds.add(selectedFlowEdge.source);
             connectedNodeIds.add(selectedFlowEdge.target);
         }
+        if (hoveredFlowEdge) {
+            connectedEdgeIds.add(hoveredFlowEdge.id);
+            connectedNodeIds.add(hoveredFlowEdge.source);
+            connectedNodeIds.add(hoveredFlowEdge.target);
+        }
+        if (hasTokenIsolation) {
+            getVisibleFlowEdges().forEach(edge => {
+                if (!edgeMatchesTokenIsolation(edge)) return;
+                tokenIsolationEdgeIds.add(edge.id);
+                tokenIsolationNodeIds.add(edge.source);
+                tokenIsolationNodeIds.add(edge.target);
+                connectedEdgeIds.add(edge.id);
+                connectedNodeIds.add(edge.source);
+                connectedNodeIds.add(edge.target);
+            });
+        }
 
         return {
             activeIds,
             connectedNodeIds,
             connectedEdgeIds,
-            hasFocus: activeIds.size > 0 || Boolean(selectedFlowEdge),
-            hasSelected: Boolean(state.selectedId),
+            tokenIsolationEdgeIds,
+            tokenIsolationNodeIds,
+            selectedFlowId: selectedFlowEdge?.id || null,
+            hoveredFlowId: hoveredFlowEdge?.id || null,
+            hasFocus: Boolean(replayActiveEdge)
+                && replayFocusActive
+                || hasTokenIsolation
+                || (state.focusSelection && (Boolean(state.selectedId) || Boolean(selectedFlowEdge))),
+            hasSelectionFocus: Boolean(state.focusSelection && (state.selectedId || selectedFlowEdge)),
+            hasSelected: Boolean(state.selectedId || selectedFlowEdge),
+            hasTokenIsolation,
             replayActiveFlowId,
-            hasReplayFocus: Boolean(replayActiveEdge)
+            hasReplayFocus: replayFocusActive
         };
     }
 
@@ -7296,8 +7624,13 @@
         const baseOpacity = edge.opacity || 0.7;
         const baseWidth = edge.width || 1.4;
         const isFlow = edge.type === core.EDGE_TYPES.FLOW;
+        const isSelectedFlow = interaction.selectedFlowId === edge.id;
+        const isHoveredFlow = interaction.hoveredFlowId === edge.id;
         const isReplayActive = interaction.replayActiveFlowId === edge.id;
         const hasReplayFocus = interaction.hasReplayFocus;
+        const tokenDimmed = interaction.hasTokenIsolation
+            && isFlow
+            && !interaction.tokenIsolationEdgeIds.has(edge.id);
         const ambientPulsed = isFlow
             && state.flowMotion.enabled
             && state.flowMotion.ambientEnabled
@@ -7305,13 +7638,38 @@
             && state.flowMotion.topFlowIds.has(edge.id)
             && (state.flowMotion.now || performance.now()) >= state.flowMotion.userInteractingUntil;
 
+        if (tokenDimmed) {
+            return {
+                opacity: 0.075,
+                width: Math.max(0.55, baseWidth * 0.48),
+                shadowBlur: 0,
+                shadowColor: edge.color || '#22d3ee',
+                arrowSize: 6,
+                glowTrack: false,
+                dimmed: true
+            };
+        }
+
+        if (isSelectedFlow) {
+            return {
+                opacity: 1,
+                width: baseWidth + 3.7,
+                shadowBlur: 28,
+                shadowColor: edge.color || '#67e8f9',
+                arrowSize: 13,
+                glowTrack: true,
+                selected: true
+            };
+        }
+
         if (isReplayActive) {
             return {
                 opacity: 1,
-                width: baseWidth + 2.8,
-                shadowBlur: 22,
+                width: baseWidth + 3,
+                shadowBlur: 24,
                 shadowColor: edge.color || '#22d3ee',
-                arrowSize: 11
+                arrowSize: 12,
+                glowTrack: true
             };
         }
 
@@ -7321,17 +7679,19 @@
                 width: Math.max(0.7, baseWidth * 0.72),
                 shadowBlur: 0,
                 shadowColor: edge.color || '#22d3ee',
-                arrowSize: 7
+                arrowSize: 7,
+                glowTrack: false
             };
         }
 
         if (!interaction.hasFocus) {
             return {
-                opacity: ambientPulsed ? Math.min(0.95, baseOpacity + 0.1) : baseOpacity,
-                width: ambientPulsed ? baseWidth + 0.55 : baseWidth,
-                shadowBlur: ambientPulsed ? 9 : edge.is_large_value ? 10 : 0,
+                opacity: isHoveredFlow ? 1 : ambientPulsed ? Math.min(0.88, baseOpacity + 0.05) : isFlow ? Math.max(0.38, baseOpacity * 0.76) : Math.max(0.24, baseOpacity * 0.55),
+                width: isHoveredFlow ? baseWidth + 2.4 : ambientPulsed ? baseWidth + 0.55 : baseWidth,
+                shadowBlur: isHoveredFlow ? 16 : ambientPulsed ? 9 : edge.is_large_value ? 7 : 0,
                 shadowColor: edge.color || '#22d3ee',
-                arrowSize: 8
+                arrowSize: isHoveredFlow ? 11 : 8,
+                glowTrack: isHoveredFlow
             };
         }
 
@@ -7341,20 +7701,22 @@
 
         if (connected) {
             return {
-                opacity: isFlow ? 1 : isExposure ? 0.58 : 0.38,
-                width: baseWidth + (isFlow ? 2.2 : isExposure ? 0.45 : 0.1),
-                shadowBlur: isFlow ? 16 : 7,
+                opacity: isFlow ? 1 : isExposure ? 0.56 : 0.34,
+                width: baseWidth + (isFlow ? 2.7 : isExposure ? 0.45 : 0.1),
+                shadowBlur: isFlow ? 19 : 6,
                 shadowColor: edge.color || '#22d3ee',
-                arrowSize: isFlow ? 10 : 8
+                arrowSize: isFlow ? 11 : 8,
+                glowTrack: isFlow
             };
         }
 
         return {
-            opacity: isLargeFlow ? 0.42 : isFlow ? 0.13 : isExposure ? 0.12 : 0.08,
-            width: isLargeFlow ? Math.max(baseWidth, 2.8) : Math.max(0.55, baseWidth * 0.62),
-            shadowBlur: isLargeFlow ? 5 : 0,
+            opacity: isLargeFlow ? 0.26 : isFlow ? 0.09 : isExposure ? 0.1 : 0.06,
+            width: isLargeFlow ? Math.max(baseWidth, 2.2) : Math.max(0.5, baseWidth * 0.56),
+            shadowBlur: 0,
             shadowColor: edge.color || '#22d3ee',
-            arrowSize: 7
+            arrowSize: 6,
+            glowTrack: false
         };
     }
 
@@ -7453,6 +7815,17 @@
             }
             const label = fullscreenButton.querySelector('span');
             if (label) label.textContent = state.fullscreen ? 'Exit Fullscreen' : 'Fullscreen';
+        }
+
+        const focusButton = document.getElementById('crypto-dock-focus-selection');
+        if (focusButton) {
+            focusButton.classList.toggle('is-active', state.focusSelection);
+            focusButton.setAttribute('aria-pressed', state.focusSelection ? 'true' : 'false');
+            focusButton.title = state.focusSelection
+                ? 'Focus Selection is on: selected nodes and flows isolate direct context.'
+                : 'Focus Selection is off: show the full graph while keeping selections highlighted.';
+            const label = focusButton.querySelector('span');
+            if (label) label.textContent = state.focusSelection ? 'Focus On' : 'Focus Off';
         }
 
         const walletMode = state.dataMode === DATA_MODES.WALLET;
@@ -7581,6 +7954,8 @@
         centerTrackedWallet,
         resetLayout,
         setFullscreen,
+        toggleFocusSelection,
+        setTokenIsolation,
         playFlowReplay: () => setFlowReplayPlaying(true),
         pauseFlowReplay: () => setFlowReplayPlaying(false),
         toggleFlowReplay,

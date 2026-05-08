@@ -1366,7 +1366,10 @@
                         <div class="mt-1 text-sm font-display text-cyan-50/86">Wallet Lookup Readout</div>
                         <div class="mt-1 max-w-2xl text-white/58 leading-relaxed">Secure Worker activity only. The visible graph shows wallet/address relationships observed in transfer data; it does not make identity claims about people, entities, or ownership.</div>
                     </div>
-                    ${renderWalletLookupStatusBadge(intelligence.lookupStatus)}
+                    <div class="shrink-0 flex flex-wrap items-center gap-2">
+                        ${renderWalletInvestigationReportAction()}
+                        ${renderWalletLookupStatusBadge(intelligence.lookupStatus)}
+                    </div>
                 </div>
                 ${renderWalletLookupConfidenceStatus(intelligence)}
                 ${renderWalletActionableInsights(intelligence)}
@@ -1516,6 +1519,14 @@
                 ? 'border-emerald-200/35 bg-emerald-300/14 text-emerald-50/88'
                 : 'border-white/12 bg-white/[0.04] text-white/58';
         return `<div class="shrink-0 rounded-full border ${classes} px-3 py-1.5">${escapeHtml(status)}</div>`;
+    }
+
+    function renderWalletInvestigationReportAction() {
+        return `
+            <button id="crypto-wallet-report-open" type="button" title="Preview a copyable Wallet Lookup investigation report built from the visible graph only." aria-haspopup="dialog" class="rounded-full border border-cyan-200/24 bg-cyan-300/12 px-3 py-1.5 text-cyan-50/84 hover:border-cyan-100/40 hover:bg-cyan-300/18">
+                Investigation Report
+            </button>
+        `;
     }
 
     function renderWalletLookupConfidenceStatus(intelligence) {
@@ -2330,6 +2341,9 @@
         });
         status.querySelector('#crypto-wallet-depth-toggle')?.addEventListener('change', event => {
             setWalletLookupDepth(event.target.checked ? 2 : 1);
+        });
+        status.querySelector('#crypto-wallet-report-open')?.addEventListener('click', () => {
+            openWalletInvestigationReportPreview();
         });
         status.querySelector('#crypto-live-mode-toggle')?.addEventListener('click', () => {
             setLiveModeEnabled(state.dataMode !== DATA_MODES.LIVE);
@@ -3713,6 +3727,257 @@
             ${detailRow('Largest Visible Flow', intelligence.largestFlow)}
             ${detailRow('Most Repeated Counterparty', intelligence.mostRepeatedCounterparty)}
         `);
+    }
+
+    function openWalletInvestigationReportPreview() {
+        closeWalletInvestigationReportPreview();
+        const report = buildWalletInvestigationReport();
+        const backdrop = document.createElement('div');
+        backdrop.id = 'crypto-wallet-report-preview';
+        backdrop.className = 'fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-slate-950/82 px-3 py-4 sm:p-6';
+        backdrop.innerHTML = `
+            <section class="w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-2xl border border-cyan-200/18 bg-slate-950/96 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="crypto-wallet-report-title">
+                <div class="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
+                    <div class="min-w-0">
+                        <div class="text-[10px] font-mono tracking-[1.3px] text-cyan-100/68">WALLET LOOKUP</div>
+                        <h3 id="crypto-wallet-report-title" class="mt-1 text-lg font-display text-cyan-50/90">Investigation Report Preview</h3>
+                        <div class="mt-1 text-xs text-white/52">${escapeHtml(report.statusLine)}</div>
+                    </div>
+                    <button id="crypto-wallet-report-close" type="button" class="min-h-10 rounded-xl border border-white/15 px-3 py-2 text-white/70 hover:border-cyan-100/30" aria-label="Close investigation report preview">
+                        Close
+                    </button>
+                </div>
+                <div class="grid gap-3 overflow-y-auto px-4 py-3 sm:px-5 sm:py-4 max-h-[calc(92vh-8rem)]">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        ${renderReportPreviewMetric('Visible Legs', report.metrics.visibleLegs)}
+                        ${renderReportPreviewMetric('Noise Removed', report.metrics.filteredLegs)}
+                        ${renderReportPreviewMetric('Depth', report.metrics.graphDepth)}
+                        ${renderReportPreviewMetric('Returned', report.metrics.returnedEvents)}
+                    </div>
+                    <div class="rounded-xl border border-yellow-200/18 bg-yellow-300/10 px-3 py-2 text-xs leading-relaxed text-yellow-50/78">
+                        secure Worker response. no browser provider call. visible address relationships only. no identity claims.
+                    </div>
+                    <pre id="crypto-wallet-report-text" class="max-h-[46vh] overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/28 p-3 text-[11px] leading-relaxed text-cyan-50/82">${escapeHtml(report.text)}</pre>
+                </div>
+                <div class="flex flex-col-reverse gap-2 border-t border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                    <div id="crypto-wallet-report-copy-status" class="min-h-5 text-xs text-white/46">${escapeHtml(report.copyHint)}</div>
+                    <button id="crypto-wallet-report-copy" type="button" class="min-h-11 rounded-xl border border-emerald-200/24 bg-emerald-300/14 px-4 py-2 text-sm font-semibold text-emerald-50/88 hover:border-emerald-100/40">
+                        Copy Report
+                    </button>
+                </div>
+            </section>
+        `;
+
+        backdrop.addEventListener('click', event => {
+            if (event.target === backdrop) closeWalletInvestigationReportPreview();
+        });
+        backdrop.querySelector('#crypto-wallet-report-close')?.addEventListener('click', closeWalletInvestigationReportPreview);
+        backdrop.querySelector('#crypto-wallet-report-copy')?.addEventListener('click', event => {
+            copyWalletInvestigationReport(report.text, event.currentTarget);
+        });
+        document.body.appendChild(backdrop);
+        backdrop.querySelector('#crypto-wallet-report-copy')?.focus();
+    }
+
+    function closeWalletInvestigationReportPreview() {
+        document.getElementById('crypto-wallet-report-preview')?.remove();
+    }
+
+    function renderReportPreviewMetric(label, value) {
+        return `
+            <div class="min-w-0 rounded-xl border border-white/10 bg-white/[0.045] px-3 py-2">
+                <div class="text-white/36">${escapeHtml(label)}</div>
+                <div class="mt-1 font-semibold text-cyan-50/86 break-words">${escapeHtml(value)}</div>
+            </div>
+        `;
+    }
+
+    async function copyWalletInvestigationReport(text, button) {
+        const status = document.getElementById('crypto-wallet-report-copy-status');
+        const original = button?.textContent || 'Copy Report';
+        try {
+            await writeTextToClipboard(text);
+            if (button) button.textContent = 'Copied';
+            if (status) status.textContent = 'Report copied to clipboard.';
+        } catch (error) {
+            if (button) button.textContent = 'Select Text';
+            if (status) status.textContent = 'Clipboard unavailable. Select the preview text manually.';
+            selectWalletReportPreviewText();
+        }
+        window.setTimeout(() => {
+            if (button) button.textContent = original;
+        }, 1400);
+    }
+
+    async function writeTextToClipboard(text) {
+        if (navigator.clipboard?.writeText) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (error) {
+                // Fall back for local/static contexts where clipboard permission is blocked.
+            }
+        }
+        if (fallbackCopyReportText(text)) return true;
+        throw new Error('Clipboard unavailable');
+    }
+
+    function fallbackCopyReportText(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        let copied = false;
+        try {
+            copied = document.execCommand('copy');
+        } catch (error) {
+            copied = false;
+        }
+        textarea.remove();
+        return copied;
+    }
+
+    function selectWalletReportPreviewText() {
+        const reportText = document.getElementById('crypto-wallet-report-text');
+        const selection = window.getSelection?.();
+        if (!reportText || !selection) return;
+        const range = document.createRange();
+        range.selectNodeContents(reportText);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    }
+
+    function buildWalletInvestigationReport() {
+        const intelligence = buildWalletIntelligence();
+        const selectedFlow = getSelectedFlowEdge();
+        const emptyState = getWalletLookupEmptyStateDetails(intelligence);
+        const statusLine = getWalletReportStatusLine(intelligence, emptyState);
+        const mostActiveCounterparty = intelligence.mostActiveCounterparty
+            ? formatCounterpartyReportLine(intelligence.mostActiveCounterparty)
+            : 'None visible';
+        const mostActiveToken = intelligence.mostActiveToken
+            ? formatTokenReportLine(intelligence.mostActiveToken)
+            : 'None visible';
+        const trackedWallet = intelligence.trackedWallet || 'No wallet loaded';
+        const lastLoaded = state.walletLookup.lastLoadedAt ? formatReportDateTime(state.walletLookup.lastLoadedAt) : 'Not loaded';
+
+        const lines = [
+            'CryptoPhotonic Wallet Lookup Investigation Report',
+            `Generated: ${formatReportDateTime(Date.now())}`,
+            '',
+            'Report boundaries:',
+            '- Data boundary: secure Worker response.',
+            '- Browser boundary: no browser provider call is used for this report or Wallet Lookup graph.',
+            '- Interpretation boundary: visible address relationships only.',
+            '- Claims boundary: no identity claims, ownership claims, criminality claims, risk claims, or investment claims.',
+            '',
+            'Lookup snapshot:',
+            `- Tracked wallet: ${trackedWallet}`,
+            `- Source: ${intelligence.sourceLabel || getCurrentSourceLabel()}`,
+            `- Last loaded time: ${lastLoaded}`,
+            `- Lookup state: ${statusLine}`,
+            `- Visible transfer legs: ${intelligence.visibleLegs}`,
+            `- Filtered/noise removed legs: ${intelligence.filteredLegs}`,
+            `- Graph depth: ${intelligence.graphDepth}-hop`,
+            '',
+            'Flow highlights:',
+            `- Dominant direction: ${intelligence.dominantDirection?.label || '-'} (${intelligence.dominantDirection?.detail || 'No visible transfer direction.'})`,
+            `- Most active counterparty: ${mostActiveCounterparty}`,
+            `- Most active token: ${mostActiveToken}`,
+            `- Largest normalized flow: ${intelligence.largestFlow || '-'}`,
+            `- Recent activity density: ${intelligence.recentActivityDensity?.label || '-'} (${intelligence.recentActivityDensity?.detail || 'No timestamped activity.'})`,
+            '',
+            'Top counterparties:',
+            ...formatCounterpartyReportLines(intelligence.counterparties),
+            '',
+            'Token flow summary:',
+            ...formatTokenReportLines(intelligence.tokens),
+            '',
+            'Selected flow inspector summary:',
+            ...formatSelectedFlowReportLines(selectedFlow),
+            '',
+            'Notes:',
+            '- Counts reflect the current visible graph and active filters.',
+            '- Program-like and infrastructure/noise legs may be removed before graphing.',
+            '- Addresses are shown as graph observations only; labels are source/context hints, not identity or ownership conclusions.'
+        ];
+
+        return {
+            text: lines.join('\n'),
+            statusLine,
+            copyHint: 'Preview before copying. Report uses the current Wallet Lookup graph state.',
+            metrics: {
+                visibleLegs: intelligence.visibleLegs,
+                filteredLegs: intelligence.filteredLegs,
+                graphDepth: `${intelligence.graphDepth}-hop`,
+                returnedEvents: intelligence.returnedEvents
+            }
+        };
+    }
+
+    function getWalletReportStatusLine(intelligence, emptyState) {
+        if (state.walletLookup.inFlight) return 'Wallet lookup is loading from the secure Worker.';
+        if (emptyState?.title) return `${emptyState.title}: ${emptyState.body}`;
+        if (!state.walletLookup.lastWallet && !state.walletLookup.lastLoadedAt) return 'No wallet loaded.';
+        if (state.walletLookup.lastLoadedAt && intelligence.returnedEvents === 0) return 'Secure Worker response loaded with no recent sanitized activity.';
+        if (intelligence.returnedEvents > 0 && intelligence.visibleLegs === 0) return 'Fully filtered activity state: returned activity has no visible transfer legs after filters/noise removal.';
+        return 'Wallet lookup report is based on the current visible graph.';
+    }
+
+    function formatCounterpartyReportLines(counterparties = []) {
+        const rows = counterparties.slice(0, 6).map((item, index) => `${index + 1}. ${formatCounterpartyReportLine(item)}`);
+        return rows.length ? rows : ['- None visible'];
+    }
+
+    function formatCounterpartyReportLine(item = {}) {
+        const tokens = Array.isArray(item.tokens) && item.tokens.length ? item.tokens.join(', ') : '-';
+        const value = item.totalUsd > 0 ? ` / ${core.formatUsd(item.totalUsd)}` : '';
+        return `${item.address || '-'} | ${item.count || 0} visible leg${item.count === 1 ? '' : 's'} | ${item.relationship || 'Wallet flow observed'} | tokens: ${tokens}${value}`;
+    }
+
+    function formatTokenReportLines(tokens = []) {
+        const rows = tokens.slice(0, 6).map((item, index) => `${index + 1}. ${formatTokenReportLine(item)}`);
+        return rows.length ? rows : ['- None visible'];
+    }
+
+    function formatTokenReportLine(item = {}) {
+        const amount = item.amountAvailable ? `${formatCompactNumber(item.totalAmount)} ${item.symbol}` : 'amount unavailable';
+        const value = item.totalUsd > 0 ? ` / ${core.formatUsd(item.totalUsd)}` : '';
+        return `${item.symbol || 'Token'} | ${item.count || 0} visible leg${item.count === 1 ? '' : 's'} | ${item.inbound || 0} received / ${item.outbound || 0} sent / ${item.mixed || 0} mixed | ${amount}${value}`;
+    }
+
+    function formatSelectedFlowReportLines(edge) {
+        if (!edge) return ['- No selected visible flow. Select a visible transfer leg to include inspector details.'];
+        const sourceAddress = getFlowSourceAddress(edge);
+        const targetAddress = getFlowTargetAddress(edge);
+        const tokenLabel = edge.token_mint
+            ? `${edge.symbol || 'Token'} / ${edge.token_mint}`
+            : edge.symbol || 'Token';
+        return [
+            `- Source wallet: ${sourceAddress || '-'}`,
+            `- Destination wallet: ${targetAddress || '-'}`,
+            `- Normalized amount: ${getNormalizedFlowAmountDisplay(edge)}`,
+            `- Token / mint: ${tokenLabel}`,
+            `- Direction vs tracked wallet: ${formatFlowDirectionRelativeToTracked(edge)}`,
+            `- Transaction type: ${edge.transaction_type_label || core.interpretTransactionType?.(edge.transaction_type).label || 'Unknown / Unclassified'}`,
+            `- Timestamp: ${edge.timestamp ? formatReportDateTime(edge.timestamp) : '-'}`,
+            `- Transaction hash: ${edge.transaction_hash || '-'}`
+        ];
+    }
+
+    function formatReportDateTime(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value || '');
+        return date.toLocaleString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
     }
 
     function renderCardSection(title, items, limit, renderItem, emptyMessage) {

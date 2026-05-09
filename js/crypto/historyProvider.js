@@ -2,6 +2,7 @@
     const namespace = window.CryptoPhotonic = window.CryptoPhotonic || {};
 
     const HISTORY_PROVIDER_VERSION = 'd106_provider_contract_v1';
+    const ARCHIVE_HISTORY_CONTRACT_VERSION = 'd129_archive_history_contract_v1';
 
     class WalletHistoryProvider {
         constructor(options = {}) {
@@ -10,6 +11,13 @@
             this.providerKind = options.providerKind || 'abstract';
             this.supportsPagination = options.supportsPagination !== false;
             this.backendOnly = options.backendOnly !== false;
+            this.providerGrade = options.providerGrade || 'basic';
+            this.replaySuitability = options.replaySuitability || 'low';
+            this.completenessConfidence = clampConfidence(options.completenessConfidence);
+            this.historicalDepth = options.historicalDepth || 'unknown';
+            this.orderingGuarantee = options.orderingGuarantee || 'unknown';
+            this.cursorGuarantee = options.cursorGuarantee || 'unknown';
+            this.coverageScope = options.coverageScope || 'unknown';
         }
 
         async getHistoryPage(wallet, cursor = null) {
@@ -23,6 +31,14 @@
                 providerKind: this.providerKind,
                 supportsPagination: this.supportsPagination,
                 backendOnly: this.backendOnly,
+                providerGrade: this.providerGrade,
+                replaySuitability: this.replaySuitability,
+                completenessConfidence: this.completenessConfidence,
+                historicalDepth: this.historicalDepth,
+                orderingGuarantee: this.orderingGuarantee,
+                cursorGuarantee: this.cursorGuarantee,
+                coverageScope: this.coverageScope,
+                archiveContractVersion: ARCHIVE_HISTORY_CONTRACT_VERSION,
                 browserProviderCalls: false,
                 apiKeyExposure: false
             };
@@ -193,6 +209,13 @@
                 id: 'helius-history-provider',
                 label: 'Helius History Provider',
                 providerKind: 'helius',
+                providerGrade: 'partial',
+                replaySuitability: 'medium',
+                completenessConfidence: 55,
+                historicalDepth: 'provider_defined',
+                orderingGuarantee: 'reverse_chronological',
+                cursorGuarantee: 'best_effort',
+                coverageScope: 'wallet_with_token_accounts',
                 ...options
             });
         }
@@ -204,6 +227,13 @@
                 id: options.id || 'placeholder-external-history-provider',
                 label: options.label || 'Placeholder External History Provider',
                 providerKind: options.providerKind || 'external',
+                providerGrade: options.providerGrade || 'basic',
+                replaySuitability: options.replaySuitability || 'low',
+                completenessConfidence: options.completenessConfidence ?? 0,
+                historicalDepth: options.historicalDepth || 'provider_defined',
+                orderingGuarantee: options.orderingGuarantee || 'unknown',
+                cursorGuarantee: options.cursorGuarantee || 'unknown',
+                coverageScope: options.coverageScope || 'provider_defined',
                 ...options
             });
         }
@@ -217,6 +247,7 @@
                 : [];
         const nextCursor = page.nextCursor ?? page.next_cursor ?? page.cursor_next ?? null;
         const moreAvailable = Boolean(page.moreAvailable ?? page.hasMore ?? page.has_more ?? nextCursor);
+        const metadata = page.metadata || {};
 
         return {
             provider: String(page.provider || page.source || ''),
@@ -229,16 +260,31 @@
             status: String(page.status || 'ok'),
             message: String(page.message || ''),
             metadata: {
-                ...(page.metadata || {}),
+                ...metadata,
                 history_provider_contract: HISTORY_PROVIDER_VERSION,
+                archive_contract_version: metadata.archive_contract_version || ARCHIVE_HISTORY_CONTRACT_VERSION,
+                provider_grade: metadata.provider_grade || 'basic',
+                replay_suitability: metadata.replay_suitability || 'low',
+                completeness_confidence: clampConfidence(metadata.completeness_confidence),
+                historical_depth: metadata.historical_depth || 'unknown',
+                ordering_guarantee: metadata.ordering_guarantee || 'unknown',
+                cursor_guarantee: metadata.cursor_guarantee || 'unknown',
+                coverage_scope: metadata.coverage_scope || 'unknown',
                 supports_pagination: true,
                 browser_provider_calls: false
             }
         };
     }
 
+    function clampConfidence(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return 0;
+        return Math.max(0, Math.min(100, Math.round(number)));
+    }
+
     namespace.historyProvider = {
         HISTORY_PROVIDER_VERSION,
+        ARCHIVE_HISTORY_CONTRACT_VERSION,
         WalletHistoryProvider,
         WorkerWalletHistoryProvider,
         HeliusHistoryProvider,

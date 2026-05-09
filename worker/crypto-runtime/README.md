@@ -152,6 +152,13 @@ History page guardrails:
 - Worker-side guardrails and upstream `429` responses return a normalized `provider_rate_limited` page with a structured message and `metadata.retry_after_seconds`.
 - Provider outages or malformed provider responses return `provider_unavailable`. Missing provider setup returns `provider_not_configured`. These guardrail/error pages are not cached as successful history pages.
 
+Archive-grade readiness metadata:
+
+- History responses and diagnostics include `archive_contract_version`, `provider_grade`, `replay_suitability`, `completeness_confidence`, `historical_depth`, `ordering_guarantee`, `cursor_guarantee`, and `coverage_scope`.
+- These fields are descriptive only. They do not enable new provider calls, do not change Wallet Lookup, and do not merge staged history into the active graph.
+- Current Helius history support is marked `partial` because it is useful for bounded Worker-staged history but does not prove archive-grade lifetime completeness.
+- Generic and lana.ai candidates remain `basic` until a documented provider contract proves stronger cursor, ordering, and depth guarantees.
+
 ## Controlled Watchlist
 
 The Helius route is intentionally limited to 1 to 3 wallets. The source contains a static placeholder watchlist, and deployments can set `CRYPTO_HELIUS_ALLOWED_WALLETS` to a comma-separated list of up to three controlled wallet addresses. Events with no wallet match are rejected and not stored.

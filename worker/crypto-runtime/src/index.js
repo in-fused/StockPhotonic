@@ -16,6 +16,7 @@ const WALLET_HISTORY_CACHE_TTL_SECONDS = 45;
 const WALLET_HISTORY_RATE_LIMIT_WINDOW_SECONDS = 60;
 const WALLET_HISTORY_RATE_LIMIT_FETCHES = 12;
 const WALLET_LOOKUP_COOLDOWN_MS = 60 * 1000;
+const WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION = "d129_archive_history_contract_v1";
 const WALLET_LOOKUP_CACHE_KEY_PREFIX = "crypto-wallet-lookup:";
 const WALLET_HISTORY_CACHE_KEY_PREFIX = "crypto-wallet-history:page:";
 const WALLET_HISTORY_RATE_KEY_PREFIX = "crypto-wallet-history:rate:";
@@ -37,6 +38,13 @@ const WALLET_HISTORY_PROVIDER_CANDIDATES = Object.freeze([
     expected_depth: "bounded parsed address history; not archive-grade lifetime proof",
     pagination_model: "before-signature cursor",
     limitations: "May be limited by plan, parser coverage, rate limits, permissions, or cursor behavior.",
+    provider_grade: "partial",
+    replay_suitability: "medium",
+    completeness_confidence: 55,
+    historical_depth: "provider_defined",
+    ordering_guarantee: "reverse_chronological",
+    cursor_guarantee: "best_effort",
+    coverage_scope: "wallet_with_token_accounts",
     frontend_allowed: false,
     worker_backed: true,
   },
@@ -48,6 +56,13 @@ const WALLET_HISTORY_PROVIDER_CANDIDATES = Object.freeze([
     expected_depth: "depends on the configured upstream provider",
     pagination_model: "generic cursor query parameter and nextCursor response",
     limitations: "Coverage, ordering, cursor guarantees, and totals depend on the external endpoint contract.",
+    provider_grade: "basic",
+    replay_suitability: "low",
+    completeness_confidence: 25,
+    historical_depth: "provider_defined",
+    ordering_guarantee: "unknown",
+    cursor_guarantee: "unknown",
+    coverage_scope: "provider_defined",
     frontend_allowed: false,
     worker_backed: true,
   },
@@ -59,6 +74,13 @@ const WALLET_HISTORY_PROVIDER_CANDIDATES = Object.freeze([
     expected_depth: "unknown",
     pagination_model: "unknown",
     limitations: "Placeholder only. The Worker does not call lana.ai without clear public API/auth documentation.",
+    provider_grade: "basic",
+    replay_suitability: "low",
+    completeness_confidence: 0,
+    historical_depth: "unknown",
+    ordering_guarantee: "unknown",
+    cursor_guarantee: "unknown",
+    coverage_scope: "unknown",
     frontend_allowed: false,
     worker_backed: false,
   },
@@ -70,6 +92,13 @@ const WALLET_HISTORY_PROVIDER_CANDIDATES = Object.freeze([
     expected_depth: "archive-grade only if the provider supplies complete indexed account history",
     pagination_model: "provider-specific signature, slot, or indexed cursor",
     limitations: "Not implemented. Standard RPC alone is not enough to prove full lifetime wallet history at scale.",
+    provider_grade: "basic",
+    replay_suitability: "low",
+    completeness_confidence: 0,
+    historical_depth: "unknown",
+    ordering_guarantee: "unknown",
+    cursor_guarantee: "unknown",
+    coverage_scope: "unknown",
     frontend_allowed: false,
     worker_backed: false,
   },
@@ -1145,12 +1174,14 @@ function buildWalletHistoryProviderDiagnostics(env = {}, providerId = "none") {
   const activeCandidate = candidates.find((candidate) => candidate.id === activeProvider) || null;
   const missingEnvVars = getWalletHistoryMissingEnvVars(env, activeProvider);
   const capabilities = getWalletHistoryProviderCapabilities(activeProvider);
+  const archiveProfile = getWalletHistoryProviderArchiveProfile(activeProvider);
   const providerConfigured = Boolean(activeCandidate?.configured) && missingEnvVars.length === 0;
 
   return {
     active_provider: activeProvider,
     provider_configured: providerConfigured,
     provider_capabilities: capabilities,
+    ...archiveProfile,
     pagination_supported: capabilities.pagination_supported,
     cursor_type: capabilities.cursor_type,
     max_safe_page_size: MAX_WALLET_HISTORY_LIMIT,
@@ -1162,10 +1193,12 @@ function buildWalletHistoryProviderDiagnostics(env = {}, providerId = "none") {
     frontend_allowed: false,
     worker_backed: Boolean(activeCandidate?.worker_backed),
     diagnostics_version: "d128_provider_diagnostics_v1",
+    archive_contract_version: WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION,
     provider_diagnostics: {
       active_provider: activeProvider,
       configured: providerConfigured,
       capabilities,
+      ...archiveProfile,
       pagination_supported: capabilities.pagination_supported,
       cursor_type: capabilities.cursor_type,
       max_safe_page_size: MAX_WALLET_HISTORY_LIMIT,
@@ -1176,6 +1209,7 @@ function buildWalletHistoryProviderDiagnostics(env = {}, providerId = "none") {
       missing_env_vars: missingEnvVars,
       frontend_allowed: false,
       worker_backed: Boolean(activeCandidate?.worker_backed),
+      archive_contract_version: WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION,
     },
   };
 }
@@ -1188,6 +1222,7 @@ function buildWalletHistoryProviderCandidates(env = {}, activeProvider = "none")
       : missingEnvVars.length === 0;
     return {
       ...candidate,
+      ...getWalletHistoryProviderArchiveProfile(candidate.id),
       active: candidate.id === activeProvider,
       configured,
       missing_env_vars: missingEnvVars,
@@ -1223,6 +1258,7 @@ function getWalletHistoryProviderCapabilities(providerId = "none") {
     return {
       id: "helius",
       label: "Helius Enhanced Transactions address history",
+      ...getWalletHistoryProviderArchiveProfile("helius"),
       pagination_supported: true,
       cursor_type: "before_signature",
       max_safe_page_size: MAX_WALLET_HISTORY_LIMIT,
@@ -1237,6 +1273,7 @@ function getWalletHistoryProviderCapabilities(providerId = "none") {
     return {
       id: "generic",
       label: "Generic Worker-side external wallet history endpoint",
+      ...getWalletHistoryProviderArchiveProfile("generic"),
       pagination_supported: true,
       cursor_type: "generic_cursor",
       max_safe_page_size: MAX_WALLET_HISTORY_LIMIT,
@@ -1251,6 +1288,7 @@ function getWalletHistoryProviderCapabilities(providerId = "none") {
     return {
       id: "lana",
       label: "lana.ai placeholder",
+      ...getWalletHistoryProviderArchiveProfile("lana"),
       pagination_supported: false,
       cursor_type: "unknown",
       max_safe_page_size: 0,
@@ -1264,6 +1302,7 @@ function getWalletHistoryProviderCapabilities(providerId = "none") {
     return {
       id: "rpc_archive",
       label: "Future RPC/archive provider placeholder",
+      ...getWalletHistoryProviderArchiveProfile("rpc_archive"),
       pagination_supported: false,
       cursor_type: "provider_specific",
       max_safe_page_size: 0,
@@ -1277,6 +1316,7 @@ function getWalletHistoryProviderCapabilities(providerId = "none") {
   return {
     id: "none",
     label: "No active wallet history provider",
+    ...getWalletHistoryProviderArchiveProfile("none"),
     pagination_supported: false,
     cursor_type: "none",
     max_safe_page_size: 0,
@@ -1284,6 +1324,67 @@ function getWalletHistoryProviderCapabilities(providerId = "none") {
     limitations: [
       "Configure CRYPTO_WALLET_HISTORY_PROVIDER and provider-specific Worker secrets before loading history pages.",
     ],
+  };
+}
+
+function getWalletHistoryProviderArchiveProfile(providerId = "none") {
+  if (providerId === "helius") {
+    return {
+      provider_grade: "partial",
+      replay_suitability: "medium",
+      completeness_confidence: 55,
+      historical_depth: "provider_defined",
+      ordering_guarantee: "reverse_chronological",
+      cursor_guarantee: "best_effort",
+      coverage_scope: "wallet_with_token_accounts",
+      archive_contract_version: WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION,
+    };
+  }
+  if (providerId === "generic") {
+    return {
+      provider_grade: "basic",
+      replay_suitability: "low",
+      completeness_confidence: 25,
+      historical_depth: "provider_defined",
+      ordering_guarantee: "unknown",
+      cursor_guarantee: "unknown",
+      coverage_scope: "provider_defined",
+      archive_contract_version: WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION,
+    };
+  }
+  if (providerId === "lana") {
+    return {
+      provider_grade: "basic",
+      replay_suitability: "low",
+      completeness_confidence: 0,
+      historical_depth: "unknown",
+      ordering_guarantee: "unknown",
+      cursor_guarantee: "unknown",
+      coverage_scope: "unknown",
+      archive_contract_version: WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION,
+    };
+  }
+  if (providerId === "rpc_archive") {
+    return {
+      provider_grade: "basic",
+      replay_suitability: "low",
+      completeness_confidence: 0,
+      historical_depth: "unknown",
+      ordering_guarantee: "unknown",
+      cursor_guarantee: "unknown",
+      coverage_scope: "unknown",
+      archive_contract_version: WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION,
+    };
+  }
+  return {
+    provider_grade: "basic",
+    replay_suitability: "low",
+    completeness_confidence: 0,
+    historical_depth: "unknown",
+    ordering_guarantee: "unknown",
+    cursor_guarantee: "unknown",
+    coverage_scope: "none",
+    archive_contract_version: WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION,
   };
 }
 
@@ -2048,12 +2149,14 @@ function normalizeWalletHistoryResponse(page) {
       confidence: "response_only",
       basis: "normalized_response_default",
     };
+  const archiveProfile = getWalletHistoryProviderArchiveProfile(safeString(page.provider) || "none");
   const providerDiagnostics = sourceMetadata.provider_diagnostics && typeof sourceMetadata.provider_diagnostics === "object"
     ? sourceMetadata.provider_diagnostics
     : {
       active_provider: safeString(page.provider) || "none",
       configured: sourceMetadata.provider_configured === true,
       capabilities: sourceMetadata.provider_capabilities || getWalletHistoryProviderCapabilities(safeString(page.provider) || "none"),
+      ...archiveProfile,
       pagination_supported: sourceMetadata.pagination_supported === true,
       cursor_type: safeString(sourceMetadata.cursor_type) || "unknown",
       max_safe_page_size: Number(sourceMetadata.max_safe_page_size) || MAX_WALLET_HISTORY_LIMIT,
@@ -2064,6 +2167,7 @@ function normalizeWalletHistoryResponse(page) {
       missing_env_vars: Array.isArray(sourceMetadata.missing_env_vars) ? sourceMetadata.missing_env_vars : [],
       frontend_allowed: false,
       worker_backed: false,
+      archive_contract_version: WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION,
     };
 
   return {
@@ -2086,7 +2190,9 @@ function normalizeWalletHistoryResponse(page) {
       raw_provider_payload_exposed: false,
       endpoint_contract: "/api/crypto/wallet-history",
       provider_diagnostics: providerDiagnostics,
+      ...archiveProfile,
       ...sourceMetadata,
+      archive_contract_version: sourceMetadata.archive_contract_version || WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION,
       history_depth_estimate: depthEstimate,
       provider_limit_reached: providerLimitReached,
       rate_limited: rateLimited,

@@ -574,6 +574,16 @@
             transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
         }
 
+        .crypto-wallet-report-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+            text-align: center;
+        }
+
         .crypto-guided-action {
             min-height: 4.75rem;
             border-radius: 0.75rem;
@@ -669,6 +679,33 @@
             font-size: 0.78rem;
             font-weight: 700;
             text-align: center;
+        }
+
+        .crypto-wallet-report-modal,
+        .crypto-wallet-report-modal pre,
+        .crypto-wallet-report-actions,
+        .crypto-wallet-report-actions button,
+        .crypto-wallet-report-preview {
+            min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        .crypto-wallet-report-actions button {
+            justify-content: center;
+            line-height: 1.15;
+            white-space: normal;
+        }
+
+        .crypto-workspace-metric,
+        .crypto-detail-row,
+        .crypto-edge-summary,
+        .crypto-details-selected,
+        .crypto-empty-state,
+        .crypto-summary-note {
+            overflow-wrap: anywhere;
+            word-break: normal;
         }
 
         .crypto-tab-section button,

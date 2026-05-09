@@ -3415,8 +3415,8 @@
 
     function renderWalletInvestigationReportAction() {
         return `
-            <button id="crypto-wallet-report-open" type="button" title="Preview a copyable Wallet Lookup investigation report built from the visible graph only." aria-haspopup="dialog" class="rounded-full border border-cyan-200/24 bg-cyan-300/12 px-3 py-1.5 text-cyan-50/84 hover:border-cyan-100/40 hover:bg-cyan-300/18">
-                Investigation Report
+            <button id="crypto-wallet-report-open" type="button" title="Export a Wallet Lookup investigation snapshot from the current visible graph, staged history status, selection, and replay preview state." aria-haspopup="dialog" class="crypto-wallet-report-action rounded-full border border-cyan-200/24 bg-cyan-300/12 px-3 py-1.5 text-cyan-50/84 hover:border-cyan-100/40 hover:bg-cyan-300/18">
+                Export Investigation Snapshot
             </button>
         `;
     }
@@ -7328,11 +7328,11 @@
         backdrop.id = 'crypto-wallet-report-preview';
         backdrop.className = 'fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-slate-950/82 px-3 py-4 sm:p-6';
         backdrop.innerHTML = `
-            <section class="w-full max-w-3xl max-h-[92vh] overflow-hidden rounded-2xl border border-cyan-200/18 bg-slate-950/96 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="crypto-wallet-report-title">
+            <section class="crypto-wallet-report-modal w-full max-w-5xl max-h-[92vh] overflow-hidden rounded-2xl border border-cyan-200/18 bg-slate-950/96 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="crypto-wallet-report-title">
                 <div class="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-5">
                     <div class="min-w-0">
-                        <div class="text-[10px] font-mono tracking-[1.3px] text-cyan-100/68">WALLET LOOKUP</div>
-                        <h3 id="crypto-wallet-report-title" class="mt-1 text-lg font-display text-cyan-50/90">Investigation Report Preview</h3>
+                        <div class="text-[10px] font-mono tracking-[1.3px] text-cyan-100/68">WALLET LOOKUP EXPORT</div>
+                        <h3 id="crypto-wallet-report-title" class="mt-1 text-lg font-display text-cyan-50/90">Investigation Snapshot</h3>
                         <div class="mt-1 text-xs text-white/52">${escapeHtml(report.statusLine)}</div>
                     </div>
                     <button id="crypto-wallet-report-close" type="button" class="min-h-10 rounded-xl border border-white/15 px-3 py-2 text-white/70 hover:border-cyan-100/30" aria-label="Close investigation report preview">
@@ -7343,19 +7343,38 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                         ${renderReportPreviewMetric('Visible Legs', report.metrics.visibleLegs)}
                         ${renderReportPreviewMetric('Noise Removed', report.metrics.filteredLegs)}
-                        ${renderReportPreviewMetric('Depth', report.metrics.graphDepth)}
-                        ${renderReportPreviewMetric('Returned', report.metrics.returnedEvents)}
+                        ${renderReportPreviewMetric('History', report.metrics.historyStatus)}
+                        ${renderReportPreviewMetric('Replay', report.metrics.replayStatus)}
                     </div>
                     <div class="rounded-xl border border-yellow-200/18 bg-yellow-300/10 px-3 py-2 text-xs leading-relaxed text-yellow-50/78">
-                        secure Worker response. no browser provider call. visible address relationships only. no identity claims.
+                        <div class="font-semibold text-yellow-50/90">What this report is / is not</div>
+                        <div class="mt-1">${escapeHtml(report.whatThisIsCopy)}</div>
+                        <div class="mt-1">${escapeHtml(report.whatThisIsNotCopy)}</div>
                     </div>
-                    <pre id="crypto-wallet-report-text" class="max-h-[46vh] overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/28 p-3 text-[11px] leading-relaxed text-cyan-50/82">${escapeHtml(report.text)}</pre>
+                    <section class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div class="min-w-0">
+                            <div class="mb-1 text-[10px] font-mono tracking-[1.2px] text-cyan-100/62">READABLE MARKDOWN SUMMARY</div>
+                            <pre id="crypto-wallet-report-text" class="crypto-wallet-report-preview max-h-[44vh] overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/28 p-3 text-[11px] leading-relaxed text-cyan-50/82">${escapeHtml(report.markdown)}</pre>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="mb-1 text-[10px] font-mono tracking-[1.2px] text-cyan-100/62">COPYABLE JSON SNAPSHOT</div>
+                            <pre id="crypto-wallet-report-json" class="crypto-wallet-report-preview max-h-[44vh] overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/28 p-3 text-[11px] leading-relaxed text-cyan-50/82">${escapeHtml(report.jsonText)}</pre>
+                        </div>
+                    </section>
                 </div>
-                <div class="flex flex-col-reverse gap-2 border-t border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+                <div class="flex flex-col gap-2 border-t border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                     <div id="crypto-wallet-report-copy-status" class="min-h-5 text-xs text-white/46">${escapeHtml(report.copyHint)}</div>
-                    <button id="crypto-wallet-report-copy" type="button" class="min-h-11 rounded-xl border border-emerald-200/24 bg-emerald-300/14 px-4 py-2 text-sm font-semibold text-emerald-50/88 hover:border-emerald-100/40">
-                        Copy Report
-                    </button>
+                    <div class="crypto-wallet-report-actions flex flex-col sm:flex-row gap-2">
+                        <button id="crypto-wallet-report-copy-markdown" type="button" class="min-h-11 rounded-xl border border-emerald-200/24 bg-emerald-300/14 px-4 py-2 text-sm font-semibold text-emerald-50/88 hover:border-emerald-100/40">
+                            Copy Markdown
+                        </button>
+                        <button id="crypto-wallet-report-copy-json" type="button" class="min-h-11 rounded-xl border border-cyan-200/24 bg-cyan-300/12 px-4 py-2 text-sm font-semibold text-cyan-50/88 hover:border-cyan-100/40">
+                            Copy JSON
+                        </button>
+                        <button id="crypto-wallet-report-download-json" type="button" class="min-h-11 rounded-xl border border-white/15 bg-white/[0.045] px-4 py-2 text-sm font-semibold text-white/76 hover:border-cyan-100/32">
+                            Download JSON
+                        </button>
+                    </div>
                 </div>
             </section>
         `;
@@ -7364,11 +7383,25 @@
             if (event.target === backdrop) closeWalletInvestigationReportPreview();
         });
         backdrop.querySelector('#crypto-wallet-report-close')?.addEventListener('click', closeWalletInvestigationReportPreview);
-        backdrop.querySelector('#crypto-wallet-report-copy')?.addEventListener('click', event => {
-            copyWalletInvestigationReport(report.text, event.currentTarget);
+        backdrop.querySelector('#crypto-wallet-report-copy-markdown')?.addEventListener('click', event => {
+            copyWalletInvestigationReport(report.markdown, event.currentTarget, {
+                success: 'Markdown summary copied to clipboard.',
+                fallback: 'Clipboard unavailable. Select the Markdown preview manually.',
+                previewId: 'crypto-wallet-report-text'
+            });
+        });
+        backdrop.querySelector('#crypto-wallet-report-copy-json')?.addEventListener('click', event => {
+            copyWalletInvestigationReport(report.jsonText, event.currentTarget, {
+                success: 'JSON snapshot copied to clipboard.',
+                fallback: 'Clipboard unavailable. Select the JSON preview manually.',
+                previewId: 'crypto-wallet-report-json'
+            });
+        });
+        backdrop.querySelector('#crypto-wallet-report-download-json')?.addEventListener('click', event => {
+            downloadWalletInvestigationSnapshot(report, event.currentTarget);
         });
         document.body.appendChild(backdrop);
-        backdrop.querySelector('#crypto-wallet-report-copy')?.focus();
+        backdrop.querySelector('#crypto-wallet-report-copy-markdown')?.focus();
     }
 
     function closeWalletInvestigationReportPreview() {
@@ -7384,17 +7417,41 @@
         `;
     }
 
-    async function copyWalletInvestigationReport(text, button) {
+    async function copyWalletInvestigationReport(text, button, options = {}) {
         const status = document.getElementById('crypto-wallet-report-copy-status');
-        const original = button?.textContent || 'Copy Report';
+        const original = button?.textContent || 'Copy';
         try {
             await writeTextToClipboard(text);
             if (button) button.textContent = 'Copied';
-            if (status) status.textContent = 'Report copied to clipboard.';
+            if (status) status.textContent = options.success || 'Report copied to clipboard.';
         } catch (error) {
             if (button) button.textContent = 'Select Text';
-            if (status) status.textContent = 'Clipboard unavailable. Select the preview text manually.';
-            selectWalletReportPreviewText();
+            if (status) status.textContent = options.fallback || 'Clipboard unavailable. Select the preview text manually.';
+            selectWalletReportPreviewText(options.previewId);
+        }
+        window.setTimeout(() => {
+            if (button) button.textContent = original;
+        }, 1400);
+    }
+
+    function downloadWalletInvestigationSnapshot(report, button) {
+        const status = document.getElementById('crypto-wallet-report-copy-status');
+        const original = button?.textContent || 'Download JSON';
+        try {
+            const blob = new Blob([report.jsonText], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = getWalletInvestigationSnapshotFilename(report.snapshot);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+            if (button) button.textContent = 'Downloaded';
+            if (status) status.textContent = 'JSON snapshot download started.';
+        } catch (error) {
+            if (button) button.textContent = 'Download Failed';
+            if (status) status.textContent = 'Download unavailable in this browser context. Copy JSON instead.';
         }
         window.setTimeout(() => {
             if (button) button.textContent = original;
@@ -7472,8 +7529,8 @@
         return copied;
     }
 
-    function selectWalletReportPreviewText() {
-        const reportText = document.getElementById('crypto-wallet-report-text');
+    function selectWalletReportPreviewText(previewId = 'crypto-wallet-report-text') {
+        const reportText = document.getElementById(previewId) || document.getElementById('crypto-wallet-report-text');
         const selection = window.getSelection?.();
         if (!reportText || !selection) return;
         const range = document.createRange();
@@ -7483,53 +7540,209 @@
     }
 
     function buildWalletInvestigationReport() {
+        const snapshot = buildWalletInvestigationSnapshot();
+        const markdown = buildWalletInvestigationMarkdown(snapshot);
+        const jsonText = JSON.stringify(snapshot, null, 2);
+
+        return {
+            snapshot,
+            text: markdown,
+            markdown,
+            jsonText,
+            statusLine: snapshot.status.summary,
+            whatThisIsCopy: snapshot.report_boundaries.what_this_is,
+            whatThisIsNotCopy: snapshot.report_boundaries.what_this_is_not,
+            copyHint: 'Copy Markdown for a readable note, copy JSON for structured export, or download the JSON file.',
+            metrics: {
+                visibleLegs: snapshot.lookup.visible_flows,
+                filteredLegs: snapshot.lookup.filtered_noise_removed_count,
+                historyStatus: snapshot.history.status,
+                replayStatus: snapshot.replay_preview.status
+            }
+        };
+    }
+
+    function buildWalletInvestigationSnapshot() {
         const intelligence = buildWalletIntelligence();
         const selectedFlow = getSelectedFlowEdge();
         const emptyState = getWalletLookupEmptyStateDetails(intelligence);
         const statusLine = getWalletReportStatusLine(intelligence, emptyState);
-        const mostActiveCounterparty = intelligence.mostActiveCounterparty
-            ? formatCounterpartyReportLine(intelligence.mostActiveCounterparty)
-            : 'None visible';
-        const mostActiveToken = intelligence.mostActiveToken
-            ? formatTokenReportLine(intelligence.mostActiveToken)
-            : 'None visible';
-        const trackedWallet = intelligence.trackedWallet || 'No wallet loaded';
-        const lastLoaded = state.walletLookup.lastLoadedAt ? formatReportDateTime(state.walletLookup.lastLoadedAt) : 'Not loaded';
+        const selectedNode = state.selectedId ? state.graph?.nodeById.get(state.selectedId) : null;
+        const replayStatus = getHistoryReplayStatus();
+        const replayDatasetStale = isHistoryPreviewDatasetStale();
+        const historyRows = state.history.loadedTransactions || [];
+        const datasetMetrics = state.historyPreview.datasetMetrics || null;
+        const graphRender = state.historyPreview.graphRenderResult || null;
+        const trackedWallet = intelligence.trackedWallet || '';
+        const lastLoadedIso = state.walletLookup.lastLoadedAt ? safeDateIso(state.walletLookup.lastLoadedAt) : null;
 
+        return {
+            snapshot_type: 'cryptophotonic_wallet_investigation_snapshot',
+            phase: 'D125',
+            schema_version: '1.0',
+            generated_at: new Date().toISOString(),
+            status: {
+                summary: statusLine,
+                wallet_loaded: Boolean(state.walletLookup.lastWallet || state.walletLookup.lastLoadedAt),
+                wallet_lookup_in_flight: Boolean(state.walletLookup.inFlight)
+            },
+            mode: {
+                key: state.dataMode,
+                label: getCurrentSourceLabel(),
+                source: intelligence.sourceLabel || getCurrentSourceLabel(),
+                source_kind: state.datasetSourceKind || '',
+                worker_replacement_graph: state.dataMode === DATA_MODES.WALLET,
+                active_graph_source: state.dataMode === DATA_MODES.WALLET
+                    ? 'Current Wallet Lookup replacement graph'
+                    : getCurrentSourceLabel()
+            },
+            lookup: {
+                tracked_wallet: trackedWallet,
+                tracked_wallet_short: trackedWallet ? shortLongValue(trackedWallet) : '',
+                last_loaded_at: lastLoadedIso,
+                last_loaded_display: state.walletLookup.lastLoadedAt ? formatReportDateTime(state.walletLookup.lastLoadedAt) : 'Not loaded',
+                returned_events: intelligence.returnedEvents,
+                visible_flows: intelligence.visibleLegs,
+                filtered_noise_removed_count: intelligence.filteredLegs,
+                graph_depth: intelligence.graphDepth,
+                active_filters: {
+                    transaction_type: state.filters.transactionType,
+                    token: getTokenIsolationLabel(state.filters.token),
+                    token_key: state.filters.token,
+                    direction: state.filters.direction,
+                    has_active_filter: hasActiveFlowFilter()
+                }
+            },
+            highlights: {
+                top_counterparty: intelligence.mostActiveCounterparty
+                    ? serializeCounterpartySnapshot(intelligence.mostActiveCounterparty)
+                    : null,
+                top_token: intelligence.mostActiveToken
+                    ? serializeTokenSnapshot(intelligence.mostActiveToken)
+                    : null,
+                largest_flow: intelligence.largestFlowEdge
+                    ? serializeFlowSnapshot(intelligence.largestFlowEdge)
+                    : null,
+                dominant_direction: intelligence.dominantDirection || null,
+                recent_activity_density: intelligence.recentActivityDensity || null
+            },
+            selection: buildInvestigationSnapshotSelection(selectedFlow, selectedNode),
+            history: {
+                status: getWalletHistoryLastStatusDisplay(),
+                provider: getWalletHistoryProviderDisplay(),
+                provider_state: getWalletHistoryProviderStateDisplay(),
+                cache: getWalletHistoryCacheDisplay(),
+                cache_detail: getWalletHistoryCacheTitle(),
+                pages_loaded: state.history.pagesLoaded,
+                provider_pages_loaded: state.history.providerPagesLoaded,
+                staged_transaction_rows: historyRows.length,
+                unique_transactions_tracked: state.history.totalLoadedTransactions,
+                next_cursor: state.history.nextCursor || null,
+                more_available: Boolean(state.history.moreAvailable),
+                last_message: getWalletHistoryLastMessage(),
+                last_error: state.history.lastError || '',
+                staged_only: true,
+                active_graph_unchanged: true
+            },
+            replay_preview: {
+                status: getHistoryReplayStateLabel(replayStatus, Boolean(state.historyPreview.dataset), replayDatasetStale),
+                preview_dataset_built: Boolean(state.historyPreview.dataset),
+                preview_dataset_stale: Boolean(replayDatasetStale),
+                preview_plan_built: Boolean(state.historyPreview.plan),
+                workspace_mode: Boolean(state.historyPreview.workspaceMode),
+                graph_visible: Boolean(state.historyPreview.graphVisible),
+                playing: Boolean(replayStatus.playing),
+                current_step: Number(replayStatus.currentStep) || 0,
+                total_steps: getHistoryReplayTotalSteps(replayStatus),
+                speed: replayStatus.speedLabel || replayStatus.speed || '',
+                selected_event: state.historyPreview.selectedEvent
+                    ? serializeReplayEventSnapshot(state.historyPreview.selectedEvent)
+                    : replayStatus.currentEvent
+                        ? serializeReplayEventSnapshot(replayStatus.currentEvent)
+                        : null,
+                dataset_metrics: datasetMetrics ? {
+                    wallets: datasetMetrics.wallets,
+                    tokens: datasetMetrics.tokens,
+                    transfers: datasetMetrics.transactions,
+                    rows_processed: datasetMetrics.stagedRowsProcessed,
+                    rows_received: datasetMetrics.stagedRowsReceived,
+                    duplicate_transfer_rows_skipped: datasetMetrics.duplicateTransferRowsSkipped,
+                    missing_wallet_rows_omitted: datasetMetrics.transferRowsOmittedMissingWallets,
+                    preview_only: Boolean(datasetMetrics.previewOnly),
+                    not_merged: Boolean(datasetMetrics.notMerged)
+                } : null,
+                render_result: graphRender ? {
+                    rendered_nodes: graphRender.renderedNodes || 0,
+                    rendered_edges: graphRender.renderedEdges || 0,
+                    rendered_transfers: graphRender.renderedTransfers || 0,
+                    capped: Boolean(graphRender.capped)
+                } : null,
+                preview_only: true,
+                active_graph_unchanged: true
+            },
+            report_boundaries: {
+                what_this_is: 'A point-in-time export of the current CryptoPhotonic UI state: Wallet Lookup graph readout, active filters, selected item, staged history status, and replay preview status.',
+                what_this_is_not: 'Not a complete wallet history, identity finding, ownership finding, criminality or risk assessment, investment recommendation, or browser-side provider query.',
+                safety_boundaries: [
+                    'Wallet Lookup uses the secure Worker response and replacement graph behavior.',
+                    'No browser-side provider calls are made by this export.',
+                    'No API keys or secrets are included.',
+                    'Staged history remains staged only and is not merged into the active graph.',
+                    'Replay remains preview-only and does not change the active Wallet Lookup graph.',
+                    'Address relationships are observations from visible transfer data only.'
+                ]
+            }
+        };
+    }
+
+    function buildWalletInvestigationMarkdown(snapshot = {}) {
+        const topCounterparty = snapshot.highlights?.top_counterparty;
+        const topToken = snapshot.highlights?.top_token;
+        const largestFlow = snapshot.highlights?.largest_flow;
+        const selection = snapshot.selection || {};
         const lines = [
             'CryptoPhotonic Wallet Lookup Investigation Report',
-            `Generated: ${formatReportDateTime(Date.now())}`,
+            `Generated: ${formatReportDateTime(snapshot.generated_at)}`,
+            '',
+            'What this report is:',
+            `- ${snapshot.report_boundaries?.what_this_is}`,
+            '',
+            'What this report is not:',
+            `- ${snapshot.report_boundaries?.what_this_is_not}`,
             '',
             'Report boundaries:',
-            '- Data boundary: secure Worker response.',
-            '- Browser boundary: no browser provider call is used for this report or Wallet Lookup graph.',
-            '- Interpretation boundary: visible address relationships only.',
-            '- Claims boundary: no identity claims, ownership claims, criminality claims, risk claims, or investment claims.',
+            ...(snapshot.report_boundaries?.safety_boundaries || []).map(item => `- ${item}`),
             '',
             'Lookup snapshot:',
-            `- Tracked wallet: ${trackedWallet}`,
-            `- Source: ${intelligence.sourceLabel || getCurrentSourceLabel()}`,
-            `- Last loaded time: ${lastLoaded}`,
-            `- Lookup state: ${statusLine}`,
-            `- Visible transfer legs: ${intelligence.visibleLegs}`,
-            `- Filtered/noise removed legs: ${intelligence.filteredLegs}`,
-            `- Graph depth: ${intelligence.graphDepth}-hop`,
+            `- Mode/source: ${snapshot.mode?.label || '-'} / ${snapshot.mode?.source || '-'}`,
+            `- Tracked wallet: ${snapshot.lookup?.tracked_wallet || 'No wallet loaded'}`,
+            `- Last loaded time: ${snapshot.lookup?.last_loaded_display || 'Not loaded'}`,
+            `- Lookup state: ${snapshot.status?.summary || '-'}`,
+            `- Visible flows: ${snapshot.lookup?.visible_flows ?? 0}`,
+            `- Filtered/noise removed count: ${snapshot.lookup?.filtered_noise_removed_count ?? 0}`,
+            `- Top counterparty: ${topCounterparty ? formatCounterpartySnapshotMarkdown(topCounterparty) : 'None visible'}`,
+            `- Top token: ${topToken ? formatTokenSnapshotMarkdown(topToken) : 'None visible'}`,
+            `- Largest flow: ${largestFlow ? formatFlowSnapshotMarkdown(largestFlow) : 'None visible'}`,
             '',
-            'Flow highlights:',
-            `- Dominant direction: ${intelligence.dominantDirection?.label || '-'} (${intelligence.dominantDirection?.detail || 'No visible transfer direction.'})`,
-            `- Most active counterparty: ${mostActiveCounterparty}`,
-            `- Most active token: ${mostActiveToken}`,
-            `- Largest normalized flow: ${intelligence.largestFlow || '-'}`,
-            `- Recent activity density: ${intelligence.recentActivityDensity?.label || '-'} (${intelligence.recentActivityDensity?.detail || 'No timestamped activity.'})`,
+            'Selected item:',
+            ...formatSnapshotSelectionMarkdown(selection),
             '',
-            'Top counterparties:',
-            ...formatCounterpartyReportLines(intelligence.counterparties),
+            'History status:',
+            `- Provider: ${snapshot.history?.provider || '-'}`,
+            `- Provider state: ${snapshot.history?.provider_state || '-'}`,
+            `- Cache: ${snapshot.history?.cache || '-'}`,
+            `- Status: ${snapshot.history?.status || '-'}`,
+            `- Staged rows: ${snapshot.history?.staged_transaction_rows ?? 0}`,
+            `- Pages loaded: ${snapshot.history?.pages_loaded ?? 0}`,
+            `- Staged-only boundary: ${snapshot.history?.staged_only ? 'Yes' : 'Check'}`,
             '',
-            'Token flow summary:',
-            ...formatTokenReportLines(intelligence.tokens),
-            '',
-            'Selected flow inspector summary:',
-            ...formatSelectedFlowReportLines(selectedFlow),
+            'Replay preview status:',
+            `- Status: ${snapshot.replay_preview?.status || '-'}`,
+            `- Dataset built: ${snapshot.replay_preview?.preview_dataset_built ? 'Yes' : 'No'}`,
+            `- Dataset stale: ${snapshot.replay_preview?.preview_dataset_stale ? 'Yes' : 'No'}`,
+            `- Workspace mode: ${snapshot.replay_preview?.workspace_mode ? 'Open' : 'Closed'}`,
+            `- Progress: ${snapshot.replay_preview?.current_step ?? 0}/${snapshot.replay_preview?.total_steps ?? 0}`,
+            `- Preview-only boundary: ${snapshot.replay_preview?.preview_only ? 'Yes' : 'Check'}`,
             '',
             'Notes:',
             '- Counts reflect the current visible graph and active filters.',
@@ -7537,17 +7750,197 @@
             '- Addresses are shown as graph observations only; labels are source/context hints, not identity or ownership conclusions.'
         ];
 
+        return lines.join('\n');
+    }
+
+    function buildInvestigationSnapshotSelection(selectedFlow = null, selectedNode = null) {
+        if (selectedFlow) {
+            return {
+                type: 'flow',
+                present: true,
+                flow: serializeFlowSnapshot(selectedFlow)
+            };
+        }
+        if (selectedNode) {
+            return {
+                type: selectedNode.type || 'node',
+                present: true,
+                node: serializeNodeSnapshot(selectedNode)
+            };
+        }
+        if (state.historyPreview.selectedEvent) {
+            return {
+                type: 'replay_preview_event',
+                present: true,
+                replay_event: serializeReplayEventSnapshot(state.historyPreview.selectedEvent)
+            };
+        }
         return {
-            text: lines.join('\n'),
-            statusLine,
-            copyHint: 'Preview before copying. Report uses the current Wallet Lookup graph state.',
-            metrics: {
-                visibleLegs: intelligence.visibleLegs,
-                filteredLegs: intelligence.filteredLegs,
-                graphDepth: `${intelligence.graphDepth}-hop`,
-                returnedEvents: intelligence.returnedEvents
-            }
+            type: 'none',
+            present: false,
+            note: 'No node, flow, or replay preview event is selected.'
         };
+    }
+
+    function serializeCounterpartySnapshot(item = {}) {
+        return {
+            address: item.address || '',
+            address_short: item.address ? shortLongValue(item.address) : '',
+            visible_legs: item.count || 0,
+            inbound_legs: item.inbound || 0,
+            outbound_legs: item.outbound || 0,
+            mixed_legs: item.mixed || 0,
+            relationship: item.relationship || 'Wallet flow observed',
+            tokens: Array.isArray(item.tokens) ? item.tokens : [],
+            total_usd: Number(item.totalUsd) || 0,
+            latest_timestamp: item.latestTimestamp ? safeDateIso(item.latestTimestamp) : null
+        };
+    }
+
+    function serializeTokenSnapshot(item = {}) {
+        return {
+            symbol: item.symbol || 'Token',
+            mint: item.mint || '',
+            visible_legs: item.count || 0,
+            inbound_legs: item.inbound || 0,
+            outbound_legs: item.outbound || 0,
+            mixed_legs: item.mixed || 0,
+            direction_label: item.directionLabel || '',
+            total_amount: item.amountAvailable ? Number(item.totalAmount) || 0 : null,
+            amount_available: Boolean(item.amountAvailable),
+            total_usd: Number(item.totalUsd) || 0
+        };
+    }
+
+    function serializeFlowSnapshot(edge = {}) {
+        const sourceAddress = getFlowSourceAddress(edge);
+        const targetAddress = getFlowTargetAddress(edge);
+        return {
+            id: edge.id || '',
+            source_wallet: sourceAddress || '',
+            source_wallet_short: sourceAddress ? shortLongValue(sourceAddress) : '',
+            destination_wallet: targetAddress || '',
+            destination_wallet_short: targetAddress ? shortLongValue(targetAddress) : '',
+            normalized_amount: getNormalizedFlowAmountDisplay(edge),
+            amount: Number.isFinite(Number(edge.amount)) ? Number(edge.amount) : null,
+            symbol: edge.symbol || '',
+            token_mint: edge.token_mint || '',
+            usd_value: Number(edge.usd_value) || 0,
+            direction_vs_tracked: formatFlowDirectionRelativeToTracked(edge),
+            transaction_type: edge.transaction_type_label || core.interpretTransactionType?.(edge.transaction_type).label || 'Unknown / Unclassified',
+            timestamp: edge.timestamp ? safeDateIso(edge.timestamp) : null,
+            transaction_hash: edge.transaction_hash || edge.signature || '',
+            visible_under_filters: edgeMatchesActiveFilters(edge)
+        };
+    }
+
+    function serializeNodeSnapshot(node = {}) {
+        return {
+            id: node.id || '',
+            type: node.type || '',
+            label: labelForNode(node),
+            address: node.address || '',
+            address_short: node.address ? shortLongValue(node.address) : '',
+            token_mint: node.token_mint || '',
+            token_mint_short: node.token_mint ? shortLongValue(node.token_mint) : '',
+            symbol: node.symbol || '',
+            chain: node.chain || '',
+            relationship_to_tracked_wallet: node.type === core.NODE_TYPES.WALLET ? describeWalletRelationship(node) : '',
+            visible_context_only: true
+        };
+    }
+
+    function serializeReplayEventSnapshot(event = {}) {
+        const sourceWallet = event.sourceWallet || event.source_wallet || '';
+        const destinationWallet = event.destinationWallet || event.destination_wallet || '';
+        return {
+            step: Number(event.step) || 0,
+            total_steps: Number(event.totalSteps) || 0,
+            source_wallet: sourceWallet,
+            source_wallet_short: sourceWallet ? shortLongValue(sourceWallet) : '',
+            destination_wallet: destinationWallet,
+            destination_wallet_short: destinationWallet ? shortLongValue(destinationWallet) : '',
+            amount_token: getHistoryReplayAmountTokenLabel(event),
+            direction: getHistoryReplayDirectionLabel(event.direction),
+            timestamp: event.timestamp ? safeDateIso(event.timestamp) : null,
+            signature: event.signature || event.transaction_hash || '',
+            preview_only: true,
+            active_graph_unchanged: true
+        };
+    }
+
+    function formatCounterpartySnapshotMarkdown(item = {}) {
+        const value = item.total_usd > 0 ? ` / ${core.formatUsd(item.total_usd)}` : '';
+        const tokens = item.tokens?.length ? item.tokens.join(', ') : '-';
+        return `${item.address || '-'} | ${item.visible_legs || 0} visible leg${item.visible_legs === 1 ? '' : 's'} | ${item.relationship || 'Wallet flow observed'} | tokens: ${tokens}${value}`;
+    }
+
+    function formatTokenSnapshotMarkdown(item = {}) {
+        const amount = item.amount_available ? `${formatCompactNumber(item.total_amount)} ${item.symbol}` : 'amount unavailable';
+        const value = item.total_usd > 0 ? ` / ${core.formatUsd(item.total_usd)}` : '';
+        return `${item.symbol || 'Token'} | ${item.visible_legs || 0} visible leg${item.visible_legs === 1 ? '' : 's'} | ${item.inbound_legs || 0} received / ${item.outbound_legs || 0} sent / ${item.mixed_legs || 0} mixed | ${amount}${value}`;
+    }
+
+    function formatFlowSnapshotMarkdown(flow = {}) {
+        const value = flow.usd_value > 0 ? ` / ${core.formatUsd(flow.usd_value)}` : '';
+        return `${flow.normalized_amount || '-'} ${flow.symbol || ''}${value} | ${flow.direction_vs_tracked || '-'} | ${flow.source_wallet_short || '-'} -> ${flow.destination_wallet_short || '-'}`;
+    }
+
+    function formatSnapshotSelectionMarkdown(selection = {}) {
+        if (!selection.present) return ['- No selected node, flow, or replay preview event.'];
+        if (selection.flow) {
+            const flow = selection.flow;
+            return [
+                '- Type: visible flow',
+                `- Flow: ${formatFlowSnapshotMarkdown(flow)}`,
+                `- Transaction type: ${flow.transaction_type || '-'}`,
+                `- Timestamp: ${flow.timestamp || '-'}`,
+                `- Transaction hash: ${flow.transaction_hash || '-'}`
+            ];
+        }
+        if (selection.node) {
+            const node = selection.node;
+            return [
+                `- Type: ${node.type || 'node'}`,
+                `- Label: ${node.label || '-'}`,
+                `- Address/token: ${node.address || node.token_mint || '-'}`,
+                `- Relationship: ${node.relationship_to_tracked_wallet || 'Visible graph context only'}`
+            ];
+        }
+        if (selection.replay_event) {
+            const event = selection.replay_event;
+            return [
+                '- Type: replay preview event',
+                `- Step: ${event.step || 0}/${event.total_steps || 0}`,
+                `- Amount/token: ${event.amount_token || '-'}`,
+                `- Direction: ${event.direction || '-'}`,
+                `- Signature: ${event.signature || '-'}`
+            ];
+        }
+        return ['- Selection unavailable.'];
+    }
+
+    function getWalletInvestigationSnapshotFilename(snapshot = {}) {
+        const wallet = snapshot.lookup?.tracked_wallet_short || 'no-wallet';
+        const timestamp = String(snapshot.generated_at || new Date().toISOString())
+            .replaceAll(':', '')
+            .replaceAll('.', '')
+            .replace('T', '-')
+            .replace('Z', 'Z');
+        return `cryptophotonic-investigation-snapshot-${sanitizeFilenamePart(wallet)}-${sanitizeFilenamePart(timestamp)}.json`;
+    }
+
+    function sanitizeFilenamePart(value) {
+        return String(value || 'snapshot')
+            .replace(/[^a-zA-Z0-9._-]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .slice(0, 80) || 'snapshot';
+    }
+
+    function safeDateIso(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return null;
+        return date.toISOString();
     }
 
     function getWalletReportStatusLine(intelligence, emptyState) {

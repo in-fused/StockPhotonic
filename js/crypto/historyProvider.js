@@ -138,6 +138,44 @@
             });
         }
 
+        async getProviderDiagnostics(wallet = '') {
+            if (!this.endpoint) {
+                throw new Error('Worker wallet history endpoint unavailable');
+            }
+
+            const separator = this.endpoint.includes('?') ? '&' : '?';
+            const params = new URLSearchParams({
+                diagnostics: '1',
+                limit: String(this.limit)
+            });
+            const normalizedWallet = String(wallet || '').trim();
+            if (/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(normalizedWallet)) {
+                params.set('wallet', normalizedWallet);
+            }
+
+            const response = await fetch(`${this.endpoint}${separator}${params.toString()}`, {
+                cache: 'no-store',
+                headers: { accept: 'application/json' }
+            });
+            const payload = await response.json().catch(() => null);
+            const metadata = payload && typeof payload === 'object' ? (payload.metadata || {}) : {};
+            return {
+                provider: payload?.provider || this.id,
+                wallet: payload?.wallet || normalizedWallet,
+                status: payload?.status || (response.ok ? 'diagnostics_ok' : 'provider_unavailable'),
+                message: payload?.message || (response.ok
+                    ? 'Provider diagnostics loaded from Worker metadata.'
+                    : 'Provider diagnostics unavailable from Worker metadata.'),
+                metadata: {
+                    ...metadata,
+                    worker_endpoint_contract: '/api/crypto/wallet-history',
+                    browser_provider_calls: false,
+                    no_history_page_loaded: true
+                },
+                providerDiagnostics: payload?.providerDiagnostics || metadata.provider_diagnostics || null
+            };
+        }
+
         getCapabilities() {
             return {
                 ...super.getCapabilities(),

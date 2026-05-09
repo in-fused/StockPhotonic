@@ -107,7 +107,9 @@
             progress: null,
             provider: '',
             providerLabel: '',
-            providerCapabilities: null
+            providerCapabilities: null,
+            providerDiagnostics: null,
+            providerDiagnosticsInFlight: false
         },
         historyPreview: {
             plan: null,
@@ -1016,6 +1018,8 @@
         state.history.provider = '';
         state.history.providerLabel = '';
         state.history.providerCapabilities = null;
+        state.history.providerDiagnostics = null;
+        state.history.providerDiagnosticsInFlight = false;
         state.historyPreview.plan = null;
         state.historyPreview.dataset = null;
         state.historyPreview.datasetMetrics = null;
@@ -1556,6 +1560,7 @@
     function getWalletHistoryLoadMoreDisabledTitle() {
         if (state.walletLookup.inFlight) return 'Wallet Lookup is still loading. Wait before staging more history.';
         if (state.history.inFlight) return 'History is already loading through the Worker.';
+        if (state.history.providerDiagnosticsInFlight) return 'Provider diagnostics are checking Worker readiness. Wait before staging history.';
         if (!(state.walletLookup.lastWallet || state.walletLookup.walletInput)) return 'Enter and load a wallet before staging history.';
         if (state.history.providerPagesLoaded > 0 && !state.history.moreAvailable) return getWalletHistoryStuckMessage();
         if (!state.history.backendProviderConnected) return 'Worker wallet-history adapter is not connected; browser provider calls remain disabled.';
@@ -1571,6 +1576,7 @@
             }
             return 'History: loading next backend page';
         }
+        if (state.history.providerDiagnosticsInFlight) return 'History: checking provider diagnostics through the Worker';
         if (state.history.lastError) return `History: ${state.history.lastError}`;
         if (state.history.pagesLoaded > 0) {
             const next = state.history.nextCursor ? shortLongValue(state.history.nextCursor) : 'none';
@@ -1592,6 +1598,7 @@
         const noMoreBackendPages = state.history.providerPagesLoaded > 0 && !state.history.moreAvailable;
         return state.walletLookup.inFlight
             || state.history.inFlight
+            || state.history.providerDiagnosticsInFlight
             || !hasWallet
             || noMoreBackendPages
             || !state.history.backendProviderConnected;
@@ -2526,6 +2533,7 @@
     function renderWalletHistoryBrowserPanel() {
         const rows = getWalletHistoryBrowserRows(24);
         const loadMoreDisabled = isWalletHistoryLoadMoreDisabled();
+        const diagnosticsDisabled = state.history.providerDiagnosticsInFlight || state.history.inFlight;
         const clearDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.loadedTransactions.length);
         const copyDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.lastMessage && !state.history.lastError);
         const coverage = getWalletHistoryCoverage();
@@ -2542,6 +2550,7 @@
                         <button id="crypto-wallet-history-browser-load-more" type="button" ${loadMoreDisabled ? 'disabled' : ''} title="Load the next history page from the Worker wallet-history endpoint only." class="min-h-10 rounded-xl border border-emerald-200/22 bg-emerald-300/12 px-3 py-2 text-emerald-50/84 hover:border-emerald-100/38 disabled:opacity-50 disabled:cursor-not-allowed">Load Next Page</button>
                         <button id="crypto-wallet-history-browser-load-5" type="button" ${loadMoreDisabled ? 'disabled' : ''} title="Load up to 5 Worker history pages sequentially, stopping on cursor exhaustion, rate limit, or provider limit." class="min-h-10 rounded-xl border border-emerald-200/22 bg-emerald-300/12 px-3 py-2 text-emerald-50/84 hover:border-emerald-100/38 disabled:opacity-50 disabled:cursor-not-allowed">Load 5 Pages</button>
                         <button id="crypto-wallet-history-browser-load-until-limit" type="button" ${loadMoreDisabled ? 'disabled' : ''} title="Load sequentially until no safe next page is available. The action is capped to prevent runaway loops." class="min-h-10 rounded-xl border border-yellow-200/18 bg-yellow-300/10 px-3 py-2 text-yellow-50/82 hover:border-yellow-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Until Limit</button>
+                        <button id="crypto-wallet-history-diagnostics" type="button" ${diagnosticsDisabled ? 'disabled' : ''} title="Check Worker provider readiness and limits without fetching history pages or changing the active graph." class="min-h-10 rounded-xl border border-sky-200/22 bg-sky-300/10 px-3 py-2 text-sky-50/84 hover:border-sky-100/38 disabled:opacity-50 disabled:cursor-not-allowed">${escapeHtml(state.history.providerDiagnosticsInFlight ? 'Checking Provider' : 'Provider Capability Check')}</button>
                         <button id="crypto-wallet-history-clear" type="button" ${clearDisabled ? 'disabled' : ''} title="Clear staged history rows without changing the current graph." class="min-h-10 rounded-xl border border-white/12 bg-white/[0.045] px-3 py-2 text-white/70 hover:border-cyan-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Clear Loaded History</button>
                         <button id="crypto-wallet-history-copy" type="button" ${copyDisabled ? 'disabled' : ''} title="Copy a compact staged history snapshot." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy History Snapshot</button>
                     </div>
@@ -2570,6 +2579,7 @@
                     ${renderWalletHistoryMetric('Last Status', getWalletHistoryLastStatusDisplay(), getWalletHistoryLastMessage())}
                 </div>
                 <div class="mt-2 rounded-lg border ${state.history.lastError ? 'border-yellow-200/22 bg-yellow-300/10 text-yellow-50/82' : 'border-cyan-200/12 bg-cyan-300/8 text-cyan-50/72'} px-3 py-2 leading-relaxed">${escapeHtml(getWalletHistoryNotice())}</div>
+                ${renderWalletHistoryProviderDiagnosticsPanel()}
                 <div class="mt-3 grid gap-2 max-h-[34rem] overflow-auto pr-1">
                     ${rows.map(renderWalletHistoryBrowserRow).join('') || renderWalletInlineEmpty(getWalletHistoryEmptyMessage())}
                 </div>
@@ -3204,6 +3214,67 @@
         `;
     }
 
+    function renderWalletHistoryProviderDiagnosticsPanel() {
+        const diagnostics = getWalletHistoryProviderDiagnostics();
+        const candidates = getWalletHistoryProviderCandidates(diagnostics);
+        const missing = getDiagnosticsMissingEnvVars(diagnostics);
+        const limits = [
+            `Max page ${diagnostics.maxSafePageSize || diagnostics.max_safe_page_size || '-'}`,
+            `Cache ${diagnostics.cacheTtlSeconds || diagnostics.cache_ttl_seconds || '-'}s`,
+            `Rate ${diagnostics.rateLimitFetches || diagnostics.rate_limit_fetches || '-'}/${diagnostics.rateLimitWindowSeconds || diagnostics.rate_limit_window_seconds || '-'}s`
+        ].join(' / ');
+        return `
+            <div class="mt-3 rounded-lg border border-sky-200/14 bg-sky-300/8 px-3 py-2.5">
+                <div class="flex flex-wrap items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="text-white/38">PROVIDER DIAGNOSTICS</div>
+                        <div class="mt-1 text-sm font-semibold text-cyan-50/84 break-words">${escapeHtml(getProviderDiagnosticsTitle(diagnostics))}</div>
+                    </div>
+                    <div class="rounded-full border ${diagnostics.configured ? 'border-emerald-200/20 bg-emerald-300/10 text-emerald-50/78' : 'border-yellow-200/20 bg-yellow-300/10 text-yellow-50/78'} px-2.5 py-1 text-[10px] font-mono">
+                        ${escapeHtml(diagnostics.configured ? 'CONFIGURED' : 'UNCONFIGURED')}
+                    </div>
+                </div>
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 text-[11px]">
+                    ${renderWalletHistoryMetric('Active Provider', diagnostics.activeProvider || diagnostics.active_provider || 'none')}
+                    ${renderWalletHistoryMetric('Pagination', diagnostics.paginationSupported || diagnostics.pagination_supported ? `Yes / ${diagnostics.cursorType || diagnostics.cursor_type || 'cursor'}` : 'No')}
+                    ${renderWalletHistoryMetric('Cache / Rate', limits)}
+                    ${renderWalletHistoryMetric('Missing Env', missing.length ? missing.join(', ') : 'None reported')}
+                </div>
+                <div class="mt-2 text-white/54 leading-relaxed">${escapeHtml(getWalletHistoryProviderLimitationCopy(diagnostics))}</div>
+                <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    ${candidates.map(renderWalletHistoryProviderCandidate).join('') || renderWalletInlineEmpty('No provider candidates were reported by the Worker.')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderWalletHistoryProviderCandidate(candidate = {}) {
+        const configured = candidate.configured === true;
+        const active = candidate.active === true;
+        const tone = active
+            ? configured
+                ? 'border-emerald-200/20 bg-emerald-300/10'
+                : 'border-yellow-200/20 bg-yellow-300/10'
+            : 'border-white/10 bg-white/[0.035]';
+        const missing = Array.isArray(candidate.missing_env_vars) ? candidate.missing_env_vars : [];
+        return `
+            <div class="min-w-0 rounded-lg border ${tone} px-3 py-2">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="font-semibold text-cyan-50/84 break-words">${escapeHtml(candidate.label || candidate.id || 'Provider')}</div>
+                    <div class="text-[10px] font-mono text-white/46">${escapeHtml(active ? 'ACTIVE' : configured ? 'READY' : 'CANDIDATE')}</div>
+                </div>
+                <div class="mt-1 text-white/52 leading-snug">${escapeHtml(candidate.readiness || '-')}</div>
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[10px] text-white/48">
+                    <div>Auth: ${escapeHtml(candidate.auth_required || 'provider-specific')}</div>
+                    <div>Depth: ${escapeHtml(candidate.expected_depth || 'unknown')}</div>
+                    <div>Pagination: ${escapeHtml(candidate.pagination_model || candidate.capabilities?.cursor_type || 'unknown')}</div>
+                    <div>Frontend: ${escapeHtml(candidate.frontend_allowed ? 'allowed' : 'blocked')}</div>
+                </div>
+                <div class="mt-1.5 text-[10px] text-white/44 leading-snug">${escapeHtml(candidate.limitations || (missing.length ? `Missing ${missing.join(', ')}` : 'No additional limitation reported.'))}</div>
+            </div>
+        `;
+    }
+
     function renderWalletHistoryBrowserRow(row = {}) {
         return `
             <div class="min-w-0 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2">
@@ -3250,19 +3321,81 @@
     }
 
     function getWalletHistoryProviderDisplay() {
-        const label = state.history.providerLabel || state.history.provider || 'Worker history provider';
+        const diagnostics = getWalletHistoryProviderDiagnostics();
+        const label = diagnostics.capabilities?.label
+            || diagnostics.activeProvider
+            || diagnostics.active_provider
+            || state.history.providerLabel
+            || state.history.provider
+            || 'Worker history provider';
         return label.length > 28 ? shortLongValue(label) : label;
     }
 
     function getWalletHistoryProviderStateDisplay() {
         if (state.history.inFlight) return 'Loading';
+        if (state.history.providerDiagnosticsInFlight) return 'Checking';
         if (state.history.lastStatus === 'provider_rate_limited') return 'Rate-limited';
         if (state.history.lastStatus === 'provider_limited') return 'Limited by provider';
         if (state.history.lastStatus === 'provider_unavailable') return 'Unavailable';
         if (state.history.lastStatus === 'provider_not_configured' || state.history.lastStatus === 'provider_placeholder') return 'Unconfigured';
+        if (getWalletHistoryProviderDiagnostics().configured === true) return 'Configured';
         if (state.history.providerConfigured) return 'Configured';
         if (state.history.backendProviderConnected) return 'Unknown';
         return 'Unconnected';
+    }
+
+    function getWalletHistoryProviderDiagnostics() {
+        const metadataDiagnostics = state.history.lastMetadata?.provider_diagnostics || {};
+        const stored = state.history.providerDiagnostics || {};
+        const merged = {
+            ...metadataDiagnostics,
+            ...stored
+        };
+        const capabilities = merged.capabilities || state.history.lastMetadata?.provider_capabilities || state.history.providerCapabilities || {};
+        return {
+            ...merged,
+            activeProvider: merged.active_provider || state.history.lastMetadata?.active_provider || state.history.provider || 'none',
+            configured: merged.configured ?? state.history.lastMetadata?.provider_configured ?? state.history.providerConfigured ?? false,
+            capabilities,
+            paginationSupported: merged.pagination_supported ?? state.history.lastMetadata?.pagination_supported ?? capabilities.pagination_supported ?? null,
+            cursorType: merged.cursor_type || state.history.lastMetadata?.cursor_type || capabilities.cursor_type || '',
+            maxSafePageSize: merged.max_safe_page_size || state.history.lastMetadata?.max_safe_page_size || capabilities.max_safe_page_size || '',
+            rateLimitWindowSeconds: merged.rate_limit_window_seconds || state.history.lastMetadata?.rate_limit_window_seconds || '',
+            rateLimitFetches: merged.rate_limit_fetches || state.history.lastMetadata?.rate_limit_fetches || '',
+            cacheTtlSeconds: merged.cache_ttl_seconds || state.history.lastMetadata?.cache_ttl_seconds || '',
+            candidates: getWalletHistoryProviderCandidates(merged),
+            missingEnvVars: getDiagnosticsMissingEnvVars(merged)
+        };
+    }
+
+    function getWalletHistoryProviderCandidates(diagnostics = getWalletHistoryProviderDiagnostics()) {
+        const candidates = diagnostics.candidates || diagnostics.provider_candidates || state.history.lastMetadata?.provider_candidates || [];
+        return Array.isArray(candidates) ? candidates : [];
+    }
+
+    function getDiagnosticsMissingEnvVars(diagnostics = getWalletHistoryProviderDiagnostics()) {
+        const missing = diagnostics.missingEnvVars || diagnostics.missing_env_vars || state.history.lastMetadata?.missing_env_vars || [];
+        return Array.isArray(missing) ? missing.filter(Boolean) : [];
+    }
+
+    function getProviderDiagnosticsTitle(diagnostics = getWalletHistoryProviderDiagnostics()) {
+        const active = diagnostics.activeProvider || diagnostics.active_provider || 'none';
+        const cursor = diagnostics.cursorType || diagnostics.cursor_type || 'none';
+        return `${active} / cursor ${cursor} / ${diagnostics.configured ? 'ready for Worker-backed pages' : 'configuration incomplete'}`;
+    }
+
+    function getWalletHistoryProviderLimitationCopy(diagnostics = getWalletHistoryProviderDiagnostics()) {
+        const active = String(diagnostics.activeProvider || diagnostics.active_provider || '').toLowerCase();
+        if (active.includes('helius')) {
+            return 'Helius can provide useful parsed wallet history, but it may still be incomplete because provider plans, credits, rate limits, parser coverage, and cursor behavior can cap depth.';
+        }
+        if (active.includes('lana')) {
+            return 'lana.ai remains a placeholder until public API and authentication documentation are verified; the Worker will not call it from this UI.';
+        }
+        if (active.includes('generic')) {
+            return 'Generic provider support is Worker-side only. Its lifetime depth depends on the configured external endpoint, its cursor contract, and its archive coverage.';
+        }
+        return 'Full lifetime wallet history requires archive-grade indexed provider coverage. Standard page cursors and public RPC access do not prove completeness.';
     }
 
     function getWalletHistoryCacheDisplay() {
@@ -3336,6 +3469,7 @@
         if (state.history.lastStatus === 'provider_limited') return state.history.lastMessage || 'History page is limited by provider coverage or permissions. Full history is not loaded.';
         if (state.history.lastStatus === 'provider_unavailable') return state.history.lastMessage || 'History provider is configured, but this page could not be loaded.';
         if (state.history.lastStatus === 'provider_not_configured') return state.history.lastMessage || 'Worker history provider is not configured.';
+        if (state.history.lastStatus === 'diagnostics_ok') return state.history.lastMessage || 'Provider diagnostics are current. No history page was fetched or staged.';
         if (isLanaPlaceholderHistoryState()) return 'lana placeholder history is not a browser provider. Configure it behind the Worker before loading real pages.';
         if (!state.history.backendProviderConnected) return 'History provider is unavailable in the browser until the Worker adapter is connected; direct provider calls remain disabled.';
         if (state.history.pagesLoaded && !state.history.loadedTransactions.length) return 'History page loaded, but it did not contain inspectable transactions.';
@@ -4466,6 +4600,9 @@
         status.querySelector('#crypto-wallet-history-browser-load-until-limit')?.addEventListener('click', () => {
             loadMoreWalletHistory({ untilLimit: true });
         });
+        status.querySelector('#crypto-wallet-history-diagnostics')?.addEventListener('click', () => {
+            checkWalletHistoryProviderCapability();
+        });
         status.querySelector('#crypto-wallet-history-clear')?.addEventListener('click', () => {
             clearLoadedWalletHistory();
         });
@@ -4842,6 +4979,46 @@
         }
     }
 
+    async function checkWalletHistoryProviderCapability() {
+        const wallet = state.walletLookup.lastWallet || state.walletLookup.walletInput || '';
+        state.investigationTab = 'history';
+        state.history.providerDiagnosticsInFlight = true;
+        state.history.lastError = '';
+        state.history.lastMessage = 'Checking Worker provider diagnostics without loading history pages.';
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        try {
+            const controller = await ensureHistoryController(wallet);
+            const provider = controller?.provider || createWorkerHistoryProvider();
+            if (!provider || typeof provider.getProviderDiagnostics !== 'function') {
+                state.history.lastError = 'Provider diagnostics unavailable from the Worker adapter.';
+                return null;
+            }
+
+            const result = await provider.getProviderDiagnostics(wallet);
+            const diagnostics = result.providerDiagnostics || result.metadata?.provider_diagnostics || null;
+            state.history.providerDiagnostics = diagnostics;
+            state.history.lastMetadata = {
+                ...(state.history.lastMetadata || {}),
+                ...(result.metadata || {}),
+                provider_diagnostics: diagnostics || result.metadata?.provider_diagnostics || null
+            };
+            state.history.lastStatus = result.status || state.history.lastStatus || 'diagnostics_ok';
+            state.history.lastMessage = result.message || 'Provider diagnostics loaded. No history page was fetched or staged.';
+            state.history.providerConfigured = diagnostics?.configured === true || result.metadata?.provider_configured === true;
+            state.history.provider = diagnostics?.active_provider || result.provider || state.history.provider;
+            state.history.providerLabel = diagnostics?.capabilities?.label || state.history.providerLabel || result.provider || '';
+            state.history.providerCapabilities = diagnostics?.capabilities || state.history.providerCapabilities;
+            return result;
+        } catch (error) {
+            state.history.lastError = getSafeWalletHistoryErrorMessage(error);
+            state.history.lastMessage = 'Provider diagnostics failed. No history page was fetched or staged.';
+            return null;
+        } finally {
+            state.history.providerDiagnosticsInFlight = false;
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        }
+    }
+
     function normalizeWalletHistoryUnavailableStatus() {
         if (!isRawWalletHistoryEndpointMissingText(state.history.lastError) && !isRawWalletHistoryEndpointMissingText(state.history.lastMessage)) return;
         state.history.lastStatus = 'provider_not_configured';
@@ -4923,6 +5100,7 @@
             provider: state.history.provider || '',
             providerLabel: state.history.providerLabel || '',
             providerConfigured: state.history.providerConfigured,
+            providerDiagnostics: getWalletHistoryProviderDiagnostics(),
             pagesLoaded: state.history.pagesLoaded,
             providerPagesLoaded: state.history.providerPagesLoaded,
             totalUniqueTransactionsTracked: state.history.totalLoadedTransactions,
@@ -5616,6 +5794,7 @@
         state.history.provider = snapshot.provider || '';
         state.history.providerLabel = snapshot.providerLabel || snapshot.providerCapabilities?.label || snapshot.provider || '';
         state.history.providerCapabilities = snapshot.providerCapabilities || null;
+        state.history.providerDiagnostics = snapshot.lastMetadata?.provider_diagnostics || state.history.providerDiagnostics || null;
         state.history.loadedTransactions = Array.isArray(snapshot.loadedTransactions) ? snapshot.loadedTransactions.slice(0, HISTORY_PREVIEW_TRANSACTION_LIMIT) : [];
         state.history.backendProviderConnected = Boolean(snapshot.provider && snapshot.providerCapabilities && snapshot.providerCapabilities.browserProviderCalls === false && !snapshot.providerCapabilities.backendOnly);
     }
@@ -7844,6 +8023,10 @@
         }
         if (action === 'load-more') {
             await loadMoreWalletHistory();
+            return;
+        }
+        if (action === 'provider-diagnostics') {
+            await checkWalletHistoryProviderCapability();
             return;
         }
         if (action === 'start-replay') {

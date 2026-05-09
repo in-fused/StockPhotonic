@@ -32,17 +32,46 @@ const WALLET_HISTORY_PROVIDER_CANDIDATES = Object.freeze([
   {
     id: "helius",
     label: "Helius Enhanced Transactions address history",
-    readiness: "implemented_when_HELIUS_API_KEY_and_CRYPTO_WALLET_HISTORY_PROVIDER_are_configured",
-  },
-  {
-    id: "lana",
-    label: "lana.ai wallet history",
-    readiness: "placeholder_only_no_public_api_docs_found_d107",
+    readiness: "worker_ready_when_selected_and_HELIUS_API_KEY_is_configured",
+    auth_required: "HELIUS_API_KEY Worker secret",
+    expected_depth: "bounded parsed address history; not archive-grade lifetime proof",
+    pagination_model: "before-signature cursor",
+    limitations: "May be limited by plan, parser coverage, rate limits, permissions, or cursor behavior.",
+    frontend_allowed: false,
+    worker_backed: true,
   },
   {
     id: "generic",
     label: "Generic Worker-side external wallet history endpoint",
-    readiness: "implemented_when_CRYPTO_WALLET_HISTORY_URL_is_configured",
+    readiness: "worker_ready_when_selected_and_CRYPTO_WALLET_HISTORY_URL_is_configured",
+    auth_required: "Optional CRYPTO_WALLET_HISTORY_BEARER_TOKEN Worker secret",
+    expected_depth: "depends on the configured upstream provider",
+    pagination_model: "generic cursor query parameter and nextCursor response",
+    limitations: "Coverage, ordering, cursor guarantees, and totals depend on the external endpoint contract.",
+    frontend_allowed: false,
+    worker_backed: true,
+  },
+  {
+    id: "lana",
+    label: "lana.ai wallet history placeholder",
+    readiness: "placeholder_only_no_public_api_or_auth_docs_verified",
+    auth_required: "unknown until public API/auth documentation is verified",
+    expected_depth: "unknown",
+    pagination_model: "unknown",
+    limitations: "Placeholder only. The Worker does not call lana.ai without clear public API/auth documentation.",
+    frontend_allowed: false,
+    worker_backed: false,
+  },
+  {
+    id: "rpc_archive",
+    label: "Future RPC/archive provider placeholder",
+    readiness: "future_archive_grade_provider_not_implemented",
+    auth_required: "provider-specific Worker secret or private endpoint",
+    expected_depth: "archive-grade only if the provider supplies complete indexed account history",
+    pagination_model: "provider-specific signature, slot, or indexed cursor",
+    limitations: "Not implemented. Standard RPC alone is not enough to prove full lifetime wallet history at scale.",
+    frontend_allowed: false,
+    worker_backed: false,
   },
 ]);
 const HELIUS_ALLOWED_WALLETS = [
@@ -727,7 +756,7 @@ function parseWalletActivityLimit(value, issues) {
 }
 
 function parseWalletHistoryQuery(url) {
-  const allowedParams = new Set(["wallet", "cursor", "limit", "loaded_pages", "loaded_transactions"]);
+  const allowedParams = new Set(["wallet", "cursor", "limit", "loaded_pages", "loaded_transactions", "diagnostics"]);
   const issues = [];
 
   for (const key of url.searchParams.keys()) {
@@ -739,7 +768,11 @@ function parseWalletHistoryQuery(url) {
     }
   }
 
-  const wallet = parseSolanaWalletAddress(url.searchParams.get("wallet"), issues);
+  const diagnostics = parseBooleanQueryFlag(url.searchParams.get("diagnostics"));
+  const walletParam = url.searchParams.get("wallet");
+  const wallet = diagnostics && !walletParam
+    ? ""
+    : parseSolanaWalletAddress(walletParam, issues);
   const cursor = parseWalletHistoryCursor(url.searchParams.get("cursor"), issues);
   const limitResult = parseWalletHistoryLimit(url.searchParams.get("limit"), issues);
   const observedPages = parseWalletHistoryObservedCount(url.searchParams.get("loaded_pages"), "loaded_pages", issues);
@@ -757,7 +790,13 @@ function parseWalletHistoryQuery(url) {
     limitCapped: limitResult.capped,
     observedPages,
     observedTransactions,
+    diagnostics,
   };
+}
+
+function parseBooleanQueryFlag(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
 }
 
 function parseWalletHistoryObservedCount(value, param, issues) {
@@ -829,9 +868,13 @@ function isWalletHistoryEndpointPath(pathname) {
 }
 
 async function fetchWalletHistoryPage(query, env = {}) {
+  if (query.diagnostics) {
+    return walletHistoryDiagnosticsPage(query, env);
+  }
+
   const provider = createWalletHistoryProvider(env);
   if (!provider.configured) {
-    return walletHistoryProviderNotConfiguredPage(query, provider);
+    return walletHistoryProviderNotConfiguredPage(query, provider, env);
   }
 
   const cacheKey = walletHistoryPageCacheKey(query, provider.id);
@@ -843,6 +886,7 @@ async function fetchWalletHistoryPage(query, env = {}) {
       providerFetchPerformed: false,
       rateLimitStatus: "not_checked_cache_hit",
       query,
+      env,
     });
   }
 
@@ -853,6 +897,7 @@ async function fetchWalletHistoryPage(query, env = {}) {
       message: "Wallet history provider fetch rate limit reached for this wallet. Wait briefly before loading more pages.",
       retryAfterSeconds: rateLimit.retryAfterSeconds,
       source: "worker_rate_limit_guardrail",
+      env,
     });
   }
 
@@ -864,6 +909,7 @@ async function fetchWalletHistoryPage(query, env = {}) {
     rateLimitStatus: providerPage?.status === "provider_rate_limited" ? "limited" : "allowed",
     rateLimitRemaining: rateLimit.remaining,
     query,
+    env,
   });
 
   if (isCacheableWalletHistoryPage(page)) {
@@ -881,10 +927,13 @@ function isCacheableWalletHistoryPage(page = {}) {
 }
 
 function withWalletHistoryGuardrailMetadata(page = {}, options = {}) {
+  const providerId = safeString(page.provider) || normalizeProviderId(options.env?.CRYPTO_WALLET_HISTORY_PROVIDER || options.env?.CRYPTO_HISTORY_PROVIDER) || "none";
+  const diagnostics = buildWalletHistoryProviderDiagnostics(options.env || {}, providerId);
   return normalizeWalletHistoryResponse({
     ...page,
     metadata: {
       ...(page.metadata || {}),
+      ...diagnostics,
       cache_status: options.cacheStatus,
       cache_hit: Boolean(options.cacheHit),
       cache_ttl_seconds: WALLET_HISTORY_CACHE_TTL_SECONDS,
@@ -1044,6 +1093,200 @@ function trimMap(map, maxItems) {
   }
 }
 
+function walletHistoryDiagnosticsPage(query, env = {}) {
+  const providerId = normalizeProviderId(env.CRYPTO_WALLET_HISTORY_PROVIDER || env.CRYPTO_HISTORY_PROVIDER) || "none";
+  const diagnostics = buildWalletHistoryProviderDiagnostics(env, providerId);
+  const status = diagnostics.provider_configured ? "diagnostics_ok" : "provider_not_configured";
+  return normalizeWalletHistoryResponse({
+    wallet: query.wallet || "",
+    provider: diagnostics.active_provider,
+    cursor: null,
+    nextCursor: null,
+    events: [],
+    moreAvailable: false,
+    status,
+    message: diagnostics.provider_configured
+      ? "Provider capability diagnostics loaded from the Worker. No history page was fetched."
+      : "Provider capability diagnostics loaded from the Worker. Configure missing Worker environment values before loading history pages.",
+    metadata: {
+      ...diagnostics,
+      source: "wallet_history_provider_diagnostics",
+      limit: query.limit,
+      requested_limit: query.requestedLimit,
+      limit_capped: Boolean(query.limitCapped),
+      cache_status: "diagnostics_bypass",
+      cache_hit: false,
+      cache_ttl_seconds: WALLET_HISTORY_CACHE_TTL_SECONDS,
+      rate_limit_status: "not_checked_diagnostics",
+      rate_limit_window_seconds: WALLET_HISTORY_RATE_LIMIT_WINDOW_SECONDS,
+      provider_fetch_performed: false,
+      no_history_page_loaded: true,
+      no_data_merged: true,
+      page_size: 0,
+      more_available: false,
+      history_coverage: "diagnostics_only",
+      full_history_loaded: false,
+      limited_by_provider: false,
+      ...buildWalletHistoryDepthMetadata(query, {
+        pageSize: 0,
+        pageObserved: false,
+        providerFetchPerformed: false,
+        providerLimitReached: false,
+        rateLimited: false,
+        basis: "diagnostics_only",
+      }),
+    },
+  });
+}
+
+function buildWalletHistoryProviderDiagnostics(env = {}, providerId = "none") {
+  const activeProvider = normalizeProviderId(providerId) || "none";
+  const candidates = buildWalletHistoryProviderCandidates(env, activeProvider);
+  const activeCandidate = candidates.find((candidate) => candidate.id === activeProvider) || null;
+  const missingEnvVars = getWalletHistoryMissingEnvVars(env, activeProvider);
+  const capabilities = getWalletHistoryProviderCapabilities(activeProvider);
+  const providerConfigured = Boolean(activeCandidate?.configured) && missingEnvVars.length === 0;
+
+  return {
+    active_provider: activeProvider,
+    provider_configured: providerConfigured,
+    provider_capabilities: capabilities,
+    pagination_supported: capabilities.pagination_supported,
+    cursor_type: capabilities.cursor_type,
+    max_safe_page_size: MAX_WALLET_HISTORY_LIMIT,
+    rate_limit_window_seconds: WALLET_HISTORY_RATE_LIMIT_WINDOW_SECONDS,
+    rate_limit_fetches: getWalletHistoryRateLimitFetches(env),
+    cache_ttl_seconds: WALLET_HISTORY_CACHE_TTL_SECONDS,
+    provider_candidates: candidates,
+    missing_env_vars: missingEnvVars,
+    frontend_allowed: false,
+    worker_backed: Boolean(activeCandidate?.worker_backed),
+    diagnostics_version: "d128_provider_diagnostics_v1",
+    provider_diagnostics: {
+      active_provider: activeProvider,
+      configured: providerConfigured,
+      capabilities,
+      pagination_supported: capabilities.pagination_supported,
+      cursor_type: capabilities.cursor_type,
+      max_safe_page_size: MAX_WALLET_HISTORY_LIMIT,
+      rate_limit_window_seconds: WALLET_HISTORY_RATE_LIMIT_WINDOW_SECONDS,
+      rate_limit_fetches: getWalletHistoryRateLimitFetches(env),
+      cache_ttl_seconds: WALLET_HISTORY_CACHE_TTL_SECONDS,
+      candidates,
+      missing_env_vars: missingEnvVars,
+      frontend_allowed: false,
+      worker_backed: Boolean(activeCandidate?.worker_backed),
+    },
+  };
+}
+
+function buildWalletHistoryProviderCandidates(env = {}, activeProvider = "none") {
+  return WALLET_HISTORY_PROVIDER_CANDIDATES.map((candidate) => {
+    const missingEnvVars = getWalletHistoryMissingEnvVars(env, candidate.id);
+    const configured = candidate.id === "lana" || candidate.id === "rpc_archive"
+      ? false
+      : missingEnvVars.length === 0;
+    return {
+      ...candidate,
+      active: candidate.id === activeProvider,
+      configured,
+      missing_env_vars: missingEnvVars,
+      capabilities: getWalletHistoryProviderCapabilities(candidate.id),
+    };
+  });
+}
+
+function getWalletHistoryMissingEnvVars(env = {}, providerId = "none") {
+  if (providerId === "helius") {
+    const missing = [];
+    if (!safeString(env.CRYPTO_WALLET_HISTORY_PROVIDER || env.CRYPTO_HISTORY_PROVIDER)) missing.push("CRYPTO_WALLET_HISTORY_PROVIDER");
+    if (!safeString(env.HELIUS_API_KEY)) missing.push("HELIUS_API_KEY");
+    return missing;
+  }
+  if (providerId === "generic") {
+    const missing = [];
+    if (!safeString(env.CRYPTO_WALLET_HISTORY_PROVIDER || env.CRYPTO_HISTORY_PROVIDER)) missing.push("CRYPTO_WALLET_HISTORY_PROVIDER");
+    if (!parseGenericHistoryEndpoint(env.CRYPTO_WALLET_HISTORY_URL)) missing.push("CRYPTO_WALLET_HISTORY_URL");
+    return missing;
+  }
+  if (providerId === "lana") {
+    return ["LANA_PUBLIC_API_DOCS", "LANA_AUTH_CONFIGURATION"];
+  }
+  if (providerId === "rpc_archive") {
+    return ["ARCHIVE_PROVIDER_ENDPOINT", "ARCHIVE_PROVIDER_AUTH"];
+  }
+  return ["CRYPTO_WALLET_HISTORY_PROVIDER"];
+}
+
+function getWalletHistoryProviderCapabilities(providerId = "none") {
+  if (providerId === "helius") {
+    return {
+      id: "helius",
+      label: "Helius Enhanced Transactions address history",
+      pagination_supported: true,
+      cursor_type: "before_signature",
+      max_safe_page_size: MAX_WALLET_HISTORY_LIMIT,
+      expected_depth: "bounded address history",
+      limitations: [
+        "Helius may be limited by plan quotas, credits, parser coverage, and rate limits.",
+        "A missing or stalled before-signature cursor means full lifetime history is not proven.",
+      ],
+    };
+  }
+  if (providerId === "generic") {
+    return {
+      id: "generic",
+      label: "Generic Worker-side external wallet history endpoint",
+      pagination_supported: true,
+      cursor_type: "generic_cursor",
+      max_safe_page_size: MAX_WALLET_HISTORY_LIMIT,
+      expected_depth: "provider_defined",
+      limitations: [
+        "Full history depth depends on the configured external endpoint.",
+        "The Worker only trusts sanitized events and nextCursor-style pagination.",
+      ],
+    };
+  }
+  if (providerId === "lana") {
+    return {
+      id: "lana",
+      label: "lana.ai placeholder",
+      pagination_supported: false,
+      cursor_type: "unknown",
+      max_safe_page_size: 0,
+      expected_depth: "unknown",
+      limitations: [
+        "Placeholder only until public API and authentication documentation is verified.",
+      ],
+    };
+  }
+  if (providerId === "rpc_archive") {
+    return {
+      id: "rpc_archive",
+      label: "Future RPC/archive provider placeholder",
+      pagination_supported: false,
+      cursor_type: "provider_specific",
+      max_safe_page_size: 0,
+      expected_depth: "archive_grade_if_indexed_provider_available",
+      limitations: [
+        "Not implemented.",
+        "Standard RPC alone does not prove complete lifetime wallet history.",
+      ],
+    };
+  }
+  return {
+    id: "none",
+    label: "No active wallet history provider",
+    pagination_supported: false,
+    cursor_type: "none",
+    max_safe_page_size: 0,
+    expected_depth: "none",
+    limitations: [
+      "Configure CRYPTO_WALLET_HISTORY_PROVIDER and provider-specific Worker secrets before loading history pages.",
+    ],
+  };
+}
+
 function createWalletHistoryProvider(env = {}) {
   const providerId = normalizeProviderId(env.CRYPTO_WALLET_HISTORY_PROVIDER || env.CRYPTO_HISTORY_PROVIDER);
 
@@ -1142,7 +1385,8 @@ function normalizeProviderId(value) {
   return normalized;
 }
 
-function walletHistoryProviderNotConfiguredPage(query, provider) {
+function walletHistoryProviderNotConfiguredPage(query, provider, env = {}) {
+  const diagnostics = buildWalletHistoryProviderDiagnostics(env, provider.id);
   return normalizeWalletHistoryResponse({
     wallet: query.wallet,
     provider: provider.id,
@@ -1154,7 +1398,7 @@ function walletHistoryProviderNotConfiguredPage(query, provider) {
     message: provider.message,
     metadata: {
       ...provider.metadata,
-      provider_candidates: WALLET_HISTORY_PROVIDER_CANDIDATES,
+      ...diagnostics,
       limit: query.limit,
       requested_limit: query.requestedLimit,
       limit_capped: Boolean(query.limitCapped),
@@ -1425,10 +1669,32 @@ async function fetchGenericWalletHistoryPage(query, env, endpoint) {
     receivedAt: new Date().toISOString(),
   });
 
-  const candidateCursor = safeString(payload.nextCursor || payload.next_cursor);
+  const candidateCursor = safeString(
+    payload.nextCursor
+    || payload.next_cursor
+    || payload.cursor_next
+    || payload.pagination?.nextCursor
+    || payload.pagination?.next_cursor
+    || payload.pagination?.cursor_next
+  );
   const cursorAdvanced = isDistinctHistoryCursor(candidateCursor, query.cursor);
-  const moreAvailable = Boolean((payload.moreAvailable ?? payload.hasMore ?? payload.has_more ?? candidateCursor) && cursorAdvanced);
-  const providerReportedMore = Boolean(payload.moreAvailable ?? payload.hasMore ?? payload.has_more);
+  const moreAvailable = Boolean((
+    payload.moreAvailable
+    ?? payload.hasMore
+    ?? payload.has_more
+    ?? payload.pagination?.moreAvailable
+    ?? payload.pagination?.hasMore
+    ?? payload.pagination?.has_more
+    ?? candidateCursor
+  ) && cursorAdvanced);
+  const providerReportedMore = Boolean(
+    payload.moreAvailable
+    ?? payload.hasMore
+    ?? payload.has_more
+    ?? payload.pagination?.moreAvailable
+    ?? payload.pagination?.hasMore
+    ?? payload.pagination?.has_more
+  );
   const providerLimitReached = providerReportedMore && !moreAvailable;
   const totalPossibleEstimate = getProviderTotalPossibleEstimate(payload);
 
@@ -1490,7 +1756,13 @@ function normalizeGenericHistoryEvents(payload, options) {
     ? payload.events
     : Array.isArray(payload.transactions)
       ? payload.transactions
-      : [];
+      : Array.isArray(payload.items)
+        ? payload.items
+        : Array.isArray(payload.results)
+          ? payload.results
+          : Array.isArray(payload.data)
+            ? payload.data
+            : [];
   const events = [];
   let skipped = 0;
 
@@ -1776,6 +2048,23 @@ function normalizeWalletHistoryResponse(page) {
       confidence: "response_only",
       basis: "normalized_response_default",
     };
+  const providerDiagnostics = sourceMetadata.provider_diagnostics && typeof sourceMetadata.provider_diagnostics === "object"
+    ? sourceMetadata.provider_diagnostics
+    : {
+      active_provider: safeString(page.provider) || "none",
+      configured: sourceMetadata.provider_configured === true,
+      capabilities: sourceMetadata.provider_capabilities || getWalletHistoryProviderCapabilities(safeString(page.provider) || "none"),
+      pagination_supported: sourceMetadata.pagination_supported === true,
+      cursor_type: safeString(sourceMetadata.cursor_type) || "unknown",
+      max_safe_page_size: Number(sourceMetadata.max_safe_page_size) || MAX_WALLET_HISTORY_LIMIT,
+      rate_limit_window_seconds: Number(sourceMetadata.rate_limit_window_seconds) || WALLET_HISTORY_RATE_LIMIT_WINDOW_SECONDS,
+      rate_limit_fetches: Number(sourceMetadata.rate_limit_fetches) || WALLET_HISTORY_RATE_LIMIT_FETCHES,
+      cache_ttl_seconds: Number(sourceMetadata.cache_ttl_seconds) || WALLET_HISTORY_CACHE_TTL_SECONDS,
+      candidates: Array.isArray(sourceMetadata.provider_candidates) ? sourceMetadata.provider_candidates : WALLET_HISTORY_PROVIDER_CANDIDATES,
+      missing_env_vars: Array.isArray(sourceMetadata.missing_env_vars) ? sourceMetadata.missing_env_vars : [],
+      frontend_allowed: false,
+      worker_backed: false,
+    };
 
   return {
     wallet: safeString(page.wallet) || "",
@@ -1787,6 +2076,7 @@ function normalizeWalletHistoryResponse(page) {
     moreAvailable: Boolean(page.moreAvailable && page.nextCursor),
     status,
     message: safeString(page.message) || "",
+    providerDiagnostics,
     metadata: {
       sanitized: true,
       production_meaning: false,
@@ -1795,6 +2085,7 @@ function normalizeWalletHistoryResponse(page) {
       provider_secret_exposed: false,
       raw_provider_payload_exposed: false,
       endpoint_contract: "/api/crypto/wallet-history",
+      provider_diagnostics: providerDiagnostics,
       ...sourceMetadata,
       history_depth_estimate: depthEstimate,
       provider_limit_reached: providerLimitReached,

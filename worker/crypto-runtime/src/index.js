@@ -11,6 +11,7 @@ const DEFAULT_WALLET_ACTIVITY_LIMIT = 10;
 const MAX_WALLET_ACTIVITY_LIMIT = 25;
 const DEFAULT_WALLET_HISTORY_LIMIT = 10;
 const MAX_WALLET_HISTORY_LIMIT = 50;
+const WALLET_HISTORY_PROVIDER_LIMITED_STATUSES = new Set([400, 401, 403, 404, 410]);
 const WALLET_HISTORY_CACHE_TTL_SECONDS = 45;
 const WALLET_HISTORY_RATE_LIMIT_WINDOW_SECONDS = 60;
 const WALLET_HISTORY_RATE_LIMIT_FETCHES = 12;
@@ -1133,6 +1134,12 @@ function walletHistoryProviderNotConfiguredPage(query, provider) {
       cache_status: "bypass",
       cache_hit: false,
       rate_limit_status: "not_checked_provider_unconfigured",
+      status_alias: "provider_not_configured",
+      page_size: 0,
+      more_available: false,
+      history_coverage: "provider_not_configured",
+      full_history_loaded: false,
+      limited_by_provider: false,
     },
   });
 }
@@ -1172,9 +1179,17 @@ async function fetchHeliusWalletHistoryPage(query, env, heliusApiKey) {
       });
     }
 
+    if (WALLET_HISTORY_PROVIDER_LIMITED_STATUSES.has(response.status)) {
+      return walletHistoryProviderLimitedPage(query, {
+        provider: "helius",
+        message: "Helius wallet history could not return this page. The Worker normalized the provider response; no raw provider error was exposed.",
+        statusCode: response.status,
+      });
+    }
+
     return walletHistoryProviderUnavailablePage(query, {
       provider: "helius",
-      message: `Helius wallet history returned ${response.status}.`,
+      message: "Helius wallet history is temporarily unavailable. The Worker normalized the provider response; no raw provider error was exposed.",
       statusCode: response.status,
     });
   }
@@ -1192,15 +1207,18 @@ async function fetchHeliusWalletHistoryPage(query, env, heliusApiKey) {
     wallet: query.wallet,
     receivedAt: new Date().toISOString(),
   });
-  const nextCursor = getLastTransactionSignature(transactions);
+  const candidateCursor = getLastTransactionSignature(transactions);
+  const cursorAdvanced = isDistinctHistoryCursor(candidateCursor, query.cursor);
+  const nextCursor = transactions.length >= query.limit && cursorAdvanced ? candidateCursor : null;
+  const moreAvailable = Boolean(nextCursor);
 
   return normalizeWalletHistoryResponse({
     wallet: query.wallet,
     provider: "helius",
     cursor: query.cursor,
-    nextCursor: transactions.length >= query.limit ? nextCursor : null,
+    nextCursor,
     events,
-    moreAvailable: Boolean(transactions.length >= query.limit && nextCursor),
+    moreAvailable,
     status: "ok",
     message: transactions.length
       ? "Wallet history page loaded from the Worker-side Helius adapter."
@@ -1213,8 +1231,21 @@ async function fetchHeliusWalletHistoryPage(query, env, heliusApiKey) {
       requested_limit: query.requestedLimit,
       limit_capped: Boolean(query.limitCapped),
       count: events.length,
+      provider_transaction_count: transactions.length,
+      page_size: transactions.length,
       token_accounts: tokenAccounts,
       cursor_kind: query.cursor ? "before_signature" : "initial",
+      cursor_advanced: cursorAdvanced,
+      cursor_stalled: Boolean(transactions.length >= query.limit && candidateCursor && !cursorAdvanced),
+      more_available: moreAvailable,
+      more_available_reason: moreAvailable
+        ? "provider_returned_next_before_signature_cursor"
+        : transactions.length >= query.limit && candidateCursor && !cursorAdvanced
+          ? "provider_cursor_did_not_advance"
+          : "provider_returned_short_or_empty_page",
+      history_coverage: "partial_provider_page",
+      full_history_loaded: !moreAvailable,
+      limited_by_provider: false,
       provider_fetch_performed: true,
     },
   });
@@ -1250,6 +1281,13 @@ function getHeliusHistoryTokenAccounts(env = {}) {
 function getLastTransactionSignature(transactions) {
   const last = Array.isArray(transactions) ? transactions[transactions.length - 1] : null;
   return safeString(last?.signature);
+}
+
+function isDistinctHistoryCursor(nextCursor, currentCursor) {
+  const next = safeString(nextCursor);
+  if (!next) return false;
+  const current = safeString(currentCursor);
+  return !current || next !== current;
 }
 
 function parseGenericHistoryEndpoint(value) {
@@ -1307,9 +1345,17 @@ async function fetchGenericWalletHistoryPage(query, env, endpoint) {
       });
     }
 
+    if (WALLET_HISTORY_PROVIDER_LIMITED_STATUSES.has(response.status)) {
+      return walletHistoryProviderLimitedPage(query, {
+        provider: "generic",
+        message: "Generic wallet history provider could not return this page. The Worker normalized the provider response; no raw provider error was exposed.",
+        statusCode: response.status,
+      });
+    }
+
     return walletHistoryProviderUnavailablePage(query, {
       provider: "generic",
-      message: `Generic wallet history provider returned ${response.status}.`,
+      message: "Generic wallet history provider is temporarily unavailable. The Worker normalized the provider response; no raw provider error was exposed.",
       statusCode: response.status,
     });
   }
@@ -1327,13 +1373,17 @@ async function fetchGenericWalletHistoryPage(query, env, endpoint) {
     receivedAt: new Date().toISOString(),
   });
 
+  const candidateCursor = safeString(payload.nextCursor || payload.next_cursor);
+  const cursorAdvanced = isDistinctHistoryCursor(candidateCursor, query.cursor);
+  const moreAvailable = Boolean((payload.moreAvailable ?? payload.hasMore ?? payload.has_more ?? candidateCursor) && cursorAdvanced);
+
   return normalizeWalletHistoryResponse({
     wallet: query.wallet,
     provider: "generic",
     cursor: query.cursor,
-    nextCursor: safeString(payload.nextCursor || payload.next_cursor),
+    nextCursor: moreAvailable ? candidateCursor : null,
     events: normalized.events,
-    moreAvailable: Boolean(payload.moreAvailable ?? payload.hasMore ?? payload.has_more ?? payload.nextCursor ?? payload.next_cursor),
+    moreAvailable,
     status: "ok",
     message: safeString(payload.message) || "Wallet history page loaded from a Worker-side generic adapter.",
     metadata: {
@@ -1345,6 +1395,14 @@ async function fetchGenericWalletHistoryPage(query, env, endpoint) {
       limit_capped: Boolean(query.limitCapped),
       count: normalized.events.length,
       skipped_unsafe_items: normalized.skipped,
+      page_size: normalized.events.length,
+      cursor_advanced: cursorAdvanced,
+      cursor_stalled: Boolean(candidateCursor && !cursorAdvanced),
+      more_available: moreAvailable,
+      more_available_reason: moreAvailable ? "provider_returned_next_cursor" : "provider_returned_no_advanced_cursor",
+      history_coverage: "partial_provider_page",
+      full_history_loaded: !moreAvailable,
+      limited_by_provider: false,
       provider_fetch_performed: true,
     },
   });
@@ -1424,6 +1482,12 @@ function walletHistoryProviderUnavailablePage(query, options) {
       requested_limit: query.requestedLimit,
       limit_capped: Boolean(query.limitCapped),
       provider_status: options.statusCode || null,
+      status_alias: "unavailable",
+      page_size: 0,
+      more_available: false,
+      history_coverage: "unavailable",
+      full_history_loaded: false,
+      limited_by_provider: false,
       provider_fetch_performed: true,
     },
   });
@@ -1446,6 +1510,12 @@ function walletHistoryProviderRateLimitedPage(query, options) {
       requested_limit: query.requestedLimit,
       limit_capped: Boolean(query.limitCapped),
       provider_status: options.statusCode || null,
+      status_alias: "rate_limited",
+      page_size: 0,
+      more_available: Boolean(query.cursor),
+      history_coverage: "rate_limited",
+      full_history_loaded: false,
+      limited_by_provider: true,
       provider_fetch_performed: options.source !== "worker_rate_limit_guardrail",
       rate_limit_status: "limited",
       rate_limit_source: options.source || "provider",
@@ -1453,6 +1523,34 @@ function walletHistoryProviderRateLimitedPage(query, options) {
       cache_status: "miss",
       cache_hit: false,
       cache_ttl_seconds: WALLET_HISTORY_CACHE_TTL_SECONDS,
+    },
+  });
+}
+
+function walletHistoryProviderLimitedPage(query, options) {
+  return normalizeWalletHistoryResponse({
+    wallet: query.wallet,
+    provider: options.provider,
+    cursor: query.cursor,
+    nextCursor: null,
+    events: [],
+    moreAvailable: false,
+    status: "provider_limited",
+    message: options.message,
+    metadata: {
+      provider_configured: true,
+      provider_candidates: WALLET_HISTORY_PROVIDER_CANDIDATES,
+      limit: query.limit,
+      requested_limit: query.requestedLimit,
+      limit_capped: Boolean(query.limitCapped),
+      provider_status: options.statusCode || null,
+      status_alias: "limited_by_provider",
+      page_size: 0,
+      more_available: false,
+      history_coverage: "limited_by_provider",
+      full_history_loaded: false,
+      limited_by_provider: true,
+      provider_fetch_performed: true,
     },
   });
 }
@@ -1483,6 +1581,9 @@ function normalizeWalletHistoryResponse(page) {
       raw_provider_payload_exposed: false,
       endpoint_contract: "/api/crypto/wallet-history",
       ...(page.metadata || {}),
+      response_status: safeString(page.status) || "ok",
+      response_more_available: Boolean(page.moreAvailable && page.nextCursor),
+      response_next_cursor_present: Boolean(page.nextCursor),
     },
   };
 }

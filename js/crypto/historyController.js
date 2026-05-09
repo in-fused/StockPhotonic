@@ -105,6 +105,9 @@
             if (pageRecord.status === 'ok') {
                 this.nextCursor = pageRecord.nextCursor ?? null;
                 this.moreAvailable = Boolean(pageRecord.moreAvailable && this.nextCursor);
+            } else if (isTerminalHistoryStatus(pageRecord.status)) {
+                this.nextCursor = null;
+                this.moreAvailable = false;
             } else {
                 this.nextCursor = previousNextCursor;
                 this.moreAvailable = Boolean(previousNextCursor);
@@ -169,6 +172,15 @@
             || transaction.id
             || `${transaction.timestamp || ''}:${transaction.source_wallet || ''}:${transaction.destination_wallet || ''}:${index}`
         );
+    }
+
+    function isTerminalHistoryStatus(status = '') {
+        return [
+            'provider_limited',
+            'provider_not_configured',
+            'provider_placeholder',
+            'provider_unavailable'
+        ].includes(String(status || '').trim());
     }
 
     namespace.historyController = {

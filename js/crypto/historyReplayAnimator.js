@@ -12,11 +12,11 @@
         maxParticles: 48
     });
     const SPEEDS = Object.freeze({
-        inspect: { label: 'Inspect', stepMs: 1450 },
-        standard: { label: 'Standard', stepMs: 760 },
-        fast: { label: 'Fast', stepMs: 280 }
+        inspect: { label: 'Inspect', stepMs: 1250 },
+        standard: { label: 'Standard', stepMs: 620 },
+        fast: { label: 'Fast', stepMs: 240 }
     });
-    const FRAME_MS = 33;
+    const FRAME_MS = 16;
 
     function createReplayAnimator(canvas, dataset = {}, options = {}) {
         const state = {
@@ -553,7 +553,12 @@
         ctx.shadowColor = color;
         ctx.shadowBlur = root ? 28 : active ? 30 : 8;
         if (active) {
-            ctx.fillStyle = 'rgba(244, 114, 182, 0.16)';
+            ctx.strokeStyle = 'rgba(251, 207, 232, 0.44)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius * 2.08, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(244, 114, 182, 0.18)';
             ctx.beginPath();
             ctx.arc(node.x, node.y, radius * 1.72, 0, Math.PI * 2);
             ctx.fill();
@@ -607,25 +612,52 @@
     }
 
     function drawReplayProgress(ctx, width, height, current, total, playing = false) {
-        const barWidth = Math.min(width - 28, 360);
+        const barWidth = Math.min(width - 28, 440);
         const x = 14;
         const y = 14;
+        const pct = total ? clamp(current / total, 0, 1) : 0;
         ctx.save();
         ctx.globalAlpha = 0.9;
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.62)';
-        roundedRect(ctx, x, y, barWidth, 6, 3);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+        roundedRect(ctx, x, y, barWidth, 9, 5);
         ctx.fill();
         ctx.fillStyle = playing ? 'rgba(34, 211, 238, 0.82)' : 'rgba(217, 70, 239, 0.74)';
-        roundedRect(ctx, x, y, barWidth * (total ? current / total : 0), 6, 3);
+        roundedRect(ctx, x, y, Math.max(0, barWidth * pct), 9, 5);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = 1;
+        roundedRect(ctx, x, y, barWidth, 9, 5);
+        ctx.stroke();
+        drawReplayProgressTicks(ctx, x, y + 12, barWidth, total, current);
+        ctx.font = '700 10px JetBrains Mono, monospace';
+        ctx.fillStyle = 'rgba(236, 254, 255, 0.78)';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(`TIMELINE ${current}/${total}`, x, y + 22);
+        ctx.restore();
+    }
+
+    function drawReplayProgressTicks(ctx, x, y, width, total, current) {
+        if (!total) return;
+        const tickCount = Math.min(12, total);
+        ctx.save();
+        for (let i = 0; i <= tickCount; i += 1) {
+            const step = Math.round((total / tickCount) * i);
+            const tx = x + width * (i / tickCount);
+            ctx.strokeStyle = step <= current ? 'rgba(217, 70, 239, 0.55)' : 'rgba(148, 163, 184, 0.24)';
+            ctx.beginPath();
+            ctx.moveTo(tx, y);
+            ctx.lineTo(tx, y + (i === 0 || i === tickCount ? 7 : 5));
+            ctx.stroke();
+        }
         ctx.restore();
     }
 
     function drawReplayStatePill(ctx, width, height, playing = false, current = 0, total = 0) {
-        const label = playing ? 'PLAYING' : current >= total && total ? 'ENDED' : 'PAUSED';
+        const label = playing ? 'PLAYING' : current >= total && total ? 'ENDED' : current > 0 ? 'PAUSED' : 'READY';
         const text = `${label} ${current}/${total}`;
         const x = 14;
-        const y = 28;
+        const y = 54;
         ctx.save();
         ctx.font = '700 10px JetBrains Mono, monospace';
         const w = Math.min(width - 28, Math.max(118, ctx.measureText(text).width + 24));

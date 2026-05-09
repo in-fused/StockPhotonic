@@ -100,7 +100,25 @@
                         }
                     });
                 }
-                throw new Error(payload?.message || `Worker wallet history returned ${response.status}`);
+                return normalizeHistoryPage({
+                    provider: this.id,
+                    wallet: normalizedWallet,
+                    cursor,
+                    nextCursor: null,
+                    transactions: [],
+                    moreAvailable: false,
+                    status: response.status === 404 ? 'provider_not_configured' : 'provider_unavailable',
+                    message: response.status === 404
+                        ? 'Worker wallet-history endpoint unavailable. No provider data was loaded or merged.'
+                        : 'Worker wallet-history endpoint returned an unavailable status. No provider data was loaded or merged.',
+                    metadata: {
+                        worker_endpoint_contract: '/api/crypto/wallet-history',
+                        worker_http_status: response.status,
+                        browser_provider_calls: false,
+                        provider_configured: false,
+                        no_data_merged: true
+                    }
+                });
             }
 
             return normalizeHistoryPage({

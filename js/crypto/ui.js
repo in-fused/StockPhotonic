@@ -1526,10 +1526,23 @@
         if (state.dataMode !== DATA_MODES.WALLET) return '';
         const disabled = isWalletHistoryLoadMoreDisabled();
         const status = getWalletHistoryStatusLabel();
+        const coverage = getWalletHistoryCoverage();
+        const badges = getWalletHistoryStatusBadges();
         return `
             <div class="grid grid-cols-1 gap-2 items-center">
                 <div id="crypto-wallet-history-status" class="crypto-wallet-status-line rounded-xl border border-white/10 bg-slate-950/32 px-3 py-2 text-white/56">${escapeHtml(status)}</div>
-                <button id="crypto-wallet-history-load-more" type="button" ${disabled ? 'disabled' : ''} title="${escapeAttr(disabled ? getWalletHistoryLoadMoreDisabledTitle() : 'Load the next backend-provided wallet history page into staging only. The current graph is unchanged.')}" class="min-h-10 rounded-xl border border-emerald-200/18 bg-emerald-300/10 px-3 py-2 text-emerald-50/82 hover:border-emerald-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load More History</button>
+                <div class="grid grid-cols-2 gap-2 text-[11px]">
+                    <div class="rounded-lg border border-cyan-200/12 bg-cyan-300/8 px-2.5 py-2 text-cyan-50/76">
+                        <div class="text-white/36">Coverage</div>
+                        <div class="mt-0.5 font-semibold">${escapeHtml(coverage.label)}</div>
+                    </div>
+                    <div class="rounded-lg border ${coverage.moreAvailable ? 'border-yellow-200/18 bg-yellow-300/8 text-yellow-50/78' : 'border-emerald-200/16 bg-emerald-300/8 text-emerald-50/76'} px-2.5 py-2">
+                        <div class="text-white/36">More</div>
+                        <div class="mt-0.5 font-semibold">${escapeHtml(coverage.moreAvailable ? 'Available' : 'Not available')}</div>
+                    </div>
+                </div>
+                ${badges.length ? `<div class="flex flex-wrap gap-1.5">${badges.map(badge => `<span class="rounded-full border ${escapeAttr(badge.className)} px-2 py-1 text-[10px] font-mono">${escapeHtml(badge.label)}</span>`).join('')}</div>` : ''}
+                <button id="crypto-wallet-history-load-more" type="button" ${disabled ? 'disabled' : ''} title="${escapeAttr(disabled ? getWalletHistoryLoadMoreDisabledTitle() : 'Load the next backend-provided wallet history page into staging only. The current graph is unchanged.')}" class="min-h-10 rounded-xl border border-emerald-200/18 bg-emerald-300/10 px-3 py-2 text-emerald-50/82 hover:border-emerald-100/35 disabled:opacity-50 disabled:cursor-not-allowed">${escapeHtml(disabled && state.history.providerPagesLoaded > 0 && !state.history.moreAvailable ? 'No More History' : 'Load More History')}</button>
             </div>
         `;
     }
@@ -1538,7 +1551,7 @@
         if (state.walletLookup.inFlight) return 'Wallet Lookup is still loading. Wait before staging more history.';
         if (state.history.inFlight) return 'History is already loading through the Worker.';
         if (!(state.walletLookup.lastWallet || state.walletLookup.walletInput)) return 'Enter and load a wallet before staging history.';
-        if (state.history.providerPagesLoaded > 0 && !state.history.moreAvailable) return 'No additional Worker history cursor is staged.';
+        if (state.history.providerPagesLoaded > 0 && !state.history.moreAvailable) return getWalletHistoryStuckMessage();
         if (!state.history.backendProviderConnected) return 'Worker wallet-history adapter is not connected; browser provider calls remain disabled.';
         return 'History loading is unavailable for the current state.';
     }
@@ -1550,7 +1563,8 @@
             const next = state.history.nextCursor ? shortLongValue(state.history.nextCursor) : 'none';
             const providerState = getWalletHistoryProviderStateDisplay().toLowerCase();
             const cacheState = getWalletHistoryCacheDisplay().toLowerCase();
-            return `History: ${state.history.pagesLoaded} page${state.history.pagesLoaded === 1 ? '' : 's'} loaded / ${state.history.totalLoadedTransactions} tx tracked / next cursor ${next} / provider ${providerState} / cache ${cacheState}`;
+            const more = state.history.moreAvailable ? 'more available' : 'no next page';
+            return `History: ${state.history.pagesLoaded} page${state.history.pagesLoaded === 1 ? '' : 's'} loaded / ${state.history.totalLoadedTransactions} tx tracked / ${more} / next cursor ${next} / provider ${providerState} / cache ${cacheState}`;
         }
         if (state.dataMode === DATA_MODES.WALLET) {
             return state.history.backendProviderConnected
@@ -1568,6 +1582,68 @@
             || !hasWallet
             || noMoreBackendPages
             || !state.history.backendProviderConnected;
+    }
+
+    function getWalletHistoryCoverage() {
+        const pages = Math.max(0, Number(state.history.pagesLoaded) || 0);
+        const providerPages = Math.max(0, Number(state.history.providerPagesLoaded) || 0);
+        const tx = Math.max(0, Number(state.history.totalLoadedTransactions) || 0);
+        const moreAvailable = Boolean(state.history.moreAvailable);
+        const coverage = String(state.history.lastMetadata?.history_coverage || '').replaceAll('_', ' ');
+        const limited = isWalletHistoryLimitedByProvider();
+        const rateLimited = state.history.lastStatus === 'provider_rate_limited';
+        const fullLoaded = state.history.lastMetadata?.full_history_loaded === true && !moreAvailable && pages > 0;
+        const label = pages
+            ? `${tx} tx / ${pages} page${pages === 1 ? '' : 's'}${providerPages ? ` / ${providerPages} provider` : ''}`
+            : 'No staged pages';
+        const detail = rateLimited
+            ? 'Rate limited; full history not loaded.'
+            : limited
+                ? 'Limited by provider; full history not loaded.'
+                : moreAvailable
+                    ? 'Full history not loaded; provider has another cursor.'
+                    : fullLoaded
+                        ? 'Provider reports no next cursor for current request.'
+                        : pages
+                            ? 'Full history is not proven complete.'
+                            : 'Load wallet activity or history pages to estimate coverage.';
+        return {
+            pages,
+            providerPages,
+            tx,
+            moreAvailable,
+            coverage,
+            label,
+            detail,
+            fullLoaded,
+            limited,
+            rateLimited
+        };
+    }
+
+    function getWalletHistoryStatusBadges() {
+        const coverage = getWalletHistoryCoverage();
+        const badges = [];
+        if (coverage.moreAvailable) badges.push({ label: 'full history not loaded', className: 'border-yellow-200/18 bg-yellow-300/10 text-yellow-50/78' });
+        if (coverage.limited) badges.push({ label: 'limited by provider', className: 'border-yellow-200/18 bg-yellow-300/10 text-yellow-50/78' });
+        if (coverage.rateLimited) badges.push({ label: 'rate limited', className: 'border-red-200/20 bg-red-300/10 text-red-50/78' });
+        if (state.history.lastStatus === 'provider_unavailable') badges.push({ label: 'provider unavailable', className: 'border-yellow-200/18 bg-yellow-300/10 text-yellow-50/78' });
+        if (!state.history.providerConfigured && state.history.pagesLoaded > 0) badges.push({ label: 'provider unconfirmed', className: 'border-white/12 bg-white/[0.045] text-white/58' });
+        return badges;
+    }
+
+    function isWalletHistoryLimitedByProvider() {
+        const metadata = state.history.lastMetadata || {};
+        return state.history.lastStatus === 'provider_limited'
+            || metadata.limited_by_provider === true
+            || metadata.history_coverage === 'limited_by_provider';
+    }
+
+    function getWalletHistoryStuckMessage() {
+        if (state.history.lastStatus === 'provider_rate_limited') return 'History pagination is rate limited. Wait before retrying; full history is not loaded.';
+        if (isWalletHistoryLimitedByProvider()) return 'History pagination is limited by the provider. No additional safe cursor is available.';
+        if (state.history.lastStatus === 'provider_unavailable') return 'History provider is unavailable for the next page. No data was merged.';
+        return 'No additional Worker history cursor is staged. Full wallet-history completeness is not guaranteed.';
     }
 
     function renderWalletIntelligencePanel() {
@@ -2436,6 +2512,8 @@
         const loadMoreDisabled = isWalletHistoryLoadMoreDisabled();
         const clearDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.loadedTransactions.length);
         const copyDisabled = state.history.inFlight || (!state.history.pagesLoaded && !state.history.lastMessage && !state.history.lastError);
+        const coverage = getWalletHistoryCoverage();
+        const badges = getWalletHistoryStatusBadges();
         return `
             <section class="rounded-xl border border-cyan-200/16 bg-slate-950/30 p-3">
                 <div class="flex flex-col gap-2">
@@ -2450,13 +2528,25 @@
                         <button id="crypto-wallet-history-copy" type="button" ${copyDisabled ? 'disabled' : ''} title="Copy a compact staged history snapshot." class="min-h-10 rounded-xl border border-cyan-200/20 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Copy History Snapshot</button>
                     </div>
                 </div>
-                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div class="mt-3 rounded-lg border border-cyan-200/14 bg-cyan-300/8 px-3 py-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="text-white/38">HISTORY COVERAGE</div>
+                        <div class="text-cyan-50/78 font-semibold">${escapeHtml(coverage.label)}</div>
+                    </div>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                        <div class="h-full ${coverage.moreAvailable ? 'bg-yellow-300/72' : 'bg-emerald-300/68'}" style="width:${escapeAttr(getWalletHistoryCoverageBarWidth(coverage))}%"></div>
+                    </div>
+                    <div class="mt-2 text-white/54 leading-relaxed">${escapeHtml(coverage.detail)}</div>
+                    ${badges.length ? `<div class="mt-2 flex flex-wrap gap-1.5">${badges.map(badge => `<span class="rounded-full border ${escapeAttr(badge.className)} px-2 py-1 text-[10px] font-mono">${escapeHtml(badge.label)}</span>`).join('')}</div>` : ''}
+                </div>
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
                     ${renderWalletHistoryMetric('Provider', getWalletHistoryProviderDisplay(), 'Backend Worker adapter or provider surface reported by the history controller.')}
                     ${renderWalletHistoryMetric('Provider State', getWalletHistoryProviderStateDisplay(), getWalletHistoryConfigurationTitle())}
                     ${renderWalletHistoryMetric('Cache', getWalletHistoryCacheDisplay(), getWalletHistoryCacheTitle())}
                     ${renderWalletHistoryMetric('Pages', state.history.pagesLoaded, 'All staged pages, including the initial wallet lookup page when available.')}
                     ${renderWalletHistoryMetric('Provider Pages', state.history.providerPagesLoaded, 'Pages loaded by the dedicated wallet-history endpoint after the initial lookup.')}
                     ${renderWalletHistoryMetric('Unique Tx', state.history.totalLoadedTransactions, 'Unique staged transaction/event keys tracked by the HistoryController.')}
+                    ${renderWalletHistoryMetric('More Available', state.history.moreAvailable ? 'Yes' : 'No', coverage.detail)}
                     ${renderWalletHistoryMetric('Next Cursor', state.history.nextCursor ? shortLongValue(state.history.nextCursor) : 'None', state.history.nextCursor || 'No additional cursor is staged.')}
                     ${renderWalletHistoryMetric('Last Status', getWalletHistoryLastStatusDisplay(), getWalletHistoryLastMessage())}
                 </div>
@@ -2466,6 +2556,14 @@
                 </div>
             </section>
         `;
+    }
+
+    function getWalletHistoryCoverageBarWidth(coverage = getWalletHistoryCoverage()) {
+        if (!coverage.pages) return 8;
+        if (coverage.rateLimited || coverage.limited) return 42;
+        if (coverage.moreAvailable) return Math.min(78, 28 + coverage.pages * 12);
+        if (coverage.fullLoaded) return 92;
+        return Math.min(72, 34 + coverage.pages * 10);
     }
 
     function renderWalletHistoryGraphPreviewPanel() {
@@ -2480,6 +2578,7 @@
         const datasetCopyDisabled = state.history.inFlight || !state.historyPreview.dataset;
         const copyDisabled = state.history.inFlight || !plan;
         const graphToggleDisabled = state.history.inFlight;
+        const coverage = getWalletHistoryCoverage();
         const graphToggleLabel = state.historyPreview.workspaceMode
             ? 'Show Large Preview Graph'
             : state.historyPreview.graphVisible ? 'Hide Preview Graph' : 'Show Preview Graph';
@@ -2503,6 +2602,8 @@
                     </div>
                 </div>
                 <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    ${renderWalletHistoryMetric('History Coverage', coverage.label, coverage.detail)}
+                    ${renderWalletHistoryMetric('Timeline Represented', getHistoryTimelineCoverageLabel(summary), getHistoryTimelineCoverageTitle(summary, coverage))}
                     ${renderWalletHistoryMetric('Unique Wallets', summary.uniqueWalletCount, 'Distinct wallet/address values seen in staged history only.')}
                     ${renderWalletHistoryMetric('Unique Tokens', summary.uniqueTokenCount, 'Distinct token symbols or mints seen in staged history only.')}
                     ${renderWalletHistoryMetric('Events', summary.transferEventCount, 'Estimated transfer/event count from staged history rows.')}
@@ -2580,6 +2681,25 @@
         `;
     }
 
+    function getHistoryTimelineCoverageLabel(summary = {}) {
+        const start = formatPreviewTimestamp(summary.earliestTimestamp);
+        const end = formatPreviewTimestamp(summary.latestTimestamp);
+        const pct = Math.max(0, Math.min(100, Number(summary.timestampCoveragePct) || 0));
+        if (start && end && start !== end) return `${start} to ${end} / ${pct}% timestamped`;
+        if (start) return `${start} / ${pct}% timestamped`;
+        return `${pct}% timestamped`;
+    }
+
+    function getHistoryTimelineCoverageTitle(summary = {}, coverage = getWalletHistoryCoverage()) {
+        const parts = [
+            coverage.detail,
+            summary.earliestTimestamp ? `Earliest staged timestamp: ${summary.earliestTimestamp}.` : 'No earliest staged timestamp.',
+            summary.latestTimestamp ? `Latest staged timestamp: ${summary.latestTimestamp}.` : 'No latest staged timestamp.',
+            'This describes staged rows only and avoids claiming complete wallet history.'
+        ];
+        return parts.join(' ');
+    }
+
     function renderHistoryPreviewGraphCanvasPanel(summary = {}, datasetMetrics = null, datasetStale = false) {
         const visible = state.historyPreview.graphVisible;
         const workspaceActive = Boolean(state.historyPreview.workspaceMode);
@@ -2653,11 +2773,14 @@
         const timestamp = status.timestamp ? formatPreviewTimestamp(status.timestamp) : 'No timestamp';
         const signature = status.signature ? shortLongValue(status.signature) : 'No signature';
         const stepCopy = totalSteps ? `${currentStep}/${totalSteps}` : hasDataset ? '0/0' : 'Dataset required';
+        const progressPct = totalSteps ? Math.round((currentStep / totalSteps) * 100) : 0;
         const amountToken = getHistoryReplayAmountTokenLabel(status);
         const direction = getHistoryReplayDirectionLabel(status.direction);
         const replayState = getHistoryReplayStateLabel(status, hasDataset, datasetStale);
         const stateClasses = getHistoryReplayStateClasses(status, hasDataset, datasetStale);
         const jumpChips = buildHistoryReplayJumpChips(summary, status, totalSteps);
+        const currentRoute = getHistoryReplayRouteLabel(status);
+        const coverage = getWalletHistoryCoverage();
         const targetCanvasCopy = state.historyPreview.workspaceMode
             ? 'large Replay Workspace canvas'
             : 'History Graph Preview canvas';
@@ -2692,6 +2815,26 @@
                     </div>
                     <input id="crypto-history-replay-scrubber" type="range" min="0" max="${escapeAttr(totalSteps)}" step="1" value="${escapeAttr(currentStep)}" ${stepDisabled ? 'disabled' : ''} aria-label="Replay scrubber" class="block min-h-11 w-full cursor-pointer accent-fuchsia-300 disabled:cursor-not-allowed disabled:opacity-50" />
                 </label>
+                <div class="mt-3 rounded-lg border border-fuchsia-200/14 bg-slate-950/34 px-3 py-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="text-white/38">TIMELINE PROGRESS</div>
+                        <div id="crypto-history-replay-progress-percent" class="font-mono text-[10px] text-fuchsia-50/76">${escapeHtml(`${progressPct}% represented`)}</div>
+                    </div>
+                    <div class="mt-2 h-2.5 overflow-hidden rounded-full bg-white/10">
+                        <div id="crypto-history-replay-progress-bar" class="h-full bg-fuchsia-300/78" style="width:${escapeAttr(progressPct)}%"></div>
+                    </div>
+                    <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                        <div class="min-w-0 rounded-md border border-white/10 bg-white/[0.035] px-2 py-1.5">
+                            <div class="text-white/34">Current path</div>
+                            <div id="crypto-history-replay-current-route" class="mt-0.5 font-mono text-cyan-50/76 break-words">${escapeHtml(currentRoute)}</div>
+                        </div>
+                        <div class="min-w-0 rounded-md border border-white/10 bg-white/[0.035] px-2 py-1.5">
+                            <div class="text-white/34">History coverage</div>
+                            <div class="mt-0.5 text-cyan-50/76 break-words">${escapeHtml(coverage.label)}; ${escapeHtml(coverage.moreAvailable ? 'more pages available' : 'no next cursor')}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-white/46 leading-relaxed">${escapeHtml(coverage.detail)}</div>
+                </div>
                 <div class="mt-3 grid grid-cols-1 gap-2">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         ${renderWalletHistoryMetric('Step', stepCopy, 'Current replay step / total preview-dataset steps.')}
@@ -2824,6 +2967,13 @@
         const text = String(direction || '').trim();
         if (!text) return 'No direction';
         return text.replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
+    function getHistoryReplayRouteLabel(status = getHistoryReplayStatus()) {
+        const source = status.sourceWallet ? shortLongValue(status.sourceWallet) : 'source unknown';
+        const destination = status.destinationWallet ? shortLongValue(status.destinationWallet) : 'destination unknown';
+        if (!status.sourceWallet && !status.destinationWallet) return 'No current transfer path';
+        return `${source} -> ${destination}`;
     }
 
     function buildHistoryReplayJumpChips(summary = {}, status = getHistoryReplayStatus(), totalSteps = 0) {
@@ -3088,6 +3238,7 @@
     function getWalletHistoryProviderStateDisplay() {
         if (state.history.inFlight) return 'Loading';
         if (state.history.lastStatus === 'provider_rate_limited') return 'Rate-limited';
+        if (state.history.lastStatus === 'provider_limited') return 'Limited by provider';
         if (state.history.lastStatus === 'provider_unavailable') return 'Unavailable';
         if (state.history.lastStatus === 'provider_not_configured' || state.history.lastStatus === 'provider_placeholder') return 'Unconfigured';
         if (state.history.providerConfigured) return 'Configured';
@@ -3107,12 +3258,14 @@
         const metadata = state.history.lastMetadata || {};
         const ttl = metadata.cache_ttl_seconds ? ` TTL ${metadata.cache_ttl_seconds}s.` : '';
         const rate = metadata.rate_limit_status ? ` Rate: ${metadata.rate_limit_status}.` : '';
-        return `Worker reported cache status: ${metadata.cache_status || 'not reported'}.${ttl}${rate}`;
+        const coverage = metadata.history_coverage ? ` Coverage: ${String(metadata.history_coverage).replaceAll('_', ' ')}.` : '';
+        return `Worker reported cache status: ${metadata.cache_status || 'not reported'}.${ttl}${rate}${coverage}`;
     }
 
     function getWalletHistoryConfigurationTitle() {
         if (state.history.providerConfigured) return 'Provider reported configured through the Worker response.';
         if (state.history.lastStatus === 'provider_rate_limited') return 'Provider is configured, but the Worker or upstream provider is rate-limiting history pagination.';
+        if (state.history.lastStatus === 'provider_limited') return 'Provider is configured, but this wallet/page is limited by provider coverage or permissions.';
         if (state.history.lastStatus === 'provider_unavailable') return 'Provider is configured, but the Worker could not load this history page.';
         if (state.history.lastStatus === 'provider_not_configured') return 'Configure the Worker wallet history provider and secrets before loading real history pages.';
         if (isLanaPlaceholderHistoryState()) return 'lana placeholder is staged only; no browser-side provider call is made.';
@@ -3122,6 +3275,7 @@
     function getWalletHistoryLastStatusDisplay() {
         if (state.history.inFlight) return 'loading';
         if (state.history.lastStatus === 'provider_not_configured') return 'provider_not_configured';
+        if (state.history.lastStatus === 'provider_limited') return 'provider_limited';
         if (state.history.lastError) return 'attention';
         return state.history.lastStatus || 'idle';
     }
@@ -3134,12 +3288,13 @@
         if (state.history.inFlight) return 'Loading the next staged history page through the Worker wallet-history endpoint.';
         if (state.history.lastError) return state.history.lastError;
         if (state.history.lastStatus === 'provider_rate_limited') return state.history.lastMessage || 'History provider is rate-limited. Wait briefly before loading another staged page.';
+        if (state.history.lastStatus === 'provider_limited') return state.history.lastMessage || 'History page is limited by provider coverage or permissions. Full history is not loaded.';
         if (state.history.lastStatus === 'provider_unavailable') return state.history.lastMessage || 'History provider is configured, but this page could not be loaded.';
         if (state.history.lastStatus === 'provider_not_configured') return state.history.lastMessage || 'Worker history provider is not configured.';
         if (isLanaPlaceholderHistoryState()) return 'lana placeholder history is not a browser provider. Configure it behind the Worker before loading real pages.';
         if (!state.history.backendProviderConnected) return 'History provider is unavailable in the browser until the Worker adapter is connected; direct provider calls remain disabled.';
         if (state.history.pagesLoaded && !state.history.loadedTransactions.length) return 'History page loaded, but it did not contain inspectable transactions.';
-        if (state.history.providerPagesLoaded > 0 && !state.history.moreAvailable) return 'No additional cursor is available from the staged history provider.';
+        if (state.history.providerPagesLoaded > 0 && !state.history.moreAvailable) return getWalletHistoryStuckMessage();
         if (!state.history.providerConfigured) return 'Provider configuration has not been confirmed by a history page yet.';
         return state.history.lastMessage || 'History is staged for inspection only. The graph still reflects Wallet Lookup replacement data.';
     }
@@ -3243,6 +3398,7 @@
 
     function getHistoryPreviewBuildOptions() {
         const trackedWallet = state.history.controller?.wallet || state.walletLookup.lastWallet || state.walletLookup.walletInput || '';
+        const coverage = getWalletHistoryCoverage();
         return {
             trackedWallet,
             provider: state.history.provider || '',
@@ -3252,6 +3408,11 @@
             cache: getWalletHistoryCacheDisplay(),
             pagesLoaded: state.history.pagesLoaded,
             providerPagesLoaded: state.history.providerPagesLoaded,
+            historyCoverage: coverage.label,
+            historyCoverageDetail: coverage.detail,
+            fullHistoryLoaded: coverage.fullLoaded,
+            limitedByProvider: coverage.limited,
+            rateLimited: coverage.rateLimited,
             nextCursor: state.history.nextCursor,
             moreAvailable: state.history.moreAvailable,
             maxRows: HISTORY_PREVIEW_TRANSACTION_LIMIT
@@ -3374,12 +3535,13 @@
     }
 
     function getHistoryGraphPreviewNotice(summary = {}, stale = false) {
+        const coverage = getWalletHistoryCoverage();
         if (state.history.inFlight) return 'History is loading. The preview will update after the Worker page is staged.';
         if (stale) return 'A replay plan exists, but staged history changed after it was generated. Preview Lifetime Replay will refresh the plan.';
         if (!summary.transactionCount) return 'No history loaded. The sandbox is visible so the replay boundary and missing data are explicit before pagination starts.';
         if (!summary.earliestTimestamp && !summary.latestTimestamp) return 'History is staged, but no timestamps are available. Replay ordering will need timestamp coverage before animation.';
         if ((summary.warnings || []).length) return summary.warnings[0];
-        return 'Staged history has been summarized for future replay planning only. No active graph nodes or flow edges were added.';
+        return `Staged history has been summarized for replay planning only: ${coverage.label}. ${coverage.detail} No active graph nodes or flow edges were added.`;
     }
 
     function renderWalletMetric(label, value, title = '') {
@@ -4995,6 +5157,13 @@
         }
         const scrubberLabel = document.getElementById('crypto-history-replay-scrubber-label');
         if (scrubberLabel) scrubberLabel.textContent = totalSteps ? `${currentStep}/${totalSteps}` : '0/0';
+        const progressPct = totalSteps ? Math.round((currentStep / totalSteps) * 100) : 0;
+        const progressPercent = document.getElementById('crypto-history-replay-progress-percent');
+        if (progressPercent) progressPercent.textContent = `${progressPct}% represented`;
+        const progressBar = document.getElementById('crypto-history-replay-progress-bar');
+        if (progressBar) progressBar.style.width = `${progressPct}%`;
+        const currentRoute = document.getElementById('crypto-history-replay-current-route');
+        if (currentRoute) currentRoute.textContent = getHistoryReplayRouteLabel(normalized);
         const statePill = document.getElementById('crypto-history-replay-state-pill');
         if (statePill) {
             statePill.textContent = getHistoryReplayStateLabel(normalized, Boolean(state.historyPreview.dataset), datasetStale);
@@ -5006,6 +5175,10 @@
         }
         const workspaceProgress = document.getElementById('crypto-replay-workspace-progress');
         if (workspaceProgress) workspaceProgress.textContent = `${currentStep}/${totalSteps}`;
+        const workspaceProgressBar = document.getElementById('crypto-replay-workspace-progress-bar');
+        if (workspaceProgressBar) workspaceProgressBar.style.width = `${progressPct}%`;
+        const workspaceRoute = document.getElementById('crypto-replay-workspace-route');
+        if (workspaceRoute) workspaceRoute.textContent = getHistoryReplayRouteLabel(normalized);
         const workspaceStart = document.getElementById('crypto-replay-workspace-start');
         if (workspaceStart) {
             workspaceStart.textContent = normalized.playing ? 'Pause Replay' : 'Start Replay';
@@ -6906,6 +7079,8 @@
         const result = state.historyPreview.graphRenderResult;
         const totalSteps = getHistoryReplayTotalSteps(status);
         const currentStep = Math.max(0, Math.min(totalSteps, Number(status.currentStep) || 0));
+        const progressPct = totalSteps ? Math.round((currentStep / totalSteps) * 100) : 0;
+        const coverage = getWalletHistoryCoverage();
         const graphCopy = hasDataset
             ? result
                 ? `${result.renderedNodes || 0} nodes / ${result.renderedEdges || 0} edges / ${result.renderedTransfers || 0} transfers`
@@ -6939,7 +7114,20 @@
                         <div class="mt-1 font-semibold text-cyan-50/82">No claims / no merge</div>
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-white/52 leading-relaxed">Not full wallet history unless enough pages are loaded. No identity, ownership, risk, criminality, or investment claims.</div>
+                <div class="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+                    <div id="crypto-replay-workspace-progress-bar" class="h-full bg-fuchsia-300/78" style="width:${escapeAttr(progressPct)}%"></div>
+                </div>
+                <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div class="rounded-lg border border-white/10 bg-white/[0.035] px-2.5 py-2">
+                        <div class="text-white/36">Current path</div>
+                        <div id="crypto-replay-workspace-route" class="mt-1 font-mono text-cyan-50/82 break-words">${escapeHtml(getHistoryReplayRouteLabel(status))}</div>
+                    </div>
+                    <div class="rounded-lg border border-white/10 bg-white/[0.035] px-2.5 py-2">
+                        <div class="text-white/36">History coverage</div>
+                        <div class="mt-1 font-semibold text-cyan-50/82 break-words">${escapeHtml(coverage.label)}</div>
+                    </div>
+                </div>
+                <div class="mt-2 text-xs text-white/52 leading-relaxed">${escapeHtml(coverage.detail)} No identity, ownership, risk, criminality, or investment claims.</div>
                 <div class="crypto-replay-workspace-actions">
                     <button id="crypto-replay-workspace-build" type="button" class="is-primary" ${state.history.inFlight ? 'disabled' : ''}>Build Preview Dataset</button>
                     <button id="crypto-replay-workspace-show" type="button" ${!hasDataset || state.history.inFlight ? 'disabled' : ''}>Show Preview Graph</button>

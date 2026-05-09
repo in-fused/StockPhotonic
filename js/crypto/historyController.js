@@ -14,7 +14,8 @@
         metadata: page.metadata || {}
     }));
 
-    const HISTORY_CONTROLLER_VERSION = 'd106_history_controller_v1';
+    const HISTORY_CONTROLLER_VERSION = 'd127_history_controller_progressive_v1';
+    const MAX_PROGRESSIVE_LOAD_PAGES = 20;
 
     class HistoryController {
         constructor(options = {}) {
@@ -30,10 +31,12 @@
             this.nextCursor = null;
             this.moreAvailable = false;
             this.loading = false;
+            this.progressiveLoading = false;
             this.lastError = '';
             this.lastMessage = '';
             this.lastStatus = 'idle';
             this.lastMetadata = {};
+            this.progress = null;
             this.providerConfigured = false;
             this.providerPagesLoaded = 0;
             this.totalLoadedTransactions = 0;
@@ -73,12 +76,54 @@
             this.loading = true;
             this.lastError = '';
             try {
-                const page = await this.provider.getHistoryPage(this.wallet, this.nextCursor);
+                const page = await this.provider.getHistoryPage(this.wallet, this.nextCursor, {
+                    loadedPages: this.providerPagesLoaded,
+                    loadedTransactions: this.totalLoadedTransactions
+                });
                 this.recordPage(page);
             } catch (error) {
                 this.lastError = error?.message || 'History page load failed';
             } finally {
                 this.loading = false;
+            }
+
+            return this.getSnapshot();
+        }
+
+        async loadPages(options = {}) {
+            if (this.loading || this.progressiveLoading) return this.getSnapshot();
+            const requestedPages = options.untilLimit
+                ? MAX_PROGRESSIVE_LOAD_PAGES
+                : Math.max(1, Math.min(MAX_PROGRESSIVE_LOAD_PAGES, Math.floor(Number(options.pages) || 1)));
+            const untilLimit = options.untilLimit === true;
+            const onProgress = typeof options.onProgress === 'function' ? options.onProgress : null;
+            let loaded = 0;
+            this.progressiveLoading = true;
+
+            try {
+                for (let index = 0; index < requestedPages; index += 1) {
+                    if (this.providerPagesLoaded > 0 && !this.moreAvailable) break;
+                    this.progress = {
+                        mode: untilLimit ? 'until_limit' : 'batch',
+                        current: index + 1,
+                        target: untilLimit ? null : requestedPages,
+                        loaded,
+                        totalTransactions: this.totalLoadedTransactions,
+                        message: untilLimit
+                            ? `Loading page ${index + 1} of ?`
+                            : `Loading page ${index + 1} of ${requestedPages}`
+                    };
+                    onProgress?.(this.getSnapshot());
+                    const beforePages = this.providerPagesLoaded;
+                    await this.loadNextPage(options);
+                    if (this.providerPagesLoaded > beforePages) loaded += 1;
+                    onProgress?.(this.getSnapshot());
+                    if (shouldStopProgressiveLoad(this.getSnapshot())) break;
+                    await waitForUiTurn();
+                }
+            } finally {
+                this.progressiveLoading = false;
+                this.progress = null;
             }
 
             return this.getSnapshot();
@@ -135,10 +180,12 @@
                 nextCursor: this.nextCursor,
                 moreAvailable: this.moreAvailable,
                 loading: this.loading,
+                progressiveLoading: this.progressiveLoading,
                 lastError: this.lastError,
                 lastMessage: this.lastMessage,
                 lastStatus: this.lastStatus,
                 lastMetadata: this.lastMetadata,
+                progress: this.progress,
                 providerConfigured: this.providerConfigured,
                 totalLoadedTransactions: this.totalLoadedTransactions,
                 loadedTransactions: this.loadedTransactions.slice(0, this.pageLimit),
@@ -164,6 +211,19 @@
         return count;
     }
 
+    function shouldStopProgressiveLoad(snapshot = {}) {
+        const status = String(snapshot.lastStatus || '').trim();
+        return !snapshot.moreAvailable
+            || status === 'provider_rate_limited'
+            || status === 'provider_limited'
+            || snapshot.lastMetadata?.rate_limited === true
+            || snapshot.lastMetadata?.provider_limit_reached === true;
+    }
+
+    function waitForUiTurn() {
+        return new Promise(resolve => setTimeout(resolve, 0));
+    }
+
     function getTransactionKey(transaction = {}, index = 0) {
         return String(
             transaction.signature
@@ -179,6 +239,7 @@
             'provider_limited',
             'provider_not_configured',
             'provider_placeholder',
+            'provider_rate_limited',
             'provider_unavailable'
         ].includes(String(status || '').trim());
     }

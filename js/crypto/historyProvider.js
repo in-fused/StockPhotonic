@@ -65,7 +65,7 @@
             this.limit = Math.max(1, Math.min(50, Number(options.limit) || 10));
         }
 
-        async getHistoryPage(wallet, cursor = null) {
+        async getHistoryPage(wallet, cursor = null, options = {}) {
             const normalizedWallet = String(wallet || '').trim();
             if (!normalizedWallet) {
                 throw new Error('Wallet history requires a wallet address');
@@ -80,6 +80,10 @@
                 limit: String(this.limit)
             });
             if (cursor) params.set('cursor', String(cursor));
+            const loadedPages = Math.max(0, Number(options.loadedPages) || 0);
+            const loadedTransactions = Math.max(0, Number(options.loadedTransactions) || 0);
+            if (loadedPages) params.set('loaded_pages', String(Math.floor(loadedPages)));
+            if (loadedTransactions) params.set('loaded_transactions', String(Math.floor(loadedTransactions)));
 
             const response = await fetch(`${this.endpoint}${separator}${params.toString()}`, {
                 cache: 'no-store',

@@ -727,7 +727,7 @@ function parseWalletActivityLimit(value, issues) {
 }
 
 function parseWalletHistoryQuery(url) {
-  const allowedParams = new Set(["wallet", "cursor", "limit"]);
+  const allowedParams = new Set(["wallet", "cursor", "limit", "loaded_pages", "loaded_transactions"]);
   const issues = [];
 
   for (const key of url.searchParams.keys()) {
@@ -742,6 +742,8 @@ function parseWalletHistoryQuery(url) {
   const wallet = parseSolanaWalletAddress(url.searchParams.get("wallet"), issues);
   const cursor = parseWalletHistoryCursor(url.searchParams.get("cursor"), issues);
   const limitResult = parseWalletHistoryLimit(url.searchParams.get("limit"), issues);
+  const observedPages = parseWalletHistoryObservedCount(url.searchParams.get("loaded_pages"), "loaded_pages", issues);
+  const observedTransactions = parseWalletHistoryObservedCount(url.searchParams.get("loaded_transactions"), "loaded_transactions", issues);
 
   if (issues.length > 0) {
     throw new InvalidEventQueryError("Wallet history query parameters are invalid.", issues);
@@ -753,7 +755,25 @@ function parseWalletHistoryQuery(url) {
     limit: limitResult.limit,
     requestedLimit: limitResult.requestedLimit,
     limitCapped: limitResult.capped,
+    observedPages,
+    observedTransactions,
   };
+}
+
+function parseWalletHistoryObservedCount(value, param, issues) {
+  if (value === null) {
+    return 0;
+  }
+
+  if (!/^\d+$/.test(value)) {
+    issues.push({
+      param,
+      reason: "must_be_non_negative_integer",
+    });
+    return 0;
+  }
+
+  return Math.min(1000000, Number(value));
 }
 
 function parseWalletHistoryCursor(value, issues) {
@@ -822,6 +842,7 @@ async function fetchWalletHistoryPage(query, env = {}) {
       cacheHit: true,
       providerFetchPerformed: false,
       rateLimitStatus: "not_checked_cache_hit",
+      query,
     });
   }
 
@@ -842,6 +863,7 @@ async function fetchWalletHistoryPage(query, env = {}) {
     providerFetchPerformed: true,
     rateLimitStatus: providerPage?.status === "provider_rate_limited" ? "limited" : "allowed",
     rateLimitRemaining: rateLimit.remaining,
+    query,
   });
 
   if (isCacheableWalletHistoryPage(page)) {
@@ -870,6 +892,11 @@ function withWalletHistoryGuardrailMetadata(page = {}, options = {}) {
       rate_limit_window_seconds: WALLET_HISTORY_RATE_LIMIT_WINDOW_SECONDS,
       provider_fetch_performed: Boolean(options.providerFetchPerformed),
       ...(Number.isFinite(options.rateLimitRemaining) ? { rate_limit_remaining: options.rateLimitRemaining } : {}),
+      ...buildWalletHistoryDepthMetadata(options.query, {
+        page,
+        providerFetchPerformed: options.providerFetchPerformed,
+        rateLimited: options.rateLimitStatus === "limited" || page.status === "provider_rate_limited",
+      }),
     },
   });
 }
@@ -1140,6 +1167,13 @@ function walletHistoryProviderNotConfiguredPage(query, provider) {
       history_coverage: "provider_not_configured",
       full_history_loaded: false,
       limited_by_provider: false,
+      ...buildWalletHistoryDepthMetadata(query, {
+        pageSize: 0,
+        providerFetchPerformed: false,
+        providerLimitReached: false,
+        rateLimited: false,
+        basis: "provider_not_configured",
+      }),
     },
   });
 }
@@ -1211,6 +1245,13 @@ async function fetchHeliusWalletHistoryPage(query, env, heliusApiKey) {
   const cursorAdvanced = isDistinctHistoryCursor(candidateCursor, query.cursor);
   const nextCursor = transactions.length >= query.limit && cursorAdvanced ? candidateCursor : null;
   const moreAvailable = Boolean(nextCursor);
+  const providerLimitReached = transactions.length >= query.limit && Boolean(candidateCursor) && !cursorAdvanced;
+  const status = providerLimitReached ? "provider_limited" : "ok";
+  const message = providerLimitReached
+    ? "Helius wallet history returned a full page but did not advance the cursor. The Worker stopped pagination at the provider limit."
+    : transactions.length
+      ? "Wallet history page loaded from the Worker-side Helius adapter."
+      : "Wallet history provider returned no transactions for this page.";
 
   return normalizeWalletHistoryResponse({
     wallet: query.wallet,
@@ -1219,10 +1260,8 @@ async function fetchHeliusWalletHistoryPage(query, env, heliusApiKey) {
     nextCursor,
     events,
     moreAvailable,
-    status: "ok",
-    message: transactions.length
-      ? "Wallet history page loaded from the Worker-side Helius adapter."
-      : "Wallet history provider returned no transactions for this page.",
+    status,
+    message,
     metadata: {
       provider_configured: true,
       provider_candidates: WALLET_HISTORY_PROVIDER_CANDIDATES,
@@ -1240,13 +1279,26 @@ async function fetchHeliusWalletHistoryPage(query, env, heliusApiKey) {
       more_available: moreAvailable,
       more_available_reason: moreAvailable
         ? "provider_returned_next_before_signature_cursor"
-        : transactions.length >= query.limit && candidateCursor && !cursorAdvanced
+        : providerLimitReached
           ? "provider_cursor_did_not_advance"
           : "provider_returned_short_or_empty_page",
-      history_coverage: "partial_provider_page",
+      history_coverage: providerLimitReached ? "limited_by_provider" : "partial_provider_page",
       full_history_loaded: !moreAvailable,
-      limited_by_provider: false,
+      limited_by_provider: providerLimitReached,
       provider_fetch_performed: true,
+      ...buildWalletHistoryDepthMetadata(query, {
+        pageSize: transactions.length,
+        maxPageSize: query.limit,
+        cursorAdvanced,
+        cursorExhausted: !moreAvailable,
+        providerLimitReached,
+        rateLimited: false,
+        basis: providerLimitReached
+          ? "full_page_without_advanced_cursor"
+          : moreAvailable
+            ? "provider_returned_advanced_cursor"
+            : "provider_returned_short_or_empty_page",
+      }),
     },
   });
 }
@@ -1376,6 +1428,9 @@ async function fetchGenericWalletHistoryPage(query, env, endpoint) {
   const candidateCursor = safeString(payload.nextCursor || payload.next_cursor);
   const cursorAdvanced = isDistinctHistoryCursor(candidateCursor, query.cursor);
   const moreAvailable = Boolean((payload.moreAvailable ?? payload.hasMore ?? payload.has_more ?? candidateCursor) && cursorAdvanced);
+  const providerReportedMore = Boolean(payload.moreAvailable ?? payload.hasMore ?? payload.has_more);
+  const providerLimitReached = providerReportedMore && !moreAvailable;
+  const totalPossibleEstimate = getProviderTotalPossibleEstimate(payload);
 
   return normalizeWalletHistoryResponse({
     wallet: query.wallet,
@@ -1384,8 +1439,10 @@ async function fetchGenericWalletHistoryPage(query, env, endpoint) {
     nextCursor: moreAvailable ? candidateCursor : null,
     events: normalized.events,
     moreAvailable,
-    status: "ok",
-    message: safeString(payload.message) || "Wallet history page loaded from a Worker-side generic adapter.",
+    status: providerLimitReached ? "provider_limited" : "ok",
+    message: safeString(payload.message) || (providerLimitReached
+      ? "Generic wallet history provider reported more data without a usable next cursor. The Worker stopped pagination at the provider limit."
+      : "Wallet history page loaded from a Worker-side generic adapter."),
     metadata: {
       provider_configured: true,
       provider_candidates: WALLET_HISTORY_PROVIDER_CANDIDATES,
@@ -1399,11 +1456,31 @@ async function fetchGenericWalletHistoryPage(query, env, endpoint) {
       cursor_advanced: cursorAdvanced,
       cursor_stalled: Boolean(candidateCursor && !cursorAdvanced),
       more_available: moreAvailable,
-      more_available_reason: moreAvailable ? "provider_returned_next_cursor" : "provider_returned_no_advanced_cursor",
-      history_coverage: "partial_provider_page",
+      more_available_reason: moreAvailable
+        ? "provider_returned_next_cursor"
+        : providerLimitReached
+          ? "provider_reported_more_without_advanced_cursor"
+          : "provider_returned_no_advanced_cursor",
+      history_coverage: providerLimitReached ? "limited_by_provider" : "partial_provider_page",
       full_history_loaded: !moreAvailable,
-      limited_by_provider: false,
+      limited_by_provider: providerLimitReached,
       provider_fetch_performed: true,
+      ...buildWalletHistoryDepthMetadata(query, {
+        pageSize: normalized.events.length,
+        maxPageSize: query.limit,
+        cursorAdvanced,
+        cursorExhausted: !moreAvailable,
+        providerLimitReached,
+        rateLimited: false,
+        totalPossibleEstimate,
+        maxPages: estimateMaxPages(totalPossibleEstimate, query.limit),
+        maxTransactions: totalPossibleEstimate,
+        basis: providerLimitReached
+          ? "provider_reported_more_without_advanced_cursor"
+          : moreAvailable
+            ? "provider_returned_advanced_cursor"
+            : "provider_returned_no_advanced_cursor",
+      }),
     },
   });
 }
@@ -1465,6 +1542,101 @@ function reduceGenericHistoryItem(item, index, options) {
   };
 }
 
+function getProviderTotalPossibleEstimate(payload = {}) {
+  const candidates = [
+    payload.totalPossible,
+    payload.total_possible,
+    payload.total,
+    payload.totalCount,
+    payload.total_count,
+    payload.pagination?.total,
+    payload.pagination?.total_count,
+  ];
+  const value = candidates.find((item) => Number.isFinite(Number(item)) && Number(item) >= 0);
+  return value == null ? null : Math.floor(Number(value));
+}
+
+function estimateMaxPages(totalPossibleEstimate, limit) {
+  const total = Number(totalPossibleEstimate);
+  const pageLimit = Number(limit);
+  if (!Number.isFinite(total) || !Number.isFinite(pageLimit) || pageLimit <= 0) {
+    return null;
+  }
+  return Math.ceil(total / pageLimit);
+}
+
+function buildWalletHistoryDepthMetadata(query = {}, options = {}) {
+  const page = options.page && typeof options.page === "object" ? options.page : {};
+  const pageMetadata = page.metadata && typeof page.metadata === "object" ? page.metadata : {};
+  const pageEvents = Array.isArray(page.events)
+    ? page.events
+    : Array.isArray(page.transactions)
+      ? page.transactions
+      : [];
+  const pageSize = Math.max(0, Number(options.pageSize ?? pageMetadata.page_size ?? pageEvents.length) || 0);
+  const limit = Math.max(1, Number(options.maxPageSize ?? query.limit ?? pageMetadata.limit ?? MAX_WALLET_HISTORY_LIMIT) || MAX_WALLET_HISTORY_LIMIT);
+  const pageObserved = options.pageObserved !== false;
+  const rateLimited = options.rateLimited === true || page.status === "provider_rate_limited" || pageMetadata.rate_limit_status === "limited";
+  const providerLimitReached = options.providerLimitReached === true
+    || page.status === "provider_limited"
+    || pageMetadata.limited_by_provider === true
+    || pageMetadata.history_coverage === "limited_by_provider";
+  const moreAvailable = Boolean(page.moreAvailable ?? pageMetadata.more_available);
+  const nextCursorPresent = Boolean(page.nextCursor ?? pageMetadata.response_next_cursor_present);
+  const cursorExhausted = options.cursorExhausted === true || (!rateLimited && !moreAvailable && !nextCursorPresent);
+  const pagesBefore = Math.max(0, Number(query.observedPages ?? pageMetadata.pages_observed_before) || 0);
+  const transactionsBefore = Math.max(0, Number(query.observedTransactions ?? pageMetadata.transactions_observed_before) || 0);
+  const pagesObserved = pagesBefore + (pageObserved && !rateLimited ? 1 : 0);
+  const transactionsObserved = transactionsBefore + pageSize;
+  const totalPossibleEstimate = getNullablePositiveInteger(options.totalPossibleEstimate ?? pageMetadata.total_possible_estimate);
+  const maxTransactions = getNullablePositiveInteger(options.maxTransactions ?? pageMetadata.provider_max_transactions ?? totalPossibleEstimate);
+  const maxPages = getNullablePositiveInteger(options.maxPages ?? pageMetadata.provider_max_pages ?? estimateMaxPages(totalPossibleEstimate, limit));
+  const basis = safeString(options.basis || pageMetadata.history_depth_basis) || (
+    rateLimited
+      ? "rate_limited_before_depth_verified"
+      : providerLimitReached
+        ? "provider_limit_reached"
+        : cursorExhausted
+          ? "cursor_exhausted_best_effort"
+          : "advanced_cursor_available"
+  );
+
+  return {
+    history_depth_estimate: {
+      pages_observed: pagesObserved,
+      transactions_observed: transactionsObserved,
+      current_page_size: pageSize,
+      max_page_size: limit,
+      max_pages: maxPages,
+      max_transactions: maxTransactions,
+      cursor_exhausted: cursorExhausted,
+      cursor_advanced: options.cursorAdvanced ?? pageMetadata.cursor_advanced ?? null,
+      confidence: totalPossibleEstimate != null
+        ? "provider_total_estimate"
+        : cursorExhausted && !providerLimitReached
+          ? "best_effort_cursor_exhausted"
+          : "observed_pages_only",
+      basis,
+    },
+    provider_limit_reached: providerLimitReached,
+    rate_limited: rateLimited,
+    total_possible_estimate: totalPossibleEstimate,
+    provider_max_pages: maxPages,
+    provider_max_transactions: maxTransactions,
+    cursor_exhausted: cursorExhausted,
+    pages_observed_before: pagesBefore,
+    transactions_observed_before: transactionsBefore,
+  };
+}
+
+function getNullablePositiveInteger(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) {
+    return null;
+  }
+  return Math.floor(number);
+}
+
 function walletHistoryProviderUnavailablePage(query, options) {
   return normalizeWalletHistoryResponse({
     wallet: query.wallet,
@@ -1489,6 +1661,13 @@ function walletHistoryProviderUnavailablePage(query, options) {
       full_history_loaded: false,
       limited_by_provider: false,
       provider_fetch_performed: true,
+      ...buildWalletHistoryDepthMetadata(query, {
+        pageSize: 0,
+        providerFetchPerformed: true,
+        providerLimitReached: false,
+        rateLimited: false,
+        basis: "provider_unavailable",
+      }),
     },
   });
 }
@@ -1523,6 +1702,13 @@ function walletHistoryProviderRateLimitedPage(query, options) {
       cache_status: "miss",
       cache_hit: false,
       cache_ttl_seconds: WALLET_HISTORY_CACHE_TTL_SECONDS,
+      ...buildWalletHistoryDepthMetadata(query, {
+        pageSize: 0,
+        providerFetchPerformed: false,
+        providerLimitReached: false,
+        rateLimited: true,
+        basis: "rate_limited",
+      }),
     },
   });
 }
@@ -1551,6 +1737,13 @@ function walletHistoryProviderLimitedPage(query, options) {
       full_history_loaded: false,
       limited_by_provider: true,
       provider_fetch_performed: true,
+      ...buildWalletHistoryDepthMetadata(query, {
+        pageSize: 0,
+        providerFetchPerformed: true,
+        providerLimitReached: true,
+        rateLimited: false,
+        basis: "provider_status_limit",
+      }),
     },
   });
 }
@@ -1561,6 +1754,28 @@ function normalizeWalletHistoryResponse(page) {
     : Array.isArray(page.transactions)
       ? page.transactions
       : [];
+  const status = safeString(page.status) || "ok";
+  const sourceMetadata = page.metadata || {};
+  const rateLimited = sourceMetadata.rate_limited === true
+    || sourceMetadata.rate_limit_status === "limited"
+    || status === "provider_rate_limited";
+  const providerLimitReached = sourceMetadata.provider_limit_reached === true
+    || sourceMetadata.limited_by_provider === true
+    || status === "provider_limited";
+  const depthEstimate = sourceMetadata.history_depth_estimate && typeof sourceMetadata.history_depth_estimate === "object"
+    ? sourceMetadata.history_depth_estimate
+    : {
+      pages_observed: 0,
+      transactions_observed: events.length,
+      current_page_size: events.length,
+      max_page_size: Number(sourceMetadata.limit) || MAX_WALLET_HISTORY_LIMIT,
+      max_pages: sourceMetadata.provider_max_pages ?? null,
+      max_transactions: sourceMetadata.provider_max_transactions ?? null,
+      cursor_exhausted: !Boolean(page.nextCursor),
+      cursor_advanced: sourceMetadata.cursor_advanced ?? null,
+      confidence: "response_only",
+      basis: "normalized_response_default",
+    };
 
   return {
     wallet: safeString(page.wallet) || "",
@@ -1570,7 +1785,7 @@ function normalizeWalletHistoryResponse(page) {
     events,
     transactions: events,
     moreAvailable: Boolean(page.moreAvailable && page.nextCursor),
-    status: safeString(page.status) || "ok",
+    status,
     message: safeString(page.message) || "",
     metadata: {
       sanitized: true,
@@ -1580,10 +1795,14 @@ function normalizeWalletHistoryResponse(page) {
       provider_secret_exposed: false,
       raw_provider_payload_exposed: false,
       endpoint_contract: "/api/crypto/wallet-history",
-      ...(page.metadata || {}),
-      response_status: safeString(page.status) || "ok",
+      ...sourceMetadata,
+      history_depth_estimate: depthEstimate,
+      provider_limit_reached: providerLimitReached,
+      rate_limited: rateLimited,
+      total_possible_estimate: sourceMetadata.total_possible_estimate ?? null,
       response_more_available: Boolean(page.moreAvailable && page.nextCursor),
       response_next_cursor_present: Boolean(page.nextCursor),
+      response_status: status,
     },
   };
 }

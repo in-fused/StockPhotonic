@@ -7,7 +7,7 @@ This Worker is the secure runtime foundation for CryptoPhotonic. It is isolated 
 - `GET /health` returns runtime status with no secrets and no provider calls.
 - `GET /api/crypto/events` returns sanitized events through the secure runtime feed contract.
 - `GET /api/crypto/wallet-activity?wallet=<address>&limit=<n>` performs one controlled server-side Helius Enhanced Transactions address-history lookup, stores/dedupes sanitized events, and returns browser-safe events only.
-- `GET /api/crypto/wallet-history?wallet=<address>&cursor=<optional>&limit=<n>` returns a non-storing normalized wallet history page contract for frontend pagination state. It calls only Worker-side provider adapters and returns `provider_not_configured` when no provider is configured.
+- `GET /api/crypto/wallet-history?wallet=<address>&cursor=<optional>&scan_id=<optional>&limit=<n>` returns a non-storing normalized wallet history page contract for frontend pagination state. It calls only Worker-side provider adapters, carries safe scan-manifest metadata, and returns `provider_not_configured` when no provider is configured.
 - `POST /api/crypto/test-event` accepts local/dev event-like JSON payloads, rejects unsafe provider or secret-shaped fields, normalizes the event, stores it through the configured adapter, and never echoes unsafe input.
 - `POST /webhooks/helius` accepts bounded Helius webhook deliveries, verifies the configured authorization header when not running locally, reduces payloads to the CryptoPhotonic event shape, enforces the controlled wallet watchlist, dedupes retries, and stores only sanitized fields.
 - `POST /api/crypto/dev/clear-events` clears test events only when `ENVIRONMENT` is `local` or `development`.
@@ -111,7 +111,7 @@ Wallet lookup complements webhook tracking. Webhooks are push-based configured w
 
 ## Wallet History Endpoint
 
-`GET /api/crypto/wallet-history?wallet=<address>&cursor=<optional>&limit=<n>` is the backend pagination contract used by the CryptoPhotonic Load More History control. The browser calls only this Worker route. The endpoint does not write to KV/D1, does not merge pages into the graph, does not expose provider URLs or secrets, and always returns a normalized page:
+`GET /api/crypto/wallet-history?wallet=<address>&cursor=<optional>&scan_id=<optional>&limit=<n>` is the backend pagination contract used by the CryptoPhotonic Load More History control. The browser calls only this Worker route. The endpoint does not merge pages into the graph, does not expose provider URLs or secrets, and always returns a normalized page:
 
 ```json
 {
@@ -130,14 +130,27 @@ Wallet lookup complements webhook tracking. Webhooks are push-based configured w
     "browser_provider_calls": false,
     "provider_secret_exposed": false,
     "raw_provider_payload_exposed": false,
-    "endpoint_contract": "/api/crypto/wallet-history"
+    "endpoint_contract": "/api/crypto/wallet-history",
+    "scan_manifest": {
+      "scan_id": "scan:helius:<safe-id>",
+      "provider": "helius",
+      "cursor_state": {
+        "current_cursor": null,
+        "next_cursor": "<PROVIDER_CURSOR_OR_NULL>"
+      },
+      "pages_loaded": 1,
+      "transactions_loaded": 10,
+      "completeness_confidence": 60,
+      "full_history_loaded": false,
+      "gap_flags": []
+    }
   }
 }
 ```
 
 Supported Worker-side provider candidates:
 
-- `helius`: implemented against public Helius Enhanced Transactions address history docs. Configure `CRYPTO_WALLET_HISTORY_PROVIDER=helius` and set `HELIUS_API_KEY` as a Wrangler secret. The adapter uses `before-signature` cursors, `limit`, descending sort order, and `token-accounts=balanceChanged` unless `CRYPTO_HELIUS_HISTORY_TOKEN_ACCOUNTS` is set to `none`, `balanceChanged`, or `all`.
+- `helius`: implemented against Helius `getTransactionsForAddress` through the Worker-side Helius RPC endpoint. Configure `CRYPTO_WALLET_HISTORY_PROVIDER=helius` and set `HELIUS_API_KEY` as a Wrangler secret. The archive adapter uses `paginationToken`, `transactionDetails=full`, page-safe `limit`, `sortOrder=desc` by default, and `filters.tokenAccounts=balanceChanged` unless `CRYPTO_HELIUS_HISTORY_TOKEN_ACCOUNTS` is set to `none`, `balanceChanged`, or `all`. Set `CRYPTO_HELIUS_HISTORY_SORT_ORDER=asc` for oldest-first archive scans when the UI flow is ready to consume them. Set `CRYPTO_HELIUS_HISTORY_ADAPTER=legacy` only to force the older address-history adapter. The legacy address-history path remains available as a downgraded fallback and is not archive-grade.
 - `lana`: placeholder only. D107 found no public lana.ai wallet history API documentation, so the Worker returns `provider_placeholder` and performs no lana.ai request.
 - `generic`: implemented as a Worker-side HTTPS endpoint adapter for a future documented provider or owned backend. Configure `CRYPTO_WALLET_HISTORY_PROVIDER=generic`, `CRYPTO_WALLET_HISTORY_URL`, and optionally `CRYPTO_WALLET_HISTORY_BEARER_TOKEN`. The browser never sees these values.
 
@@ -146,7 +159,7 @@ If `CRYPTO_WALLET_HISTORY_PROVIDER` or provider-specific config is missing, the 
 History page guardrails:
 
 - Frontend-requested `limit` is capped to the Worker maximum and reported as `metadata.limit_capped` when adjusted.
-- Successful normalized history pages are cached by provider, wallet, cursor, and limit for 45 seconds. Cache entries contain only the normalized response body, never provider URLs, API keys, bearer tokens, or raw provider payloads.
+- Successful normalized history pages are cached by provider, wallet, scan id, cursor, and limit for 45 seconds. Cache entries contain only the normalized response body, never provider URLs, API keys, bearer tokens, or raw provider payloads.
 - Cache metadata is returned as `metadata.cache_status` and `metadata.cache_hit` so the staged UI can show hit/miss state.
 - Provider fetches are rate-limited per provider/wallet window before calling Helius or a generic endpoint. The default is 12 provider fetches per 60 seconds; override with `CRYPTO_WALLET_HISTORY_RATE_LIMIT_FETCHES` if needed.
 - Worker-side guardrails and upstream `429` responses return a normalized `provider_rate_limited` page with a structured message and `metadata.retry_after_seconds`.
@@ -154,10 +167,69 @@ History page guardrails:
 
 Archive-grade readiness metadata:
 
-- History responses and diagnostics include `archive_contract_version`, `provider_grade`, `replay_suitability`, `completeness_confidence`, `historical_depth`, `ordering_guarantee`, `cursor_guarantee`, and `coverage_scope`.
-- These fields are descriptive only. They do not enable new provider calls, do not change Wallet Lookup, and do not merge staged history into the active graph.
-- Current Helius history support is marked `partial` because it is useful for bounded Worker-staged history but does not prove archive-grade lifetime completeness.
+- History responses and diagnostics include `archive_contract_version`, `scan_manifest_version`, `provider_family`, `archive_readiness`, `replay_readiness`, `provider_grade`, `replay_suitability`, `completeness_confidence`, `historical_depth`, `ordering_guarantee`, `cursor_guarantee`, `coverage_scope`, `chronological_ordering_support`, `token_account_coverage_support`, `deterministic_pagination_support`, and `gap_detection_support`.
+- These fields do not change Wallet Lookup and do not merge staged history into the active graph.
+- Current Helius history support is archive-path capable, but a wallet scan is not complete until pagination exhausts without blocking `gap_flags`. Confidence is degraded by rate limits, provider limits, cursor stalls, missing ordering fields, malformed ordering, timestamp inconsistencies, incomplete rows, and ambiguous exhaustion.
 - Generic and lana.ai candidates remain `basic` until a documented provider contract proves stronger cursor, ordering, and depth guarantees.
+
+## Scan Manifests
+
+Every Worker history page now carries a browser-safe scan manifest. The manifest is operational metadata only; it contains no raw provider payload, API key, bearer token, request header, provider URL, or private RPC value.
+
+Manifest fields:
+
+- `scan_id`: safe identifier passed back by the browser on later page requests.
+- `wallet`, `provider`, `provider_grade`, `replay_suitability`.
+- `started_at`, `updated_at`.
+- `cursor_state`: current cursor, next cursor, cursor kind, advancement state, sort order, and pagination model.
+- `pages_loaded`, `transactions_loaded`.
+- `earliest_timestamp`, `latest_timestamp`.
+- `provider_limit_reached`, `rate_limited`.
+- `completeness_confidence`, `full_history_loaded`.
+- `gap_flags`, `warnings`.
+
+The Worker persists scan manifests in `CRYPTO_EVENTS_KV` when available, falling back to bounded in-memory storage. The browser also keeps the latest manifest in the history controller so progressive loading can resume within the current session by sending `scan_id`.
+
+Stop conditions for progressive backfill:
+
+- provider limit or upstream rate limit
+- Worker rate limit
+- cursor stall
+- schema mismatch
+- malformed ordering
+- ambiguous provider exhaustion
+- no next cursor
+
+`full_history_loaded: true` is only best-effort unless the provider contract plus scan state prove exhaustion without gaps. Do not present it as legal, forensic, or investment-grade completeness.
+
+## Helius Archive Adapter
+
+The default Helius history path now calls `getTransactionsForAddress` server-side only:
+
+- endpoint family: Helius RPC, Worker-side only
+- method: `getTransactionsForAddress`
+- `transactionDetails`: `full`
+- `sortOrder`: `desc` by default, `asc` when configured
+- cursor: `paginationToken`
+- token-account scope: `filters.tokenAccounts`
+- replay ordering checks: slot plus `transactionIndex`
+- normalized output: CryptoPhotonic sanitized event rows only
+
+The adapter validates page-local schema, timestamps, cursor movement, ordering fields, and transaction completeness. It emits `gap_flags` instead of pretending gaps are complete. The older Helius address-history adapter still exists as a fallback/legacy path and is explicitly downgraded to partial confidence when used.
+
+## Replay Scaling Notes
+
+Replay remains preview-only. The browser builds capped preview datasets from staged rows and never merges staged history into the active Wallet Lookup graph. The current UI exposes:
+
+- scan progress
+- replay coverage estimate
+- completeness confidence
+- provider grade
+- archive readiness
+- staged-history warnings
+- replay limitations
+
+Rendering remains capped by the frontend preview limits, and the replay animator uses capped graph windows. Large archive scans must continue through progressive pages and manifest-backed windows rather than one massive browser graph render.
 
 ## Controlled Watchlist
 

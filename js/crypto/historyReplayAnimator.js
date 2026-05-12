@@ -31,6 +31,7 @@
             lastAdvanceAt: 0,
             lastFrameAt: 0,
             warnings: [],
+            metadata: {},
             destroyed: false,
             onStatus: typeof options.onStatus === 'function' ? options.onStatus : null,
             limits: normalizeLimits(options)
@@ -58,6 +59,7 @@
             state.graph = prepared.graph;
             state.steps = prepared.steps;
             state.warnings = prepared.warnings;
+            state.metadata = prepared.metadata || nextDataset.metadata || {};
             state.stepIndex = clampInteger(configureOptions.initialStep, 0, 0, state.steps.length);
             state.done = state.steps.length > 0 && state.stepIndex >= state.steps.length;
             render();
@@ -180,6 +182,11 @@
                 renderedEdges: state.graph?.edges?.length || 0,
                 warnings: state.warnings.slice(0, 4),
                 warning: state.warnings[0] || '',
+                replayCoveragePct: clampInteger(state.metadata.replay_coverage_pct || state.metadata.replay_window?.coverage_pct, 0, 0, 100),
+                completenessConfidence: clampInteger(state.metadata.completeness_confidence, 0, 0, 100),
+                archiveReadiness: state.metadata.archive_readiness || '',
+                providerGrade: state.metadata.provider_grade || '',
+                scanId: state.metadata.scan_id || '',
                 performance: {
                     cappedTransactions: state.limits.maxTransactions,
                     cappedNodes: state.limits.maxNodes,
@@ -256,6 +263,7 @@
             ? namespace.historyGraphRenderer.capPreviewDataset(dataset, limits)
             : capPreviewDataset(dataset, limits);
         warnings.push(...(capped.warnings || []));
+        warnings.push(...safeMetadataWarnings(dataset.metadata));
 
         const size = getCanvasSize(canvas);
         const graph = layoutEngine.layoutGraph(graphEngine.buildGraph(capped.dataset), size);
@@ -267,12 +275,13 @@
         }
         replayGraph.metadata = {
             ...(replayGraph.metadata || {}),
+            ...(dataset.metadata || {}),
             replay_preview_only: true,
             replay_not_merged: true,
             replay_animator_version: HISTORY_REPLAY_ANIMATOR_VERSION
         };
 
-        return { graph: replayGraph, steps, warnings };
+        return { graph: replayGraph, steps, warnings: dedupeStrings(warnings), metadata: replayGraph.metadata };
     }
 
     function capGraphForReplay(graph = {}, dataset = {}, limits = DEFAULT_LIMITS) {
@@ -845,6 +854,23 @@
     function previewNodeOrder(node = {}) {
         if (node.type === core.NODE_TYPES.TOKEN) return 0;
         return 1;
+    }
+
+    function safeMetadataWarnings(metadata = {}) {
+        return [
+            ...(Array.isArray(metadata?.warnings) ? metadata.warnings : []),
+            ...(Array.isArray(metadata?.replay_generation_warnings) ? metadata.replay_generation_warnings : []),
+            ...(Array.isArray(metadata?.gap_flags) && metadata.gap_flags.length ? [`Scan gap flags: ${metadata.gap_flags.join(', ')}`] : [])
+        ].map(item => String(item || '').trim()).filter(Boolean).slice(0, 8);
+    }
+
+    function dedupeStrings(items = []) {
+        const values = [];
+        items.forEach(item => {
+            const value = String(item || '').trim();
+            if (value && !values.includes(value)) values.push(value);
+        });
+        return values;
     }
 
     function normalizeLimits(options = {}) {

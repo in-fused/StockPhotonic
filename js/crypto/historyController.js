@@ -14,7 +14,7 @@
         metadata: page.metadata || {}
     }));
 
-    const HISTORY_CONTROLLER_VERSION = 'd127_history_controller_progressive_v1';
+    const HISTORY_CONTROLLER_VERSION = 'd130_history_controller_scan_manifest_v1';
     const MAX_PROGRESSIVE_LOAD_PAGES = 20;
 
     class HistoryController {
@@ -36,6 +36,11 @@
             this.lastMessage = '';
             this.lastStatus = 'idle';
             this.lastMetadata = {};
+            this.scanManifest = null;
+            this.scanId = '';
+            this.gapFlags = [];
+            this.warnings = [];
+            this.replayWindow = null;
             this.progress = null;
             this.providerConfigured = false;
             this.providerPagesLoaded = 0;
@@ -78,7 +83,9 @@
             try {
                 const page = await this.provider.getHistoryPage(this.wallet, this.nextCursor, {
                     loadedPages: this.providerPagesLoaded,
-                    loadedTransactions: this.totalLoadedTransactions
+                    loadedTransactions: this.totalLoadedTransactions,
+                    scanId: this.scanId,
+                    scanManifest: this.scanManifest
                 });
                 this.recordPage(page);
             } catch (error) {
@@ -161,6 +168,11 @@
             this.lastMessage = pageRecord.message || '';
             this.lastStatus = pageRecord.status || 'ok';
             this.lastMetadata = pageRecord.metadata || {};
+            this.scanManifest = normalizeScanManifest(pageRecord.metadata?.scan_manifest || this.scanManifest);
+            this.scanId = pageRecord.metadata?.scan_id || this.scanManifest?.scan_id || this.scanId || '';
+            this.gapFlags = mergeStringLists(this.gapFlags, pageRecord.metadata?.gap_flags, this.scanManifest?.gap_flags);
+            this.warnings = mergeStringLists(this.warnings, pageRecord.metadata?.warnings, this.scanManifest?.warnings);
+            this.replayWindow = pageRecord.metadata?.replay_window || this.replayWindow || null;
             this.providerConfigured = pageRecord.metadata?.provider_configured === true
                 || (!options.seeded && pageRecord.status === 'ok');
             this.lastError = pageRecord.status === 'ok' ? '' : this.lastMessage || pageRecord.status;
@@ -185,6 +197,11 @@
                 lastMessage: this.lastMessage,
                 lastStatus: this.lastStatus,
                 lastMetadata: this.lastMetadata,
+                scanManifest: this.scanManifest,
+                scanId: this.scanId,
+                gapFlags: this.gapFlags.slice(0, 16),
+                warnings: this.warnings.slice(0, 16),
+                replayWindow: this.replayWindow,
                 progress: this.progress,
                 providerConfigured: this.providerConfigured,
                 totalLoadedTransactions: this.totalLoadedTransactions,
@@ -217,7 +234,42 @@
             || status === 'provider_rate_limited'
             || status === 'provider_limited'
             || snapshot.lastMetadata?.rate_limited === true
-            || snapshot.lastMetadata?.provider_limit_reached === true;
+            || snapshot.lastMetadata?.provider_limit_reached === true
+            || snapshot.lastMetadata?.cursor_stalled === true
+            || hasBlockingGapFlag(snapshot.lastMetadata?.gap_flags)
+            || hasBlockingGapFlag(snapshot.scanManifest?.gap_flags);
+    }
+
+    function hasBlockingGapFlag(flags = []) {
+        const blocking = new Set([
+            'cursor_stall',
+            'schema_mismatch',
+            'malformed_ordering',
+            'provider_exhaustion_ambiguous'
+        ]);
+        return Array.isArray(flags) && flags.some(flag => blocking.has(String(flag || '').trim()));
+    }
+
+    function normalizeScanManifest(manifest = null) {
+        if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return null;
+        return {
+            ...manifest,
+            scan_id: String(manifest.scan_id || ''),
+            gap_flags: Array.isArray(manifest.gap_flags) ? manifest.gap_flags.slice(0, 16) : [],
+            warnings: Array.isArray(manifest.warnings) ? manifest.warnings.slice(0, 16) : []
+        };
+    }
+
+    function mergeStringLists(...lists) {
+        const values = [];
+        lists.forEach(list => {
+            if (!Array.isArray(list)) return;
+            list.forEach(item => {
+                const value = String(item || '').trim();
+                if (value && !values.includes(value)) values.push(value);
+            });
+        });
+        return values.slice(0, 16);
     }
 
     function waitForUiTurn() {

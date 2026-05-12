@@ -1,7 +1,7 @@
 (() => {
     const namespace = window.CryptoPhotonic = window.CryptoPhotonic || {};
 
-    const HISTORY_PROVIDER_VERSION = 'd106_provider_contract_v1';
+    const HISTORY_PROVIDER_VERSION = 'd130_provider_scan_manifest_contract_v1';
     const ARCHIVE_HISTORY_CONTRACT_VERSION = 'd129_archive_history_contract_v1';
 
     class WalletHistoryProvider {
@@ -98,8 +98,10 @@
             if (cursor) params.set('cursor', String(cursor));
             const loadedPages = Math.max(0, Number(options.loadedPages) || 0);
             const loadedTransactions = Math.max(0, Number(options.loadedTransactions) || 0);
+            const scanId = String(options.scanId || options.scanManifest?.scan_id || '').trim();
             if (loadedPages) params.set('loaded_pages', String(Math.floor(loadedPages)));
             if (loadedTransactions) params.set('loaded_transactions', String(Math.floor(loadedTransactions)));
+            if (/^[A-Za-z0-9._:-]{1,180}$/.test(scanId)) params.set('scan_id', scanId);
 
             const response = await fetch(`${this.endpoint}${separator}${params.toString()}`, {
                 cache: 'no-store',
@@ -263,6 +265,9 @@
                 ...metadata,
                 history_provider_contract: HISTORY_PROVIDER_VERSION,
                 archive_contract_version: metadata.archive_contract_version || ARCHIVE_HISTORY_CONTRACT_VERSION,
+                scan_manifest_version: metadata.scan_manifest_version || 'd130_scan_manifest_v1',
+                scan_id: metadata.scan_id || metadata.scan_manifest?.scan_id || '',
+                scan_manifest: normalizeScanManifest(metadata.scan_manifest),
                 provider_grade: metadata.provider_grade || 'basic',
                 replay_suitability: metadata.replay_suitability || 'low',
                 completeness_confidence: clampConfidence(metadata.completeness_confidence),
@@ -270,9 +275,60 @@
                 ordering_guarantee: metadata.ordering_guarantee || 'unknown',
                 cursor_guarantee: metadata.cursor_guarantee || 'unknown',
                 coverage_scope: metadata.coverage_scope || 'unknown',
+                provider_family: metadata.provider_family || metadata.provider_diagnostics?.provider_family || 'unknown',
+                archive_readiness: metadata.archive_readiness || metadata.provider_diagnostics?.archive_readiness || 'unknown',
+                replay_readiness: metadata.replay_readiness || metadata.provider_diagnostics?.replay_readiness || 'unknown',
+                gap_flags: Array.isArray(metadata.gap_flags) ? metadata.gap_flags.slice(0, 16) : [],
+                warnings: Array.isArray(metadata.warnings) ? metadata.warnings.slice(0, 16) : [],
+                replay_window: normalizeReplayWindow(metadata.replay_window),
                 supports_pagination: true,
                 browser_provider_calls: false
             }
+        };
+    }
+
+    function normalizeScanManifest(manifest = null) {
+        if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return null;
+        return {
+            scan_id: String(manifest.scan_id || ''),
+            wallet: String(manifest.wallet || ''),
+            provider: String(manifest.provider || ''),
+            provider_grade: String(manifest.provider_grade || 'basic'),
+            replay_suitability: String(manifest.replay_suitability || 'low'),
+            started_at: String(manifest.started_at || ''),
+            updated_at: String(manifest.updated_at || ''),
+            cursor_state: manifest.cursor_state && typeof manifest.cursor_state === 'object' ? { ...manifest.cursor_state } : {},
+            pages_loaded: Math.max(0, Number(manifest.pages_loaded) || 0),
+            transactions_loaded: Math.max(0, Number(manifest.transactions_loaded) || 0),
+            earliest_timestamp: String(manifest.earliest_timestamp || ''),
+            latest_timestamp: String(manifest.latest_timestamp || ''),
+            provider_limit_reached: manifest.provider_limit_reached === true,
+            rate_limited: manifest.rate_limited === true,
+            completeness_confidence: clampConfidence(manifest.completeness_confidence),
+            full_history_loaded: manifest.full_history_loaded === true,
+            gap_flags: Array.isArray(manifest.gap_flags) ? manifest.gap_flags.slice(0, 16) : [],
+            warnings: Array.isArray(manifest.warnings) ? manifest.warnings.slice(0, 16) : []
+        };
+    }
+
+    function normalizeReplayWindow(windowMetadata = null) {
+        if (!windowMetadata || typeof windowMetadata !== 'object' || Array.isArray(windowMetadata)) return null;
+        return {
+            preview_only: windowMetadata.preview_only !== false,
+            staged_history_only: windowMetadata.staged_history_only !== false,
+            rows_in_page: Math.max(0, Number(windowMetadata.rows_in_page) || 0),
+            rows_loaded_estimate: Math.max(0, Number(windowMetadata.rows_loaded_estimate) || 0),
+            earliest_timestamp: String(windowMetadata.earliest_timestamp || ''),
+            latest_timestamp: String(windowMetadata.latest_timestamp || ''),
+            coverage_pct: clampConfidence(windowMetadata.coverage_pct),
+            coverage_basis: String(windowMetadata.coverage_basis || ''),
+            replay_suitability: String(windowMetadata.replay_suitability || ''),
+            completeness_confidence: clampConfidence(windowMetadata.completeness_confidence),
+            warnings: Array.isArray(windowMetadata.warnings)
+                ? windowMetadata.warnings.slice(0, 8)
+                : Array.isArray(windowMetadata.generation_warnings)
+                    ? windowMetadata.generation_warnings.slice(0, 8)
+                    : []
         };
     }
 

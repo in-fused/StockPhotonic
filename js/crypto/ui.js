@@ -145,6 +145,14 @@
                 selectedStep: 0,
                 selectedWallet: '',
                 expandedStep: 0,
+                neighborhood: {
+                    mode: 'none',
+                    wallet: '',
+                    token: 'all',
+                    route: '',
+                    clusterKey: '',
+                    clusterKind: ''
+                },
                 breadcrumbs: [],
                 recentSteps: []
             },
@@ -3092,7 +3100,9 @@
             replayWindow: status.replayWindow || state.historyPreview.dataset?.metadata?.replay_window || null,
             replayReconstruction: status.replayReconstruction || state.historyPreview.dataset?.metadata?.replay_reconstruction || null,
             windowing: status.windowing || null,
-            timelineSegments: Array.isArray(status.timelineSegments) ? status.timelineSegments : []
+            timelineSegments: Array.isArray(status.timelineSegments) ? status.timelineSegments : [],
+            replayNeighborhood: status.replayNeighborhood || null,
+            replayClusters: status.replayClusters || null
         };
     }
 
@@ -3111,12 +3121,27 @@
                     direction: 'all',
                     counterparty: 'all',
                     majorOnly: false
-                },
+            },
             selectedStep: 0,
             selectedWallet: options.preserveFilters ? previous.selectedWallet || '' : '',
             expandedStep: 0,
+            neighborhood: options.preserveNeighborhood
+                ? normalizeReplayNeighborhoodFocus(previous.neighborhood)
+                : normalizeReplayNeighborhoodFocus(),
             breadcrumbs: options.preserveBreadcrumbs && Array.isArray(previous.breadcrumbs) ? previous.breadcrumbs.slice(-7) : [],
             recentSteps: options.preserveRecent && Array.isArray(previous.recentSteps) ? previous.recentSteps.slice(0, 8) : []
+        };
+    }
+
+    function normalizeReplayNeighborhoodFocus(focus = {}) {
+        const mode = String(focus?.mode || 'none');
+        return {
+            mode: ['none', 'transfer', 'wallet', 'counterparties', 'route', 'token', 'cluster'].includes(mode) ? mode : 'none',
+            wallet: String(focus?.wallet || ''),
+            token: String(focus?.token || 'all'),
+            route: String(focus?.route || ''),
+            clusterKey: String(focus?.clusterKey || focus?.cluster_key || ''),
+            clusterKind: String(focus?.clusterKind || focus?.cluster_kind || '')
         };
     }
 
@@ -3269,6 +3294,7 @@
             totalSteps: getHistoryReplayTotalSteps(status),
             audit: state.historyPreview.audit,
             auditFilters: normalizeReplayAuditFilters(state.historyPreview.audit?.filters),
+            neighborhood: normalizeReplayNeighborhoodFocus(state.historyPreview.audit?.neighborhood),
             breadcrumbs: state.historyPreview.audit?.breadcrumbs || [],
             recentEvents: state.historyPreview.audit?.recentSteps || []
         };
@@ -3288,6 +3314,7 @@
             filters: context.auditFilters,
             selectedCounterparty: context.auditFilters.counterparty !== 'all' ? context.auditFilters.counterparty : '',
             selectedToken: context.auditFilters.token !== 'all' ? context.auditFilters.token : '',
+            neighborhood: context.neighborhood,
             breadcrumbs: (context.breadcrumbs || []).slice(-7),
             recentSteps: (context.recentEvents || []).slice(0, 8),
             boundary: {
@@ -3364,6 +3391,8 @@
         state.historyPreview.checkpoint = checkpoint;
         state.historyPreview.audit.filters = normalizeReplayAuditFilters(checkpoint.filters);
         state.historyPreview.audit.selectedWallet = checkpoint.selectedCounterparty || '';
+        state.historyPreview.audit.neighborhood = normalizeReplayNeighborhoodFocus(checkpoint.neighborhood);
+        state.historyPreview.replayAnimator?.setNeighborhoodFocus?.(state.historyPreview.audit.neighborhood);
         const activeWindow = getActiveReplayWindowDescriptor();
         if (checkpoint.windowIndex && (!activeWindow?.windowIndex || checkpoint.windowIndex !== activeWindow.windowIndex)) {
             await activateReplayWindow(checkpoint.windowIndex, {
@@ -3461,6 +3490,8 @@
             continuityWarning: partial
                 ? 'This replay is only a staged window. Continue controls move between available Worker-backed windows or load another staged page when needed.'
                 : '',
+            continuityConfidence: replayWindow.continuity_confidence || reconstruction.continuity_confidence || null,
+            gapMap: replayWindow.gap_map || reconstruction.gap_map || getWalletHistoryScanManifest().replay_gap_map || null,
             oldestFirstReady: reconstruction.oldest_first_ready === true || replayWindow.oldest_first_ready === true,
             oldestFirstRequired: reconstruction.oldest_first_reconstruction_required === true || replayWindow.oldest_first_reconstruction_required === true,
             progressiveExpansion: reconstruction.progressive_expansion_available === true || replayWindow.progressive_expansion_available === true || state.history.moreAvailable,
@@ -3522,6 +3553,8 @@
             continuation: window.continuation && typeof window.continuation === 'object' ? { ...window.continuation } : null,
             boundary: window.boundary && typeof window.boundary === 'object' ? { ...window.boundary } : null,
             partial: window.partial === true,
+            continuityConfidence: window.continuityConfidence || window.continuity_confidence || null,
+            gapMap: window.gapMap || window.gap_map || null,
             timelineSegments: Array.isArray(window.timelineSegments)
                 ? window.timelineSegments.slice(0, 24)
                 : Array.isArray(window.timeline_segments)
@@ -5849,7 +5882,7 @@
             state.historyPreview.graphRenderResult = null;
             state.historyPreview.graphRenderedAt = 0;
             detachHistoryReplayAnimator({ preserveStatus: false });
-            resetHistoryPreviewAuditState({ preserveFilters: true, preserveBreadcrumbs: true, preserveRecent: true });
+            resetHistoryPreviewAuditState({ preserveFilters: true, preserveBreadcrumbs: true, preserveRecent: true, preserveNeighborhood: true });
             state.historyPreview.lastMessage = 'Replay window dataset restored from local staged-window cache. Active Wallet Lookup graph unchanged.';
             if (!options.skipRenderStatus) renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             return cachedDataset.dataset;
@@ -5876,7 +5909,8 @@
         resetHistoryPreviewAuditState({
             preserveFilters: options.preserveAudit === true,
             preserveBreadcrumbs: options.preserveAudit === true,
-            preserveRecent: options.preserveAudit === true
+            preserveRecent: options.preserveAudit === true,
+            preserveNeighborhood: options.preserveAudit === true
         });
         cacheReplayWindowDataset(generationKey, dataset, metrics);
         state.historyPreview.lastMessage = metrics.transactions
@@ -5905,6 +5939,8 @@
                 ordinal_end: activeWindow.ordinalEnd,
                 chunk_size: activeWindow.chunkSize,
                 partial: activeWindow.partial,
+                continuity_confidence: activeWindow.continuityConfidence || activeWindow.continuity_confidence || state.history.replayWindow?.continuity_confidence || state.history.lastMetadata?.replay_window?.continuity_confidence || null,
+                gap_map: activeWindow.gapMap || activeWindow.gap_map || state.history.replayWindow?.gap_map || state.history.lastMetadata?.replay_window?.gap_map || null,
                 continuation: activeWindow.continuation,
                 boundary: activeWindow.boundary,
                 timeline_segments: activeWindow.timelineSegments
@@ -5930,6 +5966,8 @@
                 replay_window: replayWindow && typeof replayWindow === 'object' ? { ...replayWindow } : null,
                 scan_cache: scanCache && typeof scanCache === 'object' ? { ...scanCache } : null,
                 replay_reconstruction: replayReconstruction && typeof replayReconstruction === 'object' ? { ...replayReconstruction } : null,
+                replay_gap_map: replayWindow?.gap_map || replayReconstruction?.gap_map || getWalletHistoryScanManifest().replay_gap_map || null,
+                replay_continuity_confidence: replayWindow?.continuity_confidence || replayReconstruction?.continuity_confidence || null,
                 gap_flags: getWalletHistoryGapFlags(),
                 warnings,
                 replay_generation_warnings: warnings,
@@ -5956,6 +5994,8 @@
                     max_preview_transactions: HISTORY_PREVIEW_GRAPH_LIMITS.maxTransactions,
                     max_preview_nodes: HISTORY_PREVIEW_GRAPH_LIMITS.maxNodes,
                     max_preview_edges: HISTORY_PREVIEW_GRAPH_LIMITS.maxEdges,
+                    max_replay_neighborhood_events: 18,
+                    max_replay_clusters: 8,
                     progressive_expansion_required: true
                 }
             }
@@ -6213,11 +6253,13 @@
                 initialStep: options.stepIndex ?? state.historyPreview.replayStatus?.currentStep ?? 0,
                 selectedStep: state.historyPreview.audit?.selectedStep || options.stepIndex || state.historyPreview.replayStatus?.selectedStep || state.historyPreview.replayStatus?.currentStep || 0,
                 auditFilters: normalizeReplayAuditFilters(state.historyPreview.audit?.filters),
+                neighborhoodFocus: normalizeReplayNeighborhoodFocus(state.historyPreview.audit?.neighborhood),
                 onStatus: updateHistoryReplayStatus
             });
             state.historyPreview.replayStatus = state.historyPreview.replayAnimator.getStatus?.() || state.historyPreview.replayStatus;
         }
         state.historyPreview.replayAnimator?.setAuditFilters?.(normalizeReplayAuditFilters(state.historyPreview.audit?.filters));
+        state.historyPreview.replayAnimator?.setNeighborhoodFocus?.(normalizeReplayNeighborhoodFocus(state.historyPreview.audit?.neighborhood));
         if (state.historyPreview.audit?.selectedStep) {
             state.historyPreview.replayAnimator?.selectStep?.(state.historyPreview.audit.selectedStep);
         }
@@ -8424,6 +8466,7 @@
                 events,
                 selectedEvent,
                 auditFilters: normalizeReplayAuditFilters(audit.filters),
+                neighborhoodFocus: normalizeReplayNeighborhoodFocus(audit.neighborhood),
                 breadcrumbs: audit.breadcrumbs || [],
                 recentEvents: audit.recentSteps || [],
                 checkpoint,
@@ -8440,6 +8483,8 @@
                 startDisabled,
                 replayCoverage,
                 confidence,
+                gapFlags: getWalletHistoryGapFlags(),
+                scanManifest: getWalletHistoryScanManifest(),
                 providerState: getWalletHistoryProviderStateDisplay(),
                 providerGrade: getWalletHistoryProviderGrade(),
                 speed,
@@ -8774,6 +8819,8 @@
                         ? 'oldest_staged_range'
                         : 'middle_staged_range',
             partial: getWalletHistoryScanManifest().full_history_loaded !== true,
+            continuityConfidence: replayWindow.continuity_confidence || reconstruction.continuity_confidence || null,
+            gapMap: replayWindow.gap_map || reconstruction.gap_map || getWalletHistoryScanManifest().replay_gap_map || null,
             continuation: {
                 can_continue_older: newestFirst ? safeIndex < windowCount : safeIndex > 1,
                 can_continue_newer: newestFirst ? safeIndex > 1 : safeIndex < windowCount,
@@ -8871,6 +8918,9 @@
         if (action === 'jump-boundary-oldest' || action === 'jump-boundary-newest') {
             return jumpReplayBoundary(action === 'jump-boundary-newest' ? 'newest' : 'oldest');
         }
+        if (action === 'collapse-neighborhood') {
+            return setReplayNeighborhoodFocus(null, 'Replay neighborhood collapsed. Staged replay data and Wallet Lookup graph are unchanged.');
+        }
         if (!event) {
             state.historyPreview.lastMessage = 'Select a replay transfer before running replay audit actions.';
             updateReplayWorkspaceShell();
@@ -8903,9 +8953,48 @@
             filters.token = event.token ? String(event.token).toUpperCase() : filters.token;
             state.historyPreview.audit.filters = filters;
             state.historyPreview.replayAnimator?.setAuditFilters?.(filters);
+            setReplayNeighborhoodFocus({
+                mode: 'transfer',
+                token: filters.token,
+                route: getReplayEventRouteKey(event)
+            }, 'Replay expansion is scoped to the selected staged transfer neighborhood only.');
             state.historyPreview.lastMessage = 'Replay expansion is scoped to staged transfer neighbors and token context only.';
             updateReplayWorkspaceShell();
             return event;
+        }
+        if (action === 'expand-wallet') {
+            return setReplayNeighborhoodFocus({
+                mode: 'wallet',
+                wallet: details.wallet || event.destinationWallet || event.sourceWallet || ''
+            }, 'Replay wallet neighborhood expanded from staged replay rows only.');
+        }
+        if (action === 'expand-counterparties') {
+            return setReplayNeighborhoodFocus({
+                mode: 'counterparties',
+                wallet: details.wallet || event.destinationWallet || event.sourceWallet || ''
+            }, 'Related counterparties highlighted inside staged replay rows only.');
+        }
+        if (action === 'expand-route') {
+            return setReplayNeighborhoodFocus({
+                mode: 'route',
+                route: details.route || getReplayEventRouteKey(event)
+            }, 'Same-route staged replay neighborhood expanded without merging into Wallet Lookup.');
+        }
+        if (action === 'expand-token') {
+            return setReplayNeighborhoodFocus({
+                mode: 'token',
+                token: details.token || event.token || event.symbol || ''
+            }, 'Token-specific staged replay neighborhood expanded.');
+        }
+        if (action === 'expand-cluster') {
+            return setReplayNeighborhoodFocus({
+                mode: 'cluster',
+                clusterKey: details.clusterKey || '',
+                clusterKind: details.clusterKind || '',
+                route: details.route || getReplayEventRouteKey(event),
+                token: details.token || event.token || event.symbol || '',
+                wallet: details.wallet || event.destinationWallet || event.sourceWallet || ''
+            }, 'Replay cluster expanded from repeated staged replay patterns only.');
         }
         if (action === 'continue-around') {
             const total = getHistoryReplayTotalSteps();
@@ -8917,6 +9006,26 @@
             state.historyPreview.lastMessage = 'Replay continuation is centered around this staged transfer. Use boundary controls to move windows.';
             updateReplayWorkspaceShell();
             return event;
+        }
+        if (action === 'continue-route') {
+            return continueReplayPath('route', {
+                route: details.route || getReplayEventRouteKey(event)
+            });
+        }
+        if (action === 'follow-outbound') {
+            return continueReplayPath('outbound', {
+                wallet: details.wallet || event.destinationWallet || ''
+            });
+        }
+        if (action === 'follow-inbound') {
+            return continueReplayPath('inbound', {
+                wallet: details.wallet || event.sourceWallet || ''
+            });
+        }
+        if (action === 'continue-token-path') {
+            return continueReplayPath('token', {
+                token: details.token || event.token || event.symbol || ''
+            });
         }
         if (action === 'continue-counterparty') {
             const wallet = details.wallet || event.destinationWallet || event.sourceWallet || '';
@@ -8950,12 +9059,110 @@
         return null;
     }
 
+    function setReplayNeighborhoodFocus(focus = null, message = '') {
+        const normalized = normalizeReplayNeighborhoodFocus(focus || {});
+        state.historyPreview.audit.neighborhood = normalized;
+        state.historyPreview.replayAnimator?.setNeighborhoodFocus?.(normalized);
+        pruneReplayInvestigationState();
+        persistReplayAuditCheckpoint(normalized.mode === 'none' ? 'neighborhood-reset' : 'neighborhood-expansion');
+        state.historyPreview.lastMessage = message || 'Replay neighborhood updated from staged replay data only.';
+        updateReplayWorkspaceShell();
+        return normalized;
+    }
+
+    async function continueReplayPath(kind = 'route', details = {}) {
+        const current = getSelectedHistoryReplayEvent() || getCurrentHistoryReplayEvent();
+        if (!current) {
+            state.historyPreview.lastMessage = 'Select a staged replay transfer before continuing a replay path.';
+            updateReplayWorkspaceShell();
+            return null;
+        }
+        const currentStep = Number(current.step) || 0;
+        const route = details.route || getReplayEventRouteKey(current);
+        const token = String(details.token || current.token || current.symbol || '').toUpperCase();
+        const wallet = String(details.wallet || '').trim();
+        const events = getHistoryReplayEvents().slice().sort((a, b) => Number(a.step) - Number(b.step));
+        const after = events.filter(event => Number(event.step) > currentStep);
+        const before = events.filter(event => Number(event.step) < currentStep).reverse();
+        const predicate = event => {
+            if (kind === 'route') return route && getReplayEventRouteKey(event) === route;
+            if (kind === 'token') return token && String(event.token || event.symbol || '').toUpperCase() === token;
+            if (kind === 'outbound') return wallet && String(event.sourceWallet || event.source_wallet || '') === wallet;
+            if (kind === 'inbound') return wallet && String(event.destinationWallet || event.destination_wallet || '') === wallet;
+            return false;
+        };
+        const target = after.find(predicate) || (kind === 'inbound' ? before.find(predicate) : null);
+        if (target?.step) {
+            const focus = kind === 'route'
+                ? { mode: 'route', route }
+                : kind === 'token'
+                    ? { mode: 'token', token }
+                    : { mode: 'wallet', wallet };
+            setReplayNeighborhoodFocus(focus, 'Replay path continuation narrowed to staged replay rows only.');
+            return selectHistoryReplayEventByStep(target.step, {
+                pause: true,
+                addBreadcrumb: true,
+                message: getReplayContinuationMessage(kind, true)
+            });
+        }
+        const windowStatus = getHistoryReplayWindowStatus(buildHistoryGraphPreviewSummary(), getHistoryReplayStatus());
+        if (windowStatus.canContinueOlder || windowStatus.olderRequiresProviderPage) {
+            state.historyPreview.lastMessage = getReplayContinuationMessage(kind, false);
+            setReplayNeighborhoodFocus(kind === 'route'
+                ? { mode: 'route', route }
+                : kind === 'token'
+                    ? { mode: 'token', token }
+                    : { mode: 'wallet', wallet }, state.historyPreview.lastMessage);
+            return continueReplayWindow('older');
+        }
+        state.historyPreview.lastMessage = 'No next staged replay event matches that continuation. This does not prove the chain ends.';
+        updateReplayWorkspaceShell();
+        return null;
+    }
+
+    function getReplayContinuationMessage(kind = 'route', found = false) {
+        const label = kind === 'route'
+            ? 'same-route'
+            : kind === 'token'
+                ? 'token-specific'
+                : kind === 'outbound'
+                    ? 'outbound'
+                    : 'inbound';
+        return found
+            ? `Replay continued to the next ${label} staged event. Continuity remains staged-only.`
+            : `No ${label} continuation is visible in this staged window; moving to an older staged window may still be uncertain.`;
+    }
+
+    function getReplayEventRouteKey(event = {}) {
+        const source = String(event.sourceWallet || event.source_wallet || '').trim();
+        const destination = String(event.destinationWallet || event.destination_wallet || '').trim();
+        return source && destination ? `${source}>${destination}` : '';
+    }
+
+    function pruneReplayInvestigationState() {
+        const audit = state.historyPreview.audit || {};
+        audit.breadcrumbs = Array.isArray(audit.breadcrumbs) ? audit.breadcrumbs.slice(-7) : [];
+        audit.recentSteps = Array.isArray(audit.recentSteps)
+            ? audit.recentSteps.map(step => Math.max(0, Number(step) || 0)).filter(Boolean).slice(0, 8)
+            : [];
+        audit.neighborhood = normalizeReplayNeighborhoodFocus(audit.neighborhood);
+        state.historyPreview.audit = audit;
+        if (state.historyPreview.replayWindowCache?.size > HISTORY_REPLAY_WINDOW_CACHE_LIMIT) {
+            while (state.historyPreview.replayWindowCache.size > HISTORY_REPLAY_WINDOW_CACHE_LIMIT) {
+                const oldestKey = state.historyPreview.replayWindowCache.keys().next().value;
+                state.historyPreview.replayWindowCache.delete(oldestKey);
+            }
+        }
+    }
+
     function followReplayAuditWallet(wallet = '', source = '') {
         const filters = normalizeReplayAuditFilters(state.historyPreview.audit.filters);
         filters.counterparty = wallet || 'all';
         state.historyPreview.audit.filters = filters;
         state.historyPreview.audit.selectedWallet = wallet;
+        state.historyPreview.audit.neighborhood = normalizeReplayNeighborhoodFocus({ mode: 'wallet', wallet });
         state.historyPreview.replayAnimator?.setAuditFilters?.(filters);
+        state.historyPreview.replayAnimator?.setNeighborhoodFocus?.(state.historyPreview.audit.neighborhood);
         persistReplayAuditCheckpoint('follow-counterparty');
         const events = namespace.replayWorkspace?.filterReplayEvents
             ? namespace.replayWorkspace.filterReplayEvents(getHistoryReplayEvents(), filters)

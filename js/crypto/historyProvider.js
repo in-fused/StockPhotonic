@@ -451,6 +451,8 @@
             oldest_first_ready: windowMetadata.oldest_first_ready === true,
             oldest_first_reconstruction_required: windowMetadata.oldest_first_reconstruction_required === true,
             progressive_expansion_available: windowMetadata.progressive_expansion_available === true,
+            continuity_confidence: normalizeReplayContinuityProfile(windowMetadata.continuity_confidence),
+            gap_map: normalizeReplayGapMap(windowMetadata.gap_map),
             timeline_segments: Array.isArray(windowMetadata.timeline_segments)
                 ? windowMetadata.timeline_segments.slice(0, 12).map(normalizeTimelineSegment)
                 : [],
@@ -512,6 +514,8 @@
             reconstruction_complete: reconstruction.reconstruction_complete === true,
             coverage_pct: clampConfidence(reconstruction.coverage_pct),
             confidence_degraded: reconstruction.confidence_degraded === true,
+            continuity_confidence: normalizeReplayContinuityProfile(reconstruction.continuity_confidence),
+            gap_map: normalizeReplayGapMap(reconstruction.gap_map),
             timeline_segments: Array.isArray(reconstruction.timeline_segments)
                 ? reconstruction.timeline_segments.slice(0, 24).map(normalizeTimelineSegment)
                 : [],
@@ -536,6 +540,66 @@
             cursor_kind: String(segment.cursor_kind || 'unknown'),
             active: segment.active === true,
             partial: segment.partial !== false
+        };
+    }
+
+    function normalizeReplayContinuityProfile(profile = null) {
+        if (!profile || typeof profile !== 'object' || Array.isArray(profile)) return null;
+        const level = String(profile.level || 'partial');
+        return {
+            score: clampConfidence(profile.score),
+            level: ['high', 'partial', 'ambiguous', 'provider_limited'].includes(level) ? level : 'partial',
+            label: String(profile.label || 'Partial staged continuity'),
+            degraded: profile.degraded !== false,
+            reason_codes: Array.isArray(profile.reason_codes) ? profile.reason_codes.slice(0, 8).map(String) : [],
+            gap_count: Math.max(0, Number(profile.gap_count) || 0),
+            scope: String(profile.scope || 'staged_continuity'),
+            no_full_history_claim: profile.no_full_history_claim !== false
+        };
+    }
+
+    function normalizeReplayGapMap(gapMap = null) {
+        if (!gapMap || typeof gapMap !== 'object' || Array.isArray(gapMap)) return null;
+        return {
+            version: String(gapMap.version || 'd136_replay_gap_map_v1'),
+            scope: String(gapMap.scope || 'staged_replay_window'),
+            scan_id: String(gapMap.scan_id || ''),
+            window_index: Math.max(0, Number(gapMap.window_index) || 0),
+            total_windows: Math.max(0, Number(gapMap.total_windows) || 0),
+            ordinal_start: Math.max(0, Number(gapMap.ordinal_start) || 0),
+            ordinal_end: Math.max(0, Number(gapMap.ordinal_end) || 0),
+            missing_windows_possible: gapMap.missing_windows_possible === true,
+            provider_limited: gapMap.provider_limited === true,
+            rate_limited: gapMap.rate_limited === true,
+            cursor_ambiguous: gapMap.cursor_ambiguous === true,
+            timestamp_gaps: gapMap.timestamp_gaps === true,
+            confidence_impact: clampConfidence(gapMap.confidence_impact),
+            gaps: Array.isArray(gapMap.gaps) ? gapMap.gaps.slice(0, 12).map(normalizeReplayGap) : [],
+            boundary_markers: Array.isArray(gapMap.boundary_markers)
+                ? gapMap.boundary_markers.slice(0, 12).map(marker => ({
+                    key: String(marker.key || ''),
+                    label: String(marker.label || ''),
+                    position_pct: clampConfidence(marker.position_pct),
+                    kind: String(marker.kind || 'uncertain_continuation')
+                }))
+                : [],
+            no_full_history_claim: gapMap.no_full_history_claim !== false
+        };
+    }
+
+    function normalizeReplayGap(gap = {}) {
+        const severity = String(gap.severity || 'medium');
+        return {
+            code: String(gap.code || ''),
+            label: String(gap.label || gap.code || ''),
+            severity: ['low', 'medium', 'high'].includes(severity) ? severity : 'medium',
+            ordinal_start: Math.max(0, Number(gap.ordinal_start) || 0),
+            ordinal_end: Math.max(0, Number(gap.ordinal_end) || 0),
+            window_index: Math.max(0, Number(gap.window_index) || 0),
+            confidence_impact: clampConfidence(gap.confidence_impact),
+            source: String(gap.source || ''),
+            boundary: String(gap.boundary || ''),
+            note: String(gap.note || '')
         };
     }
 

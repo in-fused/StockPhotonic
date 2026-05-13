@@ -33,6 +33,7 @@
             warnings: [],
             metadata: {},
             auditFilters: normalizeAuditFilters(options.auditFilters),
+            neighborhoodFocus: normalizeNeighborhoodFocus(options.neighborhoodFocus),
             selectedStepIndex: 0,
             destroyed: false,
             onStatus: typeof options.onStatus === 'function' ? options.onStatus : null,
@@ -48,6 +49,7 @@
             reset,
             setSpeed,
             setAuditFilters,
+            setNeighborhoodFocus,
             selectStep,
             hitTest,
             render,
@@ -68,6 +70,7 @@
             state.stepIndex = clampInteger(configureOptions.initialStep, 0, 0, state.steps.length);
             state.selectedStepIndex = clampInteger(configureOptions.selectedStep ?? state.stepIndex, state.stepIndex, 0, state.steps.length);
             state.auditFilters = normalizeAuditFilters(configureOptions.auditFilters || state.auditFilters);
+            state.neighborhoodFocus = normalizeNeighborhoodFocus(configureOptions.neighborhoodFocus || state.neighborhoodFocus);
             state.done = state.steps.length > 0 && state.stepIndex >= state.steps.length;
             render();
             notifyStatus();
@@ -159,6 +162,13 @@
             return getStatus();
         }
 
+        function setNeighborhoodFocus(focus = {}) {
+            state.neighborhoodFocus = normalizeNeighborhoodFocus(focus);
+            render();
+            notifyStatus();
+            return getStatus();
+        }
+
         function selectStep(stepIndex = 0) {
             state.selectedStepIndex = clampInteger(stepIndex, state.stepIndex, 0, state.steps.length);
             render();
@@ -186,6 +196,7 @@
                 playing: state.playing,
                 selectedStepIndex: state.selectedStepIndex,
                 auditFilters: state.auditFilters,
+                neighborhoodFocus: state.neighborhoodFocus,
                 now,
                 metadata: state.metadata,
                 limits: state.limits
@@ -198,7 +209,9 @@
             const selected = state.selectedStepIndex > 0 ? state.steps[Math.max(0, state.selectedStepIndex - 1)] || {} : {};
             const speed = SPEEDS[state.speed] || SPEEDS.standard;
             const activePath = buildActivePathMetadata(current, state.graph, state.stepIndex, state.steps.length);
-            const audit = buildAuditStatusMetadata(state.steps, selected, state.auditFilters);
+            const audit = buildAuditStatusMetadata(state.steps, selected, state.auditFilters, state.neighborhoodFocus);
+            const replayClusters = buildReplayClusterStatus(state.steps);
+            const replayNeighborhood = buildReplayNeighborhoodStatus(state.steps, selected, state.neighborhoodFocus);
             return {
                 version: HISTORY_REPLAY_ANIMATOR_VERSION,
                 previewOnly: true,
@@ -244,6 +257,10 @@
                 scanId: state.metadata.scan_id || '',
                 replayWindow: state.metadata.replay_window || null,
                 replayReconstruction: state.metadata.replay_reconstruction || null,
+                replayGapMap: state.metadata.replay_gap_map || state.metadata.gap_map || state.metadata.replay_window?.gap_map || state.metadata.replay_reconstruction?.gap_map || null,
+                continuityConfidence: state.metadata.replay_continuity_confidence || state.metadata.continuity_confidence || state.metadata.replay_window?.continuity_confidence || state.metadata.replay_reconstruction?.continuity_confidence || null,
+                replayNeighborhood,
+                replayClusters,
                 timelineSegments: Array.isArray(state.metadata.replay_reconstruction?.timeline_segments)
                     ? state.metadata.replay_reconstruction.timeline_segments.slice(0, 24)
                     : Array.isArray(state.metadata.replay_window?.timeline_segments)
@@ -469,7 +486,7 @@
         const selected = options.steps[Math.max(0, Number(options.selectedStepIndex || 0) - 1)] || current;
         const viewport = getReplayViewport(graph, selected || current, size, options);
         const visibility = getReplayVisibilitySets(options.steps, options.stepIndex);
-        const audit = getReplayAuditSets(options.steps, selected, options.auditFilters);
+        const audit = getReplayAuditSets(options.steps, selected, options.auditFilters, options.neighborhoodFocus);
         let rootVisible = false;
         graph.nodes.forEach(node => {
             if (!isTrackedWallet(node, graph)) return;
@@ -487,11 +504,13 @@
         drawReplayFocusHalo(ctx, graph, selected || current, options);
         drawRevealedEdges(ctx, graph, visibility, current, { ...options, selected, audit });
         drawRevealedNodes(ctx, graph, visibility, current, { ...options, selected, audit });
+        drawReplayClusterBadges(ctx, graph, options.steps, audit, options);
 
         ctx.restore();
         drawReplayProgress(ctx, size.width, size.height, options.stepIndex, options.steps.length, options.playing);
         drawReplayStatePill(ctx, size.width, size.height, options.playing, options.stepIndex, options.steps.length);
         drawReplayBoundaryMarkers(ctx, size.width, size.height, options);
+        drawReplayGapOverlays(ctx, size.width, size.height, options);
         drawWatermark(ctx, size.width, size.height);
     }
 
@@ -883,6 +902,82 @@
         ctx.restore();
     }
 
+    function drawReplayGapOverlays(ctx, width, height, options = {}) {
+        const gapMap = normalizeReplayGapMap(options.metadata?.replay_gap_map
+            || options.metadata?.gap_map
+            || options.metadata?.replay_window?.gap_map
+            || options.metadata?.replay_reconstruction?.gap_map
+            || null);
+        const gaps = gapMap.gaps || [];
+        if (!gaps.length && !gapMap.missingWindowsPossible && !gapMap.cursorAmbiguous) return;
+        const barWidth = Math.min(width - 28, 440);
+        const x = 14;
+        const y = 38;
+        const markerCount = Math.min(8, Math.max(1, gaps.length));
+        ctx.save();
+        gaps.slice(0, markerCount).forEach((gap, index) => {
+            const pct = gapMap.ordinalStart && gapMap.ordinalEnd && gap.ordinalStart
+                ? clamp((gap.ordinalStart - gapMap.ordinalStart) / Math.max(1, gapMap.ordinalEnd - gapMap.ordinalStart + 1), 0.03, 0.97)
+                : (index + 1) / (markerCount + 1);
+            const mx = x + barWidth * pct;
+            ctx.strokeStyle = gap.severity === 'high' ? 'rgba(248, 113, 113, 0.78)' : 'rgba(250, 204, 21, 0.72)';
+            ctx.lineWidth = gap.severity === 'high' ? 2 : 1.4;
+            ctx.setLineDash(gap.severity === 'high' ? [3, 4] : [2, 5]);
+            ctx.beginPath();
+            ctx.moveTo(mx, y - 18);
+            ctx.lineTo(mx, y + 9);
+            ctx.stroke();
+        });
+        const label = gapMap.providerLimited || gapMap.rateLimited
+            ? 'PROVIDER-LIMITED CONTINUITY'
+            : gapMap.cursorAmbiguous
+                ? 'CURSOR AMBIGUITY'
+                : 'GAP-AWARE STAGED REPLAY';
+        ctx.setLineDash([]);
+        ctx.font = '800 9px JetBrains Mono, monospace';
+        const textWidth = Math.min(width - 28, ctx.measureText(label).width + 18);
+        roundedRect(ctx, width - textWidth - 14, 14, textWidth, 21, 10);
+        ctx.fillStyle = gapMap.providerLimited || gapMap.rateLimited ? 'rgba(127, 29, 29, 0.52)' : 'rgba(113, 63, 18, 0.48)';
+        ctx.fill();
+        ctx.strokeStyle = gapMap.providerLimited || gapMap.rateLimited ? 'rgba(248, 113, 113, 0.34)' : 'rgba(250, 204, 21, 0.34)';
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(254, 249, 195, 0.86)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, width - textWidth / 2 - 14, 24.5);
+        ctx.restore();
+    }
+
+    function drawReplayClusterBadges(ctx, graph = {}, steps = [], audit = {}, options = {}) {
+        const clusters = buildVisibleReplayClusters(steps, audit).slice(0, 5);
+        if (!clusters.length) return;
+        const nodeById = graph.nodeById || new Map();
+        ctx.save();
+        clusters.forEach(cluster => {
+            const nodes = [...cluster.nodeIds].map(id => nodeById.get(id)).filter(Boolean);
+            if (!nodes.length) return;
+            const center = nodes.reduce((point, node) => ({
+                x: point.x + node.x / nodes.length,
+                y: point.y + node.y / nodes.length
+            }), { x: 0, y: 0 });
+            const label = `${cluster.label} ${cluster.count}`;
+            ctx.font = '800 8.5px JetBrains Mono, monospace';
+            const width = Math.min(132, Math.max(42, ctx.measureText(label).width + 14));
+            const x = center.x - width / 2;
+            const y = center.y - 34 - (cluster.offset || 0);
+            roundedRect(ctx, x, y, width, 18, 8);
+            ctx.fillStyle = cluster.active ? 'rgba(217, 70, 239, 0.34)' : 'rgba(15, 23, 42, 0.76)';
+            ctx.fill();
+            ctx.strokeStyle = cluster.active ? 'rgba(244, 114, 182, 0.62)' : 'rgba(103, 232, 249, 0.34)';
+            ctx.stroke();
+            ctx.fillStyle = cluster.active ? 'rgba(253, 244, 255, 0.9)' : 'rgba(207, 250, 254, 0.8)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, center.x, y + 9);
+        });
+        ctx.restore();
+    }
+
     function drawBoundaryLine(ctx, x, y1, y2, label, align = 'left') {
         ctx.save();
         ctx.strokeStyle = 'rgba(250, 204, 21, 0.30)';
@@ -1053,8 +1148,9 @@
         };
     }
 
-    function getReplayAuditSets(steps = [], selected = null, filters = {}) {
+    function getReplayAuditSets(steps = [], selected = null, filters = {}, neighborhoodFocus = {}) {
         const safeFilters = normalizeAuditFilters(filters);
+        const focus = normalizeNeighborhoodFocus(neighborhoodFocus);
         const filtersActive = hasActiveAuditFilters(safeFilters);
         const threshold = getMajorFlowThreshold(steps);
         const filteredStepIds = new Set();
@@ -1062,6 +1158,7 @@
         const filteredNodeIds = new Set();
         const neighborhoodEdgeIds = new Set();
         const neighborhoodNodeIds = new Set(selected?.nodeIds || []);
+        const expandedStepIds = new Set();
         const selectedSource = normalizeAddress(selected?.sourceWallet);
         const selectedDestination = normalizeAddress(selected?.destinationWallet);
 
@@ -1082,30 +1179,41 @@
                 if (step.edgeId) neighborhoodEdgeIds.add(step.edgeId);
                 (step.nodeIds || []).forEach(id => neighborhoodNodeIds.add(id));
             }
+            if (stepMatchesNeighborhoodFocus(step, selected, focus)) {
+                expandedStepIds.add(step.index);
+                if (step.edgeId) neighborhoodEdgeIds.add(step.edgeId);
+                (step.nodeIds || []).forEach(id => neighborhoodNodeIds.add(id));
+            }
         });
 
         return {
             filtersActive,
+            neighborhoodActive: focus.mode !== 'none',
+            neighborhoodFocus: focus,
             filteredStepIds,
             filteredEdgeIds,
             filteredNodeIds,
             neighborhoodEdgeIds,
-            neighborhoodNodeIds
+            neighborhoodNodeIds,
+            expandedStepIds
         };
     }
 
-    function buildAuditStatusMetadata(steps = [], selected = null, filters = {}) {
-        const audit = getReplayAuditSets(steps, selected, filters);
+    function buildAuditStatusMetadata(steps = [], selected = null, filters = {}, neighborhoodFocus = {}) {
+        const audit = getReplayAuditSets(steps, selected, filters, neighborhoodFocus);
         return {
             previewOnly: true,
             notMerged: true,
             filters: normalizeAuditFilters(filters),
             filtersActive: audit.filtersActive,
+            neighborhoodActive: audit.neighborhoodActive,
+            neighborhoodFocus: audit.neighborhoodFocus,
             filteredStepCount: audit.filteredEdgeIds.size,
             selectedStep: selected?.index != null ? Number(selected.index) + 1 : 0,
             selectedEdgeId: selected?.edgeId || '',
             selectedNodeIds: Array.isArray(selected?.nodeIds) ? selected.nodeIds.slice() : [],
-            localNeighborhoodEdgeCount: audit.neighborhoodEdgeIds.size
+            localNeighborhoodEdgeCount: audit.neighborhoodEdgeIds.size,
+            expandedStepCount: audit.expandedStepIds.size
         };
     }
 
@@ -1195,6 +1303,161 @@
             minDistance = Math.min(minDistance, Math.hypot(point.x - curvePoint.x, point.y - curvePoint.y));
         }
         return minDistance;
+    }
+
+    function stepMatchesNeighborhoodFocus(step = {}, selected = null, focus = {}) {
+        const safeFocus = normalizeNeighborhoodFocus(focus);
+        if (safeFocus.mode === 'none') return false;
+        const source = normalizeAddress(step.sourceWallet);
+        const destination = normalizeAddress(step.destinationWallet);
+        const token = normalizeFilterValue(step.token);
+        const route = getStepRouteKey(step);
+        if (safeFocus.mode === 'wallet') return safeFocus.wallet && (source === safeFocus.wallet || destination === safeFocus.wallet);
+        if (safeFocus.mode === 'route') return safeFocus.route && route === safeFocus.route;
+        if (safeFocus.mode === 'token') return safeFocus.token !== 'all' && token === safeFocus.token;
+        if (safeFocus.mode === 'counterparties') {
+            const selectedWallets = new Set([
+                normalizeAddress(selected?.sourceWallet),
+                normalizeAddress(selected?.destinationWallet)
+            ].filter(Boolean));
+            return selectedWallets.has(source) || selectedWallets.has(destination);
+        }
+        if (safeFocus.mode === 'cluster') {
+            if (safeFocus.route && route === safeFocus.route) return true;
+            if (safeFocus.token !== 'all' && token === safeFocus.token) return true;
+            if (safeFocus.wallet && (source === safeFocus.wallet || destination === safeFocus.wallet)) return true;
+            return false;
+        }
+        if (safeFocus.mode === 'transfer' && selected) {
+            const selectedRoute = getStepRouteKey(selected);
+            const selectedToken = normalizeFilterValue(selected.token);
+            return (selectedRoute && route === selectedRoute)
+                || (selectedToken !== 'all' && token === selectedToken)
+                || source === normalizeAddress(selected.sourceWallet)
+                || source === normalizeAddress(selected.destinationWallet)
+                || destination === normalizeAddress(selected.sourceWallet)
+                || destination === normalizeAddress(selected.destinationWallet);
+        }
+        return false;
+    }
+
+    function normalizeNeighborhoodFocus(focus = {}) {
+        const value = focus && typeof focus === 'object' && !Array.isArray(focus) ? focus : {};
+        const mode = String(value.mode || 'none');
+        return {
+            mode: ['none', 'transfer', 'wallet', 'counterparties', 'route', 'token', 'cluster'].includes(mode) ? mode : 'none',
+            wallet: normalizeAddress(value.wallet),
+            token: normalizeFilterValue(value.token || 'all'),
+            route: String(value.route || ''),
+            clusterKey: String(value.clusterKey || value.cluster_key || ''),
+            clusterKind: String(value.clusterKind || value.cluster_kind || '')
+        };
+    }
+
+    function getStepRouteKey(step = {}) {
+        const source = normalizeAddress(step.sourceWallet);
+        const destination = normalizeAddress(step.destinationWallet);
+        return source && destination ? `${source}>${destination}` : '';
+    }
+
+    function buildReplayNeighborhoodStatus(steps = [], selected = null, focus = {}) {
+        const safeFocus = normalizeNeighborhoodFocus(focus);
+        const matching = steps.filter(step => stepMatchesNeighborhoodFocus(step, selected, safeFocus));
+        return {
+            previewOnly: true,
+            stagedHistoryOnly: true,
+            mode: safeFocus.mode,
+            active: safeFocus.mode !== 'none',
+            stepCount: matching.length,
+            steps: matching.map(step => Number(step.index) + 1).slice(0, 18),
+            capped: matching.length > 18
+        };
+    }
+
+    function buildReplayClusterStatus(steps = []) {
+        const clusters = buildReplayClusters(steps);
+        return {
+            previewOnly: true,
+            stagedHistoryOnly: true,
+            total: clusters.length,
+            clusters: clusters.slice(0, 8).map(cluster => ({
+                kind: cluster.kind,
+                label: cluster.label,
+                count: cluster.count,
+                steps: cluster.steps.slice(0, 18)
+            })),
+            capped: clusters.length > 8
+        };
+    }
+
+    function buildVisibleReplayClusters(steps = [], audit = {}) {
+        const clusters = buildReplayClusters(steps);
+        const activeNodeIds = audit.neighborhoodNodeIds || new Set();
+        return clusters
+            .map((cluster, index) => ({
+                ...cluster,
+                active: [...cluster.nodeIds].some(id => activeNodeIds.has(id)),
+                offset: (index % 3) * 10
+            }))
+            .filter(cluster => cluster.count >= 2)
+            .sort((a, b) => Number(b.active) - Number(a.active) || b.count - a.count)
+            .slice(0, 5);
+    }
+
+    function buildReplayClusters(steps = []) {
+        const maps = {
+            route: new Map(),
+            token: new Map(),
+            wallet: new Map()
+        };
+        const add = (map, key, partial, step) => {
+            if (!key) return;
+            const record = map.get(key) || {
+                key,
+                kind: partial.kind,
+                label: partial.label,
+                count: 0,
+                steps: [],
+                nodeIds: new Set()
+            };
+            record.count += 1;
+            record.steps.push(Number(step.index) + 1);
+            (step.nodeIds || []).forEach(id => record.nodeIds.add(id));
+            map.set(key, record);
+        };
+        steps.forEach(step => {
+            const route = getStepRouteKey(step);
+            add(maps.route, route, { kind: 'route', label: 'Route' }, step);
+            const token = normalizeFilterValue(step.token);
+            if (token !== 'all') add(maps.token, token, { kind: 'token', label: token }, step);
+            [step.sourceWallet, step.destinationWallet].map(normalizeAddress).filter(Boolean).forEach(wallet => {
+                add(maps.wallet, wallet, { kind: 'wallet', label: shortValue(wallet) }, step);
+            });
+        });
+        return [...maps.route.values(), ...maps.token.values(), ...maps.wallet.values()]
+            .filter(cluster => cluster.count >= (cluster.kind === 'wallet' ? 3 : 2))
+            .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+    }
+
+    function normalizeReplayGapMap(gapMap = null) {
+        if (!gapMap || typeof gapMap !== 'object' || Array.isArray(gapMap)) {
+            return { gaps: [], boundaryMarkers: [], missingWindowsPossible: false, cursorAmbiguous: false, providerLimited: false, rateLimited: false };
+        }
+        return {
+            ordinalStart: Math.max(0, Number(gapMap.ordinalStart || gapMap.ordinal_start) || 0),
+            ordinalEnd: Math.max(0, Number(gapMap.ordinalEnd || gapMap.ordinal_end) || 0),
+            missingWindowsPossible: gapMap.missingWindowsPossible === true || gapMap.missing_windows_possible === true,
+            cursorAmbiguous: gapMap.cursorAmbiguous === true || gapMap.cursor_ambiguous === true,
+            providerLimited: gapMap.providerLimited === true || gapMap.provider_limited === true,
+            rateLimited: gapMap.rateLimited === true || gapMap.rate_limited === true,
+            gaps: Array.isArray(gapMap.gaps) ? gapMap.gaps.slice(0, 10).map(gap => ({
+                code: String(gap.code || ''),
+                label: String(gap.label || gap.code || 'Gap'),
+                severity: String(gap.severity || 'medium'),
+                ordinalStart: Math.max(0, Number(gap.ordinalStart || gap.ordinal_start) || 0),
+                ordinalEnd: Math.max(0, Number(gap.ordinalEnd || gap.ordinal_end) || 0)
+            })) : []
+        };
     }
 
     function normalizeAuditFilters(filters = {}) {

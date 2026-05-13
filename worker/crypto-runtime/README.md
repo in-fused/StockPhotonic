@@ -246,6 +246,14 @@ The route returns:
 
 The route does not call Helius, generic providers, lana.ai, RPC endpoints, Jupiter, or any browser-side provider. It does not expose provider URLs, API keys, bearer tokens, request headers, raw provider responses, or provider internals. If cached rows are unavailable, it returns metadata-only status rather than inventing a full replay window.
 
+## D136 Gap Maps and Continuity Confidence
+
+D136 extends replay-window metadata with sanitized `gap_map` and `continuity_confidence` objects. These are Worker-derived staged replay indicators, not archive-completeness claims.
+
+Gap maps can mark rate limits, provider-limited windows, cursor ambiguity, missing timestamp boundaries, replay-order reconstruction requirements, unknown continuation regions, and missing-window risk. Continuity confidence is a staged-window trust indicator with levels such as high, partial, ambiguous, and provider-limited continuity.
+
+The replay-window route still performs no provider fetch. It only reports sanitized metadata from the Worker scan manifest, replay reconstruction, and normalized scan cache. Browser UI may visualize these fields, but it must continue to say "staged continuity" rather than "proven full history."
+
 ## D131 Persisted Scan Cache
 
 D131 adds a Worker-only normalized scan-cache foundation linked to each scan manifest. The Worker stores only reduced, browser-safe records:

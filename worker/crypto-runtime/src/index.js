@@ -21,6 +21,7 @@ const WALLET_HISTORY_SCAN_MANIFEST_VERSION = "d130_scan_manifest_v1";
 const WALLET_HISTORY_SCAN_CACHE_VERSION = "d131_persisted_scan_cache_v1";
 const WALLET_HISTORY_REPLAY_RECONSTRUCTION_VERSION = "d131_replay_reconstruction_v1";
 const WALLET_HISTORY_REPLAY_WINDOW_VERSION = "d135_replay_window_v1";
+const WALLET_HISTORY_REPLAY_GAP_MAP_VERSION = "d136_replay_gap_map_v1";
 const WALLET_LOOKUP_CACHE_KEY_PREFIX = "crypto-wallet-lookup:";
 const WALLET_HISTORY_CACHE_KEY_PREFIX = "crypto-wallet-history:page:";
 const WALLET_HISTORY_RATE_KEY_PREFIX = "crypto-wallet-history:rate:";
@@ -3225,6 +3226,7 @@ function sanitizeWalletHistoryScanManifest(manifest = {}) {
     warnings: safeStringList(manifest.warnings).slice(0, 16),
     cache_state: sanitizeWalletHistoryScanCacheState(manifest.cache_state),
     replay_reconstruction: sanitizeReplayReconstructionMetadata(manifest.replay_reconstruction),
+    replay_gap_map: sanitizeReplayGapMap(manifest.replay_gap_map),
   };
 }
 
@@ -3279,6 +3281,8 @@ function sanitizeReplayReconstructionMetadata(metadata = {}) {
     reconstruction_complete: value.reconstruction_complete === true,
     coverage_pct: clampConfidence(value.coverage_pct),
     confidence_degraded: value.confidence_degraded === true,
+    continuity_confidence: sanitizeReplayContinuityProfile(value.continuity_confidence),
+    gap_map: sanitizeReplayGapMap(value.gap_map),
     timeline_segments: timelineSegments,
     warnings: safeStringList(value.warnings).slice(0, 12),
   };
@@ -3518,6 +3522,8 @@ function sanitizeReplayWindowForCache(windowMetadata = {}) {
         no_full_history_claim: value.continuation.no_full_history_claim !== false,
       }
       : null,
+    continuity_confidence: sanitizeReplayContinuityProfile(value.continuity_confidence),
+    gap_map: sanitizeReplayGapMap(value.gap_map),
     boundary: value.boundary && typeof value.boundary === "object" && !Array.isArray(value.boundary)
       ? {
         oldest_staged_window_index: Math.max(0, Math.floor(Number(value.boundary.oldest_staged_window_index) || 0)),
@@ -3635,6 +3641,13 @@ function buildReplayReconstructionMetadata(manifest = {}, page = {}, query = {},
     safeManifest.full_history_loaded === true ? "" : "Replay reconstruction is partial until pagination exhausts without blocking gaps.",
     sortOrder === "desc" ? "Provider pages are newest-first; oldest-first replay requires reconstruction from cached normalized windows." : "",
   ]).slice(0, 12);
+  const gapMap = buildReplayGapMap(safeManifest, existing, {
+    ordinal_start: currentWindowStart,
+    ordinal_end: currentWindowEnd,
+    total_windows: totalWindows,
+    current_window_index: currentWindowIndex,
+    partial: safeManifest.full_history_loaded !== true,
+  });
 
   return sanitizeReplayReconstructionMetadata({
     ...existing,
@@ -3655,6 +3668,8 @@ function buildReplayReconstructionMetadata(manifest = {}, page = {}, query = {},
     reconstruction_complete: safeManifest.full_history_loaded === true,
     coverage_pct: estimateReplayCoveragePct(safeManifest),
     confidence_degraded: safeManifest.provider_limit_reached || safeManifest.rate_limited || safeManifest.gap_flags.length > 0 || safeManifest.full_history_loaded !== true,
+    continuity_confidence: buildReplayContinuityProfile(safeManifest, gapMap),
+    gap_map: gapMap,
     timeline_segments: timelineSegments,
     warnings,
   });
@@ -3736,6 +3751,17 @@ function buildReplayWindowDescriptor(manifest = {}, reconstruction = {}, query =
     olderNeedsProviderPage ? "Continuing older requires loading another Worker history page before this window can be materialized." : "",
     safeReconstruction.oldest_first_reconstruction_required ? "Provider pages are not proven oldest-first; chronological replay remains reconstruction-bound." : "",
   ]).slice(0, 12);
+  const gapMap = buildReplayGapMap(safeManifest, safeReconstruction, {
+    ordinal_start: ordinalStart,
+    ordinal_end: ordinalEnd,
+    total_windows: totalWindows,
+    current_window_index: windowIndex,
+    partial: safeManifest.full_history_loaded !== true,
+    older_requires_provider_page: olderNeedsProviderPage,
+    missing_windows_possible: safeManifest.full_history_loaded !== true || olderNeedsProviderPage,
+    timeline_segments: overlappingSegments,
+  });
+  const continuityProfile = buildReplayContinuityProfile(safeManifest, gapMap);
 
   return {
     version: WALLET_HISTORY_REPLAY_WINDOW_VERSION,
@@ -3775,6 +3801,8 @@ function buildReplayWindowDescriptor(manifest = {}, reconstruction = {}, query =
     completeness_confidence: safeManifest.completeness_confidence,
     full_history_loaded: safeManifest.full_history_loaded,
     partial: safeManifest.full_history_loaded !== true,
+    continuity_confidence: continuityProfile,
+    gap_map: gapMap,
     timeline_segments: overlappingSegments.slice(0, 24),
     continuation: {
       can_continue_older: canContinueOlder,
@@ -3798,6 +3826,246 @@ function buildReplayWindowDescriptor(manifest = {}, reconstruction = {}, query =
       preview_only: true,
     },
     warnings,
+  };
+}
+
+function buildReplayGapMap(manifest = {}, reconstruction = {}, window = {}) {
+  const safeManifest = sanitizeWalletHistoryScanManifest(manifest);
+  const safeReconstruction = sanitizeReplayReconstructionMetadata(reconstruction);
+  const cursorState = sanitizeCursorState(safeManifest.cursor_state);
+  const totalWindows = Math.max(0, Number(window.total_windows || safeReconstruction.total_windows) || 0);
+  const currentWindow = Math.max(0, Number(window.current_window_index || window.window_index || safeReconstruction.current_window_index) || 0);
+  const ordinalStart = Math.max(0, Number(window.ordinal_start || safeReconstruction.current_window_start) || 0);
+  const ordinalEnd = Math.max(0, Number(window.ordinal_end || safeReconstruction.current_window_end) || 0);
+  const segments = Array.isArray(window.timeline_segments) && window.timeline_segments.length
+    ? window.timeline_segments.map(sanitizeReplayTimelineSegment)
+    : safeReconstruction.timeline_segments;
+  const gaps = [];
+  const addGap = (code, label, severity, details = {}) => {
+    if (!code || gaps.some((gap) => gap.code === code)) return;
+    gaps.push(sanitizeReplayGap({
+      code,
+      label,
+      severity,
+      ordinal_start: details.ordinal_start ?? ordinalStart,
+      ordinal_end: details.ordinal_end ?? ordinalEnd,
+      window_index: details.window_index ?? currentWindow,
+      confidence_impact: details.confidence_impact,
+      source: details.source,
+      boundary: details.boundary,
+      note: details.note,
+    }));
+  };
+
+  if (safeManifest.rate_limited) {
+    addGap("rate_limited_replay_continuation", "Rate-limited replay continuation", "high", {
+      confidence_impact: 24,
+      source: "worker_scan_manifest",
+      boundary: "provider",
+      note: "Continuation paused by Worker-side rate-limit state.",
+    });
+  }
+  if (safeManifest.provider_limit_reached) {
+    addGap("provider_limited_window", "Provider-limited window", "high", {
+      confidence_impact: 20,
+      source: "worker_scan_manifest",
+      boundary: "provider",
+      note: "Provider limit prevents claiming a complete continuation.",
+    });
+  }
+  if (cursorState.cursor_stalled) {
+    addGap("cursor_ambiguity", "Cursor ambiguity", "high", {
+      confidence_impact: 18,
+      source: "cursor_state",
+      boundary: "cursor",
+      note: "Cursor stalled or failed to advance during staged scan.",
+    });
+  }
+  if (cursorState.cursor_advanced === false) {
+    addGap("cursor_not_advanced", "Cursor did not advance", "medium", {
+      confidence_impact: 14,
+      source: "cursor_state",
+      boundary: "cursor",
+      note: "Cursor movement was not confirmed for this staged continuation.",
+    });
+  }
+  safeManifest.gap_flags.forEach((flag) => {
+    const code = safeString(flag);
+    if (!code) return;
+    addGap(code, code.replaceAll("_", " "), ["schema_mismatch", "malformed_ordering", "provider_exhaustion_ambiguous"].includes(code) ? "high" : "medium", {
+      confidence_impact: ["schema_mismatch", "malformed_ordering", "provider_exhaustion_ambiguous"].includes(code) ? 18 : 10,
+      source: "scan_gap_flags",
+      boundary: code.includes("cursor") ? "cursor" : "replay",
+      note: "Gap flag emitted by the Worker normalized history contract.",
+    });
+  });
+  if (safeManifest.full_history_loaded !== true && window.older_requires_provider_page === true) {
+    addGap("unknown_older_continuation_region", "Unknown older continuation region", "medium", {
+      confidence_impact: 12,
+      source: "replay_window",
+      boundary: "oldest",
+      note: "Another Worker history page is required before the older window can be materialized.",
+    });
+  }
+  if (safeManifest.full_history_loaded !== true && window.missing_windows_possible !== false) {
+    addGap("missing_window_risk", "Missing-window risk", "medium", {
+      confidence_impact: 10,
+      source: "replay_window",
+      boundary: "staged_window",
+      note: "Staged replay windows may not cover all provider history.",
+    });
+  }
+  if (!safeManifest.earliest_timestamp || !safeManifest.latest_timestamp || segments.some((segment) => !segment.earliest_timestamp || !segment.latest_timestamp)) {
+    addGap("missing_timestamp_window", "Missing timestamp window", "medium", {
+      confidence_impact: 8,
+      source: "timeline_segments",
+      boundary: "timeline",
+      note: "One or more staged replay segments lacks complete timestamp boundaries.",
+    });
+  }
+  if (safeReconstruction.oldest_first_reconstruction_required) {
+    addGap("replay_order_reconstruction_required", "Replay order reconstruction required", "medium", {
+      confidence_impact: 12,
+      source: "replay_reconstruction",
+      boundary: "ordering",
+      note: "Provider pages are not proven oldest-first for replay.",
+    });
+  }
+  if (safeManifest.full_history_loaded !== true && !cursorState.next_cursor && !safeManifest.provider_limit_reached && !safeManifest.rate_limited) {
+    addGap("provider_exhaustion_ambiguous", "Provider exhaustion ambiguous", "medium", {
+      confidence_impact: 14,
+      source: "cursor_state",
+      boundary: "cursor",
+      note: "No continuation cursor is visible, but archive completeness is not proven.",
+    });
+  }
+
+  const confidenceImpact = gaps.reduce((sum, gap) => sum + Math.max(0, Number(gap.confidence_impact) || 0), 0);
+  return sanitizeReplayGapMap({
+    version: WALLET_HISTORY_REPLAY_GAP_MAP_VERSION,
+    scope: "staged_replay_window",
+    scan_id: safeManifest.scan_id,
+    window_index: currentWindow,
+    total_windows: totalWindows,
+    ordinal_start: ordinalStart,
+    ordinal_end: ordinalEnd,
+    missing_windows_possible: safeManifest.full_history_loaded !== true || window.missing_windows_possible === true,
+    provider_limited: safeManifest.provider_limit_reached,
+    rate_limited: safeManifest.rate_limited,
+    cursor_ambiguous: cursorState.cursor_stalled === true || cursorState.cursor_advanced === false || gaps.some((gap) => gap.code === "provider_exhaustion_ambiguous"),
+    timestamp_gaps: gaps.some((gap) => gap.code === "missing_timestamp_window"),
+    confidence_impact: confidenceImpact,
+    gaps: gaps.slice(0, 12),
+    boundary_markers: [
+      {
+        key: "window_start",
+        label: "Known staged segment starts",
+        position_pct: 0,
+        kind: "known_staged_segment",
+      },
+      {
+        key: "window_end",
+        label: "Known staged segment ends",
+        position_pct: 100,
+        kind: safeManifest.full_history_loaded === true ? "known_staged_segment" : "uncertain_continuation",
+      },
+    ],
+    no_full_history_claim: true,
+  });
+}
+
+function buildReplayContinuityProfile(manifest = {}, gapMap = {}) {
+  const safeManifest = sanitizeWalletHistoryScanManifest(manifest);
+  const safeGapMap = sanitizeReplayGapMap(gapMap);
+  const impact = Math.min(70, Math.max(0, Number(safeGapMap.confidence_impact) || 0));
+  let score = clampConfidence((Number(safeManifest.completeness_confidence) || 0) - Math.floor(impact * 0.45));
+  if (safeManifest.full_history_loaded !== true) score = Math.min(score, 76);
+  if (safeManifest.provider_limit_reached) score = Math.min(score, 55);
+  if (safeManifest.rate_limited) score = Math.min(score, 48);
+  if (safeGapMap.cursor_ambiguous) score = Math.min(score, 58);
+  const severeGap = safeGapMap.gaps.some((gap) => gap.severity === "high");
+  const level = safeManifest.provider_limit_reached || safeManifest.rate_limited
+    ? "provider_limited"
+    : safeGapMap.cursor_ambiguous || severeGap
+      ? "ambiguous"
+      : safeManifest.full_history_loaded === true && !safeGapMap.gaps.length
+        ? "high"
+        : "partial";
+  const label = level === "high"
+    ? "High staged continuity"
+    : level === "partial"
+      ? "Partial staged continuity"
+      : level === "provider_limited"
+        ? "Provider-limited continuity"
+        : "Ambiguous staged continuity";
+  return sanitizeReplayContinuityProfile({
+    score,
+    level,
+    label,
+    degraded: level !== "high",
+    reason_codes: safeGapMap.gaps.map((gap) => gap.code).slice(0, 8),
+    gap_count: safeGapMap.gaps.length,
+    scope: "staged_continuity",
+    no_full_history_claim: true,
+  });
+}
+
+function sanitizeReplayContinuityProfile(profile = {}) {
+  const value = profile && typeof profile === "object" && !Array.isArray(profile) ? profile : {};
+  const level = safeString(value.level) || "partial";
+  return {
+    score: clampConfidence(value.score),
+    level: ["high", "partial", "ambiguous", "provider_limited"].includes(level) ? level : "partial",
+    label: safeString(value.label) || "Partial staged continuity",
+    degraded: value.degraded !== false,
+    reason_codes: safeStringList(value.reason_codes).slice(0, 8),
+    gap_count: Math.max(0, Math.floor(Number(value.gap_count) || 0)),
+    scope: safeString(value.scope) || "staged_continuity",
+    no_full_history_claim: value.no_full_history_claim !== false,
+  };
+}
+
+function sanitizeReplayGapMap(gapMap = {}) {
+  const value = gapMap && typeof gapMap === "object" && !Array.isArray(gapMap) ? gapMap : {};
+  return {
+    version: safeString(value.version) || WALLET_HISTORY_REPLAY_GAP_MAP_VERSION,
+    scope: safeString(value.scope) || "staged_replay_window",
+    scan_id: safeString(value.scan_id),
+    window_index: Math.max(0, Math.floor(Number(value.window_index) || 0)),
+    total_windows: Math.max(0, Math.floor(Number(value.total_windows) || 0)),
+    ordinal_start: Math.max(0, Math.floor(Number(value.ordinal_start) || 0)),
+    ordinal_end: Math.max(0, Math.floor(Number(value.ordinal_end) || 0)),
+    missing_windows_possible: value.missing_windows_possible === true,
+    provider_limited: value.provider_limited === true,
+    rate_limited: value.rate_limited === true,
+    cursor_ambiguous: value.cursor_ambiguous === true,
+    timestamp_gaps: value.timestamp_gaps === true,
+    confidence_impact: Math.max(0, Math.min(100, Math.floor(Number(value.confidence_impact) || 0))),
+    gaps: safeObjectList(value.gaps).slice(0, 12).map(sanitizeReplayGap),
+    boundary_markers: safeObjectList(value.boundary_markers).slice(0, 12).map((marker) => ({
+      key: safeString(marker.key),
+      label: safeString(marker.label),
+      position_pct: clampConfidence(marker.position_pct),
+      kind: safeString(marker.kind) || "uncertain_continuation",
+    })),
+    no_full_history_claim: value.no_full_history_claim !== false,
+  };
+}
+
+function sanitizeReplayGap(gap = {}) {
+  const value = gap && typeof gap === "object" && !Array.isArray(gap) ? gap : {};
+  const severity = safeString(value.severity) || "medium";
+  return {
+    code: safeString(value.code),
+    label: safeString(value.label) || safeString(value.code).replaceAll("_", " "),
+    severity: ["low", "medium", "high"].includes(severity) ? severity : "medium",
+    ordinal_start: Math.max(0, Math.floor(Number(value.ordinal_start) || 0)),
+    ordinal_end: Math.max(0, Math.floor(Number(value.ordinal_end) || 0)),
+    window_index: Math.max(0, Math.floor(Number(value.window_index) || 0)),
+    confidence_impact: Math.max(0, Math.min(100, Math.floor(Number(value.confidence_impact) || 0))),
+    source: safeString(value.source) || "worker",
+    boundary: safeString(value.boundary) || "unknown",
+    note: safeString(value.note),
   };
 }
 

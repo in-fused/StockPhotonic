@@ -1,13 +1,28 @@
 (() => {
     const namespace = window.CryptoPhotonic = window.CryptoPhotonic || {};
 
-    const REPLAY_WORKSPACE_VERSION = 'd135_replay_windows_checkpoint_workspace_ui_v1';
+    const REPLAY_WORKSPACE_VERSION = 'd136_gap_mapping_counterparty_expansion_workspace_ui_v1';
     const REPLAY_CHECKPOINT_VERSION = 'd135_replay_audit_checkpoint_v1';
+    const REPLAY_GAP_MAP_VERSION = 'd136_replay_gap_map_v1';
+    const REPLAY_CONTINUITY_VERSION = 'd136_staged_continuity_confidence_v1';
+    const REPLAY_CLUSTER_VERSION = 'd136_replay_cluster_v1';
+    const REPLAY_NEIGHBORHOOD_VERSION = 'd136_replay_neighborhood_v1';
     const DEFAULT_AUDIT_FILTERS = Object.freeze({
         token: 'all',
         direction: 'all',
         counterparty: 'all',
         majorOnly: false
+    });
+    const REPLAY_EXPANSION_CAPS = Object.freeze({
+        maxGapMarkers: 10,
+        maxGaps: 12,
+        maxNeighborhoodEvents: 18,
+        maxNeighborhoodWallets: 12,
+        maxClusters: 8,
+        maxClusterMembers: 18,
+        maxRouteClusters: 5,
+        maxTokenClusters: 5,
+        maxCounterpartyClusters: 6
     });
 
     function escapeHtml(value) {
@@ -46,11 +61,30 @@
         const breadcrumbs = normalizeAuditBreadcrumbs(context.breadcrumbs || context.auditBreadcrumbs);
         const recentEvents = normalizeRecentEvents(context.recentEvents || context.auditRecentEvents, events);
         const windowStatus = normalizeReplayWindowStatus(context.windowStatus || context.replayWindow || context.dataset?.metadata?.replay_window || {});
+        const gapMap = deriveReplayGapMap({
+            ...context,
+            events,
+            status,
+            windowStatus
+        });
+        const continuityProfile = deriveReplayContinuityProfile({
+            ...context,
+            status,
+            windowStatus
+        }, gapMap);
         const checkpoint = normalizeReplayCheckpoint(context.checkpoint || context.auditCheckpoint || null);
+        const clusters = deriveReplayClusters(events, {
+            trackedWallet: context.summary?.trackedWallet || context.dataset?.metadata?.wallet || context.dataset?.metadata?.tracked_wallet || '',
+            selectedEvent
+        });
+        const neighborhood = deriveReplayNeighborhood(selectedEvent || currentEvent, events, {
+            focus: context.neighborhoodFocus || context.audit?.neighborhood || context.neighborhood || null,
+            clusters
+        });
         const eventSummary = summarizeReplayEvent(selectedEvent || currentEvent, {
             status,
             totalSteps,
-            confidence: context.confidence ?? status.completenessConfidence,
+            confidence: continuityProfile.score ?? context.confidence ?? status.completenessConfidence,
             warning: context.warning || status.warning || (Array.isArray(context.warnings) ? context.warnings[0] : '')
         });
         const oldestLabel = context.oldestLabel || getTimelineBoundaryLabel(events, 'oldest') || 'Oldest staged';
@@ -73,6 +107,10 @@
             breadcrumbs,
             recentEvents,
             windowStatus,
+            gapMap,
+            continuityProfile,
+            clusters,
+            neighborhood,
             checkpoint,
             eventSummary,
             bookmarks,
@@ -103,6 +141,10 @@
         const eventSummary = context.eventSummary || {};
         const selectedEvent = context.selectedEvent || context.currentEvent || null;
         const relationships = context.relationships || {};
+        const gapMap = context.gapMap || {};
+        const continuityProfile = context.continuityProfile || {};
+        const neighborhood = context.neighborhood || {};
+        const clusters = context.clusters || {};
         const filterOptions = context.filterOptions || getReplayFilterOptions(context.events || []);
         const filteredEvents = context.filteredEvents || [];
         const breadcrumbs = context.breadcrumbs || [];
@@ -135,6 +177,7 @@
                     <input id="crypto-replay-workspace-scrubber" type="range" min="0" max="${escapeAttr(totalSteps)}" step="1" value="${escapeAttr(currentStep)}" ${scrubberDisabled ? 'disabled' : ''} aria-label="Large replay workspace timeline" class="block min-h-10 w-full cursor-pointer accent-fuchsia-300 disabled:cursor-not-allowed disabled:opacity-50" />
                     <div class="crypto-replay-timeline-track">
                         <div id="crypto-replay-workspace-progress-bar" class="h-full bg-fuchsia-300/78" style="width:${escapeAttr(progressPct)}%"></div>
+                        ${renderReplayTimelineGapMarkers(gapMap, totalSteps)}
                         <div class="crypto-replay-current-marker" style="left:${escapeAttr(progressPct)}%" aria-hidden="true"></div>
                     </div>
                     <div id="crypto-replay-workspace-current-summary" class="crypto-replay-current-summary">${escapeHtml(eventSummary.compact || 'No replay event selected yet.')}</div>
@@ -158,6 +201,7 @@
                     `).join('')}
                 </div>
                 ${renderReplayWindowOverview(windowStatus, checkpoint, warnings)}
+                ${renderReplayContinuityPanel(continuityProfile, gapMap)}
                 <div class="crypto-replay-bookmark-strip" aria-label="Replay bookmarks">
                     ${bookmarks.map(bookmark => renderBookmark(bookmark, currentBookmarkStep, scrubberDisabled)).join('') || '<div class="crypto-replay-bookmark-empty">Build replay steps to derive bookmarks.</div>'}
                 </div>
@@ -171,10 +215,14 @@
                     windowStatus,
                     providerState: context.providerState || '',
                     providerGrade: context.providerGrade || '',
-                    confidence: context.confidence ?? status.completenessConfidence,
+                    confidence: continuityProfile.score ?? context.confidence ?? status.completenessConfidence,
+                    continuityProfile,
+                    gapMap,
                     warnings
                 })}
                 ${renderReplayAuditActions(selectedEvent, relationships, scrubberDisabled, { checkpoint })}
+                ${renderReplayNeighborhoodPanel(neighborhood, clusters, scrubberDisabled)}
+                ${renderReplayClusterPanel(clusters, scrubberDisabled)}
                 ${renderRelatedTransferExploration(relationships)}
                 ${renderFilteredEventStrip(filteredEvents, selectedEvent, scrubberDisabled)}
             </div>
@@ -245,6 +293,87 @@
             const edge = index === 0 || index === count - 1;
             return `<span class="crypto-replay-window-segment ${active ? 'is-active' : ''} ${edge ? 'is-boundary' : ''}"></span>`;
         }).join('');
+    }
+
+    function renderReplayTimelineGapMarkers(gapMap = {}, totalSteps = 0) {
+        const markers = getReplayGapTimelineMarkers(gapMap, totalSteps).slice(0, REPLAY_EXPANSION_CAPS.maxGapMarkers);
+        if (!markers.length) return '';
+        return markers.map(marker => `
+            <span class="crypto-replay-gap-marker is-${escapeAttr(marker.severity || 'medium')}"
+                style="left:${escapeAttr(marker.positionPct)}%"
+                title="${escapeAttr(marker.title || marker.label)}"
+                aria-hidden="true"></span>
+        `).join('');
+    }
+
+    function renderReplayContinuityPanel(profile = {}, gapMap = {}) {
+        const gaps = Array.isArray(gapMap.gaps) ? gapMap.gaps.slice(0, 5) : [];
+        const score = Math.max(0, Math.min(100, Math.round(Number(profile.score) || 0)));
+        const level = profile.level || 'partial';
+        const label = profile.label || 'Partial staged continuity';
+        const detail = profile.detail || getContinuityDetail(profile, gapMap);
+        return `
+            <section class="crypto-replay-continuity-panel is-${escapeAttr(level)}" aria-label="Replay continuity confidence">
+                <div class="crypto-replay-continuity-head">
+                    <span>Continuity</span>
+                    <strong>${escapeHtml(score)}%</strong>
+                </div>
+                <div class="crypto-replay-continuity-meter" aria-hidden="true">
+                    <span style="width:${escapeAttr(score)}%"></span>
+                </div>
+                <div class="crypto-replay-continuity-copy">
+                    <strong>${escapeHtml(label)}</strong>
+                    <span>${escapeHtml(detail)}</span>
+                </div>
+                <div class="crypto-replay-gap-chip-row" aria-label="Replay gap markers">
+                    ${gaps.map(gap => `
+                        <span class="crypto-replay-gap-chip is-${escapeAttr(gap.severity || 'medium')}" title="${escapeAttr(gap.note || gap.label || gap.code)}">
+                            ${escapeHtml(gap.label || formatHistoryLikeFlag(gap.code))}
+                        </span>
+                    `).join('') || '<span class="crypto-replay-gap-chip is-low">No explicit gap flags in this staged window</span>'}
+                </div>
+            </section>
+        `;
+    }
+
+    function getContinuityDetail(profile = {}, gapMap = {}) {
+        if (profile.level === 'high') return 'Staged replay order is comparatively strong, but this is still not a full-history proof.';
+        if (profile.level === 'provider_limited') return 'Provider or rate-limit boundaries degrade staged replay continuation.';
+        if (profile.level === 'ambiguous') return 'Cursor, ordering, timestamp, or exhaustion ambiguity affects continuation trust.';
+        if (gapMap.missingWindowsPossible || gapMap.missing_windows_possible) return 'Known staged segment only; continuation outside loaded windows may exist.';
+        return 'Continuity is estimated for staged replay windows only.';
+    }
+
+    function getReplayGapTimelineMarkers(gapMap = {}, totalSteps = 0) {
+        const markers = [];
+        const ordinalStart = Number(gapMap.ordinalStart || gapMap.ordinal_start) || 0;
+        const ordinalEnd = Number(gapMap.ordinalEnd || gapMap.ordinal_end) || 0;
+        const span = Math.max(1, ordinalEnd - ordinalStart + 1);
+        (Array.isArray(gapMap.boundaryMarkers || gapMap.boundary_markers) ? (gapMap.boundaryMarkers || gapMap.boundary_markers) : []).forEach(marker => {
+            markers.push({
+                label: marker.label || marker.key || 'Replay boundary',
+                title: marker.label || marker.key || 'Replay boundary',
+                positionPct: Math.max(0, Math.min(100, Number(marker.positionPct || marker.position_pct) || 0)),
+                severity: marker.kind === 'known_staged_segment' ? 'low' : 'medium'
+            });
+        });
+        (Array.isArray(gapMap.gaps) ? gapMap.gaps : []).forEach((gap, index) => {
+            const gapStart = Number(gap.ordinalStart || gap.ordinal_start) || ordinalStart;
+            const roughPct = ordinalStart && ordinalEnd
+                ? ((Math.max(ordinalStart, gapStart) - ordinalStart) / span) * 100
+                : totalSteps
+                    ? Math.min(96, Math.max(4, ((index + 1) / (Math.min(8, gapMap.gaps.length || 1) + 1)) * 100))
+                    : 50;
+            markers.push({
+                label: gap.label || formatHistoryLikeFlag(gap.code),
+                title: gap.note || gap.label || gap.code || 'Replay gap',
+                positionPct: Math.max(2, Math.min(98, Math.round(roughPct))),
+                severity: gap.severity || 'medium'
+            });
+        });
+        return markers
+            .filter((marker, index, list) => list.findIndex(item => item.label === marker.label && item.positionPct === marker.positionPct) === index)
+            .slice(0, REPLAY_EXPANSION_CAPS.maxGapMarkers);
     }
 
     function formatWindowOrdinalRange(windowStatus = {}) {
@@ -380,6 +509,8 @@
         const providerState = context.providerState || context.providerGrade || 'Worker staged';
         const confidence = Number(context.confidence);
         const warnings = Array.isArray(context.warnings) ? context.warnings : [];
+        const continuity = context.continuityProfile || {};
+        const gapMap = context.gapMap || {};
         return `
             <section class="crypto-replay-drilldown">
                 <div class="crypto-replay-event-kicker">TRANSFER DRILLDOWN</div>
@@ -394,6 +525,8 @@
                     ${renderDrilldownItem('Replay Step', `${event.step || '-'}${context.totalSteps ? ` / ${context.totalSteps}` : ''}`)}
                     ${renderDrilldownItem('Window', context.windowStatus?.windowLabel || 'Staged window')}
                     ${renderDrilldownItem('Provider / Confidence', `${providerState}${Number.isFinite(confidence) ? ` / ${Math.round(confidence)}%` : ''}`)}
+                    ${renderDrilldownItem('Continuity', continuity.label || 'Staged continuity')}
+                    ${renderDrilldownItem('Gap Impact', `${gapMap.gaps?.length || 0} marker${gapMap.gaps?.length === 1 ? '' : 's'} / ${gapMap.confidenceImpact || gapMap.confidence_impact || 0}% impact`)}
                 </div>
                 <div class="crypto-replay-event-warning">${escapeHtml(warnings[0] || event.warning || 'Staged replay warning: partial history may omit transfers outside loaded pages.')}</div>
             </section>
@@ -413,6 +546,7 @@
         const sourceWallet = event?.sourceWallet || event?.source_wallet || '';
         const destinationWallet = event?.destinationWallet || event?.destination_wallet || '';
         const token = event?.token || event?.symbol || event?.token_mint || '';
+        const route = event ? getRouteKey(event) : '';
         const noEvent = !event || disabled;
         const previousRelated = relationships.previousRelated?.step || 0;
         const nextRelated = relationships.nextRelated?.step || 0;
@@ -430,6 +564,16 @@
                 <button type="button" data-crypto-replay-action="continue-counterparty" data-crypto-replay-wallet="${escapeAttr(destinationWallet || sourceWallet)}" ${noEvent || (!sourceWallet && !destinationWallet) ? 'disabled' : ''}>Continue Related Counterparty</button>
                 <button type="button" data-crypto-replay-action="continue-token" data-crypto-replay-token="${escapeAttr(token)}" ${noEvent || !token ? 'disabled' : ''}>Continue Related Token</button>
                 <button type="button" data-crypto-replay-action="expand-transfer" ${noEvent ? 'disabled' : ''}>Expand Around This Transfer</button>
+                <button type="button" data-crypto-replay-action="expand-wallet" data-crypto-replay-wallet="${escapeAttr(destinationWallet || sourceWallet)}" ${noEvent || (!sourceWallet && !destinationWallet) ? 'disabled' : ''}>Expand Around This Wallet</button>
+                <button type="button" data-crypto-replay-action="expand-counterparties" ${noEvent ? 'disabled' : ''}>Expand Related Counterparties</button>
+                <button type="button" data-crypto-replay-action="expand-route" data-crypto-replay-route="${escapeAttr(route)}" ${noEvent || !route ? 'disabled' : ''}>Expand Same Route</button>
+                <button type="button" data-crypto-replay-action="expand-token" data-crypto-replay-token="${escapeAttr(token)}" ${noEvent || !token ? 'disabled' : ''}>Expand Same Token Neighborhood</button>
+                <button type="button" data-crypto-replay-action="expand-cluster" ${noEvent ? 'disabled' : ''}>Expand Current Replay Cluster</button>
+                <button type="button" data-crypto-replay-action="collapse-neighborhood" ${disabled ? 'disabled' : ''}>Collapse Neighborhood</button>
+                <button type="button" data-crypto-replay-action="continue-route" data-crypto-replay-route="${escapeAttr(route)}" ${noEvent || !route ? 'disabled' : ''}>Continue Along Route</button>
+                <button type="button" data-crypto-replay-action="follow-outbound" data-crypto-replay-wallet="${escapeAttr(destinationWallet)}" ${noEvent || !destinationWallet ? 'disabled' : ''}>Follow Outbound Chain</button>
+                <button type="button" data-crypto-replay-action="follow-inbound" data-crypto-replay-wallet="${escapeAttr(sourceWallet)}" ${noEvent || !sourceWallet ? 'disabled' : ''}>Follow Inbound Chain</button>
+                <button type="button" data-crypto-replay-action="continue-token-path" data-crypto-replay-token="${escapeAttr(token)}" ${noEvent || !token ? 'disabled' : ''}>Continue Token Path</button>
                 <button type="button" data-crypto-replay-action="jump-related" data-crypto-replay-direction="-1" ${noEvent || !previousRelated ? 'disabled' : ''}>Previous Related</button>
                 <button type="button" data-crypto-replay-action="jump-related" data-crypto-replay-direction="1" ${noEvent || !nextRelated ? 'disabled' : ''}>Next Related</button>
             </section>
@@ -461,6 +605,78 @@
                             `).join('') || '<p>No staged match</p>'}
                         </div>
                     `).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    function renderReplayNeighborhoodPanel(neighborhood = {}, clusters = {}, disabled = false) {
+        const events = Array.isArray(neighborhood.events) ? neighborhood.events : [];
+        const active = Boolean(neighborhood.active);
+        const wallets = Array.isArray(neighborhood.wallets) ? neighborhood.wallets : [];
+        const routes = Array.isArray(neighborhood.routes) ? neighborhood.routes : [];
+        const tokens = Array.isArray(neighborhood.tokens) ? neighborhood.tokens : [];
+        return `
+            <section class="crypto-replay-neighborhood ${active ? 'is-active' : ''}" aria-label="Replay neighborhood">
+                <div class="crypto-replay-related-header">
+                    <span>Replay Neighborhood</span>
+                    <strong>${escapeHtml(events.length)} staged</strong>
+                </div>
+                <div class="crypto-replay-neighborhood-copy">
+                    ${escapeHtml(neighborhood.detail || 'Local staged neighbors are derived only from visible replay rows.')}
+                </div>
+                <div class="crypto-replay-neighborhood-stats">
+                    <span>${escapeHtml(wallets.length)} wallets</span>
+                    <span>${escapeHtml(routes.length)} routes</span>
+                    <span>${escapeHtml(tokens.length)} tokens</span>
+                    <span>${escapeHtml(clusters.total || 0)} clusters</span>
+                </div>
+                <div class="crypto-replay-neighborhood-strip">
+                    ${events.slice(0, 8).map(event => `
+                        <button type="button" data-crypto-replay-select-step="${escapeAttr(event.step || 0)}" data-crypto-replay-select-source="neighborhood" ${disabled ? 'disabled' : ''} title="${escapeAttr(getEventTitle(event))}">
+                            <span>#${escapeHtml(event.step || '-')}</span>
+                            <strong>${escapeHtml(event.token || 'Token')}</strong>
+                        </button>
+                    `).join('') || '<div class="crypto-replay-empty-compact">Select a replay transfer or expansion action to reveal a local staged neighborhood.</div>'}
+                </div>
+                <div class="crypto-replay-neighborhood-actions">
+                    <button type="button" data-crypto-replay-action="expand-counterparties" ${disabled ? 'disabled' : ''}>Related Counterparties</button>
+                    <button type="button" data-crypto-replay-action="expand-route" data-crypto-replay-route="${escapeAttr(neighborhood.primaryRoute || '')}" ${disabled || !neighborhood.primaryRoute ? 'disabled' : ''}>Same Route</button>
+                    <button type="button" data-crypto-replay-action="expand-token" data-crypto-replay-token="${escapeAttr(neighborhood.primaryToken || '')}" ${disabled || !neighborhood.primaryToken ? 'disabled' : ''}>Same Token</button>
+                    <button type="button" data-crypto-replay-action="collapse-neighborhood" ${disabled || !active ? 'disabled' : ''}>Reset</button>
+                </div>
+            </section>
+        `;
+    }
+
+    function renderReplayClusterPanel(clusters = {}, disabled = false) {
+        const clusterItems = [
+            ...(clusters.counterparties || []),
+            ...(clusters.routes || []),
+            ...(clusters.tokens || []),
+            ...(clusters.hotspots || [])
+        ].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label)).slice(0, REPLAY_EXPANSION_CAPS.maxClusters);
+        return `
+            <section class="crypto-replay-clusters" aria-label="Replay clusters">
+                <div class="crypto-replay-related-header">
+                    <span>Replay Clusters</span>
+                    <strong>${escapeHtml(clusters.total || clusterItems.length)}</strong>
+                </div>
+                <div class="crypto-replay-cluster-list">
+                    ${clusterItems.map(cluster => `
+                        <button type="button"
+                            data-crypto-replay-action="expand-cluster"
+                            data-crypto-replay-cluster-key="${escapeAttr(cluster.key || '')}"
+                            data-crypto-replay-cluster-kind="${escapeAttr(cluster.kind || '')}"
+                            data-crypto-replay-token="${escapeAttr(cluster.token || '')}"
+                            data-crypto-replay-wallet="${escapeAttr(cluster.wallet || '')}"
+                            data-crypto-replay-route="${escapeAttr(cluster.route || '')}"
+                            ${disabled ? 'disabled' : ''}
+                            title="${escapeAttr(cluster.detail || cluster.label)}">
+                            <span>${escapeHtml(cluster.label)}</span>
+                            <strong>${escapeHtml(cluster.count)}</strong>
+                        </button>
+                    `).join('') || '<div class="crypto-replay-empty-compact">No repeated staged replay clusters above the bounded threshold yet.</div>'}
                 </div>
             </section>
         `;
@@ -562,6 +778,9 @@
                 handlers.auditAction?.(button.dataset.cryptoReplayAction || '', {
                     wallet: button.dataset.cryptoReplayWallet || '',
                     token: button.dataset.cryptoReplayToken || '',
+                    route: button.dataset.cryptoReplayRoute || '',
+                    clusterKey: button.dataset.cryptoReplayClusterKey || '',
+                    clusterKind: button.dataset.cryptoReplayClusterKind || '',
                     step: Number(button.dataset.cryptoReplayStep) || 0,
                     direction: Number(button.dataset.cryptoReplayDirection) || 0,
                     crumbId: button.dataset.cryptoReplayCrumbId || ''
@@ -579,6 +798,427 @@
             button.addEventListener('click', () => handlers.resetFilters?.());
         });
         root.querySelector('#crypto-replay-workspace-exit')?.addEventListener('click', () => handlers.exit?.());
+    }
+
+    function deriveReplayGapMap(context = {}) {
+        const metadata = context.dataset?.metadata || {};
+        const windowStatus = normalizeReplayWindowStatus(context.windowStatus || metadata.replay_window || {});
+        const reconstruction = metadata.replay_reconstruction || context.replayReconstruction || {};
+        const explicit = normalizeReplayGapMap(
+            windowStatus.gapMap
+            || windowStatus.gap_map
+            || metadata.gap_map
+            || metadata.replay_gap_map
+            || reconstruction.gap_map
+            || context.gapMap
+            || null
+        );
+        if (explicit?.gaps?.length || explicit?.boundaryMarkers?.length) return explicit;
+
+        const events = Array.isArray(context.events) ? context.events : [];
+        const gaps = [];
+        const addGap = (code, label, severity = 'medium', details = {}) => {
+            if (!code || gaps.some(gap => gap.code === code)) return;
+            gaps.push(normalizeReplayGap({
+                code,
+                label,
+                severity,
+                ordinalStart: details.ordinalStart ?? windowStatus.windowStart,
+                ordinalEnd: details.ordinalEnd ?? windowStatus.windowEnd,
+                windowIndex: details.windowIndex ?? windowStatus.currentWindowIndex,
+                confidenceImpact: details.confidenceImpact,
+                source: details.source,
+                boundary: details.boundary,
+                note: details.note
+            }));
+        };
+        const gapFlags = [
+            ...(Array.isArray(context.gapFlags) ? context.gapFlags : []),
+            ...(Array.isArray(metadata.gap_flags) ? metadata.gap_flags : []),
+            ...(Array.isArray(context.scanManifest?.gap_flags) ? context.scanManifest.gap_flags : [])
+        ];
+        gapFlags.forEach(flag => addGap(
+            String(flag || ''),
+            formatHistoryLikeFlag(flag),
+            ['cursor_stall', 'malformed_ordering', 'schema_mismatch', 'provider_exhaustion_ambiguous'].includes(String(flag || '')) ? 'high' : 'medium',
+            {
+                confidenceImpact: ['cursor_stall', 'malformed_ordering', 'schema_mismatch', 'provider_exhaustion_ambiguous'].includes(String(flag || '')) ? 18 : 10,
+                source: 'scan_gap_flags',
+                boundary: String(flag || '').includes('cursor') ? 'cursor' : 'replay'
+            }
+        ));
+        if (windowStatus.partial) {
+            addGap('missing_window_risk', 'Missing-window risk', 'medium', {
+                confidenceImpact: 10,
+                source: 'replay_window',
+                boundary: 'staged_window',
+                note: 'Replay is limited to staged windows; other provider history may exist.'
+            });
+        }
+        if (windowStatus.olderRequiresProviderPage || windowStatus.newerRequiresProviderPage) {
+            addGap('unknown_continuation_region', 'Unknown continuation region', 'medium', {
+                confidenceImpact: 12,
+                source: 'replay_window',
+                boundary: windowStatus.olderRequiresProviderPage ? 'oldest' : 'newest',
+                note: 'Another Worker-backed staged page is needed before this region can be materialized.'
+            });
+        }
+        if (metadata.rate_limited || context.rateLimited || context.providerState === 'provider_rate_limited') {
+            addGap('rate_limited_replay_continuation', 'Rate-limited replay continuation', 'high', {
+                confidenceImpact: 24,
+                source: 'worker_history_status',
+                boundary: 'provider'
+            });
+        }
+        if (metadata.provider_limit_reached || context.providerLimited) {
+            addGap('provider_limited_window', 'Provider-limited window', 'high', {
+                confidenceImpact: 20,
+                source: 'worker_history_status',
+                boundary: 'provider'
+            });
+        }
+        if (windowStatus.oldestFirstRequired) {
+            addGap('replay_order_reconstruction_required', 'Replay order reconstruction required', 'medium', {
+                confidenceImpact: 12,
+                source: 'replay_reconstruction',
+                boundary: 'ordering'
+            });
+        }
+        if (events.some(event => !event.timestamp && !event.timestampMs)) {
+            addGap('missing_timestamp_window', 'Missing timestamp window', 'medium', {
+                confidenceImpact: 8,
+                source: 'staged_events',
+                boundary: 'timeline'
+            });
+        }
+        if (!windowStatus.canContinueOlder && !windowStatus.canContinueNewer && windowStatus.partial && !windowStatus.olderRequiresProviderPage) {
+            addGap('provider_exhaustion_ambiguous', 'Provider exhaustion ambiguous', 'medium', {
+                confidenceImpact: 14,
+                source: 'continuation_state',
+                boundary: 'cursor'
+            });
+        }
+
+        const impact = gaps.reduce((sum, gap) => sum + (Number(gap.confidenceImpact) || 0), 0);
+        return normalizeReplayGapMap({
+            version: REPLAY_GAP_MAP_VERSION,
+            scope: 'staged_replay_window',
+            scanId: windowStatus.scanId || metadata.scan_id || '',
+            windowIndex: windowStatus.currentWindowIndex,
+            totalWindows: windowStatus.windowCount,
+            ordinalStart: windowStatus.windowStart,
+            ordinalEnd: windowStatus.windowEnd,
+            missingWindowsPossible: windowStatus.partial || Boolean(windowStatus.boundary?.missing_windows_possible),
+            providerLimited: gaps.some(gap => gap.code === 'provider_limited_window'),
+            rateLimited: gaps.some(gap => gap.code === 'rate_limited_replay_continuation'),
+            cursorAmbiguous: gaps.some(gap => gap.boundary === 'cursor'),
+            timestampGaps: gaps.some(gap => gap.code === 'missing_timestamp_window'),
+            confidenceImpact: impact,
+            gaps,
+            boundaryMarkers: [
+                { key: 'window-start', label: 'Known staged segment starts', positionPct: 0, kind: 'known_staged_segment' },
+                { key: 'window-end', label: windowStatus.partial ? 'Uncertain continuation boundary' : 'Known staged segment ends', positionPct: 100, kind: windowStatus.partial ? 'uncertain_continuation' : 'known_staged_segment' }
+            ],
+            noFullHistoryClaim: true
+        });
+    }
+
+    function deriveReplayContinuityProfile(context = {}, gapMap = {}) {
+        const windowStatus = normalizeReplayWindowStatus(context.windowStatus || {});
+        const metadata = context.dataset?.metadata || {};
+        const explicit = normalizeReplayContinuityProfile(
+            windowStatus.continuityConfidence
+            || windowStatus.continuity_confidence
+            || metadata.continuity_confidence
+            || metadata.replay_continuity
+            || metadata.replay_reconstruction?.continuity_confidence
+            || metadata.replay_window?.continuity_confidence
+            || context.continuityProfile
+            || null
+        );
+        if (explicit) return explicit;
+        const base = Math.max(0, Math.min(100, Math.round(Number(context.confidence ?? context.status?.completenessConfidence ?? metadata.completeness_confidence) || 0)));
+        const impact = Math.min(70, Math.max(0, Number(gapMap.confidenceImpact ?? gapMap.confidence_impact) || 0));
+        let score = Math.max(0, Math.min(100, base - Math.floor(impact * 0.45)));
+        if (windowStatus.partial) score = Math.min(score || 62, 76);
+        if (gapMap.providerLimited) score = Math.min(score, 55);
+        if (gapMap.rateLimited) score = Math.min(score, 48);
+        if (gapMap.cursorAmbiguous) score = Math.min(score, 58);
+        const hasHighGap = (gapMap.gaps || []).some(gap => gap.severity === 'high');
+        const level = gapMap.providerLimited || gapMap.rateLimited
+            ? 'provider_limited'
+            : gapMap.cursorAmbiguous || hasHighGap
+                ? 'ambiguous'
+                : !windowStatus.partial && !(gapMap.gaps || []).length
+                    ? 'high'
+                    : 'partial';
+        const label = level === 'high'
+            ? 'High staged continuity'
+            : level === 'provider_limited'
+                ? 'Provider-limited continuity'
+                : level === 'ambiguous'
+                    ? 'Ambiguous staged continuity'
+                    : 'Partial staged continuity';
+        return normalizeReplayContinuityProfile({
+            version: REPLAY_CONTINUITY_VERSION,
+            score,
+            level,
+            label,
+            degraded: level !== 'high',
+            reasonCodes: (gapMap.gaps || []).map(gap => gap.code),
+            gapCount: (gapMap.gaps || []).length,
+            detail: getContinuityDetail({ level }, gapMap),
+            scope: 'staged_continuity',
+            noFullHistoryClaim: true
+        });
+    }
+
+    function normalizeReplayGapMap(gapMap = null) {
+        if (!gapMap || typeof gapMap !== 'object' || Array.isArray(gapMap)) return null;
+        const gaps = Array.isArray(gapMap.gaps) ? gapMap.gaps.slice(0, REPLAY_EXPANSION_CAPS.maxGaps).map(normalizeReplayGap) : [];
+        return {
+            version: String(gapMap.version || REPLAY_GAP_MAP_VERSION),
+            scope: String(gapMap.scope || 'staged_replay_window'),
+            scanId: String(gapMap.scanId || gapMap.scan_id || ''),
+            windowIndex: Math.max(0, Number(gapMap.windowIndex || gapMap.window_index) || 0),
+            totalWindows: Math.max(0, Number(gapMap.totalWindows || gapMap.total_windows) || 0),
+            ordinalStart: Math.max(0, Number(gapMap.ordinalStart || gapMap.ordinal_start) || 0),
+            ordinalEnd: Math.max(0, Number(gapMap.ordinalEnd || gapMap.ordinal_end) || 0),
+            missingWindowsPossible: gapMap.missingWindowsPossible === true || gapMap.missing_windows_possible === true,
+            providerLimited: gapMap.providerLimited === true || gapMap.provider_limited === true,
+            rateLimited: gapMap.rateLimited === true || gapMap.rate_limited === true,
+            cursorAmbiguous: gapMap.cursorAmbiguous === true || gapMap.cursor_ambiguous === true,
+            timestampGaps: gapMap.timestampGaps === true || gapMap.timestamp_gaps === true,
+            confidenceImpact: Math.max(0, Math.min(100, Math.round(Number(gapMap.confidenceImpact || gapMap.confidence_impact) || 0))),
+            gaps,
+            boundaryMarkers: Array.isArray(gapMap.boundaryMarkers || gapMap.boundary_markers)
+                ? (gapMap.boundaryMarkers || gapMap.boundary_markers).slice(0, REPLAY_EXPANSION_CAPS.maxGapMarkers).map(marker => ({
+                    key: String(marker.key || ''),
+                    label: String(marker.label || ''),
+                    positionPct: Math.max(0, Math.min(100, Math.round(Number(marker.positionPct || marker.position_pct) || 0))),
+                    kind: String(marker.kind || 'uncertain_continuation')
+                }))
+                : [],
+            noFullHistoryClaim: gapMap.noFullHistoryClaim !== false && gapMap.no_full_history_claim !== false
+        };
+    }
+
+    function normalizeReplayGap(gap = {}) {
+        const severity = String(gap.severity || 'medium');
+        return {
+            code: String(gap.code || ''),
+            label: String(gap.label || formatHistoryLikeFlag(gap.code)),
+            severity: ['low', 'medium', 'high'].includes(severity) ? severity : 'medium',
+            ordinalStart: Math.max(0, Number(gap.ordinalStart || gap.ordinal_start) || 0),
+            ordinalEnd: Math.max(0, Number(gap.ordinalEnd || gap.ordinal_end) || 0),
+            windowIndex: Math.max(0, Number(gap.windowIndex || gap.window_index) || 0),
+            confidenceImpact: Math.max(0, Math.min(100, Math.round(Number(gap.confidenceImpact || gap.confidence_impact) || 0))),
+            source: String(gap.source || ''),
+            boundary: String(gap.boundary || ''),
+            note: String(gap.note || '')
+        };
+    }
+
+    function normalizeReplayContinuityProfile(profile = null) {
+        if (!profile || typeof profile !== 'object' || Array.isArray(profile)) return null;
+        const level = String(profile.level || 'partial');
+        return {
+            version: String(profile.version || REPLAY_CONTINUITY_VERSION),
+            score: Math.max(0, Math.min(100, Math.round(Number(profile.score) || 0))),
+            level: ['high', 'partial', 'ambiguous', 'provider_limited'].includes(level) ? level : 'partial',
+            label: String(profile.label || 'Partial staged continuity'),
+            degraded: profile.degraded !== false,
+            reasonCodes: Array.isArray(profile.reasonCodes || profile.reason_codes)
+                ? (profile.reasonCodes || profile.reason_codes).slice(0, 8).map(String)
+                : [],
+            gapCount: Math.max(0, Number(profile.gapCount || profile.gap_count) || 0),
+            detail: String(profile.detail || ''),
+            scope: String(profile.scope || 'staged_continuity'),
+            noFullHistoryClaim: profile.noFullHistoryClaim !== false && profile.no_full_history_claim !== false
+        };
+    }
+
+    function deriveReplayClusters(events = [], options = {}) {
+        const tracked = normalizeAddressFilter(options.trackedWallet || '');
+        const counterpartyCounts = new Map();
+        const routeCounts = new Map();
+        const tokenCounts = new Map();
+        const hotspotCounts = new Map();
+        events.forEach(event => {
+            const step = Number(event.step) || 0;
+            const source = normalizeAddressFilter(event.sourceWallet || event.source_wallet);
+            const destination = normalizeAddressFilter(event.destinationWallet || event.destination_wallet);
+            [source, destination].filter(value => value && value !== 'all' && value !== tracked).forEach(wallet => {
+                const record = counterpartyCounts.get(wallet) || { key: `wallet:${wallet}`, kind: 'counterparty', wallet, label: shortValue(wallet), count: 0, steps: [], events: [] };
+                record.count += 1;
+                record.steps.push(step);
+                record.events.push(event);
+                counterpartyCounts.set(wallet, record);
+            });
+            const route = getRouteKey(event);
+            if (route) {
+                const record = routeCounts.get(route) || { key: `route:${route}`, kind: 'route', route, label: formatRoute(event), count: 0, steps: [], events: [] };
+                record.count += 1;
+                record.steps.push(step);
+                record.events.push(event);
+                routeCounts.set(route, record);
+            }
+            const token = normalizeTokenFilter(event.token || event.symbol || event.token_mint);
+            if (token !== 'all') {
+                const record = tokenCounts.get(token) || { key: `token:${token}`, kind: 'token', token, label: token, count: 0, steps: [], events: [] };
+                record.count += 1;
+                record.steps.push(step);
+                record.events.push(event);
+                tokenCounts.set(token, record);
+            }
+            const time = Number(event.timestampMs) || getTimestampMs(event.timestamp);
+            if (time) {
+                const bucket = Math.floor(time / (1000 * 60 * 60 * 12));
+                const record = hotspotCounts.get(bucket) || { key: `hotspot:${bucket}`, kind: 'hotspot', label: formatTimestamp(event.timestamp) || 'Time hotspot', count: 0, steps: [], events: [] };
+                record.count += 1;
+                record.steps.push(step);
+                record.events.push(event);
+                hotspotCounts.set(bucket, record);
+            }
+        });
+        const normalizeCluster = cluster => ({
+            ...cluster,
+            version: REPLAY_CLUSTER_VERSION,
+            steps: cluster.steps.filter(Boolean).slice(0, REPLAY_EXPANSION_CAPS.maxClusterMembers),
+            events: cluster.events.slice(0, REPLAY_EXPANSION_CAPS.maxClusterMembers),
+            detail: `${cluster.count} staged replay event${cluster.count === 1 ? '' : 's'} share this ${cluster.kind}. Address observation only.`
+        });
+        const pickClusters = (map, minCount, limit) => [...map.values()]
+            .filter(item => item.count >= minCount)
+            .sort((a, b) => b.count - a.count || Math.min(...a.steps) - Math.min(...b.steps) || a.label.localeCompare(b.label))
+            .slice(0, limit)
+            .map(normalizeCluster);
+        const counterparties = pickClusters(counterpartyCounts, 2, REPLAY_EXPANSION_CAPS.maxCounterpartyClusters);
+        const routes = pickClusters(routeCounts, 2, REPLAY_EXPANSION_CAPS.maxRouteClusters);
+        const tokens = pickClusters(tokenCounts, 2, REPLAY_EXPANSION_CAPS.maxTokenClusters);
+        const hotspots = pickClusters(hotspotCounts, 3, 3);
+        return {
+            version: REPLAY_CLUSTER_VERSION,
+            counterparties,
+            routes,
+            tokens,
+            hotspots,
+            total: counterparties.length + routes.length + tokens.length + hotspots.length,
+            capped: counterpartyCounts.size > counterparties.length || routeCounts.size > routes.length || tokenCounts.size > tokens.length,
+            previewOnly: true,
+            stagedHistoryOnly: true
+        };
+    }
+
+    function deriveReplayNeighborhood(selectedEvent = null, events = [], options = {}) {
+        const focus = normalizeNeighborhoodFocus(options.focus);
+        const clusters = options.clusters || deriveReplayClusters(events);
+        const selectedStep = Number(selectedEvent?.step) || 0;
+        const selectedRoute = selectedEvent ? getRouteKey(selectedEvent) : '';
+        const selectedToken = selectedEvent ? normalizeTokenFilter(selectedEvent.token || selectedEvent.symbol || selectedEvent.token_mint) : 'all';
+        const selectedWallets = selectedEvent
+            ? [selectedEvent.sourceWallet || selectedEvent.source_wallet, selectedEvent.destinationWallet || selectedEvent.destination_wallet].map(normalizeAddressFilter).filter(value => value && value !== 'all')
+            : [];
+        const eventMatchesFocus = event => {
+            const source = normalizeAddressFilter(event.sourceWallet || event.source_wallet);
+            const destination = normalizeAddressFilter(event.destinationWallet || event.destination_wallet);
+            const route = getRouteKey(event);
+            const token = normalizeTokenFilter(event.token || event.symbol || event.token_mint);
+            if (focus.mode === 'wallet') return focus.wallet && (source === focus.wallet || destination === focus.wallet);
+            if (focus.mode === 'counterparties') return selectedWallets.includes(source) || selectedWallets.includes(destination);
+            if (focus.mode === 'route') return focus.route ? route === focus.route : route && route === selectedRoute;
+            if (focus.mode === 'token') return focus.token !== 'all' ? token === focus.token : token !== 'all' && token === selectedToken;
+            if (focus.mode === 'cluster') return matchesClusterFocus(event, focus, clusters, selectedEvent);
+            if (focus.mode === 'transfer') return selectedEvent ? (
+                route && route === selectedRoute
+                || (selectedToken !== 'all' && token === selectedToken)
+                || selectedWallets.includes(source)
+                || selectedWallets.includes(destination)
+            ) : false;
+            return selectedEvent ? Math.abs((Number(event.step) || 0) - selectedStep) <= 3 : false;
+        };
+        const related = uniqueEvents(events.filter(event => eventMatchesFocus(event)))
+            .sort((a, b) => Number(a.step) - Number(b.step));
+        const wallets = [];
+        const routes = [];
+        const tokens = [];
+        related.forEach(event => {
+            [event.sourceWallet || event.source_wallet, event.destinationWallet || event.destination_wallet].forEach(wallet => {
+                const normalized = normalizeAddressFilter(wallet);
+                if (normalized && normalized !== 'all' && !wallets.includes(normalized)) wallets.push(normalized);
+            });
+            const route = getRouteKey(event);
+            if (route && !routes.includes(route)) routes.push(route);
+            const token = normalizeTokenFilter(event.token || event.symbol || event.token_mint);
+            if (token !== 'all' && !tokens.includes(token)) tokens.push(token);
+        });
+        const active = focus.mode !== 'none' || related.length > 1;
+        return {
+            version: REPLAY_NEIGHBORHOOD_VERSION,
+            active,
+            mode: focus.mode,
+            title: getNeighborhoodTitle(focus, selectedEvent),
+            detail: getNeighborhoodDetail(focus, related.length),
+            events: related.slice(0, REPLAY_EXPANSION_CAPS.maxNeighborhoodEvents),
+            totalEvents: related.length,
+            wallets: wallets.slice(0, REPLAY_EXPANSION_CAPS.maxNeighborhoodWallets),
+            routes: routes.slice(0, 10),
+            tokens: tokens.slice(0, 10),
+            primaryRoute: focus.route || selectedRoute || routes[0] || '',
+            primaryToken: focus.token !== 'all' ? focus.token : selectedToken !== 'all' ? selectedToken : tokens[0] || '',
+            capped: related.length > REPLAY_EXPANSION_CAPS.maxNeighborhoodEvents,
+            previewOnly: true,
+            stagedHistoryOnly: true
+        };
+    }
+
+    function normalizeNeighborhoodFocus(focus = null) {
+        if (!focus || typeof focus !== 'object' || Array.isArray(focus)) return { mode: 'none', wallet: '', token: 'all', route: '', clusterKey: '', clusterKind: '' };
+        const mode = String(focus.mode || 'none');
+        return {
+            mode: ['none', 'transfer', 'wallet', 'counterparties', 'route', 'token', 'cluster'].includes(mode) ? mode : 'none',
+            wallet: normalizeAddressFilter(focus.wallet || ''),
+            token: normalizeTokenFilter(focus.token || ''),
+            route: String(focus.route || ''),
+            clusterKey: String(focus.clusterKey || focus.cluster_key || ''),
+            clusterKind: String(focus.clusterKind || focus.cluster_kind || '')
+        };
+    }
+
+    function matchesClusterFocus(event = {}, focus = {}, clusters = {}, selectedEvent = null) {
+        const clusterItems = [
+            ...(clusters.counterparties || []),
+            ...(clusters.routes || []),
+            ...(clusters.tokens || []),
+            ...(clusters.hotspots || [])
+        ];
+        const selectedRoute = selectedEvent ? getRouteKey(selectedEvent) : '';
+        const selectedToken = selectedEvent ? normalizeTokenFilter(selectedEvent.token || selectedEvent.symbol || selectedEvent.token_mint) : 'all';
+        const selectedWallets = selectedEvent
+            ? [selectedEvent.sourceWallet || selectedEvent.source_wallet, selectedEvent.destinationWallet || selectedEvent.destination_wallet].map(normalizeAddressFilter)
+            : [];
+        const cluster = focus.clusterKey
+            ? clusterItems.find(item => item.key === focus.clusterKey)
+            : clusterItems.find(item => item.route === selectedRoute || (selectedToken !== 'all' && item.token === selectedToken) || selectedWallets.includes(item.wallet));
+        if (!cluster) return false;
+        const step = Number(event.step) || 0;
+        return (cluster.steps || []).includes(step);
+    }
+
+    function getNeighborhoodTitle(focus = {}, event = null) {
+        if (focus.mode === 'wallet') return `Wallet ${shortValue(focus.wallet)}`;
+        if (focus.mode === 'counterparties') return 'Related Counterparties';
+        if (focus.mode === 'route') return 'Same Route';
+        if (focus.mode === 'token') return `Token ${focus.token}`;
+        if (focus.mode === 'cluster') return 'Replay Cluster';
+        if (focus.mode === 'transfer' && event) return `Step ${event.step || '-'}`;
+        return 'Local Staged Neighborhood';
+    }
+
+    function getNeighborhoodDetail(focus = {}, count = 0) {
+        const suffix = `${count} staged event${count === 1 ? '' : 's'} matched.`;
+        if (focus.mode === 'none') return 'Select expansion actions to stage a bounded local replay neighborhood.';
+        return `${suffix} This is a replay-only expansion and does not modify Wallet Lookup.`;
     }
 
     function normalizeReplayEvents(context = {}) {
@@ -698,6 +1338,8 @@
             olderWindowIndex: Math.max(0, Number(status.olderWindowIndex || continuation.older_window_index) || 0),
             newerWindowIndex: Math.max(0, Number(status.newerWindowIndex || continuation.newer_window_index) || 0),
             boundary,
+            continuityConfidence: normalizeReplayContinuityProfile(status.continuityConfidence || status.continuity_confidence || null),
+            gapMap: normalizeReplayGapMap(status.gapMap || status.gap_map || null),
             timelineSegments: Array.isArray(status.timelineSegments)
                 ? status.timelineSegments
                 : Array.isArray(status.timeline_segments)
@@ -729,6 +1371,7 @@
             filters,
             selectedCounterparty: filters.counterparty !== 'all' ? filters.counterparty : '',
             selectedToken: filters.token !== 'all' ? filters.token : '',
+            neighborhood: normalizeNeighborhoodFocus(context.neighborhood || context.audit?.neighborhood || {}),
             selectedBookmarkKey: context.selectedBookmarkKey || '',
             selectedSignature: selectedEvent?.signature || '',
             breadcrumbs: normalizeAuditBreadcrumbs(context.breadcrumbs || context.audit?.breadcrumbs || []),
@@ -762,6 +1405,7 @@
             filters: normalizeAuditFilters(checkpoint.filters || checkpoint.auditFilters || {}),
             selectedCounterparty: String(checkpoint.selectedCounterparty || checkpoint.selected_counterparty || ''),
             selectedToken: String(checkpoint.selectedToken || checkpoint.selected_token || ''),
+            neighborhood: normalizeNeighborhoodFocus(checkpoint.neighborhood || {}),
             selectedBookmarkKey: String(checkpoint.selectedBookmarkKey || checkpoint.selected_bookmark_key || ''),
             selectedSignature: String(checkpoint.selectedSignature || checkpoint.selected_signature || ''),
             breadcrumbs: normalizeAuditBreadcrumbs(checkpoint.breadcrumbs || []),
@@ -1197,6 +1841,12 @@
         return text.replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
     }
 
+    function formatHistoryLikeFlag(value = '') {
+        const text = String(value || '').trim().replaceAll('_', ' ');
+        if (!text) return 'Replay gap';
+        return text.replace(/\b\w/g, letter => letter.toUpperCase());
+    }
+
     function formatRoute(event = {}) {
         const source = event.sourceWallet || event.source_wallet || '';
         const destination = event.destinationWallet || event.destination_wallet || '';
@@ -1252,6 +1902,12 @@
         normalizeReplayEvents,
         normalizeAuditFilters,
         normalizeReplayWindowStatus,
+        deriveReplayGapMap,
+        deriveReplayContinuityProfile,
+        deriveReplayClusters,
+        deriveReplayNeighborhood,
+        normalizeReplayGapMap,
+        normalizeReplayContinuityProfile,
         buildReplayCheckpoint,
         normalizeReplayCheckpoint,
         filterReplayEvents,

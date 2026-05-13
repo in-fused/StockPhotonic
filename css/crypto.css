@@ -2066,8 +2066,8 @@
             grid-row: 1;
             justify-self: end;
             align-self: start;
-            width: min(25rem, 100%);
-            max-height: min(38dvh, 17rem);
+            width: min(27rem, 100%);
+            max-height: min(72dvh, 38rem);
             overflow-y: auto;
             overflow-x: hidden;
         }
@@ -2309,6 +2309,321 @@
             font-size: 0.68rem;
             line-height: 1.35;
             overflow-wrap: anywhere;
+        }
+
+        .crypto-replay-audit-filters {
+            margin-top: 0.7rem;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 0.55rem;
+            background: rgba(15, 23, 42, 0.38);
+            overflow: hidden;
+        }
+
+        .crypto-replay-audit-filters summary,
+        .crypto-replay-audit-breadcrumb-header,
+        .crypto-replay-related-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            min-width: 0;
+            color: rgba(236, 254, 255, 0.72);
+            font-size: 0.66rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .crypto-replay-audit-filters summary {
+            cursor: pointer;
+            padding: 0.55rem 0.6rem;
+        }
+
+        .crypto-replay-audit-filters strong,
+        .crypto-replay-audit-breadcrumb-header strong,
+        .crypto-replay-related-header strong {
+            min-width: 0;
+            color: rgba(103, 232, 249, 0.76);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.6rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .crypto-replay-filter-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.45rem;
+            padding: 0 0.6rem 0.55rem;
+        }
+
+        .crypto-replay-filter-field {
+            display: grid;
+            gap: 0.25rem;
+            min-width: 0;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 0.61rem;
+            font-weight: 700;
+        }
+
+        .crypto-replay-filter-field select {
+            min-width: 0;
+            min-height: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 0.45rem;
+            background: rgba(2, 6, 23, 0.82);
+            color: rgba(236, 254, 255, 0.82);
+            padding: 0.35rem 0.45rem;
+            font-size: 0.68rem;
+            outline: none;
+        }
+
+        .crypto-replay-filter-toggle {
+            min-height: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.45rem;
+            background: rgba(255, 255, 255, 0.035);
+            padding: 0.35rem 0.5rem;
+            color: rgba(236, 254, 255, 0.72);
+            font-size: 0.68rem;
+            font-weight: 700;
+        }
+
+        .crypto-replay-filter-toggle input {
+            width: 1rem;
+            height: 1rem;
+            accent-color: #f0abfc;
+        }
+
+        .crypto-replay-filter-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            padding: 0.45rem 0.6rem;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 0.62rem;
+            line-height: 1.25;
+        }
+
+        .crypto-replay-filter-footer button,
+        .crypto-replay-audit-actions button,
+        .crypto-replay-related-card button,
+        .crypto-replay-filtered-strip button,
+        .crypto-replay-recent-strip button,
+        .crypto-replay-audit-crumb button {
+            min-width: 0;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 0.45rem;
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(226, 232, 240, 0.76);
+            font-size: 0.64rem;
+            font-weight: 800;
+            line-height: 1.15;
+        }
+
+        .crypto-replay-filter-footer button {
+            flex: 0 0 auto;
+            min-height: 1.85rem;
+            padding: 0.3rem 0.55rem;
+        }
+
+        .crypto-replay-audit-breadcrumbs,
+        .crypto-replay-drilldown,
+        .crypto-replay-related,
+        .crypto-replay-filtered-events {
+            margin-top: 0.72rem;
+            min-width: 0;
+        }
+
+        .crypto-replay-audit-breadcrumb-strip,
+        .crypto-replay-recent-strip,
+        .crypto-replay-filtered-strip {
+            display: flex;
+            gap: 0.35rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0.4rem 0 0.05rem;
+            scrollbar-width: thin;
+        }
+
+        .crypto-replay-audit-crumb {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: stretch;
+            max-width: 12rem;
+            border-radius: 0.48rem;
+            overflow: hidden;
+        }
+
+        .crypto-replay-audit-crumb button {
+            min-height: 1.95rem;
+            border-radius: 0;
+            padding: 0.35rem 0.48rem;
+        }
+
+        .crypto-replay-audit-crumb button:first-child {
+            max-width: 9.8rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: rgba(236, 254, 255, 0.78);
+        }
+
+        .crypto-replay-audit-crumb button:last-child {
+            width: 1.85rem;
+            color: rgba(250, 204, 21, 0.75);
+        }
+
+        .crypto-replay-recent-strip button,
+        .crypto-replay-filtered-strip button {
+            flex: 0 0 auto;
+            min-height: 1.95rem;
+            padding: 0.34rem 0.52rem;
+        }
+
+        .crypto-replay-filtered-strip button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .crypto-replay-filtered-strip button.is-active {
+            border-color: rgba(250, 204, 21, 0.4);
+            background: rgba(250, 204, 21, 0.12);
+            color: rgba(254, 249, 195, 0.94);
+        }
+
+        .crypto-replay-drilldown {
+            border-top: 1px solid rgba(255, 255, 255, 0.09);
+            padding-top: 0.72rem;
+        }
+
+        .crypto-replay-drilldown-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.4rem;
+            margin-top: 0.55rem;
+        }
+
+        .crypto-replay-drilldown-grid div {
+            min-width: 0;
+            border: 1px solid rgba(255, 255, 255, 0.075);
+            border-radius: 0.42rem;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.4rem 0.46rem;
+        }
+
+        .crypto-replay-drilldown-grid span {
+            display: block;
+            color: rgba(255, 255, 255, 0.34);
+            font-size: 0.58rem;
+            line-height: 1.15;
+        }
+
+        .crypto-replay-drilldown-grid strong {
+            display: block;
+            min-width: 0;
+            margin-top: 0.16rem;
+            color: rgba(236, 254, 255, 0.82);
+            font-size: 0.66rem;
+            line-height: 1.24;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .crypto-replay-drilldown-grid strong.is-mono {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        .crypto-replay-audit-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.4rem;
+            margin-top: 0.7rem;
+        }
+
+        .crypto-replay-audit-actions button {
+            min-height: 2.1rem;
+            padding: 0.42rem 0.52rem;
+            white-space: normal;
+        }
+
+        .crypto-replay-audit-actions button:hover:not(:disabled),
+        .crypto-replay-related-card button:hover:not(:disabled),
+        .crypto-replay-filtered-strip button:hover:not(:disabled),
+        .crypto-replay-recent-strip button:hover:not(:disabled),
+        .crypto-replay-audit-crumb button:hover:not(:disabled) {
+            border-color: rgba(103, 232, 249, 0.35);
+            background: rgba(34, 211, 238, 0.10);
+            color: rgba(236, 254, 255, 0.92);
+        }
+
+        .crypto-replay-audit-actions button:disabled,
+        .crypto-replay-related-card button:disabled,
+        .crypto-replay-filtered-strip button:disabled,
+        .crypto-replay-filter-footer button:disabled {
+            cursor: not-allowed;
+            opacity: 0.48;
+        }
+
+        .crypto-replay-related-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.45rem;
+            margin-top: 0.5rem;
+        }
+
+        .crypto-replay-related-card {
+            min-width: 0;
+            border: 1px solid rgba(255, 255, 255, 0.075);
+            border-radius: 0.48rem;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.45rem;
+        }
+
+        .crypto-replay-related-card > div {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.35rem;
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 0.6rem;
+            font-weight: 800;
+        }
+
+        .crypto-replay-related-card > div strong {
+            color: rgba(103, 232, 249, 0.76);
+        }
+
+        .crypto-replay-related-card button {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.35rem;
+            width: 100%;
+            min-height: 1.8rem;
+            margin-top: 0.32rem;
+            padding: 0.32rem 0.42rem;
+        }
+
+        .crypto-replay-related-card button strong {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .crypto-replay-related-card p,
+        .crypto-replay-empty-compact {
+            margin: 0.42rem 0 0;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.65rem;
+            line-height: 1.35;
         }
 
         .crypto-replay-workspace-controls button {
@@ -2790,7 +3105,7 @@
                 justify-self: stretch;
                 align-self: start;
                 width: 100%;
-                max-height: min(18dvh, 9.5rem);
+                max-height: min(30dvh, 16rem);
                 overflow-y: auto;
             }
 
@@ -2816,6 +3131,21 @@
             .crypto-replay-event-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 0.35rem;
+            }
+
+            .crypto-replay-audit-filters:not([open]) .crypto-replay-filter-grid,
+            .crypto-replay-audit-filters:not([open]) .crypto-replay-filter-footer {
+                display: none;
+            }
+
+            .crypto-replay-drilldown-grid,
+            .crypto-replay-related-grid,
+            .crypto-replay-audit-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .crypto-replay-drilldown-grid strong {
+                white-space: normal;
             }
 
             .crypto-replay-workspace-actions button {

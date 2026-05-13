@@ -4,7 +4,7 @@
     const graphEngine = namespace.graph;
     const layoutEngine = namespace.layout;
 
-    const HISTORY_REPLAY_ANIMATOR_VERSION = 'd133_cinematic_history_replay_animator_v1';
+    const HISTORY_REPLAY_ANIMATOR_VERSION = 'd134_replay_audit_history_replay_animator_v1';
     const DEFAULT_LIMITS = Object.freeze({
         maxTransactions: 180,
         maxNodes: 160,
@@ -32,6 +32,8 @@
             lastFrameAt: 0,
             warnings: [],
             metadata: {},
+            auditFilters: normalizeAuditFilters(options.auditFilters),
+            selectedStepIndex: 0,
             destroyed: false,
             onStatus: typeof options.onStatus === 'function' ? options.onStatus : null,
             limits: normalizeLimits(options)
@@ -45,6 +47,9 @@
             seek,
             reset,
             setSpeed,
+            setAuditFilters,
+            selectStep,
+            hitTest,
             render,
             getStatus,
             destroy
@@ -61,6 +66,8 @@
             state.warnings = prepared.warnings;
             state.metadata = prepared.metadata || nextDataset.metadata || {};
             state.stepIndex = clampInteger(configureOptions.initialStep, 0, 0, state.steps.length);
+            state.selectedStepIndex = clampInteger(configureOptions.selectedStep ?? state.stepIndex, state.stepIndex, 0, state.steps.length);
+            state.auditFilters = normalizeAuditFilters(configureOptions.auditFilters || state.auditFilters);
             state.done = state.steps.length > 0 && state.stepIndex >= state.steps.length;
             render();
             notifyStatus();
@@ -82,6 +89,7 @@
             }
             state.done = false;
             state.playing = true;
+            state.selectedStepIndex = state.stepIndex;
             state.lastAdvanceAt = performanceNow();
             scheduleFrame();
             render();
@@ -102,6 +110,7 @@
             cancelFrame();
             const delta = direction < 0 ? -1 : 1;
             state.stepIndex = clampInteger(state.stepIndex + delta, state.stepIndex, 0, state.steps.length);
+            state.selectedStepIndex = state.stepIndex;
             state.done = state.steps.length > 0 && state.stepIndex >= state.steps.length;
             state.lastAdvanceAt = performanceNow();
             render();
@@ -112,6 +121,7 @@
         function seek(stepIndex = 0) {
             const wasPlaying = state.playing;
             state.stepIndex = clampInteger(stepIndex, state.stepIndex, 0, state.steps.length);
+            state.selectedStepIndex = state.stepIndex;
             state.done = state.steps.length > 0 && state.stepIndex >= state.steps.length;
             if (state.done) state.playing = false;
             state.lastAdvanceAt = performanceNow();
@@ -127,6 +137,7 @@
             state.playing = false;
             state.done = false;
             state.stepIndex = 0;
+            state.selectedStepIndex = 0;
             state.lastAdvanceAt = performanceNow();
             cancelFrame();
             render();
@@ -141,6 +152,31 @@
             return getStatus();
         }
 
+        function setAuditFilters(filters = {}) {
+            state.auditFilters = normalizeAuditFilters(filters);
+            render();
+            notifyStatus();
+            return getStatus();
+        }
+
+        function selectStep(stepIndex = 0) {
+            state.selectedStepIndex = clampInteger(stepIndex, state.stepIndex, 0, state.steps.length);
+            render();
+            notifyStatus();
+            return getStatus();
+        }
+
+        function hitTest(point = {}) {
+            if (!state.canvas || !state.graph || !state.steps.length) return null;
+            return hitTestReplayGraph(state.graph, state.steps, {
+                point,
+                canvas: state.canvas,
+                stepIndex: state.stepIndex,
+                selectedStepIndex: state.selectedStepIndex,
+                playing: state.playing
+            });
+        }
+
         function render(now = performanceNow()) {
             if (!state.canvas || state.destroyed) return getStatus();
             drawReplayFrame(state.canvas, state.graph, {
@@ -148,6 +184,8 @@
                 stepIndex: state.stepIndex,
                 progress: getCurrentStepProgress(now),
                 playing: state.playing,
+                selectedStepIndex: state.selectedStepIndex,
+                auditFilters: state.auditFilters,
                 now,
                 limits: state.limits
             });
@@ -156,8 +194,10 @@
 
         function getStatus() {
             const current = state.stepIndex > 0 ? state.steps[Math.max(0, state.stepIndex - 1)] || {} : {};
+            const selected = state.selectedStepIndex > 0 ? state.steps[Math.max(0, state.selectedStepIndex - 1)] || {} : {};
             const speed = SPEEDS[state.speed] || SPEEDS.standard;
             const activePath = buildActivePathMetadata(current, state.graph, state.stepIndex, state.steps.length);
+            const audit = buildAuditStatusMetadata(state.steps, selected, state.auditFilters);
             return {
                 version: HISTORY_REPLAY_ANIMATOR_VERSION,
                 previewOnly: true,
@@ -165,6 +205,7 @@
                 playing: state.playing,
                 done: state.done,
                 currentStep: state.stepIndex,
+                selectedStep: state.selectedStepIndex,
                 totalSteps: state.steps.length,
                 timestamp: current.timestamp || '',
                 signature: current.signature || '',
@@ -175,6 +216,7 @@
                 sourceWallet: current.sourceWallet || '',
                 destinationWallet: current.destinationWallet || '',
                 currentEvent: summarizeStep(current, state.stepIndex),
+                selectedEvent: state.selectedStepIndex ? summarizeStep(selected, state.selectedStepIndex) : null,
                 eventSummaries: state.steps.map((step, index) => ({
                     ...summarizeStep(step, index + 1),
                     replayState: index + 1 < state.stepIndex
@@ -184,6 +226,7 @@
                             : 'future'
                 })),
                 activePath,
+                audit,
                 completedStepCount: activePath.completedStepCount,
                 futureStepCount: activePath.futureStepCount,
                 speed: state.speed,
@@ -247,6 +290,7 @@
             const speed = SPEEDS[state.speed] || SPEEDS.standard;
             if (now - state.lastAdvanceAt >= speed.stepMs) {
                 state.stepIndex = Math.min(state.steps.length, state.stepIndex + 1);
+                state.selectedStepIndex = state.stepIndex;
                 state.lastAdvanceAt = now;
                 state.done = state.stepIndex >= state.steps.length;
                 notifyStatus();
@@ -421,8 +465,10 @@
         }
 
         const current = options.steps[Math.max(0, options.stepIndex - 1)] || null;
-        const viewport = getReplayViewport(graph, current, size, options);
+        const selected = options.steps[Math.max(0, Number(options.selectedStepIndex || 0) - 1)] || current;
+        const viewport = getReplayViewport(graph, selected || current, size, options);
         const visibility = getReplayVisibilitySets(options.steps, options.stepIndex);
+        const audit = getReplayAuditSets(options.steps, selected, options.auditFilters);
         let rootVisible = false;
         graph.nodes.forEach(node => {
             if (!isTrackedWallet(node, graph)) return;
@@ -437,9 +483,9 @@
         ctx.translate(viewport.offset.x, viewport.offset.y);
         ctx.scale(viewport.scale, viewport.scale);
 
-        drawReplayFocusHalo(ctx, graph, current, options);
-        drawRevealedEdges(ctx, graph, visibility, current, options);
-        drawRevealedNodes(ctx, graph, visibility, current, options);
+        drawReplayFocusHalo(ctx, graph, selected || current, options);
+        drawRevealedEdges(ctx, graph, visibility, current, { ...options, selected, audit });
+        drawRevealedNodes(ctx, graph, visibility, current, { ...options, selected, audit });
 
         ctx.restore();
         drawReplayProgress(ctx, size.width, size.height, options.stepIndex, options.steps.length, options.playing);
@@ -449,6 +495,8 @@
 
     function drawRevealedEdges(ctx, graph, visibility, current, options) {
         const nodeById = graph.nodeById || new Map();
+        const audit = options.audit || {};
+        const selectedEdgeId = options.selected?.edgeId || '';
         (graph.exposureEdges || []).forEach(edge => {
             if (!visibility.completedEdgeIds.has(edge.id) && !visibility.currentEdgeIds.has(edge.id)) return;
             const active = visibility.currentEdgeIds.has(edge.id);
@@ -462,25 +510,47 @@
         });
 
         let particleCount = 0;
-        (graph.flowEdges || []).forEach((edge, index) => {
+        (graph.flowEdges || [])
+            .slice()
+            .sort((a, b) => (a.id === selectedEdgeId ? 1 : 0) - (b.id === selectedEdgeId ? 1 : 0))
+            .forEach((edge, index) => {
             const isCurrent = current?.edgeId === edge.id || visibility.currentEdgeIds.has(edge.id);
+            const isSelected = selectedEdgeId === edge.id;
+            const isNeighbor = audit.neighborhoodEdgeIds?.has(edge.id);
+            const filterMismatch = audit.filtersActive && !isSelected && !audit.filteredEdgeIds?.has(edge.id);
             const isCompleted = visibility.completedEdgeIds.has(edge.id);
-            const isFuture = visibility.futureEdgeIds.has(edge.id) && !isCurrent && !isCompleted;
-            if (!isCurrent && !isCompleted && !isFuture) return;
+            const isFuture = visibility.futureEdgeIds.has(edge.id) && !isCurrent && !isCompleted && !isSelected;
+            if (!isCurrent && !isCompleted && !isFuture && !isSelected) return;
             const progress = isCurrent ? options.progress : 1;
+            const baseAlpha = isSelected
+                ? 1
+                : isCurrent
+                    ? 0.94
+                    : isNeighbor
+                        ? 0.46
+                        : isCompleted
+                            ? 0.28
+                            : 0.045;
             drawReplayEdge(ctx, edge, nodeById, {
-                alpha: isCurrent ? 1 : isCompleted ? 0.34 : 0.055,
+                alpha: filterMismatch ? Math.min(baseAlpha, 0.055) : baseAlpha,
                 progress,
-                color: isCurrent
+                color: isSelected
+                    ? 'rgba(253, 224, 71, 0.98)'
+                    : isCurrent
                     ? 'rgba(244, 114, 182, 0.96)'
+                    : isNeighbor
+                        ? 'rgba(103, 232, 249, 0.7)'
                     : isCompleted
                         ? 'rgba(125, 211, 252, 0.58)'
                         : 'rgba(148, 163, 184, 0.32)',
                 dashed: false,
                 active: isCurrent,
+                selected: isSelected,
+                neighbor: isNeighbor,
+                filterMismatch,
                 trail: isCompleted,
                 future: isFuture,
-                state: isCurrent ? 'current' : isCompleted ? 'completed' : 'future'
+                state: isSelected ? 'selected' : isCurrent ? 'current' : isCompleted ? 'completed' : 'future'
             });
             if (!isFuture && options.playing && particleCount < options.limits.maxParticles && progress > 0.08) {
                 drawFlowParticle(ctx, edge, nodeById, options.now, index, isCurrent ? progress : 1);
@@ -491,6 +561,8 @@
 
     function drawRevealedNodes(ctx, graph, visibility, current, options) {
         const currentNodeIds = new Set(current?.nodeIds || []);
+        const selectedNodeIds = new Set(options.selected?.nodeIds || []);
+        const audit = options.audit || {};
         const orderedNodes = graph.nodes
             .slice()
             .sort((a, b) => previewNodeOrder(a) - previewNodeOrder(b));
@@ -498,12 +570,18 @@
         orderedNodes.forEach(node => {
             const root = isTrackedWallet(node, graph);
             const active = currentNodeIds.has(node.id);
+            const selected = selectedNodeIds.has(node.id);
+            const neighbor = audit.neighborhoodNodeIds?.has(node.id);
+            const filterMismatch = audit.filtersActive && !selected && !audit.filteredNodeIds?.has(node.id);
             const completed = visibility.completedNodeIds.has(node.id);
-            const future = visibility.futureNodeIds.has(node.id) && !active && !completed && !root;
+            const future = visibility.futureNodeIds.has(node.id) && !active && !completed && !root && !selected;
             if (!future) return;
             drawReplayNode(ctx, node, graph, {
                 active: false,
                 root: false,
+                selected,
+                neighbor,
+                filterMismatch,
                 playing: options.playing,
                 now: options.now,
                 revealState: 'future'
@@ -513,14 +591,20 @@
         orderedNodes.forEach(node => {
             const root = isTrackedWallet(node, graph);
             const active = currentNodeIds.has(node.id);
+            const selected = selectedNodeIds.has(node.id);
+            const neighbor = audit.neighborhoodNodeIds?.has(node.id);
+            const filterMismatch = audit.filtersActive && !selected && !audit.filteredNodeIds?.has(node.id);
             const completed = visibility.completedNodeIds.has(node.id) || root;
-            if (!active && !completed) return;
+            if (!active && !completed && !selected && !neighbor) return;
             drawReplayNode(ctx, node, graph, {
                 active,
                 root,
+                selected,
+                neighbor,
+                filterMismatch,
                 playing: options.playing,
                 now: options.now,
-                revealState: active ? 'current' : 'completed'
+                revealState: selected ? 'selected' : active ? 'current' : 'completed'
             });
         });
     }
@@ -540,16 +624,20 @@
         ctx.save();
         ctx.globalAlpha = options.alpha;
         ctx.strokeStyle = options.color;
-        ctx.lineWidth = options.future ? Math.max(0.45, baseWidth * 0.58) : options.trail ? Math.max(0.75, baseWidth * 0.82) : baseWidth;
+        ctx.lineWidth = options.selected
+            ? Math.max(3.4, baseWidth + 2.9)
+            : options.neighbor
+                ? Math.max(1.4, baseWidth + 0.5)
+                : options.future ? Math.max(0.45, baseWidth * 0.58) : options.trail ? Math.max(0.75, baseWidth * 0.82) : baseWidth;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         if (options.dashed) ctx.setLineDash([5, 8]);
-        if (options.active) {
+        if (options.active || options.selected) {
             ctx.globalAlpha = Math.min(1, options.alpha * 0.55);
-            ctx.strokeStyle = 'rgba(251, 207, 232, 0.56)';
-            ctx.lineWidth += 7.5;
-            ctx.shadowColor = 'rgba(244, 114, 182, 0.86)';
-            ctx.shadowBlur = 22;
+            ctx.strokeStyle = options.selected ? 'rgba(254, 240, 138, 0.62)' : 'rgba(251, 207, 232, 0.56)';
+            ctx.lineWidth += options.selected ? 9.5 : 7.5;
+            ctx.shadowColor = options.selected ? 'rgba(250, 204, 21, 0.92)' : 'rgba(244, 114, 182, 0.86)';
+            ctx.shadowBlur = options.selected ? 30 : 22;
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
             points.slice(1).forEach(point => ctx.lineTo(point.x, point.y));
@@ -557,9 +645,9 @@
             ctx.globalAlpha = options.alpha;
             ctx.strokeStyle = options.color;
             ctx.lineWidth = edge.type === core.EDGE_TYPES.FLOW
-                ? Math.max(2.6, Math.min(5.8, (edge.width || 1.4) + 2.2))
+                ? Math.max(options.selected ? 3.2 : 2.6, Math.min(options.selected ? 7 : 5.8, (edge.width || 1.4) + (options.selected ? 3.1 : 2.2)))
                 : 1.4;
-            ctx.shadowBlur = 16;
+            ctx.shadowBlur = options.selected ? 24 : 16;
         }
         ctx.beginPath();
         ctx.moveTo(points[0].x, points[0].y);
@@ -570,7 +658,7 @@
         }
         ctx.setLineDash([]);
         if (!options.future && edge.type === core.EDGE_TYPES.FLOW && progress >= 0.86) {
-            drawReplayArrow(ctx, points[Math.max(0, points.length - 3)], points[points.length - 1], options.active);
+            drawReplayArrow(ctx, points[Math.max(0, points.length - 3)], points[points.length - 1], options.active || options.selected, options.selected);
         }
         ctx.restore();
     }
@@ -591,10 +679,10 @@
         ctx.restore();
     }
 
-    function drawReplayArrow(ctx, from, to, active = false) {
+    function drawReplayArrow(ctx, from, to, active = false, selected = false) {
         const angle = Math.atan2(to.y - from.y, to.x - from.x);
-        const size = active ? 7.5 : 6;
-        ctx.fillStyle = active ? 'rgba(245, 208, 254, 0.86)' : 'rgba(165, 243, 252, 0.58)';
+        const size = selected ? 8.6 : active ? 7.5 : 6;
+        ctx.fillStyle = selected ? 'rgba(254, 240, 138, 0.94)' : active ? 'rgba(245, 208, 254, 0.86)' : 'rgba(165, 243, 252, 0.58)';
         ctx.beginPath();
         ctx.moveTo(to.x - Math.cos(angle) * 15, to.y - Math.sin(angle) * 15);
         ctx.lineTo(to.x - Math.cos(angle - 0.5) * (15 + size), to.y - Math.sin(angle - 0.5) * (15 + size));
@@ -624,29 +712,32 @@
         const token = node.type === core.NODE_TYPES.TOKEN;
         const root = options.root;
         const active = options.active;
+        const selected = options.selected;
+        const neighbor = options.neighbor;
+        const filterMismatch = options.filterMismatch;
         const future = options.revealState === 'future';
-        const radius = Math.max(7, Math.min(23, (node.radius || 14) * 0.74)) + (root ? 5 : active ? 4 : 0);
+        const radius = Math.max(7, Math.min(23, (node.radius || 14) * 0.74)) + (root ? 5 : selected ? 6 : active ? 4 : neighbor ? 2 : 0);
         const pulse = !future && options.playing ? 1 + Math.sin((options.now || 0) / 320) * 0.08 : 1;
-        const color = future ? '#94a3b8' : root ? '#f0f9ff' : active ? '#f0abfc' : token ? '#facc15' : '#67e8f9';
+        const color = filterMismatch ? '#64748b' : future ? '#94a3b8' : root ? '#f0f9ff' : selected ? '#fde047' : active ? '#f0abfc' : token ? '#facc15' : '#67e8f9';
 
         ctx.save();
-        ctx.globalAlpha = future ? 0.16 : root ? 0.98 : token ? 0.78 : 0.84;
+        ctx.globalAlpha = filterMismatch ? 0.16 : future ? 0.16 : root ? 0.98 : selected ? 0.98 : neighbor ? 0.72 : token ? 0.78 : 0.84;
         ctx.shadowColor = color;
-        ctx.shadowBlur = future ? 0 : root ? 28 : active ? 30 : 8;
-        if (active) {
-            ctx.strokeStyle = 'rgba(251, 207, 232, 0.44)';
-            ctx.lineWidth = 2;
+        ctx.shadowBlur = filterMismatch ? 0 : future ? 0 : root ? 28 : selected ? 34 : active ? 30 : neighbor ? 15 : 8;
+        if (active || selected) {
+            ctx.strokeStyle = selected ? 'rgba(254, 240, 138, 0.5)' : 'rgba(251, 207, 232, 0.44)';
+            ctx.lineWidth = selected ? 2.4 : 2;
             ctx.beginPath();
-            ctx.arc(node.x, node.y, radius * 2.08, 0, Math.PI * 2);
+            ctx.arc(node.x, node.y, radius * (selected ? 2.28 : 2.08), 0, Math.PI * 2);
             ctx.stroke();
-            ctx.fillStyle = 'rgba(244, 114, 182, 0.18)';
+            ctx.fillStyle = selected ? 'rgba(250, 204, 21, 0.18)' : 'rgba(244, 114, 182, 0.18)';
             ctx.beginPath();
             ctx.arc(node.x, node.y, radius * 1.72, 0, Math.PI * 2);
             ctx.fill();
         }
         ctx.fillStyle = 'rgba(2, 6, 23, 0.9)';
         ctx.strokeStyle = color;
-        ctx.lineWidth = root ? 2.6 : active ? 2.55 : 1.15;
+        ctx.lineWidth = root ? 2.6 : selected ? 3 : active ? 2.55 : neighbor ? 1.7 : 1.15;
         ctx.beginPath();
         ctx.arc(node.x, node.y, radius * pulse, 0, Math.PI * 2);
         ctx.fill();
@@ -656,10 +747,10 @@
         ctx.beginPath();
         ctx.arc(node.x, node.y, Math.max(2.8, radius * 0.28), 0, Math.PI * 2);
         ctx.fill();
-        if (!future && (root || token || active || (graph.walletNodes || []).length <= 16)) {
-            ctx.globalAlpha = root ? 0.93 : active ? 0.78 : 0.56;
+        if (!future && !filterMismatch && (root || token || active || selected || neighbor || (graph.walletNodes || []).length <= 16)) {
+            ctx.globalAlpha = root ? 0.93 : selected ? 0.9 : active ? 0.78 : neighbor ? 0.66 : 0.56;
             ctx.fillStyle = root ? '#f8fafc' : 'rgba(226, 232, 240, 0.76)';
-            ctx.font = root ? '700 10px Inter, sans-serif' : '500 9px Inter, sans-serif';
+            ctx.font = root || selected ? '700 10px Inter, sans-serif' : '500 9px Inter, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
             ctx.fillText(labelForNode(node), node.x, node.y + radius + 5);
@@ -903,6 +994,207 @@
             futureNodeIds,
             futureEdgeIds
         };
+    }
+
+    function getReplayAuditSets(steps = [], selected = null, filters = {}) {
+        const safeFilters = normalizeAuditFilters(filters);
+        const filtersActive = hasActiveAuditFilters(safeFilters);
+        const threshold = getMajorFlowThreshold(steps);
+        const filteredStepIds = new Set();
+        const filteredEdgeIds = new Set();
+        const filteredNodeIds = new Set();
+        const neighborhoodEdgeIds = new Set();
+        const neighborhoodNodeIds = new Set(selected?.nodeIds || []);
+        const selectedSource = normalizeAddress(selected?.sourceWallet);
+        const selectedDestination = normalizeAddress(selected?.destinationWallet);
+
+        steps.forEach(step => {
+            const matches = stepMatchesAuditFilters(step, safeFilters, threshold);
+            if (matches) {
+                filteredStepIds.add(step.index);
+                if (step.edgeId) filteredEdgeIds.add(step.edgeId);
+                (step.nodeIds || []).forEach(id => filteredNodeIds.add(id));
+            }
+            const sharesWallet = selected && (
+                normalizeAddress(step.sourceWallet) === selectedSource
+                || normalizeAddress(step.sourceWallet) === selectedDestination
+                || normalizeAddress(step.destinationWallet) === selectedSource
+                || normalizeAddress(step.destinationWallet) === selectedDestination
+            );
+            if (sharesWallet || step.edgeId === selected?.edgeId) {
+                if (step.edgeId) neighborhoodEdgeIds.add(step.edgeId);
+                (step.nodeIds || []).forEach(id => neighborhoodNodeIds.add(id));
+            }
+        });
+
+        return {
+            filtersActive,
+            filteredStepIds,
+            filteredEdgeIds,
+            filteredNodeIds,
+            neighborhoodEdgeIds,
+            neighborhoodNodeIds
+        };
+    }
+
+    function buildAuditStatusMetadata(steps = [], selected = null, filters = {}) {
+        const audit = getReplayAuditSets(steps, selected, filters);
+        return {
+            previewOnly: true,
+            notMerged: true,
+            filters: normalizeAuditFilters(filters),
+            filtersActive: audit.filtersActive,
+            filteredStepCount: audit.filteredEdgeIds.size,
+            selectedStep: selected?.index != null ? Number(selected.index) + 1 : 0,
+            selectedEdgeId: selected?.edgeId || '',
+            selectedNodeIds: Array.isArray(selected?.nodeIds) ? selected.nodeIds.slice() : [],
+            localNeighborhoodEdgeCount: audit.neighborhoodEdgeIds.size
+        };
+    }
+
+    function hitTestReplayGraph(graph = {}, steps = [], options = {}) {
+        const point = options.point || {};
+        const size = getCanvasSize(options.canvas);
+        const stepIndex = Math.max(0, Number(options.stepIndex) || 0);
+        const selectedStepIndex = Math.max(0, Number(options.selectedStepIndex) || 0);
+        const focusStep = steps[Math.max(0, (selectedStepIndex || stepIndex) - 1)] || steps[Math.max(0, stepIndex - 1)] || null;
+        const viewport = getReplayViewport(graph, focusStep, size, {
+            stepIndex,
+            selectedStepIndex,
+            playing: Boolean(options.playing),
+            progress: 1
+        });
+        const world = {
+            x: (Number(point.x) - viewport.offset.x) / viewport.scale,
+            y: (Number(point.y) - viewport.offset.y) / viewport.scale
+        };
+        const nodeHit = findReplayNodeHit(graph, world, viewport.scale);
+        if (nodeHit) {
+            const relatedSteps = getStepsForNode(steps, nodeHit.node.id);
+            return {
+                type: 'node',
+                nodeId: nodeHit.node.id,
+                nodeType: nodeHit.node.type || '',
+                wallet: nodeHit.node.address || '',
+                token: nodeHit.node.token_mint || nodeHit.node.symbol || '',
+                step: relatedSteps[0] ? Number(relatedSteps[0].index) + 1 : 0,
+                relatedSteps: relatedSteps.map(step => Number(step.index) + 1),
+                previewOnly: true,
+                notMerged: true
+            };
+        }
+        const edgeHit = findReplayEdgeHit(graph, world, viewport.scale);
+        if (!edgeHit) return null;
+        const step = steps.find(item => item.edgeId === edgeHit.edge.id) || null;
+        return {
+            type: 'edge',
+            edgeId: edgeHit.edge.id,
+            step: step ? Number(step.index) + 1 : 0,
+            event: step ? summarizeStep(step, Number(step.index) + 1) : null,
+            distance: edgeHit.distance,
+            previewOnly: true,
+            notMerged: true
+        };
+    }
+
+    function findReplayNodeHit(graph = {}, world = {}, scale = 1) {
+        const tolerance = Math.max(8, 13 / Math.max(0.4, scale));
+        return (graph.nodes || [])
+            .slice()
+            .sort((a, b) => Math.hypot(world.x - a.x, world.y - a.y) - Math.hypot(world.x - b.x, world.y - b.y))
+            .map(node => {
+                const radius = Math.max(7, Math.min(28, (node.radius || 14) * 0.82));
+                const distance = Math.hypot(world.x - node.x, world.y - node.y);
+                return { node, distance, radius };
+            })
+            .find(item => item.distance <= item.radius + tolerance) || null;
+    }
+
+    function findReplayEdgeHit(graph = {}, world = {}, scale = 1) {
+        const nodeById = graph.nodeById || new Map();
+        const tolerance = Math.max(7, 12 / Math.max(0.4, scale));
+        return (graph.flowEdges || [])
+            .map(edge => {
+                const source = nodeById.get(edge.source);
+                const target = nodeById.get(edge.target);
+                if (!source || !target) return null;
+                const distance = distanceToCurve(world, getCurve(source, target, 18), 28);
+                return { edge, distance };
+            })
+            .filter(Boolean)
+            .sort((a, b) => a.distance - b.distance)
+            .find(item => item.distance <= tolerance) || null;
+    }
+
+    function getStepsForNode(steps = [], nodeId = '') {
+        if (!nodeId) return [];
+        return steps.filter(step => (step.nodeIds || []).includes(nodeId));
+    }
+
+    function distanceToCurve(point, curve, segments = 24) {
+        let minDistance = Number.POSITIVE_INFINITY;
+        for (let index = 0; index <= segments; index += 1) {
+            const curvePoint = pointOnCurve(curve, index / segments);
+            minDistance = Math.min(minDistance, Math.hypot(point.x - curvePoint.x, point.y - curvePoint.y));
+        }
+        return minDistance;
+    }
+
+    function normalizeAuditFilters(filters = {}) {
+        return {
+            token: String(filters.token || 'all'),
+            direction: String(filters.direction || 'all'),
+            counterparty: String(filters.counterparty || 'all'),
+            majorOnly: filters.majorOnly === true || filters.majorOnly === 'true'
+        };
+    }
+
+    function hasActiveAuditFilters(filters = {}) {
+        const safeFilters = normalizeAuditFilters(filters);
+        return safeFilters.token !== 'all'
+            || safeFilters.direction !== 'all'
+            || safeFilters.counterparty !== 'all'
+            || safeFilters.majorOnly;
+    }
+
+    function stepMatchesAuditFilters(step = {}, filters = {}, majorThreshold = 0) {
+        const safeFilters = normalizeAuditFilters(filters);
+        const token = normalizeFilterValue(safeFilters.token);
+        if (token !== 'all' && normalizeFilterValue(step.token) !== token) return false;
+        const direction = normalizeDirectionValue(safeFilters.direction);
+        if (direction !== 'all' && normalizeDirectionValue(step.direction) !== direction) return false;
+        const counterparty = normalizeAddress(safeFilters.counterparty);
+        if (counterparty && counterparty !== 'all') {
+            const source = normalizeAddress(step.sourceWallet);
+            const destination = normalizeAddress(step.destinationWallet);
+            if (source !== counterparty && destination !== counterparty) return false;
+        }
+        if (safeFilters.majorOnly) {
+            const amount = Math.abs(Number(step.amount) || 0);
+            if (!majorThreshold || amount < majorThreshold) return false;
+        }
+        return true;
+    }
+
+    function getMajorFlowThreshold(steps = []) {
+        const amounts = steps
+            .map(step => Math.abs(Number(step.amount) || 0))
+            .filter(value => value > 0)
+            .sort((a, b) => a - b);
+        if (!amounts.length) return 0;
+        return amounts[Math.min(amounts.length - 1, Math.floor(amounts.length * 0.75))] || 0;
+    }
+
+    function normalizeFilterValue(value = '') {
+        const text = String(value || '').trim();
+        if (!text || text.toLowerCase() === 'all') return 'all';
+        return text ? text.toUpperCase() : 'all';
+    }
+
+    function normalizeDirectionValue(value = '') {
+        const text = String(value || '').trim().toLowerCase().replace(/\s+/g, '_');
+        if (!text || text === 'all') return 'all';
+        return text || 'all';
     }
 
     function capPreviewDataset(dataset = {}, limits = DEFAULT_LIMITS) {

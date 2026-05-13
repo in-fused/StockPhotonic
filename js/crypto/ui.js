@@ -131,6 +131,19 @@
             replayAnimator: null,
             replayStatus: null,
             selectedEvent: null,
+            audit: {
+                filters: {
+                    token: 'all',
+                    direction: 'all',
+                    counterparty: 'all',
+                    majorOnly: false
+                },
+                selectedStep: 0,
+                selectedWallet: '',
+                expandedStep: 0,
+                breadcrumbs: [],
+                recentSteps: []
+            },
             replaySpeed: 'standard',
             lastMessage: ''
         },
@@ -308,6 +321,10 @@
         state.canvas.addEventListener('pointercancel', handleCanvasPointerCancel);
         state.canvas.addEventListener('lostpointercapture', handleCanvasPointerCancel);
         state.canvas.addEventListener('mouseleave', handleCanvasLeave);
+        const replayCanvas = document.getElementById('crypto-history-workspace-canvas');
+        replayCanvas?.addEventListener('click', handleReplayWorkspaceCanvasClick);
+        replayCanvas?.addEventListener('pointermove', handleReplayWorkspaceCanvasPointerMove);
+        replayCanvas?.addEventListener('mouseleave', handleReplayWorkspaceCanvasLeave);
         document.getElementById('crypto-reset-view')?.addEventListener('click', resetView);
         document.getElementById('crypto-reset-layout')?.addEventListener('click', resetLayout);
         document.getElementById('crypto-fullscreen-toggle')?.addEventListener('click', () => {
@@ -1044,7 +1061,7 @@
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
         detachHistoryReplayAnimator({ preserveStatus: false });
-        state.historyPreview.selectedEvent = null;
+        resetHistoryPreviewAuditState();
         state.historyPreview.replaySpeed = 'standard';
         state.historyPreview.lastMessage = '';
     }
@@ -3041,8 +3058,11 @@
             sourceWallet: status.sourceWallet || '',
             destinationWallet: status.destinationWallet || '',
             currentEvent: status.currentEvent || null,
+            selectedStep: Number(status.selectedStep || state.historyPreview.audit?.selectedStep) || 0,
+            selectedEvent: status.selectedEvent || state.historyPreview.selectedEvent || null,
             eventSummaries: Array.isArray(status.eventSummaries) ? status.eventSummaries : [],
             activePath: status.activePath || null,
+            audit: status.audit || null,
             completedStepCount: Number(status.completedStepCount) || 0,
             futureStepCount: Number(status.futureStepCount) || 0,
             speed: status.speed || state.historyPreview.replaySpeed || 'standard',
@@ -3063,8 +3083,38 @@
         return Boolean(state.historyPreview.dataset || state.historyPreview.plan || state.historyPreview.datasetMetrics);
     }
 
+    function resetHistoryPreviewAuditState(options = {}) {
+        state.historyPreview.selectedEvent = null;
+        state.historyPreview.audit = {
+            filters: options.preserveFilters
+                ? normalizeReplayAuditFilters(state.historyPreview.audit?.filters)
+                : {
+                    token: 'all',
+                    direction: 'all',
+                    counterparty: 'all',
+                    majorOnly: false
+                },
+            selectedStep: 0,
+            selectedWallet: '',
+            expandedStep: 0,
+            breadcrumbs: [],
+            recentSteps: []
+        };
+    }
+
+    function normalizeReplayAuditFilters(filters = {}) {
+        const helper = namespace.replayWorkspace?.normalizeAuditFilters;
+        if (helper) return helper(filters);
+        return {
+            token: String(filters.token || 'all'),
+            direction: String(filters.direction || 'all'),
+            counterparty: String(filters.counterparty || 'all'),
+            majorOnly: filters.majorOnly === true || filters.majorOnly === 'true'
+        };
+    }
+
     function inspectCurrentHistoryReplayEvent() {
-        const event = getCurrentHistoryReplayEvent();
+        const event = getSelectedHistoryReplayEvent() || getCurrentHistoryReplayEvent();
         if (!event) {
             state.historyPreview.lastMessage = 'No replay event is selected yet. Start, step, or scrub the preview replay first.';
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -3104,6 +3154,85 @@
             sourceWallet: event.sourceWallet || event.source_wallet || status.sourceWallet || '',
             destinationWallet: event.destinationWallet || event.destination_wallet || status.destinationWallet || ''
         };
+    }
+
+    function getSelectedHistoryReplayEvent(status = getHistoryReplayStatus()) {
+        const selectedStep = Number(state.historyPreview.audit?.selectedStep || status.selectedStep) || 0;
+        const selectedEvent = state.historyPreview.selectedEvent || status.selectedEvent || null;
+        const events = getHistoryReplayEvents(status);
+        const event = selectedStep
+            ? events.find(item => Number(item.step) === selectedStep) || selectedEvent
+            : selectedEvent || getCurrentHistoryReplayEvent();
+        if (!event) return null;
+        return buildHistoryReplayEventSnapshot(event, status, selectedStep || event.step || status.currentStep);
+    }
+
+    function buildHistoryReplayEventSnapshot(event = {}, status = getHistoryReplayStatus(), step = event.step) {
+        return {
+            ...event,
+            step: Math.max(0, Number(step || event.step) || 0),
+            totalSteps: getHistoryReplayTotalSteps(status),
+            timestamp: event.timestamp || status.timestamp || '',
+            signature: event.signature || event.transaction_hash || status.signature || '',
+            amount: event.amount ?? status.amount,
+            amountDisplay: event.amountDisplay || event.amount_display || status.amountDisplay || '',
+            token: event.token || event.symbol || status.token || '',
+            direction: event.direction || status.direction || '',
+            sourceWallet: event.sourceWallet || event.source_wallet || status.sourceWallet || '',
+            destinationWallet: event.destinationWallet || event.destination_wallet || status.destinationWallet || ''
+        };
+    }
+
+    async function selectHistoryReplayEventByStep(step = 0, options = {}) {
+        const total = getHistoryReplayTotalSteps();
+        const targetStep = Math.max(0, Math.min(total, Math.round(Number(step) || 0)));
+        if (!targetStep) return null;
+        const animator = state.historyPreview.replayAnimator || await initializeHistoryReplayAnimator(getHistoryPreviewRenderRoot());
+        let status = animator?.seek ? animator.seek(targetStep) : await seekHistoryReplayStep(targetStep, { quiet: true, select: false });
+        if (options.pause !== false) animator?.pause?.();
+        if (animator?.selectStep) status = animator.selectStep(targetStep);
+        status = status || getHistoryReplayStatus();
+        const events = getHistoryReplayEvents(status);
+        const event = events.find(item => Number(item.step) === targetStep) || status.selectedEvent || status.currentEvent || null;
+        if (!event) return null;
+        const snapshot = buildHistoryReplayEventSnapshot(event, status, targetStep);
+        state.historyPreview.selectedEvent = snapshot;
+        state.historyPreview.audit.selectedStep = targetStep;
+        state.historyPreview.audit.selectedWallet = options.wallet || state.historyPreview.audit.selectedWallet || '';
+        recordReplayAuditVisit(snapshot, options);
+        state.historyPreview.lastMessage = options.message || 'Replay transfer selected for audit drilldown. Active Wallet Lookup graph unchanged.';
+        updateHistoryReplayStatus(status);
+        if (options.openDetails) {
+            state.investigationTab = 'details';
+            openMobileDrawerForSelection('expanded');
+            renderDetails();
+        } else {
+            updateReplayWorkspaceShell();
+        }
+        return snapshot;
+    }
+
+    function recordReplayAuditVisit(event = {}, options = {}) {
+        const audit = state.historyPreview.audit;
+        const step = Number(event.step) || 0;
+        if (!step) return;
+        audit.recentSteps = [step, ...(audit.recentSteps || []).filter(item => Number(item) !== step)].slice(0, 8);
+        const crumb = {
+            id: `step-${step}-${event.signature || Date.now()}`,
+            step,
+            label: `#${step} ${getHistoryReplayAmountTokenLabel(event)}`,
+            title: getHistoryReplayEventTitle(event),
+            route: getHistoryReplayRouteLabel(event),
+            sourceWallet: event.sourceWallet || '',
+            destinationWallet: event.destinationWallet || ''
+        };
+        const shouldAddCrumb = options.addBreadcrumb !== false;
+        if (shouldAddCrumb) {
+            audit.breadcrumbs = [
+                ...(audit.breadcrumbs || []).filter(item => Number(item.step) !== step),
+                crumb
+            ].slice(-7);
+        }
     }
 
     function getHistoryReplayTotalSteps(status = getHistoryReplayStatus(), datasetMetrics = state.historyPreview.datasetMetrics) {
@@ -5345,7 +5474,7 @@
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
         detachHistoryReplayAnimator({ preserveStatus: false });
-        state.historyPreview.selectedEvent = null;
+        resetHistoryPreviewAuditState();
         state.historyPreview.replaySpeed = 'standard';
         state.historyPreview.lastMessage = 'Replay preview cleared with staged history; the Wallet Lookup graph was not changed.';
         state.history.lastMessage = 'Loaded history staging cleared; the Wallet Lookup graph was not changed.';
@@ -5421,6 +5550,7 @@
         state.historyPreview.graphRenderedAt = 0;
         if (state.historyPreview.workspaceMode) state.historyPreview.graphVisible = true;
         detachHistoryReplayAnimator({ preserveStatus: false });
+        resetHistoryPreviewAuditState();
         state.historyPreview.lastMessage = metrics.transactions
             ? state.historyPreview.workspaceMode
                 ? 'Preview dataset built from staged history only. Large Replay Workspace canvas is ready; active graph unchanged.'
@@ -5492,7 +5622,7 @@
             return null;
         }
 
-        if (state.historyPreview.replayStatus || state.historyPreview.replayAnimator) {
+        if (state.historyPreview.workspaceMode || state.historyPreview.replayStatus || state.historyPreview.replayAnimator) {
             const animator = await initializeHistoryReplayAnimator(root, {
                 stepIndex: state.historyPreview.replayStatus?.currentStep || 0
             });
@@ -5501,7 +5631,20 @@
             } else {
                 animator?.render?.();
             }
-            return animator?.getStatus?.() || null;
+            const status = animator?.getStatus?.() || null;
+            if (status) {
+                state.historyPreview.graphRenderResult = {
+                    renderedNodes: status.renderedNodes || 0,
+                    renderedEdges: status.renderedEdges || 0,
+                    renderedTransfers: status.totalSteps || 0,
+                    warnings: status.warnings || [],
+                    previewOnly: true,
+                    notMerged: true
+                };
+                state.historyPreview.graphRenderedAt = Date.now();
+                updateHistoryGraphPreviewRenderStatus(state.historyPreview.graphRenderResult);
+            }
+            return status;
         }
 
         await loadHistoryGraphRendererModule();
@@ -5598,8 +5741,18 @@
         if (!state.historyPreview.workspaceMode) setReplayWorkspaceMode(true, { force: true });
         else renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         const animator = await initializeHistoryReplayAnimator(getHistoryPreviewRenderRoot());
-        animator?.step?.(direction);
-        return animator?.getStatus?.() || null;
+        const status = animator?.step?.(direction) || animator?.getStatus?.() || null;
+        const currentStep = Number(status?.currentStep) || 0;
+        if (currentStep) {
+            const events = getHistoryReplayEvents(status);
+            const event = events.find(item => Number(item.step) === currentStep) || status.currentEvent || null;
+            if (event) {
+                state.historyPreview.selectedEvent = buildHistoryReplayEventSnapshot(event, status, currentStep);
+                state.historyPreview.audit.selectedStep = currentStep;
+                recordReplayAuditVisit(state.historyPreview.selectedEvent, { addBreadcrumb: true });
+            }
+        }
+        return status;
     }
 
     async function seekHistoryReplayStep(stepIndex = 0, options = {}) {
@@ -5622,6 +5775,16 @@
         if (wasPlaying && safeStep < total) {
             status = animator.start({ resume: true, stepIndex: safeStep });
         }
+        if (options.select !== false && safeStep) {
+            animator.selectStep?.(safeStep);
+            const events = getHistoryReplayEvents(status);
+            const event = events.find(item => Number(item.step) === safeStep) || status.selectedEvent || status.currentEvent || null;
+            if (event) {
+                state.historyPreview.selectedEvent = buildHistoryReplayEventSnapshot(event, status, safeStep);
+                state.historyPreview.audit.selectedStep = safeStep;
+                recordReplayAuditVisit(state.historyPreview.selectedEvent, { addBreadcrumb: true });
+            }
+        }
         if (!options.quiet && options.label) state.historyPreview.lastMessage = options.label;
         updateHistoryReplayStatus(status);
         return status;
@@ -5631,6 +5794,8 @@
         state.investigationTab = 'replay';
         const animator = state.historyPreview.replayAnimator || await initializeHistoryReplayAnimator(getHistoryPreviewRenderRoot());
         animator?.reset?.();
+        state.historyPreview.selectedEvent = null;
+        state.historyPreview.audit.selectedStep = 0;
         state.historyPreview.lastMessage = 'Replay reset to the tracked-wallet root inside the preview canvas only.';
         updateHistoryReplayStatus(animator?.getStatus?.() || getHistoryReplayStatus());
         return animator?.getStatus?.() || null;
@@ -5677,9 +5842,15 @@
                 ...HISTORY_PREVIEW_GRAPH_LIMITS,
                 speed: state.historyPreview.replaySpeed,
                 initialStep: options.stepIndex ?? state.historyPreview.replayStatus?.currentStep ?? 0,
+                selectedStep: state.historyPreview.audit?.selectedStep || options.stepIndex || state.historyPreview.replayStatus?.selectedStep || state.historyPreview.replayStatus?.currentStep || 0,
+                auditFilters: normalizeReplayAuditFilters(state.historyPreview.audit?.filters),
                 onStatus: updateHistoryReplayStatus
             });
             state.historyPreview.replayStatus = state.historyPreview.replayAnimator.getStatus?.() || state.historyPreview.replayStatus;
+        }
+        state.historyPreview.replayAnimator?.setAuditFilters?.(normalizeReplayAuditFilters(state.historyPreview.audit?.filters));
+        if (state.historyPreview.audit?.selectedStep) {
+            state.historyPreview.replayAnimator?.selectStep?.(state.historyPreview.audit.selectedStep);
         }
         return state.historyPreview.replayAnimator;
     }
@@ -5704,6 +5875,7 @@
         };
         state.historyPreview.replayStatus = normalized;
         state.historyPreview.replaySpeed = normalized.speed;
+        if (Number(normalized.selectedStep)) state.historyPreview.audit.selectedStep = Number(normalized.selectedStep);
 
         const datasetStale = state.historyPreview.datasetMetrics
             && Number(state.historyPreview.datasetMetrics.stagedRowsReceived || 0) !== Number((state.history.loadedTransactions || []).length);
@@ -5969,7 +6141,7 @@
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
         detachHistoryReplayAnimator({ preserveStatus: false });
-        state.historyPreview.selectedEvent = null;
+        resetHistoryPreviewAuditState();
         state.historyPreview.replaySpeed = 'standard';
         state.historyPreview.lastMessage = 'Preview artifacts cleared. Staged history and the active graph were not changed.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -7683,6 +7855,62 @@
         scheduleRender();
     }
 
+    async function handleReplayWorkspaceCanvasClick(event) {
+        if (!state.historyPreview.workspaceMode || !state.historyPreview.dataset) return;
+        const hit = await getReplayWorkspaceHit(event);
+        if (!hit) return;
+        if (hit.type === 'edge' && hit.step) {
+            await selectHistoryReplayEventByStep(hit.step, {
+                pause: true,
+                addBreadcrumb: true,
+                message: 'Replay edge selected for transfer audit drilldown. Active Wallet Lookup graph unchanged.'
+            });
+            return;
+        }
+        if (hit.type === 'node') {
+            const wallet = hit.wallet || '';
+            if (wallet) {
+                await followReplayAuditWallet(wallet, 'node-click');
+                state.historyPreview.lastMessage = 'Replay node filtered related staged replay events only.';
+            } else if (hit.token) {
+                updateReplayAuditFilter('token', String(hit.token).toUpperCase());
+                state.historyPreview.lastMessage = 'Replay token node filtered related staged replay events only.';
+            } else if (hit.step) {
+                await selectHistoryReplayEventByStep(hit.step, {
+                    pause: true,
+                    addBreadcrumb: false,
+                    message: 'Replay node selected related staged replay context only.'
+                });
+            }
+        }
+    }
+
+    async function handleReplayWorkspaceCanvasPointerMove(event) {
+        if (!state.historyPreview.workspaceMode || !state.historyPreview.dataset) return;
+        const canvas = event.currentTarget;
+        const hit = await getReplayWorkspaceHit(event, { initialize: false });
+        if (canvas) canvas.style.cursor = hit ? 'pointer' : 'grab';
+    }
+
+    function handleReplayWorkspaceCanvasLeave(event) {
+        if (event.currentTarget) event.currentTarget.style.cursor = 'grab';
+    }
+
+    async function getReplayWorkspaceHit(event, options = {}) {
+        const canvas = event.currentTarget || document.getElementById('crypto-history-workspace-canvas');
+        if (!canvas) return null;
+        let animator = state.historyPreview.replayAnimator;
+        if (!animator && options.initialize !== false) {
+            animator = await initializeHistoryReplayAnimator(getHistoryPreviewRenderRoot());
+        }
+        if (!animator?.hitTest) return null;
+        const rect = canvas.getBoundingClientRect();
+        return animator.hitTest({
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        });
+    }
+
     function renderDetails(options = {}) {
         if (!state.detailPanel || !state.graph) return;
         state.detailPanel.innerHTML = renderInvestigationWorkspace();
@@ -7804,6 +8032,8 @@
             : 'Newest staged';
         const events = getHistoryReplayEvents(status);
         const bookmarks = buildHistoryReplayJumpChips(summary, status, totalSteps);
+        const selectedEvent = getSelectedHistoryReplayEvent(status);
+        const audit = state.historyPreview.audit || {};
         const helper = namespace.replayWorkspace?.renderOverlay;
         if (helper) {
             return helper({
@@ -7812,6 +8042,10 @@
                 dataset: state.historyPreview.dataset,
                 summary,
                 events,
+                selectedEvent,
+                auditFilters: normalizeReplayAuditFilters(audit.filters),
+                breadcrumbs: audit.breadcrumbs || [],
+                recentEvents: audit.recentSteps || [],
                 bookmarks,
                 stale,
                 stateInFlight: state.history.inFlight,
@@ -7825,6 +8059,8 @@
                 startDisabled,
                 replayCoverage,
                 confidence,
+                providerState: getWalletHistoryProviderStateDisplay(),
+                providerGrade: getWalletHistoryProviderGrade(),
                 speed,
                 scrubberDisabled,
                 warnings,
@@ -7931,6 +8167,14 @@
                 jumpMajor: delta => jumpHistoryReplayMajor(delta),
                 jumpBookmark: (step, key) => jumpHistoryReplayBookmark(step, key),
                 jumpWindow: delta => jumpReplayWorkspaceWindow(delta),
+                selectStep: (step, options) => selectHistoryReplayEventByStep(step, {
+                    ...(options || {}),
+                    pause: true,
+                    addBreadcrumb: true
+                }),
+                updateFilter: (key, value) => updateReplayAuditFilter(key, value),
+                resetFilters: () => resetReplayAuditFilters(),
+                auditAction: (action, details) => runReplayAuditAction(action, details),
                 seek: value => seekHistoryReplayStep(value, {
                     label: 'Replay workspace timeline moved the preview-only canvas.',
                     quiet: true
@@ -8024,6 +8268,132 @@
         return seekHistoryReplayStep(nextStep, {
             label: `Replay jumped to ${windowStatus.windowCount ? `window ${nextWindow}/${windowStatus.windowCount}` : 'the selected window'} in the preview-only workspace.`
         });
+    }
+
+    function updateReplayAuditFilter(key = '', value = '') {
+        const filters = normalizeReplayAuditFilters(state.historyPreview.audit?.filters);
+        if (key === 'majorOnly') {
+            filters.majorOnly = value === true || value === 'true';
+        } else if (key === 'token' || key === 'direction' || key === 'counterparty') {
+            filters[key] = String(value || 'all');
+        }
+        state.historyPreview.audit.filters = filters;
+        state.historyPreview.audit.selectedWallet = filters.counterparty !== 'all' ? filters.counterparty : '';
+        state.historyPreview.replayAnimator?.setAuditFilters?.(filters);
+        const filtered = namespace.replayWorkspace?.filterReplayEvents
+            ? namespace.replayWorkspace.filterReplayEvents(getHistoryReplayEvents(), filters)
+            : getHistoryReplayEvents();
+        const currentSelected = Number(state.historyPreview.audit.selectedStep) || 0;
+        const stillVisible = filtered.some(event => Number(event.step) === currentSelected);
+        if (!stillVisible && filtered[0]) {
+            selectHistoryReplayEventByStep(filtered[0].step, {
+                pause: true,
+                addBreadcrumb: false,
+                message: 'Replay filter selected the first matching staged transfer. Active Wallet Lookup graph unchanged.'
+            });
+        } else {
+            updateReplayWorkspaceShell();
+        }
+        state.historyPreview.lastMessage = 'Replay audit filters applied to staged preview data only.';
+    }
+
+    function resetReplayAuditFilters() {
+        state.historyPreview.audit.filters = {
+            token: 'all',
+            direction: 'all',
+            counterparty: 'all',
+            majorOnly: false
+        };
+        state.historyPreview.audit.selectedWallet = '';
+        state.historyPreview.replayAnimator?.setAuditFilters?.(state.historyPreview.audit.filters);
+        state.historyPreview.lastMessage = 'Replay audit filters reset. Active Wallet Lookup graph unchanged.';
+        updateReplayWorkspaceShell();
+    }
+
+    async function runReplayAuditAction(action = '', details = {}) {
+        const event = getSelectedHistoryReplayEvent();
+        if (action === 'select-breadcrumb') {
+            return selectHistoryReplayEventByStep(details.step, { pause: true, addBreadcrumb: false });
+        }
+        if (action === 'remove-breadcrumb') {
+            state.historyPreview.audit.breadcrumbs = (state.historyPreview.audit.breadcrumbs || [])
+                .filter(crumb => crumb.id !== details.crumbId);
+            updateReplayWorkspaceShell();
+            return null;
+        }
+        if (!event) {
+            state.historyPreview.lastMessage = 'Select a replay transfer before running replay audit actions.';
+            updateReplayWorkspaceShell();
+            return null;
+        }
+        if (action === 'follow-source' || action === 'follow-destination') {
+            const wallet = details.wallet || (action === 'follow-source' ? event.sourceWallet : event.destinationWallet) || '';
+            if (!wallet) return null;
+            return followReplayAuditWallet(wallet, action);
+        }
+        if (action === 'center-transfer') {
+            await selectHistoryReplayEventByStep(event.step, {
+                pause: true,
+                addBreadcrumb: true,
+                message: 'Replay camera centered on the selected staged transfer only.'
+            });
+            return event;
+        }
+        if (action === 'inspect-related') {
+            state.investigationTab = 'details';
+            state.historyPreview.selectedEvent = event;
+            openMobileDrawerForSelection('expanded');
+            renderDetails();
+            state.historyPreview.lastMessage = 'Details now reflects the selected staged replay transfer and its derived replay-only relationships.';
+            return event;
+        }
+        if (action === 'expand-transfer') {
+            state.historyPreview.audit.expandedStep = Number(event.step) || 0;
+            const filters = normalizeReplayAuditFilters(state.historyPreview.audit.filters);
+            filters.token = event.token ? String(event.token).toUpperCase() : filters.token;
+            state.historyPreview.audit.filters = filters;
+            state.historyPreview.replayAnimator?.setAuditFilters?.(filters);
+            state.historyPreview.lastMessage = 'Replay expansion is scoped to staged transfer neighbors and token context only.';
+            updateReplayWorkspaceShell();
+            return event;
+        }
+        if (action === 'jump-related') {
+            const relationships = namespace.replayWorkspace?.deriveReplayRelationships?.(event, getHistoryReplayEvents()) || {};
+            const target = Number(details.direction) < 0 ? relationships.previousRelated : relationships.nextRelated;
+            if (target?.step) {
+                return selectHistoryReplayEventByStep(target.step, {
+                    pause: true,
+                    addBreadcrumb: true,
+                    message: 'Replay jumped to the next derived related staged transfer.'
+                });
+            }
+        }
+        return null;
+    }
+
+    function followReplayAuditWallet(wallet = '', source = '') {
+        const filters = normalizeReplayAuditFilters(state.historyPreview.audit.filters);
+        filters.counterparty = wallet || 'all';
+        state.historyPreview.audit.filters = filters;
+        state.historyPreview.audit.selectedWallet = wallet;
+        state.historyPreview.replayAnimator?.setAuditFilters?.(filters);
+        const events = namespace.replayWorkspace?.filterReplayEvents
+            ? namespace.replayWorkspace.filterReplayEvents(getHistoryReplayEvents(), filters)
+            : getHistoryReplayEvents().filter(event => event.sourceWallet === wallet || event.destinationWallet === wallet);
+        const currentStep = Number(state.historyPreview.audit.selectedStep || getHistoryReplayStatus().currentStep) || 0;
+        const target = events.find(event => Number(event.step) >= currentStep) || events[0] || null;
+        state.historyPreview.lastMessage = source === 'follow-source'
+            ? 'Replay audit is following the source wallet within staged replay data only.'
+            : 'Replay audit is following the destination wallet within staged replay data only.';
+        if (target?.step) {
+            return selectHistoryReplayEventByStep(target.step, {
+                pause: true,
+                wallet,
+                addBreadcrumb: true
+            });
+        }
+        updateReplayWorkspaceShell();
+        return null;
     }
 
     function bindInvestigationWorkspaceControls(root) {
@@ -8261,6 +8631,7 @@
         const sourceWallet = event.sourceWallet || event.source_wallet || '';
         const destinationWallet = event.destinationWallet || event.destination_wallet || '';
         const signature = event.signature || event.transaction_hash || '';
+        const relationships = namespace.replayWorkspace?.deriveReplayRelationships?.(event, getHistoryReplayEvents()) || {};
         return `
             ${renderDetailsSelectionHeader({
                 kicker: 'PREVIEW REPLAY EVENT',
@@ -8283,6 +8654,14 @@
                 ${detailRow('Destination Wallet', destinationWallet || '-', { shorten: true })}
                 ${detailRow('Signature', signature || '-', { shorten: true })}
                 ${detailRow('Source / Boundary', 'Preview dataset from staged Worker history. Active graph unchanged.')}
+            `)}
+            ${renderDetailSection('Replay Audit Links', `
+                ${detailRow('Same Counterparty', `${relationships.sameCounterparty?.length || 0} staged transfer${relationships.sameCounterparty?.length === 1 ? '' : 's'}`)}
+                ${detailRow('Same Token', `${relationships.sameToken?.length || 0} staged transfer${relationships.sameToken?.length === 1 ? '' : 's'}`)}
+                ${detailRow('Nearby Timestamp', `${relationships.nearbyTime?.length || 0} staged transfer${relationships.nearbyTime?.length === 1 ? '' : 's'}`)}
+                ${detailRow('Repeated Route', `${relationships.repeatedRoute?.length || 0} staged transfer${relationships.repeatedRoute?.length === 1 ? '' : 's'}`)}
+                ${detailRow('Previous Related', relationships.previousRelated ? `Step ${relationships.previousRelated.step}` : '-')}
+                ${detailRow('Next Related', relationships.nextRelated ? `Step ${relationships.nextRelated.step}` : '-')}
             `)}
             ${renderDetailSection('Relationship To Tracked Wallet', `
                 ${detailRow('Tracked Wallet', getRelationshipWallet() || state.walletLookup.lastWallet || '-', { shorten: true })}

@@ -1,7 +1,13 @@
 (() => {
     const namespace = window.CryptoPhotonic = window.CryptoPhotonic || {};
 
-    const REPLAY_WORKSPACE_VERSION = 'd133_cinematic_replay_workspace_ui_v1';
+    const REPLAY_WORKSPACE_VERSION = 'd134_replay_audit_workspace_ui_v1';
+    const DEFAULT_AUDIT_FILTERS = Object.freeze({
+        token: 'all',
+        direction: 'all',
+        counterparty: 'all',
+        majorOnly: false
+    });
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -31,7 +37,14 @@
                 totalSteps
             });
         const majorNavigation = getMajorNavigation(bookmarks, currentStep, totalSteps);
-        const eventSummary = summarizeReplayEvent(currentEvent, {
+        const auditFilters = normalizeAuditFilters(context.auditFilters || context.filters);
+        const selectedEvent = normalizeSelectedEvent(context.selectedEvent, currentEvent, events);
+        const filterOptions = getReplayFilterOptions(events);
+        const filteredEvents = filterReplayEvents(events, auditFilters);
+        const relationships = deriveReplayRelationships(selectedEvent || currentEvent, events);
+        const breadcrumbs = normalizeAuditBreadcrumbs(context.breadcrumbs || context.auditBreadcrumbs);
+        const recentEvents = normalizeRecentEvents(context.recentEvents || context.auditRecentEvents, events);
+        const eventSummary = summarizeReplayEvent(selectedEvent || currentEvent, {
             status,
             totalSteps,
             confidence: context.confidence ?? status.completenessConfidence,
@@ -49,6 +62,13 @@
             currentStep,
             progressPct,
             currentEvent,
+            selectedEvent,
+            auditFilters,
+            filterOptions,
+            filteredEvents,
+            relationships,
+            breadcrumbs,
+            recentEvents,
             eventSummary,
             bookmarks,
             majorNavigation,
@@ -75,6 +95,12 @@
         const bookmarks = context.bookmarks || [];
         const majorNavigation = context.majorNavigation || {};
         const eventSummary = context.eventSummary || {};
+        const selectedEvent = context.selectedEvent || context.currentEvent || null;
+        const relationships = context.relationships || {};
+        const filterOptions = context.filterOptions || getReplayFilterOptions(context.events || []);
+        const filteredEvents = context.filteredEvents || [];
+        const breadcrumbs = context.breadcrumbs || [];
+        const recentEvents = context.recentEvents || [];
         const currentBookmarkStep = currentStep || 0;
         const nextMajorDisabled = scrubberDisabled || !majorNavigation.nextStep;
         const previousMajorDisabled = scrubberDisabled || !majorNavigation.previousStep;
@@ -124,9 +150,22 @@
                 <div class="crypto-replay-bookmark-strip" aria-label="Replay bookmarks">
                     ${bookmarks.map(bookmark => renderBookmark(bookmark, currentBookmarkStep, scrubberDisabled)).join('') || '<div class="crypto-replay-bookmark-empty">Build replay steps to derive bookmarks.</div>'}
                 </div>
+                ${renderAuditFilters(context.auditFilters, filterOptions, filteredEvents.length, totalSteps, scrubberDisabled)}
+                ${renderAuditBreadcrumbs(breadcrumbs, recentEvents)}
             </div>
-            <div class="crypto-replay-workspace-panel crypto-replay-workspace-event" id="crypto-replay-workspace-event-readout">
+            <div class="crypto-replay-workspace-panel crypto-replay-workspace-event crypto-replay-audit-panel" id="crypto-replay-workspace-event-readout">
                 ${renderCurrentEventReadout(eventSummary)}
+                ${renderTransferDrilldown(selectedEvent, {
+                    totalSteps,
+                    windowStatus,
+                    providerState: context.providerState || '',
+                    providerGrade: context.providerGrade || '',
+                    confidence: context.confidence ?? status.completenessConfidence,
+                    warnings
+                })}
+                ${renderReplayAuditActions(selectedEvent, relationships, scrubberDisabled)}
+                ${renderRelatedTransferExploration(relationships)}
+                ${renderFilteredEventStrip(filteredEvents, selectedEvent, scrubberDisabled)}
             </div>
             <div class="crypto-replay-workspace-bottom">
                 <div class="crypto-replay-workspace-panel crypto-replay-workspace-meta">
@@ -152,6 +191,189 @@
                 <div><span>Signature</span><strong>${escapeHtml(summary.signature || '-')}</strong></div>
             </div>
             <div class="crypto-replay-event-warning">${escapeHtml(summary.warning || 'Preview-only staged history. No identity, ownership, risk, criminality, or investment claims.')}</div>
+        `;
+    }
+
+    function renderAuditFilters(filters = DEFAULT_AUDIT_FILTERS, options = {}, filteredCount = 0, totalSteps = 0, disabled = false) {
+        const safeFilters = normalizeAuditFilters(filters);
+        const tokenOptions = options.tokens || [{ value: 'all', label: 'All tokens' }];
+        const directionOptions = options.directions || [{ value: 'all', label: 'All directions' }];
+        const counterpartyOptions = options.counterparties || [{ value: 'all', label: 'All wallets' }];
+        const active = hasActiveReplayFilters(safeFilters);
+        return `
+            <details class="crypto-replay-audit-filters" ${active ? 'open' : ''}>
+                <summary>
+                    <span>Audit Filters</span>
+                    <strong>${escapeHtml(filteredCount)}/${escapeHtml(totalSteps || 0)}</strong>
+                </summary>
+                <div class="crypto-replay-filter-grid">
+                    ${renderFilterSelect('Token', 'token', safeFilters.token, tokenOptions, disabled)}
+                    ${renderFilterSelect('Direction', 'direction', safeFilters.direction, directionOptions, disabled)}
+                    ${renderFilterSelect('Counterparty', 'counterparty', safeFilters.counterparty, counterpartyOptions, disabled)}
+                    <label class="crypto-replay-filter-toggle">
+                        <input type="checkbox" data-crypto-replay-filter="majorOnly" ${safeFilters.majorOnly ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+                        <span>Major staged flows</span>
+                    </label>
+                </div>
+                <div class="crypto-replay-filter-footer">
+                    <span>${escapeHtml(active ? 'Filters dim unmatched staged replay events only.' : 'All staged replay events are visible.')}</span>
+                    <button type="button" data-crypto-replay-clear-filter ${!active || disabled ? 'disabled' : ''}>Reset</button>
+                </div>
+            </details>
+        `;
+    }
+
+    function renderFilterSelect(label, key, value, options = [], disabled = false) {
+        const normalizedValue = String(value || 'all');
+        const safeOptions = ensureSelectedOption(options, normalizedValue);
+        return `
+            <label class="crypto-replay-filter-field">
+                <span>${escapeHtml(label)}</span>
+                <select data-crypto-replay-filter="${escapeAttr(key)}" ${disabled ? 'disabled' : ''}>
+                    ${safeOptions.map(option => `
+                        <option value="${escapeAttr(option.value)}" ${String(option.value) === normalizedValue ? 'selected' : ''}>${escapeHtml(option.label)}</option>
+                    `).join('')}
+                </select>
+            </label>
+        `;
+    }
+
+    function renderAuditBreadcrumbs(breadcrumbs = [], recentEvents = []) {
+        const chain = deriveBreadcrumbChain(breadcrumbs);
+        return `
+            <div class="crypto-replay-audit-breadcrumbs" aria-label="Replay audit breadcrumbs">
+                <div class="crypto-replay-audit-breadcrumb-header">
+                    <span>Audit Trail</span>
+                    ${chain ? `<strong title="${escapeAttr(chain)}">${escapeHtml(chain)}</strong>` : '<strong>No chain pinned</strong>'}
+                </div>
+                <div class="crypto-replay-audit-breadcrumb-strip">
+                    ${breadcrumbs.map(crumb => `
+                        <span class="crypto-replay-audit-crumb">
+                            <button type="button" data-crypto-replay-action="select-breadcrumb" data-crypto-replay-step="${escapeAttr(crumb.step || 0)}" title="${escapeAttr(crumb.title || crumb.label || '')}">${escapeHtml(crumb.label || `Step ${crumb.step || '-'}`)}</button>
+                            <button type="button" data-crypto-replay-action="remove-breadcrumb" data-crypto-replay-crumb-id="${escapeAttr(crumb.id || '')}" aria-label="Remove replay breadcrumb">x</button>
+                        </span>
+                    `).join('') || '<div class="crypto-replay-bookmark-empty">Select replay transfers to build a compact audit trail.</div>'}
+                </div>
+                ${recentEvents.length ? `
+                    <div class="crypto-replay-recent-strip">
+                        ${recentEvents.map(event => `
+                            <button type="button" data-crypto-replay-select-step="${escapeAttr(event.step || 0)}" data-crypto-replay-select-source="recent-event" title="${escapeAttr(getEventTitle(event))}">
+                                ${escapeHtml(`#${event.step || '-'} ${shortValue(event.signature || event.token || event.sourceWallet || '')}`)}
+                            </button>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    function renderTransferDrilldown(event = null, context = {}) {
+        if (!event) {
+            return `
+                <section class="crypto-replay-drilldown">
+                    <div class="crypto-replay-event-kicker">TRANSFER DRILLDOWN</div>
+                    <div class="crypto-replay-empty-compact">Pause, scrub, or click a replay edge to inspect staged transfer context.</div>
+                </section>
+            `;
+        }
+        const providerState = context.providerState || context.providerGrade || 'Worker staged';
+        const confidence = Number(context.confidence);
+        const warnings = Array.isArray(context.warnings) ? context.warnings : [];
+        return `
+            <section class="crypto-replay-drilldown">
+                <div class="crypto-replay-event-kicker">TRANSFER DRILLDOWN</div>
+                <div class="crypto-replay-drilldown-grid">
+                    ${renderDrilldownItem('Source', event.sourceWallet || event.source_wallet || '-', true)}
+                    ${renderDrilldownItem('Destination', event.destinationWallet || event.destination_wallet || '-', true)}
+                    ${renderDrilldownItem('Amount', event.amountDisplay || event.amount_display || event.amount || '-')}
+                    ${renderDrilldownItem('Token', event.token || event.symbol || event.token_mint || '-')}
+                    ${renderDrilldownItem('Direction', formatDirectionLabel(event.direction))}
+                    ${renderDrilldownItem('Timestamp', formatTimestamp(event.timestamp) || '-')}
+                    ${renderDrilldownItem('Signature', event.signature || event.transaction_hash || '-', true)}
+                    ${renderDrilldownItem('Replay Step', `${event.step || '-'}${context.totalSteps ? ` / ${context.totalSteps}` : ''}`)}
+                    ${renderDrilldownItem('Window', context.windowStatus?.windowLabel || 'Staged window')}
+                    ${renderDrilldownItem('Provider / Confidence', `${providerState}${Number.isFinite(confidence) ? ` / ${Math.round(confidence)}%` : ''}`)}
+                </div>
+                <div class="crypto-replay-event-warning">${escapeHtml(warnings[0] || event.warning || 'Staged replay warning: partial history may omit transfers outside loaded pages.')}</div>
+            </section>
+        `;
+    }
+
+    function renderDrilldownItem(label, value, mono = false) {
+        return `
+            <div>
+                <span>${escapeHtml(label)}</span>
+                <strong class="${mono ? 'is-mono' : ''}" title="${escapeAttr(value)}">${escapeHtml(value)}</strong>
+            </div>
+        `;
+    }
+
+    function renderReplayAuditActions(event = null, relationships = {}, disabled = false) {
+        const sourceWallet = event?.sourceWallet || event?.source_wallet || '';
+        const destinationWallet = event?.destinationWallet || event?.destination_wallet || '';
+        const noEvent = !event || disabled;
+        const previousRelated = relationships.previousRelated?.step || 0;
+        const nextRelated = relationships.nextRelated?.step || 0;
+        return `
+            <section class="crypto-replay-audit-actions" aria-label="Replay audit actions">
+                <button type="button" data-crypto-replay-action="follow-source" data-crypto-replay-wallet="${escapeAttr(sourceWallet)}" ${noEvent || !sourceWallet ? 'disabled' : ''}>Follow Source Wallet</button>
+                <button type="button" data-crypto-replay-action="follow-destination" data-crypto-replay-wallet="${escapeAttr(destinationWallet)}" ${noEvent || !destinationWallet ? 'disabled' : ''}>Follow Destination Wallet</button>
+                <button type="button" data-crypto-replay-action="center-transfer" ${noEvent ? 'disabled' : ''}>Center Current Transfer</button>
+                <button type="button" data-crypto-replay-action="inspect-related" ${noEvent ? 'disabled' : ''}>Inspect Related Flows</button>
+                <button type="button" data-crypto-replay-action="expand-transfer" ${noEvent ? 'disabled' : ''}>Expand Around This Transfer</button>
+                <button type="button" data-crypto-replay-action="jump-related" data-crypto-replay-direction="-1" ${noEvent || !previousRelated ? 'disabled' : ''}>Previous Related</button>
+                <button type="button" data-crypto-replay-action="jump-related" data-crypto-replay-direction="1" ${noEvent || !nextRelated ? 'disabled' : ''}>Next Related</button>
+            </section>
+        `;
+    }
+
+    function renderRelatedTransferExploration(relationships = {}) {
+        const groups = [
+            ['Same Counterparty', relationships.sameCounterparty || []],
+            ['Same Token', relationships.sameToken || []],
+            ['Nearby Time', relationships.nearbyTime || []],
+            ['Repeated Route', relationships.repeatedRoute || []]
+        ];
+        return `
+            <section class="crypto-replay-related">
+                <div class="crypto-replay-related-header">
+                    <span>Related Staged Transfers</span>
+                    <strong>${escapeHtml(relationships.totalRelated || 0)} derived</strong>
+                </div>
+                <div class="crypto-replay-related-grid">
+                    ${groups.map(([label, events]) => `
+                        <div class="crypto-replay-related-card">
+                            <div><span>${escapeHtml(label)}</span><strong>${escapeHtml(events.length)}</strong></div>
+                            ${events.slice(0, 3).map(event => `
+                                <button type="button" data-crypto-replay-select-step="${escapeAttr(event.step || 0)}" data-crypto-replay-select-source="related-transfer" title="${escapeAttr(getEventTitle(event))}">
+                                    <span>#${escapeHtml(event.step || '-')}</span>
+                                    <strong>${escapeHtml(formatAmountToken(event))}</strong>
+                                </button>
+                            `).join('') || '<p>No staged match</p>'}
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    function renderFilteredEventStrip(events = [], selectedEvent = null, disabled = false) {
+        const selectedStep = Number(selectedEvent?.step) || 0;
+        return `
+            <section class="crypto-replay-filtered-events">
+                <div class="crypto-replay-related-header">
+                    <span>Filtered Replay Events</span>
+                    <strong>${escapeHtml(events.length)}</strong>
+                </div>
+                <div class="crypto-replay-filtered-strip">
+                    ${events.slice(0, 12).map(event => `
+                        <button type="button" class="${Number(event.step) === selectedStep ? 'is-active' : ''}" data-crypto-replay-select-step="${escapeAttr(event.step || 0)}" data-crypto-replay-select-source="filtered-event" ${disabled ? 'disabled' : ''} title="${escapeAttr(getEventTitle(event))}">
+                            <span>#${escapeHtml(event.step || '-')}</span>
+                            <strong>${escapeHtml(event.token || 'Token')}</strong>
+                        </button>
+                    `).join('') || '<div class="crypto-replay-empty-compact">No staged transfer matches the current replay filters.</div>'}
+                </div>
+            </section>
         `;
     }
 
@@ -215,6 +437,33 @@
                 );
             });
         });
+        root.querySelectorAll('[data-crypto-replay-select-step]').forEach(button => {
+            button.addEventListener('click', () => {
+                handlers.selectStep?.(Number(button.dataset.cryptoReplaySelectStep) || 0, {
+                    source: button.dataset.cryptoReplaySelectSource || 'audit-panel'
+                });
+            });
+        });
+        root.querySelectorAll('[data-crypto-replay-action]').forEach(button => {
+            button.addEventListener('click', () => {
+                handlers.auditAction?.(button.dataset.cryptoReplayAction || '', {
+                    wallet: button.dataset.cryptoReplayWallet || '',
+                    step: Number(button.dataset.cryptoReplayStep) || 0,
+                    direction: Number(button.dataset.cryptoReplayDirection) || 0,
+                    crumbId: button.dataset.cryptoReplayCrumbId || ''
+                });
+            });
+        });
+        root.querySelectorAll('[data-crypto-replay-filter]').forEach(control => {
+            control.addEventListener('change', event => {
+                handlers.updateFilter?.(control.dataset.cryptoReplayFilter || '', event.target.type === 'checkbox'
+                    ? event.target.checked
+                    : event.target.value);
+            });
+        });
+        root.querySelectorAll('[data-crypto-replay-clear-filter]').forEach(button => {
+            button.addEventListener('click', () => handlers.resetFilters?.());
+        });
         root.querySelector('#crypto-replay-workspace-exit')?.addEventListener('click', () => handlers.exit?.());
     }
 
@@ -275,6 +524,165 @@
         normalized.route = formatRoute(normalized);
         normalized.signatureShort = shortValue(normalized.signature);
         return normalized;
+    }
+
+    function normalizeSelectedEvent(selectedEvent = null, currentEvent = null, events = []) {
+        const selectedStep = Number(selectedEvent?.step || selectedEvent?.selectedStep || 0) || 0;
+        if (selectedStep) {
+            const match = events.find(event => Number(event.step) === selectedStep);
+            return normalizeEvent(match || selectedEvent, selectedStep - 1);
+        }
+        if (selectedEvent?.signature) {
+            const match = events.find(event => event.signature === selectedEvent.signature);
+            return normalizeEvent(match || selectedEvent, (match?.step || selectedEvent.step || 1) - 1);
+        }
+        return currentEvent || null;
+    }
+
+    function normalizeAuditFilters(filters = {}) {
+        return {
+            token: String(filters.token || DEFAULT_AUDIT_FILTERS.token),
+            direction: String(filters.direction || DEFAULT_AUDIT_FILTERS.direction),
+            counterparty: String(filters.counterparty || DEFAULT_AUDIT_FILTERS.counterparty),
+            majorOnly: filters.majorOnly === true || filters.majorOnly === 'true'
+        };
+    }
+
+    function filterReplayEvents(events = [], filters = DEFAULT_AUDIT_FILTERS) {
+        const safeFilters = normalizeAuditFilters(filters);
+        const threshold = getMajorFlowThreshold(events);
+        return events.filter(event => eventMatchesFilters(event, safeFilters, threshold));
+    }
+
+    function eventMatchesFilters(event = {}, filters = DEFAULT_AUDIT_FILTERS, majorThreshold = 0) {
+        const token = normalizeTokenFilter(filters.token);
+        if (token !== 'all' && normalizeTokenFilter(event.token) !== token) return false;
+        const direction = normalizeDirectionFilter(filters.direction);
+        if (direction !== 'all' && normalizeDirectionFilter(event.direction) !== direction) return false;
+        const counterparty = normalizeAddressFilter(filters.counterparty);
+        if (counterparty !== 'all') {
+            const source = normalizeAddressFilter(event.sourceWallet || event.source_wallet);
+            const destination = normalizeAddressFilter(event.destinationWallet || event.destination_wallet);
+            if (source !== counterparty && destination !== counterparty) return false;
+        }
+        if (filters.majorOnly && !(Number(event.amountValue ?? getAmountValue(event)) >= majorThreshold && majorThreshold > 0)) return false;
+        return true;
+    }
+
+    function hasActiveReplayFilters(filters = DEFAULT_AUDIT_FILTERS) {
+        const safeFilters = normalizeAuditFilters(filters);
+        return safeFilters.token !== 'all'
+            || safeFilters.direction !== 'all'
+            || safeFilters.counterparty !== 'all'
+            || safeFilters.majorOnly;
+    }
+
+    function getReplayFilterOptions(events = []) {
+        const tokenCounts = new Map();
+        const directionCounts = new Map();
+        const counterpartyCounts = new Map();
+        events.forEach(event => {
+            const token = String(event.token || '').trim();
+            if (token) incrementOption(tokenCounts, normalizeTokenFilter(token), token);
+            const direction = String(event.direction || '').trim();
+            if (direction) incrementOption(directionCounts, normalizeDirectionFilter(direction), formatDirectionLabel(direction));
+            [event.sourceWallet, event.destinationWallet].forEach(wallet => {
+                const normalized = normalizeAddressFilter(wallet);
+                if (normalized && normalized !== 'all') incrementOption(counterpartyCounts, normalized, shortValue(wallet));
+            });
+        });
+        return {
+            tokens: [
+                { value: 'all', label: 'All tokens' },
+                ...sortOptions(tokenCounts)
+            ],
+            directions: [
+                { value: 'all', label: 'All directions' },
+                ...sortOptions(directionCounts)
+            ],
+            counterparties: [
+                { value: 'all', label: 'All wallets' },
+                ...sortOptions(counterpartyCounts).slice(0, 48)
+            ]
+        };
+    }
+
+    function deriveReplayRelationships(selectedEvent = null, events = []) {
+        if (!selectedEvent) {
+            return {
+                sameCounterparty: [],
+                sameToken: [],
+                nearbyTime: [],
+                repeatedRoute: [],
+                previousRelated: null,
+                nextRelated: null,
+                totalRelated: 0
+            };
+        }
+        const selectedStep = Number(selectedEvent.step) || 0;
+        const selectedWallets = new Set([
+            normalizeAddressFilter(selectedEvent.sourceWallet || selectedEvent.source_wallet),
+            normalizeAddressFilter(selectedEvent.destinationWallet || selectedEvent.destination_wallet)
+        ].filter(value => value && value !== 'all'));
+        const selectedToken = normalizeTokenFilter(selectedEvent.token || selectedEvent.symbol || selectedEvent.token_mint);
+        const selectedRoute = getRouteKey(selectedEvent);
+        const selectedTime = Number(selectedEvent.timestampMs) || getTimestampMs(selectedEvent.timestamp);
+        const withoutSelected = events.filter(event => Number(event.step) !== selectedStep);
+        const sameCounterparty = withoutSelected.filter(event => {
+            const source = normalizeAddressFilter(event.sourceWallet || event.source_wallet);
+            const destination = normalizeAddressFilter(event.destinationWallet || event.destination_wallet);
+            return selectedWallets.has(source) || selectedWallets.has(destination);
+        });
+        const sameToken = selectedToken === 'all'
+            ? []
+            : withoutSelected.filter(event => normalizeTokenFilter(event.token || event.symbol || event.token_mint) === selectedToken);
+        const repeatedRoute = selectedRoute
+            ? withoutSelected.filter(event => getRouteKey(event) === selectedRoute)
+            : [];
+        const nearbyTime = selectedTime
+            ? withoutSelected.filter(event => {
+                const value = Number(event.timestampMs) || getTimestampMs(event.timestamp);
+                return value && Math.abs(value - selectedTime) <= 1000 * 60 * 60 * 24;
+            }).sort((a, b) => Math.abs((a.timestampMs || getTimestampMs(a.timestamp)) - selectedTime) - Math.abs((b.timestampMs || getTimestampMs(b.timestamp)) - selectedTime))
+            : [];
+        const related = uniqueEvents([...sameCounterparty, ...sameToken, ...nearbyTime, ...repeatedRoute])
+            .sort((a, b) => Number(a.step) - Number(b.step));
+        return {
+            sameCounterparty: sameCounterparty.slice(0, 8),
+            sameToken: sameToken.slice(0, 8),
+            nearbyTime: nearbyTime.slice(0, 8),
+            repeatedRoute: repeatedRoute.slice(0, 8),
+            previousRelated: related.filter(event => Number(event.step) < selectedStep).pop() || null,
+            nextRelated: related.find(event => Number(event.step) > selectedStep) || null,
+            totalRelated: related.length
+        };
+    }
+
+    function normalizeAuditBreadcrumbs(breadcrumbs = []) {
+        return breadcrumbs
+            .filter(Boolean)
+            .map((crumb, index) => ({
+                id: crumb.id || `crumb-${index}-${crumb.step || 0}`,
+                label: crumb.label || `Step ${crumb.step || '-'}`,
+                title: crumb.title || crumb.route || crumb.label || '',
+                step: Number(crumb.step) || 0,
+                sourceWallet: crumb.sourceWallet || '',
+                destinationWallet: crumb.destinationWallet || ''
+            }))
+            .slice(-7);
+    }
+
+    function normalizeRecentEvents(recentEvents = [], events = []) {
+        const byStep = new Map(events.map(event => [Number(event.step) || 0, event]));
+        return recentEvents
+            .map(item => {
+                const step = Number(item?.step || item) || 0;
+                return byStep.get(step) || (typeof item === 'object' ? normalizeEvent(item, step - 1) : null);
+            })
+            .filter(Boolean)
+            .filter((event, index, list) => list.findIndex(item => Number(item.step) === Number(event.step)) === index)
+            .slice(-6)
+            .reverse();
     }
 
     function deriveBookmarks(context = {}) {
@@ -453,6 +861,88 @@
         return null;
     }
 
+    function incrementOption(map, value, label) {
+        const key = String(value || '').trim();
+        if (!key) return;
+        const current = map.get(key) || { value: key, label: String(label || key), count: 0 };
+        current.count += 1;
+        map.set(key, current);
+    }
+
+    function sortOptions(map) {
+        return [...map.values()]
+            .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
+            .map(item => ({
+                value: item.value,
+                label: `${item.label} (${item.count})`
+            }));
+    }
+
+    function ensureSelectedOption(options = [], selectedValue = 'all') {
+        const safeOptions = Array.isArray(options) && options.length ? options.slice() : [{ value: 'all', label: 'All' }];
+        const value = String(selectedValue || 'all');
+        if (safeOptions.some(option => String(option.value) === value)) return safeOptions;
+        return [...safeOptions, { value, label: value === 'all' ? 'All' : `${shortValue(value)} (filtered)` }];
+    }
+
+    function deriveBreadcrumbChain(breadcrumbs = []) {
+        const wallets = [];
+        breadcrumbs.forEach(crumb => {
+            const source = crumb.sourceWallet || '';
+            const destination = crumb.destinationWallet || '';
+            if (source && wallets[wallets.length - 1] !== source) wallets.push(source);
+            if (destination && wallets[wallets.length - 1] !== destination) wallets.push(destination);
+        });
+        return wallets.slice(-5).map(shortValue).join(' -> ');
+    }
+
+    function getMajorFlowThreshold(events = []) {
+        const amounts = events
+            .map(event => Number(event.amountValue ?? getAmountValue(event)) || 0)
+            .filter(value => value > 0)
+            .sort((a, b) => a - b);
+        if (!amounts.length) return 0;
+        const index = Math.max(0, Math.floor(amounts.length * 0.75));
+        return amounts[Math.min(amounts.length - 1, index)] || amounts[amounts.length - 1] || 0;
+    }
+
+    function uniqueEvents(events = []) {
+        const seen = new Set();
+        const result = [];
+        events.forEach(event => {
+            const key = event.signature || `${event.step || ''}|${event.sourceWallet || ''}|${event.destinationWallet || ''}|${event.token || ''}`;
+            if (!key || seen.has(key)) return;
+            seen.add(key);
+            result.push(event);
+        });
+        return result;
+    }
+
+    function getRouteKey(event = {}) {
+        const source = normalizeAddressFilter(event.sourceWallet || event.source_wallet);
+        const destination = normalizeAddressFilter(event.destinationWallet || event.destination_wallet);
+        if (!source || !destination || source === 'all' || destination === 'all') return '';
+        return `${source}>${destination}`;
+    }
+
+    function normalizeTokenFilter(value = '') {
+        const text = String(value || '').trim();
+        if (!text || text.toLowerCase() === 'all') return 'all';
+        return text ? text.toUpperCase() : 'all';
+    }
+
+    function normalizeDirectionFilter(value = '') {
+        const text = String(value || '').trim().toLowerCase().replace(/\s+/g, '_');
+        if (!text || text === 'all') return 'all';
+        return text || 'all';
+    }
+
+    function normalizeAddressFilter(value = '') {
+        const text = String(value || '').trim();
+        if (!text || text.toLowerCase() === 'all') return 'all';
+        return text || 'all';
+    }
+
     function getEventTitle(event = {}) {
         return [
             `Step ${event.step || 0}`,
@@ -530,6 +1020,11 @@
         version: REPLAY_WORKSPACE_VERSION,
         buildReplayContext,
         normalizeReplayEvents,
+        normalizeAuditFilters,
+        filterReplayEvents,
+        getReplayFilterOptions,
+        deriveReplayRelationships,
+        hasActiveReplayFilters,
         deriveBookmarks,
         summarizeReplayEvent,
         formatAmountToken,

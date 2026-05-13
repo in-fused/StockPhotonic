@@ -187,6 +187,22 @@
                 archiveReadiness: state.metadata.archive_readiness || '',
                 providerGrade: state.metadata.provider_grade || '',
                 scanId: state.metadata.scan_id || '',
+                replayWindow: state.metadata.replay_window || null,
+                replayReconstruction: state.metadata.replay_reconstruction || null,
+                timelineSegments: Array.isArray(state.metadata.replay_reconstruction?.timeline_segments)
+                    ? state.metadata.replay_reconstruction.timeline_segments.slice(0, 24)
+                    : Array.isArray(state.metadata.replay_window?.timeline_segments)
+                        ? state.metadata.replay_window.timeline_segments.slice(0, 12)
+                        : [],
+                windowing: {
+                    chunkSize: Math.max(1, Number(state.metadata.replay_reconstruction?.chunk_size || state.metadata.replay_window?.chunk_size) || state.limits.maxTransactions),
+                    renderCapTransactions: state.limits.maxTransactions,
+                    renderCapNodes: state.limits.maxNodes,
+                    renderCapEdges: state.limits.maxEdges,
+                    progressiveReveal: true,
+                    batchRendering: true,
+                    oldestFirstPrepared: state.metadata.replay_reconstruction?.oldest_first_ready === true || state.metadata.replay_window?.oldest_first_ready === true
+                },
                 performance: {
                     cappedTransactions: state.limits.maxTransactions,
                     cappedNodes: state.limits.maxNodes,

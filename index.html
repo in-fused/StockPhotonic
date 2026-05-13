@@ -1880,14 +1880,19 @@
             background-size: 46px 46px, 46px 46px, 100% 100%;
         }
 
-        #crypto-flow-canvas,
-        #crypto-history-workspace-canvas {
+        #crypto-flow-canvas {
             display: block;
             cursor: grab;
             touch-action: none;
         }
 
-        #crypto-flow-canvas:active {
+        #crypto-history-workspace-canvas {
+            cursor: grab;
+            touch-action: none;
+        }
+
+        #crypto-flow-canvas:active,
+        #crypto-history-workspace-canvas:active {
             cursor: grabbing;
         }
 
@@ -1907,12 +1912,14 @@
             display: none;
             pointer-events: none;
             padding: 1rem;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            gap: 0.75rem;
         }
 
         .crypto-replay-workspace-panel {
-            width: min(42rem, calc(100% - 1rem));
+            width: min(72rem, 100%);
             border: 1px solid rgba(217, 70, 239, 0.24);
-            border-radius: 1rem;
+            border-radius: 0.5rem;
             background: rgba(2, 6, 23, 0.84);
             box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42), 0 0 34px rgba(217, 70, 239, 0.10);
             backdrop-filter: blur(16px);
@@ -1922,11 +1929,68 @@
             overflow-wrap: anywhere;
         }
 
+        .crypto-replay-workspace-toolbar,
+        .crypto-replay-workspace-bottom {
+            justify-self: center;
+        }
+
+        .crypto-replay-workspace-toolbar {
+            grid-row: 1;
+            align-self: start;
+        }
+
+        .crypto-replay-workspace-bottom {
+            grid-row: 3;
+            width: min(72rem, 100%);
+            align-self: end;
+            pointer-events: none;
+        }
+
+        .crypto-replay-workspace-bottom .crypto-replay-workspace-panel {
+            width: 100%;
+        }
+
+        .crypto-replay-toolbar-main {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.8rem;
+        }
+
+        .crypto-replay-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
         .crypto-replay-workspace-actions {
             display: flex;
             flex-wrap: wrap;
             gap: 0.6rem;
-            margin-top: 0.9rem;
+        }
+
+        .crypto-replay-workspace-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .crypto-replay-workspace-controls button {
+            min-height: 2.25rem;
+            border-radius: 0.65rem;
+            padding: 0.45rem 0.7rem;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(226, 232, 240, 0.72);
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: normal;
+        }
+
+        .crypto-replay-workspace-controls button.is-primary {
+            border-color: rgba(217, 70, 239, 0.38);
+            background: rgba(217, 70, 239, 0.16);
+            color: rgba(253, 244, 255, 0.94);
         }
 
         .crypto-replay-workspace-actions button {
@@ -1947,6 +2011,12 @@
             color: rgba(253, 244, 255, 0.94);
         }
 
+        .crypto-replay-workspace-controls button:disabled,
+        .crypto-replay-workspace-actions button:disabled {
+            cursor: not-allowed;
+            opacity: 0.52;
+        }
+
         #crypto-photonic-view.is-replay-workspace #crypto-flow-canvas,
         #crypto-photonic-view.is-replay-workspace #crypto-graph-hover-overlay,
         #crypto-photonic-view.is-replay-workspace .crypto-mobile-graph-overlay {
@@ -1958,9 +2028,7 @@
         }
 
         #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-overlay {
-            display: flex;
-            align-items: flex-start;
-            justify-content: flex-start;
+            display: grid;
         }
 
         #crypto-photonic-view.is-replay-workspace .crypto-canvas-wrap {
@@ -2347,16 +2415,34 @@
 
             .crypto-replay-workspace-overlay {
                 padding: 0.65rem;
+                gap: 0.55rem;
             }
 
             .crypto-replay-workspace-panel {
                 width: 100%;
-                max-height: calc(100% - 1rem);
+                max-height: min(28dvh, 15rem);
+                overflow-y: auto;
+            }
+
+            .crypto-replay-toolbar-main {
+                flex-direction: column;
+            }
+
+            .crypto-replay-meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .crypto-replay-workspace-bottom {
+                max-height: min(22dvh, 12rem);
                 overflow-y: auto;
             }
 
             .crypto-replay-workspace-actions button {
-                flex: 1 1 100%;
+                flex: 1 1 calc(50% - 0.35rem);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-mobile-investigation-drawer {
+                display: none;
             }
 
             .crypto-data-source-snapshot {

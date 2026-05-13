@@ -1,7 +1,7 @@
 (() => {
     const namespace = window.CryptoPhotonic = window.CryptoPhotonic || {};
 
-    const HISTORY_PROVIDER_VERSION = 'd130_provider_scan_manifest_contract_v1';
+    const HISTORY_PROVIDER_VERSION = 'd131_provider_scan_cache_contract_v1';
     const ARCHIVE_HISTORY_CONTRACT_VERSION = 'd129_archive_history_contract_v1';
 
     class WalletHistoryProvider {
@@ -268,6 +268,8 @@
                 scan_manifest_version: metadata.scan_manifest_version || 'd130_scan_manifest_v1',
                 scan_id: metadata.scan_id || metadata.scan_manifest?.scan_id || '',
                 scan_manifest: normalizeScanManifest(metadata.scan_manifest),
+                scan_cache: normalizeScanCache(metadata.scan_cache || metadata.scan_manifest?.cache_state),
+                replay_reconstruction: normalizeReplayReconstruction(metadata.replay_reconstruction || metadata.scan_manifest?.replay_reconstruction),
                 provider_grade: metadata.provider_grade || 'basic',
                 replay_suitability: metadata.replay_suitability || 'low',
                 completeness_confidence: clampConfidence(metadata.completeness_confidence),
@@ -307,7 +309,9 @@
             completeness_confidence: clampConfidence(manifest.completeness_confidence),
             full_history_loaded: manifest.full_history_loaded === true,
             gap_flags: Array.isArray(manifest.gap_flags) ? manifest.gap_flags.slice(0, 16) : [],
-            warnings: Array.isArray(manifest.warnings) ? manifest.warnings.slice(0, 16) : []
+            warnings: Array.isArray(manifest.warnings) ? manifest.warnings.slice(0, 16) : [],
+            cache_state: normalizeScanCache(manifest.cache_state),
+            replay_reconstruction: normalizeReplayReconstruction(manifest.replay_reconstruction)
         };
     }
 
@@ -324,11 +328,93 @@
             coverage_basis: String(windowMetadata.coverage_basis || ''),
             replay_suitability: String(windowMetadata.replay_suitability || ''),
             completeness_confidence: clampConfidence(windowMetadata.completeness_confidence),
+            chunk_size: Math.max(0, Number(windowMetadata.chunk_size) || 0),
+            render_cap_transactions: Math.max(0, Number(windowMetadata.render_cap_transactions) || 0),
+            current_window_index: Math.max(0, Number(windowMetadata.current_window_index) || 0),
+            total_windows: Math.max(0, Number(windowMetadata.total_windows) || 0),
+            window_label: String(windowMetadata.window_label || ''),
+            oldest_first_ready: windowMetadata.oldest_first_ready === true,
+            oldest_first_reconstruction_required: windowMetadata.oldest_first_reconstruction_required === true,
+            progressive_expansion_available: windowMetadata.progressive_expansion_available === true,
+            timeline_segments: Array.isArray(windowMetadata.timeline_segments)
+                ? windowMetadata.timeline_segments.slice(0, 12).map(normalizeTimelineSegment)
+                : [],
             warnings: Array.isArray(windowMetadata.warnings)
                 ? windowMetadata.warnings.slice(0, 8)
                 : Array.isArray(windowMetadata.generation_warnings)
                     ? windowMetadata.generation_warnings.slice(0, 8)
                     : []
+        };
+    }
+
+    function normalizeScanCache(cache = null) {
+        if (!cache || typeof cache !== 'object' || Array.isArray(cache)) return null;
+        return {
+            version: String(cache.version || 'd131_persisted_scan_cache_v1'),
+            storage: String(cache.storage || 'unavailable'),
+            persisted: cache.persisted === true,
+            manifest_linked: cache.manifest_linked === true,
+            normalized_page_persistence: String(cache.normalized_page_persistence || 'not_started'),
+            normalized_transaction_persistence: String(cache.normalized_transaction_persistence || 'not_started'),
+            replay_reconstruction_cached: cache.replay_reconstruction_cached === true,
+            resumable: cache.resumable === true,
+            normalized_pages_persisted: Math.max(0, Number(cache.normalized_pages_persisted) || 0),
+            normalized_transactions_persisted: Math.max(0, Number(cache.normalized_transactions_persisted) || 0),
+            last_page_ref: String(cache.last_page_ref || ''),
+            last_page_index: Math.max(0, Number(cache.last_page_index) || 0),
+            last_transaction_ref_count: Math.max(0, Number(cache.last_transaction_ref_count) || 0),
+            persisted_at: String(cache.persisted_at || ''),
+            ttl_seconds: Math.max(0, Number(cache.ttl_seconds) || 0),
+            browser_receives_metadata_only: cache.browser_receives_metadata_only !== false,
+            raw_provider_payload_exposed: cache.raw_provider_payload_exposed === true,
+            provider_secret_exposed: cache.provider_secret_exposed === true
+        };
+    }
+
+    function normalizeReplayReconstruction(reconstruction = null) {
+        if (!reconstruction || typeof reconstruction !== 'object' || Array.isArray(reconstruction)) return null;
+        return {
+            version: String(reconstruction.version || 'd131_replay_reconstruction_v1'),
+            preview_only: reconstruction.preview_only !== false,
+            staged_history_only: reconstruction.staged_history_only !== false,
+            active_graph_unchanged: reconstruction.active_graph_unchanged !== false,
+            scan_id: String(reconstruction.scan_id || ''),
+            chunk_size: Math.max(0, Number(reconstruction.chunk_size) || 0),
+            render_cap_transactions: Math.max(0, Number(reconstruction.render_cap_transactions) || 0),
+            total_transactions: Math.max(0, Number(reconstruction.total_transactions) || 0),
+            total_windows: Math.max(0, Number(reconstruction.total_windows) || 0),
+            current_window_index: Math.max(0, Number(reconstruction.current_window_index) || 0),
+            current_window_start: Math.max(0, Number(reconstruction.current_window_start) || 0),
+            current_window_end: Math.max(0, Number(reconstruction.current_window_end) || 0),
+            current_window_label: String(reconstruction.current_window_label || ''),
+            earliest_timestamp: String(reconstruction.earliest_timestamp || ''),
+            latest_timestamp: String(reconstruction.latest_timestamp || ''),
+            oldest_first_ready: reconstruction.oldest_first_ready === true,
+            oldest_first_reconstruction_required: reconstruction.oldest_first_reconstruction_required === true,
+            progressive_expansion_available: reconstruction.progressive_expansion_available === true,
+            reconstruction_complete: reconstruction.reconstruction_complete === true,
+            coverage_pct: clampConfidence(reconstruction.coverage_pct),
+            confidence_degraded: reconstruction.confidence_degraded === true,
+            timeline_segments: Array.isArray(reconstruction.timeline_segments)
+                ? reconstruction.timeline_segments.slice(0, 24).map(normalizeTimelineSegment)
+                : [],
+            warnings: Array.isArray(reconstruction.warnings) ? reconstruction.warnings.slice(0, 12) : []
+        };
+    }
+
+    function normalizeTimelineSegment(segment = {}) {
+        return {
+            segment_id: String(segment.segment_id || ''),
+            page_ref: String(segment.page_ref || ''),
+            page_index: Math.max(0, Number(segment.page_index) || 0),
+            transaction_count: Math.max(0, Number(segment.transaction_count) || 0),
+            ordinal_start: Math.max(0, Number(segment.ordinal_start) || 0),
+            ordinal_end: Math.max(0, Number(segment.ordinal_end) || 0),
+            earliest_timestamp: String(segment.earliest_timestamp || ''),
+            latest_timestamp: String(segment.latest_timestamp || ''),
+            sort_order: String(segment.sort_order || 'unknown'),
+            cursor_kind: String(segment.cursor_kind || 'unknown'),
+            partial: segment.partial !== false
         };
     }
 

@@ -14,7 +14,7 @@
         metadata: page.metadata || {}
     }));
 
-    const HISTORY_CONTROLLER_VERSION = 'd130_history_controller_scan_manifest_v1';
+    const HISTORY_CONTROLLER_VERSION = 'd131_history_controller_scan_cache_v1';
     const MAX_PROGRESSIVE_LOAD_PAGES = 20;
 
     class HistoryController {
@@ -41,6 +41,8 @@
             this.gapFlags = [];
             this.warnings = [];
             this.replayWindow = null;
+            this.scanCache = null;
+            this.replayReconstruction = null;
             this.progress = null;
             this.providerConfigured = false;
             this.providerPagesLoaded = 0;
@@ -173,6 +175,8 @@
             this.gapFlags = mergeStringLists(this.gapFlags, pageRecord.metadata?.gap_flags, this.scanManifest?.gap_flags);
             this.warnings = mergeStringLists(this.warnings, pageRecord.metadata?.warnings, this.scanManifest?.warnings);
             this.replayWindow = pageRecord.metadata?.replay_window || this.replayWindow || null;
+            this.scanCache = pageRecord.metadata?.scan_cache || this.scanManifest?.cache_state || this.scanCache || null;
+            this.replayReconstruction = pageRecord.metadata?.replay_reconstruction || this.scanManifest?.replay_reconstruction || this.replayReconstruction || null;
             this.providerConfigured = pageRecord.metadata?.provider_configured === true
                 || (!options.seeded && pageRecord.status === 'ok');
             this.lastError = pageRecord.status === 'ok' ? '' : this.lastMessage || pageRecord.status;
@@ -202,6 +206,8 @@
                 gapFlags: this.gapFlags.slice(0, 16),
                 warnings: this.warnings.slice(0, 16),
                 replayWindow: this.replayWindow,
+                scanCache: this.scanCache,
+                replayReconstruction: this.replayReconstruction,
                 progress: this.progress,
                 providerConfigured: this.providerConfigured,
                 totalLoadedTransactions: this.totalLoadedTransactions,
@@ -256,7 +262,18 @@
             ...manifest,
             scan_id: String(manifest.scan_id || ''),
             gap_flags: Array.isArray(manifest.gap_flags) ? manifest.gap_flags.slice(0, 16) : [],
-            warnings: Array.isArray(manifest.warnings) ? manifest.warnings.slice(0, 16) : []
+            warnings: Array.isArray(manifest.warnings) ? manifest.warnings.slice(0, 16) : [],
+            cache_state: manifest.cache_state && typeof manifest.cache_state === 'object' && !Array.isArray(manifest.cache_state)
+                ? { ...manifest.cache_state }
+                : null,
+            replay_reconstruction: manifest.replay_reconstruction && typeof manifest.replay_reconstruction === 'object' && !Array.isArray(manifest.replay_reconstruction)
+                ? {
+                    ...manifest.replay_reconstruction,
+                    timeline_segments: Array.isArray(manifest.replay_reconstruction.timeline_segments)
+                        ? manifest.replay_reconstruction.timeline_segments.slice(0, 24)
+                        : []
+                }
+                : null
         };
     }
 

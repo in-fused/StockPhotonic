@@ -18,14 +18,22 @@ const WALLET_HISTORY_RATE_LIMIT_FETCHES = 12;
 const WALLET_LOOKUP_COOLDOWN_MS = 60 * 1000;
 const WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION = "d129_archive_history_contract_v1";
 const WALLET_HISTORY_SCAN_MANIFEST_VERSION = "d130_scan_manifest_v1";
+const WALLET_HISTORY_SCAN_CACHE_VERSION = "d131_persisted_scan_cache_v1";
+const WALLET_HISTORY_REPLAY_RECONSTRUCTION_VERSION = "d131_replay_reconstruction_v1";
 const WALLET_LOOKUP_CACHE_KEY_PREFIX = "crypto-wallet-lookup:";
 const WALLET_HISTORY_CACHE_KEY_PREFIX = "crypto-wallet-history:page:";
 const WALLET_HISTORY_RATE_KEY_PREFIX = "crypto-wallet-history:rate:";
 const WALLET_HISTORY_SCAN_KEY_PREFIX = "crypto-wallet-history:scan:";
+const WALLET_HISTORY_SCAN_PAGE_KEY_PREFIX = "crypto-wallet-history:scan-page:";
+const WALLET_HISTORY_SCAN_TRANSACTION_KEY_PREFIX = "crypto-wallet-history:scan-transaction:";
+const WALLET_HISTORY_REPLAY_CACHE_KEY_PREFIX = "crypto-wallet-history:replay-cache:";
 const MAX_WALLET_LOOKUP_CACHE_ITEMS = 100;
 const MAX_WALLET_HISTORY_CACHE_ITEMS = 160;
 const MAX_WALLET_HISTORY_RATE_ITEMS = 160;
 const MAX_WALLET_HISTORY_SCAN_ITEMS = 120;
+const MAX_WALLET_HISTORY_SCAN_PAGE_ITEMS = 220;
+const MAX_WALLET_HISTORY_SCAN_TRANSACTION_ITEMS = 1500;
+const MAX_WALLET_HISTORY_REPLAY_CACHE_ITEMS = 120;
 const MAX_TEST_EVENT_BATCH = 10;
 const MAX_HELIUS_WEBHOOK_BATCH = 10;
 const MAX_JSON_BODY_BYTES = 256 * 1024;
@@ -34,6 +42,10 @@ const HELIUS_RPC_ENDPOINT = "https://mainnet.helius-rpc.com/";
 const HELIUS_ARCHIVE_METHOD = "getTransactionsForAddress";
 const HELIUS_ARCHIVE_TRANSACTION_DETAILS = "full";
 const WALLET_HISTORY_SCAN_TTL_SECONDS = 24 * 60 * 60;
+const WALLET_HISTORY_SCAN_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
+const WALLET_HISTORY_REPLAY_CHUNK_SIZE = 80;
+const WALLET_HISTORY_REPLAY_RENDER_CAP = 320;
+const WALLET_HISTORY_REPLAY_MAX_TIMELINE_SEGMENTS = 128;
 const DEFAULT_HELIUS_HISTORY_TOKEN_ACCOUNTS = "balanceChanged";
 const SUPPORTED_HELIUS_HISTORY_TOKEN_ACCOUNTS = new Set(["none", "balanceChanged", "all"]);
 const SUPPORTED_HELIUS_HISTORY_SORT_ORDERS = new Set(["asc", "desc"]);
@@ -147,6 +159,9 @@ const walletLookupMemoryCache = new Map();
 const walletHistoryMemoryCache = new Map();
 const walletHistoryRateMemoryCache = new Map();
 const walletHistoryScanMemoryCache = new Map();
+const walletHistoryScanPageMemoryCache = new Map();
+const walletHistoryScanTransactionMemoryCache = new Map();
+const walletHistoryReplayCacheMemoryCache = new Map();
 
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
@@ -2820,9 +2835,15 @@ async function attachWalletHistoryScanManifest(page = {}, options = {}) {
   const query = options.query || {};
   const providerId = options.providerId || safeString(page.provider) || "none";
   const currentManifest = await readWalletHistoryScanManifest(options.env, query.scanId);
-  const manifest = updateWalletHistoryScanManifest(currentManifest, page, {
+  let manifest = updateWalletHistoryScanManifest(currentManifest, page, {
     query,
     providerId,
+  });
+  const scanCacheState = await persistWalletHistoryScanCache(options.env, manifest, page, query);
+  manifest = sanitizeWalletHistoryScanManifest({
+    ...manifest,
+    cache_state: mergeWalletHistoryScanCacheState(manifest.cache_state, scanCacheState),
+    replay_reconstruction: buildReplayReconstructionMetadata(manifest, page, query, scanCacheState),
   });
   await putWalletHistoryScanManifest(options.env, manifest);
 
@@ -2845,12 +2866,23 @@ async function attachWalletHistoryScanManifest(page = {}, options = {}) {
       gap_flags: manifest.gap_flags,
       warnings: manifest.warnings,
       replay_suitability: manifest.replay_suitability,
+      scan_cache: manifest.cache_state,
+      replay_reconstruction: manifest.replay_reconstruction,
       replay_window: {
         ...(page.metadata?.replay_window || {}),
         coverage_pct: estimateReplayCoveragePct(manifest),
         scan_id: manifest.scan_id,
         completeness_confidence: manifest.completeness_confidence,
         warnings: manifest.warnings.slice(0, 6),
+        chunk_size: manifest.replay_reconstruction.chunk_size,
+        render_cap_transactions: manifest.replay_reconstruction.render_cap_transactions,
+        current_window_index: manifest.replay_reconstruction.current_window_index,
+        total_windows: manifest.replay_reconstruction.total_windows,
+        window_label: manifest.replay_reconstruction.current_window_label,
+        oldest_first_ready: manifest.replay_reconstruction.oldest_first_ready,
+        oldest_first_reconstruction_required: manifest.replay_reconstruction.oldest_first_reconstruction_required,
+        progressive_expansion_available: manifest.replay_reconstruction.progressive_expansion_available,
+        timeline_segments: manifest.replay_reconstruction.timeline_segments.slice(-6),
       },
     },
   });
@@ -2949,6 +2981,8 @@ function updateWalletHistoryScanManifest(existing, page = {}, options = {}) {
       ...safeStringList(metadata.warnings),
       ...(fullHistoryLoaded ? ["Cursor exhausted without blocking gap flags; completeness is still best-effort unless provider contract guarantees are independently verified."] : []),
     ]).slice(0, 12),
+    cache_state: existing?.cache_state,
+    replay_reconstruction: existing?.replay_reconstruction,
   });
 }
 
@@ -2972,7 +3006,431 @@ function sanitizeWalletHistoryScanManifest(manifest = {}) {
     full_history_loaded: manifest.full_history_loaded === true,
     gap_flags: safeStringList(manifest.gap_flags).slice(0, 16),
     warnings: safeStringList(manifest.warnings).slice(0, 16),
+    cache_state: sanitizeWalletHistoryScanCacheState(manifest.cache_state),
+    replay_reconstruction: sanitizeReplayReconstructionMetadata(manifest.replay_reconstruction),
   };
+}
+
+function sanitizeWalletHistoryScanCacheState(cacheState = {}) {
+  const state = cacheState && typeof cacheState === "object" && !Array.isArray(cacheState) ? cacheState : {};
+  return {
+    version: safeString(state.version) || WALLET_HISTORY_SCAN_CACHE_VERSION,
+    storage: safeString(state.storage) || "unavailable",
+    persisted: state.persisted === true,
+    manifest_linked: state.manifest_linked === true,
+    normalized_page_persistence: safeString(state.normalized_page_persistence) || "not_started",
+    normalized_transaction_persistence: safeString(state.normalized_transaction_persistence) || "not_started",
+    replay_reconstruction_cached: state.replay_reconstruction_cached === true,
+    resumable: state.resumable === true,
+    normalized_pages_persisted: Math.max(0, Math.floor(Number(state.normalized_pages_persisted) || 0)),
+    normalized_transactions_persisted: Math.max(0, Math.floor(Number(state.normalized_transactions_persisted) || 0)),
+    last_page_ref: safeString(state.last_page_ref),
+    last_page_index: Math.max(0, Math.floor(Number(state.last_page_index) || 0)),
+    last_transaction_ref_count: Math.max(0, Math.floor(Number(state.last_transaction_ref_count) || 0)),
+    persisted_at: normalizeOptionalManifestTimestamp(state.persisted_at),
+    ttl_seconds: Math.max(0, Math.floor(Number(state.ttl_seconds) || WALLET_HISTORY_SCAN_CACHE_TTL_SECONDS)),
+    browser_receives_metadata_only: state.browser_receives_metadata_only !== false,
+    raw_provider_payload_exposed: false,
+    provider_secret_exposed: false,
+  };
+}
+
+function sanitizeReplayReconstructionMetadata(metadata = {}) {
+  const value = metadata && typeof metadata === "object" && !Array.isArray(metadata) ? metadata : {};
+  const timelineSegments = Array.isArray(value.timeline_segments)
+    ? value.timeline_segments.map(sanitizeReplayTimelineSegment).filter((segment) => segment.segment_id).slice(-WALLET_HISTORY_REPLAY_MAX_TIMELINE_SEGMENTS)
+    : [];
+  return {
+    version: safeString(value.version) || WALLET_HISTORY_REPLAY_RECONSTRUCTION_VERSION,
+    preview_only: value.preview_only !== false,
+    staged_history_only: value.staged_history_only !== false,
+    active_graph_unchanged: value.active_graph_unchanged !== false,
+    scan_id: safeString(value.scan_id),
+    chunk_size: Math.max(1, Math.floor(Number(value.chunk_size) || WALLET_HISTORY_REPLAY_CHUNK_SIZE)),
+    render_cap_transactions: Math.max(1, Math.floor(Number(value.render_cap_transactions) || WALLET_HISTORY_REPLAY_RENDER_CAP)),
+    total_transactions: Math.max(0, Math.floor(Number(value.total_transactions) || 0)),
+    total_windows: Math.max(0, Math.floor(Number(value.total_windows) || 0)),
+    current_window_index: Math.max(0, Math.floor(Number(value.current_window_index) || 0)),
+    current_window_start: Math.max(0, Math.floor(Number(value.current_window_start) || 0)),
+    current_window_end: Math.max(0, Math.floor(Number(value.current_window_end) || 0)),
+    current_window_label: safeString(value.current_window_label),
+    earliest_timestamp: normalizeOptionalManifestTimestamp(value.earliest_timestamp),
+    latest_timestamp: normalizeOptionalManifestTimestamp(value.latest_timestamp),
+    oldest_first_ready: value.oldest_first_ready === true,
+    oldest_first_reconstruction_required: value.oldest_first_reconstruction_required === true,
+    progressive_expansion_available: value.progressive_expansion_available === true,
+    reconstruction_complete: value.reconstruction_complete === true,
+    coverage_pct: clampConfidence(value.coverage_pct),
+    confidence_degraded: value.confidence_degraded === true,
+    timeline_segments: timelineSegments,
+    warnings: safeStringList(value.warnings).slice(0, 12),
+  };
+}
+
+function sanitizeReplayTimelineSegment(segment = {}) {
+  const value = segment && typeof segment === "object" && !Array.isArray(segment) ? segment : {};
+  return {
+    segment_id: safeString(value.segment_id),
+    page_ref: safeString(value.page_ref),
+    page_index: Math.max(0, Math.floor(Number(value.page_index) || 0)),
+    transaction_count: Math.max(0, Math.floor(Number(value.transaction_count) || 0)),
+    ordinal_start: Math.max(0, Math.floor(Number(value.ordinal_start) || 0)),
+    ordinal_end: Math.max(0, Math.floor(Number(value.ordinal_end) || 0)),
+    earliest_timestamp: normalizeOptionalManifestTimestamp(value.earliest_timestamp),
+    latest_timestamp: normalizeOptionalManifestTimestamp(value.latest_timestamp),
+    sort_order: safeString(value.sort_order) || "unknown",
+    cursor_kind: safeString(value.cursor_kind) || "unknown",
+    partial: value.partial !== false,
+  };
+}
+
+function mergeWalletHistoryScanCacheState(existing = {}, next = {}) {
+  const current = sanitizeWalletHistoryScanCacheState(existing);
+  const incoming = sanitizeWalletHistoryScanCacheState(next);
+  return sanitizeWalletHistoryScanCacheState({
+    ...current,
+    ...incoming,
+    persisted: current.persisted === true || incoming.persisted === true,
+    manifest_linked: current.manifest_linked === true || incoming.manifest_linked === true,
+    replay_reconstruction_cached: current.replay_reconstruction_cached === true || incoming.replay_reconstruction_cached === true,
+    normalized_pages_persisted: Math.max(current.normalized_pages_persisted, incoming.normalized_pages_persisted),
+    normalized_transactions_persisted: Math.max(current.normalized_transactions_persisted, incoming.normalized_transactions_persisted),
+    last_page_ref: incoming.last_page_ref || current.last_page_ref,
+    last_page_index: Math.max(current.last_page_index, incoming.last_page_index),
+    last_transaction_ref_count: incoming.last_transaction_ref_count || current.last_transaction_ref_count,
+    persisted_at: incoming.persisted_at || current.persisted_at,
+    resumable: incoming.resumable,
+  });
+}
+
+async function persistWalletHistoryScanCache(env = {}, manifest = {}, page = {}, query = {}) {
+  const safeManifest = sanitizeWalletHistoryScanManifest(manifest);
+  const events = getWalletHistoryPageEvents(page);
+  const pageIndex = Math.max(1, Number(safeManifest.pages_loaded) || (Number(query.observedPages) || 0) + 1);
+  const storage = env.CRYPTO_EVENTS_KV ? "kv" : "memory";
+  const pageRef = safeManifest.scan_id ? `scan-page:${safeManifest.scan_id}:${pageIndex}` : "";
+  const baseState = sanitizeWalletHistoryScanCacheState({
+    ...(safeManifest.cache_state || {}),
+    storage,
+    manifest_linked: Boolean(safeManifest.scan_id),
+    last_page_ref: pageRef,
+    last_page_index: pageIndex,
+    last_transaction_ref_count: events.length,
+    persisted_at: new Date().toISOString(),
+    ttl_seconds: WALLET_HISTORY_SCAN_CACHE_TTL_SECONDS,
+    resumable: Boolean(page.nextCursor || safeManifest.cursor_state?.next_cursor) && safeManifest.full_history_loaded !== true,
+    browser_receives_metadata_only: true,
+  });
+
+  if (!safeManifest.scan_id) {
+    return {
+      ...baseState,
+      persisted: false,
+      normalized_page_persistence: "missing_scan_id",
+      normalized_transaction_persistence: "missing_scan_id",
+      replay_reconstruction_cached: false,
+    };
+  }
+
+  const transactionRefs = events.map((event, index) => buildWalletHistoryTransactionRef(safeManifest.scan_id, event, index, pageIndex));
+  const pageRecord = buildWalletHistoryScanPageRecord(safeManifest, page, query, {
+    pageIndex,
+    pageRef,
+    transactionRefs,
+  });
+  const replayRecord = buildReplayCacheRecord(safeManifest, page, query, {
+    pageIndex,
+    pageRef,
+    transactionRefs,
+  });
+
+  try {
+    await putWalletHistoryScanCacheRecord(
+      env,
+      walletHistoryScanPageKey(safeManifest.scan_id, pageIndex, query.cursor),
+      pageRecord,
+      walletHistoryScanPageMemoryCache,
+      MAX_WALLET_HISTORY_SCAN_PAGE_ITEMS,
+    );
+    for (const [index, event] of events.entries()) {
+      await putWalletHistoryScanCacheRecord(
+        env,
+        walletHistoryScanTransactionKey(safeManifest.scan_id, transactionRefs[index]),
+        buildWalletHistoryScanTransactionRecord(safeManifest, event, index, {
+          pageIndex,
+          pageRef,
+          transactionRef: transactionRefs[index],
+          pageTransactionCount: events.length,
+        }),
+        walletHistoryScanTransactionMemoryCache,
+        MAX_WALLET_HISTORY_SCAN_TRANSACTION_ITEMS,
+      );
+    }
+    await putWalletHistoryScanCacheRecord(
+      env,
+      walletHistoryReplayCacheKey(safeManifest.scan_id),
+      replayRecord,
+      walletHistoryReplayCacheMemoryCache,
+      MAX_WALLET_HISTORY_REPLAY_CACHE_ITEMS,
+    );
+    return sanitizeWalletHistoryScanCacheState({
+      ...baseState,
+      persisted: true,
+      normalized_page_persistence: "stored",
+      normalized_transaction_persistence: events.length ? "stored" : "no_transactions",
+      replay_reconstruction_cached: true,
+      normalized_pages_persisted: Math.max(baseState.normalized_pages_persisted, pageIndex),
+      normalized_transactions_persisted: Math.max(baseState.normalized_transactions_persisted, safeManifest.transactions_loaded),
+    });
+  } catch {
+    return sanitizeWalletHistoryScanCacheState({
+      ...baseState,
+      persisted: false,
+      normalized_page_persistence: "best_effort_failed",
+      normalized_transaction_persistence: events.length ? "best_effort_failed" : "no_transactions",
+      replay_reconstruction_cached: false,
+    });
+  }
+}
+
+function getWalletHistoryPageEvents(page = {}) {
+  return Array.isArray(page.events)
+    ? page.events.slice(0, MAX_WALLET_HISTORY_LIMIT)
+    : Array.isArray(page.transactions)
+      ? page.transactions.slice(0, MAX_WALLET_HISTORY_LIMIT)
+      : [];
+}
+
+function buildWalletHistoryScanPageRecord(manifest = {}, page = {}, query = {}, options = {}) {
+  const events = getWalletHistoryPageEvents(page);
+  return {
+    version: WALLET_HISTORY_SCAN_CACHE_VERSION,
+    kind: "normalized_scan_page",
+    scan_id: manifest.scan_id,
+    page_ref: options.pageRef,
+    page_index: options.pageIndex,
+    wallet: manifest.wallet,
+    provider: manifest.provider,
+    cursor: sanitizeManifestCursor(page.cursor ?? query.cursor),
+    next_cursor: sanitizeManifestCursor(page.nextCursor),
+    status: safeString(page.status) || "ok",
+    persisted_at: new Date().toISOString(),
+    manifest_ref: manifest.scan_id,
+    replay_window: page.metadata?.replay_window && typeof page.metadata.replay_window === "object"
+      ? sanitizeReplayWindowForCache(page.metadata.replay_window)
+      : null,
+    transaction_refs: Array.isArray(options.transactionRefs) ? options.transactionRefs.slice(0, MAX_WALLET_HISTORY_LIMIT) : [],
+    normalized_transactions: events.map((event, index) => sanitizeScanCacheTransaction(event, index)),
+    boundary: {
+      worker_only_cache: true,
+      browser_receives_metadata_only: true,
+      raw_provider_payload_exposed: false,
+      provider_secret_exposed: false,
+    },
+  };
+}
+
+function buildWalletHistoryScanTransactionRecord(manifest = {}, event = {}, index = 0, options = {}) {
+  return {
+    version: WALLET_HISTORY_SCAN_CACHE_VERSION,
+    kind: "normalized_scan_transaction",
+    scan_id: manifest.scan_id,
+    manifest_ref: manifest.scan_id,
+    page_ref: options.pageRef,
+    page_index: options.pageIndex,
+    transaction_ref: options.transactionRef,
+    ordinal_hint: Math.max(1, (Math.max(0, Number(manifest.transactions_loaded) || 0) - Math.max(0, Number(options.pageTransactionCount) || 0)) + index + 1),
+    persisted_at: new Date().toISOString(),
+    transaction: sanitizeScanCacheTransaction(event, index),
+    boundary: {
+      worker_only_cache: true,
+      raw_provider_payload_exposed: false,
+      provider_secret_exposed: false,
+    },
+  };
+}
+
+function sanitizeReplayWindowForCache(windowMetadata = {}) {
+  const value = windowMetadata && typeof windowMetadata === "object" && !Array.isArray(windowMetadata) ? windowMetadata : {};
+  return {
+    preview_only: value.preview_only !== false,
+    staged_history_only: value.staged_history_only !== false,
+    rows_in_page: Math.max(0, Math.floor(Number(value.rows_in_page) || 0)),
+    rows_loaded_estimate: Math.max(0, Math.floor(Number(value.rows_loaded_estimate) || 0)),
+    earliest_timestamp: normalizeOptionalManifestTimestamp(value.earliest_timestamp),
+    latest_timestamp: normalizeOptionalManifestTimestamp(value.latest_timestamp),
+    coverage_pct: clampConfidence(value.coverage_pct),
+    coverage_basis: safeString(value.coverage_basis),
+    replay_suitability: safeString(value.replay_suitability),
+    completeness_confidence: clampConfidence(value.completeness_confidence),
+  };
+}
+
+function sanitizeScanCacheTransaction(event = {}, index = 0) {
+  const value = event && typeof event === "object" && !Array.isArray(event) ? event : {};
+  return {
+    id: safeString(value.id) || `history-transaction-${index + 1}`,
+    chain: safeString(value.chain) || "solana",
+    signature: safeString(value.signature || value.transaction_hash || value.hash),
+    timestamp: normalizeOptionalManifestTimestamp(value.timestamp || value.block_time || value.blockTime || value.received_at),
+    transaction_type: safeString(value.transaction_type || value.type) || "unknown",
+    source: safeString(value.source),
+    wallets: safeObjectList(value.wallets).slice(0, 64).map((wallet) => ({
+      address: safeString(wallet.address || wallet.wallet_address),
+      role: safeString(wallet.role) || "unknown",
+    })),
+    tokens: safeObjectList(value.tokens).slice(0, 64).map((token) => ({
+      symbol: safeString(token.symbol || token.token_symbol),
+      mint: safeString(token.mint || token.token_mint || token.address),
+      decimals: Number.isFinite(Number(token.decimals)) ? Number(token.decimals) : null,
+    })),
+    transfers: safeObjectList(value.transfers).slice(0, 96).map((transfer) => ({
+      token_symbol: safeString(transfer.token_symbol || transfer.symbol),
+      token_mint: safeString(transfer.token_mint || transfer.mint),
+      amount: safeString(transfer.amount),
+      from: safeString(transfer.from || transfer.source_wallet),
+      to: safeString(transfer.to || transfer.destination_wallet),
+    })),
+  };
+}
+
+function buildWalletHistoryTransactionRef(scanId, event = {}, index = 0, pageIndex = 0) {
+  const signature = safeString(event.signature || event.transaction_hash || event.hash);
+  const seed = [
+    scanId,
+    pageIndex,
+    signature || event.id || "transaction",
+    event.timestamp || "",
+    index,
+  ].join(":");
+  return `tx:${hashStableString(seed)}`;
+}
+
+function buildReplayCacheRecord(manifest = {}, page = {}, query = {}, options = {}) {
+  return {
+    version: WALLET_HISTORY_REPLAY_RECONSTRUCTION_VERSION,
+    kind: "replay_reconstruction_cache",
+    scan_id: manifest.scan_id,
+    manifest_ref: manifest.scan_id,
+    page_ref: options.pageRef,
+    persisted_at: new Date().toISOString(),
+    reconstruction: buildReplayReconstructionMetadata(manifest, page, query, {
+      persisted: true,
+      last_page_ref: options.pageRef,
+      last_page_index: options.pageIndex,
+      last_transaction_ref_count: Array.isArray(options.transactionRefs) ? options.transactionRefs.length : 0,
+      replay_reconstruction_cached: true,
+    }),
+    boundary: {
+      preview_only: true,
+      staged_history_only: true,
+      active_graph_unchanged: true,
+      worker_only_cache: true,
+    },
+  };
+}
+
+function buildReplayReconstructionMetadata(manifest = {}, page = {}, query = {}, cacheState = {}) {
+  const safeManifest = sanitizeWalletHistoryScanManifest(manifest);
+  const existing = sanitizeReplayReconstructionMetadata(safeManifest.replay_reconstruction);
+  const events = getWalletHistoryPageEvents(page);
+  const timestamps = events
+    .map((event) => Date.parse(event.timestamp || event.block_time || event.blockTime || ""))
+    .filter((timestamp) => Number.isFinite(timestamp));
+  const pageIndex = Math.max(1, Number(cacheState.last_page_index) || Number(safeManifest.pages_loaded) || (Number(query.observedPages) || 0) + 1);
+  const ordinalEnd = Math.max(Number(safeManifest.transactions_loaded) || 0, Number(query.observedTransactions || 0) + events.length);
+  const ordinalStart = events.length ? Math.max(1, ordinalEnd - events.length + 1) : ordinalEnd;
+  const pageRef = safeString(cacheState.last_page_ref) || `scan-page:${safeManifest.scan_id}:${pageIndex}`;
+  const sortOrder = safeManifest.cursor_state?.sort_order || page.metadata?.sort_order || "unknown";
+  const pageSegment = sanitizeReplayTimelineSegment({
+    segment_id: `segment:${pageIndex}:${hashStableString(`${safeManifest.scan_id}:${pageRef}:${ordinalStart}:${ordinalEnd}`)}`,
+    page_ref: pageRef,
+    page_index: pageIndex,
+    transaction_count: events.length,
+    ordinal_start: ordinalStart,
+    ordinal_end: ordinalEnd,
+    earliest_timestamp: formatOptionalIsoTimestamp(timestamps.length ? Math.min(...timestamps) : null),
+    latest_timestamp: formatOptionalIsoTimestamp(timestamps.length ? Math.max(...timestamps) : null),
+    sort_order: sortOrder,
+    cursor_kind: safeManifest.cursor_state?.cursor_kind || "unknown",
+    partial: safeManifest.full_history_loaded !== true,
+  });
+  const timelineSegments = mergeReplayTimelineSegments(existing.timeline_segments, pageSegment);
+  const totalTransactions = Math.max(0, Number(safeManifest.transactions_loaded) || ordinalEnd);
+  const totalWindows = totalTransactions ? Math.ceil(totalTransactions / WALLET_HISTORY_REPLAY_CHUNK_SIZE) : 0;
+  const currentWindowIndex = totalTransactions ? Math.max(1, Math.ceil(Math.max(1, ordinalEnd) / WALLET_HISTORY_REPLAY_CHUNK_SIZE)) : 0;
+  const currentWindowStart = currentWindowIndex ? ((currentWindowIndex - 1) * WALLET_HISTORY_REPLAY_CHUNK_SIZE) + 1 : 0;
+  const currentWindowEnd = currentWindowIndex ? Math.min(totalTransactions, currentWindowIndex * WALLET_HISTORY_REPLAY_CHUNK_SIZE) : 0;
+  const oldestFirstReady = safeManifest.full_history_loaded === true || sortOrder === "asc";
+  const warnings = dedupeStrings([
+    ...existing.warnings,
+    ...safeManifest.warnings,
+    safeManifest.full_history_loaded === true ? "" : "Replay reconstruction is partial until pagination exhausts without blocking gaps.",
+    sortOrder === "desc" ? "Provider pages are newest-first; oldest-first replay requires reconstruction from cached normalized windows." : "",
+  ]).slice(0, 12);
+
+  return sanitizeReplayReconstructionMetadata({
+    ...existing,
+    scan_id: safeManifest.scan_id,
+    total_transactions: totalTransactions,
+    total_windows: totalWindows,
+    current_window_index: currentWindowIndex,
+    current_window_start: currentWindowStart,
+    current_window_end: currentWindowEnd,
+    current_window_label: currentWindowIndex
+      ? `Window ${currentWindowIndex}/${totalWindows || currentWindowIndex} (${currentWindowStart}-${currentWindowEnd})`
+      : "No replay window",
+    earliest_timestamp: safeManifest.earliest_timestamp,
+    latest_timestamp: safeManifest.latest_timestamp,
+    oldest_first_ready: oldestFirstReady,
+    oldest_first_reconstruction_required: sortOrder !== "asc",
+    progressive_expansion_available: Boolean(page.nextCursor || safeManifest.cursor_state?.next_cursor),
+    reconstruction_complete: safeManifest.full_history_loaded === true,
+    coverage_pct: estimateReplayCoveragePct(safeManifest),
+    confidence_degraded: safeManifest.provider_limit_reached || safeManifest.rate_limited || safeManifest.gap_flags.length > 0 || safeManifest.full_history_loaded !== true,
+    timeline_segments: timelineSegments,
+    warnings,
+  });
+}
+
+function mergeReplayTimelineSegments(existingSegments = [], nextSegment = {}) {
+  const byId = new Map();
+  (Array.isArray(existingSegments) ? existingSegments : []).forEach((segment) => {
+    const safeSegment = sanitizeReplayTimelineSegment(segment);
+    if (safeSegment.segment_id) byId.set(safeSegment.segment_id, safeSegment);
+  });
+  const safeNext = sanitizeReplayTimelineSegment(nextSegment);
+  if (safeNext.segment_id && (safeNext.transaction_count || safeNext.page_index)) {
+    byId.set(safeNext.segment_id, safeNext);
+  }
+  return [...byId.values()]
+    .sort((a, b) => a.page_index - b.page_index || a.ordinal_start - b.ordinal_start)
+    .slice(-WALLET_HISTORY_REPLAY_MAX_TIMELINE_SEGMENTS);
+}
+
+async function putWalletHistoryScanCacheRecord(env = {}, key, record, memoryCache, maxItems) {
+  if (!key || !record || typeof record !== "object" || Array.isArray(record)) return;
+  if (env.CRYPTO_EVENTS_KV) {
+    await env.CRYPTO_EVENTS_KV.put(key, JSON.stringify(record), {
+      expirationTtl: WALLET_HISTORY_SCAN_CACHE_TTL_SECONDS,
+    });
+    return;
+  }
+  memoryCache.set(key, record);
+  trimMap(memoryCache, maxItems);
+}
+
+function walletHistoryScanPageKey(scanId, pageIndex, cursor) {
+  const cursorPart = sanitizeManifestCursor(cursor) || "initial";
+  return `${WALLET_HISTORY_SCAN_PAGE_KEY_PREFIX}${safeString(scanId)}:${Math.max(1, Number(pageIndex) || 1)}:${cursorPart}`;
+}
+
+function walletHistoryScanTransactionKey(scanId, transactionRef) {
+  return `${WALLET_HISTORY_SCAN_TRANSACTION_KEY_PREFIX}${safeString(scanId)}:${safeString(transactionRef)}`;
+}
+
+function walletHistoryReplayCacheKey(scanId) {
+  return `${WALLET_HISTORY_REPLAY_CACHE_KEY_PREFIX}${safeString(scanId)}`;
 }
 
 function sanitizeCursorState(cursorState = {}) {

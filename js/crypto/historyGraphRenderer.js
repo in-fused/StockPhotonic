@@ -367,6 +367,8 @@
             renderedTransfers: capped.renderedTransactionCount || (Array.isArray(graph.flowEdges) ? graph.flowEdges.length : 0),
             sourceCounts: details.sourceCounts || {},
             limits: details.limits || DEFAULT_LIMITS,
+            replayWindow: graph.metadata?.replay_window || null,
+            replayReconstruction: graph.metadata?.replay_reconstruction || null,
             capped: Boolean(capped.warnings?.length || graph.rendererCapped),
             warnings: [
                 ...(details.warning ? [details.warning] : []),

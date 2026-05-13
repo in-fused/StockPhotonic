@@ -231,6 +231,31 @@ Replay remains preview-only. The browser builds capped preview datasets from sta
 
 Rendering remains capped by the frontend preview limits, and the replay animator uses capped graph windows. Large archive scans must continue through progressive pages and manifest-backed windows rather than one massive browser graph render.
 
+## D131 Persisted Scan Cache
+
+D131 adds a Worker-only normalized scan-cache foundation linked to each scan manifest. The Worker stores only reduced, browser-safe records:
+
+- normalized scan pages with manifest refs, cursor state, transaction refs, sanitized replay window metadata, and normalized transactions.
+- normalized transaction records keyed by scan id and stable transaction ref.
+- replay reconstruction cache records with chunk/window metadata and bounded timeline segments.
+
+The Worker uses `CRYPTO_EVENTS_KV` when available and falls back to bounded in-memory maps for local/dev runs. Scan-cache records use a 7 day TTL. The browser receives metadata only: persistence status, storage mode, page/transaction counts, resumability, last page ref, and replay reconstruction cache presence. It never receives provider URLs, API keys, bearer tokens, private RPC values, request headers, raw provider payloads, or secret-shaped fields.
+
+The cache is resumable metadata for progressive scans. It does not make a scan complete by itself and does not authorize any browser-side provider call.
+
+## D131 Replay Reconstruction Windows
+
+Replay reconstruction metadata prepares oldest-first archive replay without rendering unlimited history in one pass. The metadata includes chunk size, render cap, current window index, total windows, window boundaries, timeline segments, coverage percentage, and confidence degradation flags.
+
+Default D131 caps:
+
+- replay chunk size: 80 transactions.
+- Worker replay render cap metadata: 320 transactions.
+- Worker timeline segment retention: 128 segments.
+- frontend preview graph cap: 320 transactions, 240 nodes, and 360 edges.
+
+Newest-first provider pages are marked with `oldest_first_reconstruction_required` until cached windows can be replayed oldest-first. Partial scans, provider limits, rate limits, cursor stalls, schema or ordering gaps, missing timestamps, and ambiguous exhaustion degrade confidence. Replay output remains preview-only, staged-history-only, and graph-neutral.
+
 ## Controlled Watchlist
 
 The Helius route is intentionally limited to 1 to 3 wallets. The source contains a static placeholder watchlist, and deployments can set `CRYPTO_HELIUS_ALLOWED_WALLETS` to a comma-separated list of up to three controlled wallet addresses. Events with no wallet match are rejected and not stored.

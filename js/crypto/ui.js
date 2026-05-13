@@ -2966,6 +2966,7 @@
         const replayState = getHistoryReplayStateLabel(status, hasDataset, datasetStale);
         const stateClasses = getHistoryReplayStateClasses(status, hasDataset, datasetStale);
         const targetCanvasCopy = 'large Replay Workspace canvas';
+        const jumpChips = buildHistoryReplayJumpChips(summary, status, totalSteps);
         return `
             <div class="mt-3 rounded-lg border border-fuchsia-200/16 bg-fuchsia-300/10 p-3">
                 <div class="flex flex-col gap-3">
@@ -3000,6 +3001,20 @@
                         <div id="crypto-history-replay-progress-bar" class="h-full bg-fuchsia-300/78" style="width:${escapeAttr(progressPct)}%"></div>
                     </div>
                 </div>
+                <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button id="crypto-history-replay-jump-start" type="button" ${stepDisabled || currentStep <= 0 ? 'disabled' : ''} title="Jump to the start of the staged preview replay." class="min-h-9 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-1.5 text-white/68 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Start</button>
+                    <button id="crypto-history-replay-prev-event" type="button" ${stepDisabled || currentStep <= 0 ? 'disabled' : ''} title="Step to the previous staged preview event." class="min-h-9 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-1.5 text-white/68 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                    <button id="crypto-history-replay-next-event" type="button" ${stepDisabled || currentStep >= totalSteps ? 'disabled' : ''} title="Step to the next staged preview event." class="min-h-9 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-1.5 text-white/68 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                    <button id="crypto-history-replay-jump-end" type="button" ${stepDisabled || currentStep >= totalSteps ? 'disabled' : ''} title="Jump to the latest staged preview event." class="min-h-9 rounded-xl border border-white/10 bg-white/[0.035] px-3 py-1.5 text-white/68 hover:border-fuchsia-100/30 disabled:opacity-50 disabled:cursor-not-allowed">End</button>
+                </div>
+                <div class="mt-3 crypto-history-replay-jump-strip" aria-label="Replay bookmarks">
+                    ${jumpChips.map(chip => `
+                        <button type="button" data-crypto-history-replay-jump-step="${escapeAttr(chip.step || 0)}" ${chip.disabled || stepDisabled ? 'disabled' : ''} title="${escapeAttr(chip.title || chip.label)}">
+                            <span>${escapeHtml(chip.label)}</span>
+                            <strong>${escapeHtml(chip.step ? `#${chip.step}` : '-')}</strong>
+                        </button>
+                    `).join('') || '<div class="text-white/38">Bookmarks appear after replay events are available.</div>'}
+                </div>
                 <div class="mt-3 flex flex-wrap items-center gap-1.5">
                     <span class="text-white/38 mr-1">Speed</span>
                     ${Object.entries(HISTORY_REPLAY_SPEEDS).map(([value, label]) => `
@@ -3027,6 +3042,9 @@
             destinationWallet: status.destinationWallet || '',
             currentEvent: status.currentEvent || null,
             eventSummaries: Array.isArray(status.eventSummaries) ? status.eventSummaries : [],
+            activePath: status.activePath || null,
+            completedStepCount: Number(status.completedStepCount) || 0,
+            futureStepCount: Number(status.futureStepCount) || 0,
             speed: status.speed || state.historyPreview.replaySpeed || 'standard',
             speedLabel: status.speedLabel || HISTORY_REPLAY_SPEEDS[status.speed || state.historyPreview.replaySpeed] || 'Standard',
             done: Boolean(status.done),
@@ -3153,6 +3171,8 @@
     }
 
     function getHistoryReplayAmountTokenLabel(status = getHistoryReplayStatus()) {
+        const helper = namespace.replayWorkspace?.formatAmountToken;
+        if (helper) return helper(status);
         const amount = String(status.amountDisplay || '').trim()
             || (Number(status.amount) ? String(status.amount) : '');
         const token = String(status.token || '').trim();
@@ -3161,12 +3181,16 @@
     }
 
     function getHistoryReplayDirectionLabel(direction = '') {
+        const helper = namespace.replayWorkspace?.formatDirectionLabel;
+        if (helper) return helper(direction);
         const text = String(direction || '').trim();
         if (!text) return 'No direction';
         return text.replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
     }
 
     function getHistoryReplayRouteLabel(status = getHistoryReplayStatus()) {
+        const helper = namespace.replayWorkspace?.formatRoute;
+        if (helper) return helper(status);
         const source = status.sourceWallet ? shortLongValue(status.sourceWallet) : 'source unknown';
         const destination = status.destinationWallet ? shortLongValue(status.destinationWallet) : 'destination unknown';
         if (!status.sourceWallet && !status.destinationWallet) return 'No current transfer path';
@@ -3174,6 +3198,18 @@
     }
 
     function buildHistoryReplayJumpChips(summary = {}, status = getHistoryReplayStatus(), totalSteps = 0) {
+        const helper = namespace.replayWorkspace?.deriveBookmarks;
+        if (helper) {
+            return helper({
+                dataset: state.historyPreview.dataset,
+                events: getHistoryReplayEvents(status),
+                status,
+                summary,
+                totalSteps,
+                warnings: getWalletHistoryWarnings(),
+                windowStatus: getHistoryReplayWindowStatus(summary, status)
+            });
+        }
         const events = getHistoryReplayEvents(status);
         const chips = [];
         const addChip = (key, label, event, title) => {
@@ -3216,6 +3252,14 @@
     }
 
     function getHistoryReplayEvents(status = getHistoryReplayStatus()) {
+        const helper = namespace.replayWorkspace?.normalizeReplayEvents;
+        if (helper) {
+            return helper({
+                status,
+                dataset: state.historyPreview.dataset,
+                limits: HISTORY_PREVIEW_GRAPH_LIMITS
+            });
+        }
         const source = Array.isArray(status.eventSummaries) && status.eventSummaries.length
             ? status.eventSummaries
             : buildHistoryReplayEventsFromDataset();
@@ -5731,6 +5775,7 @@
         if (startButton) startButton.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || currentStep <= 0);
         const endButton = document.getElementById('crypto-history-replay-jump-end');
         if (endButton) endButton.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || currentStep >= totalSteps);
+        if (state.historyPreview.workspaceMode) updateReplayWorkspaceShell();
         updateInteractionDock();
     }
 
@@ -6545,8 +6590,21 @@
     function handleWindowResize() {
         applyDefaultLabelDensityForDataMode(state.dataMode);
         resizeAndRender();
+        refreshReplayWorkspaceCanvasAfterResize();
         renderMobileInvestigationDrawer();
         updateInteractionDock();
+    }
+
+    function refreshReplayWorkspaceCanvasAfterResize() {
+        if (!state.historyPreview.workspaceMode) return;
+        updateReplayWorkspaceShell();
+        window.requestAnimationFrame(() => {
+            if (state.historyPreview.replayAnimator?.render) {
+                state.historyPreview.replayAnimator.render();
+                return;
+            }
+            renderHistoryGraphPreviewCanvas(getHistoryPreviewRenderRoot());
+        });
     }
 
     function scheduleRender() {
@@ -7721,7 +7779,8 @@
         const currentStep = Math.max(0, Math.min(totalSteps, Number(status.currentStep) || 0));
         const progressPct = totalSteps ? Math.round((currentStep / totalSteps) * 100) : 0;
         const coverage = getWalletHistoryCoverage();
-        const windowStatus = getHistoryReplayWindowStatus(buildHistoryGraphPreviewSummary(), status);
+        const summary = buildHistoryGraphPreviewSummary();
+        const windowStatus = getHistoryReplayWindowStatus(summary, status);
         const graphCopy = hasDataset
             ? result
                 ? `${result.renderedNodes || 0} nodes / ${result.renderedEdges || 0} edges / ${result.renderedTransfers || 0} transfers`
@@ -7743,11 +7802,17 @@
         const newestLabel = newestSegment.latest_timestamp
             ? formatPreviewTimestamp(newestSegment.latest_timestamp)
             : 'Newest staged';
+        const events = getHistoryReplayEvents(status);
+        const bookmarks = buildHistoryReplayJumpChips(summary, status, totalSteps);
         const helper = namespace.replayWorkspace?.renderOverlay;
         if (helper) {
             return helper({
                 status,
                 hasDataset,
+                dataset: state.historyPreview.dataset,
+                summary,
+                events,
+                bookmarks,
                 stale,
                 stateInFlight: state.history.inFlight,
                 totalSteps,
@@ -7861,6 +7926,10 @@
                 },
                 step: delta => stepHistoryReplay(delta),
                 reset: () => resetHistoryReplay(),
+                jumpStart: () => seekHistoryReplayStep(0, { label: 'Replay jumped to the start of the preview canvas only.' }),
+                jumpEnd: () => seekHistoryReplayStep(getHistoryReplayTotalSteps(), { label: 'Replay jumped to the final staged preview event only.' }),
+                jumpMajor: delta => jumpHistoryReplayMajor(delta),
+                jumpBookmark: (step, key) => jumpHistoryReplayBookmark(step, key),
                 jumpWindow: delta => jumpReplayWorkspaceWindow(delta),
                 seek: value => seekHistoryReplayStep(value, {
                     label: 'Replay workspace timeline moved the preview-only canvas.',
@@ -7887,6 +7956,10 @@
         });
         root.querySelector('#crypto-replay-workspace-prev')?.addEventListener('click', () => stepHistoryReplay(-1));
         root.querySelector('#crypto-replay-workspace-next')?.addEventListener('click', () => stepHistoryReplay(1));
+        root.querySelector('#crypto-replay-workspace-jump-start')?.addEventListener('click', () => seekHistoryReplayStep(0, { label: 'Replay jumped to the start of the preview canvas only.' }));
+        root.querySelector('#crypto-replay-workspace-jump-end')?.addEventListener('click', () => seekHistoryReplayStep(getHistoryReplayTotalSteps(), { label: 'Replay jumped to the final staged preview event only.' }));
+        root.querySelector('#crypto-replay-workspace-prev-major')?.addEventListener('click', () => jumpHistoryReplayMajor(-1));
+        root.querySelector('#crypto-replay-workspace-next-major')?.addEventListener('click', () => jumpHistoryReplayMajor(1));
         root.querySelector('#crypto-replay-workspace-reset')?.addEventListener('click', () => resetHistoryReplay());
         root.querySelector('#crypto-replay-workspace-window-prev')?.addEventListener('click', () => jumpReplayWorkspaceWindow(-1));
         root.querySelector('#crypto-replay-workspace-window-next')?.addEventListener('click', () => jumpReplayWorkspaceWindow(1));
@@ -7899,7 +7972,48 @@
         root.querySelectorAll('[data-crypto-replay-workspace-speed]').forEach(button => {
             button.addEventListener('click', () => setHistoryReplaySpeed(button.dataset.cryptoReplayWorkspaceSpeed || 'standard'));
         });
+        root.querySelectorAll('[data-crypto-replay-bookmark-step]').forEach(button => {
+            button.addEventListener('click', () => {
+                jumpHistoryReplayBookmark(
+                    Number(button.dataset.cryptoReplayBookmarkStep) || 0,
+                    button.dataset.cryptoReplayBookmarkKey || ''
+                );
+            });
+        });
         root.querySelector('#crypto-replay-workspace-exit')?.addEventListener('click', () => setReplayWorkspaceMode(false));
+    }
+
+    function jumpHistoryReplayMajor(delta = 1) {
+        const status = getHistoryReplayStatus();
+        const summary = buildHistoryGraphPreviewSummary();
+        const totalSteps = getHistoryReplayTotalSteps(status);
+        const context = namespace.replayWorkspace?.buildReplayContext?.({
+            status,
+            dataset: state.historyPreview.dataset,
+            summary,
+            events: getHistoryReplayEvents(status),
+            bookmarks: buildHistoryReplayJumpChips(summary, status, totalSteps),
+            warnings: getWalletHistoryWarnings(),
+            windowStatus: getHistoryReplayWindowStatus(summary, status),
+            totalSteps
+        });
+        const targetStep = delta < 0
+            ? Number(context?.majorNavigation?.previousStep) || 0
+            : Number(context?.majorNavigation?.nextStep) || 0;
+        if (!targetStep) return null;
+        return seekHistoryReplayStep(targetStep, {
+            label: 'Replay jumped to the nearest major staged event in the preview-only workspace.'
+        });
+    }
+
+    function jumpHistoryReplayBookmark(step = 0, key = '') {
+        const targetStep = Math.max(0, Math.min(getHistoryReplayTotalSteps(), Math.round(Number(step) || 0)));
+        if (!targetStep) return null;
+        return seekHistoryReplayStep(targetStep, {
+            label: key
+                ? `Replay jumped to bookmark ${key} in the preview-only workspace.`
+                : 'Replay jumped to the selected bookmark in the preview-only workspace.'
+        });
     }
 
     function jumpReplayWorkspaceWindow(delta = 1) {

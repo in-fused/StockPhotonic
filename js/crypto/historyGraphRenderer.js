@@ -331,7 +331,7 @@
     function getCanvasSize(canvas) {
         const parent = canvas.parentElement;
         return {
-            width: Math.max(300, Math.floor(parent?.clientWidth || canvas.clientWidth || 720)),
+            width: Math.max(260, Math.floor(parent?.clientWidth || canvas.clientWidth || 720)),
             height: Math.max(240, Math.floor(parent?.clientHeight || canvas.clientHeight || 320))
         };
     }

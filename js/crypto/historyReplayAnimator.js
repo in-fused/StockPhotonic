@@ -4,7 +4,7 @@
     const graphEngine = namespace.graph;
     const layoutEngine = namespace.layout;
 
-    const HISTORY_REPLAY_ANIMATOR_VERSION = 'd115_history_replay_animator_v1';
+    const HISTORY_REPLAY_ANIMATOR_VERSION = 'd133_cinematic_history_replay_animator_v1';
     const DEFAULT_LIMITS = Object.freeze({
         maxTransactions: 180,
         maxNodes: 160,
@@ -157,6 +157,7 @@
         function getStatus() {
             const current = state.stepIndex > 0 ? state.steps[Math.max(0, state.stepIndex - 1)] || {} : {};
             const speed = SPEEDS[state.speed] || SPEEDS.standard;
+            const activePath = buildActivePathMetadata(current, state.graph, state.stepIndex, state.steps.length);
             return {
                 version: HISTORY_REPLAY_ANIMATOR_VERSION,
                 previewOnly: true,
@@ -174,7 +175,17 @@
                 sourceWallet: current.sourceWallet || '',
                 destinationWallet: current.destinationWallet || '',
                 currentEvent: summarizeStep(current, state.stepIndex),
-                eventSummaries: state.steps.map((step, index) => summarizeStep(step, index + 1)),
+                eventSummaries: state.steps.map((step, index) => ({
+                    ...summarizeStep(step, index + 1),
+                    replayState: index + 1 < state.stepIndex
+                        ? 'completed'
+                        : index + 1 === state.stepIndex
+                            ? 'current'
+                            : 'future'
+                })),
+                activePath,
+                completedStepCount: activePath.completedStepCount,
+                futureStepCount: activePath.futureStepCount,
                 speed: state.speed,
                 speedLabel: speed.label,
                 stepMs: speed.stepMs,
@@ -409,34 +420,26 @@
             return;
         }
 
-        const bounds = getGraphBounds(graph.nodes);
-        const scale = Math.min(
-            1.08,
-            (size.width * 0.8) / Math.max(1, bounds.width),
-            (size.height * 0.73) / Math.max(1, bounds.height)
-        );
-        const offset = {
-            x: size.width * 0.5 - (bounds.minX + bounds.width / 2) * scale,
-            y: size.height * 0.52 - (bounds.minY + bounds.height / 2) * scale
-        };
-        const revealed = getRevealedSets(options.steps, options.stepIndex);
         const current = options.steps[Math.max(0, options.stepIndex - 1)] || null;
+        const viewport = getReplayViewport(graph, current, size, options);
+        const visibility = getReplayVisibilitySets(options.steps, options.stepIndex);
         let rootVisible = false;
         graph.nodes.forEach(node => {
             if (!isTrackedWallet(node, graph)) return;
-            revealed.nodeIds.add(node.id);
+            visibility.completedNodeIds.add(node.id);
             rootVisible = true;
         });
         if (!rootVisible && options.stepIndex === 0 && options.steps[0]?.edge?.source) {
-            revealed.nodeIds.add(options.steps[0].edge.source);
+            visibility.completedNodeIds.add(options.steps[0].edge.source);
         }
 
         ctx.save();
-        ctx.translate(offset.x, offset.y);
-        ctx.scale(scale, scale);
+        ctx.translate(viewport.offset.x, viewport.offset.y);
+        ctx.scale(viewport.scale, viewport.scale);
 
-        drawRevealedEdges(ctx, graph, revealed, current, options);
-        drawRevealedNodes(ctx, graph, revealed, current, options);
+        drawReplayFocusHalo(ctx, graph, current, options);
+        drawRevealedEdges(ctx, graph, visibility, current, options);
+        drawRevealedNodes(ctx, graph, visibility, current, options);
 
         ctx.restore();
         drawReplayProgress(ctx, size.width, size.height, options.stepIndex, options.steps.length, options.playing);
@@ -444,51 +447,82 @@
         drawWatermark(ctx, size.width, size.height);
     }
 
-    function drawRevealedEdges(ctx, graph, revealed, current, options) {
+    function drawRevealedEdges(ctx, graph, visibility, current, options) {
         const nodeById = graph.nodeById || new Map();
         (graph.exposureEdges || []).forEach(edge => {
-            if (!revealed.edgeIds.has(edge.id)) return;
+            if (!visibility.completedEdgeIds.has(edge.id) && !visibility.currentEdgeIds.has(edge.id)) return;
+            const active = visibility.currentEdgeIds.has(edge.id);
             drawReplayEdge(ctx, edge, nodeById, {
-                alpha: 0.2,
+                alpha: active ? 0.34 : 0.16,
                 progress: 1,
-                color: 'rgba(250, 204, 21, 0.36)',
-                dashed: true
+                color: active ? 'rgba(253, 224, 71, 0.5)' : 'rgba(250, 204, 21, 0.28)',
+                dashed: true,
+                state: active ? 'current' : 'completed'
             });
         });
 
         let particleCount = 0;
         (graph.flowEdges || []).forEach((edge, index) => {
-            if (!revealed.edgeIds.has(edge.id)) return;
-            const isCurrent = current?.edgeId === edge.id;
+            const isCurrent = current?.edgeId === edge.id || visibility.currentEdgeIds.has(edge.id);
+            const isCompleted = visibility.completedEdgeIds.has(edge.id);
+            const isFuture = visibility.futureEdgeIds.has(edge.id) && !isCurrent && !isCompleted;
+            if (!isCurrent && !isCompleted && !isFuture) return;
             const progress = isCurrent ? options.progress : 1;
             drawReplayEdge(ctx, edge, nodeById, {
-                alpha: isCurrent ? 1 : 0.52,
+                alpha: isCurrent ? 1 : isCompleted ? 0.34 : 0.055,
                 progress,
-                color: isCurrent ? 'rgba(244, 114, 182, 0.96)' : 'rgba(125, 211, 252, 0.7)',
+                color: isCurrent
+                    ? 'rgba(244, 114, 182, 0.96)'
+                    : isCompleted
+                        ? 'rgba(125, 211, 252, 0.58)'
+                        : 'rgba(148, 163, 184, 0.32)',
                 dashed: false,
-                active: isCurrent
+                active: isCurrent,
+                trail: isCompleted,
+                future: isFuture,
+                state: isCurrent ? 'current' : isCompleted ? 'completed' : 'future'
             });
-            if (options.playing && particleCount < options.limits.maxParticles && progress > 0.08) {
+            if (!isFuture && options.playing && particleCount < options.limits.maxParticles && progress > 0.08) {
                 drawFlowParticle(ctx, edge, nodeById, options.now, index, isCurrent ? progress : 1);
                 particleCount += 1;
             }
         });
     }
 
-    function drawRevealedNodes(ctx, graph, revealed, current, options) {
+    function drawRevealedNodes(ctx, graph, visibility, current, options) {
         const currentNodeIds = new Set(current?.nodeIds || []);
-        graph.nodes
+        const orderedNodes = graph.nodes
             .slice()
-            .sort((a, b) => previewNodeOrder(a) - previewNodeOrder(b))
-            .forEach(node => {
-                if (!revealed.nodeIds.has(node.id)) return;
-                drawReplayNode(ctx, node, graph, {
-                    active: currentNodeIds.has(node.id),
-                    root: isTrackedWallet(node, graph),
-                    playing: options.playing,
-                    now: options.now
-                });
+            .sort((a, b) => previewNodeOrder(a) - previewNodeOrder(b));
+
+        orderedNodes.forEach(node => {
+            const root = isTrackedWallet(node, graph);
+            const active = currentNodeIds.has(node.id);
+            const completed = visibility.completedNodeIds.has(node.id);
+            const future = visibility.futureNodeIds.has(node.id) && !active && !completed && !root;
+            if (!future) return;
+            drawReplayNode(ctx, node, graph, {
+                active: false,
+                root: false,
+                playing: options.playing,
+                now: options.now,
+                revealState: 'future'
             });
+        });
+
+        orderedNodes.forEach(node => {
+            const root = isTrackedWallet(node, graph);
+            const active = currentNodeIds.has(node.id);
+            const completed = visibility.completedNodeIds.has(node.id) || root;
+            if (!active && !completed) return;
+            drawReplayNode(ctx, node, graph, {
+                active,
+                root,
+                playing: options.playing,
+                now: options.now,
+                revealState: active ? 'current' : 'completed'
+            });
+        });
     }
 
     function drawReplayEdge(ctx, edge = {}, nodeById = new Map(), options = {}) {
@@ -496,15 +530,17 @@
         const target = nodeById.get(edge.target);
         if (!source || !target) return;
         const curve = getCurve(source, target, edge.type === core.EDGE_TYPES.FLOW ? 18 : -12);
-        const points = getCurvePoints(curve, clamp(options.progress, 0, 1), 26);
+        const progress = clamp(options.progress, 0, 1);
+        const points = getCurvePoints(curve, progress, 26);
         if (points.length < 2) return;
+        const baseWidth = edge.type === core.EDGE_TYPES.FLOW
+            ? Math.max(1.05, Math.min(3.2, edge.width || 1.4))
+            : 0.85;
 
         ctx.save();
         ctx.globalAlpha = options.alpha;
         ctx.strokeStyle = options.color;
-        ctx.lineWidth = edge.type === core.EDGE_TYPES.FLOW
-            ? Math.max(1.05, Math.min(3.2, edge.width || 1.4))
-            : 0.85;
+        ctx.lineWidth = options.future ? Math.max(0.45, baseWidth * 0.58) : options.trail ? Math.max(0.75, baseWidth * 0.82) : baseWidth;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         if (options.dashed) ctx.setLineDash([5, 8]);
@@ -529,10 +565,29 @@
         ctx.moveTo(points[0].x, points[0].y);
         points.slice(1).forEach(point => ctx.lineTo(point.x, point.y));
         ctx.stroke();
+        if (options.trail && edge.type === core.EDGE_TYPES.FLOW) {
+            drawMyceliumTrail(ctx, points, options);
+        }
         ctx.setLineDash([]);
-        if (edge.type === core.EDGE_TYPES.FLOW && options.progress >= 0.86) {
+        if (!options.future && edge.type === core.EDGE_TYPES.FLOW && progress >= 0.86) {
             drawReplayArrow(ctx, points[Math.max(0, points.length - 3)], points[points.length - 1], options.active);
         }
+        ctx.restore();
+    }
+
+    function drawMyceliumTrail(ctx, points = [], options = {}) {
+        if (points.length < 4) return;
+        ctx.save();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = Math.min(0.38, Math.max(0.12, (options.alpha || 0.2) * 0.92));
+        ctx.fillStyle = 'rgba(165, 243, 252, 0.78)';
+        points.forEach((point, index) => {
+            if (index % 5 !== 0) return;
+            const radius = index % 10 === 0 ? 1.65 : 1.05;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        });
         ctx.restore();
     }
 
@@ -569,14 +624,15 @@
         const token = node.type === core.NODE_TYPES.TOKEN;
         const root = options.root;
         const active = options.active;
+        const future = options.revealState === 'future';
         const radius = Math.max(7, Math.min(23, (node.radius || 14) * 0.74)) + (root ? 5 : active ? 4 : 0);
-        const pulse = options.playing ? 1 + Math.sin((options.now || 0) / 320) * 0.08 : 1;
-        const color = root ? '#f0f9ff' : active ? '#f0abfc' : token ? '#facc15' : '#67e8f9';
+        const pulse = !future && options.playing ? 1 + Math.sin((options.now || 0) / 320) * 0.08 : 1;
+        const color = future ? '#94a3b8' : root ? '#f0f9ff' : active ? '#f0abfc' : token ? '#facc15' : '#67e8f9';
 
         ctx.save();
-        ctx.globalAlpha = root ? 0.98 : token ? 0.78 : 0.84;
+        ctx.globalAlpha = future ? 0.16 : root ? 0.98 : token ? 0.78 : 0.84;
         ctx.shadowColor = color;
-        ctx.shadowBlur = root ? 28 : active ? 30 : 8;
+        ctx.shadowBlur = future ? 0 : root ? 28 : active ? 30 : 8;
         if (active) {
             ctx.strokeStyle = 'rgba(251, 207, 232, 0.44)';
             ctx.lineWidth = 2;
@@ -600,7 +656,7 @@
         ctx.beginPath();
         ctx.arc(node.x, node.y, Math.max(2.8, radius * 0.28), 0, Math.PI * 2);
         ctx.fill();
-        if (root || token || active || (graph.walletNodes || []).length <= 16) {
+        if (!future && (root || token || active || (graph.walletNodes || []).length <= 16)) {
             ctx.globalAlpha = root ? 0.93 : active ? 0.78 : 0.56;
             ctx.fillStyle = root ? '#f8fafc' : 'rgba(226, 232, 240, 0.76)';
             ctx.font = root ? '700 10px Inter, sans-serif' : '500 9px Inter, sans-serif';
@@ -717,15 +773,136 @@
         ctx.fillText(text, width / 2, height / 2);
     }
 
-    function getRevealedSets(steps = [], stepIndex = 0) {
-        const nodeIds = new Set();
-        const edgeIds = new Set();
-        steps.slice(0, stepIndex).forEach(step => {
-            step.nodeIds.forEach(id => nodeIds.add(id));
-            edgeIds.add(step.edgeId);
-            step.exposureEdgeIds.forEach(id => edgeIds.add(id));
+    function drawReplayFocusHalo(ctx, graph = {}, current = null, options = {}) {
+        if (!current?.edge) return;
+        const nodeById = graph.nodeById || new Map();
+        const source = nodeById.get(current.edge.source);
+        const target = nodeById.get(current.edge.target);
+        if (!source || !target) return;
+        const progress = clamp(options.progress, 0, 1);
+        const curve = getCurve(source, target, 18);
+        const focus = pointOnCurve(curve, Math.max(0.15, Math.min(0.85, progress || 0.5)));
+        const pulse = options.playing ? 1 + Math.sin((options.now || 0) / 260) * 0.08 : 1;
+
+        ctx.save();
+        ctx.globalAlpha = 0.28;
+        ctx.strokeStyle = 'rgba(244, 114, 182, 0.28)';
+        ctx.lineWidth = 18;
+        ctx.shadowColor = 'rgba(244, 114, 182, 0.7)';
+        ctx.shadowBlur = 34;
+        ctx.beginPath();
+        ctx.moveTo(source.x, source.y);
+        ctx.quadraticCurveTo(curve.control.x, curve.control.y, target.x, target.y);
+        ctx.stroke();
+
+        ctx.globalAlpha = 0.24;
+        ctx.fillStyle = 'rgba(34, 211, 238, 0.2)';
+        ctx.beginPath();
+        ctx.arc(focus.x, focus.y, 46 * pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function getReplayViewport(graph = {}, current = null, size = {}, options = {}) {
+        const bounds = getGraphBounds(graph.nodes || []);
+        const fullScale = Math.min(
+            1.08,
+            (size.width * 0.8) / Math.max(1, bounds.width),
+            (size.height * 0.73) / Math.max(1, bounds.height)
+        );
+        const fullOffset = {
+            x: size.width * 0.5 - (bounds.minX + bounds.width / 2) * fullScale,
+            y: size.height * 0.52 - (bounds.minY + bounds.height / 2) * fullScale
+        };
+
+        if (!current?.edge || Number(options.stepIndex) <= 0) {
+            return { scale: fullScale, offset: fullOffset, mode: 'full' };
+        }
+
+        const activeBounds = getActivePathBounds(current, graph.nodeById || new Map(), bounds);
+        const focusScale = Math.min(
+            1.42,
+            Math.max(
+                fullScale,
+                (size.width * 0.58) / Math.max(1, activeBounds.width + 140),
+                (size.height * 0.54) / Math.max(1, activeBounds.height + 120)
+            )
+        );
+        const focusPoint = {
+            x: size.width * (size.width < 700 ? 0.5 : 0.58),
+            y: size.height * (size.height < 440 ? 0.5 : 0.52)
+        };
+        const focusOffset = {
+            x: focusPoint.x - (activeBounds.minX + activeBounds.width / 2) * focusScale,
+            y: focusPoint.y - (activeBounds.minY + activeBounds.height / 2) * focusScale
+        };
+        const blend = options.playing ? 0.76 : 0.62;
+        const scale = lerp(fullScale, focusScale, blend);
+
+        return {
+            scale,
+            offset: {
+                x: lerp(fullOffset.x, focusOffset.x, blend),
+                y: lerp(fullOffset.y, focusOffset.y, blend)
+            },
+            mode: 'active-path'
+        };
+    }
+
+    function getActivePathBounds(step = {}, nodeById = new Map(), fallback = null) {
+        const nodes = [
+            nodeById.get(step.edge?.source),
+            nodeById.get(step.edge?.target),
+            ...(Array.isArray(step.nodeIds) ? step.nodeIds.map(id => nodeById.get(id)) : [])
+        ].filter(Boolean);
+        if (!nodes.length) return fallback || { minX: 0, minY: 0, width: 1, height: 1 };
+        const bounds = getGraphBounds(nodes);
+        const margin = 54;
+        return {
+            minX: bounds.minX - margin,
+            maxX: bounds.maxX + margin,
+            minY: bounds.minY - margin,
+            maxY: bounds.maxY + margin,
+            width: bounds.width + margin * 2,
+            height: bounds.height + margin * 2
+        };
+    }
+
+    function getReplayVisibilitySets(steps = [], stepIndex = 0) {
+        const completedNodeIds = new Set();
+        const completedEdgeIds = new Set();
+        const currentNodeIds = new Set();
+        const currentEdgeIds = new Set();
+        const futureNodeIds = new Set();
+        const futureEdgeIds = new Set();
+        const currentIndex = Math.max(0, Math.min(steps.length, Number(stepIndex) || 0)) - 1;
+
+        steps.forEach((step, index) => {
+            const nodeSet = index < currentIndex
+                ? completedNodeIds
+                : index === currentIndex
+                    ? currentNodeIds
+                    : futureNodeIds;
+            const edgeSet = index < currentIndex
+                ? completedEdgeIds
+                : index === currentIndex
+                    ? currentEdgeIds
+                    : futureEdgeIds;
+            (step.nodeIds || []).forEach(id => nodeSet.add(id));
+            if (step.edgeId) edgeSet.add(step.edgeId);
+            if (index <= currentIndex) {
+                (step.exposureEdgeIds || []).forEach(id => edgeSet.add(id));
+            }
         });
-        return { nodeIds, edgeIds };
+
+        return {
+            completedNodeIds,
+            completedEdgeIds,
+            currentNodeIds,
+            currentEdgeIds,
+            futureNodeIds,
+            futureEdgeIds
+        };
     }
 
     function capPreviewDataset(dataset = {}, limits = DEFAULT_LIMITS) {
@@ -839,7 +1016,7 @@
     function getCanvasSize(canvas) {
         const parent = canvas?.parentElement;
         return {
-            width: Math.max(300, Math.floor(parent?.clientWidth || canvas?.clientWidth || 720)),
+            width: Math.max(260, Math.floor(parent?.clientWidth || canvas?.clientWidth || 720)),
             height: Math.max(240, Math.floor(parent?.clientHeight || canvas?.clientHeight || 320))
         };
     }
@@ -922,6 +1099,32 @@
         if (normalized) set.add(normalized);
     }
 
+    function buildActivePathMetadata(step = {}, graph = {}, stepIndex = 0, totalSteps = 0) {
+        const edge = step.edge || {};
+        const nodeIds = [...new Set([
+            edge.source,
+            edge.target,
+            ...(Array.isArray(step.nodeIds) ? step.nodeIds : [])
+        ].filter(Boolean))];
+        return {
+            edgeId: step.edgeId || edge.id || '',
+            sourceNodeId: edge.source || '',
+            destinationNodeId: edge.target || '',
+            nodeIds,
+            sourceWallet: step.sourceWallet || edge.source_wallet || '',
+            destinationWallet: step.destinationWallet || edge.destination_wallet || '',
+            signature: step.signature || edge.transaction_hash || '',
+            token: step.token || edge.symbol || edge.token_mint || '',
+            step: Math.max(0, Number(stepIndex) || 0),
+            totalSteps: Math.max(0, Number(totalSteps) || 0),
+            completedStepCount: Math.max(0, Math.min(Math.max(0, Number(totalSteps) || 0), (Number(stepIndex) || 0) > 0 ? (Number(stepIndex) || 0) - 1 : 0)),
+            futureStepCount: Math.max(0, (Number(totalSteps) || 0) - (Number(stepIndex) || 0)),
+            previewOnly: true,
+            notMerged: true,
+            cameraMode: step?.edge ? 'active-path' : 'full-replay'
+        };
+    }
+
     function summarizeStep(step = {}, stepNumber = 0) {
         return {
             step: Math.max(0, Number(stepNumber) || 0),
@@ -942,6 +1145,10 @@
         const text = String(value || '');
         if (text.length <= 14) return text || 'Wallet';
         return `${text.slice(0, 6)}...${text.slice(-4)}`;
+    }
+
+    function lerp(start, end, amount) {
+        return start + (end - start) * clamp(amount, 0, 1);
     }
 
     function roundedRect(ctx, x, y, width, height, radius) {

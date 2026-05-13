@@ -1517,7 +1517,7 @@
                         <span title="Solana wallet address to investigate through the Worker wallet-activity endpoint.">Wallet Address</span>
                         <input id="crypto-wallet-lookup-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${escapeAttr(value)}" placeholder="Solana wallet address" class="w-full min-h-10 bg-slate-950/80 border border-cyan-200/15 rounded-xl px-3 py-2 text-cyan-50/82 outline-none placeholder:text-white/28">
                     </label>
-                    <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+                    <div class="crypto-wallet-lookup-action-grid grid gap-2">
                         <button id="crypto-wallet-lookup-submit" type="submit" ${state.walletLookup.inFlight ? 'disabled' : ''} title="Load recent sanitized wallet activity from the Worker and replace the active graph." class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Activity</button>
                         <button id="crypto-wallet-lookup-refresh" type="button" ${state.walletLookup.inFlight || !(state.walletLookup.lastWallet || value) ? 'disabled' : ''} title="Run the last wallet lookup again without changing the entered address." class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
                     </div>
@@ -1552,7 +1552,7 @@
         return `
             <div class="grid grid-cols-1 gap-2 items-center">
                 <div id="crypto-wallet-history-status" class="crypto-wallet-status-line rounded-xl border border-white/10 bg-slate-950/32 px-3 py-2 text-white/56">${escapeHtml(status)}</div>
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 text-[11px]">
+                <div class="crypto-wallet-history-mini-grid grid gap-2 text-[11px]">
                     <div class="rounded-lg border border-cyan-200/12 bg-cyan-300/8 px-2.5 py-2 text-cyan-50/76">
                         <div class="text-white/36">Coverage</div>
                         <div class="mt-0.5 font-semibold">${escapeHtml(coverage.label)}</div>
@@ -1571,7 +1571,7 @@
                     </div>
                 </div>
                 ${badges.length ? `<div class="flex flex-wrap gap-1.5">${badges.map(badge => `<span class="rounded-full border ${escapeAttr(badge.className)} px-2 py-1 text-[10px] font-mono">${escapeHtml(badge.label)}</span>`).join('')}</div>` : ''}
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div class="crypto-wallet-history-action-grid grid gap-2">
                     <button id="crypto-wallet-history-load-more" type="button" ${disabled ? 'disabled' : ''} title="${escapeAttr(disabled ? getWalletHistoryLoadMoreDisabledTitle() : 'Load the next backend-provided wallet history page into staging only. The current graph is unchanged.')}" class="min-h-10 rounded-xl border border-emerald-200/18 bg-emerald-300/10 px-3 py-2 text-emerald-50/82 hover:border-emerald-100/35 disabled:opacity-50 disabled:cursor-not-allowed">${escapeHtml(disabled && state.history.providerPagesLoaded > 0 && !state.history.moreAvailable ? 'No More History' : 'Load Next Page')}</button>
                     <button id="crypto-wallet-history-load-5" type="button" ${disabled ? 'disabled' : ''} title="${escapeAttr(disabled ? getWalletHistoryLoadMoreDisabledTitle() : 'Sequentially load up to 5 Worker history pages, stopping on cursor exhaustion, rate limit, or provider limit.')}" class="min-h-10 rounded-xl border border-emerald-200/18 bg-emerald-300/10 px-3 py-2 text-emerald-50/82 hover:border-emerald-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load 5 Pages</button>
                     <button id="crypto-wallet-history-load-until-limit" type="button" ${disabled ? 'disabled' : ''} title="${escapeAttr(disabled ? getWalletHistoryLoadMoreDisabledTitle() : 'Sequentially load until the Worker reports no cursor, a rate limit, or a provider limit. Guarded to prevent runaway loops.')}" class="min-h-10 rounded-xl border border-yellow-200/18 bg-yellow-300/10 px-3 py-2 text-yellow-50/82 hover:border-yellow-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Until Limit</button>
@@ -1943,6 +1943,13 @@
     }
 
     function renderGuidedActionGrid(actions = [], options = {}) {
+        const helper = namespace.historyWorkspace?.renderGuidedActionGrid;
+        if (helper) {
+            return helper(actions, options, {
+                getAttributes: getGuidedActionAttributes,
+                emptyHtml: renderWalletInlineEmpty('No guided actions are available for the current graph state.')
+            });
+        }
         const title = options.title || 'Guided Next Actions';
         const subtitle = options.subtitle || '';
         const available = actions.filter(Boolean);
@@ -1963,6 +1970,10 @@
     }
 
     function renderGuidedActionCard(action = {}) {
+        const helper = namespace.historyWorkspace?.renderGuidedActionCard;
+        if (helper) {
+            return helper(action, { getAttributes: getGuidedActionAttributes });
+        }
         const attrs = getGuidedActionAttributes(action);
         const disabled = action.disabled || !attrs ? 'disabled' : '';
         const tone = action.tone === 'strong'
@@ -2592,6 +2603,8 @@
     }
 
     function renderWorkspaceMetric(label, value, options = {}) {
+        const helper = namespace.statusPanels?.renderWorkspaceMetric;
+        if (helper) return helper(label, value, options);
         const raw = String(value ?? '-');
         const valueClass = options.mono ? 'crypto-metric-value is-mono' : 'crypto-metric-value';
         return `
@@ -2752,6 +2765,8 @@
     }
 
     function renderWalletHistoryStatusRow(label, value, title = '') {
+        const helper = namespace.statusPanels?.renderHistoryStatusRow;
+        if (helper) return helper(label, value, title);
         return `
             <div class="flex min-w-0 items-start justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2" title="${escapeAttr(title || String(value ?? '-'))}">
                 <span class="shrink-0 text-white/38">${escapeHtml(label)}</span>
@@ -3358,6 +3373,8 @@
     }
 
     function renderWalletHistoryMetric(label, value, title = '') {
+        const helper = namespace.statusPanels?.renderHistoryMetric;
+        if (helper) return helper(label, value, title);
         const raw = String(value ?? '-');
         return `
             <div class="min-w-0 rounded-lg border border-white/10 bg-white/[0.035] px-2.5 py-2" title="${escapeAttr(title || raw)}">
@@ -3369,6 +3386,8 @@
 
     function renderWalletHistoryWarningStrip() {
         const warnings = getWalletHistoryWarnings().slice(0, 3);
+        const helper = namespace.statusPanels?.renderWarningStrip;
+        if (helper) return helper(warnings);
         if (!warnings.length) return '';
         return `
             <div class="mt-2 grid grid-cols-1 gap-1.5">
@@ -7724,6 +7743,39 @@
         const newestLabel = newestSegment.latest_timestamp
             ? formatPreviewTimestamp(newestSegment.latest_timestamp)
             : 'Newest staged';
+        const helper = namespace.replayWorkspace?.renderOverlay;
+        if (helper) {
+            return helper({
+                status,
+                hasDataset,
+                stale,
+                stateInFlight: state.history.inFlight,
+                totalSteps,
+                currentStep,
+                progressPct,
+                coverageDetail: coverage.detail,
+                windowStatus,
+                graphCopy,
+                readinessCopy,
+                startDisabled,
+                replayCoverage,
+                confidence,
+                speed,
+                scrubberDisabled,
+                warnings,
+                oldestLabel,
+                newestLabel,
+                speedOptions: HISTORY_REPLAY_SPEEDS,
+                metaItems: [
+                    { label: 'Canvas', value: graphCopy, options: { id: 'crypto-replay-workspace-render-status' } },
+                    { label: 'Window', value: windowStatus.windowLabel },
+                    { label: 'Current Path', value: getHistoryReplayRouteLabel(status), options: { mono: true, id: 'crypto-replay-workspace-route' } },
+                    { label: 'Coverage', value: `${replayCoverage}% replay / ${coverage.label}` },
+                    { label: 'Confidence', value: `${confidence}% / ${getWalletHistoryProviderGrade()}` },
+                    { label: 'Scan Cache', value: getWalletHistoryScanCacheLabel() }
+                ]
+            });
+        }
         return `
             <div id="crypto-replay-workspace-stage" class="crypto-replay-workspace-panel crypto-replay-workspace-toolbar">
                 <div class="crypto-replay-toolbar-main">
@@ -7777,6 +7829,8 @@
     }
 
     function renderReplayWorkspaceMeta(label, value, options = {}) {
+        const helper = namespace.replayWorkspace?.renderMeta;
+        if (helper) return helper(label, value, options);
         const id = options.id ? ` id="${escapeAttr(options.id)}"` : '';
         const valueClass = options.mono ? 'font-mono' : 'font-semibold';
         return `
@@ -7788,6 +7842,35 @@
     }
 
     function bindReplayWorkspaceOverlayControls(root) {
+        const helper = namespace.replayWorkspace?.bindOverlayControls;
+        if (helper) {
+            helper(root, {
+                buildDataset: () => buildHistoryPreviewDataset(),
+                showGraph: () => {
+                    state.historyPreview.graphVisible = true;
+                    state.historyPreview.lastMessage = 'Large replay workspace preview graph shown. Active Wallet Lookup graph unchanged.';
+                    renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+                },
+                togglePlay: () => {
+                    const status = getHistoryReplayStatus();
+                    if (status.playing) {
+                        pauseHistoryReplay();
+                    } else {
+                        startHistoryReplay();
+                    }
+                },
+                step: delta => stepHistoryReplay(delta),
+                reset: () => resetHistoryReplay(),
+                jumpWindow: delta => jumpReplayWorkspaceWindow(delta),
+                seek: value => seekHistoryReplayStep(value, {
+                    label: 'Replay workspace timeline moved the preview-only canvas.',
+                    quiet: true
+                }),
+                setSpeed: value => setHistoryReplaySpeed(value || 'standard'),
+                exit: () => setReplayWorkspaceMode(false)
+            });
+            return;
+        }
         root.querySelector('#crypto-replay-workspace-build')?.addEventListener('click', () => buildHistoryPreviewDataset());
         root.querySelector('#crypto-replay-workspace-show')?.addEventListener('click', () => {
             state.historyPreview.graphVisible = true;
@@ -8096,6 +8179,8 @@
     }
 
     function renderDetailsSelectionHeader(options = {}) {
+        const helper = namespace.investigationWorkspace?.renderSelectionHeader;
+        if (helper) return helper(options);
         const actions = (options.actions || []).filter(Boolean).join('');
         return `
             <section class="crypto-details-selected">
@@ -8111,6 +8196,8 @@
     }
 
     function renderCopyButton(label, value) {
+        const helper = namespace.investigationWorkspace?.renderCopyButton;
+        if (helper) return helper(label, value);
         const text = String(value || '');
         if (!text) return '';
         return `
@@ -8139,6 +8226,8 @@
     function renderDetailSection(title, rowsHtml) {
         const rows = compactHtmlRows(rowsHtml);
         if (!rows) return '';
+        const helper = namespace.investigationWorkspace?.renderDetailSection;
+        if (helper) return helper(title, rows);
         return `
             <section class="mt-5 pt-4 border-t border-white/10">
                 <div class="text-[10px] font-mono tracking-[1.3px] text-white/45 mb-2">${escapeHtml(title)}</div>
@@ -9074,6 +9163,8 @@
     }
 
     function detailRow(label, value, options = {}) {
+        const helper = namespace.investigationWorkspace?.renderDetailRow;
+        if (helper) return helper(label, value, { ...options, shortener: shortLongValue });
         const rawValue = String(value ?? '-');
         const visibleValue = options.shorten ? shortLongValue(rawValue) : rawValue;
         return `

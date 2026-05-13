@@ -1,0 +1,3155 @@
+/* CryptoPhotonic frontend styles extracted during D132. Includes legacy app-wide rules that were interleaved in the original inline stylesheet; new Crypto-specific rules should live here. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@500;600&display=swap');
+
+        :root {
+            --neon-cyan: #00f9ff;
+            --neon-magenta: #ff00aa;
+            --neon-purple: #c026d3;
+            --neon-green: #00ff9f;
+            --neon-gold: #ffd700;
+            --neon-orange: #ff6b00;
+            --surface-border: rgba(125, 211, 252, 0.16);
+            --surface-border-strong: rgba(0, 249, 255, 0.24);
+            --surface-panel: rgba(6, 8, 18, 0.82);
+            --surface-panel-soft: rgba(255, 255, 255, 0.04);
+            --surface-radius: 1rem;
+            --surface-radius-lg: 1.15rem;
+            --scrollbar-track: rgba(2, 6, 23, 0.72);
+            --scrollbar-thumb: linear-gradient(180deg, rgba(0, 249, 255, 0.62), rgba(255, 0, 170, 0.42));
+        }
+
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.54) rgba(2, 6, 23, 0.84);
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.46) rgba(2, 6, 23, 0.78);
+        }
+
+        *::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        *::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 999px;
+        }
+
+        *::-webkit-scrollbar-thumb {
+            border: 2px solid rgba(2, 6, 23, 0.86);
+            background: var(--scrollbar-thumb);
+            border-radius: 999px;
+        }
+
+        *::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, rgba(0, 249, 255, 0.82), rgba(255, 0, 170, 0.62));
+        }
+
+        /* Phase D112 layout system: graph-first, compact controls, scrollable intelligence. */
+        header .page-shell {
+            padding-top: 0.85rem !important;
+            padding-bottom: 0.85rem !important;
+        }
+
+        #stock-photonic-surface,
+        #crypto-photonic-view {
+            padding-top: 1rem !important;
+        }
+
+        #stock-photonic-surface > .flex:first-child,
+        #crypto-photonic-view > .flex:first-child {
+            align-items: center;
+            margin-bottom: 0.85rem !important;
+        }
+
+        #stock-photonic-surface > .flex:first-child h1,
+        #crypto-photonic-view > .flex:first-child h1 {
+            font-size: clamp(2rem, 4vw, 3.4rem);
+            line-height: 0.96;
+        }
+
+        #stock-photonic-surface > .flex:first-child p,
+        #crypto-photonic-view > .flex:first-child p {
+            margin-top: 0.35rem;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            max-width: 56rem;
+        }
+
+        .product-view-switch,
+        .app-view-tabs {
+            margin-bottom: 0.85rem !important;
+        }
+
+        .graph-intelligence-controls {
+            margin-bottom: 0.85rem !important;
+            padding: 0.75rem !important;
+            gap: 0.55rem !important;
+            border-radius: 1.25rem !important;
+        }
+
+        .graph-intelligence-controls .control-section-title,
+        .graph-intelligence-controls .control-help {
+            display: none;
+        }
+
+        .graph-intelligence-controls .stock-control-break {
+            display: none;
+        }
+
+        .graph-intelligence-controls input,
+        .graph-intelligence-controls select,
+        .graph-intelligence-controls .focus-button,
+        .graph-intelligence-controls .signal-control {
+            min-height: 2.35rem;
+        }
+
+        .graph-intelligence-controls input,
+        .graph-intelligence-controls select,
+        .graph-intelligence-controls .focus-button {
+            padding-top: 0.55rem !important;
+            padding-bottom: 0.55rem !important;
+            border-radius: 1rem !important;
+        }
+
+        .graph-intelligence-controls .signal-control {
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 1rem !important;
+        }
+
+        .interaction-dock {
+            position: sticky;
+            top: calc(4.9rem + env(safe-area-inset-top));
+            z-index: 38;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+            padding: 0.55rem;
+            border: 1px solid var(--surface-border-strong);
+            border-radius: var(--surface-radius-lg);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.11), rgba(255, 0, 170, 0.06)),
+                rgba(3, 7, 18, 0.84);
+            box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34), 0 0 26px rgba(0, 249, 255, 0.08);
+            backdrop-filter: blur(22px) saturate(118%);
+        }
+
+        .interaction-dock-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 8.5rem;
+            padding: 0 0.45rem;
+            color: rgba(165, 243, 252, 0.76);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .interaction-dock-actions {
+            display: flex;
+            flex: 1;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.4rem;
+            min-width: 0;
+        }
+
+        .interaction-dock-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            min-height: 2.35rem;
+            padding: 0.48rem 0.75rem;
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            border-radius: 999px;
+            background: rgba(2, 6, 23, 0.58);
+            color: rgba(224, 242, 254, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.66rem;
+            letter-spacing: 0.8px;
+            line-height: 1;
+            white-space: nowrap;
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+        }
+
+        .interaction-dock-button:hover,
+        .interaction-dock-button:focus-visible {
+            border-color: rgba(0, 249, 255, 0.54);
+            background: rgba(8, 145, 178, 0.18);
+            color: #ffffff;
+            outline: none;
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.12);
+        }
+
+        .interaction-dock-button:active {
+            transform: translateY(1px);
+        }
+
+        .interaction-dock-button.is-active,
+        .interaction-dock-button[aria-pressed="true"] {
+            border-color: rgba(0, 249, 255, 0.62);
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.18), rgba(255, 0, 170, 0.12));
+            color: #ffffff;
+            box-shadow: 0 0 22px rgba(0, 249, 255, 0.16);
+        }
+
+        .interaction-dock-button:disabled,
+        .interaction-dock-button.is-disabled {
+            cursor: not-allowed;
+            opacity: 0.44;
+        }
+
+        .interaction-dock-button.is-hidden {
+            display: none;
+        }
+
+        .interaction-dock-split {
+            display: inline-flex;
+            gap: 0.25rem;
+            padding: 0.18rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .graph-intelligence-controls #focus-mode-toggle,
+        .graph-intelligence-controls #perspective-toggle,
+        .graph-intelligence-controls #orb-map-toggle,
+        .graph-intelligence-controls #graph-fullscreen-toggle,
+        .graph-intelligence-controls #stock-help-guide {
+            display: none !important;
+        }
+
+        .graph-intelligence-controls #perspective-reset,
+        .graph-intelligence-controls #orb-spread-clusters,
+        .graph-intelligence-controls #orb-reset-layout,
+        .graph-intelligence-controls #sec-preview-toggle {
+            opacity: 0.78;
+        }
+
+        .graph-intelligence-controls #perspective-reset:hover,
+        .graph-intelligence-controls #orb-spread-clusters:hover,
+        .graph-intelligence-controls #orb-reset-layout:hover,
+        .graph-intelligence-controls #sec-preview-toggle:hover {
+            opacity: 1;
+        }
+
+        #portfolio-input {
+            min-height: 2.35rem;
+            max-height: 3.2rem;
+        }
+
+        .graph-intelligence-layout,
+        .crypto-layout-grid {
+            align-items: stretch;
+        }
+
+        .graph-container {
+            min-height: 560px;
+        }
+
+        #sidebar,
+        #empty-sidebar,
+        #crypto-detail-panel,
+        #crypto-status-panel {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.38) rgba(255, 255, 255, 0.045);
+        }
+
+        .crypto-surface {
+            min-height: auto;
+        }
+
+        .crypto-panel {
+            padding: 0.85rem !important;
+            border-radius: 1.25rem !important;
+        }
+
+        .crypto-workspace-toolbar {
+            margin-bottom: 0.75rem;
+        }
+
+        .crypto-workspace-toolbar #crypto-fullscreen-toggle,
+        .crypto-workspace-toolbar .help-trigger,
+        .crypto-workspace-toolbar #crypto-reset-view {
+            display: none !important;
+        }
+
+        .crypto-workspace-toolbar #crypto-reset-layout {
+            border-color: rgba(125, 211, 252, 0.12);
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(224, 242, 254, 0.62);
+        }
+
+        .crypto-canvas-wrap {
+            height: clamp(540px, calc(100dvh - 18rem), 740px) !important;
+            min-height: 520px !important;
+            border-radius: 1.25rem !important;
+        }
+
+        .crypto-sidebar-stack {
+            display: grid;
+            align-content: start;
+            gap: 0.9rem;
+            max-height: clamp(540px, calc(100dvh - 18rem), 740px);
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            padding-right: 0.35rem;
+            scrollbar-gutter: stable;
+        }
+
+        .crypto-status-stack {
+            gap: 0.8rem;
+            max-width: none;
+        }
+
+        .crypto-control-group,
+        .crypto-collapse {
+            border-radius: 1rem !important;
+        }
+
+        .crypto-control-group {
+            padding: 0.7rem !important;
+            border-color: var(--surface-border) !important;
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.045), rgba(255, 255, 255, 0.024)),
+                rgba(2, 6, 23, 0.40) !important;
+        }
+
+        .crypto-control-group .control-help {
+            display: none;
+        }
+
+        .crypto-collapse {
+            border: 1px solid rgba(125, 211, 252, 0.16);
+            background: rgba(255, 255, 255, 0.035);
+            overflow: hidden;
+        }
+
+        .crypto-collapse > summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            cursor: pointer;
+            list-style: none;
+            padding: 0.8rem 0.9rem;
+            color: rgba(207, 250, 254, 0.88);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.68rem;
+            letter-spacing: 1.15px;
+            text-transform: uppercase;
+        }
+
+        .crypto-collapse > summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .crypto-collapse > summary::after {
+            content: "+";
+            color: rgba(165, 243, 252, 0.72);
+            font-size: 1rem;
+            line-height: 1;
+        }
+
+        .crypto-collapse[open] > summary::after {
+            content: "-";
+        }
+
+        .crypto-collapse-body {
+            padding: 0 0.9rem 0.95rem;
+        }
+
+        #crypto-detail-panel {
+            min-height: 220px;
+            padding: 1rem !important;
+            border-radius: 1.1rem !important;
+            border-color: var(--surface-border) !important;
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.055), rgba(255, 255, 255, 0.026)),
+                rgba(3, 7, 18, 0.66) !important;
+            line-height: 1.5;
+            overflow-x: hidden;
+            word-break: normal;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-investigation-workspace {
+            min-width: 0;
+            color: rgba(226, 232, 240, 0.78);
+            font-size: 0.88rem;
+            line-height: 1.58;
+        }
+
+        .crypto-investigation-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.85rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+        }
+
+        .crypto-kicker,
+        .crypto-metric-label,
+        .crypto-card-heading {
+            color: rgba(165, 243, 252, 0.70);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.68rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .crypto-investigation-header h2,
+        .crypto-empty-state h3 {
+            margin-top: 0.15rem;
+            color: rgba(236, 254, 255, 0.92);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.12rem;
+            line-height: 1.22;
+        }
+
+        .crypto-investigation-header p,
+        .crypto-empty-state p,
+        .crypto-summary-note {
+            margin-top: 0.35rem;
+            max-width: 42rem;
+            color: rgba(226, 232, 240, 0.60);
+            line-height: 1.58;
+        }
+
+        .crypto-investigation-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-top: 0.85rem;
+            padding: 0.25rem;
+            border: 1px solid rgba(125, 211, 252, 0.13);
+            border-radius: 0.95rem;
+            background: rgba(2, 6, 23, 0.42);
+        }
+
+        .crypto-investigation-tab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            flex: 1 1 5.8rem;
+            min-width: max-content;
+            min-height: 2.35rem;
+            border-radius: 0.75rem;
+            border: 1px solid transparent;
+            padding: 0.45rem 0.55rem;
+            color: rgba(207, 250, 254, 0.68);
+            font-size: 0.78rem;
+            font-weight: 650;
+            line-height: 1.15;
+            white-space: nowrap;
+            word-break: keep-all;
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+        }
+
+        .crypto-investigation-tab:hover,
+        .crypto-investigation-tab:focus-visible {
+            border-color: rgba(125, 211, 252, 0.32);
+            color: rgba(255, 255, 255, 0.92);
+            outline: none;
+        }
+
+        .crypto-investigation-tab[aria-selected="true"] {
+            border-color: rgba(45, 212, 191, 0.38);
+            background: rgba(45, 212, 191, 0.13);
+            color: rgba(240, 253, 250, 0.96);
+        }
+
+        .crypto-investigation-tab[data-has-selection="true"] {
+            border-color: rgba(103, 232, 249, 0.30);
+        }
+
+        .crypto-tab-selection-dot {
+            width: 0.42rem;
+            height: 0.42rem;
+            border-radius: 999px;
+            background: rgba(45, 212, 191, 0.92);
+            box-shadow: 0 0 14px rgba(45, 212, 191, 0.58);
+            flex: 0 0 auto;
+        }
+
+        .crypto-investigation-content {
+            min-width: 0;
+            margin-top: 1rem;
+        }
+
+        .crypto-tab-section,
+        .crypto-workspace-card,
+        .crypto-empty-state {
+            min-width: 0;
+        }
+
+        .crypto-tab-section {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .crypto-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem;
+        }
+
+        .crypto-workspace-metric,
+        .crypto-workspace-card,
+        .crypto-empty-state {
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 0.9rem;
+            background: rgba(15, 23, 42, 0.34);
+            padding: 0.85rem;
+        }
+
+        .crypto-metric-value {
+            margin-top: 0.28rem;
+            color: rgba(207, 250, 254, 0.88);
+            font-size: 0.94rem;
+            font-weight: 700;
+            line-height: 1.32;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-metric-value.is-mono,
+        .crypto-workspace-card .font-mono,
+        .crypto-tab-section .font-mono {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        .crypto-card-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.65rem;
+        }
+
+        .crypto-card-list,
+        .crypto-two-column-list,
+        .crypto-guided-action-grid,
+        .crypto-details-actions {
+            display: grid;
+            gap: 0.7rem;
+        }
+
+        .crypto-two-column-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .crypto-guided-action-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .crypto-guided-action,
+        .crypto-copy-action {
+            min-width: 0;
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            background: rgba(2, 6, 23, 0.34);
+            color: rgba(207, 250, 254, 0.82);
+            text-align: left;
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+        }
+
+        .crypto-wallet-report-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+            text-align: center;
+        }
+
+        .crypto-guided-action {
+            min-height: 4.75rem;
+            border-radius: 0.75rem;
+            padding: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .crypto-guided-action:hover,
+        .crypto-guided-action:focus-visible,
+        .crypto-copy-action:hover,
+        .crypto-copy-action:focus-visible {
+            border-color: rgba(125, 211, 252, 0.36);
+            background: rgba(14, 116, 144, 0.14);
+            color: rgba(240, 253, 250, 0.94);
+            outline: none;
+        }
+
+        .crypto-guided-action:disabled {
+            cursor: not-allowed;
+            opacity: 0.52;
+        }
+
+        .crypto-guided-action.is-strong {
+            border-color: rgba(45, 212, 191, 0.25);
+            background: rgba(45, 212, 191, 0.10);
+        }
+
+        .crypto-guided-action.is-warn {
+            border-color: rgba(253, 224, 71, 0.20);
+            background: rgba(253, 224, 71, 0.08);
+        }
+
+        .crypto-guided-action-label {
+            font-weight: 700;
+            line-height: 1.22;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-guided-action-detail {
+            color: rgba(226, 232, 240, 0.52);
+            font-size: 0.78rem;
+            line-height: 1.42;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-details-selected {
+            display: grid;
+            gap: 0.85rem;
+            min-width: 0;
+            border: 1px solid rgba(45, 212, 191, 0.22);
+            border-radius: 0.95rem;
+            background: rgba(45, 212, 191, 0.09);
+            padding: 0.9rem;
+        }
+
+        .crypto-details-selected h3 {
+            margin-top: 0.2rem;
+            color: rgba(240, 253, 250, 0.96);
+            font-family: 'Space Grotesk', Inter, sans-serif;
+            font-size: clamp(1.25rem, 2vw, 1.65rem);
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-details-selected p {
+            margin-top: 0.5rem;
+            color: rgba(226, 232, 240, 0.66);
+            font-size: 0.9rem;
+            line-height: 1.58;
+        }
+
+        .crypto-selection-pill {
+            display: inline-flex;
+            width: fit-content;
+            margin-top: 0.5rem;
+            border: 1px solid rgba(125, 211, 252, 0.25);
+            border-radius: 999px;
+            background: rgba(2, 6, 23, 0.32);
+            padding: 0.28rem 0.55rem;
+            color: rgba(207, 250, 254, 0.78);
+            font-size: 0.74rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .crypto-copy-action {
+            min-height: 2.35rem;
+            border-radius: 0.7rem;
+            padding: 0.65rem 0.75rem;
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .crypto-side-column,
+        .crypto-sidebar-stack,
+        .crypto-status-stack,
+        #crypto-detail-panel,
+        .crypto-investigation-workspace,
+        .crypto-tab-section,
+        .crypto-tab-section section,
+        .crypto-tab-section [class*="grid"],
+        .crypto-tab-section [class*="rounded"],
+        .crypto-wallet-status-line {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .crypto-tab-section section,
+        .crypto-tab-section [class*="rounded"] {
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        .crypto-tab-section .font-mono,
+        .crypto-wallet-status-line,
+        .crypto-metric-value.is-mono {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .crypto-tab-section button {
+            white-space: normal;
+        }
+
+        @media (max-width: 1280px) {
+            .crypto-tab-section [class*="xl:grid-cols-3"] {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+        }
+
+        .crypto-wallet-report-modal,
+        .crypto-wallet-report-modal pre,
+        .crypto-wallet-report-actions,
+        .crypto-wallet-report-actions button,
+        .crypto-wallet-report-preview {
+            min-width: 0;
+            max-width: 100%;
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        .crypto-wallet-report-actions button {
+            justify-content: center;
+            line-height: 1.15;
+            white-space: normal;
+        }
+
+        .crypto-workspace-metric,
+        .crypto-detail-row,
+        .crypto-edge-summary,
+        .crypto-details-selected,
+        .crypto-empty-state,
+        .crypto-summary-note {
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        .crypto-tab-section button,
+        .crypto-status-stack button,
+        .crypto-status-stack input,
+        .crypto-status-stack select {
+            font-size: 0.82rem;
+        }
+
+        .crypto-tab-section .text-\[10px\],
+        .crypto-status-stack .text-\[10px\] {
+            font-size: 0.7rem;
+        }
+
+        .crypto-tab-section .text-\[11px\],
+        .crypto-status-stack .text-\[11px\] {
+            font-size: 0.76rem;
+        }
+
+        .crypto-tab-section .break-all {
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        /* D132 long-text guardrails: keep wallet/status strings inside the sidebar. */
+        .crypto-side-column,
+        .crypto-sidebar-stack,
+        #crypto-status-panel,
+        #crypto-detail-panel,
+        #crypto-wallet-lookup-form,
+        #crypto-wallet-lookup-form label,
+        #crypto-wallet-lookup-form .grid,
+        .crypto-data-source-snapshot,
+        .crypto-data-source-snapshot > div,
+        .crypto-wallet-status-line,
+        .crypto-workspace-card,
+        .crypto-workspace-metric,
+        .crypto-detail-row,
+        .crypto-replay-meta-card {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        #crypto-wallet-lookup-input {
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        #crypto-wallet-lookup-form > .grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+        }
+
+        #crypto-wallet-lookup-form [class*="sm:flex"] {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        #crypto-wallet-lookup-form [class*="sm:grid-cols-3"] {
+            grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)) !important;
+        }
+
+        #crypto-wallet-lookup-form [class*="lg:grid-cols-4"] {
+            grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)) !important;
+        }
+
+        .crypto-wallet-lookup-action-grid,
+        .crypto-wallet-history-action-grid,
+        .crypto-wallet-history-mini-grid {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .crypto-wallet-lookup-action-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+        }
+
+        .crypto-wallet-history-action-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+        }
+
+        .crypto-wallet-history-mini-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+        }
+
+        .crypto-wallet-status-line,
+        .crypto-data-source-snapshot > div,
+        .crypto-workspace-metric,
+        .crypto-detail-row,
+        .crypto-replay-meta-card,
+        .crypto-details-selected,
+        .crypto-card-heading,
+        .crypto-guided-action-detail,
+        .crypto-guided-action-label {
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        .crypto-wallet-status-line {
+            white-space: normal;
+            line-break: anywhere;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            overflow-x: hidden;
+        }
+
+        .crypto-status-stack button,
+        .crypto-tab-section button,
+        .crypto-replay-workspace-actions button,
+        .crypto-replay-workspace-controls button,
+        .crypto-wallet-report-actions button {
+            max-width: 100%;
+            line-height: 1.15;
+            overflow-wrap: normal;
+            word-break: keep-all;
+            hyphens: none;
+        }
+
+        .crypto-status-stack button,
+        .crypto-tab-section button,
+        .crypto-wallet-report-actions button {
+            white-space: normal;
+        }
+
+        .crypto-status-stack .grid,
+        .crypto-tab-section .grid,
+        .crypto-guided-action-grid,
+        .crypto-summary-grid,
+        .crypto-two-column-list {
+            min-width: 0;
+        }
+
+        @media (max-width: 720px) {
+            .crypto-investigation-header {
+                flex-direction: column;
+            }
+
+            .crypto-investigation-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                scrollbar-width: thin;
+            }
+
+            .crypto-investigation-tab {
+                flex: 0 0 auto;
+                min-height: 2.7rem;
+                font-size: 0.82rem;
+            }
+
+            .crypto-summary-grid,
+            .crypto-two-column-list,
+            .crypto-guided-action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .crypto-details-selected {
+                padding: 0.8rem;
+            }
+
+            .crypto-copy-action {
+                text-align: left;
+            }
+        }
+
+        .crypto-status-panel,
+        .crypto-status-stack,
+        .crypto-intelligence-collapse,
+        .crypto-history-collapse,
+        .crypto-history-preview-collapse {
+            min-width: 0;
+        }
+
+        .crypto-status-panel,
+        .crypto-status-stack,
+        .crypto-control-group,
+        .crypto-collapse,
+        .crypto-collapse-body {
+            max-width: 100%;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-control-group select,
+        .crypto-control-group input,
+        .crypto-control-group button {
+            max-width: 100%;
+        }
+
+        .crypto-mode-switch,
+        .crypto-data-source-snapshot {
+            min-width: 0;
+        }
+
+        .crypto-data-source-snapshot {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(8.75rem, 1fr));
+            gap: 0.35rem;
+        }
+
+        .crypto-data-source-snapshot > div,
+        .crypto-wallet-status-line {
+            min-width: 0;
+            overflow-wrap: anywhere;
+            word-break: normal;
+        }
+
+        .crypto-data-source-snapshot > div {
+            border: 1px solid rgba(125, 211, 252, 0.12);
+            border-radius: 0.72rem;
+            background: rgba(2, 6, 23, 0.28);
+            padding: 0.48rem 0.55rem;
+            line-height: 1.35;
+        }
+
+        .crypto-intelligence-collapse .crypto-collapse-body,
+        .crypto-history-collapse .crypto-collapse-body,
+        .crypto-history-preview-collapse .crypto-collapse-body {
+            max-height: min(64dvh, 42rem);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding-right: 0.45rem;
+            scrollbar-gutter: stable;
+        }
+
+        .crypto-history-collapse .crypto-collapse-body,
+        .crypto-history-preview-collapse .crypto-collapse-body {
+            max-height: min(70dvh, 46rem);
+        }
+
+        .crypto-history-collapse section,
+        .crypto-history-preview-collapse section,
+        .crypto-intelligence-collapse section,
+        .crypto-intelligence-collapse > .crypto-collapse-body > div {
+            border-radius: var(--surface-radius) !important;
+        }
+
+        .crypto-history-preview-collapse button {
+            line-height: 1.15;
+        }
+
+        .crypto-history-preview-collapse input[type="range"] {
+            touch-action: pan-y;
+        }
+
+        .crypto-interaction-dock .interaction-dock-actions {
+            row-gap: 0.45rem;
+        }
+
+        @media (min-width: 1024px) {
+            .graph-intelligence-layout,
+            .crypto-layout-grid {
+                display: grid !important;
+                grid-template-columns: minmax(0, 70fr) minmax(20rem, 30fr) !important;
+                gap: 1rem !important;
+            }
+
+            .graph-stage-column,
+            .graph-sidebar-column,
+            .crypto-graph-column,
+            .crypto-side-column {
+                grid-column: auto !important;
+            }
+
+            .graph-container {
+                height: clamp(580px, calc(100dvh - 20rem), 760px) !important;
+            }
+
+            .graph-sidebar-column #sidebar,
+            .graph-sidebar-column #empty-sidebar {
+                max-height: clamp(580px, calc(100dvh - 20rem), 760px);
+                padding: 1rem !important;
+                border-radius: 1.1rem !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #stock-photonic-surface,
+            #crypto-photonic-view {
+                padding-top: 0.8rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child,
+            #crypto-photonic-view > .flex:first-child {
+                gap: 0.65rem;
+                margin-bottom: 0.7rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child p,
+            #crypto-photonic-view > .flex:first-child p {
+                display: none;
+            }
+
+            .graph-intelligence-controls {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding: 0.6rem !important;
+                scrollbar-width: thin;
+            }
+
+            .graph-intelligence-controls > * {
+                flex-shrink: 0;
+            }
+
+            .graph-intelligence-controls .flex-1 {
+                min-width: 15rem;
+            }
+
+            .graph-intelligence-layout,
+            .crypto-layout-grid {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) !important;
+                gap: 0.85rem !important;
+            }
+
+            .graph-stage-column,
+            .crypto-graph-column {
+                order: 1;
+            }
+
+            .graph-sidebar-column,
+            .crypto-side-column {
+                order: 2;
+            }
+
+            .crypto-sidebar-stack {
+                max-height: none;
+                overflow: visible;
+                padding-right: 0;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #050508;
+            color: #e0e7ff;
+            overflow-x: hidden;
+        }
+
+        .photonic-bg {
+            background:
+                radial-gradient(circle at 20% 0%, rgba(0, 249, 255, 0.12), transparent 28rem),
+                radial-gradient(circle at 85% 15%, rgba(255, 0, 170, 0.10), transparent 24rem),
+                radial-gradient(circle at 45% 90%, rgba(0, 255, 159, 0.07), transparent 30rem),
+                #050508;
+        }
+
+        .font-display {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0;
+        }
+
+        .neon-text {
+            text-shadow:
+                0 0 5px #00f9ff,
+                0 0 10px #00f9ff,
+                0 0 20px #ff00aa,
+                0 0 40px #c026d3;
+        }
+
+        .glass {
+            background: rgba(10, 12, 25, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 249, 255, 0.15);
+        }
+
+        .graph-container {
+            position: relative;
+            box-shadow: 0 0 60px rgba(0, 249, 255, 0.08);
+            border: 1px solid rgba(0, 249, 255, 0.1);
+            min-height: 520px;
+            max-width: 100%;
+        }
+
+        #graph-canvas,
+        #crypto-flow-canvas,
+        #orb-map-canvas {
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            overscroll-behavior: contain;
+        }
+
+        #graph-canvas {
+            background:
+                linear-gradient(rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                radial-gradient(circle at center, rgba(0, 249, 255, 0.06), rgba(5, 5, 8, 0.12) 58%);
+            background-size: 46px 46px, 46px 46px, 100% 100%;
+        }
+
+        .focus-button {
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .focus-button:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 249, 255, 0.55);
+        }
+
+        .focus-button[aria-pressed="true"],
+        .focus-button.is-active {
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.18), rgba(255, 0, 170, 0.12));
+            border-color: rgba(0, 249, 255, 0.62);
+            color: #ffffff;
+            box-shadow: 0 0 22px rgba(0, 249, 255, 0.16);
+        }
+
+        #perspective-toggle.is-active {
+            border-color: rgba(0, 249, 255, 0.82);
+            box-shadow: 0 0 24px rgba(0, 249, 255, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        #orb-map-toggle.is-active {
+            border-color: rgba(251, 191, 36, 0.78);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(0, 249, 255, 0.10));
+            box-shadow: 0 0 24px rgba(251, 191, 36, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+        }
+
+        .orb-map-canvas {
+            position: absolute;
+            inset: 0.75rem;
+            width: calc(100% - 1.5rem);
+            height: calc(100% - 1.5rem);
+            border-radius: 1.5rem;
+            z-index: 2;
+            background:
+                radial-gradient(circle at 50% 48%, rgba(251, 191, 36, 0.11), rgba(0, 249, 255, 0.045) 42%, rgba(5, 5, 8, 0.92) 78%),
+                linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(255, 0, 170, 0.045));
+        }
+
+        .graph-container.is-orb-map-active #graph-canvas {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .graph-container.is-orb-map-active .sec-production-legend {
+            border-color: rgba(251, 191, 36, 0.28);
+            background: rgba(13, 10, 4, 0.72);
+        }
+
+        .perspective-reset-control {
+            border-color: rgba(0, 249, 255, 0.16);
+            color: rgba(207, 250, 254, 0.82);
+        }
+
+        .perspective-reset-control:disabled {
+            cursor: not-allowed;
+            opacity: 0.44;
+        }
+
+        .mobile-graph-overlay {
+            position: absolute;
+            left: max(0.85rem, env(safe-area-inset-left));
+            right: max(0.85rem, env(safe-area-inset-right));
+            bottom: max(0.85rem, env(safe-area-inset-bottom));
+            z-index: 18;
+            display: none;
+            pointer-events: none;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 0.65rem;
+        }
+
+        .mobile-graph-hint {
+            max-width: min(48vw, 18rem);
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            background: rgba(3, 7, 18, 0.72);
+            color: rgba(224, 242, 254, 0.82);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(16px);
+            line-height: 1.25;
+            pointer-events: none;
+        }
+
+        .mobile-graph-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 0.42rem;
+            pointer-events: auto;
+        }
+
+        .mobile-graph-action {
+            min-width: 2.75rem;
+            min-height: 2.75rem;
+            border: 1px solid rgba(125, 211, 252, 0.22);
+            background: rgba(3, 7, 18, 0.76);
+            color: rgba(236, 254, 255, 0.92);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(16px);
+        }
+
+        .mobile-graph-action.is-hidden {
+            display: none;
+        }
+
+        .mobile-graph-action:active {
+            transform: translateY(1px);
+            background: rgba(8, 145, 178, 0.24);
+        }
+
+        .crypto-mobile-investigation-drawer {
+            position: absolute;
+            left: max(0.75rem, env(safe-area-inset-left));
+            right: max(0.75rem, env(safe-area-inset-right));
+            bottom: max(0.75rem, env(safe-area-inset-bottom));
+            z-index: 24;
+            display: none;
+            max-height: min(58%, 25rem);
+            border: 1px solid rgba(125, 211, 252, 0.20);
+            border-radius: 1rem;
+            background:
+                linear-gradient(135deg, rgba(8, 145, 178, 0.16), rgba(15, 23, 42, 0.20)),
+                rgba(2, 6, 23, 0.88);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.44), 0 0 30px rgba(34, 211, 238, 0.10);
+            backdrop-filter: blur(20px) saturate(118%);
+            color: rgba(226, 232, 240, 0.84);
+            overflow: hidden;
+            touch-action: pan-y;
+        }
+
+        .crypto-mobile-investigation-drawer.is-collapsed {
+            max-height: 5.35rem;
+        }
+
+        .crypto-mobile-investigation-drawer.is-half {
+            max-height: min(38%, 17.5rem);
+        }
+
+        .crypto-mobile-investigation-drawer.is-expanded {
+            max-height: min(62%, 29rem);
+        }
+
+        .crypto-mobile-drawer-inner {
+            display: grid;
+            gap: 0.65rem;
+            max-height: inherit;
+            overflow-y: auto;
+            padding: 0.55rem 0.65rem 0.7rem;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(103, 232, 249, 0.34) rgba(255, 255, 255, 0.04);
+        }
+
+        .crypto-mobile-drawer-handle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 1.35rem;
+            color: rgba(165, 243, 252, 0.76);
+        }
+
+        .crypto-mobile-drawer-handle::before {
+            content: "";
+            width: 2.7rem;
+            height: 0.25rem;
+            border-radius: 999px;
+            background: rgba(165, 243, 252, 0.44);
+        }
+
+        .crypto-mobile-drawer-topline {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.6rem;
+            align-items: center;
+        }
+
+        .crypto-mobile-drawer-title {
+            min-width: 0;
+        }
+
+        .crypto-mobile-drawer-kicker,
+        .crypto-mobile-drawer-meta,
+        .crypto-mobile-drawer-button {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        .crypto-mobile-drawer-kicker {
+            color: rgba(165, 243, 252, 0.70);
+            font-size: 0.58rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .crypto-mobile-drawer-name {
+            margin-top: 0.1rem;
+            color: rgba(240, 253, 250, 0.96);
+            font-size: 0.86rem;
+            font-weight: 760;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-mobile-drawer-meta {
+            margin-top: 0.18rem;
+            color: rgba(226, 232, 240, 0.56);
+            font-size: 0.66rem;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-mobile-drawer-state-controls,
+        .crypto-mobile-drawer-shortcuts,
+        .crypto-mobile-drawer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+        }
+
+        .crypto-mobile-drawer-state-controls {
+            justify-content: flex-end;
+        }
+
+        .crypto-mobile-drawer-button {
+            min-height: 2.15rem;
+            border: 1px solid rgba(125, 211, 252, 0.17);
+            border-radius: 0.7rem;
+            background: rgba(15, 23, 42, 0.48);
+            color: rgba(207, 250, 254, 0.78);
+            padding: 0.42rem 0.55rem;
+            font-size: 0.64rem;
+            font-weight: 750;
+            line-height: 1.1;
+        }
+
+        .crypto-mobile-drawer-button:hover,
+        .crypto-mobile-drawer-button:focus-visible,
+        .crypto-mobile-drawer-button[aria-pressed="true"] {
+            border-color: rgba(45, 212, 191, 0.42);
+            background: rgba(20, 184, 166, 0.14);
+            color: rgba(240, 253, 250, 0.96);
+            outline: none;
+        }
+
+        .crypto-mobile-drawer-shortcuts {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .crypto-mobile-drawer-shortcuts .crypto-mobile-drawer-button {
+            justify-content: center;
+            text-align: center;
+        }
+
+        .crypto-mobile-drawer-selected {
+            display: grid;
+            gap: 0.45rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
+            padding-top: 0.6rem;
+        }
+
+        .crypto-mobile-drawer-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.4rem;
+        }
+
+        .crypto-mobile-drawer-stat {
+            min-width: 0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 0.5rem 0.55rem;
+        }
+
+        .crypto-mobile-drawer-stat span {
+            display: block;
+            color: rgba(165, 243, 252, 0.58);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.56rem;
+            letter-spacing: 0.7px;
+            text-transform: uppercase;
+        }
+
+        .crypto-mobile-drawer-stat strong {
+            display: block;
+            margin-top: 0.15rem;
+            color: rgba(240, 253, 250, 0.90);
+            font-size: 0.76rem;
+            line-height: 1.28;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-mobile-drawer-empty {
+            border-top: 1px solid rgba(255, 255, 255, 0.10);
+            padding-top: 0.6rem;
+            color: rgba(226, 232, 240, 0.58);
+            font-size: 0.76rem;
+            line-height: 1.45;
+        }
+
+        .signal-control {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(0, 0, 0, 0.28);
+        }
+
+        .signal-slider {
+            accent-color: var(--neon-cyan);
+        }
+
+        .search-panel {
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.10), rgba(255, 0, 170, 0.045)),
+                rgba(5, 7, 18, 0.96);
+            border: 1px solid rgba(0, 249, 255, 0.24);
+            box-shadow: 0 18px 52px rgba(0, 0, 0, 0.42), 0 0 30px rgba(0, 249, 255, 0.10);
+            backdrop-filter: blur(18px);
+        }
+
+        .search-result {
+            transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+        }
+
+        .search-result.is-active,
+        .search-result:hover {
+            background: rgba(0, 249, 255, 0.12);
+            border-color: rgba(0, 249, 255, 0.34);
+        }
+
+        .connection-row {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .connection-row.top-connection {
+            border-color: rgba(0, 249, 255, 0.34);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.11), rgba(255, 0, 170, 0.055) 58%, rgba(255, 255, 255, 0.035));
+            box-shadow: 0 0 22px rgba(0, 249, 255, 0.13), inset 0 0 18px rgba(255, 255, 255, 0.025);
+        }
+
+        .connection-row.top-connection-1 {
+            border-color: rgba(255, 215, 0, 0.44);
+            box-shadow: 0 0 26px rgba(255, 215, 0, 0.13), 0 0 18px rgba(0, 249, 255, 0.1);
+        }
+
+        .connection-row:hover .connection-title {
+            color: #ffffff;
+        }
+
+        .sidebar-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+
+        .sidebar-section-title {
+            color: rgba(165, 243, 252, 0.82);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            letter-spacing: 1.6px;
+            margin-bottom: 0.65rem;
+        }
+
+        @media (min-width: 1024px) {
+            #sidebar,
+            #empty-sidebar {
+                position: sticky;
+                top: 6.75rem;
+                height: auto;
+                max-height: calc(100vh - 7.75rem);
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                scrollbar-gutter: stable;
+            }
+        }
+
+        .summary-tile {
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(255, 255, 255, 0.045);
+        }
+
+        .why-panel {
+            border: 1px solid rgba(0, 249, 255, 0.17);
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.08), rgba(192, 38, 211, 0.055));
+        }
+
+        .industry-insight-panel {
+            border: 1px solid rgba(255, 0, 170, 0.18);
+            background: linear-gradient(135deg, rgba(255, 0, 170, 0.075), rgba(0, 249, 255, 0.055));
+        }
+
+        .source-indicator {
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            background: rgba(255, 255, 255, 0.045);
+        }
+
+        .source-link {
+            max-width: 7.5rem;
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(0, 249, 255, 0.07);
+            color: rgba(165, 243, 252, 0.82);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+        }
+
+        .source-link:hover {
+            border-color: rgba(0, 249, 255, 0.42);
+            background: rgba(0, 249, 255, 0.13);
+            color: #ffffff;
+        }
+
+        .sec-production-legend {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 6;
+            border: 1px solid rgba(251, 191, 36, 0.24);
+            background: rgba(3, 7, 18, 0.76);
+            box-shadow: 0 0 18px rgba(251, 191, 36, 0.08);
+            backdrop-filter: blur(14px);
+            pointer-events: none;
+        }
+
+        .sec-production-line-swatch {
+            width: 2.25rem;
+            height: 0;
+            border-top: 2px dotted rgba(251, 191, 36, 0.82);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.28);
+        }
+
+        .sec-edge-badge {
+            border: 1px solid rgba(251, 191, 36, 0.28);
+            background: rgba(251, 191, 36, 0.10);
+            color: rgba(254, 240, 138, 0.92);
+        }
+
+        .connection-row.sec-backed-connection-row {
+            border-color: rgba(251, 191, 36, 0.26);
+            background:
+                linear-gradient(135deg, rgba(251, 191, 36, 0.07), rgba(255, 255, 255, 0.035) 55%),
+                rgba(255, 255, 255, 0.035);
+        }
+
+        .sec-edge-detail {
+            border: 1px solid rgba(251, 191, 36, 0.18);
+            background: rgba(251, 191, 36, 0.065);
+        }
+
+        #sidebar,
+        #empty-sidebar,
+        .fullscreen-hud,
+        .fullscreen-panel {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.38) rgba(255, 255, 255, 0.045);
+        }
+
+        #sidebar::-webkit-scrollbar,
+        #empty-sidebar::-webkit-scrollbar,
+        .fullscreen-hud::-webkit-scrollbar,
+        .fullscreen-panel::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        #sidebar::-webkit-scrollbar-track,
+        #empty-sidebar::-webkit-scrollbar-track,
+        .fullscreen-hud::-webkit-scrollbar-track,
+        .fullscreen-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.035);
+            border-radius: 999px;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb,
+        #empty-sidebar::-webkit-scrollbar-thumb,
+        .fullscreen-hud::-webkit-scrollbar-thumb,
+        .fullscreen-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(0, 249, 255, 0.44), rgba(255, 0, 170, 0.28));
+            border-radius: 999px;
+        }
+
+        body.graph-fullscreen-active {
+            overflow: hidden;
+        }
+
+        body.graph-fullscreen-active > header {
+            display: none;
+        }
+
+        .fullscreen-hud {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.10), rgba(255, 0, 170, 0.045)),
+                rgba(3, 7, 18, 0.72);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34), 0 0 24px rgba(0, 249, 255, 0.09);
+            backdrop-filter: blur(22px) saturate(120%);
+            border-radius: 1.15rem !important;
+        }
+
+        .fullscreen-panel {
+            border: 1px solid rgba(125, 211, 252, 0.16) !important;
+            background:
+                radial-gradient(circle at 15% 0%, rgba(0, 249, 255, 0.10), transparent 16rem),
+                linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(0, 249, 255, 0.035)),
+                rgba(3, 7, 18, 0.74) !important;
+            box-shadow: 0 24px 62px rgba(0, 0, 0, 0.44), 0 0 28px rgba(0, 249, 255, 0.08);
+            backdrop-filter: blur(22px) saturate(118%);
+        }
+
+        .fullscreen-hud-toggle,
+        .fullscreen-hud-restore {
+            display: none;
+        }
+
+        .fullscreen-hud-restore {
+            position: absolute;
+            top: 0.9rem;
+            right: 0.9rem;
+            z-index: 30;
+            min-height: 2.35rem;
+            border: 1px solid rgba(0, 249, 255, 0.28);
+            background: rgba(3, 7, 18, 0.78);
+            color: rgba(236, 254, 255, 0.92);
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35), 0 0 22px rgba(0, 249, 255, 0.10);
+            backdrop-filter: blur(18px);
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-toggle {
+            display: inline-flex;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .fullscreen-hud-restore {
+            display: inline-flex;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-intelligence-controls {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-0.75rem);
+            visibility: hidden;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-sidebar-column {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(0.75rem);
+            visibility: hidden;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-overlay-stats,
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .sec-production-legend {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .graph-fullscreen-action {
+            display: none;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-fullscreen-action {
+            display: inline-flex;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            width: 100vw;
+            height: 100dvh;
+            padding: 0.85rem;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 15% 8%, rgba(0, 249, 255, 0.16), transparent 34rem),
+                radial-gradient(circle at 86% 18%, rgba(255, 0, 170, 0.10), transparent 30rem),
+                radial-gradient(circle at 50% 88%, rgba(0, 255, 159, 0.075), transparent 36rem),
+                rgba(5, 5, 8, 0.98);
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen,
+        #graph-intelligence-view.is-graph-fullscreen * {
+            min-width: 0;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls {
+            position: absolute;
+            top: 0.85rem;
+            left: 0.85rem;
+            right: auto;
+            z-index: 24;
+            width: min(calc(100vw - 1.7rem), 82rem);
+            max-height: min(22vh, 12.5rem);
+            margin: 0;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls {
+            gap: 0.45rem 0.6rem;
+            padding: 0.58rem;
+            align-items: center;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button {
+            min-height: 2.4rem;
+            padding: 0.52rem 0.76rem;
+            border-radius: 0.95rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls select,
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls input {
+            min-height: 2.4rem;
+            padding-top: 0.55rem;
+            padding-bottom: 0.55rem;
+            border-radius: 0.95rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .signal-control {
+            padding-top: 0.55rem;
+            padding-bottom: 0.55rem;
+            border-radius: 1rem;
+            min-width: 14rem;
+            background: rgba(0, 0, 0, 0.22);
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-layout {
+            display: block;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-stage-column {
+            height: 100%;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-container {
+            height: calc(100dvh - 1.7rem) !important;
+            border-radius: 1.25rem;
+            background:
+                radial-gradient(circle at 50% 50%, rgba(0, 249, 255, 0.12), rgba(255, 0, 170, 0.04) 48%, rgba(5, 5, 8, 0.78) 78%),
+                linear-gradient(rgba(0, 249, 255, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.04) 1px, transparent 1px);
+            background-size: 100% 100%, 52px 52px, 52px 52px;
+            box-shadow: inset 0 0 88px rgba(0, 249, 255, 0.10), 0 0 74px rgba(0, 249, 255, 0.08);
+            overflow: hidden;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen #graph-canvas {
+            border-radius: 1rem;
+            background:
+                linear-gradient(rgba(0, 249, 255, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.04) 1px, transparent 1px),
+                radial-gradient(circle at center, rgba(0, 249, 255, 0.08), rgba(255, 0, 170, 0.035) 52%, rgba(5, 5, 8, 0.12) 78%);
+            background-size: 52px 52px, 52px 52px, 100% 100%;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen #orb-map-canvas {
+            inset: 0.65rem;
+            width: calc(100% - 1.3rem);
+            height: calc(100% - 1.3rem);
+            border-radius: 1rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .sec-production-legend {
+            top: auto;
+            right: 1rem;
+            bottom: 1rem;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen .graph-sidebar-column {
+            position: absolute;
+            z-index: 22;
+            top: min(28vh, 15.75rem);
+            right: 1rem;
+            bottom: 1rem;
+            width: min(26rem, calc(100vw - 2rem));
+            transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+        }
+
+        #graph-intelligence-view.is-graph-fullscreen #sidebar,
+        #graph-intelligence-view.is-graph-fullscreen #empty-sidebar {
+            position: static;
+            max-height: 100%;
+            height: 100%;
+            overflow-y: auto;
+            border-radius: 1.25rem;
+            padding: 1.15rem;
+        }
+
+        .node-source-link {
+            max-width: none;
+        }
+
+        .confidence-badge {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.78);
+        }
+
+        .confidence-badge.high {
+            border-color: rgba(0, 255, 159, 0.34);
+            background: rgba(0, 255, 159, 0.10);
+            color: #7cffc8;
+        }
+
+        .confidence-badge.medium {
+            border-color: rgba(255, 215, 0, 0.34);
+            background: rgba(255, 215, 0, 0.10);
+            color: #ffe66b;
+        }
+
+        .trust-panel {
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background: rgba(0, 249, 255, 0.055);
+        }
+
+        .graph-overlay-stats {
+            position: absolute;
+            left: 1rem;
+            bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            max-width: calc(100% - 2rem);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .graph-stat-pill {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(3, 7, 18, 0.74);
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.08);
+            backdrop-filter: blur(14px);
+        }
+
+        .graph-perspective-hint {
+            flex-basis: 100%;
+            max-width: min(34rem, calc(100vw - 2rem));
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background: rgba(3, 7, 18, 0.7);
+            color: rgba(207, 250, 254, 0.78);
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.07);
+            backdrop-filter: blur(14px);
+        }
+
+        .graph-orb-map-hint {
+            flex-basis: 100%;
+            max-width: min(38rem, calc(100vw - 2rem));
+            border: 1px solid rgba(251, 191, 36, 0.18);
+            background: rgba(13, 10, 4, 0.68);
+            color: rgba(254, 243, 199, 0.78);
+            box-shadow: 0 0 16px rgba(251, 191, 36, 0.07);
+            backdrop-filter: blur(14px);
+        }
+
+        .dashboard-chip {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(0, 249, 255, 0.065);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .dashboard-chip:hover,
+        .dashboard-chip:focus-visible {
+            border-color: rgba(0, 249, 255, 0.52);
+            background: rgba(0, 249, 255, 0.14);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 249, 255, 0.13);
+            outline: none;
+        }
+
+        .app-view-tabs {
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(0, 0, 0, 0.26);
+        }
+
+        .app-view-tab {
+            min-height: 2.75rem;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.62);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .app-view-tab:hover,
+        .app-view-tab:focus-visible {
+            border-color: rgba(0, 249, 255, 0.32);
+            color: #ffffff;
+            outline: none;
+        }
+
+        .app-view-tab[aria-selected="true"] {
+            border-color: rgba(0, 249, 255, 0.52);
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.16), rgba(255, 0, 170, 0.10));
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 249, 255, 0.12);
+        }
+
+        .product-view-switch {
+            width: fit-content;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(0, 0, 0, 0.34);
+        }
+
+        .product-view-tab {
+            min-height: 2.5rem;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.62);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+        .product-view-tab:hover,
+        .product-view-tab:focus-visible {
+            border-color: rgba(0, 249, 255, 0.32);
+            color: #ffffff;
+            outline: none;
+        }
+
+        .product-view-tab[aria-selected="true"] {
+            border-color: rgba(0, 249, 255, 0.54);
+            background: rgba(0, 249, 255, 0.13);
+            color: #ffffff;
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.12);
+        }
+
+        body.is-crypto-active [data-stock-only] {
+            display: none;
+        }
+
+        .crypto-surface {
+            min-height: calc(100vh - 6rem);
+        }
+
+        .crypto-panel {
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.075), rgba(251, 191, 36, 0.045)),
+                rgba(6, 8, 18, 0.88);
+            box-shadow: 0 0 42px rgba(0, 249, 255, 0.08);
+        }
+
+        .crypto-canvas-wrap {
+            position: relative;
+            height: min(66vh, 680px);
+            min-height: 520px;
+            border: 1px solid rgba(0, 249, 255, 0.12);
+            background:
+                linear-gradient(rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                rgba(2, 6, 23, 0.74);
+            background-size: 46px 46px, 46px 46px, 100% 100%;
+        }
+
+        #crypto-flow-canvas {
+            display: block;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        #crypto-history-workspace-canvas {
+            cursor: grab;
+            touch-action: none;
+        }
+
+        #crypto-flow-canvas:active,
+        #crypto-history-workspace-canvas:active {
+            cursor: grabbing;
+        }
+
+        .crypto-history-workspace-canvas {
+            display: none;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 50% 45%, rgba(217, 70, 239, 0.10), transparent 34rem),
+                rgba(2, 6, 23, 0.68);
+        }
+
+        .crypto-replay-workspace-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 18;
+            display: none;
+            pointer-events: none;
+            padding: 0.8rem;
+            grid-template-columns: minmax(12rem, 15rem) minmax(0, 1fr);
+            grid-template-rows: minmax(0, 1fr) auto;
+            gap: 0.75rem;
+            align-items: start;
+        }
+
+        .crypto-replay-workspace-panel {
+            width: 100%;
+            max-width: 100%;
+            border: 1px solid rgba(217, 70, 239, 0.24);
+            border-radius: 0.5rem;
+            background: rgba(2, 6, 23, 0.78);
+            box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34), 0 0 24px rgba(217, 70, 239, 0.08);
+            backdrop-filter: blur(13px);
+            padding: 0.78rem;
+            color: rgba(236, 254, 255, 0.90);
+            pointer-events: auto;
+            min-width: 0;
+            max-height: calc(100% - 0.1rem);
+            overflow-y: auto;
+            overflow-x: hidden;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-replay-workspace-toolbar,
+        .crypto-replay-workspace-bottom {
+            justify-self: stretch;
+        }
+
+        .crypto-replay-workspace-toolbar {
+            grid-column: 1;
+            grid-row: 1 / span 2;
+            align-self: start;
+        }
+
+        .crypto-replay-workspace-bottom {
+            grid-column: 2;
+            grid-row: 2;
+            width: 100%;
+            align-self: end;
+            pointer-events: none;
+            max-height: min(24%, 11rem);
+            overflow-y: auto;
+        }
+
+        .crypto-replay-workspace-bottom .crypto-replay-workspace-panel {
+            width: 100%;
+        }
+
+        .crypto-replay-toolbar-main {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            gap: 0.65rem;
+        }
+
+        .crypto-replay-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
+        .crypto-replay-timeline-rail {
+            display: grid;
+            gap: 0.35rem;
+            margin-top: 0.65rem;
+            min-width: 0;
+        }
+
+        .crypto-replay-workspace-time-labels {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+            align-items: center;
+            gap: 0.45rem;
+            color: rgba(255, 255, 255, 0.46);
+            font-size: 0.62rem;
+            line-height: 1.25;
+        }
+
+        .crypto-replay-workspace-time-labels span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .crypto-replay-workspace-time-labels span:last-child {
+            text-align: right;
+        }
+
+        .crypto-replay-workspace-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.45rem;
+            min-width: 0;
+        }
+
+        .crypto-replay-workspace-controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.4rem;
+            margin-top: 0.65rem;
+            min-width: 0;
+        }
+
+        .crypto-replay-workspace-controls button {
+            min-width: 0;
+            min-height: 2.25rem;
+            border-radius: 0.65rem;
+            padding: 0.45rem 0.7rem;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(226, 232, 240, 0.72);
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: normal;
+        }
+
+        .crypto-replay-workspace-controls button.is-primary {
+            border-color: rgba(217, 70, 239, 0.38);
+            background: rgba(217, 70, 239, 0.16);
+            color: rgba(253, 244, 255, 0.94);
+        }
+
+        .crypto-replay-workspace-actions button {
+            min-width: 0;
+            min-height: 2.5rem;
+            border-radius: 0.75rem;
+            padding: 0.55rem 0.8rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(226, 232, 240, 0.78);
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: normal;
+        }
+
+        .crypto-replay-workspace-actions button.is-primary {
+            border-color: rgba(217, 70, 239, 0.38);
+            background: rgba(217, 70, 239, 0.16);
+            color: rgba(253, 244, 255, 0.94);
+        }
+
+        .crypto-replay-workspace-controls button:disabled,
+        .crypto-replay-workspace-actions button:disabled {
+            cursor: not-allowed;
+            opacity: 0.52;
+        }
+
+        #crypto-photonic-view.is-replay-workspace #crypto-flow-canvas,
+        #crypto-photonic-view.is-replay-workspace #crypto-graph-hover-overlay,
+        #crypto-photonic-view.is-replay-workspace .crypto-mobile-graph-overlay {
+            display: none;
+        }
+
+        #crypto-photonic-view.is-replay-workspace #crypto-history-workspace-canvas {
+            display: block;
+        }
+
+        #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-overlay {
+            display: grid;
+        }
+
+        #crypto-photonic-view.is-replay-workspace .crypto-canvas-wrap {
+            height: clamp(620px, calc(100dvh - 13rem), 860px) !important;
+            min-height: 600px !important;
+            border-color: rgba(217, 70, 239, 0.24);
+            box-shadow: 0 0 0 1px rgba(217, 70, 239, 0.08), 0 26px 80px rgba(0, 0, 0, 0.30);
+        }
+
+        .crypto-graph-hover-overlay {
+            position: absolute;
+            z-index: 16;
+            left: 0;
+            top: 0;
+            max-width: min(260px, calc(100% - 1.5rem));
+            pointer-events: none;
+            opacity: 0;
+            transform: translate3d(0, 4px, 0);
+            transition: opacity 90ms ease, transform 90ms ease;
+            border: 1px solid rgba(103, 232, 249, 0.28);
+            border-radius: 0.75rem;
+            background: rgba(2, 6, 23, 0.92);
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42), 0 0 22px rgba(34, 211, 238, 0.10);
+            backdrop-filter: blur(14px);
+            padding: 0.65rem 0.75rem;
+            color: rgba(236, 254, 255, 0.92);
+        }
+
+        .crypto-graph-hover-overlay.is-visible {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+        }
+
+        .crypto-hover-kicker {
+            color: rgba(165, 243, 252, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+
+        .crypto-hover-title {
+            margin-top: 0.18rem;
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+
+        .crypto-hover-meta {
+            margin-top: 0.18rem;
+            color: rgba(226, 232, 240, 0.58);
+            font-size: 0.7rem;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        .control-section-title,
+        .control-help {
+            color: rgba(165, 243, 252, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.66rem;
+            letter-spacing: 1.15px;
+            line-height: 1.45;
+        }
+
+        .control-section-title {
+            flex: 1 0 100%;
+            margin-top: 0.15rem;
+            text-transform: uppercase;
+        }
+
+        .control-help {
+            color: rgba(226, 232, 240, 0.58);
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .stock-control-break {
+            flex-basis: 100%;
+            height: 0;
+        }
+
+        .help-trigger {
+            border-color: rgba(125, 211, 252, 0.24) !important;
+            background: rgba(14, 165, 233, 0.10);
+        }
+
+        body.crypto-graph-fullscreen-active {
+            overflow: hidden;
+        }
+
+        body.crypto-graph-fullscreen-active > header,
+        body.crypto-graph-fullscreen-active > .page-shell:not(#crypto-photonic-view) {
+            display: none;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 95;
+            width: 100vw;
+            height: 100dvh;
+            max-width: none;
+            padding: 0.85rem;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 12% 9%, rgba(0, 249, 255, 0.16), transparent 32rem),
+                radial-gradient(circle at 82% 17%, rgba(34, 197, 94, 0.10), transparent 26rem),
+                rgba(3, 7, 18, 0.98);
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen > .flex {
+            margin-bottom: 0.75rem;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
+            height: calc(100dvh - 7.4rem);
+            display: flex;
+            flex-direction: column;
+            border-radius: 1.15rem;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen .crypto-panel > .grid {
+            flex: 1;
+            min-height: 0;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen .crypto-canvas-wrap {
+            height: 100%;
+            min-height: 0;
+            border-radius: 1rem;
+        }
+
+        #crypto-photonic-view.is-crypto-fullscreen #crypto-detail-panel {
+            max-height: 100%;
+            border-radius: 1rem;
+        }
+
+        .photonic-help-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.68);
+            backdrop-filter: blur(18px);
+        }
+
+        .photonic-help-backdrop.is-open {
+            display: flex;
+        }
+
+        .photonic-help-modal {
+            width: min(760px, calc(100vw - 2rem));
+            max-height: min(82dvh, 760px);
+            overflow-y: auto;
+            border: 1px solid rgba(125, 211, 252, 0.22);
+            background:
+                linear-gradient(145deg, rgba(0, 249, 255, 0.10), rgba(255, 255, 255, 0.045)),
+                rgba(3, 7, 18, 0.94);
+            box-shadow: 0 26px 80px rgba(0, 0, 0, 0.55), 0 0 34px rgba(0, 249, 255, 0.10);
+        }
+
+        .photonic-help-modal h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.65rem, 4vw, 2.35rem);
+            line-height: 1.05;
+        }
+
+        .photonic-help-list {
+            display: grid;
+            gap: 0.55rem;
+            color: rgba(226, 232, 240, 0.74);
+            font-size: 0.88rem;
+            line-height: 1.55;
+        }
+
+        .photonic-help-list strong {
+            color: rgba(236, 254, 255, 0.92);
+        }
+
+        .crypto-stat-pill,
+        .crypto-detail-row,
+        .crypto-edge-summary {
+            border: 1px solid rgba(255, 255, 255, 0.085);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .source-workbench {
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.07), rgba(255, 0, 170, 0.04)),
+                rgba(6, 8, 18, 0.88);
+            box-shadow: 0 0 42px rgba(0, 249, 255, 0.08);
+        }
+
+        .source-workbench-panel {
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+        .primary-workflow-panel {
+            border-color: rgba(0, 249, 255, 0.26);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.09), rgba(255, 0, 170, 0.045)),
+                rgba(0, 0, 0, 0.24);
+            box-shadow: 0 0 28px rgba(0, 249, 255, 0.08);
+        }
+
+        .source-workbench-label {
+            color: rgba(165, 243, 252, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.68rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .source-workbench-pill {
+            border: 1px solid rgba(0, 249, 255, 0.22);
+            background: rgba(0, 249, 255, 0.07);
+            color: rgba(207, 250, 254, 0.88);
+        }
+
+        .source-workbench-warning {
+            border: 1px solid rgba(255, 215, 0, 0.22);
+            background: rgba(255, 215, 0, 0.075);
+            color: rgba(254, 240, 138, 0.88);
+        }
+
+        .pipeline-flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.55rem;
+            align-items: center;
+        }
+
+        .pipeline-step {
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background: rgba(0, 0, 0, 0.28);
+            color: rgba(224, 242, 254, 0.86);
+        }
+
+        .primary-workflow-step {
+            border-color: rgba(0, 249, 255, 0.34);
+            background: rgba(0, 249, 255, 0.10);
+            color: #ffffff;
+        }
+
+        .pipeline-arrow {
+            color: rgba(255, 255, 255, 0.35);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.72rem;
+        }
+
+        .source-command {
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.34);
+        }
+
+        .source-command-secondary {
+            border-color: rgba(255, 255, 255, 0.055);
+            background: rgba(0, 0, 0, 0.22);
+        }
+
+        .source-command-copy {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(0, 249, 255, 0.07);
+            color: rgba(165, 243, 252, 0.88);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+        }
+
+        .source-command-copy:hover,
+        .source-command-copy:focus-visible {
+            border-color: rgba(0, 249, 255, 0.48);
+            background: rgba(0, 249, 255, 0.13);
+            color: #ffffff;
+            outline: none;
+        }
+
+        .source-candidate-table {
+            min-width: 860px;
+        }
+
+        .source-candidate-table th {
+            color: rgba(165, 243, 252, 0.82);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.64rem;
+            font-weight: 500;
+            letter-spacing: 1.2px;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        .source-candidate-table td {
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            color: rgba(255, 255, 255, 0.72);
+            font-size: 0.72rem;
+            line-height: 1.45;
+            vertical-align: top;
+        }
+
+        @media (max-width: 768px) {
+            html,
+            body {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            .page-shell {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            header .page-shell {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            header .page-shell > div:last-child {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+
+            .graph-intelligence-controls select,
+            .graph-intelligence-controls .signal-control {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .graph-container {
+                height: clamp(420px, 66dvh, 680px) !important;
+                min-height: 420px;
+                border-radius: 1.15rem !important;
+                padding: 0.5rem !important;
+            }
+
+            #graph-canvas,
+            .orb-map-canvas,
+            .crypto-canvas-wrap,
+            #crypto-flow-canvas {
+                border-radius: 1rem !important;
+            }
+
+            .mobile-graph-overlay {
+                display: flex;
+            }
+
+            .mobile-graph-hint {
+                max-width: 52%;
+                font-size: 0.62rem;
+            }
+
+            .mobile-graph-actions {
+                max-width: 46%;
+            }
+
+            .crypto-surface {
+                min-height: calc(100dvh - 4rem);
+            }
+
+            .crypto-panel {
+                padding: 0.85rem !important;
+                border-radius: 1.1rem !important;
+            }
+
+            .crypto-panel > .flex {
+                align-items: flex-start;
+            }
+
+            .crypto-canvas-wrap {
+                height: clamp(430px, 64dvh, 680px);
+                min-height: 430px;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-canvas-wrap {
+                height: clamp(520px, 68dvh, 760px);
+                min-height: 500px;
+            }
+
+            .crypto-replay-workspace-overlay {
+                padding: 0.65rem 0.65rem calc(4.85rem + env(safe-area-inset-bottom));
+                gap: 0.55rem;
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: minmax(0, 1fr) auto auto;
+                align-items: end;
+            }
+
+            .crypto-replay-workspace-panel {
+                width: 100%;
+                max-height: min(24dvh, 13rem);
+                overflow-y: auto;
+            }
+
+            .crypto-replay-toolbar-main {
+                flex-direction: column;
+            }
+
+            .crypto-replay-meta-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .crypto-replay-workspace-toolbar {
+                grid-column: 1;
+                grid-row: 2;
+            }
+
+            .crypto-replay-workspace-bottom {
+                grid-column: 1;
+                grid-row: 3;
+                max-height: min(18dvh, 9rem);
+                overflow-y: auto;
+            }
+
+            .crypto-replay-workspace-actions button {
+                flex: 1 1 calc(50% - 0.35rem);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-mobile-investigation-drawer {
+                display: none;
+            }
+
+            .crypto-data-source-snapshot {
+                grid-template-columns: 1fr;
+            }
+
+            #crypto-detail-panel {
+                min-height: 260px;
+                max-height: none;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen {
+                padding: calc(0.75rem + env(safe-area-inset-top)) calc(0.75rem + env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) calc(0.75rem + env(safe-area-inset-left));
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls {
+                position: relative;
+                inset: auto;
+                width: 100%;
+                max-height: min(34dvh, 18rem);
+                margin-bottom: 0.75rem;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-intelligence-controls,
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-sidebar-column {
+                display: none;
+            }
+
+            .fullscreen-hud-restore {
+                position: fixed;
+                top: calc(0.75rem + env(safe-area-inset-top));
+                right: calc(0.75rem + env(safe-area-inset-right));
+                min-height: 2.5rem;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-container {
+                height: clamp(500px, 72dvh, 820px) !important;
+                min-height: 460px;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-container {
+                height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+                min-height: 0;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-sidebar-column {
+                position: relative;
+                inset: auto;
+                width: 100%;
+                margin-top: 0.75rem;
+                pointer-events: auto;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen #sidebar,
+            #graph-intelligence-view.is-graph-fullscreen #empty-sidebar {
+                height: auto;
+                max-height: min(48dvh, 30rem);
+            }
+
+            .app-view-tabs {
+                width: 100%;
+            }
+
+            .app-view-tab {
+                flex: 1 1 100%;
+                justify-content: center;
+            }
+
+            .product-view-switch {
+                width: 100%;
+            }
+
+            .product-view-tab {
+                flex: 1 1 calc(50% - 0.25rem);
+                justify-content: center;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen {
+                padding: calc(0.75rem + env(safe-area-inset-top)) calc(0.75rem + env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) calc(0.75rem + env(safe-area-inset-left));
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen > .flex {
+                margin-bottom: 0.6rem;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen > .flex h1 {
+                font-size: 2rem;
+                line-height: 1.05;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen > .flex p {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
+                height: auto;
+                min-height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-canvas-wrap {
+                height: clamp(520px, 74dvh, 820px);
+                min-height: 500px;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen #crypto-detail-panel {
+                max-height: min(42dvh, 28rem);
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-panel > .grid {
+                gap: 0.75rem;
+            }
+
+            .photonic-help-backdrop {
+                align-items: stretch;
+                padding: 0.75rem;
+            }
+
+            .photonic-help-modal {
+                width: 100%;
+                max-height: calc(100dvh - 1.5rem);
+            }
+
+            .connection-row {
+                border-radius: 1rem;
+            }
+
+            .graph-overlay-stats {
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: 4.25rem;
+                max-width: calc(100% - 1.5rem);
+            }
+
+            .graph-perspective-hint,
+            .graph-orb-map-hint {
+                max-width: 100%;
+                line-height: 1.35;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen #orb-map-canvas {
+                inset: 0.5rem;
+                width: calc(100% - 1rem);
+                height: calc(100% - 1rem);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mobile-graph-overlay {
+                left: max(0.5rem, env(safe-area-inset-left));
+                right: max(0.5rem, env(safe-area-inset-right));
+                bottom: max(0.5rem, env(safe-area-inset-bottom));
+                gap: 0.45rem;
+            }
+
+            .mobile-graph-hint {
+                max-width: 44%;
+                padding: 0.45rem 0.55rem;
+            }
+
+            .mobile-graph-actions {
+                max-width: 54%;
+                gap: 0.32rem;
+            }
+
+            .mobile-graph-action {
+                min-width: 2.55rem;
+                min-height: 2.55rem;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button {
+                flex: 1 1 calc(50% - 0.35rem);
+            }
+
+            .graph-intelligence-controls .perspective-reset-control {
+                flex: 1 1 calc(50% - 0.35rem);
+                justify-content: center;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls select,
+            #graph-intelligence-view.is-graph-fullscreen .signal-control {
+                width: 100%;
+                min-width: 0;
+            }
+
+        }
+
+        @media (max-width: 768px) {
+            header .page-shell {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0.6rem !important;
+                padding: 0.55rem 0.85rem !important;
+            }
+
+            header .page-shell > div:first-child,
+            header .page-shell > div:first-child > div {
+                min-width: 0;
+            }
+
+            header .w-11 {
+                width: 2rem !important;
+                height: 2rem !important;
+                border-radius: 0.8rem !important;
+                flex: 0 0 auto;
+            }
+
+            header .fa-atom {
+                font-size: 1.25rem !important;
+            }
+
+            header .neon-text {
+                font-size: 1.25rem !important;
+                line-height: 1 !important;
+                white-space: nowrap;
+            }
+
+            header .neon-text + div,
+            header [data-stock-only] {
+                display: none !important;
+            }
+
+            .product-view-switch,
+            .app-view-tabs {
+                width: 100% !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                margin-bottom: 0.45rem !important;
+                padding: 0.35rem !important;
+            }
+
+            .product-view-tab,
+            .app-view-tab {
+                min-height: 2.25rem !important;
+                justify-content: center;
+                padding: 0.5rem 0.65rem !important;
+                font-size: 0.62rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child,
+            #crypto-photonic-view > .flex:first-child {
+                display: none !important;
+            }
+
+            .graph-intelligence-controls {
+                max-height: 4.2rem;
+                margin-bottom: 0.5rem !important;
+                overflow-x: auto;
+                overflow-y: hidden;
+                flex-wrap: nowrap !important;
+            }
+
+            .interaction-dock {
+                position: fixed;
+                left: calc(0.65rem + env(safe-area-inset-left));
+                right: calc(0.65rem + env(safe-area-inset-right));
+                bottom: calc(0.65rem + env(safe-area-inset-bottom));
+                top: auto;
+                z-index: 60;
+                align-items: stretch;
+                gap: 0.45rem;
+                margin: 0;
+                padding: 0.45rem;
+                border-radius: 1rem;
+            }
+
+            .interaction-dock-label {
+                display: none;
+            }
+
+            .interaction-dock-actions {
+                justify-content: flex-start;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding-bottom: 0.08rem;
+                scrollbar-width: none;
+            }
+
+            .interaction-dock-actions::-webkit-scrollbar {
+                display: none;
+            }
+
+            .interaction-dock-button {
+                min-width: 2.75rem;
+                min-height: 2.65rem;
+                padding: 0.45rem 0.62rem;
+                font-size: 0.6rem;
+            }
+
+            .interaction-dock-button span {
+                display: none;
+            }
+
+            .interaction-dock-split {
+                flex: 0 0 auto;
+            }
+
+            #stock-photonic-surface,
+            #crypto-photonic-view {
+                padding-bottom: calc(5.65rem + env(safe-area-inset-bottom)) !important;
+            }
+
+            .graph-container {
+                height: clamp(390px, 58dvh, 620px) !important;
+                min-height: 390px !important;
+            }
+
+            .crypto-workspace-toolbar {
+                margin-bottom: 0.5rem !important;
+            }
+
+            .crypto-workspace-toolbar > div:first-child > div:last-child {
+                display: none;
+            }
+
+            .crypto-canvas-wrap {
+                height: clamp(410px, 62dvh, 640px) !important;
+                min-height: 410px !important;
+            }
+
+            .mobile-graph-overlay {
+                bottom: calc(5.1rem + env(safe-area-inset-bottom)) !important;
+            }
+        }
+
+        #crypto-flow-canvas {
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .crypto-canvas-wrap.is-panning,
+        .crypto-canvas-wrap.is-dragging-node,
+        .crypto-canvas-wrap.is-pinching {
+            border-color: rgba(103, 232, 249, 0.34);
+            box-shadow: inset 0 0 0 1px rgba(103, 232, 249, 0.10), 0 0 34px rgba(34, 211, 238, 0.08);
+        }
+
+        .crypto-canvas-wrap.is-panning #crypto-flow-canvas,
+        .crypto-canvas-wrap.is-dragging-node #crypto-flow-canvas,
+        .crypto-canvas-wrap.is-pinching #crypto-flow-canvas {
+            cursor: grabbing;
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .crypto-graph-hover-overlay {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .crypto-interaction-dock {
+                z-index: 72;
+            }
+
+            body.crypto-graph-fullscreen-active {
+                overscroll-behavior: none;
+            }
+
+            .crypto-mobile-graph-overlay {
+                top: calc(0.6rem + env(safe-area-inset-top));
+                bottom: auto !important;
+                align-items: flex-start;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-hint {
+                max-width: min(46vw, 14rem);
+                line-height: 1.25;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-actions {
+                width: auto;
+                max-width: none;
+                margin-left: auto;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-action {
+                min-width: 2.55rem;
+                min-height: 2.55rem;
+            }
+
+            .crypto-mobile-investigation-drawer {
+                display: block;
+                bottom: calc(5.2rem + env(safe-area-inset-bottom));
+                max-width: calc(100vw - 1.5rem - env(safe-area-inset-left) - env(safe-area-inset-right));
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen {
+                overflow: hidden;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
+                min-height: 0;
+                height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+                padding-bottom: 0.65rem !important;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-layout-grid {
+                min-height: 0;
+                grid-template-columns: 1fr;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-graph-column {
+                min-height: 0;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-canvas-wrap {
+                height: calc(100dvh - 7.7rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+                min-height: 0 !important;
+                border-radius: 1rem !important;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-side-column {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-investigation-drawer {
+                bottom: calc(5.15rem + env(safe-area-inset-bottom));
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-investigation-drawer.is-collapsed {
+                max-height: 5rem;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-investigation-drawer.is-half {
+                max-height: min(36%, 16rem);
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-investigation-drawer.is-expanded {
+                max-height: min(56%, 26rem);
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-interaction-dock {
+                left: calc(0.55rem + env(safe-area-inset-left));
+                right: calc(0.55rem + env(safe-area-inset-right));
+                bottom: calc(0.5rem + env(safe-area-inset-bottom));
+            }
+
+            .crypto-sidebar-stack {
+                max-height: none;
+                overflow: visible;
+                padding-right: 0;
+            }
+
+            .crypto-investigation-tabs {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .crypto-investigation-tab {
+                min-width: 0;
+            }
+
+            .crypto-summary-grid,
+            .crypto-two-column-list,
+            .crypto-guided-action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #crypto-detail-panel {
+                min-height: 300px;
+                padding: 0.9rem !important;
+            }
+
+            .crypto-status-stack {
+                gap: 0.55rem;
+            }
+
+            .crypto-status-stack .crypto-control-group {
+                padding: 0.65rem !important;
+            }
+
+            .crypto-status-stack button,
+            .crypto-status-stack input,
+            .crypto-status-stack select,
+            .crypto-tab-section button {
+                min-width: 0;
+                white-space: normal;
+            }
+
+            .crypto-mode-switch,
+            .crypto-replay-workspace-actions,
+            .crypto-status-stack .flex,
+            .crypto-status-stack .grid {
+                min-width: 0;
+            }
+
+            .crypto-wallet-status-line,
+            .crypto-data-source-snapshot,
+            .crypto-card-heading {
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .crypto-data-source-snapshot {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .crypto-mobile-investigation-drawer.is-collapsed .crypto-mobile-drawer-selected,
+            .crypto-mobile-investigation-drawer.is-collapsed .crypto-mobile-drawer-empty {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .crypto-mobile-graph-overlay {
+                left: max(0.55rem, env(safe-area-inset-left));
+                right: max(0.55rem, env(safe-area-inset-right));
+                gap: 0.4rem;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-hint {
+                max-width: 36vw;
+                padding: 0.42rem 0.5rem;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-actions {
+                gap: 0.28rem;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-action {
+                min-width: 2.4rem;
+                min-height: 2.4rem;
+            }
+
+            .crypto-mobile-drawer-topline {
+                grid-template-columns: 1fr;
+            }
+
+            .crypto-mobile-drawer-state-controls {
+                justify-content: stretch;
+            }
+
+            .crypto-mobile-drawer-state-controls .crypto-mobile-drawer-button {
+                flex: 1 1 0;
+            }
+
+            .crypto-mobile-drawer-summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }

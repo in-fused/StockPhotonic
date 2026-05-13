@@ -187,6 +187,7 @@
                 selectedStepIndex: state.selectedStepIndex,
                 auditFilters: state.auditFilters,
                 now,
+                metadata: state.metadata,
                 limits: state.limits
             });
             return getStatus();
@@ -490,6 +491,7 @@
         ctx.restore();
         drawReplayProgress(ctx, size.width, size.height, options.stepIndex, options.steps.length, options.playing);
         drawReplayStatePill(ctx, size.width, size.height, options.playing, options.stepIndex, options.steps.length);
+        drawReplayBoundaryMarkers(ctx, size.width, size.height, options);
         drawWatermark(ctx, size.width, size.height);
     }
 
@@ -843,6 +845,61 @@
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, x + 12, y + 12);
+        ctx.restore();
+    }
+
+    function drawReplayBoundaryMarkers(ctx, width, height, options = {}) {
+        const metadata = options.metadata || {};
+        const replayWindow = metadata.replay_window || {};
+        const reconstruction = metadata.replay_reconstruction || {};
+        const label = replayWindow.window_label
+            || reconstruction.current_window_label
+            || metadata.replay_window_active?.label
+            || 'Staged replay window';
+        const partial = replayWindow.partial === true
+            || reconstruction.reconstruction_complete !== true
+            || metadata.scan_manifest?.full_history_loaded !== true;
+        const leftLabel = replayWindow.boundary?.is_oldest_staged_window ? 'OLDEST STAGED BOUNDARY' : 'WINDOW START';
+        const rightLabel = replayWindow.boundary?.is_newest_staged_window ? 'NEWEST STAGED BOUNDARY' : 'WINDOW END';
+        const y = Math.max(92, Math.min(height - 82, 96));
+        ctx.save();
+        ctx.globalAlpha = 0.92;
+        drawBoundaryLine(ctx, 18, y, Math.max(72, height - 58), leftLabel, 'left');
+        drawBoundaryLine(ctx, width - 18, y, Math.max(72, height - 58), rightLabel, 'right');
+
+        const text = `${label}${partial ? ' / PARTIAL STAGED SEGMENT' : ' / STAGED SEGMENT'}`;
+        ctx.font = '800 10px JetBrains Mono, monospace';
+        const textWidth = Math.min(width - 36, ctx.measureText(text).width + 24);
+        const x = Math.max(14, (width - textWidth) / 2);
+        roundedRect(ctx, x, height - 48, textWidth, 26, 13);
+        ctx.fillStyle = partial ? 'rgba(113, 63, 18, 0.58)' : 'rgba(8, 47, 73, 0.54)';
+        ctx.fill();
+        ctx.strokeStyle = partial ? 'rgba(250, 204, 21, 0.34)' : 'rgba(103, 232, 249, 0.32)';
+        ctx.stroke();
+        ctx.fillStyle = partial ? 'rgba(254, 249, 195, 0.88)' : 'rgba(207, 250, 254, 0.86)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, width / 2, height - 35);
+        ctx.restore();
+    }
+
+    function drawBoundaryLine(ctx, x, y1, y2, label, align = 'left') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(250, 204, 21, 0.30)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 8]);
+        ctx.beginPath();
+        ctx.moveTo(x, y1);
+        ctx.lineTo(x, y2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.translate(x + (align === 'left' ? 9 : -9), y1 + 4);
+        ctx.rotate(align === 'left' ? Math.PI / 2 : -Math.PI / 2);
+        ctx.font = '800 9px JetBrains Mono, monospace';
+        ctx.fillStyle = 'rgba(254, 249, 195, 0.64)';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, 0, 0);
         ctx.restore();
     }
 

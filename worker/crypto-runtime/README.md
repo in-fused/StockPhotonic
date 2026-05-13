@@ -8,6 +8,7 @@ This Worker is the secure runtime foundation for CryptoPhotonic. It is isolated 
 - `GET /api/crypto/events` returns sanitized events through the secure runtime feed contract.
 - `GET /api/crypto/wallet-activity?wallet=<address>&limit=<n>` performs one controlled server-side Helius Enhanced Transactions address-history lookup, stores/dedupes sanitized events, and returns browser-safe events only.
 - `GET /api/crypto/wallet-history?wallet=<address>&cursor=<optional>&scan_id=<optional>&limit=<n>` returns a non-storing normalized wallet history page contract for frontend pagination state. It calls only Worker-side provider adapters, carries safe scan-manifest metadata, and returns `provider_not_configured` when no provider is configured.
+- `GET /api/crypto/wallet-history/replay-window?scan_id=<scan>&window_index=<n>&direction=<current|older|newer|oldest|newest>` returns a bounded replay-window contract from the Worker normalized scan cache. It performs no provider fetch, exposes no raw provider payloads, and returns only sanitized staged rows when cached rows are available.
 - `POST /api/crypto/test-event` accepts local/dev event-like JSON payloads, rejects unsafe provider or secret-shaped fields, normalizes the event, stores it through the configured adapter, and never echoes unsafe input.
 - `POST /webhooks/helius` accepts bounded Helius webhook deliveries, verifies the configured authorization header when not running locally, reduces payloads to the CryptoPhotonic event shape, enforces the controlled wallet watchlist, dedupes retries, and stores only sanitized fields.
 - `POST /api/crypto/dev/clear-events` clears test events only when `ENVIRONMENT` is `local` or `development`.
@@ -230,6 +231,20 @@ Replay remains preview-only. The browser builds capped preview datasets from sta
 - replay limitations
 
 Rendering remains capped by the frontend preview limits, and the replay animator uses capped graph windows. Large archive scans must continue through progressive pages and manifest-backed windows rather than one massive browser graph render.
+
+## Replay Window Retrieval
+
+D135 adds `GET /api/crypto/wallet-history/replay-window` as a scan-cache read path. The route requires a safe `scan_id` and accepts `window_index`, `direction`, `anchor_step`, `window_id`, and `limit`.
+
+The route returns:
+
+- replay window id, label, ordinal range, staged range position, and timeline segments
+- continuation metadata for older/newer staged windows
+- boundary metadata for oldest/newest staged ranges
+- scan manifest, scan cache, replay reconstruction, warnings, confidence, and coverage metadata
+- sanitized normalized transactions only when the Worker scan cache can hydrate the requested window
+
+The route does not call Helius, generic providers, lana.ai, RPC endpoints, Jupiter, or any browser-side provider. It does not expose provider URLs, API keys, bearer tokens, request headers, raw provider responses, or provider internals. If cached rows are unavailable, it returns metadata-only status rather than inventing a full replay window.
 
 ## D131 Persisted Scan Cache
 

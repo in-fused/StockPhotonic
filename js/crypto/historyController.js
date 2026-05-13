@@ -43,6 +43,7 @@
             this.replayWindow = null;
             this.scanCache = null;
             this.replayReconstruction = null;
+            this.replayWindowResponse = null;
             this.progress = null;
             this.providerConfigured = false;
             this.providerPagesLoaded = 0;
@@ -183,6 +184,43 @@
             return this.getSnapshot();
         }
 
+        async loadReplayWindow(options = {}) {
+            if (!this.scanId && options.scanId) this.scanId = String(options.scanId || '').trim();
+            if (!this.provider || typeof this.provider.getReplayWindow !== 'function') {
+                this.lastError = 'Worker replay window provider not connected';
+                this.lastMessage = 'Replay windows require the Worker wallet-history replay-window endpoint.';
+                return this.getSnapshot();
+            }
+            if (!this.scanId) {
+                this.lastError = 'Replay window requires a scan id';
+                this.lastMessage = 'Load a Worker history page before requesting replay windows.';
+                return this.getSnapshot();
+            }
+
+            this.loading = true;
+            this.lastError = '';
+            try {
+                const response = await this.provider.getReplayWindow(this.scanId, options);
+                this.replayWindowResponse = response;
+                this.lastStatus = response.status || this.lastStatus || 'ok';
+                this.lastMessage = response.message || 'Replay window metadata loaded from Worker scan cache.';
+                this.lastMetadata = {
+                    ...(this.lastMetadata || {}),
+                    ...(response.metadata || {})
+                };
+                this.scanManifest = normalizeScanManifest(response.metadata?.scan_manifest || this.scanManifest);
+                this.scanCache = response.metadata?.scan_cache || this.scanManifest?.cache_state || this.scanCache || null;
+                this.replayReconstruction = response.metadata?.replay_reconstruction || this.scanManifest?.replay_reconstruction || this.replayReconstruction || null;
+                this.replayWindow = response.metadata?.replay_window || response.replayWindow || this.replayWindow || null;
+            } catch (error) {
+                this.lastError = error?.message || 'Replay window load failed';
+                this.lastMessage = 'Replay window load failed. No provider was called from the browser.';
+            } finally {
+                this.loading = false;
+            }
+            return this.getSnapshot();
+        }
+
         getSnapshot() {
             return {
                 version: HISTORY_CONTROLLER_VERSION,
@@ -206,6 +244,7 @@
                 gapFlags: this.gapFlags.slice(0, 16),
                 warnings: this.warnings.slice(0, 16),
                 replayWindow: this.replayWindow,
+                replayWindowResponse: this.replayWindowResponse,
                 scanCache: this.scanCache,
                 replayReconstruction: this.replayReconstruction,
                 progress: this.progress,

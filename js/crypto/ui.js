@@ -130,6 +130,10 @@
             graphRenderedAt: 0,
             replayAnimator: null,
             replayStatus: null,
+            activeReplayWindow: null,
+            replayWindowCache: new Map(),
+            replayWindowResponse: null,
+            checkpoint: null,
             selectedEvent: null,
             audit: {
                 filters: {
@@ -243,6 +247,9 @@
         maxEdges: 360
     });
     const HISTORY_REPLAY_CHUNK_SIZE = 80;
+    const HISTORY_REPLAY_WINDOW_CACHE_LIMIT = 6;
+    const HISTORY_REPLAY_CHECKPOINT_STORAGE_PREFIX = 'cryptophotonic:replay-checkpoint:v1:';
+    const HISTORY_REPLAY_CHECKPOINT_LATEST_KEY = `${HISTORY_REPLAY_CHECKPOINT_STORAGE_PREFIX}latest`;
     const HISTORY_REPLAY_SPEEDS = Object.freeze({
         inspect: 'Inspect',
         standard: 'Standard',
@@ -364,6 +371,7 @@
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
         state.flowReplayEnabled = Boolean(state.graph.flowReplayEnabled);
         applyDefaultLabelDensityForDataMode(state.dataMode);
+        state.historyPreview.checkpoint = loadReplayAuditCheckpoint({ allowLatest: true });
         prepareFlowMotion();
         rebuildInteractionIndex();
         state.selectedId = state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
@@ -1060,6 +1068,9 @@
         state.historyPreview.graphVisible = false;
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
+        state.historyPreview.activeReplayWindow = null;
+        state.historyPreview.replayWindowResponse = null;
+        state.historyPreview.replayWindowCache?.clear?.();
         detachHistoryReplayAnimator({ preserveStatus: false });
         resetHistoryPreviewAuditState();
         state.historyPreview.replaySpeed = 'standard';
@@ -2633,6 +2644,10 @@
     }
 
     function isHistoryPreviewDatasetStale() {
+        const metadata = state.historyPreview.dataset?.metadata || {};
+        if (metadata.replay_window_generation_key) {
+            return metadata.replay_window_generation_key !== getReplayDatasetGenerationKey(getActiveReplayWindowDescriptor());
+        }
         return Boolean(state.historyPreview.datasetMetrics
             && Number(state.historyPreview.datasetMetrics.stagedRowsReceived || 0) !== Number((state.history.loadedTransactions || []).length));
     }
@@ -3072,6 +3087,8 @@
             replayCoveragePct: status.replayCoveragePct ?? getWalletHistoryReplayCoverage(),
             completenessConfidence: status.completenessConfidence ?? getWalletHistoryCompletenessConfidence(),
             archiveReadiness: status.archiveReadiness || getWalletHistoryArchiveReadiness(),
+            providerGrade: status.providerGrade || getWalletHistoryProviderGrade(),
+            scanId: status.scanId || state.history.scanId || getWalletHistoryScanManifest().scan_id || '',
             replayWindow: status.replayWindow || state.historyPreview.dataset?.metadata?.replay_window || null,
             replayReconstruction: status.replayReconstruction || state.historyPreview.dataset?.metadata?.replay_reconstruction || null,
             windowing: status.windowing || null,
@@ -3084,10 +3101,11 @@
     }
 
     function resetHistoryPreviewAuditState(options = {}) {
+        const previous = state.historyPreview.audit || {};
         state.historyPreview.selectedEvent = null;
         state.historyPreview.audit = {
             filters: options.preserveFilters
-                ? normalizeReplayAuditFilters(state.historyPreview.audit?.filters)
+                ? normalizeReplayAuditFilters(previous.filters)
                 : {
                     token: 'all',
                     direction: 'all',
@@ -3095,10 +3113,10 @@
                     majorOnly: false
                 },
             selectedStep: 0,
-            selectedWallet: '',
+            selectedWallet: options.preserveFilters ? previous.selectedWallet || '' : '',
             expandedStep: 0,
-            breadcrumbs: [],
-            recentSteps: []
+            breadcrumbs: options.preserveBreadcrumbs && Array.isArray(previous.breadcrumbs) ? previous.breadcrumbs.slice(-7) : [],
+            recentSteps: options.preserveRecent && Array.isArray(previous.recentSteps) ? previous.recentSteps.slice(0, 8) : []
         };
     }
 
@@ -3233,6 +3251,138 @@
                 crumb
             ].slice(-7);
         }
+        if (options.persistCheckpoint !== false) persistReplayAuditCheckpoint(options.checkpointReason || 'selection');
+    }
+
+    function buildReplayAuditCheckpoint(reason = 'manual') {
+        const status = getHistoryReplayStatus();
+        const windowStatus = getHistoryReplayWindowStatus(buildHistoryGraphPreviewSummary(), status);
+        const helper = namespace.replayWorkspace?.buildReplayCheckpoint;
+        const context = {
+            reason,
+            status,
+            windowStatus,
+            scanId: state.history.scanId || getWalletHistoryScanManifest().scan_id || '',
+            wallet: state.walletLookup.lastWallet || state.walletLookup.walletInput || '',
+            selectedEvent: state.historyPreview.selectedEvent || status.selectedEvent || status.currentEvent || null,
+            selectedStep: state.historyPreview.audit?.selectedStep || status.selectedStep || status.currentStep || 0,
+            totalSteps: getHistoryReplayTotalSteps(status),
+            audit: state.historyPreview.audit,
+            auditFilters: normalizeReplayAuditFilters(state.historyPreview.audit?.filters),
+            breadcrumbs: state.historyPreview.audit?.breadcrumbs || [],
+            recentEvents: state.historyPreview.audit?.recentSteps || []
+        };
+        if (helper) return helper(context);
+        return {
+            version: 'd135_replay_audit_checkpoint_v1',
+            savedAt: new Date().toISOString(),
+            reason,
+            scanId: context.scanId,
+            wallet: context.wallet,
+            currentStep: Number(status.currentStep) || 0,
+            selectedStep: Number(context.selectedStep) || 0,
+            totalSteps: context.totalSteps,
+            windowId: windowStatus.windowId || '',
+            windowIndex: windowStatus.currentWindowIndex || 0,
+            windowLabel: windowStatus.windowLabel || '',
+            filters: context.auditFilters,
+            selectedCounterparty: context.auditFilters.counterparty !== 'all' ? context.auditFilters.counterparty : '',
+            selectedToken: context.auditFilters.token !== 'all' ? context.auditFilters.token : '',
+            breadcrumbs: (context.breadcrumbs || []).slice(-7),
+            recentSteps: (context.recentEvents || []).slice(0, 8),
+            boundary: {
+                previewOnly: true,
+                stagedHistoryOnly: true,
+                workerBacked: true,
+                activeGraphUnchanged: true,
+                noFullHistoryClaim: true
+            }
+        };
+    }
+
+    function persistReplayAuditCheckpoint(reason = 'manual') {
+        const checkpoint = buildReplayAuditCheckpoint(reason);
+        if (!checkpoint) return null;
+        state.historyPreview.checkpoint = checkpoint;
+        try {
+            const key = getReplayCheckpointStorageKey(checkpoint.scanId || state.history.scanId);
+            const serialized = JSON.stringify(checkpoint);
+            window.localStorage?.setItem(key, serialized);
+            window.localStorage?.setItem(HISTORY_REPLAY_CHECKPOINT_LATEST_KEY, serialized);
+        } catch (error) {
+            state.historyPreview.lastMessage = 'Replay checkpoint kept for this session only; local storage is unavailable.';
+        }
+        updateReplayWorkspaceShell();
+        return checkpoint;
+    }
+
+    function loadReplayAuditCheckpoint(options = {}) {
+        const normalize = namespace.replayWorkspace?.normalizeReplayCheckpoint || (value => value);
+        const candidates = [];
+        const scanId = state.history?.scanId || getWalletHistoryScanManifest().scan_id || '';
+        try {
+            if (scanId) candidates.push(window.localStorage?.getItem(getReplayCheckpointStorageKey(scanId)));
+            if (options.allowLatest) candidates.push(window.localStorage?.getItem(HISTORY_REPLAY_CHECKPOINT_LATEST_KEY));
+        } catch (error) {
+            return state.historyPreview?.checkpoint || null;
+        }
+        for (const item of candidates) {
+            if (!item) continue;
+            try {
+                const checkpoint = normalize(JSON.parse(item));
+                if (isReplayCheckpointCompatible(checkpoint, options)) return checkpoint;
+            } catch (error) {
+                // Ignore malformed local checkpoint records.
+            }
+        }
+        return null;
+    }
+
+    function isReplayCheckpointCompatible(checkpoint = null, options = {}) {
+        if (!checkpoint) return false;
+        const scanId = state.history?.scanId || getWalletHistoryScanManifest().scan_id || '';
+        if (scanId && checkpoint.scanId && checkpoint.scanId !== scanId && !options.allowLatest) return false;
+        return checkpoint.boundary?.previewOnly !== false
+            && checkpoint.boundary?.stagedHistoryOnly !== false
+            && checkpoint.boundary?.workerBacked !== false;
+    }
+
+    function getReplayCheckpointStorageKey(scanId = '') {
+        const scope = String(scanId || state.history.scanId || state.walletLookup.lastWallet || 'global')
+            .replace(/[^A-Za-z0-9._:-]/g, '_')
+            .slice(0, 180) || 'global';
+        return `${HISTORY_REPLAY_CHECKPOINT_STORAGE_PREFIX}${scope}`;
+    }
+
+    async function resumeReplayAuditCheckpoint() {
+        const checkpoint = state.historyPreview.checkpoint || loadReplayAuditCheckpoint({ allowLatest: true });
+        if (!checkpoint) {
+            state.historyPreview.lastMessage = 'No replay checkpoint is available to resume.';
+            updateReplayWorkspaceShell();
+            return null;
+        }
+        state.historyPreview.checkpoint = checkpoint;
+        state.historyPreview.audit.filters = normalizeReplayAuditFilters(checkpoint.filters);
+        state.historyPreview.audit.selectedWallet = checkpoint.selectedCounterparty || '';
+        const activeWindow = getActiveReplayWindowDescriptor();
+        if (checkpoint.windowIndex && (!activeWindow?.windowIndex || checkpoint.windowIndex !== activeWindow.windowIndex)) {
+            await activateReplayWindow(checkpoint.windowIndex, {
+                reason: 'checkpoint',
+                preserveAudit: true,
+                skipSeek: true
+            });
+        }
+        const targetStep = Math.max(0, Number(checkpoint.selectedStep || checkpoint.currentStep) || 0);
+        if (targetStep) {
+            return selectHistoryReplayEventByStep(targetStep, {
+                pause: true,
+                addBreadcrumb: false,
+                message: 'Replay checkpoint restored inside the preview-only staged workspace.'
+            });
+        }
+        state.historyPreview.lastMessage = 'Replay checkpoint restored filters and window context.';
+        updateReplayWorkspaceShell();
+        return checkpoint;
     }
 
     function getHistoryReplayTotalSteps(status = getHistoryReplayStatus(), datasetMetrics = state.historyPreview.datasetMetrics) {
@@ -3245,42 +3395,182 @@
     function getHistoryReplayWindowStatus(summary = buildHistoryGraphPreviewSummary(), status = getHistoryReplayStatus()) {
         const reconstruction = state.historyPreview.dataset?.metadata?.replay_reconstruction || getWalletHistoryReplayReconstruction();
         const replayWindow = state.historyPreview.dataset?.metadata?.replay_window || state.history.replayWindow || state.history.lastMetadata?.replay_window || {};
+        const activeWindow = state.historyPreview.activeReplayWindow || null;
         const totalSteps = getHistoryReplayTotalSteps(status);
         const currentStep = Math.max(0, Math.min(totalSteps, Number(status.currentStep) || 0));
-        const chunkSize = Math.max(1, Number(reconstruction.chunk_size || replayWindow.chunk_size || HISTORY_REPLAY_CHUNK_SIZE) || HISTORY_REPLAY_CHUNK_SIZE);
-        const windowCount = Math.max(0, Number(reconstruction.total_windows || replayWindow.total_windows) || Math.ceil((totalSteps || summary.transferEventCount || 0) / chunkSize));
+        const chunkSize = Math.max(1, Number(activeWindow?.chunkSize || reconstruction.chunk_size || replayWindow.chunk_size || HISTORY_REPLAY_CHUNK_SIZE) || HISTORY_REPLAY_CHUNK_SIZE);
+        const windowCount = Math.max(0, Number(activeWindow?.windowCount || reconstruction.total_windows || replayWindow.total_windows) || Math.ceil((summary.transferEventCount || state.history.loadedTransactions?.length || totalSteps || 0) / chunkSize));
         const currentWindowIndex = currentStep
-            ? Math.max(1, Math.ceil(currentStep / chunkSize))
-            : Math.max(0, Number(reconstruction.current_window_index || replayWindow.current_window_index) || (windowCount ? 1 : 0));
-        const windowStart = currentWindowIndex ? ((currentWindowIndex - 1) * chunkSize) + 1 : 0;
-        const windowEnd = currentWindowIndex ? Math.min(Math.max(totalSteps, Number(reconstruction.total_transactions) || 0), currentWindowIndex * chunkSize) : 0;
+            ? Math.max(1, Number(activeWindow?.windowIndex) || Math.ceil(currentStep / chunkSize))
+            : Math.max(0, Number(activeWindow?.windowIndex || reconstruction.current_window_index || replayWindow.current_window_index) || (windowCount ? 1 : 0));
+        const windowStart = Number(activeWindow?.ordinalStart) || (currentWindowIndex ? ((currentWindowIndex - 1) * chunkSize) + 1 : 0);
+        const windowEnd = Number(activeWindow?.ordinalEnd) || (currentWindowIndex ? Math.min(Math.max(state.history.loadedTransactions?.length || totalSteps, Number(reconstruction.total_transactions) || 0), currentWindowIndex * chunkSize) : 0);
         const renderCap = Math.max(1, Number(reconstruction.render_cap_transactions || replayWindow.render_cap_transactions || HISTORY_PREVIEW_GRAPH_LIMITS.maxTransactions) || HISTORY_PREVIEW_GRAPH_LIMITS.maxTransactions);
-        const timelineSegments = Array.isArray(reconstruction.timeline_segments) && reconstruction.timeline_segments.length
+        const timelineSegments = Array.isArray(activeWindow?.timelineSegments) && activeWindow.timelineSegments.length
+            ? activeWindow.timelineSegments
+            : Array.isArray(reconstruction.timeline_segments) && reconstruction.timeline_segments.length
             ? reconstruction.timeline_segments
             : Array.isArray(replayWindow.timeline_segments)
                 ? replayWindow.timeline_segments
                 : [];
-        const partial = reconstruction.reconstruction_complete !== true && getWalletHistoryScanManifest().full_history_loaded !== true;
-        const windowLabel = reconstruction.current_window_label
+        const partial = activeWindow?.partial === true || (reconstruction.reconstruction_complete !== true && getWalletHistoryScanManifest().full_history_loaded !== true);
+        const continuation = activeWindow?.continuation || replayWindow.continuation || {};
+        const boundary = activeWindow?.boundary || replayWindow.boundary || {};
+        const sortOrder = getWalletHistoryScanManifest().cursor_state?.sort_order || 'unknown';
+        const newestFirst = sortOrder === 'desc';
+        const canContinueOlder = activeWindow
+            ? Boolean(continuation.can_continue_older || (newestFirst ? currentWindowIndex < windowCount : currentWindowIndex > 1))
+            : Boolean(continuation.can_continue_older || state.history.moreAvailable || (newestFirst ? currentWindowIndex < windowCount : currentWindowIndex > 1));
+        const canContinueNewer = activeWindow
+            ? Boolean(continuation.can_continue_newer || (newestFirst ? currentWindowIndex > 1 : currentWindowIndex < windowCount))
+            : Boolean(continuation.can_continue_newer || (newestFirst ? currentWindowIndex > 1 : currentWindowIndex < windowCount));
+        const windowLabel = activeWindow?.windowLabel
+            || replayWindow.window_label
+            || reconstruction.current_window_label
             || replayWindow.window_label
             || (currentWindowIndex ? `Window ${currentWindowIndex}/${windowCount || currentWindowIndex} (${windowStart}-${windowEnd || '?'})` : 'Window pending');
         return {
+            id: activeWindow?.id || replayWindow.window_id || replayWindow.id || '',
+            windowId: activeWindow?.windowId || activeWindow?.id || replayWindow.window_id || replayWindow.id || '',
+            scanId: state.history.scanId || replayWindow.scan_id || '',
             chunkSize,
             currentStep,
             totalSteps,
             currentWindowIndex,
+            windowIndex: currentWindowIndex,
             windowCount,
+            totalWindows: windowCount,
             windowStart,
             windowEnd,
+            ordinalStart: windowStart,
+            ordinalEnd: windowEnd,
             windowLabel,
             windowTitle: `${windowLabel}. Chunk size ${chunkSize}. ${partial ? 'Replay is partial and may expand as older pages load.' : 'Reconstruction is best-effort complete for staged rows.'}`,
             renderCap,
             timelineSegments,
+            rangePosition: activeWindow?.rangePosition || replayWindow.range_position || '',
+            rangePositionLabel: formatReplayWindowRangePosition(activeWindow?.rangePosition || replayWindow.range_position || ''),
+            continuation,
+            boundary,
+            canContinueOlder,
+            canContinueNewer,
+            olderRequiresProviderPage: Boolean(continuation.older_requires_provider_page || (state.history.moreAvailable && !canContinueOlder)),
+            newerRequiresProviderPage: Boolean(continuation.newer_requires_provider_page),
+            olderWindowIndex: Number(continuation.older_window_index) || (newestFirst ? currentWindowIndex + 1 : currentWindowIndex - 1),
+            newerWindowIndex: Number(continuation.newer_window_index) || (newestFirst ? currentWindowIndex - 1 : currentWindowIndex + 1),
+            continuityWarning: partial
+                ? 'This replay is only a staged window. Continue controls move between available Worker-backed windows or load another staged page when needed.'
+                : '',
             oldestFirstReady: reconstruction.oldest_first_ready === true || replayWindow.oldest_first_ready === true,
             oldestFirstRequired: reconstruction.oldest_first_reconstruction_required === true || replayWindow.oldest_first_reconstruction_required === true,
             progressiveExpansion: reconstruction.progressive_expansion_available === true || replayWindow.progressive_expansion_available === true || state.history.moreAvailable,
             partial
         };
+    }
+
+    function getActiveReplayWindowDescriptor(options = {}) {
+        if (options.window) return normalizeReplayWindowDescriptor(options.window);
+        if (state.historyPreview.activeReplayWindow) return normalizeReplayWindowDescriptor(state.historyPreview.activeReplayWindow);
+        const reconstruction = getWalletHistoryReplayReconstruction();
+        const replayWindow = state.history.replayWindow || state.history.lastMetadata?.replay_window || {};
+        const totalRows = Math.max(0, (state.history.loadedTransactions || []).length);
+        const chunkSize = Math.max(1, Number(reconstruction.chunk_size || replayWindow.chunk_size || HISTORY_REPLAY_CHUNK_SIZE) || HISTORY_REPLAY_CHUNK_SIZE);
+        const windowCount = Math.max(0, Number(reconstruction.total_windows || replayWindow.total_windows) || (totalRows ? Math.ceil(totalRows / chunkSize) : 0));
+        if (!windowCount) return null;
+        const requestedIndex = Number(replayWindow.current_window_index || reconstruction.current_window_index) || windowCount || 1;
+        const windowIndex = Math.max(1, Math.min(windowCount, requestedIndex));
+        const ordinalStart = ((windowIndex - 1) * chunkSize) + 1;
+        const ordinalEnd = Math.min(totalRows || Number(reconstruction.total_transactions) || ordinalStart, windowIndex * chunkSize);
+        return normalizeReplayWindowDescriptor({
+            id: replayWindow.window_id || replayWindow.id || '',
+            scanId: state.history.scanId || replayWindow.scan_id || '',
+            windowIndex,
+            windowCount,
+            chunkSize,
+            ordinalStart,
+            ordinalEnd,
+            windowLabel: replayWindow.window_label || `Replay window ${windowIndex}/${windowCount} (${ordinalStart}-${ordinalEnd})`,
+            rangePosition: replayWindow.range_position || '',
+            continuation: replayWindow.continuation || null,
+            boundary: replayWindow.boundary || null,
+            partial: replayWindow.partial === true || getWalletHistoryScanManifest().full_history_loaded !== true,
+            timelineSegments: Array.isArray(replayWindow.timeline_segments)
+                ? replayWindow.timeline_segments
+                : Array.isArray(reconstruction.timeline_segments)
+                    ? reconstruction.timeline_segments
+                    : []
+        });
+    }
+
+    function normalizeReplayWindowDescriptor(window = null) {
+        if (!window || typeof window !== 'object' || Array.isArray(window)) return null;
+        const windowIndex = Math.max(0, Number(window.windowIndex || window.window_index || window.current_window_index) || 0);
+        const windowCount = Math.max(0, Number(window.windowCount || window.totalWindows || window.total_windows) || 0);
+        const ordinalStart = Math.max(0, Number(window.ordinalStart || window.ordinal_start || window.windowStart) || 0);
+        const ordinalEnd = Math.max(0, Number(window.ordinalEnd || window.ordinal_end || window.windowEnd) || 0);
+        return {
+            id: String(window.id || window.windowId || window.window_id || ''),
+            windowId: String(window.windowId || window.window_id || window.id || ''),
+            scanId: String(window.scanId || window.scan_id || state.history.scanId || ''),
+            windowIndex,
+            windowCount,
+            chunkSize: Math.max(1, Number(window.chunkSize || window.chunk_size || HISTORY_REPLAY_CHUNK_SIZE) || HISTORY_REPLAY_CHUNK_SIZE),
+            ordinalStart,
+            ordinalEnd,
+            windowLabel: String(window.windowLabel || window.window_label || (windowIndex ? `Replay window ${windowIndex}/${windowCount || windowIndex} (${ordinalStart}-${ordinalEnd})` : 'Replay window pending')),
+            rangePosition: String(window.rangePosition || window.range_position || ''),
+            continuation: window.continuation && typeof window.continuation === 'object' ? { ...window.continuation } : null,
+            boundary: window.boundary && typeof window.boundary === 'object' ? { ...window.boundary } : null,
+            partial: window.partial === true,
+            timelineSegments: Array.isArray(window.timelineSegments)
+                ? window.timelineSegments.slice(0, 24)
+                : Array.isArray(window.timeline_segments)
+                    ? window.timeline_segments.slice(0, 24)
+                    : [],
+            transactions: Array.isArray(window.transactions) ? window.transactions.slice(0, HISTORY_PREVIEW_TRANSACTION_LIMIT) : null
+        };
+    }
+
+    function getReplayWindowSourceRows(window = getActiveReplayWindowDescriptor()) {
+        if (Array.isArray(window?.transactions) && window.transactions.length) {
+            return window.transactions.slice(0, HISTORY_PREVIEW_TRANSACTION_LIMIT);
+        }
+        const rows = Array.isArray(state.history.loadedTransactions) ? state.history.loadedTransactions : [];
+        if (!window?.ordinalStart || !window?.ordinalEnd) return rows.slice(0, HISTORY_PREVIEW_TRANSACTION_LIMIT);
+        return rows.slice(Math.max(0, window.ordinalStart - 1), Math.min(rows.length, window.ordinalEnd)).slice(0, HISTORY_PREVIEW_TRANSACTION_LIMIT);
+    }
+
+    function getReplayDatasetGenerationKey(window = getActiveReplayWindowDescriptor()) {
+        const scan = state.history.scanId || getWalletHistoryScanManifest().scan_id || 'no-scan';
+        const total = (state.history.loadedTransactions || []).length;
+        if (!window) return `${scan}:all:${total}`;
+        return [
+            scan,
+            window.windowId || window.id || `w${window.windowIndex || 0}`,
+            window.windowIndex || 0,
+            window.ordinalStart || 0,
+            window.ordinalEnd || 0,
+            total
+        ].join(':');
+    }
+
+    function cacheReplayWindowDataset(key = '', dataset = null, metrics = null) {
+        if (!key || !dataset || !state.historyPreview.replayWindowCache?.set) return;
+        state.historyPreview.replayWindowCache.set(key, {
+            dataset,
+            metrics,
+            cachedAt: Date.now()
+        });
+        while (state.historyPreview.replayWindowCache.size > HISTORY_REPLAY_WINDOW_CACHE_LIMIT) {
+            const oldestKey = state.historyPreview.replayWindowCache.keys().next().value;
+            state.historyPreview.replayWindowCache.delete(oldestKey);
+        }
+    }
+
+    function formatReplayWindowRangePosition(value = '') {
+        const text = String(value || '').replaceAll('_', ' ').trim();
+        if (!text) return 'Staged Segment';
+        return text.replace(/\b\w/g, letter => letter.toUpperCase());
     }
 
     function getHistoryReplayStateLabel(status = getHistoryReplayStatus(), hasDataset = Boolean(state.historyPreview.dataset), datasetStale = false) {
@@ -5329,7 +5619,14 @@
                 status: 'ok',
                 message: nextCursor
                     ? 'Initial Worker wallet page is tracked; backend pagination cursor is available'
-                    : 'Initial Worker wallet page is tracked; no pagination cursor returned'
+                    : 'Initial Worker wallet page is tracked; no pagination cursor returned',
+                metadata: {
+                    ...(payload.metadata || {}),
+                    worker_endpoint_contract: DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT,
+                    initial_wallet_lookup_seed: true,
+                    browser_provider_calls: false,
+                    no_data_merged: true
+                }
             }, { replace: true, wallet });
             applyHistorySnapshot(controller.getSnapshot());
         } catch (error) {
@@ -5473,6 +5770,9 @@
         state.historyPreview.graphVisible = false;
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
+        state.historyPreview.activeReplayWindow = null;
+        state.historyPreview.replayWindowResponse = null;
+        state.historyPreview.replayWindowCache?.clear?.();
         detachHistoryReplayAnimator({ preserveStatus: false });
         resetHistoryPreviewAuditState();
         state.historyPreview.replaySpeed = 'standard';
@@ -5513,6 +5813,8 @@
             completenessConfidence: getWalletHistoryCompletenessConfidence(),
             replayCoveragePct: getWalletHistoryReplayCoverage(),
             scanManifest: getWalletHistoryScanManifest(),
+            replayWindow: getHistoryReplayWindowStatus(buildHistoryGraphPreviewSummary(), getHistoryReplayStatus()),
+            replayCheckpoint: state.historyPreview.checkpoint || null,
             gapFlags: getWalletHistoryGapFlags(),
             warnings: getWalletHistoryWarnings(),
             pagesLoaded: state.history.pagesLoaded,
@@ -5536,12 +5838,33 @@
     async function buildHistoryPreviewDataset(options = {}) {
         state.investigationTab = 'replay';
         await loadHistoryGraphPreviewModule();
+        const activeWindow = getActiveReplayWindowDescriptor(options);
+        if (activeWindow) state.historyPreview.activeReplayWindow = activeWindow;
+        const generationKey = getReplayDatasetGenerationKey(activeWindow);
+        const cachedDataset = !options.force && state.historyPreview.replayWindowCache?.get?.(generationKey);
+        if (cachedDataset) {
+            state.historyPreview.dataset = cachedDataset.dataset;
+            state.historyPreview.datasetMetrics = cachedDataset.metrics;
+            state.historyPreview.datasetGeneratedAt = Date.now();
+            state.historyPreview.graphRenderResult = null;
+            state.historyPreview.graphRenderedAt = 0;
+            detachHistoryReplayAnimator({ preserveStatus: false });
+            resetHistoryPreviewAuditState({ preserveFilters: true, preserveBreadcrumbs: true, preserveRecent: true });
+            state.historyPreview.lastMessage = 'Replay window dataset restored from local staged-window cache. Active Wallet Lookup graph unchanged.';
+            if (!options.skipRenderStatus) renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return cachedDataset.dataset;
+        }
         const builder = namespace.historyGraphPreview?.buildPreviewDataset
             || namespace.historyDatasetBuilder?.buildHistoryDataset;
+        const sourceRows = getReplayWindowSourceRows(activeWindow);
         const rawDataset = builder
-            ? builder(state.history.loadedTransactions, getHistoryPreviewBuildOptions())
+            ? builder(sourceRows, getHistoryPreviewBuildOptions())
             : buildFallbackHistoryPreviewDataset();
-        const dataset = prepareHistoryPreviewDatasetForReplay(enrichHistoryPreviewDatasetMetadata(rawDataset));
+        const dataset = prepareHistoryPreviewDatasetForReplay(enrichHistoryPreviewDatasetMetadata(rawDataset, {
+            activeWindow,
+            generationKey,
+            sourceRows
+        }));
         const metrics = getHistoryPreviewDatasetMetrics(dataset);
         state.historyPreview.dataset = dataset;
         state.historyPreview.datasetMetrics = metrics;
@@ -5550,7 +5873,12 @@
         state.historyPreview.graphRenderedAt = 0;
         if (state.historyPreview.workspaceMode) state.historyPreview.graphVisible = true;
         detachHistoryReplayAnimator({ preserveStatus: false });
-        resetHistoryPreviewAuditState();
+        resetHistoryPreviewAuditState({
+            preserveFilters: options.preserveAudit === true,
+            preserveBreadcrumbs: options.preserveAudit === true,
+            preserveRecent: options.preserveAudit === true
+        });
+        cacheReplayWindowDataset(generationKey, dataset, metrics);
         state.historyPreview.lastMessage = metrics.transactions
             ? state.historyPreview.workspaceMode
                 ? 'Preview dataset built from staged history only. Large Replay Workspace canvas is ready; active graph unchanged.'
@@ -5560,12 +5888,33 @@
         return dataset;
     }
 
-    function enrichHistoryPreviewDatasetMetadata(dataset = {}) {
-        const replayWindow = state.history.replayWindow || state.history.lastMetadata?.replay_window || {};
+    function enrichHistoryPreviewDatasetMetadata(dataset = {}, options = {}) {
+        const activeWindow = normalizeReplayWindowDescriptor(options.activeWindow || state.historyPreview.activeReplayWindow);
+        const replayWindow = activeWindow
+            ? {
+                ...(state.history.replayWindow || state.history.lastMetadata?.replay_window || {}),
+                id: activeWindow.id || activeWindow.windowId,
+                window_id: activeWindow.windowId || activeWindow.id,
+                scan_id: activeWindow.scanId,
+                current_window_index: activeWindow.windowIndex,
+                window_index: activeWindow.windowIndex,
+                total_windows: activeWindow.windowCount,
+                window_label: activeWindow.windowLabel,
+                range_position: activeWindow.rangePosition,
+                ordinal_start: activeWindow.ordinalStart,
+                ordinal_end: activeWindow.ordinalEnd,
+                chunk_size: activeWindow.chunkSize,
+                partial: activeWindow.partial,
+                continuation: activeWindow.continuation,
+                boundary: activeWindow.boundary,
+                timeline_segments: activeWindow.timelineSegments
+            }
+            : state.history.replayWindow || state.history.lastMetadata?.replay_window || {};
         const manifest = getWalletHistoryScanManifest();
         const scanCache = getWalletHistoryScanCache();
         const replayReconstruction = getWalletHistoryReplayReconstruction();
         const warnings = mergeUiStringLists(dataset.metadata?.warnings, getWalletHistoryWarnings(), replayWindow.warnings, replayWindow.generation_warnings);
+        const sourceRows = Array.isArray(options.sourceRows) ? options.sourceRows : getReplayWindowSourceRows(activeWindow);
         return {
             ...dataset,
             metadata: {
@@ -5584,6 +5933,22 @@
                 gap_flags: getWalletHistoryGapFlags(),
                 warnings,
                 replay_generation_warnings: warnings,
+                replay_window_generation_key: options.generationKey || getReplayDatasetGenerationKey(activeWindow),
+                replay_window_source_rows: sourceRows.length,
+                replay_window_source_rows_total: (state.history.loadedTransactions || []).length,
+                replay_window_active: activeWindow ? {
+                    id: activeWindow.id || activeWindow.windowId || '',
+                    window_id: activeWindow.windowId || activeWindow.id || '',
+                    window_index: activeWindow.windowIndex || 0,
+                    total_windows: activeWindow.windowCount || 0,
+                    ordinal_start: activeWindow.ordinalStart || 0,
+                    ordinal_end: activeWindow.ordinalEnd || 0,
+                    label: activeWindow.windowLabel || '',
+                    range_position: activeWindow.rangePosition || '',
+                    preview_only: true,
+                    staged_history_only: true,
+                    worker_backed: true
+                } : null,
                 replay_scaling: {
                     preview_only: true,
                     active_graph_unchanged: true,
@@ -5782,7 +6147,10 @@
             if (event) {
                 state.historyPreview.selectedEvent = buildHistoryReplayEventSnapshot(event, status, safeStep);
                 state.historyPreview.audit.selectedStep = safeStep;
-                recordReplayAuditVisit(state.historyPreview.selectedEvent, { addBreadcrumb: true });
+                recordReplayAuditVisit(state.historyPreview.selectedEvent, {
+                    addBreadcrumb: true,
+                    persistCheckpoint: options.persistCheckpoint
+                });
             }
         }
         if (!options.quiet && options.label) state.historyPreview.lastMessage = options.label;
@@ -5793,6 +6161,7 @@
     async function resetHistoryReplay() {
         state.investigationTab = 'replay';
         const animator = state.historyPreview.replayAnimator || await initializeHistoryReplayAnimator(getHistoryPreviewRenderRoot());
+        persistReplayAuditCheckpoint('before-reset');
         animator?.reset?.();
         state.historyPreview.selectedEvent = null;
         state.historyPreview.audit.selectedStep = 0;
@@ -5934,9 +6303,13 @@
         if (workspaceNext) workspaceNext.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || currentStep >= totalSteps);
         const windowStatus = getHistoryReplayWindowStatus(buildHistoryGraphPreviewSummary(), normalized);
         const workspaceWindowPrev = document.getElementById('crypto-replay-workspace-window-prev');
-        if (workspaceWindowPrev) workspaceWindowPrev.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || windowStatus.currentWindowIndex <= 1);
+        if (workspaceWindowPrev) workspaceWindowPrev.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || !windowStatus.canContinueNewer);
         const workspaceWindowNext = document.getElementById('crypto-replay-workspace-window-next');
-        if (workspaceWindowNext) workspaceWindowNext.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || (windowStatus.windowCount && windowStatus.currentWindowIndex >= windowStatus.windowCount));
+        if (workspaceWindowNext) workspaceWindowNext.disabled = Boolean(state.history.inFlight || datasetStale || !totalSteps || (!windowStatus.canContinueOlder && !windowStatus.olderRequiresProviderPage));
+        const checkpointSave = document.getElementById('crypto-replay-workspace-checkpoint-save');
+        if (checkpointSave) checkpointSave.disabled = Boolean(state.history.inFlight || datasetStale || !state.historyPreview.dataset || !totalSteps);
+        const checkpointResume = document.getElementById('crypto-replay-workspace-checkpoint-resume');
+        if (checkpointResume) checkpointResume.disabled = !state.historyPreview.checkpoint;
         const pauseButton = document.getElementById('crypto-history-replay-pause');
         if (pauseButton) pauseButton.disabled = !normalized.playing || Boolean(state.history.inFlight || datasetStale);
         const previousButton = document.getElementById('crypto-history-replay-prev-event');
@@ -6140,6 +6513,9 @@
         state.historyPreview.graphVisible = false;
         state.historyPreview.graphRenderResult = null;
         state.historyPreview.graphRenderedAt = 0;
+        state.historyPreview.activeReplayWindow = null;
+        state.historyPreview.replayWindowResponse = null;
+        state.historyPreview.replayWindowCache?.clear?.();
         detachHistoryReplayAnimator({ preserveStatus: false });
         resetHistoryPreviewAuditState();
         state.historyPreview.replaySpeed = 'standard';
@@ -6298,10 +6674,12 @@
         state.history.gapFlags = mergeUiStringLists(snapshot.gapFlags, snapshot.lastMetadata?.gap_flags, state.history.scanManifest?.gap_flags);
         state.history.warnings = mergeUiStringLists(snapshot.warnings, snapshot.lastMetadata?.warnings, state.history.scanManifest?.warnings);
         state.history.replayWindow = snapshot.replayWindow || snapshot.lastMetadata?.replay_window || state.history.replayWindow || null;
+        state.historyPreview.replayWindowResponse = snapshot.replayWindowResponse || state.historyPreview.replayWindowResponse || null;
         state.history.scanCache = snapshot.scanCache || snapshot.lastMetadata?.scan_cache || state.history.scanManifest?.cache_state || state.history.scanCache || null;
         state.history.replayReconstruction = snapshot.replayReconstruction || snapshot.lastMetadata?.replay_reconstruction || state.history.scanManifest?.replay_reconstruction || state.history.replayReconstruction || null;
         state.history.loadedTransactions = Array.isArray(snapshot.loadedTransactions) ? snapshot.loadedTransactions.slice(0, HISTORY_PREVIEW_TRANSACTION_LIMIT) : [];
         state.history.backendProviderConnected = Boolean(snapshot.provider && snapshot.providerCapabilities && snapshot.providerCapabilities.browserProviderCalls === false && !snapshot.providerCapabilities.backendOnly);
+        state.historyPreview.checkpoint = loadReplayAuditCheckpoint({ allowLatest: true }) || state.historyPreview.checkpoint || null;
     }
 
     function mergeUiStringLists(...lists) {
@@ -8034,6 +8412,8 @@
         const bookmarks = buildHistoryReplayJumpChips(summary, status, totalSteps);
         const selectedEvent = getSelectedHistoryReplayEvent(status);
         const audit = state.historyPreview.audit || {};
+        const checkpoint = state.historyPreview.checkpoint || loadReplayAuditCheckpoint({ allowLatest: true });
+        state.historyPreview.checkpoint = checkpoint || state.historyPreview.checkpoint || null;
         const helper = namespace.replayWorkspace?.renderOverlay;
         if (helper) {
             return helper({
@@ -8046,6 +8426,7 @@
                 auditFilters: normalizeReplayAuditFilters(audit.filters),
                 breadcrumbs: audit.breadcrumbs || [],
                 recentEvents: audit.recentSteps || [],
+                checkpoint,
                 bookmarks,
                 stale,
                 stateInFlight: state.history.inFlight,
@@ -8167,6 +8548,9 @@
                 jumpMajor: delta => jumpHistoryReplayMajor(delta),
                 jumpBookmark: (step, key) => jumpHistoryReplayBookmark(step, key),
                 jumpWindow: delta => jumpReplayWorkspaceWindow(delta),
+                jumpBoundary: boundary => jumpReplayBoundary(boundary),
+                saveCheckpoint: () => persistReplayAuditCheckpoint('manual'),
+                resumeCheckpoint: () => resumeReplayAuditCheckpoint(),
                 selectStep: (step, options) => selectHistoryReplayEventByStep(step, {
                     ...(options || {}),
                     pause: true,
@@ -8207,6 +8591,10 @@
         root.querySelector('#crypto-replay-workspace-reset')?.addEventListener('click', () => resetHistoryReplay());
         root.querySelector('#crypto-replay-workspace-window-prev')?.addEventListener('click', () => jumpReplayWorkspaceWindow(-1));
         root.querySelector('#crypto-replay-workspace-window-next')?.addEventListener('click', () => jumpReplayWorkspaceWindow(1));
+        root.querySelector('#crypto-replay-workspace-boundary-oldest')?.addEventListener('click', () => jumpReplayBoundary('oldest'));
+        root.querySelector('#crypto-replay-workspace-boundary-newest')?.addEventListener('click', () => jumpReplayBoundary('newest'));
+        root.querySelector('#crypto-replay-workspace-checkpoint-save')?.addEventListener('click', () => persistReplayAuditCheckpoint('manual'));
+        root.querySelector('#crypto-replay-workspace-checkpoint-resume')?.addEventListener('click', () => resumeReplayAuditCheckpoint());
         root.querySelector('#crypto-replay-workspace-scrubber')?.addEventListener('input', event => {
             seekHistoryReplayStep(Number(event.target.value) || 0, {
                 label: 'Replay workspace timeline moved the preview-only canvas.',
@@ -8261,12 +8649,159 @@
     }
 
     function jumpReplayWorkspaceWindow(delta = 1) {
+        return continueReplayWindow(delta < 0 ? 'newer' : 'older');
+    }
+
+    async function continueReplayWindow(direction = 'older') {
         const status = getHistoryReplayStatus();
         const windowStatus = getHistoryReplayWindowStatus(buildHistoryGraphPreviewSummary(), status);
-        const nextWindow = Math.max(1, Math.min(windowStatus.windowCount || 1, windowStatus.currentWindowIndex + (delta < 0 ? -1 : 1)));
-        const nextStep = Math.max(0, ((nextWindow - 1) * windowStatus.chunkSize) + 1);
-        return seekHistoryReplayStep(nextStep, {
-            label: `Replay jumped to ${windowStatus.windowCount ? `window ${nextWindow}/${windowStatus.windowCount}` : 'the selected window'} in the preview-only workspace.`
+        const newestFirst = (getWalletHistoryScanManifest().cursor_state?.sort_order || '') === 'desc';
+        const current = Math.max(1, Number(windowStatus.currentWindowIndex) || 1);
+        let targetWindow = direction === 'newer'
+            ? (Number(windowStatus.newerWindowIndex) || (newestFirst ? current - 1 : current + 1))
+            : (Number(windowStatus.olderWindowIndex) || (newestFirst ? current + 1 : current - 1));
+        targetWindow = Math.max(1, targetWindow);
+
+        if (direction === 'older' && targetWindow > Math.max(windowStatus.windowCount || 0, current) && state.history.moreAvailable) {
+            state.historyPreview.lastMessage = 'Continuing older requires another Worker history page; loading one staged page before rebuilding the replay window.';
+            await loadMoreWalletHistory({ pages: 1 });
+            const refreshedStatus = getHistoryReplayWindowStatus(buildHistoryGraphPreviewSummary(), getHistoryReplayStatus());
+            targetWindow = Math.min(Math.max(1, targetWindow), Math.max(1, refreshedStatus.windowCount || targetWindow));
+        }
+
+        if (direction === 'newer' && current <= 1 && newestFirst) {
+            state.historyPreview.lastMessage = 'No newer staged replay window is available in the current scan cache.';
+            updateReplayWorkspaceShell();
+            return null;
+        }
+
+        return activateReplayWindow(targetWindow, {
+            direction,
+            reason: direction === 'older' ? 'continue-older' : 'continue-newer',
+            preserveAudit: true
+        });
+    }
+
+    async function activateReplayWindow(windowIndex = 1, options = {}) {
+        const descriptor = await requestReplayWindowDescriptor(windowIndex, options);
+        if (!descriptor) {
+            state.historyPreview.lastMessage = 'Replay window is not available from staged Worker-backed data yet.';
+            updateReplayWorkspaceShell();
+            return null;
+        }
+        if (options.persistCheckpoint === true) persistReplayAuditCheckpoint(options.reason || 'window-swap');
+        state.historyPreview.activeReplayWindow = descriptor;
+        state.historyPreview.graphVisible = true;
+        if (!state.historyPreview.workspaceMode) setReplayWorkspaceMode(true, { force: true });
+        await buildHistoryPreviewDataset({
+            force: true,
+            replayWindow: descriptor,
+            preserveAudit: options.preserveAudit === true,
+            skipRenderStatus: true
+        });
+        const animator = await initializeHistoryReplayAnimator(getHistoryPreviewRenderRoot(), { stepIndex: 0 });
+        const total = getHistoryReplayTotalSteps(animator?.getStatus?.() || getHistoryReplayStatus());
+        const targetStep = options.skipSeek
+            ? 0
+            : options.direction === 'newer'
+                ? total
+                : Math.min(1, total);
+        if (targetStep) await seekHistoryReplayStep(targetStep, {
+            quiet: true,
+            persistCheckpoint: false,
+            label: `Replay continued into ${descriptor.windowLabel}. Active Wallet Lookup graph unchanged.`
+        });
+        state.historyPreview.lastMessage = `Replay window active: ${descriptor.windowLabel}. This is a staged segment only, not complete lifetime history.`;
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        return descriptor;
+    }
+
+    async function requestReplayWindowDescriptor(windowIndex = 1, options = {}) {
+        const localDescriptor = buildLocalReplayWindowDescriptor(windowIndex);
+        const scanId = state.history.scanId || getWalletHistoryScanManifest().scan_id || '';
+        if (!scanId) return localDescriptor;
+        try {
+            const controller = await ensureHistoryController(state.walletLookup.lastWallet || state.walletLookup.walletInput || '');
+            const snapshot = controller?.loadReplayWindow
+                ? await controller.loadReplayWindow({
+                    windowIndex,
+                    direction: options.direction || 'current',
+                    anchorStep: getHistoryReplayStatus().currentStep || 0,
+                    limit: HISTORY_PREVIEW_GRAPH_LIMITS.maxTransactions
+                })
+                : null;
+            if (snapshot) applyHistorySnapshot(snapshot);
+            const response = snapshot?.replayWindowResponse || state.historyPreview.replayWindowResponse || null;
+            const replayWindow = response?.metadata?.replay_window || response?.replayWindow || null;
+            const transactions = Array.isArray(response?.transactions) ? response.transactions : [];
+            if (replayWindow) {
+                return normalizeReplayWindowDescriptor({
+                    ...replayWindow,
+                    transactions: transactions.length ? transactions : localDescriptor?.transactions || null
+                });
+            }
+        } catch (error) {
+            state.historyPreview.lastMessage = 'Worker replay-window metadata unavailable; using already staged Worker rows for this window.';
+        }
+        return localDescriptor;
+    }
+
+    function buildLocalReplayWindowDescriptor(windowIndex = 1) {
+        const rows = state.history.loadedTransactions || [];
+        const reconstruction = getWalletHistoryReplayReconstruction();
+        const replayWindow = state.history.replayWindow || state.history.lastMetadata?.replay_window || {};
+        const chunkSize = Math.max(1, Number(reconstruction.chunk_size || replayWindow.chunk_size || HISTORY_REPLAY_CHUNK_SIZE) || HISTORY_REPLAY_CHUNK_SIZE);
+        const windowCount = rows.length ? Math.ceil(rows.length / chunkSize) : Math.max(0, Number(reconstruction.total_windows || replayWindow.total_windows) || 0);
+        if (!windowCount) return null;
+        const safeIndex = Math.max(1, Math.min(windowCount, Math.round(Number(windowIndex) || 1)));
+        const ordinalStart = ((safeIndex - 1) * chunkSize) + 1;
+        const ordinalEnd = Math.min(rows.length || Number(reconstruction.total_transactions) || ordinalStart, safeIndex * chunkSize);
+        const newestFirst = (getWalletHistoryScanManifest().cursor_state?.sort_order || '') === 'desc';
+        return normalizeReplayWindowDescriptor({
+            id: `${state.history.scanId || 'local'}:${safeIndex}:${ordinalStart}:${ordinalEnd}`,
+            scanId: state.history.scanId || '',
+            windowIndex: safeIndex,
+            windowCount,
+            chunkSize,
+            ordinalStart,
+            ordinalEnd,
+            windowLabel: `Replay window ${safeIndex}/${windowCount} (${ordinalStart}-${ordinalEnd})`,
+            rangePosition: windowCount === 1
+                ? 'single_staged_range'
+                : safeIndex === (newestFirst ? 1 : windowCount)
+                    ? 'newest_staged_range'
+                    : safeIndex === (newestFirst ? windowCount : 1)
+                        ? 'oldest_staged_range'
+                        : 'middle_staged_range',
+            partial: getWalletHistoryScanManifest().full_history_loaded !== true,
+            continuation: {
+                can_continue_older: newestFirst ? safeIndex < windowCount : safeIndex > 1,
+                can_continue_newer: newestFirst ? safeIndex > 1 : safeIndex < windowCount,
+                older_window_index: newestFirst ? safeIndex + 1 : safeIndex - 1,
+                newer_window_index: newestFirst ? safeIndex - 1 : safeIndex + 1,
+                older_requires_provider_page: newestFirst ? safeIndex >= windowCount && state.history.moreAvailable : safeIndex <= 1 && state.history.moreAvailable,
+                newer_requires_provider_page: false,
+                next_cursor_available: Boolean(state.history.nextCursor),
+                no_full_history_claim: true
+            },
+            boundary: {
+                is_oldest_staged_window: newestFirst ? safeIndex === windowCount : safeIndex === 1,
+                is_newest_staged_window: newestFirst ? safeIndex === 1 : safeIndex === windowCount,
+                missing_windows_possible: getWalletHistoryScanManifest().full_history_loaded !== true,
+                staged_segment_only: true,
+                preview_only: true
+            }
+        });
+    }
+
+    function jumpReplayBoundary(boundary = 'oldest') {
+        const total = getHistoryReplayTotalSteps();
+        const target = boundary === 'newest' ? total : Math.min(1, total);
+        if (!target) return null;
+        return seekHistoryReplayStep(target, {
+            label: boundary === 'newest'
+                ? 'Replay jumped to the newest boundary of this staged window.'
+                : 'Replay jumped to the oldest boundary of this staged window.'
         });
     }
 
@@ -8280,6 +8815,7 @@
         state.historyPreview.audit.filters = filters;
         state.historyPreview.audit.selectedWallet = filters.counterparty !== 'all' ? filters.counterparty : '';
         state.historyPreview.replayAnimator?.setAuditFilters?.(filters);
+        persistReplayAuditCheckpoint('filter-change');
         const filtered = namespace.replayWorkspace?.filterReplayEvents
             ? namespace.replayWorkspace.filterReplayEvents(getHistoryReplayEvents(), filters)
             : getHistoryReplayEvents();
@@ -8307,6 +8843,7 @@
         state.historyPreview.audit.selectedWallet = '';
         state.historyPreview.replayAnimator?.setAuditFilters?.(state.historyPreview.audit.filters);
         state.historyPreview.lastMessage = 'Replay audit filters reset. Active Wallet Lookup graph unchanged.';
+        persistReplayAuditCheckpoint('filter-reset');
         updateReplayWorkspaceShell();
     }
 
@@ -8320,6 +8857,19 @@
                 .filter(crumb => crumb.id !== details.crumbId);
             updateReplayWorkspaceShell();
             return null;
+        }
+        if (action === 'save-checkpoint') {
+            state.historyPreview.lastMessage = 'Replay audit checkpoint saved locally for this staged replay context.';
+            return persistReplayAuditCheckpoint('manual');
+        }
+        if (action === 'resume-checkpoint') {
+            return resumeReplayAuditCheckpoint();
+        }
+        if (action === 'continue-older' || action === 'continue-newer') {
+            return continueReplayWindow(action === 'continue-older' ? 'older' : 'newer');
+        }
+        if (action === 'jump-boundary-oldest' || action === 'jump-boundary-newest') {
+            return jumpReplayBoundary(action === 'jump-boundary-newest' ? 'newest' : 'oldest');
         }
         if (!event) {
             state.historyPreview.lastMessage = 'Select a replay transfer before running replay audit actions.';
@@ -8357,6 +8907,35 @@
             updateReplayWorkspaceShell();
             return event;
         }
+        if (action === 'continue-around') {
+            const total = getHistoryReplayTotalSteps();
+            const step = Number(event.step) || 0;
+            if (step <= 1) return continueReplayWindow('newer');
+            if (total && step >= total) return continueReplayWindow('older');
+            state.historyPreview.audit.expandedStep = step;
+            persistReplayAuditCheckpoint('continue-around-transfer');
+            state.historyPreview.lastMessage = 'Replay continuation is centered around this staged transfer. Use boundary controls to move windows.';
+            updateReplayWorkspaceShell();
+            return event;
+        }
+        if (action === 'continue-counterparty') {
+            const wallet = details.wallet || event.destinationWallet || event.sourceWallet || '';
+            if (!wallet) return null;
+            persistReplayAuditCheckpoint('continue-related-counterparty');
+            return followReplayAuditWallet(wallet, 'follow-destination');
+        }
+        if (action === 'continue-token') {
+            const token = details.token || event.token || event.symbol || '';
+            if (!token) return null;
+            const filters = normalizeReplayAuditFilters(state.historyPreview.audit.filters);
+            filters.token = String(token).toUpperCase();
+            state.historyPreview.audit.filters = filters;
+            state.historyPreview.replayAnimator?.setAuditFilters?.(filters);
+            persistReplayAuditCheckpoint('continue-related-token');
+            state.historyPreview.lastMessage = 'Replay audit is continuing with the related token filter inside staged replay data only.';
+            updateReplayWorkspaceShell();
+            return event;
+        }
         if (action === 'jump-related') {
             const relationships = namespace.replayWorkspace?.deriveReplayRelationships?.(event, getHistoryReplayEvents()) || {};
             const target = Number(details.direction) < 0 ? relationships.previousRelated : relationships.nextRelated;
@@ -8377,6 +8956,7 @@
         state.historyPreview.audit.filters = filters;
         state.historyPreview.audit.selectedWallet = wallet;
         state.historyPreview.replayAnimator?.setAuditFilters?.(filters);
+        persistReplayAuditCheckpoint('follow-counterparty');
         const events = namespace.replayWorkspace?.filterReplayEvents
             ? namespace.replayWorkspace.filterReplayEvents(getHistoryReplayEvents(), filters)
             : getHistoryReplayEvents().filter(event => event.sourceWallet === wallet || event.destinationWallet === wallet);
@@ -9016,6 +9596,7 @@
         const statusLine = getWalletReportStatusLine(intelligence, emptyState);
         const selectedNode = state.selectedId ? state.graph?.nodeById.get(state.selectedId) : null;
         const replayStatus = getHistoryReplayStatus();
+        const replayWindowStatus = getHistoryReplayWindowStatus(buildHistoryGraphPreviewSummary(), replayStatus);
         const replayDatasetStale = isHistoryPreviewDatasetStale();
         const historyRows = state.history.loadedTransactions || [];
         const datasetMetrics = state.historyPreview.datasetMetrics || null;
@@ -9093,6 +9674,17 @@
                 unique_transactions_tracked: state.history.totalLoadedTransactions,
                 next_cursor: state.history.nextCursor || null,
                 more_available: Boolean(state.history.moreAvailable),
+                replay_window: {
+                    id: replayWindowStatus.windowId || replayWindowStatus.id || '',
+                    label: replayWindowStatus.windowLabel || '',
+                    index: replayWindowStatus.currentWindowIndex || 0,
+                    total_windows: replayWindowStatus.windowCount || 0,
+                    ordinal_start: replayWindowStatus.windowStart || 0,
+                    ordinal_end: replayWindowStatus.windowEnd || 0,
+                    partial: Boolean(replayWindowStatus.partial),
+                    can_continue_older: Boolean(replayWindowStatus.canContinueOlder || replayWindowStatus.olderRequiresProviderPage),
+                    can_continue_newer: Boolean(replayWindowStatus.canContinueNewer)
+                },
                 last_message: getWalletHistoryLastMessage(),
                 last_error: state.history.lastError || '',
                 staged_only: true,
@@ -9108,6 +9700,13 @@
                 playing: Boolean(replayStatus.playing),
                 current_step: Number(replayStatus.currentStep) || 0,
                 total_steps: getHistoryReplayTotalSteps(replayStatus),
+                window_label: replayWindowStatus.windowLabel || '',
+                checkpoint: state.historyPreview.checkpoint ? {
+                    saved_at: state.historyPreview.checkpoint.savedAt || '',
+                    selected_step: state.historyPreview.checkpoint.selectedStep || 0,
+                    window_index: state.historyPreview.checkpoint.windowIndex || 0,
+                    has_filters: Boolean(state.historyPreview.checkpoint.filters && JSON.stringify(state.historyPreview.checkpoint.filters) !== JSON.stringify({ token: 'all', direction: 'all', counterparty: 'all', majorOnly: false }))
+                } : null,
                 speed: replayStatus.speedLabel || replayStatus.speed || '',
                 selected_event: state.historyPreview.selectedEvent
                     ? serializeReplayEventSnapshot(state.historyPreview.selectedEvent)

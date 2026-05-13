@@ -156,6 +156,68 @@
             });
         }
 
+        async getReplayWindow(scanId = '', options = {}) {
+            const normalizedScanId = String(scanId || options.scanId || '').trim();
+            if (!/^[A-Za-z0-9._:-]{1,180}$/.test(normalizedScanId)) {
+                throw new Error('Replay window requires a safe Worker scan id');
+            }
+            if (!this.endpoint) {
+                throw new Error('Worker wallet history endpoint unavailable');
+            }
+
+            const endpoint = buildReplayWindowEndpoint(this.endpoint);
+            const separator = endpoint.includes('?') ? '&' : '?';
+            const params = new URLSearchParams({
+                scan_id: normalizedScanId,
+                direction: normalizeReplayWindowDirection(options.direction)
+            });
+            if (Number(options.windowIndex) > 0) params.set('window_index', String(Math.floor(Number(options.windowIndex))));
+            if (Number(options.anchorStep) > 0) params.set('anchor_step', String(Math.floor(Number(options.anchorStep))));
+            if (/^[A-Za-z0-9._:-]{1,220}$/.test(String(options.windowId || '').trim())) {
+                params.set('window_id', String(options.windowId).trim());
+            }
+            const limit = Math.max(1, Math.min(320, Number(options.limit) || 320));
+            params.set('limit', String(limit));
+
+            const response = await fetch(`${endpoint}${separator}${params.toString()}`, {
+                cache: 'no-store',
+                headers: { accept: 'application/json' }
+            });
+            const payload = await response.json().catch(() => null);
+            const metadata = payload && typeof payload === 'object' ? (payload.metadata || {}) : {};
+            const replayWindow = normalizeReplayWindow(metadata.replay_window || payload?.replayWindow || payload?.window);
+            return {
+                provider: payload?.provider || this.id,
+                wallet: payload?.wallet || '',
+                status: payload?.status || (response.ok ? 'ok' : 'replay_window_unavailable'),
+                message: payload?.message || (response.ok
+                    ? 'Replay window loaded from Worker metadata.'
+                    : 'Replay window unavailable from Worker metadata.'),
+                transactions: Array.isArray(payload?.transactions)
+                    ? payload.transactions
+                    : Array.isArray(payload?.events)
+                        ? payload.events
+                        : [],
+                events: Array.isArray(payload?.events)
+                    ? payload.events
+                    : Array.isArray(payload?.transactions)
+                        ? payload.transactions
+                        : [],
+                moreAvailable: Boolean(payload?.moreAvailable),
+                replayWindow,
+                metadata: {
+                    ...metadata,
+                    worker_endpoint_contract: '/api/crypto/wallet-history/replay-window',
+                    browser_provider_calls: false,
+                    no_data_merged: true,
+                    replay_window: replayWindow,
+                    replay_reconstruction: normalizeReplayReconstruction(metadata.replay_reconstruction),
+                    scan_manifest: normalizeScanManifest(metadata.scan_manifest),
+                    scan_cache: normalizeScanCache(metadata.scan_cache)
+                }
+            };
+        }
+
         async getProviderDiagnostics(wallet = '') {
             if (!this.endpoint) {
                 throw new Error('Worker wallet history endpoint unavailable');
@@ -203,6 +265,22 @@
                 apiKeyExposure: false
             };
         }
+    }
+
+    function buildReplayWindowEndpoint(endpoint = '') {
+        const text = String(endpoint || '/api/crypto/wallet-history').trim() || '/api/crypto/wallet-history';
+        const queryIndex = text.indexOf('?');
+        const path = queryIndex >= 0 ? text.slice(0, queryIndex) : text;
+        const query = queryIndex >= 0 ? text.slice(queryIndex + 1) : '';
+        const replayPath = `${path.replace(/\/+$/, '')}/replay-window`;
+        return query ? `${replayPath}?${query}` : replayPath;
+    }
+
+    function normalizeReplayWindowDirection(value = 'current') {
+        const direction = String(value || 'current').trim().toLowerCase();
+        return ['current', 'older', 'newer', 'oldest', 'newest', 'anchor'].includes(direction)
+            ? direction
+            : 'current';
     }
 
     class HeliusHistoryProvider extends BackendOnlyStubProvider {
@@ -317,10 +395,42 @@
 
     function normalizeReplayWindow(windowMetadata = null) {
         if (!windowMetadata || typeof windowMetadata !== 'object' || Array.isArray(windowMetadata)) return null;
+        const continuation = windowMetadata.continuation && typeof windowMetadata.continuation === 'object' && !Array.isArray(windowMetadata.continuation)
+            ? {
+                can_continue_older: windowMetadata.continuation.can_continue_older === true,
+                can_continue_newer: windowMetadata.continuation.can_continue_newer === true,
+                older_window_index: Math.max(0, Number(windowMetadata.continuation.older_window_index) || 0),
+                newer_window_index: Math.max(0, Number(windowMetadata.continuation.newer_window_index) || 0),
+                older_window_id: String(windowMetadata.continuation.older_window_id || ''),
+                newer_window_id: String(windowMetadata.continuation.newer_window_id || ''),
+                older_requires_provider_page: windowMetadata.continuation.older_requires_provider_page === true,
+                newer_requires_provider_page: windowMetadata.continuation.newer_requires_provider_page === true,
+                next_cursor_available: windowMetadata.continuation.next_cursor_available === true,
+                no_full_history_claim: windowMetadata.continuation.no_full_history_claim !== false
+            }
+            : null;
+        const boundary = windowMetadata.boundary && typeof windowMetadata.boundary === 'object' && !Array.isArray(windowMetadata.boundary)
+            ? {
+                oldest_staged_window_index: Math.max(0, Number(windowMetadata.boundary.oldest_staged_window_index) || 0),
+                newest_staged_window_index: Math.max(0, Number(windowMetadata.boundary.newest_staged_window_index) || 0),
+                is_oldest_staged_window: windowMetadata.boundary.is_oldest_staged_window === true,
+                is_newest_staged_window: windowMetadata.boundary.is_newest_staged_window === true,
+                missing_windows_possible: windowMetadata.boundary.missing_windows_possible !== false,
+                staged_segment_only: windowMetadata.boundary.staged_segment_only !== false,
+                preview_only: windowMetadata.boundary.preview_only !== false
+            }
+            : null;
         return {
+            version: String(windowMetadata.version || 'd135_replay_window_v1'),
+            id: String(windowMetadata.id || windowMetadata.window_id || ''),
+            window_id: String(windowMetadata.window_id || windowMetadata.id || ''),
+            scan_id: String(windowMetadata.scan_id || ''),
             preview_only: windowMetadata.preview_only !== false,
             staged_history_only: windowMetadata.staged_history_only !== false,
+            active_graph_unchanged: windowMetadata.active_graph_unchanged !== false,
+            worker_backed: windowMetadata.worker_backed !== false,
             rows_in_page: Math.max(0, Number(windowMetadata.rows_in_page) || 0),
+            rows_in_window_estimate: Math.max(0, Number(windowMetadata.rows_in_window_estimate) || 0),
             rows_loaded_estimate: Math.max(0, Number(windowMetadata.rows_loaded_estimate) || 0),
             earliest_timestamp: String(windowMetadata.earliest_timestamp || ''),
             latest_timestamp: String(windowMetadata.latest_timestamp || ''),
@@ -328,17 +438,24 @@
             coverage_basis: String(windowMetadata.coverage_basis || ''),
             replay_suitability: String(windowMetadata.replay_suitability || ''),
             completeness_confidence: clampConfidence(windowMetadata.completeness_confidence),
+            window_index: Math.max(0, Number(windowMetadata.window_index || windowMetadata.current_window_index) || 0),
             chunk_size: Math.max(0, Number(windowMetadata.chunk_size) || 0),
             render_cap_transactions: Math.max(0, Number(windowMetadata.render_cap_transactions) || 0),
             current_window_index: Math.max(0, Number(windowMetadata.current_window_index) || 0),
             total_windows: Math.max(0, Number(windowMetadata.total_windows) || 0),
             window_label: String(windowMetadata.window_label || ''),
+            range_position: String(windowMetadata.range_position || ''),
+            ordinal_start: Math.max(0, Number(windowMetadata.ordinal_start) || 0),
+            ordinal_end: Math.max(0, Number(windowMetadata.ordinal_end) || 0),
+            partial: windowMetadata.partial === true,
             oldest_first_ready: windowMetadata.oldest_first_ready === true,
             oldest_first_reconstruction_required: windowMetadata.oldest_first_reconstruction_required === true,
             progressive_expansion_available: windowMetadata.progressive_expansion_available === true,
             timeline_segments: Array.isArray(windowMetadata.timeline_segments)
                 ? windowMetadata.timeline_segments.slice(0, 12).map(normalizeTimelineSegment)
                 : [],
+            continuation,
+            boundary,
             warnings: Array.isArray(windowMetadata.warnings)
                 ? windowMetadata.warnings.slice(0, 8)
                 : Array.isArray(windowMetadata.generation_warnings)
@@ -405,6 +522,9 @@
     function normalizeTimelineSegment(segment = {}) {
         return {
             segment_id: String(segment.segment_id || ''),
+            key: String(segment.key || segment.segment_id || ''),
+            label: String(segment.label || segment.title || ''),
+            title: String(segment.title || segment.label || ''),
             page_ref: String(segment.page_ref || ''),
             page_index: Math.max(0, Number(segment.page_index) || 0),
             transaction_count: Math.max(0, Number(segment.transaction_count) || 0),
@@ -414,6 +534,7 @@
             latest_timestamp: String(segment.latest_timestamp || ''),
             sort_order: String(segment.sort_order || 'unknown'),
             cursor_kind: String(segment.cursor_kind || 'unknown'),
+            active: segment.active === true,
             partial: segment.partial !== false
         };
     }
@@ -431,6 +552,7 @@
         WorkerWalletHistoryProvider,
         HeliusHistoryProvider,
         PlaceholderExternalProvider,
-        normalizeHistoryPage
+        normalizeHistoryPage,
+        normalizeReplayWindow
     };
 })();

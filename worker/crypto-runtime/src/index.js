@@ -20,11 +20,13 @@ const WALLET_HISTORY_ARCHIVE_CONTRACT_VERSION = "d129_archive_history_contract_v
 const WALLET_HISTORY_SCAN_MANIFEST_VERSION = "d130_scan_manifest_v1";
 const WALLET_HISTORY_SCAN_CACHE_VERSION = "d131_persisted_scan_cache_v1";
 const WALLET_HISTORY_REPLAY_RECONSTRUCTION_VERSION = "d131_replay_reconstruction_v1";
+const WALLET_HISTORY_REPLAY_WINDOW_VERSION = "d135_replay_window_v1";
 const WALLET_LOOKUP_CACHE_KEY_PREFIX = "crypto-wallet-lookup:";
 const WALLET_HISTORY_CACHE_KEY_PREFIX = "crypto-wallet-history:page:";
 const WALLET_HISTORY_RATE_KEY_PREFIX = "crypto-wallet-history:rate:";
 const WALLET_HISTORY_SCAN_KEY_PREFIX = "crypto-wallet-history:scan:";
 const WALLET_HISTORY_SCAN_PAGE_KEY_PREFIX = "crypto-wallet-history:scan-page:";
+const WALLET_HISTORY_SCAN_PAGE_REF_KEY_PREFIX = "crypto-wallet-history:scan-page-ref:";
 const WALLET_HISTORY_SCAN_TRANSACTION_KEY_PREFIX = "crypto-wallet-history:scan-transaction:";
 const WALLET_HISTORY_REPLAY_CACHE_KEY_PREFIX = "crypto-wallet-history:replay-cache:";
 const MAX_WALLET_LOOKUP_CACHE_ITEMS = 100;
@@ -45,6 +47,7 @@ const WALLET_HISTORY_SCAN_TTL_SECONDS = 24 * 60 * 60;
 const WALLET_HISTORY_SCAN_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60;
 const WALLET_HISTORY_REPLAY_CHUNK_SIZE = 80;
 const WALLET_HISTORY_REPLAY_RENDER_CAP = 320;
+const WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS = 320;
 const WALLET_HISTORY_REPLAY_MAX_TIMELINE_SEGMENTS = 128;
 const DEFAULT_HELIUS_HISTORY_TOKEN_ACCOUNTS = "balanceChanged";
 const SUPPORTED_HELIUS_HISTORY_TOKEN_ACCOUNTS = new Set(["none", "balanceChanged", "all"]);
@@ -160,6 +163,7 @@ const walletHistoryMemoryCache = new Map();
 const walletHistoryRateMemoryCache = new Map();
 const walletHistoryScanMemoryCache = new Map();
 const walletHistoryScanPageMemoryCache = new Map();
+const walletHistoryScanPageRefMemoryCache = new Map();
 const walletHistoryScanTransactionMemoryCache = new Map();
 const walletHistoryReplayCacheMemoryCache = new Map();
 
@@ -285,6 +289,12 @@ export default {
             cooldown_seconds: Math.round(WALLET_LOOKUP_COOLDOWN_MS / 1000),
           },
         });
+      }
+
+      if (request.method === "GET" && isWalletHistoryReplayWindowEndpointPath(url.pathname)) {
+        const query = parseWalletHistoryReplayWindowQuery(url);
+        const replayWindow = await fetchWalletHistoryReplayWindow(query, env);
+        return json(replayWindow, replayWindow.httpStatus || 200);
       }
 
       if (request.method === "GET" && isWalletHistoryEndpointPath(url.pathname)) {
@@ -878,6 +888,132 @@ function parseWalletHistoryQuery(url) {
   };
 }
 
+function parseWalletHistoryReplayWindowQuery(url) {
+  const allowedParams = new Set(["scan_id", "window_id", "window_index", "direction", "anchor_step", "limit"]);
+  const issues = [];
+
+  for (const key of url.searchParams.keys()) {
+    if (!allowedParams.has(key)) {
+      issues.push({
+        param: key,
+        reason: "unsupported_query_param",
+      });
+    }
+  }
+
+  const scanId = parseWalletHistoryScanId(url.searchParams.get("scan_id"), issues);
+  if (!scanId) {
+    issues.push({
+      param: "scan_id",
+      reason: "required_for_replay_window",
+    });
+  }
+  const windowIndex = parseReplayWindowIndex(url.searchParams.get("window_index"), issues);
+  const direction = parseReplayWindowDirection(url.searchParams.get("direction"), issues);
+  const anchorStep = parseReplayWindowAnchorStep(url.searchParams.get("anchor_step"), issues);
+  const limit = parseReplayWindowLimit(url.searchParams.get("limit"), issues);
+  const windowId = parseReplayWindowId(url.searchParams.get("window_id"), issues);
+
+  if (issues.length > 0) {
+    throw new InvalidEventQueryError("Replay window query parameters are invalid.", issues);
+  }
+
+  return {
+    scanId,
+    windowId,
+    windowIndex,
+    direction,
+    anchorStep,
+    limit,
+  };
+}
+
+function parseReplayWindowIndex(value, issues) {
+  if (value === null || value === "") return null;
+  if (!/^\d+$/.test(String(value))) {
+    issues.push({
+      param: "window_index",
+      reason: "must_be_positive_integer",
+    });
+    return null;
+  }
+  const index = Number(value);
+  if (!Number.isSafeInteger(index) || index < 1 || index > 100000) {
+    issues.push({
+      param: "window_index",
+      reason: "must_be_between_1_and_100000",
+    });
+    return null;
+  }
+  return index;
+}
+
+function parseReplayWindowAnchorStep(value, issues) {
+  if (value === null || value === "") return null;
+  if (!/^\d+$/.test(String(value))) {
+    issues.push({
+      param: "anchor_step",
+      reason: "must_be_positive_integer",
+    });
+    return null;
+  }
+  const step = Number(value);
+  if (!Number.isSafeInteger(step) || step < 1 || step > 10000000) {
+    issues.push({
+      param: "anchor_step",
+      reason: "must_be_between_1_and_10000000",
+    });
+    return null;
+  }
+  return step;
+}
+
+function parseReplayWindowLimit(value, issues) {
+  if (value === null || value === "") return WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS;
+  if (!/^\d+$/.test(String(value))) {
+    issues.push({
+      param: "limit",
+      reason: "must_be_integer",
+    });
+    return WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS;
+  }
+  const limit = Number(value);
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS) {
+    issues.push({
+      param: "limit",
+      reason: `must_be_between_1_and_${WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS}`,
+    });
+    return WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS;
+  }
+  return limit;
+}
+
+function parseReplayWindowDirection(value, issues) {
+  const direction = safeString(value || "current").toLowerCase();
+  const allowed = new Set(["current", "older", "newer", "oldest", "newest", "anchor"]);
+  if (!allowed.has(direction)) {
+    issues.push({
+      param: "direction",
+      reason: "must_be_current_older_newer_oldest_newest_or_anchor",
+    });
+    return "current";
+  }
+  return direction;
+}
+
+function parseReplayWindowId(value, issues) {
+  if (value === null || value === "") return "";
+  const id = safeString(value);
+  if (!id || id.length > 220 || !/^[A-Za-z0-9._:-]+$/.test(id)) {
+    issues.push({
+      param: "window_id",
+      reason: "must_be_safe_window_id_up_to_220_chars",
+    });
+    return "";
+  }
+  return id;
+}
+
 function parseWalletHistoryScanId(value, issues) {
   if (value === null) {
     return null;
@@ -966,6 +1102,82 @@ function parseWalletHistoryLimit(value, issues) {
 
 function isWalletHistoryEndpointPath(pathname) {
   return pathname === "/api/crypto/wallet-history" || pathname === "/api/crypto/wallet-history/";
+}
+
+function isWalletHistoryReplayWindowEndpointPath(pathname) {
+  return pathname === "/api/crypto/wallet-history/replay-window"
+    || pathname === "/api/crypto/wallet-history/replay-window/";
+}
+
+async function fetchWalletHistoryReplayWindow(query, env = {}) {
+  const manifest = await readWalletHistoryScanManifest(env, query.scanId);
+  if (!manifest?.scan_id) {
+    return {
+      status: "replay_window_unavailable",
+      httpStatus: 404,
+      message: "Replay window metadata was not found for this scan id. No provider was called and no raw payload was exposed.",
+      events: [],
+      transactions: [],
+      moreAvailable: false,
+      metadata: {
+        endpoint_contract: "/api/crypto/wallet-history/replay-window",
+        replay_window_version: WALLET_HISTORY_REPLAY_WINDOW_VERSION,
+        scan_id: safeString(query.scanId),
+        provider_fetch_performed: false,
+        browser_provider_calls: false,
+        provider_secret_exposed: false,
+        raw_provider_payload_exposed: false,
+        no_data_merged: true,
+      },
+    };
+  }
+
+  const reconstruction = sanitizeReplayReconstructionMetadata(manifest.replay_reconstruction);
+  const descriptor = buildReplayWindowDescriptor(manifest, reconstruction, query);
+  const transactions = await readReplayWindowTransactions(env, manifest, reconstruction, descriptor);
+  const responseStatus = transactions.length ? "ok" : "replay_window_metadata_only";
+  const cacheState = sanitizeWalletHistoryScanCacheState(manifest.cache_state);
+
+  return {
+    status: responseStatus,
+    message: transactions.length
+      ? "Replay window loaded from Worker-side normalized scan cache. Returned rows are sanitized staged history only."
+      : "Replay window metadata loaded, but no normalized cached transactions were available for this window.",
+    wallet: manifest.wallet,
+    provider: manifest.provider,
+    cursor: null,
+    nextCursor: null,
+    moreAvailable: descriptor.continuation.can_continue_older || descriptor.continuation.can_continue_newer,
+    events: transactions,
+    transactions,
+    metadata: {
+      endpoint_contract: "/api/crypto/wallet-history/replay-window",
+      replay_window_version: WALLET_HISTORY_REPLAY_WINDOW_VERSION,
+      scan_manifest_version: WALLET_HISTORY_SCAN_MANIFEST_VERSION,
+      scan_cache_version: WALLET_HISTORY_SCAN_CACHE_VERSION,
+      replay_reconstruction_version: WALLET_HISTORY_REPLAY_RECONSTRUCTION_VERSION,
+      scan_id: manifest.scan_id,
+      scan_manifest: manifest,
+      scan_cache: cacheState,
+      replay_reconstruction: reconstruction,
+      replay_window: descriptor,
+      replay_window_cache_status: transactions.length ? "sanitized_window_rows_loaded" : "metadata_only",
+      replay_window_transactions_returned: transactions.length,
+      provider_grade: manifest.provider_grade,
+      replay_suitability: manifest.replay_suitability,
+      completeness_confidence: manifest.completeness_confidence,
+      full_history_loaded: manifest.full_history_loaded,
+      provider_limit_reached: manifest.provider_limit_reached,
+      rate_limited: manifest.rate_limited,
+      gap_flags: manifest.gap_flags,
+      warnings: descriptor.warnings,
+      provider_fetch_performed: false,
+      browser_provider_calls: false,
+      provider_secret_exposed: false,
+      raw_provider_payload_exposed: false,
+      no_data_merged: true,
+    },
+  };
 }
 
 async function fetchWalletHistoryPage(query, env = {}) {
@@ -2846,6 +3058,10 @@ async function attachWalletHistoryScanManifest(page = {}, options = {}) {
     replay_reconstruction: buildReplayReconstructionMetadata(manifest, page, query, scanCacheState),
   });
   await putWalletHistoryScanManifest(options.env, manifest);
+  const replayWindowDescriptor = buildReplayWindowDescriptor(manifest, manifest.replay_reconstruction, {
+    direction: "current",
+    limit: WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS,
+  });
 
   return normalizeWalletHistoryResponse({
     ...page,
@@ -2870,6 +3086,7 @@ async function attachWalletHistoryScanManifest(page = {}, options = {}) {
       replay_reconstruction: manifest.replay_reconstruction,
       replay_window: {
         ...(page.metadata?.replay_window || {}),
+        ...replayWindowDescriptor,
         coverage_pct: estimateReplayCoveragePct(manifest),
         scan_id: manifest.scan_id,
         completeness_confidence: manifest.completeness_confidence,
@@ -3152,6 +3369,13 @@ async function persistWalletHistoryScanCache(env = {}, manifest = {}, page = {},
       walletHistoryScanPageMemoryCache,
       MAX_WALLET_HISTORY_SCAN_PAGE_ITEMS,
     );
+    await putWalletHistoryScanCacheRecord(
+      env,
+      walletHistoryScanPageRefKey(pageRef),
+      pageRecord,
+      walletHistoryScanPageRefMemoryCache,
+      MAX_WALLET_HISTORY_SCAN_PAGE_ITEMS,
+    );
     for (const [index, event] of events.entries()) {
       await putWalletHistoryScanCacheRecord(
         env,
@@ -3253,9 +3477,23 @@ function buildWalletHistoryScanTransactionRecord(manifest = {}, event = {}, inde
 function sanitizeReplayWindowForCache(windowMetadata = {}) {
   const value = windowMetadata && typeof windowMetadata === "object" && !Array.isArray(windowMetadata) ? windowMetadata : {};
   return {
+    version: safeString(value.version) || WALLET_HISTORY_REPLAY_WINDOW_VERSION,
+    id: safeString(value.id || value.window_id),
+    window_id: safeString(value.window_id || value.id),
+    scan_id: safeString(value.scan_id),
     preview_only: value.preview_only !== false,
     staged_history_only: value.staged_history_only !== false,
+    active_graph_unchanged: value.active_graph_unchanged !== false,
+    worker_backed: value.worker_backed !== false,
+    window_index: Math.max(0, Math.floor(Number(value.window_index || value.current_window_index) || 0)),
+    current_window_index: Math.max(0, Math.floor(Number(value.current_window_index || value.window_index) || 0)),
+    total_windows: Math.max(0, Math.floor(Number(value.total_windows) || 0)),
+    window_label: safeString(value.window_label),
+    range_position: safeString(value.range_position),
+    ordinal_start: Math.max(0, Math.floor(Number(value.ordinal_start) || 0)),
+    ordinal_end: Math.max(0, Math.floor(Number(value.ordinal_end) || 0)),
     rows_in_page: Math.max(0, Math.floor(Number(value.rows_in_page) || 0)),
+    rows_in_window_estimate: Math.max(0, Math.floor(Number(value.rows_in_window_estimate) || 0)),
     rows_loaded_estimate: Math.max(0, Math.floor(Number(value.rows_loaded_estimate) || 0)),
     earliest_timestamp: normalizeOptionalManifestTimestamp(value.earliest_timestamp),
     latest_timestamp: normalizeOptionalManifestTimestamp(value.latest_timestamp),
@@ -3263,6 +3501,35 @@ function sanitizeReplayWindowForCache(windowMetadata = {}) {
     coverage_basis: safeString(value.coverage_basis),
     replay_suitability: safeString(value.replay_suitability),
     completeness_confidence: clampConfidence(value.completeness_confidence),
+    chunk_size: Math.max(0, Math.floor(Number(value.chunk_size) || 0)),
+    render_cap_transactions: Math.max(0, Math.floor(Number(value.render_cap_transactions) || 0)),
+    partial: value.partial === true,
+    continuation: value.continuation && typeof value.continuation === "object" && !Array.isArray(value.continuation)
+      ? {
+        can_continue_older: value.continuation.can_continue_older === true,
+        can_continue_newer: value.continuation.can_continue_newer === true,
+        older_window_index: Math.max(0, Math.floor(Number(value.continuation.older_window_index) || 0)),
+        newer_window_index: Math.max(0, Math.floor(Number(value.continuation.newer_window_index) || 0)),
+        older_window_id: safeString(value.continuation.older_window_id),
+        newer_window_id: safeString(value.continuation.newer_window_id),
+        older_requires_provider_page: value.continuation.older_requires_provider_page === true,
+        newer_requires_provider_page: value.continuation.newer_requires_provider_page === true,
+        next_cursor_available: value.continuation.next_cursor_available === true,
+        no_full_history_claim: value.continuation.no_full_history_claim !== false,
+      }
+      : null,
+    boundary: value.boundary && typeof value.boundary === "object" && !Array.isArray(value.boundary)
+      ? {
+        oldest_staged_window_index: Math.max(0, Math.floor(Number(value.boundary.oldest_staged_window_index) || 0)),
+        newest_staged_window_index: Math.max(0, Math.floor(Number(value.boundary.newest_staged_window_index) || 0)),
+        is_oldest_staged_window: value.boundary.is_oldest_staged_window === true,
+        is_newest_staged_window: value.boundary.is_newest_staged_window === true,
+        missing_windows_possible: value.boundary.missing_windows_possible !== false,
+        staged_segment_only: value.boundary.staged_segment_only !== false,
+        preview_only: value.boundary.preview_only !== false,
+      }
+      : null,
+    warnings: safeStringList(value.warnings || value.generation_warnings).slice(0, 12),
   };
 }
 
@@ -3408,6 +3675,214 @@ function mergeReplayTimelineSegments(existingSegments = [], nextSegment = {}) {
     .slice(-WALLET_HISTORY_REPLAY_MAX_TIMELINE_SEGMENTS);
 }
 
+function buildReplayWindowDescriptor(manifest = {}, reconstruction = {}, query = {}) {
+  const safeManifest = sanitizeWalletHistoryScanManifest(manifest);
+  const safeReconstruction = sanitizeReplayReconstructionMetadata(reconstruction);
+  const chunkSize = Math.max(1, Math.min(
+    WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS,
+    Math.floor(Number(safeReconstruction.chunk_size) || WALLET_HISTORY_REPLAY_CHUNK_SIZE),
+  ));
+  const totalTransactions = Math.max(0, Math.floor(Number(safeReconstruction.total_transactions || safeManifest.transactions_loaded) || 0));
+  const totalWindows = Math.max(0, Math.floor(Number(safeReconstruction.total_windows) || (totalTransactions ? Math.ceil(totalTransactions / chunkSize) : 0)));
+  const sortOrder = safeManifest.cursor_state?.sort_order || "unknown";
+  const newestFirst = sortOrder === "desc";
+  const anchorWindow = query.anchorStep
+    ? Math.max(1, Math.ceil(Number(query.anchorStep) / chunkSize))
+    : Math.max(1, Number(safeReconstruction.current_window_index) || (newestFirst ? 1 : totalWindows) || 1);
+  const requestedWindow = deriveReplayWindowIndex({
+    requestedWindowIndex: query.windowIndex,
+    direction: query.direction,
+    anchorWindow,
+    totalWindows,
+    newestFirst,
+  });
+  const windowIndex = totalWindows
+    ? Math.max(1, Math.min(totalWindows, requestedWindow))
+    : 0;
+  const ordinalStart = windowIndex ? ((windowIndex - 1) * chunkSize) + 1 : 0;
+  const ordinalEnd = windowIndex ? Math.min(totalTransactions, windowIndex * chunkSize) : 0;
+  const oldestWindowIndex = totalWindows ? (newestFirst ? totalWindows : 1) : 0;
+  const newestWindowIndex = totalWindows ? (newestFirst ? 1 : totalWindows) : 0;
+  const overlappingSegments = getReplayWindowSegments(safeReconstruction.timeline_segments, ordinalStart, ordinalEnd);
+  const timestamps = overlappingSegments
+    .flatMap((segment) => [Date.parse(segment.earliest_timestamp || ""), Date.parse(segment.latest_timestamp || "")])
+    .filter((value) => Number.isFinite(value));
+  const rangePosition = getReplayWindowRangePosition(windowIndex, oldestWindowIndex, newestWindowIndex, totalWindows);
+  const windowId = safeString(query.windowId)
+    || buildReplayWindowId(safeManifest.scan_id, windowIndex, ordinalStart, ordinalEnd);
+  const canContinueOlder = windowIndex > 0 && (
+    newestFirst
+      ? windowIndex < totalWindows
+      : windowIndex > 1
+  );
+  const canContinueNewer = windowIndex > 0 && (
+    newestFirst
+      ? windowIndex > 1
+      : windowIndex < totalWindows
+  );
+  const olderWindowIndex = canContinueOlder
+    ? (newestFirst ? windowIndex + 1 : windowIndex - 1)
+    : 0;
+  const newerWindowIndex = canContinueNewer
+    ? (newestFirst ? windowIndex - 1 : windowIndex + 1)
+    : 0;
+  const olderNeedsProviderPage = !canContinueOlder
+    && safeManifest.full_history_loaded !== true
+    && Boolean(safeManifest.cursor_state?.next_cursor);
+  const warnings = dedupeStrings([
+    ...safeManifest.warnings,
+    ...safeReconstruction.warnings,
+    safeManifest.full_history_loaded === true ? "" : "Replay window is a staged segment; more history may exist outside cached pages.",
+    olderNeedsProviderPage ? "Continuing older requires loading another Worker history page before this window can be materialized." : "",
+    safeReconstruction.oldest_first_reconstruction_required ? "Provider pages are not proven oldest-first; chronological replay remains reconstruction-bound." : "",
+  ]).slice(0, 12);
+
+  return {
+    version: WALLET_HISTORY_REPLAY_WINDOW_VERSION,
+    id: windowId,
+    window_id: windowId,
+    scan_id: safeManifest.scan_id,
+    wallet: safeManifest.wallet,
+    provider: safeManifest.provider,
+    preview_only: true,
+    staged_history_only: true,
+    active_graph_unchanged: true,
+    worker_backed: true,
+    provider_fetch_performed: false,
+    browser_provider_calls: false,
+    raw_provider_payload_exposed: false,
+    provider_secret_exposed: false,
+    requested_direction: safeString(query.direction) || "current",
+    requested_window_id: safeString(query.windowId),
+    window_index: windowIndex,
+    current_window_index: windowIndex,
+    total_windows: totalWindows,
+    window_label: windowIndex
+      ? `Replay window ${windowIndex}/${totalWindows || windowIndex} (${ordinalStart}-${ordinalEnd})`
+      : "No replay window",
+    range_position: rangePosition,
+    chunk_size: chunkSize,
+    render_cap_transactions: Math.min(WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS, Number(query.limit) || WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS),
+    ordinal_start: ordinalStart,
+    ordinal_end: ordinalEnd,
+    rows_in_window_estimate: Math.max(0, ordinalEnd - ordinalStart + 1),
+    rows_loaded_estimate: safeManifest.transactions_loaded,
+    earliest_timestamp: formatOptionalIsoTimestamp(timestamps.length ? Math.min(...timestamps) : null),
+    latest_timestamp: formatOptionalIsoTimestamp(timestamps.length ? Math.max(...timestamps) : null),
+    coverage_pct: estimateReplayCoveragePct(safeManifest),
+    coverage_basis: "scan_cache_replay_window",
+    replay_suitability: safeManifest.replay_suitability,
+    completeness_confidence: safeManifest.completeness_confidence,
+    full_history_loaded: safeManifest.full_history_loaded,
+    partial: safeManifest.full_history_loaded !== true,
+    timeline_segments: overlappingSegments.slice(0, 24),
+    continuation: {
+      can_continue_older: canContinueOlder,
+      can_continue_newer: canContinueNewer,
+      older_window_index: olderWindowIndex,
+      newer_window_index: newerWindowIndex,
+      older_window_id: olderWindowIndex ? buildReplayWindowId(safeManifest.scan_id, olderWindowIndex, ((olderWindowIndex - 1) * chunkSize) + 1, Math.min(totalTransactions, olderWindowIndex * chunkSize)) : "",
+      newer_window_id: newerWindowIndex ? buildReplayWindowId(safeManifest.scan_id, newerWindowIndex, ((newerWindowIndex - 1) * chunkSize) + 1, Math.min(totalTransactions, newerWindowIndex * chunkSize)) : "",
+      older_requires_provider_page: olderNeedsProviderPage,
+      newer_requires_provider_page: false,
+      next_cursor_available: Boolean(safeManifest.cursor_state?.next_cursor),
+      no_full_history_claim: true,
+    },
+    boundary: {
+      oldest_staged_window_index: oldestWindowIndex,
+      newest_staged_window_index: newestWindowIndex,
+      is_oldest_staged_window: windowIndex > 0 && windowIndex === oldestWindowIndex,
+      is_newest_staged_window: windowIndex > 0 && windowIndex === newestWindowIndex,
+      missing_windows_possible: safeManifest.full_history_loaded !== true || olderNeedsProviderPage,
+      staged_segment_only: true,
+      preview_only: true,
+    },
+    warnings,
+  };
+}
+
+function deriveReplayWindowIndex(options = {}) {
+  const totalWindows = Math.max(0, Number(options.totalWindows) || 0);
+  if (!totalWindows) return 0;
+  if (Number(options.requestedWindowIndex)) return Number(options.requestedWindowIndex);
+  const anchorWindow = Math.max(1, Math.min(totalWindows, Number(options.anchorWindow) || 1));
+  const direction = safeString(options.direction || "current");
+  const newestFirst = options.newestFirst === true;
+  if (direction === "oldest") return newestFirst ? totalWindows : 1;
+  if (direction === "newest") return newestFirst ? 1 : totalWindows;
+  if (direction === "older") return newestFirst ? anchorWindow + 1 : anchorWindow - 1;
+  if (direction === "newer") return newestFirst ? anchorWindow - 1 : anchorWindow + 1;
+  return anchorWindow;
+}
+
+function getReplayWindowRangePosition(windowIndex, oldestWindowIndex, newestWindowIndex, totalWindows) {
+  if (!windowIndex || !totalWindows) return "empty";
+  if (totalWindows === 1) return "single_staged_range";
+  if (windowIndex === oldestWindowIndex) return "oldest_staged_range";
+  if (windowIndex === newestWindowIndex) return "newest_staged_range";
+  return "middle_staged_range";
+}
+
+function getReplayWindowSegments(segments = [], ordinalStart = 0, ordinalEnd = 0) {
+  if (!ordinalStart || !ordinalEnd) return [];
+  return (Array.isArray(segments) ? segments : [])
+    .map(sanitizeReplayTimelineSegment)
+    .filter((segment) => segment.segment_id && segment.ordinal_end >= ordinalStart && segment.ordinal_start <= ordinalEnd)
+    .sort((a, b) => a.ordinal_start - b.ordinal_start || a.page_index - b.page_index);
+}
+
+function buildReplayWindowId(scanId, windowIndex, ordinalStart, ordinalEnd) {
+  return `replay-window:${safeString(scanId)}:${Math.max(0, Number(windowIndex) || 0)}:${hashStableString(`${scanId}:${windowIndex}:${ordinalStart}:${ordinalEnd}`)}`;
+}
+
+async function readReplayWindowTransactions(env = {}, manifest = {}, reconstruction = {}, descriptor = {}) {
+  const segments = Array.isArray(descriptor.timeline_segments) ? descriptor.timeline_segments : [];
+  const limit = Math.max(1, Math.min(WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS, Number(descriptor.render_cap_transactions) || WALLET_HISTORY_REPLAY_WINDOW_MAX_EVENTS));
+  const results = [];
+  const seen = new Set();
+
+  for (const segment of segments) {
+    const pageRecord = await readWalletHistoryScanPageByRef(env, segment.page_ref);
+    const transactions = Array.isArray(pageRecord?.normalized_transactions) ? pageRecord.normalized_transactions : [];
+    transactions.forEach((transaction, index) => {
+      const ordinal = Math.max(1, Number(segment.ordinal_start) || 1) + index;
+      if (ordinal < descriptor.ordinal_start || ordinal > descriptor.ordinal_end) return;
+      const safeTransaction = sanitizeReplayWindowTransactionForResponse(transaction, ordinal, descriptor);
+      const key = safeTransaction.signature || safeTransaction.transaction_hash || `${safeTransaction.id}:${ordinal}`;
+      if (!key || seen.has(key) || results.length >= limit) return;
+      seen.add(key);
+      results.push(safeTransaction);
+    });
+    if (results.length >= limit) break;
+  }
+
+  return results.sort((a, b) => (Number(a.metadata?.replay_ordinal) || 0) - (Number(b.metadata?.replay_ordinal) || 0));
+}
+
+function sanitizeReplayWindowTransactionForResponse(transaction = {}, ordinal = 0, descriptor = {}) {
+  const safeTransaction = sanitizeScanCacheTransaction(transaction, ordinal - 1);
+  const firstTransfer = safeTransaction.transfers[0] || {};
+  return {
+    ...safeTransaction,
+    transaction_hash: safeTransaction.signature,
+    source_wallet: safeString(firstTransfer.from),
+    destination_wallet: safeString(firstTransfer.to),
+    token_symbol: safeString(firstTransfer.token_symbol),
+    token_mint: safeString(firstTransfer.token_mint),
+    amount: safeString(firstTransfer.amount),
+    amount_display: safeString(firstTransfer.amount),
+    metadata: {
+      preview_only: true,
+      staged_history_only: true,
+      worker_backed: true,
+      replay_window_id: descriptor.window_id || descriptor.id || "",
+      replay_window_index: Math.max(0, Number(descriptor.window_index) || 0),
+      replay_ordinal: Math.max(0, Number(ordinal) || 0),
+      active_graph_unchanged: true,
+    },
+  };
+}
+
 async function putWalletHistoryScanCacheRecord(env = {}, key, record, memoryCache, maxItems) {
   if (!key || !record || typeof record !== "object" || Array.isArray(record)) return;
   if (env.CRYPTO_EVENTS_KV) {
@@ -3420,9 +3895,33 @@ async function putWalletHistoryScanCacheRecord(env = {}, key, record, memoryCach
   trimMap(memoryCache, maxItems);
 }
 
+async function readWalletHistoryScanPageByRef(env = {}, pageRef = "") {
+  const safeRef = safeString(pageRef);
+  if (!safeRef) return null;
+  const key = walletHistoryScanPageRefKey(safeRef);
+  try {
+    if (env.CRYPTO_EVENTS_KV) {
+      const record = await env.CRYPTO_EVENTS_KV.get(key, "json");
+      if (record && typeof record === "object" && !Array.isArray(record)) return record;
+    }
+    const direct = walletHistoryScanPageRefMemoryCache.get(key);
+    if (direct && typeof direct === "object" && !Array.isArray(direct)) return direct;
+    for (const record of walletHistoryScanPageMemoryCache.values()) {
+      if (record?.page_ref === safeRef) return record;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function walletHistoryScanPageKey(scanId, pageIndex, cursor) {
   const cursorPart = sanitizeManifestCursor(cursor) || "initial";
   return `${WALLET_HISTORY_SCAN_PAGE_KEY_PREFIX}${safeString(scanId)}:${Math.max(1, Number(pageIndex) || 1)}:${cursorPart}`;
+}
+
+function walletHistoryScanPageRefKey(pageRef) {
+  return `${WALLET_HISTORY_SCAN_PAGE_REF_KEY_PREFIX}${safeString(pageRef)}`;
 }
 
 function walletHistoryScanTransactionKey(scanId, transactionRef) {
@@ -3549,11 +4048,35 @@ function buildReplayWindowMetadata(events = [], options = {}) {
     .filter((timestamp) => Number.isFinite(timestamp));
   const totalLoaded = Math.max(0, Number(options.query?.observedTransactions) || 0) + events.length;
   const fullHistoryLoaded = options.fullHistoryLoaded === true;
+  const chunkSize = WALLET_HISTORY_REPLAY_CHUNK_SIZE;
+  const totalWindows = totalLoaded ? Math.ceil(totalLoaded / chunkSize) : 0;
+  const windowIndex = totalLoaded ? Math.max(1, Math.ceil(totalLoaded / chunkSize)) : 0;
+  const ordinalStart = events.length ? Math.max(1, totalLoaded - events.length + 1) : 0;
+  const ordinalEnd = totalLoaded;
+  const scanId = safeString(options.query?.scanId);
+  const windowId = buildReplayWindowId(scanId || "pending-scan", windowIndex, ordinalStart, ordinalEnd);
   return {
+    version: WALLET_HISTORY_REPLAY_WINDOW_VERSION,
+    id: windowId,
+    window_id: windowId,
+    scan_id: scanId,
     preview_only: true,
     staged_history_only: true,
     active_graph_unchanged: true,
+    worker_backed: true,
+    provider_fetch_performed: true,
+    browser_provider_calls: false,
+    raw_provider_payload_exposed: false,
+    provider_secret_exposed: false,
+    current_window_index: windowIndex,
+    window_index: windowIndex,
+    total_windows: totalWindows,
+    window_label: windowIndex ? `Replay window ${windowIndex}/${totalWindows || windowIndex} (${ordinalStart}-${ordinalEnd})` : "No replay window",
+    range_position: totalWindows <= 1 ? "single_staged_range" : "newest_staged_range",
+    ordinal_start: ordinalStart,
+    ordinal_end: ordinalEnd,
     rows_in_page: events.length,
+    rows_in_window_estimate: events.length,
     rows_loaded_estimate: totalLoaded,
     earliest_timestamp: formatOptionalIsoTimestamp(timestamps.length ? Math.min(...timestamps) : null),
     latest_timestamp: formatOptionalIsoTimestamp(timestamps.length ? Math.max(...timestamps) : null),
@@ -3566,6 +4089,28 @@ function buildReplayWindowMetadata(events = [], options = {}) {
     coverage_basis: options.coverageReason || "staged_page",
     replay_suitability: options.replaySuitability || "low",
     completeness_confidence: clampConfidence(options.completenessConfidence),
+    chunk_size: chunkSize,
+    render_cap_transactions: WALLET_HISTORY_REPLAY_RENDER_CAP,
+    partial: !fullHistoryLoaded,
+    continuation: {
+      can_continue_older: false,
+      can_continue_newer: windowIndex > 1,
+      older_window_index: 0,
+      newer_window_index: windowIndex > 1 ? windowIndex - 1 : 0,
+      older_requires_provider_page: !fullHistoryLoaded,
+      newer_requires_provider_page: false,
+      next_cursor_available: false,
+      no_full_history_claim: true,
+    },
+    boundary: {
+      oldest_staged_window_index: totalWindows || windowIndex,
+      newest_staged_window_index: 1,
+      is_oldest_staged_window: totalWindows <= 1,
+      is_newest_staged_window: true,
+      missing_windows_possible: !fullHistoryLoaded,
+      staged_segment_only: true,
+      preview_only: true,
+    },
     generation_warnings: [
       "Replay remains preview-only and uses staged rows only.",
       fullHistoryLoaded ? "Cursor exhaustion was observed, but completeness remains provider-contract dependent." : "More history may exist outside the current staged window.",

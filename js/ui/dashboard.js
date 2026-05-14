@@ -301,7 +301,7 @@
     }
 
     function renderDashboardSecBackedList(items, context) {
-        const { escapeHtml, formatConnectionType, formatVerifiedDate } = context;
+        const { escapeHtml, formatConnectionType, formatVerifiedDate, getRelationshipTypeLabel } = context;
         if (!items.length) return '<div class="text-sm text-white/35">No SEC-backed production edges in the current view.</div>';
 
         return items.map(link => `
@@ -313,7 +313,7 @@
                         </div>
                         <div class="text-right shrink-0">
                             <div class="text-sm font-mono text-yellow-100">${Math.round((Number(link.strength) || 0) * 100)}%</div>
-                            <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(link.type || 'link'))}</div>
+                            <div class="text-[10px] text-white/42">${escapeHtml(getRelationshipTypeLabel?.(link) || formatConnectionType(link.type || 'link'))}</div>
                         </div>
                     </div>
                     <div class="mt-2 flex flex-wrap gap-1.5 text-[10px] font-mono">
@@ -372,7 +372,7 @@
     }
 
     function getKeyNetworkInsightSentences(stats, context) {
-        const { formatConnectionType } = context;
+        const { formatConnectionType, getRelationshipTypeLabel } = context;
         const hubNames = stats.topHubs.slice(0, 3).map(item => item.node.ticker || item.node.name).filter(Boolean);
         const topSectorPair = stats.topSectorPairs[0];
         const bridge = stats.bridgeNodes[0];
@@ -390,7 +390,7 @@
                 ? `${bridge.node.ticker || bridge.node.name} bridges ${bridge.sectors.size || 1} outside sector${bridge.sectors.size === 1 ? '' : 's'}, so it can explain movement between otherwise separate groups.`
                 : 'No strong cross-sector bridge is visible at the current filters.',
             strongest
-                ? `${strongest.source.ticker || strongest.source.name} to ${strongest.target.ticker || strongest.target.name} is unusually strong for a ${formatConnectionType(strongest.type || 'link').toLowerCase()} relationship.`
+                ? `${strongest.source.ticker || strongest.source.name} to ${strongest.target.ticker || strongest.target.name} is unusually strong for a ${(getRelationshipTypeLabel?.(strongest) || formatConnectionType(strongest.type || 'link')).toLowerCase()} relationship.`
                 : 'No unusually strong relationship is visible at the current threshold.',
             topCluster
                 ? `${topCluster[0]} is the densest industry cluster, so changes there may affect more companies than smaller groups.`
@@ -431,11 +431,12 @@
     }
 
     function renderDashboardConnectionList(items, context) {
-        const { EDGE_COLORS, DEFAULT_EDGE_COLOR, escapeHtml, formatConnectionType } = context;
+        const { EDGE_COLORS, DEFAULT_EDGE_COLOR, escapeHtml, formatConnectionType, getRelationshipTypeLabel, getRelationshipTypeColor } = context;
         if (!items.length) return '<div class="text-sm text-white/35">No visible connections at this threshold.</div>';
 
         return items.map((link, index) => {
-            const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
+            const color = getRelationshipTypeColor?.(link) || EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
+            const typeLabel = getRelationshipTypeLabel?.(link) || formatConnectionType(link.type || 'link');
             const strengthPercent = Math.round(link.strength * 100);
             return `
                     <div class="connection-row ${index === 0 ? 'top-connection top-connection-1' : ''} rounded-2xl p-3">
@@ -446,7 +447,7 @@
                             </div>
                             <div class="text-right shrink-0">
                                 <div class="text-sm font-mono" style="color:${color}">${strengthPercent}%</div>
-                                <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(link.type || 'link'))}</div>
+                                <div class="text-[10px] text-white/42">${escapeHtml(typeLabel)}</div>
                             </div>
                         </div>
                         <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">

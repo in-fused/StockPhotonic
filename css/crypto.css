@@ -1581,6 +1581,98 @@
             background: rgba(251, 191, 36, 0.065);
         }
 
+        .stock-intel-workspace,
+        .relationship-evidence-card,
+        .relationship-type-group,
+        .source-evidence-state {
+            border: 1px solid rgba(103, 232, 249, 0.16);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.07), rgba(255, 255, 255, 0.035)),
+                rgba(3, 7, 18, 0.36);
+            box-shadow: inset 0 0 24px rgba(255, 255, 255, 0.018);
+        }
+
+        .relationship-evidence-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.65rem;
+        }
+
+        .relationship-evidence-card {
+            border-color: color-mix(in srgb, var(--relationship-color, #00f9ff) 32%, rgba(255, 255, 255, 0.08));
+            background:
+                linear-gradient(135deg, color-mix(in srgb, var(--relationship-color, #00f9ff) 12%, transparent), rgba(255, 255, 255, 0.035)),
+                rgba(3, 7, 18, 0.42);
+            transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+        }
+
+        .relationship-evidence-card:hover {
+            transform: translateY(-1px);
+            border-color: color-mix(in srgb, var(--relationship-color, #00f9ff) 54%, rgba(255, 255, 255, 0.08));
+            background:
+                linear-gradient(135deg, color-mix(in srgb, var(--relationship-color, #00f9ff) 17%, transparent), rgba(255, 255, 255, 0.045)),
+                rgba(3, 7, 18, 0.48);
+        }
+
+        .relationship-type-label {
+            color: var(--relationship-color, #00f9ff);
+        }
+
+        .relationship-category-chip,
+        .relationship-evidence-tag,
+        .relationship-company-chip {
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(207, 250, 254, 0.76);
+        }
+
+        .relationship-type-group {
+            border-color: color-mix(in srgb, var(--relationship-color, #00f9ff) 28%, rgba(255, 255, 255, 0.08));
+        }
+
+        .relationship-company-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            max-width: 100%;
+            color: rgba(236, 254, 255, 0.82);
+            transition: border-color 160ms ease, background 160ms ease;
+        }
+
+        .relationship-company-chip span {
+            color: rgba(255, 255, 255, 0.42);
+        }
+
+        .relationship-company-chip:hover {
+            border-color: color-mix(in srgb, var(--relationship-color, #00f9ff) 45%, rgba(255, 255, 255, 0.10));
+            background: color-mix(in srgb, var(--relationship-color, #00f9ff) 12%, rgba(255, 255, 255, 0.045));
+        }
+
+        .relationship-state-badge.sec {
+            border: 1px solid rgba(251, 191, 36, 0.30);
+            background: rgba(251, 191, 36, 0.10);
+            color: rgba(254, 240, 138, 0.90);
+        }
+
+        .relationship-state-badge.preview {
+            border: 1px solid rgba(125, 211, 252, 0.30);
+            background: rgba(125, 211, 252, 0.10);
+            color: rgba(186, 230, 253, 0.90);
+        }
+
+        .relationship-state-badge.curated,
+        .relationship-warning {
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(255, 255, 255, 0.58);
+        }
+
+        .relationship-warning {
+            border-color: rgba(251, 146, 60, 0.28);
+            background: rgba(251, 146, 60, 0.10);
+            color: rgba(254, 215, 170, 0.85);
+        }
+
         #sidebar,
         #empty-sidebar,
         .fullscreen-hud,
@@ -3802,6 +3894,40 @@
             .graph-container {
                 height: clamp(390px, 58dvh, 620px) !important;
                 min-height: 390px !important;
+            }
+
+            #sidebar,
+            #empty-sidebar {
+                padding: 1rem !important;
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
+            .stock-intel-workspace .grid,
+            .relationship-evidence-grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .relationship-evidence-card,
+            .relationship-type-group {
+                padding: 0.85rem !important;
+            }
+
+            .relationship-company-chip,
+            .relationship-category-chip,
+            .relationship-state-badge,
+            .relationship-evidence-tag,
+            .source-indicator,
+            .confidence-badge {
+                white-space: nowrap;
+            }
+
+            .relationship-company-chip {
+                max-width: 100%;
+            }
+
+            .relationship-company-chip span {
+                display: none;
             }
 
             .crypto-workspace-toolbar {

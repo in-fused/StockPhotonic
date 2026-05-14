@@ -140,6 +140,18 @@
                     <option value="">All Industry Groups</option>
                 </select>
 
+                <select id="relationship-type-filter" aria-label="Relationship Type" title="Filter StockPhotonic edges by derived relationship taxonomy." onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="">All Relationship Types</option>
+                </select>
+
+                <select id="confidence-tier-filter" aria-label="Confidence Tier" title="Filter StockPhotonic edges by confidence tier." onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="">All Confidence Tiers</option>
+                    <option value="high">High confidence</option>
+                    <option value="medium">Medium confidence</option>
+                    <option value="low">Low confidence</option>
+                    <option value="pending">Evidence pending</option>
+                </select>
+
                 <select id="layout-mode" title="Sector Layout groups by sector, Hub Layout centers one selected company, and Company Nexus separates relationship types around a selected company." onchange="setLayoutMode(this.value)" class="bg-black/40 border border-cyan-400/25 text-white text-sm rounded-3xl px-4 py-3 outline-none">
                     <option value="sector">Sector Layout</option>
                     <option value="hub">Hub Layout</option>
@@ -193,6 +205,26 @@
                 <div class="stock-control-break"></div>
                 <div class="control-section-title">Signals / Portfolio</div>
                 <div class="control-help basis-full">SEC preview, signal threshold, and portfolio exposure help inspect relationship confidence and relevance without changing production data.</div>
+
+                <button id="sourced-only-toggle" onclick="toggleSourcedOnlyFilter()" aria-pressed="false" title="Show only relationships with source URLs or preview evidence attached." class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-link"></i>
+                    <span>Sourced Only</span>
+                </button>
+
+                <button id="sec-backed-only-toggle" onclick="toggleSecBackedOnlyFilter()" aria-pressed="false" title="Show SEC-backed production edges and SEC preview candidates only." class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-file-shield"></i>
+                    <span>SEC-backed Only</span>
+                </button>
+
+                <button id="portfolio-connected-only-toggle" onclick="togglePortfolioConnectedOnlyFilter()" aria-pressed="false" title="Show only relationships connected to the active portfolio analysis." class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span>Portfolio Links</span>
+                </button>
+
+                <button id="cross-sector-only-toggle" onclick="toggleCrossSectorOnlyFilter()" aria-pressed="false" title="Show only relationships whose endpoints sit in different sectors or derived industry groups." class="focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-code-branch"></i>
+                    <span>Cross-Sector</span>
+                </button>
 
                 <button id="sec-preview-toggle" onclick="toggleSecPreviewRelationships()" aria-pressed="true" title="Show or hide reviewed SEC-backed preview relationships in the graph." class="focus-button is-active px-4 py-3 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2">
                     <i class="fa-solid fa-file-shield"></i>
@@ -315,7 +347,7 @@
                         <div class="source-workbench-label mb-2">Local Pipeline Guide / Candidate Review Area</div>
                         <h2 id="source-workbench-title" class="font-display text-3xl md:text-4xl font-semibold">Source Intelligence Workbench</h2>
                         <p class="text-sm md:text-base text-white/64 mt-2 max-w-4xl">
-                            Read-only visibility for the SEC ingestion pipeline. This workbench shows the safe local workflow, scheduled preview plan, candidate-only files, and review boundaries; it is not production graph data and not live backend automation yet.
+                            Read-only visibility for the SEC ingestion pipeline and relationship evidence contract. Curated production edges, SEC-backed production edges, and candidate preview records are labeled separately before anything becomes production graph data.
                         </p>
                     </div>
 
@@ -323,7 +355,30 @@
                         <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">READ ONLY</span>
                         <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">LOCAL TERMINAL COMMANDS</span>
                         <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NOT GRAPH DATA</span>
+                        <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">EVIDENCE LABELS</span>
                         <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NO BROWSER SCRIPT RUNNER</span>
+                    </div>
+                </div>
+
+                <div class="source-workbench-panel rounded-2xl p-5 mt-6">
+                    <div class="source-workbench-label mb-3">Relationship Evidence States</div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div class="source-evidence-state rounded-2xl p-3">
+                            <div class="text-xs font-mono text-cyan-100/80">Curated production</div>
+                            <p class="mt-2 text-xs text-white/58 leading-relaxed">Loaded from <span class="font-mono text-cyan-50/78">data/connections.json</span>. If source URLs are missing, the graph labels that evidence as pending.</p>
+                        </div>
+                        <div class="source-evidence-state rounded-2xl p-3">
+                            <div class="text-xs font-mono text-yellow-100/80">SEC-backed production</div>
+                            <p class="mt-2 text-xs text-white/58 leading-relaxed">Promoted only after local preview, manual review, and validation. SEC-backed status requires SEC filing provenance or SEC source URLs.</p>
+                        </div>
+                        <div class="source-evidence-state rounded-2xl p-3">
+                            <div class="text-xs font-mono text-sky-100/80">Candidate / preview</div>
+                            <p class="mt-2 text-xs text-white/58 leading-relaxed">Shown as preview overlays only. Candidate records are not production claims until promoted through the safety gate.</p>
+                        </div>
+                        <div class="source-evidence-state rounded-2xl p-3">
+                            <div class="text-xs font-mono text-orange-100/80">Missing source</div>
+                            <p class="mt-2 text-xs text-white/58 leading-relaxed">Rendered as evidence pending with source warnings. The UI does not infer partnership/customer claims from missing fields.</p>
+                        </div>
                     </div>
                 </div>
 
@@ -705,6 +760,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/utils/math.js"></script>
     <script src="js/utils/formatting.js"></script>
     <script src="js/utils/dom.js"></script>
+    <script src="js/stock/relationships.js"></script>
     <script src="js/core/data.js"></script>
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
@@ -785,6 +841,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic controls module failed to load');
         }
 
+        if (!window.StockPhotonicStock?.relationships) {
+            throw new Error('StockPhotonic relationship intelligence module failed to load');
+        }
+
         if (!window.CryptoPhotonic?.core || !window.CryptoPhotonic?.graph || !window.CryptoPhotonic?.layout || !window.CryptoPhotonic?.ui) {
             throw new Error('CryptoPhotonic modules failed to load');
         }
@@ -830,6 +890,20 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             sumMarketCap,
             getDatasetTrustMetrics
         } = window.StockPhotonicData;
+        const relationshipTools = window.StockPhotonicStock.relationships;
+        const {
+            getRelationshipTypeKey,
+            getRelationshipTypeLabel,
+            getRelationshipTypeColor,
+            getRelationshipGroupKey,
+            getRelationshipFilterOptions,
+            getRelationshipVisualMeta,
+            getConfidenceTier: getRelationshipConfidenceTier,
+            getSourceStatus: getRelationshipSourceStatus,
+            getEvidenceCount: getRelationshipEvidenceCount,
+            relationshipHasSourceEvidence,
+            normalizePreviewLink
+        } = relationshipTools;
         const cryptoPhotonicUi = window.CryptoPhotonic.ui;
 
         const {
@@ -938,6 +1012,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let signalStrengthThreshold = 0;
         let currentSector = '';
         let currentIndustryGroup = '';
+        let currentRelationshipType = '';
+        let currentConfidenceTier = '';
+        let sourcedOnlyFilter = false;
+        let secBackedOnlyFilter = false;
+        let portfolioConnectedOnlyFilter = false;
+        let crossSectorOnlyFilter = false;
         let currentSearch = '';
         let searchMatches = [];
         let highlightedSearchIndex = -1;
@@ -1065,6 +1145,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             getNodeLayoutPosition,
             isNexusLayoutActive,
             getNexusSummary,
+            getRelationshipVisualMeta,
             isIndustryGroupFilterActive,
             linkTouchesCurrentIndustryGroup,
             isPortfolioAnalysisActive,
@@ -1427,7 +1508,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     getData: getOrbMapSnapshot,
                     onSelectNode: node => selectNode(node, { preserveFilters: true }),
                     isSecBackedLink: isSecBackedConnection,
-                    getLinkColor: link => EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR,
+                    getLinkColor: link => getRelationshipTypeColor(link) || EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR,
                     getNodeColor: node => node.color || '#00f9ff',
                     getLabelText: node => node.ticker || node.name || ''
                 });
@@ -1560,7 +1641,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
                 buildSectorFilter();
                 buildIndustryGroupFilter();
+                buildRelationshipTypeFilter();
                 updateFocusModeControl();
+                updateRelationshipFilterControls();
                 updateSignalThresholdControl();
                 updatePerspectiveModeControl();
                 updatePortfolioPanel();
@@ -1638,7 +1721,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 if (!source || !target) return;
 
                 const strength = getSecPreviewStrength(candidate);
-                previewLinks.push({
+                previewLinks.push(normalizePreviewLink({
                     key: `sec-preview-${sourceTicker}-${targetTicker}-${index}`,
                     isSecPreviewLink: true,
                     source,
@@ -1653,7 +1736,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     source_label: 'SEC filing',
                     candidate,
                     curveOffset: getCurveOffset(source.id, target.id, `sec-${index}`)
-                });
+                }));
             });
 
             secPreviewNodes = [...previewNodeByTicker.values()];
@@ -1771,6 +1854,93 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 escapeHtml
             });
         }
+
+        function buildRelationshipTypeFilter() {
+            uiControls.buildRelationshipTypeFilter({
+                select: document.getElementById('relationship-type-filter'),
+                relationshipOptions: getRelationshipFilterOptions(connections),
+                escapeHtml
+            });
+        }
+
+        function toggleSourcedOnlyFilter() {
+            sourcedOnlyFilter = !sourcedOnlyFilter;
+            applyRelationshipFilterChange();
+        }
+
+        function toggleSecBackedOnlyFilter() {
+            secBackedOnlyFilter = !secBackedOnlyFilter;
+            applyRelationshipFilterChange();
+        }
+
+        function togglePortfolioConnectedOnlyFilter() {
+            portfolioConnectedOnlyFilter = !portfolioConnectedOnlyFilter;
+            applyRelationshipFilterChange();
+        }
+
+        function toggleCrossSectorOnlyFilter() {
+            crossSectorOnlyFilter = !crossSectorOnlyFilter;
+            applyRelationshipFilterChange();
+        }
+
+        function applyRelationshipFilterChange() {
+            stopOrbitForInteraction();
+            updateRelationshipFilterControls();
+            refreshVisibleGraph();
+            const selectionCleared = syncSelectionAfterVisibilityChange();
+            if (!selectionCleared && selectedNode) showNodeDetails(selectedNode);
+            if (!selectionCleared && selectedSecPreviewNode) showSecPreviewNodeDetails(selectedSecPreviewNode);
+            if (!selectionCleared && selectedSecPreviewLink) showSecPreviewEdgeDetails(selectedSecPreviewLink);
+            triggerPulse(360);
+            requestDraw();
+        }
+
+        function updateRelationshipFilterControls() {
+            updateRelationshipToggle('sourced-only-toggle', sourcedOnlyFilter);
+            updateRelationshipToggle('sec-backed-only-toggle', secBackedOnlyFilter);
+            updateRelationshipToggle('portfolio-connected-only-toggle', portfolioConnectedOnlyFilter);
+            updateRelationshipToggle('cross-sector-only-toggle', crossSectorOnlyFilter);
+        }
+
+        function updateRelationshipToggle(id, active) {
+            const button = document.getElementById(id);
+            if (!button) return;
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
+            button.classList.toggle('is-active', active);
+        }
+
+        function getRelationshipFilterLabels() {
+            const labels = [];
+            if (currentRelationshipType) labels.push(getRelationshipTypeLabel(currentRelationshipType));
+            if (currentConfidenceTier) labels.push(`${getConfidenceTierLabel(currentConfidenceTier)} confidence`);
+            if (sourcedOnlyFilter) labels.push('Sourced only');
+            if (secBackedOnlyFilter) labels.push('SEC-backed only');
+            if (portfolioConnectedOnlyFilter) labels.push('Portfolio links');
+            if (crossSectorOnlyFilter) labels.push('Cross-sector');
+            return labels;
+        }
+
+        function getConfidenceTierLabel(tier) {
+            const labelByTier = {
+                high: 'High',
+                medium: 'Medium',
+                low: 'Low',
+                pending: 'Evidence pending'
+            };
+            return labelByTier[tier] || 'All';
+        }
+
+        function hasRelationshipFiltersActive() {
+            return Boolean(
+                currentRelationshipType ||
+                currentConfidenceTier ||
+                sourcedOnlyFilter ||
+                secBackedOnlyFilter ||
+                portfolioConnectedOnlyFilter ||
+                crossSectorOnlyFilter
+            );
+        }
+
         function getCompanyIndustryGroup(company) {
             return company?.industryGroup || deriveIndustryGroup(company, INDUSTRY_GROUP_RULES);
         }
@@ -1779,7 +1949,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return {
                 currentSector,
                 currentIndustryGroup,
+                currentRelationshipType,
+                currentConfidenceTier,
+                sourcedOnlyFilter,
+                secBackedOnlyFilter,
+                portfolioConnectedOnlyFilter,
+                crossSectorOnlyFilter,
                 currentSearch,
+                visibleLinkKeys,
                 signalStrengthThreshold,
                 visibleNodes,
                 nodes,
@@ -1803,6 +1980,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 getPortfolioExposureSummary,
                 getDatasetTrustMetrics: getEnhancedDatasetTrustMetrics,
                 isSecBackedConnection,
+                getRelationshipTypeLabel,
+                getRelationshipTypeColor,
+                getRelationshipFilterLabels,
                 focusModeEnabled,
                 isFocusModeActive,
                 companies,
@@ -1827,13 +2007,28 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 isSecBackedConnection,
                 getSecSourceUrl,
                 getConnectionStrength,
+                getRelationshipTypeKey,
+                getRelationshipTypeLabel,
+                getRelationshipTypeColor,
+                getRelationshipGroupKey,
+                getRelationshipConfidenceTier,
+                getRelationshipSourceStatus,
+                getRelationshipEvidenceCount,
+                relationshipHasSourceEvidence,
                 getNexusSummary,
                 isNexusLayoutActive,
                 getSharedNeighborTickerList,
                 getCorrelationAdjacentGroup,
                 currentSector,
                 currentIndustryGroup,
+                currentRelationshipType,
+                currentConfidenceTier,
+                sourcedOnlyFilter,
+                secBackedOnlyFilter,
+                portfolioConnectedOnlyFilter,
+                crossSectorOnlyFilter,
                 currentSearch,
+                visibleLinkKeys,
                 signalStrengthThreshold,
                 focusModeEnabled,
                 isFocusModeActive,
@@ -3018,6 +3213,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const empty = document.getElementById('empty-sidebar');
             const connectionsForNode = [...(adjacencyById.get(node.id) || [])]
                 .sort((a, b) => b.link.strength - a.link.strength);
+            const visibleConnectionsForNode = getVisibleConnectionsForNode(node);
+            const relationshipCardConnections = hasRelationshipFiltersActive()
+                ? visibleConnectionsForNode
+                : connectionsForNode;
             const topConnections = connectionsForNode.slice(0, 12);
             const networkSummary = getNodeNetworkSummary(connectionsForNode);
             const sectorCounts = getConnectionSectorCounts(connectionsForNode);
@@ -3038,6 +3237,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 empty,
                 node,
                 connectionsForNode,
+                visibleConnectionsForNode,
+                relationshipCardConnections,
                 topConnections,
                 networkSummary,
                 sectorCounts,
@@ -3138,7 +3339,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const highConfidenceCount = connectionsForNode.filter(item => Number(item.link.confidence) >= 4).length;
             const highCapCount = connectionsForNode.filter(item => Number(item.node.market_cap) >= 1).length;
             const typeCounts = connectionsForNode.reduce((counts, item) => {
-                const type = item.link.type || 'link';
+                const type = getRelationshipTypeKey(item.link);
                 counts[type] = (counts[type] || 0) + 1;
                 return counts;
             }, {});
@@ -3297,14 +3498,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return uiSidebar.renderNodeSources(sourceItems, getSidebarRenderContext());
         }
         function getValidSourceUrls(sourceUrls) {
-            return Array.isArray(sourceUrls)
-                ? sourceUrls.map(url => String(url).trim()).filter(url => /^https?:\/\//i.test(url))
-                : [];
+            return relationshipTools.getValidSourceUrls(sourceUrls);
         }
 
         function isSecBackedConnection(connection) {
-            const provenance = String(connection?.provenance || '').trim().toLowerCase();
-            return provenance === 'sec filing' || getValidSourceUrls(connection?.source_urls).some(url => /sec\.gov/i.test(url));
+            return relationshipTools.isSecBackedRelationship(connection);
         }
 
         function getSecSourceUrl(connection) {
@@ -3565,7 +3763,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             stopOrbitForInteraction();
             currentSector = document.getElementById('sector-filter').value;
             currentIndustryGroup = document.getElementById('industry-group-filter').value;
+            currentRelationshipType = document.getElementById('relationship-type-filter')?.value || '';
+            currentConfidenceTier = document.getElementById('confidence-tier-filter')?.value || '';
             currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
+            updateRelationshipFilterControls();
             refreshVisibleGraph();
             updateSearchMatches();
             if (document.activeElement === document.getElementById('search-input')) searchPanelOpen = true;
@@ -3578,6 +3779,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             stopOrbitForInteraction();
             currentSector = '';
             currentIndustryGroup = '';
+            currentRelationshipType = '';
+            currentConfidenceTier = '';
+            sourcedOnlyFilter = false;
+            secBackedOnlyFilter = false;
+            portfolioConnectedOnlyFilter = false;
+            crossSectorOnlyFilter = false;
             currentSearch = '';
             layoutMode = LAYOUT_MODE_SECTOR;
             focusModeEnabled = false;
@@ -3587,11 +3794,16 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             resetPortfolioState();
             document.getElementById('sector-filter').value = '';
             document.getElementById('industry-group-filter').value = '';
+            const relationshipTypeFilter = document.getElementById('relationship-type-filter');
+            const confidenceTierFilter = document.getElementById('confidence-tier-filter');
+            if (relationshipTypeFilter) relationshipTypeFilter.value = '';
+            if (confidenceTierFilter) confidenceTierFilter.value = '';
             document.getElementById('search-input').value = '';
             document.getElementById('layout-mode').value = LAYOUT_MODE_SECTOR;
             const portfolioInput = document.getElementById('portfolio-input');
             if (portfolioInput) portfolioInput.value = '';
             updateFocusModeControl();
+            updateRelationshipFilterControls();
             updateSignalThresholdControl();
             updateSecPreviewControl();
             updatePortfolioPanel();
@@ -4063,8 +4275,20 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             rebuildLayoutPositions();
             refreshGraphWorkspaceBounds();
             updateGraphOverlayStats();
+            updateVisibleGraphStatus();
             updateOrbMapData();
             if (!selectedNode && !selectedSecPreviewNode && !selectedSecPreviewLink) renderDefaultDashboard();
+        }
+
+        function updateVisibleGraphStatus() {
+            const nodeCount = document.getElementById('node-count');
+            const connectionCount = document.getElementById('connection-count');
+            const status = document.getElementById('view-status');
+            if (nodeCount) nodeCount.innerText = `${visibleNodes.length} VISIBLE NODES`;
+            if (connectionCount) connectionCount.innerText = `${visibleLinks.length} VISIBLE EDGES`;
+            if (status) status.innerText = hasRelationshipFiltersActive() || currentSector || currentIndustryGroup || currentSearch || signalStrengthThreshold > 0
+                ? 'FILTERED'
+                : 'READY';
         }
 
         function refreshSecPreviewVisibility() {
@@ -4123,6 +4347,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!link) return false;
             if (signalStrengthThreshold > 0 && link.strength < signalStrengthThreshold) return false;
             if (isIndustryGroupFilterActive() && !linkTouchesCurrentIndustryGroup(link)) return false;
+            if (!linkPassesRelationshipFilters(link, { isPreview: true })) return false;
             return true;
         }
 
@@ -4137,6 +4362,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 isPortfolioAnalysisActive,
                 matchedPortfolioNodes,
                 perspectiveEnabled,
+                relationshipFilterLabels: getRelationshipFilterLabels(),
                 escapeHtml
             });
             updatePerspectiveOverlayHint();
@@ -4201,7 +4427,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function shouldPruneZeroEdgeNodes() {
-            return signalStrengthThreshold > 0 || isAutoDeclutterActive();
+            return signalStrengthThreshold > 0 || isAutoDeclutterActive() || hasRelationshipFiltersActive();
         }
 
         function isAutoDeclutterActive() {
@@ -4220,7 +4446,26 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!link) return false;
             if (signalStrengthThreshold > 0 && link.strength < signalStrengthThreshold) return false;
             if (isIndustryGroupFilterActive() && !linkTouchesCurrentIndustryGroup(link)) return false;
+            if (!linkPassesRelationshipFilters(link)) return false;
             return true;
+        }
+
+        function linkPassesRelationshipFilters(link, options = {}) {
+            if (!link) return false;
+            if (currentRelationshipType && getRelationshipTypeKey(link) !== currentRelationshipType) return false;
+            if (currentConfidenceTier && getRelationshipConfidenceTier(link).key !== currentConfidenceTier) return false;
+            if (sourcedOnlyFilter && !relationshipHasSourceEvidence(link)) return false;
+            if (secBackedOnlyFilter && !isSecBackedConnection(link)) return false;
+            if (portfolioConnectedOnlyFilter && !options.isPreview && !portfolioEdgeKeys.has(link.key)) return false;
+            if (portfolioConnectedOnlyFilter && options.isPreview) return false;
+            if (crossSectorOnlyFilter && !isCrossSectorOrIndustryRelationship(link)) return false;
+            return true;
+        }
+
+        function isCrossSectorOrIndustryRelationship(link) {
+            if (!link?.source || !link?.target) return false;
+            return link.source.sector !== link.target.sector ||
+                getCompanyIndustryGroup(link.source) !== getCompanyIndustryGroup(link.target);
         }
 
         function getLayoutCalculationOptions() {
@@ -4246,6 +4491,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 nexusGroupSequence: NEXUS_GROUP_SEQUENCE,
                 nexusGroups: NEXUS_GROUPS,
                 getConnectionStrength,
+                getRelationshipGroupKey,
                 isPortfolioAnalysisActive,
                 isPortfolioHighlightedNode
             };

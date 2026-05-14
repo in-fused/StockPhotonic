@@ -19,6 +19,15 @@
             .join('');
     }
 
+    function buildRelationshipTypeFilter(context) {
+        const { select, relationshipOptions, escapeHtml } = context;
+        if (!select) return;
+
+        select.innerHTML = '<option value="">All Relationship Types</option>' + (relationshipOptions || [])
+            .map(option => `<option value="${escapeHtml(option.key)}">${escapeHtml(option.label)}</option>`)
+            .join('');
+    }
+
     function updateFocusModeControl(context) {
         const { toggle, focusModeEnabled } = context;
         if (!toggle) return;
@@ -93,6 +102,7 @@
             isPortfolioAnalysisActive,
             matchedPortfolioNodes,
             perspectiveEnabled,
+            relationshipFilterLabels = [],
             escapeHtml
         } = context;
         if (!overlay) return;
@@ -107,6 +117,7 @@
         if (signalStrengthThreshold > 0) items.push(`Threshold ${signalStrengthThreshold.toFixed(2)}`);
         if (isPortfolioAnalysisActive()) items.push(`Portfolio ${matchedPortfolioNodes.length}`);
         if (perspectiveEnabled) items.push('Perspective Mode');
+        relationshipFilterLabels.forEach(label => items.push(label));
 
         const statsMarkup = items.map(item => `
                 <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/75 font-mono tracking-[1.1px]">
@@ -127,6 +138,7 @@
     window.StockPhotonicUI.controls = {
         buildSectorFilter,
         buildIndustryGroupFilter,
+        buildRelationshipTypeFilter,
         updateFocusModeControl,
         updateSignalThresholdControl,
         updatePerspectiveModeControl,

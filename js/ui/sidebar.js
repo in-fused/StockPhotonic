@@ -68,6 +68,7 @@
                         <div class="text-xs text-cyan-300/80 font-mono tracking-[2px]">${escapeHtml(node.sector || 'UNKNOWN')}</div>
                         <h2 class="font-display text-3xl text-white mt-1">${escapeHtml(node.ticker || '')}</h2>
                         <div class="text-sm text-white/60 mt-1">${escapeHtml(node.name || '')}</div>
+                        <div class="text-xs text-white/42 mt-1 leading-snug">${escapeHtml(node.industry || 'Industry pending')}</div>
                         ${renderNodePortfolioBadges(portfolioContext, context)}
                     </div>
                     <button onclick="clearSelection()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70">
@@ -89,6 +90,8 @@
                         <div class="font-display text-xl text-white">${connectionsForNode.length}</div>
                     </div>
                 </div>
+
+                ${renderCompanyInvestigationWorkspace(context)}
 
                 ${renderSelectedNodeWhyLayer(context)}
 
@@ -120,6 +123,9 @@
                 </div>
 
                 ${renderNexusViewSection(node, context)}
+
+                ${renderRelationshipEvidenceCards(context)}
+                ${renderConnectedCompaniesByType(context)}
 
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">Signal Clarity</div>
@@ -217,6 +223,12 @@
         const filters = [
             context.currentSector || '',
             context.currentIndustryGroup || '',
+            context.currentRelationshipType ? context.getRelationshipTypeLabel?.(context.currentRelationshipType) : '',
+            context.currentConfidenceTier ? `Confidence: ${context.currentConfidenceTier}` : '',
+            context.sourcedOnlyFilter ? 'Sourced only' : '',
+            context.secBackedOnlyFilter ? 'SEC-backed only' : '',
+            context.portfolioConnectedOnlyFilter ? 'Portfolio links' : '',
+            context.crossSectorOnlyFilter ? 'Cross-sector' : '',
             context.currentSearch ? `Search: ${context.currentSearch}` : ''
         ].filter(Boolean).join(' / ') || 'All companies';
         const focusOn = Boolean(context.focusModeEnabled || (typeof context.isFocusModeActive === 'function' && context.isFocusModeActive()));
@@ -234,6 +246,289 @@
                         <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">FOCUS ${focusOn ? 'ON' : 'OFF'}</span>
                         <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">SIGNAL ${threshold > 0 ? threshold.toFixed(2) : 'ALL'}</span>
                         <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">PORTFOLIO ${escapeHtml(portfolio)}</span>
+                    </div>
+                </div>
+            `;
+    }
+
+    function renderCompanyInvestigationWorkspace(context) {
+        const {
+            node,
+            connectionsForNode,
+            networkSummary,
+            escapeHtml,
+            formatNumber,
+            getRelationshipTypeLabel,
+            getRelationshipConfidenceTier,
+            getRelationshipSourceStatus,
+            getRelationshipEvidenceCount
+        } = context;
+        const summary = getRelationshipEvidenceSummary(connectionsForNode, context);
+        const categoryLabels = summary.categoryKeys
+            .map(key => getRelationshipTypeLabel?.(key) || key)
+            .slice(0, 4);
+        const strongest = summary.strongest;
+        const strongestLink = strongest?.link;
+        const strongestConfidence = strongestLink ? getRelationshipConfidenceTier?.(strongestLink) : null;
+        const strongestSource = strongestLink ? getRelationshipSourceStatus?.(strongestLink) : null;
+        const strongestEvidenceCount = strongestLink ? getRelationshipEvidenceCount?.(strongestLink) || 0 : 0;
+        const strongestLine = strongest
+            ? `${escapeHtml(strongest.node.ticker || strongest.node.name || 'Connected company')}: ${escapeHtml(strongestLink.relationship_summary || strongestLink.label || 'Relationship type from curated dataset')}`
+            : 'Evidence pending. No direct relationship evidence is visible at the current filters.';
+
+        return `
+                <div class="stock-intel-workspace rounded-2xl p-4 mb-5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="text-[10px] text-cyan-100/70 font-mono tracking-[1.5px]">COMPANY INVESTIGATION WORKSPACE</div>
+                            <div class="mt-1 text-sm text-white/82 leading-snug">${escapeHtml(node.name || node.ticker || 'Selected company')}</div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-[10px] text-white/38 font-mono">MARKET CAP</div>
+                            <div class="font-display text-lg text-white">$${formatNumber(Number(node.market_cap) || 0)}T</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 grid grid-cols-2 gap-3">
+                        <div class="summary-tile rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">DIRECT RELATIONSHIPS</div>
+                            <div class="font-display text-2xl text-white">${networkSummary.degree}</div>
+                            <div class="text-[10px] text-cyan-100/58">${summary.visibleCount} visible now</div>
+                        </div>
+                        <div class="summary-tile rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">SOURCE SUMMARY</div>
+                            <div class="font-display text-2xl text-white">${summary.sourcedCount}</div>
+                            <div class="text-[10px] text-cyan-100/58">${summary.secBackedCount} SEC-backed</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 grid grid-cols-1 gap-2 text-xs">
+                        <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
+                            <div class="text-[10px] text-white/38 font-mono">SECTOR / INDUSTRY</div>
+                            <div class="mt-1 text-white/78 leading-snug">${escapeHtml(node.sector || 'Unknown sector')} · ${escapeHtml(node.industry || 'Unknown industry')}</div>
+                        </div>
+                        <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="text-[10px] text-white/38 font-mono">STRONGEST RELATIONSHIP EVIDENCE</div>
+                                <div class="text-[10px] font-mono text-cyan-100/70">${strongestConfidence ? escapeHtml(strongestConfidence.shortLabel) : 'PENDING'} · ${strongestSource ? escapeHtml(strongestSource.shortLabel) : 'NO URL'}</div>
+                            </div>
+                            <div class="mt-1 text-sm text-white/80 leading-snug">${strongestLine}</div>
+                            <div class="mt-2 flex flex-wrap gap-1.5 text-[10px] font-mono">
+                                <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">${strongestEvidenceCount} evidence item${strongestEvidenceCount === 1 ? '' : 's'}</span>
+                                <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">${summary.highConfidenceCount} high confidence</span>
+                                <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">${summary.pendingCount} pending</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        ${categoryLabels.map(label => `<span class="relationship-category-chip px-2.5 py-1 rounded-full text-[10px] font-mono">${escapeHtml(label)}</span>`).join('') || '<span class="text-xs text-white/35">No relationship categories available.</span>'}
+                    </div>
+                    <div class="mt-3 text-[11px] text-white/45 leading-relaxed">
+                        Relationship categories, source state, and confidence are derived from loaded static fields only. Missing evidence is shown as pending instead of inferred.
+                    </div>
+                </div>
+            `;
+    }
+
+    function getRelationshipEvidenceSummary(connectionsForNode, context) {
+        const {
+            getRelationshipTypeKey,
+            getRelationshipConfidenceTier,
+            getRelationshipEvidenceCount,
+            relationshipHasSourceEvidence,
+            isSecBackedConnection,
+            getConnectionStrength
+        } = context;
+        const categoryKeys = [...new Set((connectionsForNode || []).map(item => getRelationshipTypeKey?.(item.link) || item.link.relationship_type || item.link.type || 'link'))]
+            .sort((a, b) => String(a).localeCompare(String(b)));
+        const sourcedCount = (connectionsForNode || []).filter(item => relationshipHasSourceEvidence?.(item.link)).length;
+        const secBackedCount = (connectionsForNode || []).filter(item => isSecBackedConnection?.(item.link)).length;
+        const highConfidenceCount = (connectionsForNode || []).filter(item => getRelationshipConfidenceTier?.(item.link)?.key === 'high').length;
+        const pendingCount = (connectionsForNode || []).filter(item => {
+            const tier = getRelationshipConfidenceTier?.(item.link)?.key;
+            const evidenceCount = getRelationshipEvidenceCount?.(item.link) || 0;
+            return tier === 'pending' || evidenceCount === 0;
+        }).length;
+        const strongest = [...(connectionsForNode || [])]
+            .sort((a, b) => getRelationshipEvidenceScore(b, context) - getRelationshipEvidenceScore(a, context) ||
+                (getConnectionStrength?.(b.link) || 0) - (getConnectionStrength?.(a.link) || 0) ||
+                String(a.node.ticker || '').localeCompare(String(b.node.ticker || '')))[0] || null;
+
+        return {
+            categoryKeys,
+            sourcedCount,
+            secBackedCount,
+            highConfidenceCount,
+            pendingCount,
+            strongest,
+            visibleCount: context.visibleLinkKeys
+                ? (connectionsForNode || []).filter(item => context.visibleLinkKeys.has(item.link.key)).length
+                : (connectionsForNode || []).length
+        };
+    }
+
+    function getRelationshipEvidenceScore(item, context) {
+        const confidence = context.getRelationshipConfidenceTier?.(item.link)?.rank || 0;
+        const evidenceCount = context.getRelationshipEvidenceCount?.(item.link) || 0;
+        const sourced = context.relationshipHasSourceEvidence?.(item.link) ? 2 : 0;
+        const sec = context.isSecBackedConnection?.(item.link) ? 2 : 0;
+        return confidence + evidenceCount + sourced + sec;
+    }
+
+    function renderRelationshipEvidenceCards(context) {
+        const { connectionsForNode, relationshipCardConnections, escapeHtml } = context;
+        const sourceItems = relationshipCardConnections || connectionsForNode || [];
+        const items = [...sourceItems]
+            .sort((a, b) => getRelationshipEvidenceScore(b, context) - getRelationshipEvidenceScore(a, context) ||
+                (context.getConnectionStrength?.(b.link) || 0) - (context.getConnectionStrength?.(a.link) || 0) ||
+                String(a.node.ticker || '').localeCompare(String(b.node.ticker || '')))
+            .slice(0, 6);
+
+        return `
+                <div class="sidebar-section">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <div class="sidebar-section-title mb-0">Why Connected?</div>
+                        <div class="text-[10px] text-white/38 font-mono">${items.length} EVIDENCE CARD${items.length === 1 ? '' : 'S'}</div>
+                    </div>
+                    <div class="relationship-evidence-grid">
+                        ${items.map((item, index) => renderRelationshipEvidenceCard(item, index, context)).join('') || `<div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/35">${escapeHtml('Evidence pending. No direct relationships are visible at the current filters.')}</div>`}
+                    </div>
+                </div>
+            `;
+    }
+
+    function renderRelationshipEvidenceCard(item, index, context) {
+        const {
+            escapeHtml,
+            getRelationshipTypeLabel,
+            getRelationshipTypeColor,
+            getRelationshipConfidenceTier,
+            getRelationshipSourceStatus,
+            getRelationshipEvidenceCount,
+            getValidSourceUrls,
+            getSourceHost,
+            getConnectionStrength,
+            formatVerifiedDate,
+            isSecBackedConnection
+        } = context;
+        const link = item.link || {};
+        const typeLabel = getRelationshipTypeLabel?.(link) || link.relationship_type_label || 'Curated relationship';
+        const color = getRelationshipTypeColor?.(link) || context.EDGE_COLORS?.[link.type] || context.DEFAULT_EDGE_COLOR;
+        const confidence = getRelationshipConfidenceTier?.(link) || { key: 'pending', shortLabel: 'PENDING', label: 'Evidence pending' };
+        const sourceStatus = getRelationshipSourceStatus?.(link) || { key: 'missing_source', label: 'No source URL attached yet', shortLabel: 'NO URL' };
+        const evidenceCount = getRelationshipEvidenceCount?.(link) || 0;
+        const sourceUrls = getValidSourceUrls?.(link.source_urls) || [];
+        const sourceCountText = sourceUrls.length
+            ? `${sourceUrls.length} source URL${sourceUrls.length === 1 ? '' : 's'}`
+            : sourceStatus.key === 'candidate_preview'
+                ? 'SEC filing candidate preview'
+                : 'No source URL attached yet';
+        const strengthPercent = Math.round((getConnectionStrength?.(link) || Number(link.strength) || 0) * 100);
+        const confidenceScore = link.confidence_score || link.confidence || link.confidence_hint || link.candidate?.confidence_hint || '-';
+        const explanation = link.relationship_summary || link.label || 'Evidence pending. Relationship type from curated dataset.';
+        const tags = (Array.isArray(link.evidence_tags) ? link.evidence_tags : [])
+            .slice(0, 5);
+        const secBadge = sourceStatus.key === 'candidate_preview'
+                ? '<span class="relationship-state-badge preview px-2 py-1 rounded-full text-[10px] font-mono">Candidate preview</span>'
+            : isSecBackedConnection?.(link)
+                ? '<span class="relationship-state-badge sec px-2 py-1 rounded-full text-[10px] font-mono">SEC-backed</span>'
+                : '<span class="relationship-state-badge curated px-2 py-1 rounded-full text-[10px] font-mono">Curated dataset</span>';
+        const sourceLinks = sourceUrls.slice(0, 2).map((url, sourceIndex) => `
+                <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" title="${escapeHtml(url)}" class="source-link inline-flex items-center rounded-full px-2 py-0.5 font-mono truncate">
+                    ${escapeHtml(getSourceHost?.(url) || `Source ${sourceIndex + 1}`)}
+                </a>
+            `).join('');
+
+        return `
+                <div onclick="selectConnectionRow(event, ${Number(item.node.id)})" onkeydown="handleConnectionRowKeydown(event, ${Number(item.node.id)})" role="button" tabindex="0" class="relationship-evidence-card rounded-2xl p-3 cursor-pointer" style="--relationship-color:${color}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="shrink-0 px-1.5 py-0.5 rounded-full border border-white/10 bg-white/5 text-[10px] text-white/45 font-mono">#${index + 1}</span>
+                                <div class="text-sm font-semibold text-white/92 truncate">${escapeHtml(item.node.ticker || '')}</div>
+                            </div>
+                            <div class="mt-1 text-xs text-white/45 truncate">${escapeHtml(item.node.name || '')}</div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-[10px] font-mono relationship-type-label">${escapeHtml(typeLabel)}</div>
+                            <div class="text-xs text-white/55">${strengthPercent}% edge</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-xs text-white/78 leading-relaxed">
+                        <span class="text-cyan-100/80 font-mono">Why:</span> ${escapeHtml(explanation)}
+                    </div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <span class="confidence-badge ${escapeHtml(confidence.key)} px-2 py-0.5 rounded-full text-[10px] font-mono">CONF ${escapeHtml(String(confidenceScore))} · ${escapeHtml(confidence.shortLabel)}</span>
+                        <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-cyan-200/78 font-mono">${escapeHtml(sourceCountText)}</span>
+                        ${secBadge}
+                        <span class="text-[10px] text-white/42 font-mono">VERIFIED ${escapeHtml(formatVerifiedDate?.(link.verified_date || link.candidate?.filing_date) || '-')}</span>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        ${tags.map(tag => `<span class="relationship-evidence-tag px-2 py-0.5 rounded-full text-[10px] font-mono">${escapeHtml(tag)}</span>`).join('') || '<span class="relationship-evidence-tag px-2 py-0.5 rounded-full text-[10px] font-mono">Evidence pending</span>'}
+                        <span class="relationship-evidence-tag px-2 py-0.5 rounded-full text-[10px] font-mono">${evidenceCount} evidence item${evidenceCount === 1 ? '' : 's'}</span>
+                    </div>
+                    ${sourceLinks ? `<div class="mt-2 flex flex-wrap gap-1.5">${sourceLinks}</div>` : ''}
+                </div>
+            `;
+    }
+
+    function renderConnectedCompaniesByType(context) {
+        const {
+            connectionsForNode,
+            relationshipCardConnections,
+            escapeHtml,
+            getRelationshipTypeKey,
+            getRelationshipTypeLabel,
+            getRelationshipTypeColor,
+            getRelationshipConfidenceTier,
+            getRelationshipSourceStatus
+        } = context;
+        const sourceItems = relationshipCardConnections || connectionsForNode || [];
+        const groups = new Map();
+        sourceItems.forEach(item => {
+            const key = getRelationshipTypeKey?.(item.link) || item.link.relationship_type || item.link.type || 'link';
+            const existing = groups.get(key) || {
+                key,
+                label: getRelationshipTypeLabel?.(key) || key,
+                color: getRelationshipTypeColor?.(key) || context.DEFAULT_EDGE_COLOR,
+                items: []
+            };
+            existing.items.push(item);
+            groups.set(key, existing);
+        });
+
+        const groupList = [...groups.values()]
+            .map(group => ({
+                ...group,
+                items: group.items.sort((a, b) => (context.getConnectionStrength?.(b.link) || 0) - (context.getConnectionStrength?.(a.link) || 0))
+            }))
+            .sort((a, b) => b.items.length - a.items.length || String(a.label).localeCompare(String(b.label)))
+            .slice(0, 6);
+
+        if (!groupList.length) return '';
+
+        return `
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Connected Companies by Type</div>
+                    <div class="space-y-2">
+                        ${groupList.map(group => `
+                            <div class="relationship-type-group rounded-2xl p-3" style="--relationship-color:${group.color}">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="text-xs font-semibold text-white/86 truncate">${escapeHtml(group.label)}</div>
+                                    <div class="text-[10px] text-white/44 font-mono">${group.items.length} LINK${group.items.length === 1 ? '' : 'S'}</div>
+                                </div>
+                                <div class="mt-2 flex flex-wrap gap-1.5">
+                                    ${group.items.slice(0, 8).map(item => {
+                                        const confidence = getRelationshipConfidenceTier?.(item.link)?.shortLabel || 'PENDING';
+                                        const sourceStatus = getRelationshipSourceStatus?.(item.link)?.shortLabel || 'NO URL';
+                                        return `
+                                            <button onclick="selectNodeById(${Number(item.node.id)})" class="relationship-company-chip rounded-full px-2.5 py-1 text-[10px] font-mono" title="${escapeHtml(item.node.name || item.node.ticker || '')}">
+                                                ${escapeHtml(item.node.ticker || item.node.name || '')}
+                                                <span>${escapeHtml(confidence)} · ${escapeHtml(sourceStatus)}</span>
+                                            </button>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             `;
@@ -332,7 +627,7 @@
                 <div class="sidebar-section">
                     <div class="sidebar-section-title">Nexus View</div>
                     <div class="rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-3 mb-3 text-xs text-cyan-50/62 leading-relaxed">
-                        Counts are grouped from visible direct edges by relationship type only.
+                        Selected company is the investigation hub. Groups use derived relationship taxonomy; low-confidence or unsourced edges are muted in the graph.
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         ${groups.map(groupKey => renderNexusSummaryTile(summary.groups[groupKey], context)).join('')}
@@ -342,19 +637,21 @@
     }
 
     function renderNexusSummaryTile(group, context) {
-        const { escapeHtml, formatConnectionType, getConnectionStrength } = context;
+        const { escapeHtml, getRelationshipTypeLabel, getRelationshipConfidenceTier, getRelationshipSourceStatus, getConnectionStrength } = context;
         const strongest = group.strongest;
         const strengthText = strongest ? `${Math.round(getConnectionStrength(strongest.link) * 100)}% edge` : 'No visible edge';
         const tickerText = strongest ? `${strongest.node.ticker || strongest.node.name || 'Company'}` : 'None';
+        const confidenceText = strongest ? getRelationshipConfidenceTier?.(strongest.link)?.shortLabel || 'PENDING' : 'PENDING';
+        const sourceText = strongest ? getRelationshipSourceStatus?.(strongest.link)?.shortLabel || 'NO URL' : 'NO URL';
         const relationshipText = strongest
-            ? `${formatConnectionType(strongest.link.type || 'link')}: ${strongest.link.label || 'Loaded direct edge'}`
+            ? `${getRelationshipTypeLabel?.(strongest.link) || 'Relationship'}: ${strongest.link.relationship_summary || strongest.link.label || 'Loaded direct edge'}`
             : 'No strongest relationship at current filters';
         return `
                 <div class="summary-tile rounded-2xl p-3">
                     <div class="text-[10px] text-white/40 font-mono">${escapeHtml(group.shortLabel.toUpperCase())}</div>
                     <div class="font-display text-2xl text-white">${group.count}</div>
                     <div class="mt-1 text-xs text-white/70 truncate">${escapeHtml(tickerText)}</div>
-                    <div class="text-[10px] text-cyan-100/55 font-mono">${escapeHtml(strengthText)}</div>
+                    <div class="text-[10px] text-cyan-100/55 font-mono">${escapeHtml(strengthText)} · ${escapeHtml(confidenceText)} · ${escapeHtml(sourceText)}</div>
                     <div class="mt-1 text-[11px] text-white/45 leading-snug line-clamp-2">${escapeHtml(relationshipText)}</div>
                 </div>
             `;
@@ -496,18 +793,39 @@
             formatConnectionType,
             getConfidenceClass,
             formatVerifiedDate,
-            getValidSourceUrls
+            getValidSourceUrls,
+            getRelationshipTypeLabel,
+            getRelationshipTypeColor,
+            getRelationshipConfidenceTier,
+            getRelationshipSourceStatus,
+            getRelationshipEvidenceCount,
+            relationshipHasSourceEvidence,
+            isSecBackedConnection
         } = context;
-        const color = EDGE_COLORS[item.link.type] || DEFAULT_EDGE_COLOR;
+        const color = getRelationshipTypeColor?.(item.link) || EDGE_COLORS[item.link.type] || DEFAULT_EDGE_COLOR;
         const strengthPercent = Math.round(item.link.strength * 100);
-        const confidence = Number(item.link.confidence) || 0;
-        const confidenceClass = getConfidenceClass(confidence);
+        const confidence = item.link.confidence_score || Number(item.link.confidence) || item.link.confidence_hint || item.link.candidate?.confidence_hint || 0;
+        const confidenceTier = getRelationshipConfidenceTier?.(item.link) || { key: '', shortLabel: 'PENDING', label: 'Evidence pending' };
+        const confidenceClass = getConfidenceClass(Number(item.link.confidence_score || item.link.confidence) || 0);
         const verifiedDate = formatVerifiedDate(item.link.verified_date);
         const sourceUrls = getValidSourceUrls(item.link.source_urls);
+        const sourceStatus = getRelationshipSourceStatus?.(item.link) || { key: 'missing_source', label: 'No source URL attached yet', shortLabel: 'NO URL' };
+        const evidenceCount = getRelationshipEvidenceCount?.(item.link) || 0;
         const sourceLinks = renderConnectionSourceLinks(item.link.source_urls, context);
         const rank = index + 1;
         const topClass = rank <= 3 ? `top-connection top-connection-${rank}` : '';
-        const sourceLabel = sourceUrls.length === 1 ? '1 SOURCE' : `${sourceUrls.length} SOURCES`;
+        const sourceLabel = sourceUrls.length
+            ? `${sourceUrls.length} URL${sourceUrls.length === 1 ? '' : 'S'}`
+            : sourceStatus.shortLabel;
+        const relationshipTypeLabel = getRelationshipTypeLabel?.(item.link) || formatConnectionType(item.link.type || 'link');
+        const sourceWarning = relationshipHasSourceEvidence?.(item.link)
+            ? ''
+            : '<span class="relationship-warning px-2 py-0.5 rounded-full text-[10px] font-mono">Evidence pending</span>';
+        const sourceState = sourceStatus.key === 'candidate_preview'
+            ? 'Candidate / preview'
+            : isSecBackedConnection?.(item.link)
+                ? 'SEC-backed'
+                : sourceStatus.label;
         return `
                 <div onclick="selectConnectionRow(event, ${Number(item.node.id)})" onkeydown="handleConnectionRowKeydown(event, ${Number(item.node.id)})" role="button" tabindex="0" class="connection-row ${topClass} w-full rounded-2xl p-3 text-left block hover:bg-white/10 transition cursor-pointer">
                     <div class="flex items-center justify-between gap-3">
@@ -519,16 +837,19 @@
                             </div>
                         </div>
                         <div class="text-right shrink-0">
-                            <div class="text-[10px] font-mono" style="color:${color}">${escapeHtml(formatConnectionType(item.link.type || 'link'))}</div>
+                            <div class="text-[10px] font-mono" style="color:${color}">${escapeHtml(relationshipTypeLabel)}</div>
                             <div class="text-xs text-white/55">${strengthPercent}%</div>
                         </div>
                     </div>
-                    <div class="mt-2 text-xs text-white/70 leading-snug">${escapeHtml(item.link.label || 'Curated connection')}</div>
+                    <div class="mt-2 text-xs text-white/70 leading-snug"><span class="text-cyan-100/78 font-mono">Why:</span> ${escapeHtml(item.link.relationship_summary || item.link.label || 'Evidence pending. Relationship type from curated dataset.')}</div>
                     <div class="mt-2 flex flex-wrap items-center gap-2">
-                        <span class="confidence-badge ${confidenceClass} px-2 py-0.5 rounded-full text-[10px] font-mono">CONF ${confidence}/5</span>
+                        <span class="confidence-badge ${confidenceClass} px-2 py-0.5 rounded-full text-[10px] font-mono">CONF ${escapeHtml(String(confidence || '-'))} · ${escapeHtml(confidenceTier.shortLabel)}</span>
                         <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-cyan-200/78 font-mono">
                             <i class="fa-solid ${sourceUrls.length ? 'fa-link' : 'fa-link-slash'} mr-1"></i>${sourceLabel}
                         </span>
+                        <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-white/58 font-mono">${escapeHtml(sourceState)}</span>
+                        ${sourceWarning}
+                        <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-white/58 font-mono">${evidenceCount} EVIDENCE</span>
                         <span class="text-[10px] text-white/42 font-mono">VERIFIED ${escapeHtml(verifiedDate)}</span>
                     </div>
                     <div class="mt-2 text-[11px] leading-relaxed text-white/50">${escapeHtml(item.link.provenance || 'No provenance summary available.')}</div>
@@ -558,7 +879,7 @@
     }
 
     function renderSignalClarityConnection(label, item, context) {
-        const { EDGE_COLORS, DEFAULT_EDGE_COLOR, escapeHtml, formatConnectionType } = context;
+        const { EDGE_COLORS, DEFAULT_EDGE_COLOR, escapeHtml, formatConnectionType, getRelationshipTypeLabel, getRelationshipTypeColor } = context;
         if (!item) {
             return `
                     <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
@@ -568,8 +889,9 @@
                 `;
         }
 
-        const color = EDGE_COLORS[item.link.type] || DEFAULT_EDGE_COLOR;
+        const color = getRelationshipTypeColor?.(item.link) || EDGE_COLORS[item.link.type] || DEFAULT_EDGE_COLOR;
         const strengthPercent = Math.round(item.link.strength * 100);
+        const typeLabel = getRelationshipTypeLabel?.(item.link) || formatConnectionType(item.link.type || 'link');
         return `
                 <div class="rounded-2xl border border-white/10 bg-white/5 p-3">
                     <div class="flex items-start justify-between gap-3">
@@ -579,7 +901,7 @@
                         </div>
                         <div class="text-right shrink-0">
                             <div class="text-sm font-mono" style="color:${color}">${strengthPercent}%</div>
-                            <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(item.link.type || 'link'))}</div>
+                            <div class="text-[10px] text-white/42">${escapeHtml(typeLabel)}</div>
                         </div>
                     </div>
                     <div class="mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
@@ -691,14 +1013,14 @@
     }
 
     function renderConnectionTypeMix(typeCounts, context) {
-        const { EDGE_COLORS, DEFAULT_EDGE_COLOR, escapeHtml, formatConnectionType } = context;
+        const { EDGE_COLORS, DEFAULT_EDGE_COLOR, escapeHtml, formatConnectionType, getRelationshipTypeLabel, getRelationshipTypeColor } = context;
         const entries = Object.entries(typeCounts)
             .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
         if (!entries.length) return '<span class="text-sm text-white/35">No linked companies found.</span>';
 
         return entries.map(([type, count]) => `
-                <span class="px-3 py-1 rounded-full text-xs border border-white/10 bg-white/5" style="color:${EDGE_COLORS[type] || DEFAULT_EDGE_COLOR}">
-                    ${escapeHtml(formatConnectionType(type))} ${count}
+                <span class="px-3 py-1 rounded-full text-xs border border-white/10 bg-white/5" style="color:${getRelationshipTypeColor?.(type) || EDGE_COLORS[type] || DEFAULT_EDGE_COLOR}">
+                    ${escapeHtml(getRelationshipTypeLabel?.(type) || formatConnectionType(type))} ${count}
                 </span>
             `).join('');
     }
@@ -939,10 +1261,11 @@
     }
 
     function renderPortfolioStrongestEdge(link, context) {
-        const { EDGE_COLORS, DEFAULT_EDGE_COLOR, escapeHtml, formatConnectionType, getConnectionStrength } = context;
+        const { EDGE_COLORS, DEFAULT_EDGE_COLOR, escapeHtml, formatConnectionType, getConnectionStrength, getRelationshipTypeLabel, getRelationshipTypeColor } = context;
         if (!link) return '<div class="text-sm text-white/35">No portfolio-connected edge found.</div>';
-        const color = EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
+        const color = getRelationshipTypeColor?.(link) || EDGE_COLORS[link.type] || DEFAULT_EDGE_COLOR;
         const strengthPercent = Math.round(getConnectionStrength(link) * 100);
+        const typeLabel = getRelationshipTypeLabel?.(link) || formatConnectionType(link.type || 'link');
         return `
                 <div class="connection-row top-connection top-connection-1 rounded-2xl p-3">
                     <div class="flex items-start justify-between gap-3">
@@ -952,7 +1275,7 @@
                         </div>
                         <div class="text-right shrink-0">
                             <div class="text-sm font-mono" style="color:${color}">${strengthPercent}%</div>
-                            <div class="text-[10px] text-white/42">${escapeHtml(formatConnectionType(link.type || 'link'))}</div>
+                            <div class="text-[10px] text-white/42">${escapeHtml(typeLabel)}</div>
                         </div>
                     </div>
                 </div>
@@ -1120,6 +1443,10 @@
         showNodeDetails,
         showSecPreviewNodeDetails,
         showSecPreviewEdgeDetails,
+        renderCompanyInvestigationWorkspace,
+        renderRelationshipEvidenceCards,
+        renderRelationshipEvidenceCard,
+        renderConnectedCompaniesByType,
         renderNexusViewSection,
         renderNexusSummaryTile,
         renderRelatedClusterSection,

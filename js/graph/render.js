@@ -194,7 +194,8 @@
             x: link.target._screenX ?? targetFallback.x,
             y: link.target._screenY ?? targetFallback.y
         };
-        const color = context.EDGE_COLORS[link.type] || context.DEFAULT_EDGE_COLOR;
+        const relationshipVisual = context.getRelationshipVisualMeta?.(link) || {};
+        const color = relationshipVisual.color || context.EDGE_COLORS[link.relationship_type] || context.EDGE_COLORS[link.type] || context.DEFAULT_EDGE_COLOR;
         const isFocused = context.selectedNode && context.focusLinkKeys.has(link.key);
         const isHoveredLink = context.hoveredNode && (context.hoveredNode.id === link.source.id || context.hoveredNode.id === link.target.id);
         const hasFocus = Boolean(context.selectedNode);
@@ -231,6 +232,11 @@
         if (isPortfolioLink) {
             alpha = Math.max(alpha, 0.68 + strength * 0.24);
             width = Math.max(width + 0.65, 1.35 + strength * 2.5);
+        }
+
+        if (!isFocused && !isHoveredLink && !isPortfolioLink) {
+            alpha *= relationshipVisual.alphaMultiplier || 1;
+            width = Math.max(0.18, width + (relationshipVisual.widthBoost || 0));
         }
 
         ctx.globalAlpha = alpha * perspectiveShade;

@@ -244,7 +244,8 @@
         (adjacencyById.get(node.id) || [])
             .filter(item => visibleNodeIds.has(item.node.id) && visibleLinkKeys.has(item.link.key))
             .forEach(item => {
-                const groupKey = getNexusGroupKeyForType(item.link.type, options);
+                const groupKey = options.getRelationshipGroupKey?.(item.link) ||
+                    getNexusGroupKeyForType(item.link.relationship_type || item.link.type, options);
                 groups[groupKey].items.push(item);
             });
 

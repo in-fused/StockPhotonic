@@ -46,11 +46,19 @@
         return companies.map(company => normalizeCompany(company, industryGroupRules));
     }
 
+    function normalizeConnections(connections) {
+        const relationshipTools = window.StockPhotonicStock?.relationships;
+        if (relationshipTools?.normalizeConnections) {
+            return relationshipTools.normalizeConnections(connections);
+        }
+        return connections;
+    }
+
     async function loadDatasets(cacheBust, industryGroupRules) {
         const dataset = await fetchDatasets(cacheBust);
         return {
             companies: normalizeCompanies(dataset.companies, industryGroupRules),
-            connections: dataset.connections
+            connections: normalizeConnections(dataset.connections)
         };
     }
 
@@ -99,6 +107,7 @@
         deriveIndustryGroup,
         normalizeCompany,
         normalizeCompanies,
+        normalizeConnections,
         loadDatasets,
         createGraphIndex,
         sumMarketCap,

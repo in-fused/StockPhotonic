@@ -2,7 +2,7 @@
 
 Document: StockPhotonic Data Sources. Production graph data is static JSON: `data/companies.json` and `data/connections.json`. The current production dataset is 60 real public companies and 121 curated connections.
 
-- Graph Intelligence (2D): Reads production companies/connections only, then derives filters, dashboards, source visibility, clusters, shared exposure, hidden relationships, portfolio exposure, and industry correlations in the browser.
+- Graph Intelligence (2D): Reads production companies/connections only, then derives filters, dashboards, relationship taxonomy, confidence tiers, source visibility, clusters, shared exposure, hidden relationships, portfolio exposure, and industry correlations in the browser.
 - 3D Network capabilities: Renders the same production dataset with Three.js; it does not create, promote, or alter data.
 - Source Workbench pipeline: Read-only browser surface for local source commands and candidate review. It can display candidate file contents served statically, but cannot run ingestion or write production data.
 - SEC ingestion + candidate system: SEC cache, filing inspection, signal extraction, candidate preview/write, job, schedule, and policy scripts operate locally and keep staged records under `data/candidates/`.
@@ -62,3 +62,47 @@ SEC network commands require an identifying user agent and explicit network flag
 - High-confidence production edges should include stable `source_urls` when direct evidence is available.
 - Leave `source_urls` absent rather than guessing.
 - Every production connection needs `provenance`, `confidence`, `strength`, `label`, `type`, and `verified_date`.
+
+## RELATIONSHIP EVIDENCE DISPLAY
+
+The browser derives additive metadata from existing connection fields. It does not invent relationship claims.
+
+Derived runtime fields may include:
+
+- `relationship_type`: mapped from existing `type`, `relationship_type`, label, provenance, or candidate metadata.
+- `confidence_tier`: high, medium, low, or evidence pending.
+- `evidence_count`: count of attached source URLs plus explicit evidence snippets when present.
+- `source_status`: SEC-backed, candidate/preview, source attached, or no source URL attached yet.
+- `relationship_summary`: existing label, evidence snippet, provenance note, or an evidence-pending fallback.
+
+Relationship cards must show source/confidence state when available. If source evidence is missing, the UI should say "Evidence pending", "Relationship type from curated dataset", or "No source URL attached yet" instead of implying a verified partnership/customer relationship.
+
+## CURRENT TAXONOMY
+
+StockPhotonic currently maps relationship records into this open-data-ready taxonomy:
+
+- Supplier / Customer
+- Strategic Partnership
+- Competitor / Peer
+- Hyperscaler / Cloud Ecosystem
+- Semiconductor Supply Chain
+- AI Infrastructure
+- Data Center / Power
+- Ownership / ETF Overlap
+- SEC-backed Preview
+- Curated / Manual Relationship
+
+The taxonomy is a display and filtering layer. Production truth remains `data/connections.json`.
+
+## FUTURE OPEN SOURCE EXPANSION
+
+Recommended open or source-friendly inputs:
+
+- SEC EDGAR 10-K, 10-Q, 8-K, exhibit, and risk-factor text.
+- Company investor-relations releases and official technical/product pages.
+- Exchange-published listing metadata for public-company discovery only.
+- Official ETF issuer holdings files when ownership/ETF overlap is explicitly modeled.
+- Government contract portals only after a dedicated schema and source registry rules exist.
+- Reputable secondary sources only as review support, not as unsupported production claims.
+
+Do not wire paid/API-only sources into the static frontend. Any future source expansion should preserve candidate preview, manual promotion, and validation gates.

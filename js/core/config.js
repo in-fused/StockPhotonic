@@ -5,7 +5,16 @@
         supply: '#00ff9f',
         ecosystem: '#ffd700',
         competitor: '#ff6b00',
-        investment: '#c026d3'
+        investment: '#c026d3',
+        supplier_customer: '#00ff9f',
+        strategic_partnership: '#ff00aa',
+        hyperscaler_cloud_customer: '#7dd3fc',
+        semiconductor_supply_chain: '#34d399',
+        ai_infrastructure: '#ffd700',
+        data_center_power: '#facc15',
+        ownership_etf_overlap: '#c026d3',
+        sec_backed_preview: '#67e8f9',
+        curated_manual_relationship: '#00f9ff'
     };
     const DEFAULT_EDGE_COLOR = '#00f9ff';
     const DRAG_THRESHOLD_PX = 6;
@@ -210,12 +219,12 @@
         supply: {
             label: 'Suppliers / Supply',
             shortLabel: 'Supply-side',
-            types: ['supply', 'supplier_customer']
+            types: ['supply', 'supplier_customer', 'semiconductor_supply_chain', 'data_center_power']
         },
         partner: {
             label: 'Partners / Ecosystem',
             shortLabel: 'Partner/ecosystem',
-            types: ['partnership', 'ecosystem']
+            types: ['partnership', 'ecosystem', 'strategic_partnership', 'hyperscaler_cloud_customer', 'ai_infrastructure']
         },
         competitive: {
             label: 'Competitors / Peers',
@@ -225,7 +234,7 @@
         capital: {
             label: 'Capital / Ownership',
             shortLabel: 'Capital/ownership',
-            types: ['investment', 'ownership', 'institutional_ownership', 'shared_holder']
+            types: ['investment', 'ownership', 'institutional_ownership', 'shared_holder', 'ownership_etf_overlap']
         },
         other: {
             label: 'Other Direct Links',

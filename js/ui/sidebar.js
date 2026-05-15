@@ -93,6 +93,8 @@
 
                 ${renderCompanyInvestigationWorkspace(context)}
 
+                ${renderEvidenceReviewQueue(context)}
+
                 ${renderSelectedNodeWhyLayer(context)}
 
                 ${renderSecPreviewNodeOverlaySection(secPreviewLinksForNode, context)}
@@ -225,8 +227,12 @@
             context.currentIndustryGroup || '',
             context.currentRelationshipType ? context.getRelationshipTypeLabel?.(context.currentRelationshipType) : '',
             context.currentConfidenceTier ? `Confidence: ${context.currentConfidenceTier}` : '',
+            context.sourceHostCategoryFilter ? `Source: ${context.getSourceHostCategoryLabel?.(context.sourceHostCategoryFilter) || context.sourceHostCategoryFilter}` : '',
             context.sourcedOnlyFilter ? 'Sourced only' : '',
             context.secBackedOnlyFilter ? 'SEC-backed only' : '',
+            context.staleReviewFilter ? 'Stale review' : '',
+            context.candidatePreviewOnlyFilter ? 'Candidate preview' : '',
+            context.missingEvidenceFilter ? 'Missing evidence' : '',
             context.portfolioConnectedOnlyFilter ? 'Portfolio links' : '',
             context.crossSectorOnlyFilter ? 'Cross-sector' : '',
             context.currentSearch ? `Search: ${context.currentSearch}` : ''
@@ -261,9 +267,11 @@
             getRelationshipTypeLabel,
             getRelationshipConfidenceTier,
             getRelationshipSourceStatus,
-            getRelationshipEvidenceCount
+            getRelationshipEvidenceCount,
+            getRelationshipSourceAgeInfo
         } = context;
         const summary = getRelationshipEvidenceSummary(connectionsForNode, context);
+        const timeline = getRelationshipTimelineContext(connectionsForNode, context);
         const categoryLabels = summary.categoryKeys
             .map(key => getRelationshipTypeLabel?.(key) || key)
             .slice(0, 4);
@@ -299,6 +307,16 @@
                             <div class="font-display text-2xl text-white">${summary.sourcedCount}</div>
                             <div class="text-[10px] text-cyan-100/58">${summary.secBackedCount} SEC-backed</div>
                         </div>
+                        <div class="summary-tile rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">SOURCE HOSTS</div>
+                            <div class="font-display text-2xl text-white">${summary.sourceHostCount}</div>
+                            <div class="text-[10px] text-cyan-100/58">${summary.sourceCategoryCount} URL categories</div>
+                        </div>
+                        <div class="summary-tile rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">REVIEW FLAGS</div>
+                            <div class="font-display text-2xl text-white">${summary.pendingCount + summary.staleReviewCount}</div>
+                            <div class="text-[10px] text-cyan-100/58">${summary.staleReviewCount} stale · ${summary.missingDateCount} no date</div>
+                        </div>
                     </div>
                     <div class="mt-3 grid grid-cols-1 gap-2 text-xs">
                         <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
@@ -315,6 +333,16 @@
                                 <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">${strongestEvidenceCount} evidence item${strongestEvidenceCount === 1 ? '' : 's'}</span>
                                 <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">${summary.highConfidenceCount} high confidence</span>
                                 <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">${summary.pendingCount} pending</span>
+                                <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">${summary.staleReviewCount} stale review</span>
+                            </div>
+                        </div>
+                        <div class="relationship-timeline-panel rounded-2xl border border-white/10 bg-black/20 p-3">
+                            <div class="text-[10px] text-white/38 font-mono">RELATIONSHIP TIMELINE CONTEXT</div>
+                            <div class="mt-2 grid grid-cols-2 gap-2 text-[10px] font-mono">
+                                ${renderTimelineMetric('Latest verified', timeline.latestVerifiedLabel, context)}
+                                ${renderTimelineMetric('Oldest verified', timeline.oldestVerifiedLabel, context)}
+                                ${renderTimelineMetric('Latest SEC-backed', timeline.latestSecBackedLabel, context)}
+                                ${renderTimelineMetric('Pending review date', timeline.pendingReviewLabel, context)}
                             </div>
                         </div>
                     </div>
@@ -333,6 +361,8 @@
             getRelationshipTypeKey,
             getRelationshipConfidenceTier,
             getRelationshipEvidenceCount,
+            getRelationshipSourceAgeInfo,
+            getSourceHostDiversity,
             relationshipHasSourceEvidence,
             isSecBackedConnection,
             getConnectionStrength
@@ -341,7 +371,16 @@
             .sort((a, b) => String(a).localeCompare(String(b)));
         const sourcedCount = (connectionsForNode || []).filter(item => relationshipHasSourceEvidence?.(item.link)).length;
         const secBackedCount = (connectionsForNode || []).filter(item => isSecBackedConnection?.(item.link)).length;
+        const staleReviewCount = (connectionsForNode || []).filter(item => getRelationshipSourceAgeInfo?.(item.link)?.key === 'stale_review_recommended').length;
+        const missingDateCount = (connectionsForNode || []).filter(item => getRelationshipSourceAgeInfo?.(item.link)?.key === 'no_verified_date').length;
         const highConfidenceCount = (connectionsForNode || []).filter(item => getRelationshipConfidenceTier?.(item.link)?.key === 'high').length;
+        const sourceCategoryKeys = new Set();
+        const sourceHosts = new Set();
+        (connectionsForNode || []).forEach(item => {
+            const diversity = getSourceHostDiversity?.(item.link);
+            diversity?.categoryKeys?.forEach(key => sourceCategoryKeys.add(key));
+            diversity?.hosts?.forEach(host => sourceHosts.add(host));
+        });
         const pendingCount = (connectionsForNode || []).filter(item => {
             const tier = getRelationshipConfidenceTier?.(item.link)?.key;
             const evidenceCount = getRelationshipEvidenceCount?.(item.link) || 0;
@@ -356,6 +395,10 @@
             categoryKeys,
             sourcedCount,
             secBackedCount,
+            staleReviewCount,
+            missingDateCount,
+            sourceCategoryCount: sourceCategoryKeys.size,
+            sourceHostCount: sourceHosts.size,
             highConfidenceCount,
             pendingCount,
             strongest,
@@ -363,6 +406,46 @@
                 ? (connectionsForNode || []).filter(item => context.visibleLinkKeys.has(item.link.key)).length
                 : (connectionsForNode || []).length
         };
+    }
+
+    function getRelationshipTimelineContext(connectionsForNode, context) {
+        const { formatVerifiedDate, isSecBackedConnection } = context;
+        const dated = (connectionsForNode || [])
+            .map(item => ({
+                item,
+                value: item.link?.verified_date || item.link?.candidate?.filing_date || ''
+            }))
+            .filter(entry => /^\d{4}-\d{2}-\d{2}$/.test(String(entry.value || '')))
+            .sort((a, b) => String(a.value).localeCompare(String(b.value)));
+        const secDated = dated.filter(entry => isSecBackedConnection?.(entry.item.link));
+        const pendingDated = dated.filter(entry => {
+            const status = String(entry.item.link?.review_status || entry.item.link?.candidate?.review_status || '').toLowerCase();
+            return status.includes('pending');
+        });
+        const previewPendingDated = (context.secPreviewLinksForNode || [])
+            .map(link => link?.candidate?.filing_date || link?.filing_date || '')
+            .filter(value => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')))
+            .sort((a, b) => String(a).localeCompare(String(b)));
+        const pendingReviewDate = pendingDated.length
+            ? pendingDated[pendingDated.length - 1].value
+            : previewPendingDated[previewPendingDated.length - 1] || '';
+
+        return {
+            latestVerifiedLabel: dated.length ? formatVerifiedDate(dated[dated.length - 1].value) : 'Pending',
+            oldestVerifiedLabel: dated.length ? formatVerifiedDate(dated[0].value) : 'Pending',
+            latestSecBackedLabel: secDated.length ? formatVerifiedDate(secDated[secDated.length - 1].value) : 'Pending',
+            pendingReviewLabel: pendingReviewDate ? formatVerifiedDate(pendingReviewDate) : 'Pending'
+        };
+    }
+
+    function renderTimelineMetric(label, value, context) {
+        const { escapeHtml } = context;
+        return `
+                <div class="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">
+                    <div class="text-white/36">${escapeHtml(label)}</div>
+                    <div class="mt-1 text-white/78">${escapeHtml(value || 'Pending')}</div>
+                </div>
+            `;
     }
 
     function getRelationshipEvidenceScore(item, context) {
@@ -395,6 +478,95 @@
             `;
     }
 
+    function renderEvidenceReviewQueue(context) {
+        const { evidenceReviewQueue = [], escapeHtml } = context;
+        const items = Array.isArray(evidenceReviewQueue) ? evidenceReviewQueue : [];
+        const groups = groupReviewQueueItems(items);
+
+        return `
+                <div class="sidebar-section">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <div class="sidebar-section-title mb-0">Evidence Review Queue</div>
+                        <div class="text-[10px] text-white/38 font-mono">${items.length} ITEM${items.length === 1 ? '' : 'S'}</div>
+                    </div>
+                    <div class="review-queue-panel rounded-2xl p-3">
+                        <div class="text-xs text-white/52 leading-relaxed mb-3">
+                            Graph-aware review prompts for this company. Visibility labels reflect current filters; missing evidence remains pending.
+                        </div>
+                        ${items.length ? `
+                            <div class="space-y-3">
+                                ${groups.map(group => `
+                                    <div>
+                                        <div class="review-queue-group-label">${escapeHtml(group.label)} · ${group.items.length}</div>
+                                        <div class="mt-2 space-y-2">
+                                            ${group.items.map(item => renderReviewQueueItem(item, context)).join('')}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<div class="text-sm text-white/35">No low-confidence, stale, missing-source, candidate, or SEC preview relationships are queued for this company.</div>'}
+                    </div>
+                </div>
+            `;
+    }
+
+    function renderReviewQueueItem(item, context) {
+        const { escapeHtml, escapeInlineJsString } = context;
+        const sourceAge = item.sourceAge?.shortLabel || 'PENDING';
+        const confidence = item.confidence?.shortLabel || 'PENDING';
+        const sourceCategory = item.diversity?.primaryCategory?.shortLabel || 'NO URL';
+        const evidenceText = `${item.evidenceCount || 0} evidence`;
+        const reasons = (item.reasons || []).slice(0, 3);
+        const action = item.kind === 'sec_preview'
+            ? `selectSecPreviewEdge('${escapeInlineJsString(item.link?.key || '')}')`
+            : item.peer?.id
+                ? `selectNodeById(${Number(item.peer.id)})`
+                : '';
+        const tagMarkup = reasons.map(reason => `<span class="relationship-evidence-tag px-2 py-0.5 rounded-full text-[10px] font-mono">${escapeHtml(reason)}</span>`).join('');
+
+        return `
+                <button ${action ? `onclick="${action}"` : ''} class="review-queue-item w-full rounded-2xl p-3 text-left">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-xs text-white/90 font-semibold truncate">${escapeHtml(item.pairLabel || 'Relationship')}</div>
+                            <div class="mt-1 text-[10px] text-white/42 font-mono">${escapeHtml(item.typeLabel || 'Relationship')} · ${escapeHtml(item.graphState || 'visible')}</div>
+                        </div>
+                        <span class="review-queue-chip">${escapeHtml(item.groupShortLabel || 'REVIEW')}</span>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-age-chip">${escapeHtml(sourceAge)}</span>
+                        <span class="source-host-chip">${escapeHtml(sourceCategory)}</span>
+                        <span class="source-host-chip">${escapeHtml(confidence)}</span>
+                        <span class="source-host-chip">${escapeHtml(evidenceText)}</span>
+                    </div>
+                    ${tagMarkup ? `<div class="mt-2 flex flex-wrap gap-1.5">${tagMarkup}</div>` : ''}
+                </button>
+            `;
+    }
+
+    function groupReviewQueueItems(items) {
+        const groups = new Map();
+        items.forEach(item => {
+            const key = item.groupKey || 'review';
+            const group = groups.get(key) || {
+                key,
+                label: item.groupLabel || 'Review',
+                priority: Number(item.priority) || 0,
+                items: []
+            };
+            group.priority = Math.max(group.priority, Number(item.priority) || 0);
+            group.items.push(item);
+            groups.set(key, group);
+        });
+
+        return [...groups.values()]
+            .map(group => ({
+                ...group,
+                items: group.items.sort((a, b) => b.priority - a.priority || String(a.pairLabel).localeCompare(String(b.pairLabel)))
+            }))
+            .sort((a, b) => b.priority - a.priority || String(a.label).localeCompare(String(b.label)));
+    }
+
     function renderRelationshipEvidenceCard(item, index, context) {
         const {
             escapeHtml,
@@ -403,6 +575,8 @@
             getRelationshipConfidenceTier,
             getRelationshipSourceStatus,
             getRelationshipEvidenceCount,
+            getRelationshipSourceAgeInfo,
+            getSourceHostDiversity,
             getValidSourceUrls,
             getSourceHost,
             getConnectionStrength,
@@ -415,6 +589,8 @@
         const confidence = getRelationshipConfidenceTier?.(link) || { key: 'pending', shortLabel: 'PENDING', label: 'Evidence pending' };
         const sourceStatus = getRelationshipSourceStatus?.(link) || { key: 'missing_source', label: 'No source URL attached yet', shortLabel: 'NO URL' };
         const evidenceCount = getRelationshipEvidenceCount?.(link) || 0;
+        const sourceAge = getRelationshipSourceAgeInfo?.(link) || { key: 'no_verified_date', shortLabel: 'NO DATE', label: 'No verified date' };
+        const sourceDiversity = getSourceHostDiversity?.(link) || { categories: [], hosts: [], categoryCount: 0, hostCount: 0 };
         const sourceUrls = getValidSourceUrls?.(link.source_urls) || [];
         const sourceCountText = sourceUrls.length
             ? `${sourceUrls.length} source URL${sourceUrls.length === 1 ? '' : 's'}`
@@ -435,6 +611,9 @@
                 <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" title="${escapeHtml(url)}" class="source-link inline-flex items-center rounded-full px-2 py-0.5 font-mono truncate">
                     ${escapeHtml(getSourceHost?.(url) || `Source ${sourceIndex + 1}`)}
                 </a>
+            `).join('');
+        const hostChips = sourceDiversity.categories.slice(0, 3).map(category => `
+                <span class="source-host-chip">${escapeHtml(category.shortLabel || category.label)}</span>
             `).join('');
 
         return `
@@ -458,12 +637,20 @@
                     <div class="mt-3 flex flex-wrap items-center gap-2">
                         <span class="confidence-badge ${escapeHtml(confidence.key)} px-2 py-0.5 rounded-full text-[10px] font-mono">CONF ${escapeHtml(String(confidenceScore))} · ${escapeHtml(confidence.shortLabel)}</span>
                         <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-cyan-200/78 font-mono">${escapeHtml(sourceCountText)}</span>
+                        <span class="source-age-chip">${escapeHtml(sourceAge.shortLabel || sourceAge.label || 'NO DATE')}</span>
                         ${secBadge}
                         <span class="text-[10px] text-white/42 font-mono">VERIFIED ${escapeHtml(formatVerifiedDate?.(link.verified_date || link.candidate?.filing_date) || '-')}</span>
+                    </div>
+                    <div class="trust-metric-strip mt-2">
+                        <span>${escapeHtml(confidence.label || 'Evidence pending')}</span>
+                        <span>${evidenceCount} evidence</span>
+                        <span>${sourceDiversity.hostCount || 0} hosts</span>
+                        <span>${sourceDiversity.categoryCount || 0} source categories</span>
                     </div>
                     <div class="mt-2 flex flex-wrap gap-1.5">
                         ${tags.map(tag => `<span class="relationship-evidence-tag px-2 py-0.5 rounded-full text-[10px] font-mono">${escapeHtml(tag)}</span>`).join('') || '<span class="relationship-evidence-tag px-2 py-0.5 rounded-full text-[10px] font-mono">Evidence pending</span>'}
                         <span class="relationship-evidence-tag px-2 py-0.5 rounded-full text-[10px] font-mono">${evidenceCount} evidence item${evidenceCount === 1 ? '' : 's'}</span>
+                        ${hostChips}
                     </div>
                     ${sourceLinks ? `<div class="mt-2 flex flex-wrap gap-1.5">${sourceLinks}</div>` : ''}
                 </div>
@@ -799,6 +986,8 @@
             getRelationshipConfidenceTier,
             getRelationshipSourceStatus,
             getRelationshipEvidenceCount,
+            getRelationshipSourceAgeInfo,
+            getSourceHostDiversity,
             relationshipHasSourceEvidence,
             isSecBackedConnection
         } = context;
@@ -811,6 +1000,8 @@
         const sourceUrls = getValidSourceUrls(item.link.source_urls);
         const sourceStatus = getRelationshipSourceStatus?.(item.link) || { key: 'missing_source', label: 'No source URL attached yet', shortLabel: 'NO URL' };
         const evidenceCount = getRelationshipEvidenceCount?.(item.link) || 0;
+        const sourceAge = getRelationshipSourceAgeInfo?.(item.link) || { shortLabel: 'NO DATE', label: 'No verified date' };
+        const sourceDiversity = getSourceHostDiversity?.(item.link) || { primaryCategory: null, hostCount: 0 };
         const sourceLinks = renderConnectionSourceLinks(item.link.source_urls, context);
         const rank = index + 1;
         const topClass = rank <= 3 ? `top-connection top-connection-${rank}` : '';
@@ -848,8 +1039,11 @@
                             <i class="fa-solid ${sourceUrls.length ? 'fa-link' : 'fa-link-slash'} mr-1"></i>${sourceLabel}
                         </span>
                         <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-white/58 font-mono">${escapeHtml(sourceState)}</span>
+                        <span class="source-age-chip">${escapeHtml(sourceAge.shortLabel || sourceAge.label || 'NO DATE')}</span>
+                        <span class="source-host-chip">${escapeHtml(sourceDiversity.primaryCategory?.shortLabel || 'NO HOST')}</span>
                         ${sourceWarning}
                         <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-white/58 font-mono">${evidenceCount} EVIDENCE</span>
+                        <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-white/58 font-mono">${sourceDiversity.hostCount || 0} HOSTS</span>
                         <span class="text-[10px] text-white/42 font-mono">VERIFIED ${escapeHtml(verifiedDate)}</span>
                     </div>
                     <div class="mt-2 text-[11px] leading-relaxed text-white/50">${escapeHtml(item.link.provenance || 'No provenance summary available.')}</div>
@@ -862,7 +1056,7 @@
     }
 
     function renderConnectionSourceLinks(sourceUrls, context) {
-        const { escapeHtml, getValidSourceUrls } = context;
+        const { escapeHtml, getValidSourceUrls, getSourceHost } = context;
         const urls = getValidSourceUrls(sourceUrls);
         if (!urls.length) return '';
 
@@ -871,7 +1065,7 @@
                     <span class="text-white/38 font-mono uppercase tracking-[1.5px]">Sources:</span>
                     ${urls.map((url, index) => `
                         <a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(url)}" onclick="event.stopPropagation()" onkeydown="event.stopPropagation()" class="source-link inline-flex items-center rounded-full px-2 py-0.5 font-mono truncate">
-                            Source ${index + 1}
+                            ${escapeHtml(getSourceHost?.(url) || `Source ${index + 1}`)}
                         </a>
                     `).join('')}
                 </div>
@@ -1413,9 +1607,11 @@
     }
 
     function renderSecPreviewEvidence(link, context) {
-        const { escapeHtml } = context;
+        const { escapeHtml, getRelationshipSourceAgeInfo, getSourceHostDiversity } = context;
         const candidate = link?.candidate || {};
         const evidence = candidate.evidence_snippet || link?.evidence_snippet || 'No evidence snippet attached.';
+        const sourceAge = getRelationshipSourceAgeInfo?.(link) || { shortLabel: 'PREVIEW', label: 'Candidate preview' };
+        const diversity = getSourceHostDiversity?.(link) || { primaryCategory: null, hostCount: 0, categoryCount: 0 };
         return `
             <div class="rounded-2xl border border-white/10 bg-black/25 p-3">
                 <div class="text-[10px] font-mono text-white/42 mb-2">evidence_snippet</div>
@@ -1424,6 +1620,12 @@
                     <div><span class="font-mono text-white/36">source:</span> SEC filing</div>
                     <div><span class="font-mono text-white/36">confidence_hint:</span> ${escapeHtml(formatSecPreviewValue(candidate.confidence_hint ?? link?.confidence))}</div>
                     <div><span class="font-mono text-white/36">filing_date:</span> ${escapeHtml(formatSecPreviewValue(candidate.filing_date))}</div>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                    <span class="source-age-chip">${escapeHtml(sourceAge.shortLabel || sourceAge.label || 'PREVIEW')}</span>
+                    <span class="source-host-chip">${escapeHtml(diversity.primaryCategory?.shortLabel || 'SEC')}</span>
+                    <span class="source-host-chip">${diversity.hostCount || 0} HOST${diversity.hostCount === 1 ? '' : 'S'}</span>
+                    <span class="source-host-chip">${diversity.categoryCount || 0} ${diversity.categoryCount === 1 ? 'CATEGORY' : 'CATEGORIES'}</span>
                 </div>
             </div>
         `;
@@ -1444,6 +1646,7 @@
         showSecPreviewNodeDetails,
         showSecPreviewEdgeDetails,
         renderCompanyInvestigationWorkspace,
+        renderEvidenceReviewQueue,
         renderRelationshipEvidenceCards,
         renderRelationshipEvidenceCard,
         renderConnectedCompaniesByType,

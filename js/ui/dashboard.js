@@ -47,6 +47,7 @@
                 </div>
 
                 ${renderIntelligenceSummaryPanel(stats, context)}
+                ${renderDashboardEvidenceReviewQueue(stats.evidenceReviewQueue, context)}
                 ${renderKeyNetworkInsights(stats, context)}
                 ${renderLayoutHelperSection(context)}
                 ${context.renderPortfolioExposureSection(stats.portfolioExposure)}
@@ -139,6 +140,7 @@
             getCompanyIndustryGroup,
             getPortfolioExposureSummary,
             getDatasetTrustMetrics,
+            getEvidenceReviewQueueItems,
             isSecBackedConnection,
             companies,
             connections
@@ -181,7 +183,10 @@
             sectorDistribution,
             industryGroupDistribution,
             portfolioExposure: getPortfolioExposureSummary(),
-            trust: getDatasetTrustMetrics(companies, connections)
+            trust: getDatasetTrustMetrics(companies, connections),
+            evidenceReviewQueue: typeof getEvidenceReviewQueueItems === 'function'
+                ? getEvidenceReviewQueueItems({ limit: 8 })
+                : []
         };
     }
 
@@ -249,6 +254,7 @@
         const filters = [
             context.currentSector || '',
             context.currentIndustryGroup || '',
+            ...(typeof context.getRelationshipFilterLabels === 'function' ? context.getRelationshipFilterLabels() : []),
             context.currentSearch ? `Search: ${context.currentSearch}` : ''
         ].filter(Boolean).join(' / ') || 'All companies';
         const focusOn = Boolean(context.focusModeEnabled || (typeof context.isFocusModeActive === 'function' && context.isFocusModeActive()));
@@ -298,6 +304,97 @@
                     <div class="space-y-2">${body}</div>
                 </div>
             `;
+    }
+
+    function renderDashboardEvidenceReviewQueue(items, context) {
+        const { escapeHtml } = context;
+        const queue = Array.isArray(items) ? items : [];
+        if (!queue.length) {
+            return `
+                    <div class="sidebar-section">
+                        <div class="sidebar-section-title">Evidence Review Queue</div>
+                        <div class="review-queue-panel rounded-2xl p-3 text-sm text-white/45">
+                            No low-confidence, stale, missing-source, or preview relationships are visible in the current graph context.
+                        </div>
+                    </div>
+                `;
+        }
+
+        const grouped = groupReviewQueueItems(queue);
+        return `
+                <div class="sidebar-section">
+                    <div class="flex items-center justify-between gap-3 mb-3">
+                        <div class="sidebar-section-title mb-0">Evidence Review Queue</div>
+                        <div class="text-[10px] text-white/38 font-mono">${queue.length} ITEM${queue.length === 1 ? '' : 'S'}</div>
+                    </div>
+                    <div class="review-queue-panel rounded-2xl p-3">
+                        <div class="text-xs text-white/52 leading-relaxed mb-3">
+                            Sorted by review signal and current graph visibility. Items are review prompts, not partnership or supplier claims.
+                        </div>
+                        <div class="space-y-3">
+                            ${grouped.map(group => `
+                                <div>
+                                    <div class="review-queue-group-label">${escapeHtml(group.label)} · ${group.items.length}</div>
+                                    <div class="mt-2 space-y-2">
+                                        ${group.items.slice(0, 3).map(item => renderDashboardReviewQueueItem(item, context)).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+    }
+
+    function renderDashboardReviewQueueItem(item, context) {
+        const { escapeHtml, escapeInlineJsString } = context;
+        const peerId = item.peer?.id || item.source?.id || item.target?.id || '';
+        const sourceAge = item.sourceAge?.shortLabel || 'PENDING';
+        const confidence = item.confidence?.shortLabel || 'PENDING';
+        const sourceCategory = item.diversity?.primaryCategory?.shortLabel || 'NO URL';
+        const buttonAction = item.kind === 'sec_preview'
+            ? `selectSecPreviewEdge('${escapeInlineJsString(item.link?.key || '')}')`
+            : `selectNodeById(${Number(peerId) || 0})`;
+
+        return `
+                <button onclick="${buttonAction}" class="review-queue-item w-full rounded-2xl p-3 text-left">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-xs text-white/88 font-semibold truncate">${escapeHtml(item.pairLabel || 'Relationship')}</div>
+                            <div class="mt-1 text-[10px] text-white/42 font-mono">${escapeHtml(item.typeLabel || 'Relationship')} · ${escapeHtml(item.graphState || 'visible')}</div>
+                        </div>
+                        <span class="review-queue-chip">${escapeHtml(item.groupShortLabel || 'REVIEW')}</span>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-age-chip">${escapeHtml(sourceAge)}</span>
+                        <span class="source-host-chip">${escapeHtml(sourceCategory)}</span>
+                        <span class="source-host-chip">${escapeHtml(confidence)}</span>
+                    </div>
+                </button>
+            `;
+    }
+
+    function groupReviewQueueItems(items) {
+        const groups = new Map();
+        items.forEach(item => {
+            const key = item.groupKey || 'review';
+            const group = groups.get(key) || {
+                key,
+                label: item.groupLabel || 'Review',
+                priority: Number(item.priority) || 0,
+                items: []
+            };
+            group.priority = Math.max(group.priority, Number(item.priority) || 0);
+            group.items.push(item);
+            groups.set(key, group);
+        });
+
+        return [...groups.values()]
+            .map(group => ({
+                ...group,
+                items: group.items.sort((a, b) => b.priority - a.priority || String(a.pairLabel).localeCompare(String(b.pairLabel)))
+            }))
+            .sort((a, b) => b.priority - a.priority || String(a.label).localeCompare(String(b.label)));
     }
 
     function renderDashboardSecBackedList(items, context) {
@@ -526,6 +623,14 @@
                             <div class="text-[10px] text-white/40 font-mono">LATEST VERIFIED</div>
                             <div class="font-display text-xl text-white">${escapeHtml(formatVerifiedDate(metrics.latestVerifiedDate))}</div>
                         </div>
+                        <div>
+                            <div class="text-[10px] text-white/40 font-mono">STALE REVIEW</div>
+                            <div class="font-display text-xl text-white">${metrics.staleReviewCount || 0}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-white/40 font-mono">MISSING EVIDENCE</div>
+                            <div class="font-display text-xl text-white">${metrics.missingEvidenceCount || 0}</div>
+                        </div>
                     </div>
                     <div class="mt-3 pt-3 border-t border-white/10 text-[10px] text-cyan-100/58 font-mono tracking-[1.2px]">STATIC DATASET ONLY</div>
                 </div>
@@ -538,6 +643,7 @@
         getDefaultDashboardStats,
         getDashboardNodeDegree,
         getCompanyDistribution,
+        renderDashboardEvidenceReviewQueue,
         renderExplorationChips,
         renderDashboardHubList,
         renderDashboardConnectionList,

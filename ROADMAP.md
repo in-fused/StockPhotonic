@@ -2,7 +2,7 @@
 
 Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph application using `data/companies.json` and `data/connections.json` as production source of truth.
 
-- Graph Intelligence (2D): Current main work surface for exploring curated companies and edges with filters, search, relationship taxonomy, source/confidence filters, Focus Mode, signal thresholds, portfolio exposure, SEC-backed edge indicators, hub/nexus layouts, cluster intelligence, shared exposure, hidden relationship hints, and industry correlations.
+- Graph Intelligence (2D): Current main work surface for exploring curated companies and edges with filters, search, relationship taxonomy, source/confidence/review filters, Focus Mode, signal thresholds, portfolio exposure, SEC-backed edge indicators, hub/nexus layouts, cluster intelligence, shared exposure, hidden relationship hints, and industry correlations.
 - 3D Network capabilities: Three.js production-network view with orbiting camera, search, labels, filters, SEC emphasis, neighborhood depth, selected details, and fullscreen exploration.
 - Source Workbench pipeline: Static, read-only guide and candidate preview surface for the local SEC workflow.
 - SEC ingestion + candidate system: Local scripts support SEC fetch/cache, filing inspection, signal extraction, candidate preview, candidate writing, job manifests, schedule previews, and policy gates.
@@ -20,6 +20,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 - UI/UX polish for the 2D Graph Intelligence workflow.
 - Intelligence layer clarity: company investigation workspace, why-connected relationship cards, source/confidence labels, hubs, clusters, shared exposure, hidden relationships, industry correlations, portfolio exposure, and SEC-backed edge visibility.
+- Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, and candidate review grouping.
 - 3D immersion and usability while staying tied to the production static dataset.
 - Source coverage quality for existing high-value relationships.
 - Validation discipline before any production data expansion.
@@ -30,6 +31,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Broader source coverage from SEC filings, company disclosures, official pages, and reputable secondary sources when needed.
 - Better review ergonomics for candidate evaluation and promotion previews.
 - Relationship evidence depth: source snippets, source aging review queues, source-host diversity, and relationship-specific confidence explanations.
+- Future open-data review workflow: source registry rules that can pre-classify URL host categories, expose review aging thresholds, and export reviewer checklists while preserving candidate -> preview -> manual promotion.
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
 - Optional backend/auth layer only after the static app and source workflow remain stable.
 - Optional larger graph rendering/performance work as source-backed data grows.

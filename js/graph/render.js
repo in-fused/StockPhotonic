@@ -244,6 +244,7 @@
         ctx.lineWidth = width;
         ctx.shadowBlur = isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
         ctx.shadowColor = isPortfolioLink ? '#ffd700' : color;
+        ctx.setLineDash(Array.isArray(relationshipVisual.dashPattern) ? relationshipVisual.dashPattern : []);
 
         const midX = (source.x + target.x) / 2;
         const midY = (source.y + target.y) / 2;
@@ -258,6 +259,7 @@
         ctx.moveTo(source.x, source.y);
         ctx.quadraticCurveTo(controlX, controlY, target.x, target.y);
         ctx.stroke();
+        ctx.setLineDash([]);
         ctx.globalAlpha = 1;
     }
 

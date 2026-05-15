@@ -1,5 +1,6 @@
 (function () {
     window.StockPhotonicStock = window.StockPhotonicStock || {};
+    const sourceReview = window.StockPhotonicStock.sourceReview || {};
 
     const DEFAULT_RELATIONSHIP_TYPE = 'curated_manual_relationship';
     const SOURCE_STATUS = {
@@ -276,13 +277,64 @@
         return sourceCount + snippetCount + sourceLabelCount;
     }
 
-    function isSourceDateStale(connection, now = new Date()) {
+    function getSourceAgeInfo(connection, now = new Date()) {
+        if (sourceReview.getSourceAgeInfo) return sourceReview.getSourceAgeInfo(connection, { now });
+
         const value = connection?.verified_date || connection?.candidate?.filing_date;
-        if (!value) return true;
+        if (!value) {
+            return {
+                key: 'no_verified_date',
+                label: 'No verified date',
+                shortLabel: 'NO DATE',
+                ageDays: null,
+                isStale: false,
+                reviewRecommended: true
+            };
+        }
         const date = new Date(`${value}T00:00:00Z`);
-        if (Number.isNaN(date.getTime())) return true;
-        const ageDays = (now.getTime() - date.getTime()) / 86400000;
-        return ageDays > 365;
+        if (Number.isNaN(date.getTime())) {
+            return {
+                key: 'no_verified_date',
+                label: 'No verified date',
+                shortLabel: 'NO DATE',
+                ageDays: null,
+                isStale: false,
+                reviewRecommended: true
+            };
+        }
+        const ageDays = Math.max(0, Math.floor((now.getTime() - date.getTime()) / 86400000));
+        if (ageDays > 365) {
+            return {
+                key: 'stale_review_recommended',
+                label: 'Stale review recommended',
+                shortLabel: 'STALE',
+                ageDays,
+                isStale: true,
+                reviewRecommended: true
+            };
+        }
+        if (ageDays > 180) {
+            return {
+                key: 'aging_evidence',
+                label: 'Aging evidence',
+                shortLabel: 'AGING',
+                ageDays,
+                isStale: false,
+                reviewRecommended: false
+            };
+        }
+        return {
+            key: 'verified_recently',
+            label: 'Verified recently',
+            shortLabel: 'RECENT',
+            ageDays,
+            isStale: false,
+            reviewRecommended: false
+        };
+    }
+
+    function isSourceDateStale(connection, now = new Date()) {
+        return getSourceAgeInfo(connection, now).isStale === true;
     }
 
     function buildRelationshipSummary(connection) {
@@ -311,7 +363,12 @@
         if (isSecBackedRelationship(connection)) tags.push('SEC-backed');
         if (isCandidateRelationship(connection)) tags.push('Candidate preview');
         if (!getValidSourceUrls(connection?.source_urls).length) tags.push('No source URL attached yet');
-        if (isSourceDateStale(connection)) tags.push('Source date pending/stale');
+        const sourceAge = getSourceAgeInfo(connection);
+        if (sourceAge.key === 'stale_review_recommended') tags.push(sourceAge.label);
+        if (sourceAge.key === 'no_verified_date') tags.push(sourceAge.label);
+        if (sourceAge.key === 'aging_evidence') tags.push(sourceAge.label);
+        const hostDiversity = sourceReview.getSourceHostDiversity?.(connection);
+        hostDiversity?.categories?.slice(0, 2).forEach(category => tags.push(category.shortLabel || category.label));
         return [...new Set(tags.filter(Boolean))];
     }
 
@@ -322,6 +379,16 @@
         const confidenceScore = getConfidenceScore(connection);
         const sourceStatus = getSourceStatus(connection);
         const sourceUrls = getValidSourceUrls(connection?.source_urls);
+        const sourceAge = getSourceAgeInfo(connection);
+        const hostDiversity = sourceReview.getSourceHostDiversity?.(connection) || {
+            categories: [],
+            categoryKeys: [],
+            hosts: [],
+            hostCount: 0,
+            urlCount: sourceUrls.length,
+            categoryCount: 0,
+            primaryCategory: null
+        };
 
         return {
             ...connection,
@@ -336,7 +403,15 @@
             source_count: sourceUrls.length,
             source_status: sourceStatus.key,
             source_status_label: sourceStatus.label,
-            source_stale: isSourceDateStale(connection),
+            source_stale: sourceAge.isStale,
+            source_age_key: sourceAge.key,
+            source_age_label: sourceAge.label,
+            source_age_days: sourceAge.ageDays,
+            source_age_review_recommended: sourceAge.reviewRecommended,
+            source_host_categories: hostDiversity.categoryKeys,
+            source_host_category_label: hostDiversity.primaryCategory?.label || '',
+            source_host_count: hostDiversity.hostCount,
+            source_diversity_count: hostDiversity.categoryCount,
             relationship_summary: buildRelationshipSummary(connection),
             evidence_tags: buildEvidenceTags(connection)
         };
@@ -387,20 +462,28 @@
         const confidence = getConfidenceTier(connection);
         const sourceStatus = getSourceStatus(connection);
         const evidenceCount = getEvidenceCount(connection);
+        const sourceAge = getSourceAgeInfo(connection);
+        const isCandidate = isCandidateRelationship(connection);
         const isWeakEvidence = sourceStatus.key === SOURCE_STATUS.missing_source.key ||
             confidence.key === CONFIDENCE_TIERS.low.key ||
-            confidence.key === CONFIDENCE_TIERS.pending.key;
+            confidence.key === CONFIDENCE_TIERS.pending.key ||
+            sourceAge.key === 'stale_review_recommended' ||
+            sourceAge.key === 'no_verified_date';
         const isStrongEvidence = evidenceCount > 0 &&
+            sourceAge.key !== 'stale_review_recommended' &&
             (confidence.key === CONFIDENCE_TIERS.high.key || sourceStatus.key === SOURCE_STATUS.sec_backed.key);
+        const staleOrPending = sourceAge.key === 'stale_review_recommended' || sourceAge.key === 'no_verified_date';
 
         return {
             color: getRelationshipTypeColor(connection),
-            alphaMultiplier: isWeakEvidence ? 0.52 : isStrongEvidence ? 1.12 : 1,
-            widthBoost: isWeakEvidence ? -0.22 : isStrongEvidence ? 0.28 : 0,
+            alphaMultiplier: staleOrPending ? 0.42 : isWeakEvidence ? 0.52 : isStrongEvidence ? 1.12 : 1,
+            widthBoost: staleOrPending ? -0.28 : isWeakEvidence ? -0.22 : isStrongEvidence ? 0.28 : 0,
+            dashPattern: isCandidate ? [7, 6] : staleOrPending ? [3, 7] : null,
             muted: isWeakEvidence,
             strong: isStrongEvidence,
             confidenceKey: confidence.key,
-            sourceStatusKey: sourceStatus.key
+            sourceStatusKey: sourceStatus.key,
+            sourceAgeKey: sourceAge.key
         };
     }
 
@@ -441,6 +524,7 @@
         getSourceStatus,
         getEvidenceCount,
         getValidSourceUrls,
+        getSourceAgeInfo,
         isCandidateRelationship,
         isSecBackedRelationship,
         isSourceDateStale,

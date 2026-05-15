@@ -73,9 +73,36 @@ Derived runtime fields may include:
 - `confidence_tier`: high, medium, low, or evidence pending.
 - `evidence_count`: count of attached source URLs plus explicit evidence snippets when present.
 - `source_status`: SEC-backed, candidate/preview, source attached, or no source URL attached yet.
+- `source_age_key`: verified recently, aging evidence, stale review recommended, no verified date, or candidate preview.
+- `source_host_categories`: URL-derived categories such as SEC source, company IR URL, partner/customer page URL, secondary/research source, candidate-only source, or other source URL.
 - `relationship_summary`: existing label, evidence snippet, provenance note, or an evidence-pending fallback.
 
 Relationship cards must show source/confidence state when available. If source evidence is missing, the UI should say "Evidence pending", "Relationship type from curated dataset", or "No source URL attached yet" instead of implying a verified partnership/customer relationship.
+
+## SOURCE AGING AND REVIEW QUEUE
+
+Source aging is derived only from `verified_date`, candidate `filing_date`, or equivalent static metadata already present in the loaded files.
+
+- Verified recently: dated evidence within the recent review window.
+- Aging evidence: dated evidence past the recent window but not beyond the stale-review threshold.
+- Stale review recommended: dated evidence older than the stale-review threshold.
+- No verified date: no usable date is present. This is a pending metadata state, not an outdated claim.
+- Candidate preview: review-only candidate state; freshness is shown as candidate context, not production verification.
+
+The evidence review queue surfaces low-confidence, missing-source, stale-review, candidate-preview, and SEC-preview items. It is graph-aware and labels whether items are currently visible or filtered. Queue entries are prompts for human review; they do not create new production claims.
+
+## SOURCE HOST CATEGORIES
+
+Source-host visibility is derived from URL host/path patterns only:
+
+- SEC source: `sec.gov` URLs.
+- Official company IR: URL hosts or paths with investor-relations, shareholder, filing, release, or results patterns.
+- Official partner/customer page: URL paths with partner, customer, case-study, project, solution, ecosystem, collaboration, or similar page patterns.
+- Secondary/research source: known research/news/market-data hosts.
+- Candidate-only source: candidate records without a direct production source URL.
+- Other source URL: valid URL that does not match the above patterns.
+
+These badges are review aids, not proof of relationship type. If the URL category cannot be inferred safely, the UI falls back to other source URL rather than inventing an official-source label.
 
 ## CURRENT TAXONOMY
 

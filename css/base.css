@@ -1,0 +1,80 @@
+/* D139 base layer: imports, tokens, reset, body defaults, scrollbars, typography helpers. */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Space+Grotesk:wght@500;600&display=swap');
+
+        :root {
+            --neon-cyan: #00f9ff;
+            --neon-magenta: #ff00aa;
+            --neon-purple: #c026d3;
+            --neon-green: #00ff9f;
+            --neon-gold: #ffd700;
+            --neon-orange: #ff6b00;
+            --surface-border: rgba(125, 211, 252, 0.16);
+            --surface-border-strong: rgba(0, 249, 255, 0.24);
+            --surface-panel: rgba(6, 8, 18, 0.82);
+            --surface-panel-soft: rgba(255, 255, 255, 0.04);
+            --surface-radius: 1rem;
+            --surface-radius-lg: 1.15rem;
+            --scrollbar-track: rgba(2, 6, 23, 0.72);
+            --scrollbar-thumb: linear-gradient(180deg, rgba(0, 249, 255, 0.62), rgba(255, 0, 170, 0.42));
+        }
+
+html {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.54) rgba(2, 6, 23, 0.84);
+        }
+
+* {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.46) rgba(2, 6, 23, 0.78);
+            box-sizing: border-box;
+        }
+
+*::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+*::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+            border-radius: 999px;
+        }
+
+*::-webkit-scrollbar-thumb {
+            border: 2px solid rgba(2, 6, 23, 0.86);
+            background: var(--scrollbar-thumb);
+            border-radius: 999px;
+        }
+
+*::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, rgba(0, 249, 255, 0.82), rgba(255, 0, 170, 0.62));
+        }
+
+body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #050508;
+            color: #e0e7ff;
+            overflow-x: hidden;
+        }
+
+.photonic-bg {
+            background:
+                radial-gradient(circle at 20% 0%, rgba(0, 249, 255, 0.12), transparent 28rem),
+                radial-gradient(circle at 85% 15%, rgba(255, 0, 170, 0.10), transparent 24rem),
+                radial-gradient(circle at 45% 90%, rgba(0, 255, 159, 0.07), transparent 30rem),
+                #050508;
+        }
+
+.font-display {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0;
+        }
+
+.neon-text {
+            text-shadow:
+                0 0 5px #00f9ff,
+                0 0 10px #00f9ff,
+                0 0 20px #ff00aa,
+                0 0 40px #c026d3;
+        }

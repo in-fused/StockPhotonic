@@ -1,0 +1,290 @@
+/* D139 shared shell layer: page chrome, product/app tabs, docks, shared buttons, help modal. */
+
+/* Phase D112 layout system: graph-first, compact controls, scrollable intelligence. */
+        header .page-shell {
+            padding-top: 0.85rem !important;
+            padding-bottom: 0.85rem !important;
+        }
+
+#stock-photonic-surface,
+        #crypto-photonic-view {
+            padding-top: 1rem !important;
+        }
+
+#stock-photonic-surface > .flex:first-child,
+        #crypto-photonic-view > .flex:first-child {
+            align-items: center;
+            margin-bottom: 0.85rem !important;
+        }
+
+#stock-photonic-surface > .flex:first-child h1,
+        #crypto-photonic-view > .flex:first-child h1 {
+            font-size: clamp(2rem, 4vw, 3.4rem);
+            line-height: 0.96;
+        }
+
+#stock-photonic-surface > .flex:first-child p,
+        #crypto-photonic-view > .flex:first-child p {
+            margin-top: 0.35rem;
+            font-size: 0.95rem;
+            line-height: 1.35;
+            max-width: 56rem;
+        }
+
+.product-view-switch,
+        .app-view-tabs {
+            margin-bottom: 0.85rem !important;
+        }
+
+.interaction-dock {
+            position: sticky;
+            top: calc(4.9rem + env(safe-area-inset-top));
+            z-index: 38;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+            padding: 0.55rem;
+            border: 1px solid var(--surface-border-strong);
+            border-radius: var(--surface-radius-lg);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.11), rgba(255, 0, 170, 0.06)),
+                rgba(3, 7, 18, 0.84);
+            box-shadow: 0 18px 46px rgba(0, 0, 0, 0.34), 0 0 26px rgba(0, 249, 255, 0.08);
+            backdrop-filter: blur(22px) saturate(118%);
+        }
+
+.interaction-dock-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 8.5rem;
+            padding: 0 0.45rem;
+            color: rgba(165, 243, 252, 0.76);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+.interaction-dock-actions {
+            display: flex;
+            flex: 1;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 0.4rem;
+            min-width: 0;
+        }
+
+.interaction-dock-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            min-height: 2.35rem;
+            padding: 0.48rem 0.75rem;
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            border-radius: 999px;
+            background: rgba(2, 6, 23, 0.58);
+            color: rgba(224, 242, 254, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.66rem;
+            letter-spacing: 0.8px;
+            line-height: 1;
+            white-space: nowrap;
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+        }
+
+.interaction-dock-button:hover,
+        .interaction-dock-button:focus-visible {
+            border-color: rgba(0, 249, 255, 0.54);
+            background: rgba(8, 145, 178, 0.18);
+            color: #ffffff;
+            outline: none;
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.12);
+        }
+
+.interaction-dock-button:active {
+            transform: translateY(1px);
+        }
+
+.interaction-dock-button.is-active,
+        .interaction-dock-button[aria-pressed="true"] {
+            border-color: rgba(0, 249, 255, 0.62);
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.18), rgba(255, 0, 170, 0.12));
+            color: #ffffff;
+            box-shadow: 0 0 22px rgba(0, 249, 255, 0.16);
+        }
+
+.interaction-dock-button:disabled,
+        .interaction-dock-button.is-disabled {
+            cursor: not-allowed;
+            opacity: 0.44;
+        }
+
+.interaction-dock-button.is-hidden {
+            display: none;
+        }
+
+.interaction-dock-split {
+            display: inline-flex;
+            gap: 0.25rem;
+            padding: 0.18rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.035);
+        }
+
+.glass {
+            background: rgba(10, 12, 25, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 249, 255, 0.15);
+        }
+
+.focus-button {
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+.focus-button:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 249, 255, 0.55);
+        }
+
+.focus-button[aria-pressed="true"],
+        .focus-button.is-active {
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.18), rgba(255, 0, 170, 0.12));
+            border-color: rgba(0, 249, 255, 0.62);
+            color: #ffffff;
+            box-shadow: 0 0 22px rgba(0, 249, 255, 0.16);
+        }
+
+.app-view-tabs {
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(0, 0, 0, 0.26);
+        }
+
+.app-view-tab {
+            min-height: 2.75rem;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.62);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+.app-view-tab:hover,
+        .app-view-tab:focus-visible {
+            border-color: rgba(0, 249, 255, 0.32);
+            color: #ffffff;
+            outline: none;
+        }
+
+.app-view-tab[aria-selected="true"] {
+            border-color: rgba(0, 249, 255, 0.52);
+            background: linear-gradient(135deg, rgba(0, 249, 255, 0.16), rgba(255, 0, 170, 0.10));
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 249, 255, 0.12);
+        }
+
+.product-view-switch {
+            width: fit-content;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(0, 0, 0, 0.34);
+        }
+
+.product-view-tab {
+            min-height: 2.5rem;
+            border: 1px solid transparent;
+            color: rgba(255, 255, 255, 0.62);
+            transition: border-color 160ms ease, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+        }
+
+.product-view-tab:hover,
+        .product-view-tab:focus-visible {
+            border-color: rgba(0, 249, 255, 0.32);
+            color: #ffffff;
+            outline: none;
+        }
+
+.product-view-tab[aria-selected="true"] {
+            border-color: rgba(0, 249, 255, 0.54);
+            background: rgba(0, 249, 255, 0.13);
+            color: #ffffff;
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.12);
+        }
+
+body.is-crypto-active [data-stock-only] {
+            display: none;
+        }
+
+.control-section-title,
+        .control-help {
+            color: rgba(165, 243, 252, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.66rem;
+            letter-spacing: 1.15px;
+            line-height: 1.45;
+        }
+
+.control-section-title {
+            flex: 1 0 100%;
+            margin-top: 0.15rem;
+            text-transform: uppercase;
+        }
+
+.control-help {
+            color: rgba(226, 232, 240, 0.58);
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+.help-trigger {
+            border-color: rgba(125, 211, 252, 0.24) !important;
+            background: rgba(14, 165, 233, 0.10);
+        }
+
+.photonic-help-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 120;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.68);
+            backdrop-filter: blur(18px);
+        }
+
+.photonic-help-backdrop.is-open {
+            display: flex;
+        }
+
+.photonic-help-modal {
+            width: min(760px, calc(100vw - 2rem));
+            max-height: min(82dvh, 760px);
+            overflow-y: auto;
+            border: 1px solid rgba(125, 211, 252, 0.22);
+            background:
+                linear-gradient(145deg, rgba(0, 249, 255, 0.10), rgba(255, 255, 255, 0.045)),
+                rgba(3, 7, 18, 0.94);
+            box-shadow: 0 26px 80px rgba(0, 0, 0, 0.55), 0 0 34px rgba(0, 249, 255, 0.10);
+        }
+
+.photonic-help-modal h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.65rem, 4vw, 2.35rem);
+            line-height: 1.05;
+        }
+
+.photonic-help-list {
+            display: grid;
+            gap: 0.55rem;
+            color: rgba(226, 232, 240, 0.74);
+            font-size: 0.88rem;
+            line-height: 1.55;
+        }
+
+.photonic-help-list strong {
+            color: rgba(236, 254, 255, 0.92);
+        }

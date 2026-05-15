@@ -1,0 +1,573 @@
+/* D139 graph layer: Stock 2D graph stage, shared graph canvases, HUD/fullscreen controls, overlays. */
+
+.graph-intelligence-controls {
+            margin-bottom: 0.85rem !important;
+            padding: 0.75rem !important;
+            gap: 0.55rem !important;
+            border-radius: 1.25rem !important;
+        }
+
+.graph-intelligence-controls .control-section-title,
+        .graph-intelligence-controls .control-help {
+            display: none;
+        }
+
+.graph-intelligence-controls .stock-control-break {
+            display: none;
+        }
+
+.graph-intelligence-controls input,
+        .graph-intelligence-controls select,
+        .graph-intelligence-controls .focus-button,
+        .graph-intelligence-controls .signal-control {
+            min-height: 2.35rem;
+        }
+
+.graph-intelligence-controls input,
+        .graph-intelligence-controls select,
+        .graph-intelligence-controls .focus-button {
+            padding-top: 0.55rem !important;
+            padding-bottom: 0.55rem !important;
+            border-radius: 1rem !important;
+        }
+
+.graph-intelligence-controls .signal-control {
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 1rem !important;
+        }
+
+.graph-intelligence-controls #focus-mode-toggle,
+        .graph-intelligence-controls #perspective-toggle,
+        .graph-intelligence-controls #orb-map-toggle,
+        .graph-intelligence-controls #graph-fullscreen-toggle,
+        .graph-intelligence-controls #stock-help-guide {
+            display: none !important;
+        }
+
+.graph-intelligence-controls #perspective-reset,
+        .graph-intelligence-controls #orb-spread-clusters,
+        .graph-intelligence-controls #orb-reset-layout,
+        .graph-intelligence-controls #sec-preview-toggle {
+            opacity: 0.78;
+        }
+
+.graph-intelligence-controls #perspective-reset:hover,
+        .graph-intelligence-controls #orb-spread-clusters:hover,
+        .graph-intelligence-controls #orb-reset-layout:hover,
+        .graph-intelligence-controls #sec-preview-toggle:hover {
+            opacity: 1;
+        }
+
+.graph-intelligence-layout,
+        .crypto-layout-grid {
+            align-items: stretch;
+        }
+
+#sidebar,
+        #empty-sidebar,
+        #crypto-detail-panel,
+        #crypto-status-panel {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.38) rgba(255, 255, 255, 0.045);
+        }
+
+@media (min-width: 1024px) {
+            .graph-intelligence-layout,
+            .crypto-layout-grid {
+                display: grid !important;
+                grid-template-columns: minmax(0, 70fr) minmax(20rem, 30fr) !important;
+                gap: 1rem !important;
+            }
+
+            .graph-stage-column,
+            .graph-sidebar-column,
+            .crypto-graph-column,
+            .crypto-side-column {
+                grid-column: auto !important;
+            }
+
+            .graph-container {
+                height: clamp(580px, calc(100dvh - 20rem), 760px) !important;
+            }
+
+            .graph-sidebar-column #sidebar,
+            .graph-sidebar-column #empty-sidebar {
+                max-height: clamp(580px, calc(100dvh - 20rem), 760px);
+                padding: 1rem !important;
+                border-radius: 1.1rem !important;
+            }
+        }
+
+.graph-container {
+            position: relative;
+            box-shadow: 0 0 60px rgba(0, 249, 255, 0.08);
+            border: 1px solid rgba(0, 249, 255, 0.1);
+            min-height: 520px;
+            max-width: 100%;
+        }
+
+#graph-canvas,
+        #crypto-flow-canvas,
+        #orb-map-canvas {
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            overscroll-behavior: contain;
+        }
+
+#graph-canvas {
+            background:
+                linear-gradient(rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.035) 1px, transparent 1px),
+                radial-gradient(circle at center, rgba(0, 249, 255, 0.06), rgba(5, 5, 8, 0.12) 58%);
+            background-size: 46px 46px, 46px 46px, 100% 100%;
+        }
+
+#perspective-toggle.is-active {
+            border-color: rgba(0, 249, 255, 0.82);
+            box-shadow: 0 0 24px rgba(0, 249, 255, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+#orb-map-toggle.is-active {
+            border-color: rgba(251, 191, 36, 0.78);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(0, 249, 255, 0.10));
+            box-shadow: 0 0 24px rgba(251, 191, 36, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+        }
+
+.orb-map-canvas {
+            position: absolute;
+            inset: 0.75rem;
+            width: calc(100% - 1.5rem);
+            height: calc(100% - 1.5rem);
+            border-radius: 1.5rem;
+            z-index: 2;
+            background:
+                radial-gradient(circle at 50% 48%, rgba(251, 191, 36, 0.11), rgba(0, 249, 255, 0.045) 42%, rgba(5, 5, 8, 0.92) 78%),
+                linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(255, 0, 170, 0.045));
+        }
+
+.graph-container.is-orb-map-active #graph-canvas {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+.graph-container.is-orb-map-active .sec-production-legend {
+            border-color: rgba(251, 191, 36, 0.28);
+            background: rgba(13, 10, 4, 0.72);
+        }
+
+.perspective-reset-control {
+            border-color: rgba(0, 249, 255, 0.16);
+            color: rgba(207, 250, 254, 0.82);
+        }
+
+.perspective-reset-control:disabled {
+            cursor: not-allowed;
+            opacity: 0.44;
+        }
+
+.mobile-graph-overlay {
+            position: absolute;
+            left: max(0.85rem, env(safe-area-inset-left));
+            right: max(0.85rem, env(safe-area-inset-right));
+            bottom: max(0.85rem, env(safe-area-inset-bottom));
+            z-index: 18;
+            display: none;
+            pointer-events: none;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 0.65rem;
+        }
+
+.mobile-graph-hint {
+            max-width: min(48vw, 18rem);
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            background: rgba(3, 7, 18, 0.72);
+            color: rgba(224, 242, 254, 0.82);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(16px);
+            line-height: 1.25;
+            pointer-events: none;
+        }
+
+.mobile-graph-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 0.42rem;
+            pointer-events: auto;
+        }
+
+.mobile-graph-action {
+            min-width: 2.75rem;
+            min-height: 2.75rem;
+            border: 1px solid rgba(125, 211, 252, 0.22);
+            background: rgba(3, 7, 18, 0.76);
+            color: rgba(236, 254, 255, 0.92);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(16px);
+        }
+
+.mobile-graph-action.is-hidden {
+            display: none;
+        }
+
+.mobile-graph-action:active {
+            transform: translateY(1px);
+            background: rgba(8, 145, 178, 0.24);
+        }
+
+.signal-control {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(0, 0, 0, 0.28);
+        }
+
+.signal-slider {
+            accent-color: var(--neon-cyan);
+        }
+
+.search-panel {
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.10), rgba(255, 0, 170, 0.045)),
+                rgba(5, 7, 18, 0.96);
+            border: 1px solid rgba(0, 249, 255, 0.24);
+            box-shadow: 0 18px 52px rgba(0, 0, 0, 0.42), 0 0 30px rgba(0, 249, 255, 0.10);
+            backdrop-filter: blur(18px);
+        }
+
+.search-result {
+            transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+        }
+
+.search-result.is-active,
+        .search-result:hover {
+            background: rgba(0, 249, 255, 0.12);
+            border-color: rgba(0, 249, 255, 0.34);
+        }
+
+@media (min-width: 1024px) {
+            #sidebar,
+            #empty-sidebar {
+                position: sticky;
+                top: 6.75rem;
+                height: auto;
+                max-height: calc(100vh - 7.75rem);
+                overflow-y: auto;
+                overscroll-behavior: contain;
+                scrollbar-gutter: stable;
+            }
+        }
+
+.sec-production-legend {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 6;
+            border: 1px solid rgba(251, 191, 36, 0.24);
+            background: rgba(3, 7, 18, 0.76);
+            box-shadow: 0 0 18px rgba(251, 191, 36, 0.08);
+            backdrop-filter: blur(14px);
+            pointer-events: none;
+        }
+
+.sec-production-line-swatch {
+            width: 2.25rem;
+            height: 0;
+            border-top: 2px dotted rgba(251, 191, 36, 0.82);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.28);
+        }
+
+.sec-edge-badge {
+            border: 1px solid rgba(251, 191, 36, 0.28);
+            background: rgba(251, 191, 36, 0.10);
+            color: rgba(254, 240, 138, 0.92);
+        }
+
+.connection-row.sec-backed-connection-row {
+            border-color: rgba(251, 191, 36, 0.26);
+            background:
+                linear-gradient(135deg, rgba(251, 191, 36, 0.07), rgba(255, 255, 255, 0.035) 55%),
+                rgba(255, 255, 255, 0.035);
+        }
+
+.sec-edge-detail {
+            border: 1px solid rgba(251, 191, 36, 0.18);
+            background: rgba(251, 191, 36, 0.065);
+        }
+
+#sidebar,
+        #empty-sidebar,
+        .fullscreen-hud,
+        .fullscreen-panel {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 249, 255, 0.38) rgba(255, 255, 255, 0.045);
+        }
+
+#sidebar::-webkit-scrollbar,
+        #empty-sidebar::-webkit-scrollbar,
+        .fullscreen-hud::-webkit-scrollbar,
+        .fullscreen-panel::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+#sidebar::-webkit-scrollbar-track,
+        #empty-sidebar::-webkit-scrollbar-track,
+        .fullscreen-hud::-webkit-scrollbar-track,
+        .fullscreen-panel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.035);
+            border-radius: 999px;
+        }
+
+#sidebar::-webkit-scrollbar-thumb,
+        #empty-sidebar::-webkit-scrollbar-thumb,
+        .fullscreen-hud::-webkit-scrollbar-thumb,
+        .fullscreen-panel::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(0, 249, 255, 0.44), rgba(255, 0, 170, 0.28));
+            border-radius: 999px;
+        }
+
+body.graph-fullscreen-active {
+            overflow: hidden;
+        }
+
+body.graph-fullscreen-active > header {
+            display: none;
+        }
+
+.fullscreen-hud {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.10), rgba(255, 0, 170, 0.045)),
+                rgba(3, 7, 18, 0.72);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34), 0 0 24px rgba(0, 249, 255, 0.09);
+            backdrop-filter: blur(22px) saturate(120%);
+            border-radius: 1.15rem !important;
+        }
+
+.fullscreen-panel {
+            border: 1px solid rgba(125, 211, 252, 0.16) !important;
+            background:
+                radial-gradient(circle at 15% 0%, rgba(0, 249, 255, 0.10), transparent 16rem),
+                linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(0, 249, 255, 0.035)),
+                rgba(3, 7, 18, 0.74) !important;
+            box-shadow: 0 24px 62px rgba(0, 0, 0, 0.44), 0 0 28px rgba(0, 249, 255, 0.08);
+            backdrop-filter: blur(22px) saturate(118%);
+        }
+
+.fullscreen-hud-toggle,
+        .fullscreen-hud-restore {
+            display: none;
+        }
+
+.fullscreen-hud-restore {
+            position: absolute;
+            top: 0.9rem;
+            right: 0.9rem;
+            z-index: 30;
+            min-height: 2.35rem;
+            border: 1px solid rgba(0, 249, 255, 0.28);
+            background: rgba(3, 7, 18, 0.78);
+            color: rgba(236, 254, 255, 0.92);
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35), 0 0 22px rgba(0, 249, 255, 0.10);
+            backdrop-filter: blur(18px);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-toggle {
+            display: inline-flex;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .fullscreen-hud-restore {
+            display: inline-flex;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-intelligence-controls {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-0.75rem);
+            visibility: hidden;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-sidebar-column {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(0.75rem);
+            visibility: hidden;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-overlay-stats,
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .sec-production-legend {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+.graph-fullscreen-action {
+            display: none;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-fullscreen-action {
+            display: inline-flex;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 90;
+            width: 100vw;
+            height: 100dvh;
+            padding: 0.85rem;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 15% 8%, rgba(0, 249, 255, 0.16), transparent 34rem),
+                radial-gradient(circle at 86% 18%, rgba(255, 0, 170, 0.10), transparent 30rem),
+                radial-gradient(circle at 50% 88%, rgba(0, 255, 159, 0.075), transparent 36rem),
+                rgba(5, 5, 8, 0.98);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen,
+        #graph-intelligence-view.is-graph-fullscreen * {
+            min-width: 0;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls {
+            position: absolute;
+            top: 0.85rem;
+            left: 0.85rem;
+            right: auto;
+            z-index: 24;
+            width: min(calc(100vw - 1.7rem), 82rem);
+            max-height: min(22vh, 12.5rem);
+            margin: 0;
+            gap: 0.45rem 0.6rem;
+            padding: 0.58rem;
+            align-items: center;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button {
+            min-height: 2.4rem;
+            padding: 0.52rem 0.76rem;
+            border-radius: 0.95rem;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls select,
+        #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls input {
+            min-height: 2.4rem;
+            padding-top: 0.55rem;
+            padding-bottom: 0.55rem;
+            border-radius: 0.95rem;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .signal-control {
+            padding-top: 0.55rem;
+            padding-bottom: 0.55rem;
+            border-radius: 1rem;
+            min-width: 14rem;
+            background: rgba(0, 0, 0, 0.22);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-intelligence-layout {
+            display: block;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-stage-column {
+            height: 100%;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-container {
+            height: calc(100dvh - 1.7rem) !important;
+            border-radius: 1.25rem;
+            background:
+                radial-gradient(circle at 50% 50%, rgba(0, 249, 255, 0.12), rgba(255, 0, 170, 0.04) 48%, rgba(5, 5, 8, 0.78) 78%),
+                linear-gradient(rgba(0, 249, 255, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.04) 1px, transparent 1px);
+            background-size: 100% 100%, 52px 52px, 52px 52px;
+            box-shadow: inset 0 0 88px rgba(0, 249, 255, 0.10), 0 0 74px rgba(0, 249, 255, 0.08);
+            overflow: hidden;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen #graph-canvas {
+            border-radius: 1rem;
+            background:
+                linear-gradient(rgba(0, 249, 255, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 249, 255, 0.04) 1px, transparent 1px),
+                radial-gradient(circle at center, rgba(0, 249, 255, 0.08), rgba(255, 0, 170, 0.035) 52%, rgba(5, 5, 8, 0.12) 78%);
+            background-size: 52px 52px, 52px 52px, 100% 100%;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen #orb-map-canvas {
+            inset: 0.65rem;
+            width: calc(100% - 1.3rem);
+            height: calc(100% - 1.3rem);
+            border-radius: 1rem;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .sec-production-legend {
+            top: auto;
+            right: 1rem;
+            bottom: 1rem;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-sidebar-column {
+            position: absolute;
+            z-index: 22;
+            top: min(28vh, 15.75rem);
+            right: 1rem;
+            bottom: 1rem;
+            width: min(26rem, calc(100vw - 2rem));
+            transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen #sidebar,
+        #graph-intelligence-view.is-graph-fullscreen #empty-sidebar {
+            position: static;
+            max-height: 100%;
+            height: 100%;
+            overflow-y: auto;
+            border-radius: 1.25rem;
+            padding: 1.15rem;
+        }
+
+.graph-overlay-stats {
+            position: absolute;
+            left: 1rem;
+            bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            max-width: calc(100% - 2rem);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+.graph-stat-pill {
+            border: 1px solid rgba(0, 249, 255, 0.18);
+            background: rgba(3, 7, 18, 0.74);
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.08);
+            backdrop-filter: blur(14px);
+        }
+
+.graph-perspective-hint {
+            flex-basis: 100%;
+            max-width: min(34rem, calc(100vw - 2rem));
+            border: 1px solid rgba(0, 249, 255, 0.16);
+            background: rgba(3, 7, 18, 0.7);
+            color: rgba(207, 250, 254, 0.78);
+            box-shadow: 0 0 18px rgba(0, 249, 255, 0.07);
+            backdrop-filter: blur(14px);
+        }
+
+.graph-orb-map-hint {
+            flex-basis: 100%;
+            max-width: min(38rem, calc(100vw - 2rem));
+            border: 1px solid rgba(251, 191, 36, 0.18);
+            background: rgba(13, 10, 4, 0.68);
+            color: rgba(254, 243, 199, 0.78);
+            box-shadow: 0 0 16px rgba(251, 191, 36, 0.07);
+            backdrop-filter: blur(14px);
+        }

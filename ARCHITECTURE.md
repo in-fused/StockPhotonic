@@ -21,6 +21,14 @@ Document: StockPhotonic Architecture. StockPhotonic is a static browser app. `in
 ```text
 StockPhotonic/
   index.html                  # Static app shell and tab structure
+  css/
+    base.css                  # Fonts, tokens, reset, body defaults, scrollbars
+    shell.css                 # Shared page chrome, product/app tabs, docks, help modal
+    graph.css                 # Graph containers, canvases, overlays, fullscreen HUD
+    stock.css                 # StockPhotonic controls, sidebar/workspace surfaces
+    crypto.css                # CryptoPhotonic-only graph, wallet, replay, audit surfaces
+    review.css                # Evidence review, trust/source chips, Source Workbench
+    mobile.css                # Shared and product-specific responsive overrides
   data/
     companies.json            # Production companies
     connections.json          # Production connections
@@ -51,6 +59,8 @@ The StockPhotonic relationship intelligence layer lives in `js/stock/relationshi
 - Graph controls: sector, industry group, relationship type, confidence tier, source-host category, sourced-only, SEC-backed-only, stale-review, candidate-preview, missing-evidence, portfolio-connected, cross-sector, layout, search, focus, threshold, orbit, portfolio input, SEC preview visibility.
 - Sidebar/dashboard: selected company investigation workspace, relationship evidence cards, evidence review queue, relationship timeline context, connection rows, SEC evidence cues, source/confidence/freshness/host-diversity summaries, nexus view, shared exposure, hidden relationships, cluster context, portfolio exposure, trust summary.
 - Source Workbench: command reference, evidence-state contract, source aging/host-category rules, pipeline overview, candidate file list, recommended local workflow, grouped candidate review snapshot, and static candidate preview table.
+
+CSS ownership is split by layer. Shared shell styles live in `css/shell.css`, graph/fullscreen styles in `css/graph.css`, StockPhotonic styles in `css/stock.css`, CryptoPhotonic styles in `css/crypto.css`, review/source styles in `css/review.css`, and responsive overrides in `css/mobile.css`. Do not use `css/crypto.css` as a shared catch-all.
 
 ## REVIEW AND TRUST DISPLAY
 

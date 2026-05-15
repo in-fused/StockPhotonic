@@ -21,6 +21,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - UI/UX polish for the 2D Graph Intelligence workflow.
 - Intelligence layer clarity: company investigation workspace, why-connected relationship cards, source/confidence labels, hubs, clusters, shared exposure, hidden relationships, industry correlations, portfolio exposure, and SEC-backed edge visibility.
 - Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, and candidate review grouping.
+- CSS maintainability: keep the D139 split across `base.css`, `shell.css`, `graph.css`, `stock.css`, `crypto.css`, `review.css`, and `mobile.css`; do not return to a single shared catch-all stylesheet.
 - 3D immersion and usability while staying tied to the production static dataset.
 - Source coverage quality for existing high-value relationships.
 - Validation discipline before any production data expansion.

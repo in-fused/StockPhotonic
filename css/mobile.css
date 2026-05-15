@@ -1,0 +1,877 @@
+/* D139 responsive layer: shared and product-specific mobile/touch overrides. Keep loaded last. */
+
+@media (max-width: 1280px) {
+            .crypto-tab-section [class*="xl:grid-cols-3"] {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+        }
+
+@media (max-width: 720px) {
+            .crypto-investigation-header {
+                flex-direction: column;
+            }
+
+            .crypto-investigation-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                scrollbar-width: thin;
+            }
+
+            .crypto-investigation-tab {
+                flex: 0 0 auto;
+                min-height: 2.7rem;
+                font-size: 0.82rem;
+            }
+
+            .crypto-summary-grid,
+            .crypto-two-column-list,
+            .crypto-guided-action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .crypto-details-selected {
+                padding: 0.8rem;
+            }
+
+            .crypto-copy-action {
+                text-align: left;
+            }
+        }
+
+@media (max-width: 768px) {
+            #stock-photonic-surface,
+            #crypto-photonic-view {
+                padding-top: 0.8rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child,
+            #crypto-photonic-view > .flex:first-child {
+                gap: 0.65rem;
+                margin-bottom: 0.7rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child p,
+            #crypto-photonic-view > .flex:first-child p {
+                display: none;
+            }
+
+            .graph-intelligence-controls {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding: 0.6rem !important;
+                scrollbar-width: thin;
+            }
+
+            .graph-intelligence-controls > * {
+                flex-shrink: 0;
+            }
+
+            .graph-intelligence-controls .flex-1 {
+                min-width: 15rem;
+            }
+
+            .graph-intelligence-layout,
+            .crypto-layout-grid {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) !important;
+                gap: 0.85rem !important;
+            }
+
+            .graph-stage-column,
+            .crypto-graph-column {
+                order: 1;
+            }
+
+            .graph-sidebar-column,
+            .crypto-side-column {
+                order: 2;
+            }
+
+            .crypto-sidebar-stack {
+                max-height: none;
+                overflow: visible;
+                padding-right: 0;
+            }
+        }
+
+@media (max-width: 768px) {
+            html,
+            body {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            .page-shell {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+
+            header .page-shell {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            header .page-shell > div:last-child {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+            }
+
+            .graph-intelligence-controls select,
+            .graph-intelligence-controls .signal-control {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .graph-container {
+                height: clamp(420px, 66dvh, 680px) !important;
+                min-height: 420px;
+                border-radius: 1.15rem !important;
+                padding: 0.5rem !important;
+            }
+
+            #graph-canvas,
+            .orb-map-canvas,
+            .crypto-canvas-wrap,
+            #crypto-flow-canvas {
+                border-radius: 1rem !important;
+            }
+
+            .mobile-graph-overlay {
+                display: flex;
+            }
+
+            .mobile-graph-hint {
+                max-width: 52%;
+                font-size: 0.62rem;
+            }
+
+            .mobile-graph-actions {
+                max-width: 46%;
+            }
+
+            .crypto-surface {
+                min-height: calc(100dvh - 4rem);
+            }
+
+            .crypto-panel {
+                padding: 0.85rem !important;
+                border-radius: 1.1rem !important;
+            }
+
+            .crypto-panel > .flex {
+                align-items: flex-start;
+            }
+
+            .crypto-canvas-wrap {
+                height: clamp(430px, 64dvh, 680px);
+                min-height: 430px;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-canvas-wrap {
+                height: clamp(520px, 68dvh, 760px);
+                min-height: 500px;
+            }
+
+            .crypto-replay-workspace-overlay {
+                padding: 0.65rem 0.65rem calc(4.85rem + env(safe-area-inset-bottom));
+                gap: 0.55rem;
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-rows: minmax(0, 1fr) auto auto auto;
+                align-items: end;
+            }
+
+            .crypto-replay-workspace-panel {
+                width: 100%;
+                max-height: min(24dvh, 13rem);
+                overflow-y: auto;
+            }
+
+            .crypto-replay-toolbar-main {
+                flex-direction: column;
+            }
+
+            .crypto-replay-meta-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .crypto-replay-workspace-toolbar {
+                grid-column: 1;
+                grid-row: 2;
+                max-height: min(36dvh, 20rem);
+            }
+
+            .crypto-replay-workspace-event {
+                grid-column: 1;
+                grid-row: 1;
+                justify-self: stretch;
+                align-self: start;
+                width: 100%;
+                max-height: min(30dvh, 16rem);
+                overflow-y: auto;
+            }
+
+            .crypto-replay-workspace-bottom {
+                grid-column: 1;
+                grid-row: 3;
+                display: none;
+            }
+
+            .crypto-replay-bookmark-strip,
+            .crypto-history-replay-jump-strip {
+                margin-right: -0.15rem;
+                padding-right: 0.35rem;
+            }
+
+            .crypto-replay-bookmark,
+            .crypto-history-replay-jump-strip button {
+                min-height: 2.45rem;
+                max-width: 8.5rem;
+                padding: 0.5rem 0.58rem;
+            }
+
+            .crypto-replay-event-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.35rem;
+            }
+
+            .crypto-replay-audit-filters:not([open]) .crypto-replay-filter-grid,
+            .crypto-replay-audit-filters:not([open]) .crypto-replay-filter-footer {
+                display: none;
+            }
+
+            .crypto-replay-drilldown-grid,
+            .crypto-replay-related-grid,
+            .crypto-replay-audit-actions,
+            .crypto-replay-neighborhood-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .crypto-replay-neighborhood-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .crypto-replay-continuity-panel {
+                padding: 0.48rem;
+            }
+
+            .crypto-replay-window-header,
+            .crypto-replay-window-facts {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .crypto-replay-window-header span,
+            .crypto-replay-window-facts span {
+                white-space: normal;
+            }
+
+            .crypto-replay-drilldown-grid strong {
+                white-space: normal;
+            }
+
+            .crypto-replay-workspace-actions button {
+                flex: 1 1 calc(50% - 0.35rem);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-mobile-investigation-drawer {
+                display: none;
+            }
+
+            .crypto-data-source-snapshot {
+                grid-template-columns: 1fr;
+            }
+
+            #crypto-detail-panel {
+                min-height: 260px;
+                max-height: none;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen {
+                padding: calc(0.75rem + env(safe-area-inset-top)) calc(0.75rem + env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) calc(0.75rem + env(safe-area-inset-left));
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls {
+                position: relative;
+                inset: auto;
+                width: 100%;
+                max-height: min(34dvh, 18rem);
+                margin-bottom: 0.75rem;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-intelligence-controls,
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-sidebar-column {
+                display: none;
+            }
+
+            .fullscreen-hud-restore {
+                position: fixed;
+                top: calc(0.75rem + env(safe-area-inset-top));
+                right: calc(0.75rem + env(safe-area-inset-right));
+                min-height: 2.5rem;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-container {
+                height: clamp(500px, 72dvh, 820px) !important;
+                min-height: 460px;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-container {
+                height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+                min-height: 0;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-sidebar-column {
+                position: relative;
+                inset: auto;
+                width: 100%;
+                margin-top: 0.75rem;
+                pointer-events: auto;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen #sidebar,
+            #graph-intelligence-view.is-graph-fullscreen #empty-sidebar {
+                height: auto;
+                max-height: min(48dvh, 30rem);
+            }
+
+            .app-view-tabs {
+                width: 100%;
+            }
+
+            .app-view-tab {
+                flex: 1 1 100%;
+                justify-content: center;
+            }
+
+            .product-view-switch {
+                width: 100%;
+            }
+
+            .product-view-tab {
+                flex: 1 1 calc(50% - 0.25rem);
+                justify-content: center;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen {
+                padding: calc(0.75rem + env(safe-area-inset-top)) calc(0.75rem + env(safe-area-inset-right)) calc(0.75rem + env(safe-area-inset-bottom)) calc(0.75rem + env(safe-area-inset-left));
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen > .flex {
+                margin-bottom: 0.6rem;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen > .flex h1 {
+                font-size: 2rem;
+                line-height: 1.05;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen > .flex p {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
+                height: auto;
+                min-height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-canvas-wrap {
+                height: clamp(520px, 74dvh, 820px);
+                min-height: 500px;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen #crypto-detail-panel {
+                max-height: min(42dvh, 28rem);
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-panel > .grid {
+                gap: 0.75rem;
+            }
+
+            .photonic-help-backdrop {
+                align-items: stretch;
+                padding: 0.75rem;
+            }
+
+            .photonic-help-modal {
+                width: 100%;
+                max-height: calc(100dvh - 1.5rem);
+            }
+
+            .connection-row {
+                border-radius: 1rem;
+            }
+
+            .graph-overlay-stats {
+                left: 0.75rem;
+                right: 0.75rem;
+                bottom: 4.25rem;
+                max-width: calc(100% - 1.5rem);
+            }
+
+            .graph-perspective-hint,
+            .graph-orb-map-hint {
+                max-width: 100%;
+                line-height: 1.35;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen #orb-map-canvas {
+                inset: 0.5rem;
+                width: calc(100% - 1rem);
+                height: calc(100% - 1rem);
+            }
+        }
+
+@media (max-width: 480px) {
+            .mobile-graph-overlay {
+                left: max(0.5rem, env(safe-area-inset-left));
+                right: max(0.5rem, env(safe-area-inset-right));
+                bottom: max(0.5rem, env(safe-area-inset-bottom));
+                gap: 0.45rem;
+            }
+
+            .mobile-graph-hint {
+                max-width: 44%;
+                padding: 0.45rem 0.55rem;
+            }
+
+            .mobile-graph-actions {
+                max-width: 54%;
+                gap: 0.32rem;
+            }
+
+            .mobile-graph-action {
+                min-width: 2.55rem;
+                min-height: 2.55rem;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button {
+                flex: 1 1 calc(50% - 0.35rem);
+            }
+
+            .graph-intelligence-controls .perspective-reset-control {
+                flex: 1 1 calc(50% - 0.35rem);
+                justify-content: center;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls select,
+            #graph-intelligence-view.is-graph-fullscreen .signal-control {
+                width: 100%;
+                min-width: 0;
+            }
+
+        }
+
+@media (max-width: 768px) {
+            header .page-shell {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0.6rem !important;
+                padding: 0.55rem 0.85rem !important;
+            }
+
+            header .page-shell > div:first-child,
+            header .page-shell > div:first-child > div {
+                min-width: 0;
+            }
+
+            header .w-11 {
+                width: 2rem !important;
+                height: 2rem !important;
+                border-radius: 0.8rem !important;
+                flex: 0 0 auto;
+            }
+
+            header .fa-atom {
+                font-size: 1.25rem !important;
+            }
+
+            header .neon-text {
+                font-size: 1.25rem !important;
+                line-height: 1 !important;
+                white-space: nowrap;
+            }
+
+            header .neon-text + div,
+            header [data-stock-only] {
+                display: none !important;
+            }
+
+            .product-view-switch,
+            .app-view-tabs {
+                width: 100% !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                margin-bottom: 0.45rem !important;
+                padding: 0.35rem !important;
+            }
+
+            .product-view-tab,
+            .app-view-tab {
+                min-height: 2.25rem !important;
+                justify-content: center;
+                padding: 0.5rem 0.65rem !important;
+                font-size: 0.62rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child,
+            #crypto-photonic-view > .flex:first-child {
+                display: none !important;
+            }
+
+            .graph-intelligence-controls {
+                max-height: 4.2rem;
+                margin-bottom: 0.5rem !important;
+                overflow-x: auto;
+                overflow-y: hidden;
+                flex-wrap: nowrap !important;
+            }
+
+            #stock-photonic-surface .graph-intelligence-controls select,
+            #stock-photonic-surface .graph-intelligence-controls .focus-button,
+            #stock-photonic-surface .graph-intelligence-controls .signal-control {
+                flex: 0 0 auto;
+                max-width: 82vw;
+                white-space: nowrap;
+            }
+
+            #stock-photonic-surface .graph-intelligence-controls .focus-button span {
+                white-space: nowrap;
+            }
+
+            .interaction-dock {
+                position: fixed;
+                left: calc(0.65rem + env(safe-area-inset-left));
+                right: calc(0.65rem + env(safe-area-inset-right));
+                bottom: calc(0.65rem + env(safe-area-inset-bottom));
+                top: auto;
+                z-index: 60;
+                align-items: stretch;
+                gap: 0.45rem;
+                margin: 0;
+                padding: 0.45rem;
+                border-radius: 1rem;
+            }
+
+            .interaction-dock-label {
+                display: none;
+            }
+
+            .interaction-dock-actions {
+                justify-content: flex-start;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding-bottom: 0.08rem;
+                scrollbar-width: none;
+            }
+
+            .interaction-dock-actions::-webkit-scrollbar {
+                display: none;
+            }
+
+            .interaction-dock-button {
+                min-width: 2.75rem;
+                min-height: 2.65rem;
+                padding: 0.45rem 0.62rem;
+                font-size: 0.6rem;
+            }
+
+            .interaction-dock-button span {
+                display: none;
+            }
+
+            .interaction-dock-split {
+                flex: 0 0 auto;
+            }
+
+            #stock-photonic-surface,
+            #crypto-photonic-view {
+                padding-bottom: calc(5.65rem + env(safe-area-inset-bottom)) !important;
+            }
+
+            .graph-container {
+                height: clamp(390px, 58dvh, 620px) !important;
+                min-height: 390px !important;
+            }
+
+            #sidebar,
+            #empty-sidebar {
+                padding: 1rem !important;
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
+            .stock-intel-workspace .grid,
+            .relationship-evidence-grid,
+            .source-candidate-review-grid,
+            .source-candidate-groups {
+                grid-template-columns: 1fr !important;
+            }
+
+            .relationship-evidence-card,
+            .relationship-type-group {
+                padding: 0.85rem !important;
+            }
+
+            .relationship-company-chip,
+            .relationship-category-chip,
+            .relationship-state-badge,
+            .relationship-evidence-tag,
+            .source-indicator,
+            .confidence-badge,
+            .source-age-chip,
+            .source-host-chip,
+            .review-queue-chip {
+                white-space: nowrap;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .trust-metric-strip {
+                grid-template-columns: 1fr;
+            }
+
+            .review-queue-item,
+            .relationship-evidence-card,
+            .source-candidate-group {
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
+            #stock-photonic-surface #sidebar .grid.grid-cols-3 .font-display,
+            #stock-photonic-surface #empty-sidebar .grid.grid-cols-3 .font-display {
+                font-size: clamp(1rem, 4.6vw, 1.2rem);
+                white-space: nowrap;
+            }
+
+            .relationship-company-chip {
+                max-width: 100%;
+            }
+
+            .relationship-company-chip span {
+                display: none;
+            }
+
+            .crypto-workspace-toolbar {
+                margin-bottom: 0.5rem !important;
+            }
+
+            .crypto-workspace-toolbar > div:first-child > div:last-child {
+                display: none;
+            }
+
+            .crypto-canvas-wrap {
+                height: clamp(410px, 62dvh, 640px) !important;
+                min-height: 410px !important;
+            }
+
+            .mobile-graph-overlay {
+                bottom: calc(5.1rem + env(safe-area-inset-bottom)) !important;
+            }
+        }
+
+@media (hover: none) and (pointer: coarse) {
+            .crypto-graph-hover-overlay {
+                display: none;
+            }
+        }
+
+@media (max-width: 768px) {
+            .crypto-interaction-dock {
+                z-index: 72;
+            }
+
+            body.crypto-graph-fullscreen-active {
+                overscroll-behavior: none;
+            }
+
+            .crypto-mobile-graph-overlay {
+                top: calc(0.6rem + env(safe-area-inset-top));
+                bottom: auto !important;
+                align-items: flex-start;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-hint {
+                max-width: min(46vw, 14rem);
+                line-height: 1.25;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-actions {
+                width: auto;
+                max-width: none;
+                margin-left: auto;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-action {
+                min-width: 2.55rem;
+                min-height: 2.55rem;
+            }
+
+            .crypto-mobile-investigation-drawer {
+                display: block;
+                bottom: calc(5.2rem + env(safe-area-inset-bottom));
+                max-width: calc(100vw - 1.5rem - env(safe-area-inset-left) - env(safe-area-inset-right));
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen {
+                overflow: hidden;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
+                min-height: 0;
+                height: calc(100dvh - 1.5rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+                padding-bottom: 0.65rem !important;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-layout-grid {
+                min-height: 0;
+                grid-template-columns: 1fr;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-graph-column {
+                min-height: 0;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-canvas-wrap {
+                height: calc(100dvh - 7.7rem - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+                min-height: 0 !important;
+                border-radius: 1rem !important;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-side-column {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-investigation-drawer {
+                bottom: calc(5.15rem + env(safe-area-inset-bottom));
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-investigation-drawer.is-collapsed {
+                max-height: 5rem;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-investigation-drawer.is-half {
+                max-height: min(36%, 16rem);
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-investigation-drawer.is-expanded {
+                max-height: min(56%, 26rem);
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-interaction-dock {
+                left: calc(0.55rem + env(safe-area-inset-left));
+                right: calc(0.55rem + env(safe-area-inset-right));
+                bottom: calc(0.5rem + env(safe-area-inset-bottom));
+            }
+
+            .crypto-sidebar-stack {
+                max-height: none;
+                overflow: visible;
+                padding-right: 0;
+            }
+
+            .crypto-investigation-tabs {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .crypto-investigation-tab {
+                min-width: 0;
+            }
+
+            .crypto-summary-grid,
+            .crypto-two-column-list,
+            .crypto-guided-action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #crypto-detail-panel {
+                min-height: 300px;
+                padding: 0.9rem !important;
+            }
+
+            .crypto-status-stack {
+                gap: 0.55rem;
+            }
+
+            .crypto-status-stack .crypto-control-group {
+                padding: 0.65rem !important;
+            }
+
+            .crypto-status-stack button,
+            .crypto-status-stack input,
+            .crypto-status-stack select,
+            .crypto-tab-section button {
+                min-width: 0;
+                white-space: normal;
+            }
+
+            .crypto-mode-switch,
+            .crypto-replay-workspace-actions,
+            .crypto-status-stack .flex,
+            .crypto-status-stack .grid {
+                min-width: 0;
+            }
+
+            .crypto-wallet-status-line,
+            .crypto-data-source-snapshot,
+            .crypto-card-heading {
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .crypto-data-source-snapshot {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .crypto-mobile-investigation-drawer.is-collapsed .crypto-mobile-drawer-selected,
+            .crypto-mobile-investigation-drawer.is-collapsed .crypto-mobile-drawer-empty {
+                display: none;
+            }
+        }
+
+@media (max-width: 480px) {
+            .crypto-mobile-graph-overlay {
+                left: max(0.55rem, env(safe-area-inset-left));
+                right: max(0.55rem, env(safe-area-inset-right));
+                gap: 0.4rem;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-hint {
+                max-width: 36vw;
+                padding: 0.42rem 0.5rem;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-actions {
+                gap: 0.28rem;
+            }
+
+            .crypto-mobile-graph-overlay .mobile-graph-action {
+                min-width: 2.4rem;
+                min-height: 2.4rem;
+            }
+
+            .crypto-mobile-drawer-topline {
+                grid-template-columns: 1fr;
+            }
+
+            .crypto-mobile-drawer-state-controls {
+                justify-content: stretch;
+            }
+
+            .crypto-mobile-drawer-state-controls .crypto-mobile-drawer-button {
+                flex: 1 1 0;
+            }
+
+            .crypto-mobile-drawer-summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }

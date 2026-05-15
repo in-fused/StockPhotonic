@@ -22,6 +22,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 COMPANIES_PATH = ROOT / "data" / "companies.json"
 CONNECTIONS_PATH = ROOT / "data" / "connections.json"
+CANDIDATE_PATH = ROOT / "data" / "candidates" / "sec_relationship_candidates.json"
+CANDIDATE_QUEUE_PATH = ROOT / "data" / "candidates" / "candidate_review_queue.json"
+CANDIDATE_SUMMARY_PATH = ROOT / "data" / "candidates" / "candidate_review_summary.json"
+CANDIDATE_OVERLAP_PATH = ROOT / "data" / "candidates" / "candidate_overlap_report.json"
 
 ALLOWED_TYPES = {
     "supply",
@@ -29,6 +33,23 @@ ALLOWED_TYPES = {
     "ecosystem",
     "competitor",
     "investment",
+}
+ALLOWED_CANDIDATE_TYPES = {
+    "supplier_customer",
+    "partnership",
+    "investment",
+    "competitor",
+    "cloud_hyperscaler_ecosystem",
+    "semiconductor_supply_chain",
+    "ai_infrastructure",
+    "data_center_power",
+}
+ALLOWED_REVIEW_ACTIONS = {
+    "ignore duplicate",
+    "enrich existing edge",
+    "review for promotion",
+    "needs more evidence",
+    "reject as weak signal",
 }
 
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -59,6 +80,17 @@ def is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def clean_string(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None
+
+
+def valid_url(value: Any) -> bool:
+    return isinstance(value, str) and URL_PATTERN.match(value.strip()) is not None
+
+
 def compute_confidence(edge: dict[str, Any]) -> int:
     source_urls = edge.get("source_urls")
     has_source_urls = isinstance(source_urls, list) and len(source_urls) > 0
@@ -83,6 +115,126 @@ def compute_confidence(edge: dict[str, Any]) -> int:
             confidence = 3
 
     return min(5, max(3, confidence))
+
+
+def validate_candidate_file(errors: list[str], warnings: list[str]) -> None:
+    if not CANDIDATE_PATH.exists():
+        warnings.append("SEC candidate file is absent; candidate validation skipped.")
+        return
+
+    payload = load_json(CANDIDATE_PATH)
+    if not isinstance(payload, dict):
+        errors.append("data/candidates/sec_relationship_candidates.json must contain an object.")
+        return
+
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        errors.append("SEC candidate file metadata must be an object.")
+    else:
+        if metadata.get("status") != "candidate_only":
+            errors.append("SEC candidate metadata.status must be candidate_only.")
+        if metadata.get("production_write_allowed") is not False:
+            errors.append("SEC candidate metadata.production_write_allowed must be false.")
+        if metadata.get("app_load_allowed") is not False:
+            errors.append("SEC candidate metadata.app_load_allowed must be false.")
+
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list):
+        errors.append("SEC candidate file candidates must be a list.")
+        return
+
+    for index, candidate in enumerate(candidates, start=1):
+        if not isinstance(candidate, dict):
+            errors.append(f"SEC candidate {index}: record must be an object.")
+            continue
+        source_ticker = clean_string(candidate.get("source_ticker"))
+        target_ticker = clean_string(candidate.get("target_ticker"))
+        relationship_type = clean_string(candidate.get("relationship_type"))
+        if source_ticker is None:
+            errors.append(f"SEC candidate {index}: source_ticker is required.")
+        if target_ticker is None:
+            errors.append(f"SEC candidate {index}: target_ticker is required.")
+        if relationship_type not in ALLOWED_CANDIDATE_TYPES:
+            errors.append(
+                f"SEC candidate {index}: relationship_type {relationship_type!r} is unsupported."
+            )
+        evidence_snippet = clean_string(candidate.get("evidence_snippet"))
+        if evidence_snippet is None:
+            errors.append(f"SEC candidate {index}: evidence_snippet is required.")
+        elif len(evidence_snippet) > 900:
+            errors.append(f"SEC candidate {index}: evidence_snippet is too long.")
+        source_urls = candidate.get("source_urls")
+        if source_urls is not None:
+            if not isinstance(source_urls, list):
+                errors.append(f"SEC candidate {index}: source_urls must be a list.")
+            else:
+                for url_index, source_url in enumerate(source_urls):
+                    if not valid_url(source_url):
+                        errors.append(
+                            f"SEC candidate {index}: source_urls[{url_index}] must be http(s)."
+                        )
+        archive_url = candidate.get("archive_url")
+        if archive_url is not None and not valid_url(archive_url):
+            errors.append(f"SEC candidate {index}: archive_url must be http(s).")
+
+
+def validate_triage_artifact_file(
+    path: Path,
+    artifact_name: str,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    if not path.exists():
+        warnings.append(f"{artifact_name} triage artifact is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} triage artifact must contain an object.")
+        return
+
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        errors.append(f"{artifact_name} triage metadata must be an object.")
+    else:
+        if metadata.get("artifact_status") != "review_only":
+            errors.append(f"{artifact_name} triage artifact must be review_only.")
+        if metadata.get("production_write_allowed") is not False:
+            errors.append(f"{artifact_name} triage artifact cannot allow production writes.")
+
+    records = payload.get("records")
+    if records is not None:
+        if not isinstance(records, list):
+            errors.append(f"{artifact_name} triage records must be a list.")
+        else:
+            for index, record in enumerate(records, start=1):
+                if not isinstance(record, dict):
+                    errors.append(f"{artifact_name} record {index}: must be an object.")
+                    continue
+                if clean_string(record.get("source_ticker")) is None:
+                    errors.append(f"{artifact_name} record {index}: missing source_ticker.")
+                if clean_string(record.get("target_ticker")) is None:
+                    errors.append(f"{artifact_name} record {index}: missing target_ticker.")
+                action = clean_string(record.get("recommended_reviewer_action"))
+                if action is not None and action not in ALLOWED_REVIEW_ACTIONS:
+                    errors.append(
+                        f"{artifact_name} record {index}: unsupported reviewer action {action!r}."
+                    )
+
+    comparisons = payload.get("comparisons")
+    if comparisons is not None:
+        if not isinstance(comparisons, list):
+            errors.append(f"{artifact_name} comparisons must be a list.")
+        else:
+            for index, comparison in enumerate(comparisons, start=1):
+                if not isinstance(comparison, dict):
+                    errors.append(f"{artifact_name} comparison {index}: must be an object.")
+                    continue
+                action = clean_string(comparison.get("recommended_reviewer_action"))
+                if action not in ALLOWED_REVIEW_ACTIONS:
+                    errors.append(
+                        f"{artifact_name} comparison {index}: unsupported reviewer action {action!r}."
+                    )
 
 
 def validate(strict_confidence: bool = False) -> int:
@@ -278,6 +430,26 @@ def validate(strict_confidence: bool = False) -> int:
             f"{', '.join(str(company_id) for company_id in sorted(orphan_company_ids)[:10])}"
             f"{'...' if len(orphan_company_ids) > 10 else ''}"
         )
+
+    validate_candidate_file(errors, warnings)
+    validate_triage_artifact_file(
+        CANDIDATE_QUEUE_PATH,
+        "candidate_review_queue",
+        errors,
+        warnings,
+    )
+    validate_triage_artifact_file(
+        CANDIDATE_SUMMARY_PATH,
+        "candidate_review_summary",
+        errors,
+        warnings,
+    )
+    validate_triage_artifact_file(
+        CANDIDATE_OVERLAP_PATH,
+        "candidate_overlap_report",
+        errors,
+        warnings,
+    )
 
     print("StockPhotonic data validation")
     print(f"Companies: {len(companies)}")

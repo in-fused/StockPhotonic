@@ -1,0 +1,699 @@
+{
+  "candidate_enrichment_opportunities": [
+    {
+      "candidate_index": 8,
+      "candidate_relationship_type": "partnership",
+      "evidence_count": 2,
+      "existing_production_relationship_type": "competitor",
+      "overlap_state": "same_pair_different_type",
+      "recommended_reviewer_action": "enrich existing edge",
+      "source_state": "sec_filing_url",
+      "source_ticker": "MRK",
+      "target_ticker": "PFE"
+    }
+  ],
+  "comparisons": [
+    {
+      "candidate_index": 1,
+      "candidate_relationship_type": "partnership",
+      "evidence_count": 2,
+      "existing_production_relationship_type": null,
+      "overlap_state": "new_pair",
+      "recommended_reviewer_action": "needs more evidence",
+      "source_state": "sec_filing_url",
+      "source_ticker": "PAA",
+      "target_ticker": "ENB"
+    },
+    {
+      "candidate_index": 2,
+      "candidate_relationship_type": "partnership",
+      "evidence_count": 2,
+      "existing_production_relationship_type": null,
+      "overlap_state": "new_pair",
+      "recommended_reviewer_action": "needs more evidence",
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_ticker": "KMI"
+    },
+    {
+      "candidate_index": 3,
+      "candidate_relationship_type": "partnership",
+      "evidence_count": 2,
+      "existing_production_relationship_type": null,
+      "overlap_state": "new_pair",
+      "recommended_reviewer_action": "needs more evidence",
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_ticker": "ENB"
+    },
+    {
+      "candidate_index": 4,
+      "candidate_relationship_type": "partnership",
+      "evidence_count": 2,
+      "existing_production_relationship_type": null,
+      "overlap_state": "new_pair",
+      "recommended_reviewer_action": "needs more evidence",
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_ticker": "SUN"
+    },
+    {
+      "candidate_index": 5,
+      "candidate_relationship_type": "supplier_customer",
+      "evidence_count": 2,
+      "existing_production_relationship_type": null,
+      "overlap_state": "new_pair",
+      "recommended_reviewer_action": "needs more evidence",
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_ticker": "KMI"
+    },
+    {
+      "candidate_index": 6,
+      "candidate_relationship_type": "supplier_customer",
+      "evidence_count": 2,
+      "existing_production_relationship_type": null,
+      "overlap_state": "new_pair",
+      "recommended_reviewer_action": "needs more evidence",
+      "source_state": "sec_filing_url",
+      "source_ticker": "PAA",
+      "target_ticker": "ENB"
+    },
+    {
+      "candidate_index": 7,
+      "candidate_relationship_type": "partnership",
+      "evidence_count": 2,
+      "existing_production_relationship_type": null,
+      "overlap_state": "new_pair",
+      "recommended_reviewer_action": "needs more evidence",
+      "source_state": "sec_filing_url",
+      "source_ticker": "MRK",
+      "target_ticker": "MRNA"
+    },
+    {
+      "candidate_index": 8,
+      "candidate_relationship_type": "partnership",
+      "evidence_count": 2,
+      "existing_production_relationship_type": "competitor",
+      "overlap_state": "same_pair_different_type",
+      "recommended_reviewer_action": "enrich existing edge",
+      "source_state": "sec_filing_url",
+      "source_ticker": "MRK",
+      "target_ticker": "PFE"
+    },
+    {
+      "candidate_index": 9,
+      "candidate_relationship_type": "investment",
+      "evidence_count": 2,
+      "existing_production_relationship_type": null,
+      "overlap_state": "new_pair",
+      "recommended_reviewer_action": "needs more evidence",
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_ticker": "SUN"
+    },
+    {
+      "candidate_index": 10,
+      "candidate_relationship_type": "partnership",
+      "evidence_count": 2,
+      "existing_production_relationship_type": null,
+      "overlap_state": "new_pair",
+      "recommended_reviewer_action": "needs more evidence",
+      "source_state": "sec_filing_url",
+      "source_ticker": "MPLX",
+      "target_ticker": "ET"
+    }
+  ],
+  "metadata": {
+    "artifact_status": "review_only",
+    "candidate_file": "data\\candidates\\sec_relationship_candidates.json",
+    "generated_at_utc": "2026-05-15T02:12:58+00:00",
+    "generated_by": "scripts/sec_candidate_triage.py",
+    "network_calls": 0,
+    "production_files_read": {
+      "companies": "data\\companies.json",
+      "connections": "data\\connections.json"
+    },
+    "production_write_allowed": false
+  },
+  "production_edges_missing_source_urls": [
+    {
+      "connection_index": 17,
+      "label": "Data infrastructure semiconductor competition",
+      "relationship_type": "competitor",
+      "source_ticker": "AVGO",
+      "target_ticker": "MRVL"
+    },
+    {
+      "connection_index": 18,
+      "label": "Custom AI accelerator and networking silicon ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "AVGO",
+      "target_ticker": "GOOGL"
+    },
+    {
+      "connection_index": 21,
+      "label": "Premium device silicon platform competition",
+      "relationship_type": "competitor",
+      "source_ticker": "QCOM",
+      "target_ticker": "AAPL"
+    },
+    {
+      "connection_index": 23,
+      "label": "Memory and semiconductor manufacturing peer exposure",
+      "relationship_type": "competitor",
+      "source_ticker": "MU",
+      "target_ticker": "INTC"
+    },
+    {
+      "connection_index": 29,
+      "label": "Semiconductor capital equipment ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "ASML",
+      "target_ticker": "AMAT"
+    },
+    {
+      "connection_index": 30,
+      "label": "Wafer equipment purchasing-cycle ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "ASML",
+      "target_ticker": "LRCX"
+    },
+    {
+      "connection_index": 31,
+      "label": "Wafer fabrication equipment competition",
+      "relationship_type": "competitor",
+      "source_ticker": "AMAT",
+      "target_ticker": "LRCX"
+    },
+    {
+      "connection_index": 32,
+      "label": "Semiconductor manufacturing equipment cycle exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "AMAT",
+      "target_ticker": "KLAC"
+    },
+    {
+      "connection_index": 36,
+      "label": "Cloud data infrastructure silicon exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "MRVL",
+      "target_ticker": "AMZN"
+    },
+    {
+      "connection_index": 37,
+      "label": "AI server power management ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "MPWR",
+      "target_ticker": "NVDA"
+    },
+    {
+      "connection_index": 42,
+      "label": "Enterprise workflow and productivity software overlap",
+      "relationship_type": "ecosystem",
+      "source_ticker": "MSFT",
+      "target_ticker": "NOW"
+    },
+    {
+      "connection_index": 43,
+      "label": "Cloud platform and advertising-adjacent AI competition",
+      "relationship_type": "competitor",
+      "source_ticker": "GOOGL",
+      "target_ticker": "AMZN"
+    },
+    {
+      "connection_index": 44,
+      "label": "Digital advertising and AI platform competition",
+      "relationship_type": "competitor",
+      "source_ticker": "GOOGL",
+      "target_ticker": "META"
+    },
+    {
+      "connection_index": 45,
+      "label": "Mobile ecosystem and AI assistant competition",
+      "relationship_type": "competitor",
+      "source_ticker": "GOOGL",
+      "target_ticker": "AAPL"
+    },
+    {
+      "connection_index": 46,
+      "label": "Enterprise cloud infrastructure competition",
+      "relationship_type": "competitor",
+      "source_ticker": "AMZN",
+      "target_ticker": "ORCL"
+    },
+    {
+      "connection_index": 48,
+      "label": "Consumer device platform and app ecosystem tension",
+      "relationship_type": "competitor",
+      "source_ticker": "META",
+      "target_ticker": "AAPL"
+    },
+    {
+      "connection_index": 51,
+      "label": "Enterprise customer data platform ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "CRM",
+      "target_ticker": "SNOW"
+    },
+    {
+      "connection_index": 52,
+      "label": "Enterprise workflow and CRM software competition",
+      "relationship_type": "competitor",
+      "source_ticker": "CRM",
+      "target_ticker": "NOW"
+    },
+    {
+      "connection_index": 53,
+      "label": "Enterprise SaaS data and workflow ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "SNOW",
+      "target_ticker": "NOW"
+    },
+    {
+      "connection_index": 54,
+      "label": "Cloud security marketplace and platform integration",
+      "relationship_type": "partnership",
+      "source_ticker": "PANW",
+      "target_ticker": "MSFT"
+    },
+    {
+      "connection_index": 55,
+      "label": "AWS cloud security marketplace ecosystem",
+      "relationship_type": "partnership",
+      "source_ticker": "PANW",
+      "target_ticker": "AMZN"
+    },
+    {
+      "connection_index": 56,
+      "label": "Global card payment network competition",
+      "relationship_type": "competitor",
+      "source_ticker": "V",
+      "target_ticker": "MA"
+    },
+    {
+      "connection_index": 57,
+      "label": "Digital wallet acceptance network exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "V",
+      "target_ticker": "PYPL"
+    },
+    {
+      "connection_index": 58,
+      "label": "Digital wallet acceptance network exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "MA",
+      "target_ticker": "PYPL"
+    },
+    {
+      "connection_index": 59,
+      "label": "Card network and premium card spend competition",
+      "relationship_type": "competitor",
+      "source_ticker": "V",
+      "target_ticker": "AXP"
+    },
+    {
+      "connection_index": 60,
+      "label": "Card network and premium card spend competition",
+      "relationship_type": "competitor",
+      "source_ticker": "MA",
+      "target_ticker": "AXP"
+    },
+    {
+      "connection_index": 61,
+      "label": "Issuer and card network payments ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "V",
+      "target_ticker": "JPM"
+    },
+    {
+      "connection_index": 62,
+      "label": "Issuer and card network payments ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "MA",
+      "target_ticker": "JPM"
+    },
+    {
+      "connection_index": 63,
+      "label": "Consumer card issuing and network ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "V",
+      "target_ticker": "BAC"
+    },
+    {
+      "connection_index": 64,
+      "label": "Consumer card issuing and network ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "MA",
+      "target_ticker": "BAC"
+    },
+    {
+      "connection_index": 65,
+      "label": "Large bank deposit and credit competition",
+      "relationship_type": "competitor",
+      "source_ticker": "JPM",
+      "target_ticker": "BAC"
+    },
+    {
+      "connection_index": 66,
+      "label": "Consumer card lending competition",
+      "relationship_type": "competitor",
+      "source_ticker": "AXP",
+      "target_ticker": "COF"
+    },
+    {
+      "connection_index": 67,
+      "label": "Consumer credit card issuing competition",
+      "relationship_type": "competitor",
+      "source_ticker": "JPM",
+      "target_ticker": "COF"
+    },
+    {
+      "connection_index": 73,
+      "label": "Large-cap pharmaceutical portfolio competition",
+      "relationship_type": "competitor",
+      "source_ticker": "LLY",
+      "target_ticker": "MRK"
+    },
+    {
+      "connection_index": 74,
+      "label": "Large-cap pharmaceutical portfolio competition",
+      "relationship_type": "competitor",
+      "source_ticker": "LLY",
+      "target_ticker": "ABBV"
+    },
+    {
+      "connection_index": 75,
+      "label": "Large-cap pharmaceutical portfolio competition",
+      "relationship_type": "competitor",
+      "source_ticker": "LLY",
+      "target_ticker": "PFE"
+    },
+    {
+      "connection_index": 76,
+      "label": "Managed care and PBM competition",
+      "relationship_type": "competitor",
+      "source_ticker": "UNH",
+      "target_ticker": "CVS"
+    },
+    {
+      "connection_index": 77,
+      "label": "Managed care and PBM competition",
+      "relationship_type": "competitor",
+      "source_ticker": "UNH",
+      "target_ticker": "CI"
+    },
+    {
+      "connection_index": 78,
+      "label": "PBM and pharmacy benefit competition",
+      "relationship_type": "competitor",
+      "source_ticker": "CVS",
+      "target_ticker": "CI"
+    },
+    {
+      "connection_index": 79,
+      "label": "Insurer and pharmaceutical reimbursement ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "UNH",
+      "target_ticker": "LLY"
+    },
+    {
+      "connection_index": 80,
+      "label": "PBM formulary and pharmaceutical distribution exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "CVS",
+      "target_ticker": "LLY"
+    },
+    {
+      "connection_index": 81,
+      "label": "PBM formulary and pharmaceutical reimbursement exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "CI",
+      "target_ticker": "LLY"
+    },
+    {
+      "connection_index": 82,
+      "label": "Large-cap pharmaceutical portfolio competition",
+      "relationship_type": "competitor",
+      "source_ticker": "JNJ",
+      "target_ticker": "MRK"
+    },
+    {
+      "connection_index": 83,
+      "label": "Immunology and pharmaceutical portfolio competition",
+      "relationship_type": "competitor",
+      "source_ticker": "JNJ",
+      "target_ticker": "ABBV"
+    },
+    {
+      "connection_index": 84,
+      "label": "Large-cap pharmaceutical portfolio competition",
+      "relationship_type": "competitor",
+      "source_ticker": "MRK",
+      "target_ticker": "PFE"
+    },
+    {
+      "connection_index": 85,
+      "label": "Large-cap pharmaceutical portfolio competition",
+      "relationship_type": "competitor",
+      "source_ticker": "ABBV",
+      "target_ticker": "PFE"
+    },
+    {
+      "connection_index": 86,
+      "label": "MedTech and surgical device market overlap",
+      "relationship_type": "competitor",
+      "source_ticker": "ISRG",
+      "target_ticker": "JNJ"
+    },
+    {
+      "connection_index": 87,
+      "label": "Life sciences tools and biopharma research exposure",
+      "relationship_type": "supply",
+      "source_ticker": "TMO",
+      "target_ticker": "MRK"
+    },
+    {
+      "connection_index": 88,
+      "label": "Life sciences tools and biopharma research exposure",
+      "relationship_type": "supply",
+      "source_ticker": "TMO",
+      "target_ticker": "PFE"
+    },
+    {
+      "connection_index": 89,
+      "label": "Life sciences tools and drug development ecosystem",
+      "relationship_type": "supply",
+      "source_ticker": "TMO",
+      "target_ticker": "LLY"
+    },
+    {
+      "connection_index": 90,
+      "label": "Integrated oil major competition",
+      "relationship_type": "competitor",
+      "source_ticker": "XOM",
+      "target_ticker": "CVX"
+    },
+    {
+      "connection_index": 91,
+      "label": "Upstream oil and gas production competition",
+      "relationship_type": "competitor",
+      "source_ticker": "XOM",
+      "target_ticker": "COP"
+    },
+    {
+      "connection_index": 92,
+      "label": "Upstream oil and gas production competition",
+      "relationship_type": "competitor",
+      "source_ticker": "CVX",
+      "target_ticker": "COP"
+    },
+    {
+      "connection_index": 93,
+      "label": "Oilfield services exposure to upstream producers",
+      "relationship_type": "supply",
+      "source_ticker": "SLB",
+      "target_ticker": "XOM"
+    },
+    {
+      "connection_index": 94,
+      "label": "Oilfield services exposure to upstream producers",
+      "relationship_type": "supply",
+      "source_ticker": "SLB",
+      "target_ticker": "CVX"
+    },
+    {
+      "connection_index": 95,
+      "label": "Oilfield services exposure to upstream producers",
+      "relationship_type": "supply",
+      "source_ticker": "SLB",
+      "target_ticker": "COP"
+    },
+    {
+      "connection_index": 96,
+      "label": "Heavy machinery and construction equipment competition",
+      "relationship_type": "competitor",
+      "source_ticker": "CAT",
+      "target_ticker": "DE"
+    },
+    {
+      "connection_index": 97,
+      "label": "Energy and mining capital equipment demand exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "CAT",
+      "target_ticker": "XOM"
+    },
+    {
+      "connection_index": 98,
+      "label": "Industrial equipment cycle overlap",
+      "relationship_type": "ecosystem",
+      "source_ticker": "DE",
+      "target_ticker": "CAT"
+    },
+    {
+      "connection_index": 99,
+      "label": "Commercial aircraft engine supplier exposure",
+      "relationship_type": "supply",
+      "source_ticker": "GE",
+      "target_ticker": "BA"
+    },
+    {
+      "connection_index": 100,
+      "label": "Commercial aerospace systems supplier exposure",
+      "relationship_type": "supply",
+      "source_ticker": "RTX",
+      "target_ticker": "BA"
+    },
+    {
+      "connection_index": 101,
+      "label": "Aerospace avionics and systems supplier exposure",
+      "relationship_type": "supply",
+      "source_ticker": "HON",
+      "target_ticker": "BA"
+    },
+    {
+      "connection_index": 102,
+      "label": "Aerospace propulsion and defense systems overlap",
+      "relationship_type": "competitor",
+      "source_ticker": "GE",
+      "target_ticker": "RTX"
+    },
+    {
+      "connection_index": 103,
+      "label": "Aerospace and defense systems competition",
+      "relationship_type": "competitor",
+      "source_ticker": "HON",
+      "target_ticker": "RTX"
+    },
+    {
+      "connection_index": 104,
+      "label": "Industrial automation and aerospace cycle exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "HON",
+      "target_ticker": "GE"
+    },
+    {
+      "connection_index": 105,
+      "label": "AI compute demand and autonomous systems ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "TSLA",
+      "target_ticker": "NVDA"
+    },
+    {
+      "connection_index": 106,
+      "label": "Automotive compute and edge AI semiconductor ecosystem",
+      "relationship_type": "ecosystem",
+      "source_ticker": "TSLA",
+      "target_ticker": "QCOM"
+    },
+    {
+      "connection_index": 107,
+      "label": "Consumer hardware and services ecosystem overlap",
+      "relationship_type": "ecosystem",
+      "source_ticker": "TSLA",
+      "target_ticker": "AAPL"
+    },
+    {
+      "connection_index": 108,
+      "label": "Large-format retail and grocery competition",
+      "relationship_type": "competitor",
+      "source_ticker": "WMT",
+      "target_ticker": "COST"
+    },
+    {
+      "connection_index": 109,
+      "label": "Retail marketplace and fulfillment competition",
+      "relationship_type": "competitor",
+      "source_ticker": "WMT",
+      "target_ticker": "AMZN"
+    },
+    {
+      "connection_index": 110,
+      "label": "Retail membership and e-commerce competition",
+      "relationship_type": "competitor",
+      "source_ticker": "COST",
+      "target_ticker": "AMZN"
+    },
+    {
+      "connection_index": 111,
+      "label": "Consumer retail spending cycle exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "HD",
+      "target_ticker": "WMT"
+    },
+    {
+      "connection_index": 112,
+      "label": "Household retail spending cycle exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "HD",
+      "target_ticker": "COST"
+    },
+    {
+      "connection_index": 113,
+      "label": "Restaurant beverage supplier ecosystem",
+      "relationship_type": "supply",
+      "source_ticker": "MCD",
+      "target_ticker": "KO"
+    },
+    {
+      "connection_index": 114,
+      "label": "Beverage distribution through mass retail channels",
+      "relationship_type": "ecosystem",
+      "source_ticker": "KO",
+      "target_ticker": "WMT"
+    },
+    {
+      "connection_index": 115,
+      "label": "Beverage distribution through warehouse retail channels",
+      "relationship_type": "ecosystem",
+      "source_ticker": "KO",
+      "target_ticker": "COST"
+    },
+    {
+      "connection_index": 116,
+      "label": "Consumer spending and food retail demand exposure",
+      "relationship_type": "ecosystem",
+      "source_ticker": "MCD",
+      "target_ticker": "WMT"
+    },
+    {
+      "connection_index": 117,
+      "label": "SEC filing relationship: licensing/search distribution",
+      "relationship_type": "partnership",
+      "source_ticker": "AAPL",
+      "target_ticker": "GOOGL"
+    }
+  ],
+  "safety": {
+    "network_calls": 0,
+    "production_writes": 0
+  },
+  "summary": {
+    "candidate_comparisons": 10,
+    "enrichment_opportunities": 1,
+    "exact_duplicates": 0,
+    "new_pairs": 9,
+    "production_edges_missing_source_urls": 78,
+    "same_pair_different_type": 1
+  }
+}

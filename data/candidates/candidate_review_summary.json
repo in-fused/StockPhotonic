@@ -1,0 +1,839 @@
+{
+  "checklist_status": {
+    "complete_items": 0,
+    "open_items": 7,
+    "path": "docs\\candidate_reviewer_checklist.md",
+    "total_items": 7
+  },
+  "clusters": [
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        8
+      ],
+      "cluster_id": "evidence_phrase:collaboration with",
+      "cluster_number": 1,
+      "cluster_type": "evidence_phrase",
+      "key": "collaboration with",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        9
+      ],
+      "cluster_id": "evidence_phrase:investment in",
+      "cluster_number": 2,
+      "cluster_type": "evidence_phrase",
+      "key": "investment in",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 4,
+      "candidate_indices": [
+        2,
+        3,
+        4,
+        10
+      ],
+      "cluster_id": "evidence_phrase:joint venture",
+      "cluster_number": 3,
+      "cluster_type": "evidence_phrase",
+      "key": "joint venture",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        1
+      ],
+      "cluster_id": "evidence_phrase:joint venture with",
+      "cluster_number": 4,
+      "cluster_type": "evidence_phrase",
+      "key": "joint venture with",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        7
+      ],
+      "cluster_id": "evidence_phrase:license agreement",
+      "cluster_number": 5,
+      "cluster_type": "evidence_phrase",
+      "key": "license agreement",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        5,
+        6
+      ],
+      "cluster_id": "evidence_phrase:pipeline system",
+      "cluster_number": 6,
+      "cluster_type": "evidence_phrase",
+      "key": "pipeline system",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 7,
+      "candidate_indices": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        9
+      ],
+      "cluster_id": "filing_form:10-K",
+      "cluster_number": 7,
+      "cluster_type": "filing_form",
+      "key": "10-K",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 3,
+      "candidate_indices": [
+        7,
+        8,
+        10
+      ],
+      "cluster_id": "filing_form:10-Q",
+      "cluster_number": 8,
+      "cluster_type": "filing_form",
+      "key": "10-Q",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        3
+      ],
+      "cluster_id": "pair:ET|ENB",
+      "cluster_number": 9,
+      "cluster_type": "pair",
+      "key": "ET|ENB",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        2,
+        5
+      ],
+      "cluster_id": "pair:ET|KMI",
+      "cluster_number": 10,
+      "cluster_type": "pair",
+      "key": "ET|KMI",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        4,
+        9
+      ],
+      "cluster_id": "pair:ET|SUN",
+      "cluster_number": 11,
+      "cluster_type": "pair",
+      "key": "ET|SUN",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        10
+      ],
+      "cluster_id": "pair:MPLX|ET",
+      "cluster_number": 12,
+      "cluster_type": "pair",
+      "key": "MPLX|ET",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        7
+      ],
+      "cluster_id": "pair:MRK|MRNA",
+      "cluster_number": 13,
+      "cluster_type": "pair",
+      "key": "MRK|MRNA",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        8
+      ],
+      "cluster_id": "pair:MRK|PFE",
+      "cluster_number": 14,
+      "cluster_type": "pair",
+      "key": "MRK|PFE",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        1,
+        6
+      ],
+      "cluster_id": "pair:PAA|ENB",
+      "cluster_number": 15,
+      "cluster_type": "pair",
+      "key": "PAA|ENB",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        3
+      ],
+      "cluster_id": "pair_type:ET|ENB|partnership",
+      "cluster_number": 16,
+      "cluster_type": "pair_type",
+      "key": "ET|ENB|partnership",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        2
+      ],
+      "cluster_id": "pair_type:ET|KMI|partnership",
+      "cluster_number": 17,
+      "cluster_type": "pair_type",
+      "key": "ET|KMI|partnership",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        5
+      ],
+      "cluster_id": "pair_type:ET|KMI|supplier_customer",
+      "cluster_number": 18,
+      "cluster_type": "pair_type",
+      "key": "ET|KMI|supplier_customer",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        9
+      ],
+      "cluster_id": "pair_type:ET|SUN|investment",
+      "cluster_number": 19,
+      "cluster_type": "pair_type",
+      "key": "ET|SUN|investment",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        4
+      ],
+      "cluster_id": "pair_type:ET|SUN|partnership",
+      "cluster_number": 20,
+      "cluster_type": "pair_type",
+      "key": "ET|SUN|partnership",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        10
+      ],
+      "cluster_id": "pair_type:MPLX|ET|partnership",
+      "cluster_number": 21,
+      "cluster_type": "pair_type",
+      "key": "MPLX|ET|partnership",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        7
+      ],
+      "cluster_id": "pair_type:MRK|MRNA|partnership",
+      "cluster_number": 22,
+      "cluster_type": "pair_type",
+      "key": "MRK|MRNA|partnership",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        8
+      ],
+      "cluster_id": "pair_type:MRK|PFE|partnership",
+      "cluster_number": 23,
+      "cluster_type": "pair_type",
+      "key": "MRK|PFE|partnership",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        1
+      ],
+      "cluster_id": "pair_type:PAA|ENB|partnership",
+      "cluster_number": 24,
+      "cluster_type": "pair_type",
+      "key": "PAA|ENB|partnership",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        6
+      ],
+      "cluster_id": "pair_type:PAA|ENB|supplier_customer",
+      "cluster_number": 25,
+      "cluster_type": "pair_type",
+      "key": "PAA|ENB|supplier_customer",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        9
+      ],
+      "cluster_id": "relationship_type:investment",
+      "cluster_number": 26,
+      "cluster_type": "relationship_type",
+      "key": "investment",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 7,
+      "candidate_indices": [
+        1,
+        2,
+        3,
+        4,
+        7,
+        8,
+        10
+      ],
+      "cluster_id": "relationship_type:partnership",
+      "cluster_number": 27,
+      "cluster_type": "relationship_type",
+      "key": "partnership",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        5,
+        6
+      ],
+      "cluster_id": "relationship_type:supplier_customer",
+      "cluster_number": 28,
+      "cluster_type": "relationship_type",
+      "key": "supplier_customer",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 10,
+      "candidate_indices": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "cluster_id": "source_host:sec.gov",
+      "cluster_number": 29,
+      "cluster_type": "source_host",
+      "key": "sec.gov",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 10,
+      "candidate_indices": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "cluster_id": "source_host_category:sec_filing",
+      "cluster_number": 30,
+      "cluster_type": "source_host_category",
+      "key": "sec_filing",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 5,
+      "candidate_indices": [
+        2,
+        3,
+        4,
+        5,
+        9
+      ],
+      "cluster_id": "source_ticker:ET",
+      "cluster_number": 31,
+      "cluster_type": "source_ticker",
+      "key": "ET",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        10
+      ],
+      "cluster_id": "source_ticker:MPLX",
+      "cluster_number": 32,
+      "cluster_type": "source_ticker",
+      "key": "MPLX",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        7,
+        8
+      ],
+      "cluster_id": "source_ticker:MRK",
+      "cluster_number": 33,
+      "cluster_type": "source_ticker",
+      "key": "MRK",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        1,
+        6
+      ],
+      "cluster_id": "source_ticker:PAA",
+      "cluster_number": 34,
+      "cluster_type": "source_ticker",
+      "key": "PAA",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 3,
+      "candidate_indices": [
+        1,
+        3,
+        6
+      ],
+      "cluster_id": "target_ticker:ENB",
+      "cluster_number": 35,
+      "cluster_type": "target_ticker",
+      "key": "ENB",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        10
+      ],
+      "cluster_id": "target_ticker:ET",
+      "cluster_number": 36,
+      "cluster_type": "target_ticker",
+      "key": "ET",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        2,
+        5
+      ],
+      "cluster_id": "target_ticker:KMI",
+      "cluster_number": 37,
+      "cluster_type": "target_ticker",
+      "key": "KMI",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        7
+      ],
+      "cluster_id": "target_ticker:MRNA",
+      "cluster_number": 38,
+      "cluster_type": "target_ticker",
+      "key": "MRNA",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 1,
+      "candidate_indices": [
+        8
+      ],
+      "cluster_id": "target_ticker:PFE",
+      "cluster_number": 39,
+      "cluster_type": "target_ticker",
+      "key": "PFE",
+      "repeated_signal": false,
+      "review_value": "one-off signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        4,
+        9
+      ],
+      "cluster_id": "target_ticker:SUN",
+      "cluster_number": 40,
+      "cluster_type": "target_ticker",
+      "key": "SUN",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    }
+  ],
+  "metadata": {
+    "artifact_status": "review_only",
+    "candidate_file": "data\\candidates\\sec_relationship_candidates.json",
+    "generated_at_utc": "2026-05-15T02:12:58+00:00",
+    "generated_by": "scripts/sec_candidate_triage.py",
+    "network_calls": 0,
+    "production_files_read": {
+      "companies": "data\\companies.json",
+      "connections": "data\\connections.json"
+    },
+    "production_write_allowed": false
+  },
+  "repeated_signal_clusters": [
+    {
+      "candidate_count": 4,
+      "candidate_indices": [
+        2,
+        3,
+        4,
+        10
+      ],
+      "cluster_id": "evidence_phrase:joint venture",
+      "cluster_number": 3,
+      "cluster_type": "evidence_phrase",
+      "key": "joint venture",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        5,
+        6
+      ],
+      "cluster_id": "evidence_phrase:pipeline system",
+      "cluster_number": 6,
+      "cluster_type": "evidence_phrase",
+      "key": "pipeline system",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 7,
+      "candidate_indices": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        9
+      ],
+      "cluster_id": "filing_form:10-K",
+      "cluster_number": 7,
+      "cluster_type": "filing_form",
+      "key": "10-K",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 3,
+      "candidate_indices": [
+        7,
+        8,
+        10
+      ],
+      "cluster_id": "filing_form:10-Q",
+      "cluster_number": 8,
+      "cluster_type": "filing_form",
+      "key": "10-Q",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        2,
+        5
+      ],
+      "cluster_id": "pair:ET|KMI",
+      "cluster_number": 10,
+      "cluster_type": "pair",
+      "key": "ET|KMI",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        4,
+        9
+      ],
+      "cluster_id": "pair:ET|SUN",
+      "cluster_number": 11,
+      "cluster_type": "pair",
+      "key": "ET|SUN",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        1,
+        6
+      ],
+      "cluster_id": "pair:PAA|ENB",
+      "cluster_number": 15,
+      "cluster_type": "pair",
+      "key": "PAA|ENB",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 7,
+      "candidate_indices": [
+        1,
+        2,
+        3,
+        4,
+        7,
+        8,
+        10
+      ],
+      "cluster_id": "relationship_type:partnership",
+      "cluster_number": 27,
+      "cluster_type": "relationship_type",
+      "key": "partnership",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        5,
+        6
+      ],
+      "cluster_id": "relationship_type:supplier_customer",
+      "cluster_number": 28,
+      "cluster_type": "relationship_type",
+      "key": "supplier_customer",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 10,
+      "candidate_indices": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "cluster_id": "source_host:sec.gov",
+      "cluster_number": 29,
+      "cluster_type": "source_host",
+      "key": "sec.gov",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 10,
+      "candidate_indices": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "cluster_id": "source_host_category:sec_filing",
+      "cluster_number": 30,
+      "cluster_type": "source_host_category",
+      "key": "sec_filing",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 5,
+      "candidate_indices": [
+        2,
+        3,
+        4,
+        5,
+        9
+      ],
+      "cluster_id": "source_ticker:ET",
+      "cluster_number": 31,
+      "cluster_type": "source_ticker",
+      "key": "ET",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        7,
+        8
+      ],
+      "cluster_id": "source_ticker:MRK",
+      "cluster_number": 33,
+      "cluster_type": "source_ticker",
+      "key": "MRK",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        1,
+        6
+      ],
+      "cluster_id": "source_ticker:PAA",
+      "cluster_number": 34,
+      "cluster_type": "source_ticker",
+      "key": "PAA",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 3,
+      "candidate_indices": [
+        1,
+        3,
+        6
+      ],
+      "cluster_id": "target_ticker:ENB",
+      "cluster_number": 35,
+      "cluster_type": "target_ticker",
+      "key": "ENB",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        2,
+        5
+      ],
+      "cluster_id": "target_ticker:KMI",
+      "cluster_number": 37,
+      "cluster_type": "target_ticker",
+      "key": "KMI",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    },
+    {
+      "candidate_count": 2,
+      "candidate_indices": [
+        4,
+        9
+      ],
+      "cluster_id": "target_ticker:SUN",
+      "cluster_number": 40,
+      "cluster_type": "target_ticker",
+      "key": "SUN",
+      "repeated_signal": true,
+      "review_value": "repeated signal"
+    }
+  ],
+  "review_action_counts": {
+    "enrich existing edge": 1,
+    "needs more evidence": 9
+  },
+  "review_priority_counts": {
+    "high": 1,
+    "low": 3,
+    "medium": 6
+  },
+  "safety": {
+    "network_calls": 0,
+    "production_writes": 0
+  },
+  "source_host_category_counts": {
+    "sec_filing": 10
+  },
+  "summary": {
+    "enrichment_opportunities": 1,
+    "exact_duplicate_candidates": 0,
+    "high_priority_count": 1,
+    "low_priority_count": 3,
+    "medium_priority_count": 6,
+    "new_pair_candidates": 9,
+    "production_edges_missing_source_urls": 78,
+    "queue_count": 10,
+    "reject_priority_count": 0,
+    "review_only": true,
+    "same_pair_different_type_candidates": 1,
+    "source_diversity_count": 1,
+    "total_candidates": 10
+  }
+}

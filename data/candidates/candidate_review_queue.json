@@ -1,0 +1,743 @@
+{
+  "metadata": {
+    "artifact_status": "review_only",
+    "candidate_file": "data\\candidates\\sec_relationship_candidates.json",
+    "generated_at_utc": "2026-05-15T02:12:58+00:00",
+    "generated_by": "scripts/sec_candidate_triage.py",
+    "network_calls": 0,
+    "production_files_read": {
+      "companies": "data\\companies.json",
+      "connections": "data\\connections.json"
+    },
+    "production_write_allowed": false
+  },
+  "queue_count": 10,
+  "records": [
+    {
+      "candidate_index": 1,
+      "candidate_relationship_type": "partnership",
+      "cluster_memberships": [
+        "evidence_phrase:joint venture with",
+        "filing_form:10-K",
+        "pair:PAA|ENB",
+        "pair_type:PAA|ENB|partnership",
+        "relationship_type:partnership",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:PAA",
+        "target_ticker:ENB"
+      ],
+      "confidence_hint": 0.94,
+      "evidence": {
+        "phrase": "joint venture with",
+        "snippet": "...rmian mainline system that extends directly to the Corpus Christi market and has a capacity of approximately 670,000 barrels per day. We operate the Cactus II Pipeline and own a 70% interest in Cactus II, the entity that owns the Cactus II Pipeline, through a joint venture with Enbridge Inc. \u2022 Cactus III Pipeline (Permian to Corpus Christi). We own and operate the Cactus III Pipeline (formerly the EPIC Crude Oil Pipeline), which we acquired from EPIC Crude Holdings, LP (\u201cEPIC\u201d) in the fourth quarter of 2025. The Cactus III Pipeline has a capacit...",
+        "source_reference": {
+          "accession_number": "0001070423-26-000014",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/1070423/000107042326000014/paa-20251231.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0001070423\\000107042326000014\\paa-20251231.htm",
+          "extraction_method": "strong_relationship_pattern",
+          "filing_date": "2026-02-27",
+          "form": "10-K",
+          "offset": 97547,
+          "source_type": "sec_filing",
+          "ticker": "PAA"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 77,
+        "date": "2026-02-27",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": "partnership",
+      "overlap": {
+        "can_enrich_existing_edge": false,
+        "existing_production_relationship_types": [],
+        "production_edges_missing_source_urls": 0,
+        "state": "new_pair"
+      },
+      "queue_id": "sec-candidate-0001",
+      "recommended_reviewer_action": "needs more evidence",
+      "relationship_signal": "joint venture with",
+      "review_only": true,
+      "review_priority": "medium",
+      "review_status": "pending_review",
+      "source_company_in_production": false,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/1070423/000107042326000014/paa-20251231.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "PAA",
+      "target_company_in_production": false,
+      "target_match_confidence": 0.98,
+      "target_ticker": "ENB"
+    },
+    {
+      "candidate_index": 2,
+      "candidate_relationship_type": "partnership",
+      "cluster_memberships": [
+        "evidence_phrase:joint venture",
+        "filing_form:10-K",
+        "pair:ET|KMI",
+        "pair_type:ET|KMI|partnership",
+        "relationship_type:partnership",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:ET",
+        "target_ticker:KMI"
+      ],
+      "confidence_hint": 0.94,
+      "evidence": {
+        "phrase": "joint venture",
+        "snippet": "...state. In addition, FGT\u2019s numerous intrastate and interstate pipeline interconnections with major interstate and intrastate natural gas pipelines provide access to diverse natural gas supply sources. FGT\u2019s customers include electric utilities, independent power producers, industrial end-users and local distribution companies. FGT is owned by Citrus, a 50/50 joint venture with Kinder Morgan, Inc. \u2022 Transwestern Pipeline transports natural gas supply from the Permian Basin, the San Juan Basin and the Anadarko Basin. The system has bi-directional capabilities and can access Texas and Midcontinent natural gas market hubs as well a...",
+        "source_reference": {
+          "accession_number": "0001276187-26-000013",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0001276187\\000127618726000013\\et-20251231.htm",
+          "extraction_method": "sector_aware_relationship_pattern",
+          "filing_date": "2026-02-19",
+          "form": "10-K",
+          "offset": 147751,
+          "source_type": "sec_filing",
+          "ticker": "ET"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 85,
+        "date": "2026-02-19",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": "partnership",
+      "overlap": {
+        "can_enrich_existing_edge": false,
+        "existing_production_relationship_types": [],
+        "production_edges_missing_source_urls": 0,
+        "state": "new_pair"
+      },
+      "queue_id": "sec-candidate-0002",
+      "recommended_reviewer_action": "needs more evidence",
+      "relationship_signal": "joint venture",
+      "review_only": true,
+      "review_priority": "medium",
+      "review_status": "pending_review",
+      "source_company_in_production": false,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_company_in_production": false,
+      "target_match_confidence": 0.98,
+      "target_ticker": "KMI"
+    },
+    {
+      "candidate_index": 3,
+      "candidate_relationship_type": "partnership",
+      "cluster_memberships": [
+        "evidence_phrase:joint venture",
+        "filing_form:10-K",
+        "pair:ET|ENB",
+        "pair_type:ET|ENB|partnership",
+        "relationship_type:partnership",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:ET",
+        "target_ticker:ENB"
+      ],
+      "confidence_hint": 0.94,
+      "evidence": {
+        "phrase": "joint venture",
+        "snippet": "...n Texas, Arkansas, Louisiana, Missouri and Illinois. MRT has underground natural gas storage facilities in Louisiana and Illinois. MRT receives natural gas from a variety of interstate and intrastate pipelines through its interconnections and delivers natural gas primarily to the St. Louis market. 16 of Contents Index to Financial Statements \u2022 SESH, a 50/50 joint venture with Enbridge Inc., provides transportation services in Louisiana, Mississippi and Alabama. SESH transports natural gas from the Perryville Hub in Louisiana to its endpoint in Mobile County, Alabama. SESH has interconnections with third-party natural gas pipel...",
+        "source_reference": {
+          "accession_number": "0001276187-26-000013",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0001276187\\000127618726000013\\et-20251231.htm",
+          "extraction_method": "sector_aware_relationship_pattern",
+          "filing_date": "2026-02-19",
+          "form": "10-K",
+          "offset": 151418,
+          "source_type": "sec_filing",
+          "ticker": "ET"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 85,
+        "date": "2026-02-19",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": "partnership",
+      "overlap": {
+        "can_enrich_existing_edge": false,
+        "existing_production_relationship_types": [],
+        "production_edges_missing_source_urls": 0,
+        "state": "new_pair"
+      },
+      "queue_id": "sec-candidate-0003",
+      "recommended_reviewer_action": "needs more evidence",
+      "relationship_signal": "joint venture",
+      "review_only": true,
+      "review_priority": "low",
+      "review_status": "pending_review",
+      "source_company_in_production": false,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_company_in_production": false,
+      "target_match_confidence": 0.98,
+      "target_ticker": "ENB"
+    },
+    {
+      "candidate_index": 4,
+      "candidate_relationship_type": "partnership",
+      "cluster_memberships": [
+        "evidence_phrase:joint venture",
+        "filing_form:10-K",
+        "pair:ET|SUN",
+        "pair_type:ET|SUN|partnership",
+        "relationship_type:partnership",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:ET",
+        "target_ticker:SUN"
+      ],
+      "confidence_hint": 0.94,
+      "evidence": {
+        "phrase": "joint venture",
+        "snippet": "...152) (149) (3) Adjusted EBITDA related to unconsolidated affiliates 33 28 5 Other \u2014 2 (2) Segment Adjusted EBITDA $ 2,942 $ 3,177 $ (235) Volumes. For the year ended December 31, 2025 compared to the prior year, crude oil transportation volumes were higher due to continued growth on our Texas pipeline system, our gathering systems, and from the ET-S Permian joint venture with Sunoco LP, partially offset by lower volumes on our Bakken Pipeline. Crude terminal volumes were lower primarily due to Gulf Coast refinery maintenance and lower volumes received from our Bakken Pipeline system. Segment Adjusted EBITDA. For the year ended...",
+        "source_reference": {
+          "accession_number": "0001276187-26-000013",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0001276187\\000127618726000013\\et-20251231.htm",
+          "extraction_method": "sector_aware_relationship_pattern",
+          "filing_date": "2026-02-19",
+          "form": "10-K",
+          "offset": 667898,
+          "source_type": "sec_filing",
+          "ticker": "ET"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 85,
+        "date": "2026-02-19",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": "partnership",
+      "overlap": {
+        "can_enrich_existing_edge": false,
+        "existing_production_relationship_types": [],
+        "production_edges_missing_source_urls": 0,
+        "state": "new_pair"
+      },
+      "queue_id": "sec-candidate-0004",
+      "recommended_reviewer_action": "needs more evidence",
+      "relationship_signal": "joint venture",
+      "review_only": true,
+      "review_priority": "medium",
+      "review_status": "pending_review",
+      "source_company_in_production": false,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_company_in_production": false,
+      "target_match_confidence": 0.98,
+      "target_ticker": "SUN"
+    },
+    {
+      "candidate_index": 5,
+      "candidate_relationship_type": "supplier_customer",
+      "cluster_memberships": [
+        "evidence_phrase:pipeline system",
+        "filing_form:10-K",
+        "pair:ET|KMI",
+        "pair_type:ET|KMI|supplier_customer",
+        "relationship_type:supplier_customer",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:ET",
+        "target_ticker:KMI"
+      ],
+      "confidence_hint": 0.91,
+      "evidence": {
+        "phrase": "pipeline system",
+        "snippet": "...Pennsylvania for delivery to other pipeline interconnects in Ohio and Michigan, where the gas is delivered for distribution to markets across the United States and to Ontario, Canada. \u2022 Midcontinent Express Pipeline originates near Bennington, Oklahoma and traverses northern Louisiana and central Mississippi to an interconnect with the Transcontinental Gas Pipeline system in Butler, Alabama. The Midcontinent Express Pipeline is owned by a 50/50 joint venture with Kinder Morgan, Inc., the operator of the system. \u2022 EGT provides natural gas transportation and storage services to customers in Oklahoma, Texas, Arkansas, Louisiana...",
+        "source_reference": {
+          "accession_number": "0001276187-26-000013",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0001276187\\000127618726000013\\et-20251231.htm",
+          "extraction_method": "sector_aware_relationship_pattern",
+          "filing_date": "2026-02-19",
+          "form": "10-K",
+          "offset": 150344,
+          "source_type": "sec_filing",
+          "ticker": "ET"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 85,
+        "date": "2026-02-19",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": "partnership",
+      "overlap": {
+        "can_enrich_existing_edge": false,
+        "existing_production_relationship_types": [],
+        "production_edges_missing_source_urls": 0,
+        "state": "new_pair"
+      },
+      "queue_id": "sec-candidate-0005",
+      "recommended_reviewer_action": "needs more evidence",
+      "relationship_signal": "pipeline system",
+      "review_only": true,
+      "review_priority": "medium",
+      "review_status": "pending_review",
+      "source_company_in_production": false,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_company_in_production": false,
+      "target_match_confidence": 0.98,
+      "target_ticker": "KMI"
+    },
+    {
+      "candidate_index": 6,
+      "candidate_relationship_type": "supplier_customer",
+      "cluster_memberships": [
+        "evidence_phrase:pipeline system",
+        "filing_form:10-K",
+        "pair:PAA|ENB",
+        "pair_type:PAA|ENB|supplier_customer",
+        "relationship_type:supplier_customer",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:PAA",
+        "target_ticker:ENB"
+      ],
+      "confidence_hint": 0.91,
+      "evidence": {
+        "phrase": "pipeline system",
+        "snippet": "...s to the transportation pipelines. We acquire the rights to extract the NGL from producers and/or shippers of the gas streams that pass through our Empress facility and then purchase natural gas to replace the thermal content attributable to the NGL that was extracted. The NGL mix can be fractionated at our Empress facility or transported along the Enbridge pipeline system for fractionation at our Sarnia facility. Our Empress plants are capable of processing up to 5.7 Bcf of natural gas per day; however, supply available to these plants is typically in the 3.5 to 4.5 Bcf per day range. These plants produce approximately 65,000...",
+        "source_reference": {
+          "accession_number": "0001070423-26-000014",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/1070423/000107042326000014/paa-20251231.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0001070423\\000107042326000014\\paa-20251231.htm",
+          "extraction_method": "sector_aware_relationship_pattern",
+          "filing_date": "2026-02-27",
+          "form": "10-K",
+          "offset": 116054,
+          "source_type": "sec_filing",
+          "ticker": "PAA"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 77,
+        "date": "2026-02-27",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": null,
+      "overlap": {
+        "can_enrich_existing_edge": false,
+        "existing_production_relationship_types": [],
+        "production_edges_missing_source_urls": 0,
+        "state": "new_pair"
+      },
+      "queue_id": "sec-candidate-0006",
+      "recommended_reviewer_action": "needs more evidence",
+      "relationship_signal": "pipeline system",
+      "review_only": true,
+      "review_priority": "medium",
+      "review_status": "pending_review",
+      "source_company_in_production": false,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/1070423/000107042326000014/paa-20251231.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "PAA",
+      "target_company_in_production": false,
+      "target_match_confidence": 0.9,
+      "target_ticker": "ENB"
+    },
+    {
+      "candidate_index": 7,
+      "candidate_relationship_type": "partnership",
+      "cluster_memberships": [
+        "evidence_phrase:license agreement",
+        "filing_form:10-Q",
+        "pair:MRK|MRNA",
+        "pair_type:MRK|MRNA|partnership",
+        "relationship_type:partnership",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:MRK",
+        "target_ticker:MRNA"
+      ],
+      "confidence_hint": 0.9,
+      "evidence": {
+        "phrase": "license agreement",
+        "snippet": "...ncluded in Other current assets $ 22 $ 15 Payables to Daiichi Sankyo included in Accrued and other current liabilities 85 113 Moderna, Inc. In 2022, Merck exercised its option to jointly develop and commercialize intismeran autogene (V940/mRNA-4157), an investigational individualized neoantigen therapy, pursuant to the terms of an existing collaboration and license agreement with Moderna, Inc. (Moderna). Intismeran autogene is currently being evaluated in combination with Keytruda in multiple clinical trials. Merck and Moderna share costs and will share any profits equally under this worldwide collaboration. Merck records its...",
+        "source_reference": {
+          "accession_number": "0001628280-26-029802",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/310158/000162828026029802/mrk-20260331.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0000310158\\000162828026029802\\mrk-20260331.htm",
+          "extraction_method": "sector_aware_relationship_pattern",
+          "filing_date": "2026-05-04",
+          "form": "10-Q",
+          "offset": 96326,
+          "source_type": "sec_filing",
+          "ticker": "MRK"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 11,
+        "date": "2026-05-04",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": "partnership",
+      "overlap": {
+        "can_enrich_existing_edge": false,
+        "existing_production_relationship_types": [],
+        "production_edges_missing_source_urls": 0,
+        "state": "new_pair"
+      },
+      "queue_id": "sec-candidate-0007",
+      "recommended_reviewer_action": "needs more evidence",
+      "relationship_signal": "license agreement",
+      "review_only": true,
+      "review_priority": "low",
+      "review_status": "pending_review",
+      "source_company_in_production": true,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/310158/000162828026029802/mrk-20260331.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "MRK",
+      "target_company_in_production": false,
+      "target_match_confidence": 0.98,
+      "target_ticker": "MRNA"
+    },
+    {
+      "candidate_index": 8,
+      "candidate_relationship_type": "partnership",
+      "cluster_memberships": [
+        "evidence_phrase:collaboration with",
+        "filing_form:10-Q",
+        "pair:MRK|PFE",
+        "pair_type:MRK|PFE|partnership",
+        "relationship_type:partnership",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:MRK",
+        "target_ticker:PFE"
+      ],
+      "confidence_hint": 0.92,
+      "evidence": {
+        "phrase": "collaboration with",
+        "snippet": "...tment, then continued after radical cystectomy as adjuvant treatment, for patients with muscle invasive bladder cancer (MIBC) who are ineligible for cisplatin-based chemotherapy. The application is based on data from the Phase 3 KEYNOTE-905 trial conducted in collaboration with Pfizer Inc. (Pfizer) and Astellas. Keytruda and Keytruda Qlex are under priority review by the FDA in combination with Padcev as neoadjuvant treatment, then continued after radical cystectomy as adjuvant treatment, for patients with MIBC who are eligible for cisplatin-b...",
+        "source_reference": {
+          "accession_number": "0001628280-26-029802",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/310158/000162828026029802/mrk-20260331.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0000310158\\000162828026029802\\mrk-20260331.htm",
+          "extraction_method": "strong_relationship_pattern",
+          "filing_date": "2026-05-04",
+          "form": "10-Q",
+          "offset": 239067,
+          "source_type": "sec_filing",
+          "ticker": "MRK"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 11,
+        "date": "2026-05-04",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": "partnership",
+      "overlap": {
+        "can_enrich_existing_edge": true,
+        "existing_production_relationship_types": [
+          "competitor"
+        ],
+        "production_edges_missing_source_urls": 1,
+        "state": "same_pair_different_type"
+      },
+      "queue_id": "sec-candidate-0008",
+      "recommended_reviewer_action": "enrich existing edge",
+      "relationship_signal": "collaboration with",
+      "review_only": true,
+      "review_priority": "high",
+      "review_status": "pending_review",
+      "source_company_in_production": true,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/310158/000162828026029802/mrk-20260331.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "MRK",
+      "target_company_in_production": true,
+      "target_match_confidence": 0.98,
+      "target_ticker": "PFE"
+    },
+    {
+      "candidate_index": 9,
+      "candidate_relationship_type": "investment",
+      "cluster_memberships": [
+        "evidence_phrase:investment in",
+        "filing_form:10-K",
+        "pair:ET|SUN",
+        "pair_type:ET|SUN|investment",
+        "relationship_type:investment",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:ET",
+        "target_ticker:SUN"
+      ],
+      "confidence_hint": 0.91,
+      "evidence": {
+        "phrase": "investment in",
+        "snippet": "...te from their operations. Our reportable segments are as follows: \u2022 intrastate transportation and storage; \u2022 interstate transportation and storage; \u2022 midstream; \u2022 NGL and refined products transportation and services; \u2022 crude oil transportation and services; \u2022 investment in Sunoco LP; \u2022 investment in USAC; and \u2022 all other. Recent Developments Acquisitions Terminal Facilities Acquisition In the third quarter of 2025, Energy Transfer completed the acquisition of two terminal facilities for total cash consideration of approximately $176 mill...",
+        "source_reference": {
+          "accession_number": "0001276187-26-000013",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0001276187\\000127618726000013\\et-20251231.htm",
+          "extraction_method": "strong_relationship_pattern",
+          "filing_date": "2026-02-19",
+          "form": "10-K",
+          "offset": 614036,
+          "source_type": "sec_filing",
+          "ticker": "ET"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 85,
+        "date": "2026-02-19",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": "investment",
+      "overlap": {
+        "can_enrich_existing_edge": false,
+        "existing_production_relationship_types": [],
+        "production_edges_missing_source_urls": 0,
+        "state": "new_pair"
+      },
+      "queue_id": "sec-candidate-0009",
+      "recommended_reviewer_action": "needs more evidence",
+      "relationship_signal": "investment in",
+      "review_only": true,
+      "review_priority": "medium",
+      "review_status": "pending_review",
+      "source_company_in_production": false,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/1276187/000127618726000013/et-20251231.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "ET",
+      "target_company_in_production": false,
+      "target_match_confidence": 0.98,
+      "target_ticker": "SUN"
+    },
+    {
+      "candidate_index": 10,
+      "candidate_relationship_type": "partnership",
+      "cluster_memberships": [
+        "evidence_phrase:joint venture",
+        "filing_form:10-Q",
+        "pair:MPLX|ET",
+        "pair_type:MPLX|ET|partnership",
+        "relationship_type:partnership",
+        "source_host:sec.gov",
+        "source_host_category:sec_filing",
+        "source_ticker:MPLX",
+        "target_ticker:ET"
+      ],
+      "confidence_hint": 0.92,
+      "evidence": {
+        "phrase": "joint venture",
+        "snippet": "...n Bakken Company LLC includes our 9.19 percent indirect interest in a joint venture (\u201cDakota Access\u201d) that owns and operates the Dakota Access Pipeline and Energy Transfer Crude Oil Pipeline projects (collectively, the \u201cBakken Pipeline system\u201d)....",
+        "source_reference": {
+          "accession_number": "0001552000-26-000025",
+          "archive_url": "https://www.sec.gov/Archives/edgar/data/1552000/000155200026000025/mplx-20260331.htm",
+          "cache_file": "C:\\Users\\Taylor\\Documents\\GitHub\\StockPhotonic\\data\\cache\\sec\\filings\\0001552000\\000155200026000025\\mplx-20260331.htm",
+          "extraction_method": "relationship_phrase_rule",
+          "filing_date": "2026-05-05",
+          "form": "10-Q",
+          "offset": 581435,
+          "source_type": "sec_filing",
+          "ticker": "MPLX"
+        }
+      },
+      "evidence_count": 2,
+      "freshness": {
+        "age_days": 10,
+        "date": "2026-05-05",
+        "state": "recent_filing"
+      },
+      "mapped_production_type": "partnership",
+      "overlap": {
+        "can_enrich_existing_edge": false,
+        "existing_production_relationship_types": [],
+        "production_edges_missing_source_urls": 0,
+        "state": "new_pair"
+      },
+      "queue_id": "sec-candidate-0010",
+      "recommended_reviewer_action": "needs more evidence",
+      "relationship_signal": "joint venture",
+      "review_only": true,
+      "review_priority": "low",
+      "review_status": "pending_review",
+      "source_company_in_production": false,
+      "source_quality": {
+        "primary_source_category": "sec_filing",
+        "sec_filing_source": true,
+        "source_diversity_count": 1,
+        "source_host_categories": [
+          "sec_filing"
+        ],
+        "source_host_count": 1,
+        "source_hosts": [
+          "sec.gov"
+        ],
+        "source_url_count": 1,
+        "source_urls": [
+          "https://www.sec.gov/Archives/edgar/data/1552000/000155200026000025/mplx-20260331.htm"
+        ]
+      },
+      "source_state": "sec_filing_url",
+      "source_ticker": "MPLX",
+      "target_company_in_production": false,
+      "target_match_confidence": 0.92,
+      "target_ticker": "ET"
+    }
+  ],
+  "safety": {
+    "network_calls": 0,
+    "production_writes": 0
+  }
+}

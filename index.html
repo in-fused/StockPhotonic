@@ -467,6 +467,10 @@
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_jobs.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_schedule.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/sec_relationship_candidates.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_review_queue.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_review_summary.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_overlap_report.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">docs/candidate_reviewer_checklist.md</div>
                         </div>
                         <p class="text-sm text-white/58 mt-4">
                             Candidate files are review-only staging artifacts. They do not create production nodes or edges, and SEC graph visibility remains preview-only.
@@ -525,6 +529,17 @@
                                 <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-3', this)" aria-label="Copy SEC candidate promotion preview command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                             </div>
                             <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-3">python scripts/sec_candidate_promotion_preview.py</code></pre>
+                        </div>
+
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3A.</span> Reviewer Triage Artifacts</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-triage', this)" aria-label="Copy SEC candidate triage artifact command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-triage">python scripts/sec_candidate_triage.py --write --force</code></pre>
+                            <p class="mt-2 text-xs text-white/54">
+                                Generates review-only queue, summary, overlap, and checklist artifacts. It reads production data only for comparison and writes no production graph data.
+                            </p>
                         </div>
 
                         <div class="source-command rounded-2xl p-3">
@@ -638,6 +653,38 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                                 </thead>
                                 <tbody id="source-candidate-rows"></tbody>
                             </table>
+                        </div>
+                        <div class="source-triage-section mt-4 pt-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="source-workbench-label mb-2">Reviewer Triage Artifacts</div>
+                                    <p class="text-sm text-white/56">
+                                        Static read-only view of local queue, summary, overlap, and checklist artifacts when present.
+                                    </p>
+                                </div>
+                                <div id="source-triage-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING TRIAGE</div>
+                            </div>
+                            <div id="source-triage-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                                Triage artifacts are not present yet. Run the reviewer triage command locally to generate review-only artifacts.
+                            </div>
+                            <div id="source-triage-summary" class="hidden source-triage-grid mb-3"></div>
+                            <div id="source-checklist-panel" class="hidden source-checklist-panel rounded-2xl p-3 mb-3"></div>
+                            <div id="source-overlap-comparison-wrap" class="hidden overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+                                <table class="source-overlap-table w-full border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-3 py-2">Source</th>
+                                            <th class="px-3 py-2">Target</th>
+                                            <th class="px-3 py-2">Candidate Type</th>
+                                            <th class="px-3 py-2">Production Type</th>
+                                            <th class="px-3 py-2">Evidence</th>
+                                            <th class="px-3 py-2">Source State</th>
+                                            <th class="px-3 py-2">Reviewer Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="source-overlap-comparison-rows"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -5476,6 +5523,161 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }
         }
 
+        function setSourceTriageStatus(label, tone = 'info') {
+            const status = document.getElementById('source-triage-status');
+            if (!status) return;
+
+            status.innerText = label;
+            status.classList.toggle('text-yellow-100/70', tone === 'warning');
+            status.classList.toggle('border-yellow-300/20', tone === 'warning');
+            status.classList.toggle('bg-yellow-300/10', tone === 'warning');
+            status.classList.toggle('text-cyan-100/70', tone !== 'warning');
+            status.classList.toggle('border-cyan-300/20', tone !== 'warning');
+            status.classList.toggle('bg-cyan-300/10', tone !== 'warning');
+        }
+
+        async function fetchOptionalWorkbenchJson(path) {
+            try {
+                const response = await fetch(`${path}?v=${CACHE_BUST}`);
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (error) {
+                console.warn(`Optional Source Workbench artifact unavailable: ${path}`, error);
+                return null;
+            }
+        }
+
+        async function fetchOptionalWorkbenchText(path) {
+            try {
+                const response = await fetch(`${path}?v=${CACHE_BUST}`);
+                if (!response.ok) return null;
+                return await response.text();
+            } catch (error) {
+                console.warn(`Optional Source Workbench artifact unavailable: ${path}`, error);
+                return null;
+            }
+        }
+
+        function renderTriageMetric(label, value) {
+            return `
+                <div class="source-triage-card rounded-2xl p-3">
+                    <div class="text-[10px] text-white/42 font-mono">${escapeHtml(label)}</div>
+                    <div class="font-display text-xl text-white">${escapeHtml(formatCandidateCell(value))}</div>
+                </div>
+            `;
+        }
+
+        function renderSourceTriageSummary(summaryPayload, queuePayload, overlapPayload) {
+            const summary = summaryPayload?.summary || {};
+            const overlapSummary = overlapPayload?.summary || {};
+            const queueCount = Number(summary.queue_count ?? queuePayload?.queue_count ?? 0) || 0;
+            return [
+                renderTriageMetric('QUEUE', queueCount),
+                renderTriageMetric('HIGH PRIORITY', summary.high_priority_count ?? 0),
+                renderTriageMetric('OVERLAPS', (summary.exact_duplicate_candidates || 0) + (summary.same_pair_different_type_candidates || 0)),
+                renderTriageMetric('ENRICH', overlapSummary.enrichment_opportunities ?? summary.enrichment_opportunities ?? 0),
+                renderTriageMetric('MISSING URLS', overlapSummary.production_edges_missing_source_urls ?? summary.production_edges_missing_source_urls ?? 0),
+                renderTriageMetric('SOURCE TYPES', summary.source_diversity_count ?? 0)
+            ].join('');
+        }
+
+        function checklistCounts(markdown, summaryPayload) {
+            if (typeof markdown === 'string' && markdown.trim()) {
+                const matches = markdown.match(/^- \[[ xX]\]/gm) || [];
+                const complete = markdown.match(/^- \[[xX]\]/gm) || [];
+                return {
+                    total: matches.length,
+                    complete: complete.length,
+                    open: Math.max(0, matches.length - complete.length)
+                };
+            }
+            const status = summaryPayload?.checklist_status || {};
+            return {
+                total: Number(status.total_items || 0),
+                complete: Number(status.complete_items || 0),
+                open: Number(status.open_items || 0)
+            };
+        }
+
+        function renderChecklistPanel(markdown, summaryPayload) {
+            const counts = checklistCounts(markdown, summaryPayload);
+            const path = summaryPayload?.checklist_status?.path || 'docs/candidate_reviewer_checklist.md';
+            return `
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div>
+                        <div class="text-[10px] text-cyan-100/72 font-mono tracking-[1.2px]">CHECKLIST STATUS</div>
+                        <div class="text-sm text-white/62 mt-1">${escapeHtml(path)}</div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${counts.total} ITEMS</span>
+                        <span class="source-host-chip">${counts.open} OPEN</span>
+                        <span class="source-host-chip">${counts.complete} COMPLETE</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOverlapComparisonRows(overlapPayload) {
+            const rows = Array.isArray(overlapPayload?.comparisons)
+                ? overlapPayload.comparisons.slice(0, 18)
+                : [];
+            return rows.map(row => `
+                <tr>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(row.source_ticker))}</td>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(row.target_ticker))}</td>
+                    <td class="px-3 py-2">${escapeHtml(formatCandidateCell(row.candidate_relationship_type))}</td>
+                    <td class="px-3 py-2">${escapeHtml(formatCandidateCell(row.existing_production_relationship_type))}</td>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(row.evidence_count))}</td>
+                    <td class="px-3 py-2">${escapeHtml(formatCandidateCell(row.source_state))}</td>
+                    <td class="px-3 py-2">
+                        <span class="review-action-chip">${escapeHtml(formatCandidateCell(row.recommended_reviewer_action))}</span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderSourceTriageArtifacts(artifacts) {
+            const empty = document.getElementById('source-triage-empty');
+            const summary = document.getElementById('source-triage-summary');
+            const checklist = document.getElementById('source-checklist-panel');
+            const comparisonWrap = document.getElementById('source-overlap-comparison-wrap');
+            const comparisonRows = document.getElementById('source-overlap-comparison-rows');
+            if (!empty || !summary || !checklist || !comparisonWrap || !comparisonRows) return;
+
+            const hasAnyArtifact = Boolean(artifacts.summary || artifacts.queue || artifacts.overlap || artifacts.checklist);
+            if (!hasAnyArtifact) {
+                summary.classList.add('hidden');
+                checklist.classList.add('hidden');
+                comparisonWrap.classList.add('hidden');
+                empty.classList.remove('hidden');
+                setSourceTriageStatus('TRIAGE UNAVAILABLE', 'warning');
+                return;
+            }
+
+            summary.innerHTML = renderSourceTriageSummary(artifacts.summary, artifacts.queue, artifacts.overlap);
+            summary.classList.remove('hidden');
+            checklist.innerHTML = renderChecklistPanel(artifacts.checklist, artifacts.summary);
+            checklist.classList.remove('hidden');
+
+            const rows = renderOverlapComparisonRows(artifacts.overlap);
+            comparisonRows.innerHTML = rows;
+            comparisonWrap.classList.toggle('hidden', !rows);
+            empty.classList.add('hidden');
+
+            const queueCount = Number(artifacts.summary?.summary?.queue_count ?? artifacts.queue?.queue_count ?? 0) || 0;
+            setSourceTriageStatus(`${queueCount} TRIAGE ITEM${queueCount === 1 ? '' : 'S'}`);
+        }
+
+        async function loadSourceTriageArtifacts() {
+            const [summary, queue, overlap, checklist] = await Promise.all([
+                fetchOptionalWorkbenchJson('data/candidates/candidate_review_summary.json'),
+                fetchOptionalWorkbenchJson('data/candidates/candidate_review_queue.json'),
+                fetchOptionalWorkbenchJson('data/candidates/candidate_overlap_report.json'),
+                fetchOptionalWorkbenchText('docs/candidate_reviewer_checklist.md')
+            ]);
+            renderSourceTriageArtifacts({ summary, queue, overlap, checklist });
+        }
+
         function roundedRect(ctx, x, y, width, height, radius) {
             graphRender.roundedRect(ctx, x, y, width, height, radius);
         }
@@ -5488,6 +5690,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         setupHelpGuide();
         setupOrbMap();
         loadSourceCandidatePreview();
+        loadSourceTriageArtifacts();
         loadData();
     </script>
 </body>

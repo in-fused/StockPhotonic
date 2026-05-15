@@ -327,12 +327,24 @@
             gap: 0.65rem;
         }
 
+.source-triage-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 0.65rem;
+        }
+
 .source-candidate-review-card,
+        .source-triage-card,
+        .source-checklist-panel,
         .source-candidate-group {
             border: 1px solid rgba(125, 211, 252, 0.14);
             background:
                 linear-gradient(135deg, rgba(0, 249, 255, 0.055), rgba(255, 255, 255, 0.028)),
                 rgba(3, 7, 18, 0.36);
+        }
+
+.source-triage-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
 .source-candidate-groups {
@@ -345,7 +357,12 @@
             min-width: 860px;
         }
 
-.source-candidate-table th {
+.source-overlap-table {
+            min-width: 980px;
+        }
+
+.source-candidate-table th,
+        .source-overlap-table th {
             color: rgba(165, 243, 252, 0.82);
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             font-size: 0.64rem;
@@ -355,10 +372,27 @@
             text-transform: uppercase;
         }
 
-.source-candidate-table td {
+.source-candidate-table td,
+        .source-overlap-table td {
             border-top: 1px solid rgba(255, 255, 255, 0.07);
             color: rgba(255, 255, 255, 0.72);
             font-size: 0.72rem;
             line-height: 1.45;
             vertical-align: top;
+        }
+
+.review-action-chip {
+            display: inline-flex;
+            max-width: 100%;
+            border: 1px solid rgba(251, 191, 36, 0.22);
+            border-radius: 999px;
+            background: rgba(251, 191, 36, 0.08);
+            color: rgba(254, 240, 138, 0.86);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            line-height: 1;
+            padding: 0.3rem 0.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }

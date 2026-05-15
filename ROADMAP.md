@@ -20,7 +20,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 - UI/UX polish for the 2D Graph Intelligence workflow.
 - Intelligence layer clarity: company investigation workspace, why-connected relationship cards, source/confidence labels, hubs, clusters, shared exposure, hidden relationships, industry correlations, portfolio exposure, and SEC-backed edge visibility.
-- Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, and candidate review grouping.
+- Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, triage artifacts, and candidate-vs-production overlap comparison.
 - CSS maintainability: keep the D139 split across `base.css`, `shell.css`, `graph.css`, `stock.css`, `crypto.css`, `review.css`, and `mobile.css`; do not return to a single shared catch-all stylesheet.
 - 3D immersion and usability while staying tied to the production static dataset.
 - Source coverage quality for existing high-value relationships.
@@ -30,12 +30,19 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 - Data expansion through SEC-backed candidates, not direct production writes.
 - Broader source coverage from SEC filings, company disclosures, official pages, and reputable secondary sources when needed.
-- Better review ergonomics for candidate evaluation and promotion previews.
-- Relationship evidence depth: source snippets, source aging review queues, source-host diversity, and relationship-specific confidence explanations.
+- Better review ergonomics for candidate evaluation, clustering, overlap reports, checklist exports, and promotion previews.
+- Relationship evidence depth: short source snippets, filing references, source aging review queues, source-host diversity, and relationship-specific confidence explanations.
 - Future open-data review workflow: source registry rules that can pre-classify URL host categories, expose review aging thresholds, and export reviewer checklists while preserving candidate -> preview -> manual promotion.
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
 - Optional backend/auth layer only after the static app and source workflow remain stable.
 - Optional larger graph rendering/performance work as source-backed data grows.
+
+## D140 FOLLOW-ON
+
+- Expand approved CIK/ticker coverage only through local SEC candidate runs.
+- Add reviewer decisions as explicit review-only fields before any new promotion logic.
+- Improve production source coverage for the 78 current production edges missing source URLs.
+- Keep ownership/ETF overlap behind explicit schema and validation support.
 
 ## NOT CURRENT
 

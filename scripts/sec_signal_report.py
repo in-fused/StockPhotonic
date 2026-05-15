@@ -47,6 +47,19 @@ SIGNAL_TYPES: tuple[str, ...] = tuple(dict.fromkeys((*BASE_SIGNAL_TYPES, "invest
 DEFAULT_CANDIDATE_SNIPPETS = 120
 STRONG_RELATIONSHIP_CONTEXT_CHARS = 260
 TAG_PATTERN = re.compile(r"<[^>]+>")
+HTML_ATTRIBUTE_FRAGMENT_PATTERN = re.compile(
+    r"\b(?:style|class|colspan|rowspan|href|id|width|height|contextref|unitref)="
+    r"\"[^\"]*\"",
+    re.IGNORECASE,
+)
+CSS_FRAGMENT_PATTERN = re.compile(
+    r"\s*=?\"[^\"]*(?:background-color|padding|font-family|line-height|text-align|vertical-align)[^\"]*\"",
+    re.IGNORECASE,
+)
+UNTERMINATED_ATTRIBUTE_FRAGMENT_PATTERN = re.compile(
+    r"\b(?:style|class|colspan|rowspan|href|id|width|height)=\"[^<>]{0,220}",
+    re.IGNORECASE,
+)
 ENTITY_NAME_FRAGMENT = (
     r"(?:[A-Z][A-Za-z0-9&.'-]*|[A-Z]{2,})"
     r"(?:\s+(?:&|and|of|the|[A-Z][A-Za-z0-9&.'-]*|[A-Z]{2,})){0,8}"
@@ -125,6 +138,46 @@ STRONG_RELATIONSHIP_RULES: tuple[dict[str, Any], ...] = (
         ),
     },
     {
+        "signal_type": "partnership",
+        "relationship_type": "partnership",
+        "keyword": "strategic partnership with",
+        "confidence_hint": 0.93,
+        "pattern": re.compile(
+            rf"\bstrategic\s+partnership\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "partnership",
+        "relationship_type": "partnership",
+        "keyword": "joint development agreement with",
+        "confidence_hint": 0.92,
+        "pattern": re.compile(
+            rf"\bjoint\s+development\s+agreement\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "cloud_hyperscaler",
+        "relationship_type": "cloud_hyperscaler_ecosystem",
+        "keyword": "cloud services agreement with",
+        "confidence_hint": 0.9,
+        "pattern": re.compile(
+            rf"\bcloud\s+services\s+agreement\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "cloud_hyperscaler",
+        "relationship_type": "cloud_hyperscaler_ecosystem",
+        "keyword": "cloud infrastructure partnership with",
+        "confidence_hint": 0.91,
+        "pattern": re.compile(
+            rf"\bcloud\s+infrastructure\s+partnership\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
         "signal_type": "supplier",
         "relationship_type": "supply",
         "keyword": "supplies",
@@ -151,6 +204,86 @@ STRONG_RELATIONSHIP_RULES: tuple[dict[str, Any], ...] = (
         "confidence_hint": 0.93,
         "pattern": re.compile(
             rf"\bcomponents\s+sourced\s+from\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "supplier",
+        "relationship_type": "supplier_customer",
+        "keyword": "supply agreement with",
+        "confidence_hint": 0.92,
+        "pattern": re.compile(
+            rf"\bsupply\s+agreement\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "supplier",
+        "relationship_type": "semiconductor_supply_chain",
+        "keyword": "foundry agreement with",
+        "confidence_hint": 0.91,
+        "pattern": re.compile(
+            rf"\bfoundry\s+agreement\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "supplier",
+        "relationship_type": "semiconductor_supply_chain",
+        "keyword": "wafer supply agreement with",
+        "confidence_hint": 0.92,
+        "pattern": re.compile(
+            rf"\bwafer\s+supply\s+agreement\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "ai_infrastructure",
+        "relationship_type": "ai_infrastructure",
+        "keyword": "AI infrastructure partnership with",
+        "confidence_hint": 0.91,
+        "pattern": re.compile(
+            rf"\bAI\s+infrastructure\s+partnership\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "data_center_power",
+        "relationship_type": "data_center_power",
+        "keyword": "power purchase agreement with",
+        "confidence_hint": 0.92,
+        "pattern": re.compile(
+            rf"\bpower\s+purchase\s+agreement\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "data_center_power",
+        "relationship_type": "data_center_power",
+        "keyword": "electricity supply agreement with",
+        "confidence_hint": 0.9,
+        "pattern": re.compile(
+            rf"\belectricity\s+supply\s+agreement\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "competitor",
+        "relationship_type": "competitor",
+        "keyword": "competes with",
+        "confidence_hint": 0.88,
+        "pattern": re.compile(
+            rf"\bcompetes?\s+with\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
+            re.IGNORECASE,
+        ),
+    },
+    {
+        "signal_type": "competitor",
+        "relationship_type": "competitor",
+        "keyword": "competitors include",
+        "confidence_hint": 0.84,
+        "pattern": re.compile(
+            rf"\bcompetitors\s+include\s+(?P<target>{ENTITY_NAME_FRAGMENT})\b",
             re.IGNORECASE,
         ),
     },
@@ -226,6 +359,18 @@ AFTER_TARGET_RULES: tuple[dict[str, Any], ...] = tuple(
         "partnership with",
         "collaboration with",
         "joint venture with",
+        "strategic partnership with",
+        "joint development agreement with",
+        "cloud services agreement with",
+        "cloud infrastructure partnership with",
+        "supply agreement with",
+        "foundry agreement with",
+        "wafer supply agreement with",
+        "AI infrastructure partnership with",
+        "power purchase agreement with",
+        "electricity supply agreement with",
+        "competes with",
+        "competitors include",
         "manufactured by",
         "components sourced from",
         "revenue from",
@@ -294,7 +439,18 @@ def nonempty_fields(fields: dict[str, Any]) -> dict[str, str]:
 
 
 def visible_text(value: str) -> str:
-    return " ".join(TAG_PATTERN.sub(" ", html.unescape(value)).split())
+    visible = TAG_PATTERN.sub(" ", html.unescape(value))
+    visible = HTML_ATTRIBUTE_FRAGMENT_PATTERN.sub(" ", visible)
+    visible = CSS_FRAGMENT_PATTERN.sub(" ", visible)
+    visible = UNTERMINATED_ATTRIBUTE_FRAGMENT_PATTERN.sub(" ", visible)
+    visible = visible.replace("<", " ").replace(">", " ")
+    visible = re.sub(
+        r"\b(?:td|tr|div|span|table|tbody|ix|xbrli)\b",
+        " ",
+        visible,
+        flags=re.IGNORECASE,
+    )
+    return " ".join(visible.split())
 
 
 def normalized_target_key(value: str) -> str:

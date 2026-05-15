@@ -48,12 +48,22 @@ SIGNAL_RELATIONSHIP_TYPES = {
     "dependency": "supplier_customer",
     "partnership": "partnership",
     "investment": "investment",
+    "ownership": "investment",
+    "competitor": "competitor",
+    "cloud_hyperscaler": "cloud_hyperscaler_ecosystem",
+    "semiconductor_supply_chain": "semiconductor_supply_chain",
+    "ai_infrastructure": "ai_infrastructure",
+    "data_center_power": "data_center_power",
 }
 CORE_RELATIONSHIP_TYPES = {
     "partnership",
     "supplier_customer",
     "investment",
-    "competitive",
+    "competitor",
+    "cloud_hyperscaler_ecosystem",
+    "semiconductor_supply_chain",
+    "ai_infrastructure",
+    "data_center_power",
 }
 MIN_TARGET_MATCH_CONFIDENCE = 0.75
 MIN_CONFIDENCE_HINT = 0.85
@@ -61,6 +71,7 @@ MAX_PREVIEW_CANDIDATES_TOTAL = 500
 MAX_PREVIEW_CANDIDATES_PER_SOURCE_TICKER = 8
 MAX_SECTOR_AWARE_SNIPPETS_TOTAL = 600
 SECTOR_RELATIONSHIP_CONTEXT_CHARS = 360
+MAX_CANDIDATE_EVIDENCE_SNIPPET_CHARS = 640
 SUPPLIER_CUSTOMER_PARTNERSHIP_TERMS = (
     "revenue from",
     "licensing",
@@ -75,6 +86,37 @@ SUPPLIER_CUSTOMER_SUPPLY_TERMS = (
     "manufacturing agreement",
     "manufacturing services",
     "manufacturing services agreement",
+    "supply agreement with",
+    "foundry agreement",
+    "foundry services",
+    "wafer supply agreement",
+)
+RELATIONSHIP_SPECIFIC_TERMS = (
+    "strategic partnership",
+    "partnership with",
+    "collaboration agreement",
+    "collaboration with",
+    "joint venture",
+    "joint development agreement",
+    "supply agreement",
+    "supplier agreement",
+    "customer agreement",
+    "cloud services agreement",
+    "cloud infrastructure partnership",
+    "AI infrastructure partnership",
+    "power purchase agreement",
+    "electricity supply agreement",
+    "competes with",
+    "competitors include",
+    "ownership stake",
+    "equity investment",
+)
+NON_OWNERSHIP_FINANCING_TERMS = (
+    "lending facility",
+    "credit agreement",
+    "credit facility",
+    "loan agreement",
+    "revolving loan agreement",
 )
 GENERIC_RELATIONSHIP_NOISE_TERMS = (
     "depends on",
@@ -244,13 +286,7 @@ SECTOR_AWARE_RELATIONSHIP_RULES: tuple[dict[str, Any], ...] = (
         "relationship_type": "investment",
         "signal_type": "investment",
         "confidence_hint": 0.91,
-        "terms": (
-            "lending facility",
-            "credit agreement",
-            "credit facility",
-            "loan agreement",
-            "revolving loan agreement",
-        ),
+        "terms": (),
     },
 )
 SECTOR_AWARE_RELATIONSHIP_TERMS = tuple(
@@ -485,6 +521,19 @@ CAPITALIZED_ENTITY_PATTERN = re.compile(
 )
 URL_PATTERN = re.compile(r"^https?://\S+$", re.IGNORECASE)
 TAG_PATTERN = re.compile(r"<[^>]+>")
+HTML_ATTRIBUTE_FRAGMENT_PATTERN = re.compile(
+    r"\b(?:style|class|colspan|rowspan|href|id|width|height|contextref|unitref)="
+    r"\"[^\"]*\"",
+    re.IGNORECASE,
+)
+CSS_FRAGMENT_PATTERN = re.compile(
+    r"\s*=?\"[^\"]*(?:background-color|padding|font-family|line-height|text-align|vertical-align)[^\"]*\"",
+    re.IGNORECASE,
+)
+UNTERMINATED_ATTRIBUTE_FRAGMENT_PATTERN = re.compile(
+    r"\b(?:style|class|colspan|rowspan|href|id|width|height)=\"[^<>]{0,220}",
+    re.IGNORECASE,
+)
 XBRL_NOISE_MARKERS = (
     "xbrli:",
     "ix:",
@@ -656,7 +705,49 @@ def relationship_type_for(signal_type: str, snippet_text: Any) -> str | None:
 def visible_snippet_text(value: Any) -> str:
     if not isinstance(value, str):
         return ""
-    return " ".join(TAG_PATTERN.sub(" ", html.unescape(value)).split())
+    visible = TAG_PATTERN.sub(" ", html.unescape(value))
+    visible = HTML_ATTRIBUTE_FRAGMENT_PATTERN.sub(" ", visible)
+    visible = CSS_FRAGMENT_PATTERN.sub(" ", visible)
+    visible = UNTERMINATED_ATTRIBUTE_FRAGMENT_PATTERN.sub(" ", visible)
+    visible = visible.replace("<", " ").replace(">", " ")
+    visible = re.sub(
+        r"\b(?:td|tr|div|span|table|tbody|ix|xbrli)\b",
+        " ",
+        visible,
+        flags=re.IGNORECASE,
+    )
+    return " ".join(visible.split())
+
+
+def compact_candidate_snippet(value: Any) -> str | None:
+    text = visible_snippet_text(value)
+    if not text:
+        return None
+    if len(text) <= MAX_CANDIDATE_EVIDENCE_SNIPPET_CHARS:
+        return text
+    return text[: MAX_CANDIDATE_EVIDENCE_SNIPPET_CHARS - 3].rstrip(" ,.;:") + "..."
+
+
+def source_reference_for_snippet(
+    snippet: dict[str, Any],
+    metadata_fields: dict[str, Any],
+) -> dict[str, Any]:
+    reference = {
+        "source_type": "sec_filing",
+        "ticker": clean_optional_string(metadata_fields.get("ticker")),
+        "form": clean_optional_string(metadata_fields.get("form")),
+        "filing_date": clean_optional_string(metadata_fields.get("filing_date")),
+        "accession_number": clean_optional_string(metadata_fields.get("accession_number")),
+        "archive_url": clean_source_url(metadata_fields.get("archive_url")),
+        "cache_file": clean_optional_string(snippet.get("file")),
+        "offset": snippet.get("offset"),
+        "extraction_method": clean_optional_string(snippet.get("extraction_method")),
+    }
+    return {
+        key: value
+        for key, value in reference.items()
+        if value is not None
+    }
 
 
 def normalize_match_key(value: str) -> str:
@@ -1348,9 +1439,24 @@ def relationship_evidence_for_mention(text: str, mention: str) -> dict[str, str]
             rf"\bjoint\s+venture\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
         ),
         (
+            "partnership",
+            "strategic partnership with",
+            rf"\bstrategic\s+partnership\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "partnership",
+            "joint development agreement with",
+            rf"\bjoint\s+development\s+agreement\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
             "supplier_customer",
             "supplies",
             rf"(?<![A-Za-z0-9]){mention_pattern}\s+supplies\b",
+        ),
+        (
+            "supplier_customer",
+            "supply agreement with",
+            rf"\bsupply\s+agreement\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
         ),
         (
             "supplier_customer",
@@ -1361,6 +1467,46 @@ def relationship_evidence_for_mention(text: str, mention: str) -> dict[str, str]
             "supplier_customer",
             "components sourced from",
             rf"\bcomponents\s+sourced\s+from\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "semiconductor_supply_chain",
+            "foundry agreement with",
+            rf"\bfoundry\s+agreement\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "semiconductor_supply_chain",
+            "wafer supply agreement with",
+            rf"\bwafer\s+supply\s+agreement\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "cloud_hyperscaler_ecosystem",
+            "cloud services agreement with",
+            rf"\bcloud\s+services\s+agreement\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "cloud_hyperscaler_ecosystem",
+            "cloud infrastructure partnership with",
+            rf"\bcloud\s+infrastructure\s+partnership\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "ai_infrastructure",
+            "AI infrastructure partnership with",
+            rf"\bAI\s+infrastructure\s+partnership\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "data_center_power",
+            "power purchase agreement with",
+            rf"\bpower\s+purchase\s+agreement\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "data_center_power",
+            "electricity supply agreement with",
+            rf"\belectricity\s+supply\s+agreement\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
+        ),
+        (
+            "competitor",
+            "competes with",
+            rf"\bcompetes?\s+with\s+(?:an?\s+|the\s+)?{mention_pattern}(?![A-Za-z0-9])",
         ),
         (
             "supplier_customer",
@@ -1500,6 +1646,11 @@ def preview_ranked_snippets(snippets: list[dict[str, Any]]) -> list[dict[str, An
 
 def generic_relationship_noise_dominates(snippet_text: Any) -> bool:
     visible_text = visible_snippet_text(snippet_text)
+    if relationship_term_hits(visible_text, NON_OWNERSHIP_FINANCING_TERMS) and not relationship_term_hits(
+        visible_text,
+        ("ownership stake", "equity investment", "investment in", "shares purchased"),
+    ):
+        return True
     if relationship_term_hits(visible_text, ACCOUNTING_RELATIONSHIP_NOISE_TERMS):
         return True
     if not relationship_term_hits(visible_text, GENERIC_RELATIONSHIP_NOISE_TERMS):
@@ -1569,6 +1720,9 @@ def candidate_from_snippet(
     relationship_evidence = relationship_evidence_for(snippet, matcher)
     if relationship_evidence is None:
         return None
+    evidence_snippet = compact_candidate_snippet(snippet.get("text_snippet"))
+    if evidence_snippet is None:
+        return None
 
     target_resolution = resolve_snippet_target(
         snippet.get("text_snippet"),
@@ -1590,9 +1744,17 @@ def candidate_from_snippet(
         "source_type": "sec_filing",
         "source_tier": 1,
         "confidence_hint": snippet.get("confidence_hint"),
-        "evidence_snippet": snippet.get("text_snippet"),
+        "evidence_snippet": evidence_snippet,
+        "evidence_context": "short_sec_filing_excerpt",
         "filing_date": clean_optional_string(snippet.get("filing_date")),
+        "filing_form": clean_optional_string(metadata_fields.get("form")),
         "accession_number": clean_optional_string(metadata_fields.get("accession_number")),
+        "source_reference": source_reference_for_snippet(snippet, metadata_fields),
+        "ticker_pairing": {
+            "source_ticker_from_filing_metadata": source_ticker,
+            "target_ticker_resolution": target_resolution["target_match_method"],
+            "target_entity_mention": target_resolution["target_entity_mention"],
+        },
         "review_status": "preview_only",
     }
     if archive_url is not None:

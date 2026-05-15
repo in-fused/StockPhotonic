@@ -611,6 +611,7 @@
             .stock-intel-workspace .grid,
             .relationship-evidence-grid,
             .source-candidate-review-grid,
+            .source-triage-grid,
             .source-candidate-groups {
                 grid-template-columns: 1fr !important;
             }
@@ -628,6 +629,7 @@
             .confidence-badge,
             .source-age-chip,
             .source-host-chip,
+            .review-action-chip,
             .review-queue-chip {
                 white-space: nowrap;
                 max-width: 100%;
@@ -641,6 +643,8 @@
 
             .review-queue-item,
             .relationship-evidence-card,
+            .source-triage-card,
+            .source-checklist-panel,
             .source-candidate-group {
                 min-width: 0;
                 overflow-wrap: anywhere;

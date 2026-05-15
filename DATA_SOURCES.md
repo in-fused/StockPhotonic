@@ -41,11 +41,36 @@ Key scripts:
 - `scripts/sec_signal_report.py`: aggregates filing signals for review.
 - `scripts/sec_signal_candidates_preview.py`: prints candidate-shaped records without writing.
 - `scripts/sec_signal_candidates_write.py`: writes review-only SEC candidates when explicitly requested.
+- `scripts/sec_candidate_triage.py`: writes review-only queue, summary, overlap, and checklist artifacts for manual review.
 - `scripts/sec_candidate_promotion_preview.py`: validates candidate promotion shape without production writes.
 - `scripts/sec_candidate_promote.py`: explicit production writer; default mode is dry-run.
 - `scripts/validate_data.py`: production dataset validation.
 
 SEC network commands require an identifying user agent and explicit network flags where supported.
+
+## SEC EXTRACTION AND REVIEW ARTIFACTS
+
+D140 expands local SEC evidence extraction while preserving the same gates:
+
+- Relationship phrase rules now look for explicit supplier/customer, strategic partnership, cloud/hyperscaler, semiconductor supply-chain, AI infrastructure, data-center/power, competitor, and ownership/investment language.
+- Candidate snippets are capped as short filing excerpts and may carry `filing_form`, `source_reference`, `evidence_context`, and `ticker_pairing` metadata.
+- Generic customer/supplier mentions, accounting contract language, XBRL fragments, legal exhibit lists, credit-facility noise, and negated relationship language are filtered before candidate creation where possible.
+- Source/reference metadata remains review-only. A snippet or confidence hint is not production proof.
+
+Reviewer triage command:
+
+```text
+python scripts/sec_candidate_triage.py --write --force
+```
+
+Generated review-only artifacts:
+
+- `data/candidates/candidate_review_queue.json`
+- `data/candidates/candidate_review_summary.json`
+- `data/candidates/candidate_overlap_report.json`
+- `docs/candidate_reviewer_checklist.md`
+
+The triage artifacts cluster candidates by source ticker, target ticker, relationship type, filing form, repeated pair, repeated evidence phrase, and source host/category. They also compare candidates to `data/connections.json`, identify same-pair overlaps, production edges missing source URLs, and candidate evidence that could enrich an existing edge. These are labels for review only; they do not merge or promote data.
 
 ## CANDIDATE VS PRODUCTION
 
@@ -90,6 +115,8 @@ Source aging is derived only from `verified_date`, candidate `filing_date`, or e
 - Candidate preview: review-only candidate state; freshness is shown as candidate context, not production verification.
 
 The evidence review queue surfaces low-confidence, missing-source, stale-review, candidate-preview, and SEC-preview items. It is graph-aware and labels whether items are currently visible or filtered. Queue entries are prompts for human review; they do not create new production claims.
+
+The Source Workbench can also display the generated candidate triage queue, summary, overlap comparison, and checklist status when those static files are present. Missing artifacts are handled as an unavailable review state.
 
 ## SOURCE HOST CATEGORIES
 

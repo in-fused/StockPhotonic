@@ -45,8 +45,22 @@ OPTIONAL_CANDIDATE_FIELDS = (
     "source_urls",
     "unresolved_entity_mentions",
     "relationship_signal",
+    "evidence_context",
+    "filing_form",
+    "source_reference",
+    "ticker_pairing",
 )
 MIN_TARGET_MATCH_CONFIDENCE = 0.85
+SUPPORTED_CANDIDATE_RELATIONSHIP_TYPES = {
+    "supplier_customer",
+    "partnership",
+    "investment",
+    "competitor",
+    "cloud_hyperscaler_ecosystem",
+    "semiconductor_supply_chain",
+    "ai_infrastructure",
+    "data_center_power",
+}
 
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
@@ -230,6 +244,12 @@ def validate_optional_urls(candidate: dict[str, Any], *, index: int) -> None:
         raise CandidateWriteError(
             f"candidate {index} archive_url must be an http(s) URL when present."
         )
+    source_reference = candidate.get("source_reference")
+    if isinstance(source_reference, dict) and source_reference.get("archive_url") is not None:
+        if clean_source_url(source_reference.get("archive_url")) is None:
+            raise CandidateWriteError(
+                f"candidate {index} source_reference.archive_url must be an http(s) URL."
+            )
 
     if "source_urls" not in candidate:
         return
@@ -315,6 +335,7 @@ def validate_payload(payload: dict[str, Any]) -> None:
                 f"candidate {index} review_status must be pending_review."
             )
         for field in (
+            "source_ticker",
             "target_ticker",
             "target_name",
             "target_match_method",
@@ -324,6 +345,18 @@ def validate_payload(payload: dict[str, Any]) -> None:
                 raise CandidateWriteError(
                     f"candidate {index} must include resolved {field}."
                 )
+        relationship_type = clean_string(candidate.get("relationship_type"))
+        if relationship_type not in SUPPORTED_CANDIDATE_RELATIONSHIP_TYPES:
+            raise CandidateWriteError(
+                f"candidate {index} relationship_type {relationship_type!r} is not supported."
+            )
+        evidence_snippet = clean_string(candidate.get("evidence_snippet"))
+        if evidence_snippet is None:
+            raise CandidateWriteError(f"candidate {index} evidence_snippet is required.")
+        if len(evidence_snippet) > 900:
+            raise CandidateWriteError(
+                f"candidate {index} evidence_snippet must stay short for review."
+            )
         match_confidence = numeric_score(candidate.get("target_match_confidence"))
         if (
             match_confidence is None

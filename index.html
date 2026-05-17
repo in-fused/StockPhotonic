@@ -350,6 +350,8 @@
                             </div>
                             <div id="sec-production-legend-count" class="mt-1 text-white/42">0 EDGES</div>
                         </div>
+                        <div id="graph-explorer-dock" class="graph-explorer-dock" aria-label="Graph exploration tools"></div>
+                        <div id="graph-intelligence-card" class="graph-intelligence-card hidden" aria-live="polite"></div>
                         <div id="graph-overlay-stats" class="graph-overlay-stats" aria-live="polite"></div>
                     </div>
                 </div>
@@ -846,6 +848,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/utils/dom.js"></script>
     <script src="js/stock/sourceReview.js"></script>
     <script src="js/stock/relationships.js"></script>
+    <script src="js/stock/graphIntelligence.js"></script>
     <script src="js/core/data.js"></script>
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
@@ -930,6 +933,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic relationship intelligence module failed to load');
         }
 
+        if (!window.StockPhotonicStock?.graphIntelligence) {
+            throw new Error('StockPhotonic graph intelligence module failed to load');
+        }
+
         if (!window.CryptoPhotonic?.core || !window.CryptoPhotonic?.graph || !window.CryptoPhotonic?.layout || !window.CryptoPhotonic?.ui) {
             throw new Error('CryptoPhotonic modules failed to load');
         }
@@ -977,6 +984,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         } = window.StockPhotonicData;
         const sourceReviewTools = window.StockPhotonicStock.sourceReview;
         const relationshipTools = window.StockPhotonicStock.relationships;
+        const stockGraphIntelligence = window.StockPhotonicStock.graphIntelligence;
         const {
             getRelationshipTypeKey,
             getRelationshipTypeLabel,
@@ -1102,6 +1110,19 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let visibleSecPreviewLinks = [];
         let selectedSecPreviewNode = null;
         let selectedSecPreviewLink = null;
+        let selectedRelationshipLink = null;
+        let activeEcosystemOverlayKey = '';
+        let sourceCoverageLensEnabled = false;
+        let activeRelationshipRoute = null;
+        let graphStoryMode = '';
+        let graphIntelligenceModel = {
+            overlay: null,
+            selectedStory: null,
+            relationshipExplanation: null,
+            sourceCoverage: null
+        };
+        let graphNodeIntelligenceVisualCache = new Map();
+        let graphLinkIntelligenceVisualCache = new Map();
 
         let selectedNode = null;
         let hoveredNode = null;
@@ -1222,6 +1243,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             get activeClusterNodeIds() { return activeClusterNodeIds; },
             get topLabelIds() { return topLabelIds; },
             get portfolioEdgeKeys() { return portfolioEdgeKeys; },
+            get activeRelationshipRoute() { return activeRelationshipRoute; },
+            get selectedRelationshipLink() { return selectedRelationshipLink; },
+            get activeEcosystemOverlayKey() { return activeEcosystemOverlayKey; },
+            get graphIntelligenceModel() { return graphIntelligenceModel; },
+            get sourceCoverageLensEnabled() { return sourceCoverageLensEnabled; },
+            get graphStoryMode() { return graphStoryMode; },
             get signalStrengthThreshold() { return signalStrengthThreshold; },
             get orbitEnabled() { return false; },
             get perspectiveEnabled() { return perspectiveEnabled; },
@@ -1249,6 +1276,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             isNexusLayoutActive,
             getNexusSummary,
             getRelationshipVisualMeta,
+            getGraphNodeIntelligenceVisual,
+            getGraphLinkIntelligenceVisual,
             isIndustryGroupFilterActive,
             linkTouchesCurrentIndustryGroup,
             isPortfolioAnalysisActive,
@@ -1753,6 +1782,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 updatePortfolioPanel();
                 initGraphData();
                 await loadSecPreviewCandidateGraph();
+                refreshGraphIntelligenceModel();
                 resizeCanvas();
                 fitGraph(false, { keepOrbit: true });
                 showDefaultDashboard();
@@ -2258,6 +2288,47 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             };
         }
 
+        function getGraphIntelligenceContext(overrides = {}) {
+            return {
+                nodes,
+                links,
+                visibleNodes,
+                visibleLinks,
+                visibleLinkKeys,
+                selectedNode,
+                selectedRelationshipLink,
+                activeEcosystemOverlayKey,
+                sourceCoverageLensEnabled,
+                activeRelationshipRoute,
+                graphStoryMode,
+                graphIntelligenceModel,
+                activeClusterNodeIds,
+                adjacencyById,
+                nodeById,
+                portfolioEdgeKeys,
+                matchedPortfolioNodes,
+                getRelationshipTypeKey,
+                getRelationshipTypeLabel,
+                getRelationshipTypeColor,
+                getRelationshipGroupKey,
+                getRelationshipConfidenceTier,
+                getRelationshipSourceStatus,
+                getRelationshipEvidenceCount,
+                getRelationshipSourceAgeInfo,
+                relationshipHasSourceEvidence,
+                getSourceHostDiversity,
+                getConnectionStrength,
+                getCompanyIndustryGroup,
+                getNodeCluster,
+                getSharedConnections,
+                isSecBackedConnection,
+                isPortfolioAnalysisActive,
+                formatConnectionType,
+                escapeHtml,
+                ...overrides
+            };
+        }
+
         /* ==============================
            GRAPH INITIALIZATION
         ================================ */
@@ -2527,8 +2598,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 if (pointerState.node) {
                     selectGraphNode(pointerState.node);
                 } else {
-                    const previewLink = findSecPreviewLinkAt(screen.x, screen.y);
-                    if (previewLink) {
+                    const productionLink = findProductionLinkAt(screen.x, screen.y);
+                    const previewLink = productionLink ? null : findSecPreviewLinkAt(screen.x, screen.y);
+                    if (productionLink) {
+                        selectProductionRelationship(productionLink);
+                    } else if (previewLink) {
                         selectSecPreviewEdge(previewLink.key);
                     } else {
                         clearSelection();
@@ -2997,6 +3071,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             stopOrbitForInteraction();
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = null;
+            selectedRelationshipLink = null;
+            activeRelationshipRoute = null;
+            graphStoryMode = 'overview';
             if (!options.preserveFilters) ensureIndustryGroupFilterAllowsNode(node);
             selectedNode = node;
             focusNeighborIds = new Set();
@@ -3030,6 +3107,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function selectSecPreviewNode(node) {
             stopOrbitForInteraction();
             selectedNode = null;
+            selectedRelationshipLink = null;
+            activeRelationshipRoute = null;
+            graphStoryMode = '';
             selectedSecPreviewNode = node;
             selectedSecPreviewLink = null;
             focusNeighborIds = new Set();
@@ -3050,6 +3130,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!link) return;
 
             selectedNode = null;
+            selectedRelationshipLink = null;
+            activeRelationshipRoute = null;
+            graphStoryMode = '';
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = link;
             focusNeighborIds = new Set();
@@ -3093,6 +3176,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             selectedNode = null;
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = null;
+            selectedRelationshipLink = null;
+            activeRelationshipRoute = null;
+            graphStoryMode = '';
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
             activeClusterNodeIds = new Set();
@@ -3237,6 +3323,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             selectedNode = null;
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = null;
+            selectedRelationshipLink = null;
+            activeRelationshipRoute = null;
+            graphStoryMode = '';
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
             activeClusterNodeIds = new Set();
@@ -3267,6 +3356,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             selectedNode = null;
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = null;
+            selectedRelationshipLink = null;
+            activeRelationshipRoute = null;
+            graphStoryMode = '';
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
             activeClusterNodeIds = new Set();
@@ -3330,6 +3422,388 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function getConnectionStrength(link) {
             return clamp(Number(link?.strength) || 0, 0, 1);
+        }
+
+        function refreshGraphIntelligenceModel(options = {}) {
+            graphIntelligenceModel = stockGraphIntelligence.buildGraphIntelligenceModel(getGraphIntelligenceContext());
+            graphNodeIntelligenceVisualCache = new Map();
+            graphLinkIntelligenceVisualCache = new Map();
+
+            if (options.render !== false) {
+                renderGraphExplorerDock();
+                renderGraphNativeIntelligenceCard();
+                updateGraphOverlayStats();
+            }
+        }
+
+        function getGraphNodeIntelligenceVisual(node) {
+            if (!node) return {};
+            if (graphNodeIntelligenceVisualCache.has(node.id)) return graphNodeIntelligenceVisualCache.get(node.id);
+            const visual = stockGraphIntelligence.getNodeVisualMeta(node, getGraphIntelligenceContext());
+            graphNodeIntelligenceVisualCache.set(node.id, visual);
+            return visual;
+        }
+
+        function getGraphLinkIntelligenceVisual(link) {
+            if (!link) return {};
+            if (graphLinkIntelligenceVisualCache.has(link.key)) return graphLinkIntelligenceVisualCache.get(link.key);
+            const visual = stockGraphIntelligence.getLinkVisualMeta(link, getGraphIntelligenceContext());
+            graphLinkIntelligenceVisualCache.set(link.key, visual);
+            return visual;
+        }
+
+        function renderGraphExplorerDock() {
+            const dock = document.getElementById('graph-explorer-dock');
+            if (!dock) return;
+
+            const ecosystemButtons = stockGraphIntelligence.getEcosystemDefinitions().map(ecosystem => {
+                const active = activeEcosystemOverlayKey === ecosystem.key;
+                return `
+                    <button type="button" onclick="toggleEcosystemOverlay('${escapeInlineJsString(ecosystem.key)}')" class="graph-explorer-action ${active ? 'is-active' : ''}" aria-pressed="${active ? 'true' : 'false'}" title="${escapeHtml(ecosystem.label)} overlay">
+                        <i class="fa-solid ${escapeHtml(getEcosystemIcon(ecosystem.key))}"></i>
+                        <span>${escapeHtml(ecosystem.shortLabel)}</span>
+                    </button>
+                `;
+            }).join('');
+
+            dock.innerHTML = `
+                <div class="graph-explorer-group">
+                    <span class="graph-explorer-label">Overlays</span>
+                    ${ecosystemButtons}
+                </div>
+                <div class="graph-explorer-group">
+                    <span class="graph-explorer-label">Lens</span>
+                    <button type="button" onclick="toggleSourceCoverageLens()" class="graph-explorer-action ${sourceCoverageLensEnabled ? 'is-active' : ''}" aria-pressed="${sourceCoverageLensEnabled ? 'true' : 'false'}" title="Toggle source coverage lens">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Sources</span>
+                    </button>
+                    <button type="button" onclick="clearGraphIntelligenceOverlays()" class="graph-explorer-action" title="Clear overlays, route traces, and relationship selection">
+                        <i class="fa-solid fa-eraser"></i>
+                        <span>Clear</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        function getEcosystemIcon(key) {
+            const iconByKey = {
+                ai_infrastructure: 'fa-brain',
+                semiconductor_supply_chain: 'fa-microchip',
+                cloud_hyperscaler: 'fa-cloud',
+                financial_payments: 'fa-credit-card',
+                energy_infrastructure: 'fa-bolt',
+                healthcare_biotech: 'fa-dna',
+                enterprise_saas_workflow: 'fa-diagram-project'
+            };
+            return iconByKey[key] || 'fa-circle-nodes';
+        }
+
+        function renderGraphNativeIntelligenceCard() {
+            const card = document.getElementById('graph-intelligence-card');
+            if (!card) return;
+
+            let html = '';
+            if (graphIntelligenceModel.relationshipExplanation) {
+                html = renderRelationshipExplanationCard(graphIntelligenceModel.relationshipExplanation);
+            } else if (graphIntelligenceModel.selectedStory) {
+                html = renderSelectedGraphStoryCard(graphIntelligenceModel.selectedStory);
+            } else if (activeRelationshipRoute) {
+                html = renderRouteTraceCard(activeRelationshipRoute);
+            } else if (graphIntelligenceModel.overlay) {
+                html = renderEcosystemOverlayCard(graphIntelligenceModel.overlay);
+            } else if (sourceCoverageLensEnabled) {
+                html = renderSourceCoverageCard(graphIntelligenceModel.sourceCoverage);
+            }
+
+            if (!html) {
+                card.classList.add('hidden');
+                card.innerHTML = '';
+                return;
+            }
+
+            card.innerHTML = html;
+            card.classList.remove('hidden');
+        }
+
+        function renderSelectedGraphStoryCard(story) {
+            const primary = story.primaryEcosystem;
+            const dominantType = story.typeCounts[0]?.[0] || 'Mixed relationships';
+            const cluster = story.cluster || {};
+            const sourceSummary = story.sourceSummary || {};
+            const routeBanner = activeRelationshipRoute ? renderRouteTraceCard(activeRelationshipRoute, { embedded: true }) : '';
+            const ecosystemButton = primary
+                ? `<button type="button" onclick="applyGuidedTraversal('ecosystem')" class="graph-card-action"><i class="fa-solid fa-compass"></i><span>Explore ${escapeHtml(primary.shortLabel)}</span></button>`
+                : '';
+            const portfolioButton = isPortfolioAnalysisActive()
+                ? `<button type="button" onclick="traceRelationshipRoute('portfolio')" class="graph-card-action"><i class="fa-solid fa-briefcase"></i><span>Portfolio Route</span></button>`
+                : '';
+
+            return `
+                <div class="graph-card-header">
+                    <div>
+                        <div class="graph-card-eyebrow">${escapeHtml(story.role.label)}</div>
+                        <div class="graph-card-title">${escapeHtml(story.node.ticker || story.node.name || 'Selected')}</div>
+                    </div>
+                    <button type="button" onclick="clearSelection()" class="graph-card-close" aria-label="Clear graph selection"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="graph-card-body">${escapeHtml(story.headline)}</div>
+                ${routeBanner}
+                <div class="graph-card-metrics">
+                    <div><span>${story.degree}</span><small>edges</small></div>
+                    <div><span>${Math.round(story.avgStrength * 100)}%</span><small>avg</small></div>
+                    <div><span>${cluster.memberCount || 0}</span><small>cluster</small></div>
+                    <div><span>${Math.round((sourceSummary.sourcedRatio || 0) * 100)}%</span><small>sourced</small></div>
+                </div>
+                <div class="graph-card-chips">
+                    <span>${escapeHtml(dominantType)}</span>
+                    ${primary ? `<span style="border-color:${primary.color}; color:${primary.color};">${escapeHtml(primary.label)}</span>` : ''}
+                    ${cluster.strongestHub ? `<span>Hub ${escapeHtml(cluster.strongestHub.ticker || cluster.strongestHub.name || '')}</span>` : ''}
+                </div>
+                <div class="graph-card-actions">
+                    <button type="button" onclick="traceRelationshipRoute('strongest')" class="graph-card-action"><i class="fa-solid fa-route"></i><span>Strongest Route</span></button>
+                    ${ecosystemButton}
+                    <button type="button" onclick="applyGuidedTraversal('cluster')" class="graph-card-action"><i class="fa-solid fa-layer-group"></i><span>Cluster</span></button>
+                    <button type="button" onclick="traceRelationshipRoute('shared')" class="graph-card-action"><i class="fa-solid fa-share-nodes"></i><span>Shared Exposure</span></button>
+                    <button type="button" onclick="traceRelationshipRoute('hidden')" class="graph-card-action"><i class="fa-solid fa-eye"></i><span>Hidden Links</span></button>
+                    <button type="button" onclick="traceRelationshipRoute('supply')" class="graph-card-action"><i class="fa-solid fa-truck-ramp-box"></i><span>Supply Chain</span></button>
+                    <button type="button" onclick="traceRelationshipRoute('sec')" class="graph-card-action"><i class="fa-solid fa-file-shield"></i><span>SEC Route</span></button>
+                    ${portfolioButton}
+                </div>
+            `;
+        }
+
+        function renderRouteTraceCard(route, options = {}) {
+            const embedded = Boolean(options.embedded);
+            const tickers = (route.nodes || []).map(node => node.ticker || node.name).filter(Boolean).join(' - ');
+            const empty = route.emptyReason || (!route.linkKeys?.size ? route.explanation : '');
+            const body = route.linkKeys?.size
+                ? `${escapeHtml(route.explanation || '')}${tickers ? `<div class="graph-route-path">${escapeHtml(tickers)}</div>` : ''}`
+                : escapeHtml(empty || 'No route is visible under the current filters.');
+
+            return `
+                <div class="${embedded ? 'graph-route-embedded' : ''}">
+                    ${embedded ? '' : `
+                        <div class="graph-card-header">
+                            <div>
+                                <div class="graph-card-eyebrow">Relationship Route</div>
+                                <div class="graph-card-title">${escapeHtml(route.label || 'Route')}</div>
+                            </div>
+                            <button type="button" onclick="clearRelationshipRoute()" class="graph-card-close" aria-label="Clear route"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    `}
+                    <div class="graph-card-route">
+                        <div class="graph-card-route-title">${escapeHtml(route.label || 'Route')}</div>
+                        <div class="graph-card-body">${body}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRelationshipExplanationCard(explanation) {
+            const link = explanation.link;
+            const sourceState = explanation.sourceStatus?.shortLabel || 'PENDING';
+            const sourceAge = explanation.sourceAge?.shortLabel || 'NO DATE';
+            const sourceHost = explanation.diversity?.primaryCategory?.shortLabel || 'NO URL';
+            return `
+                <div class="graph-card-header">
+                    <div>
+                        <div class="graph-card-eyebrow">Why Connected?</div>
+                        <div class="graph-card-title">${escapeHtml(explanation.pairLabel)}</div>
+                    </div>
+                    <button type="button" onclick="clearSelectedRelationship()" class="graph-card-close" aria-label="Clear relationship selection"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="graph-card-body">${escapeHtml(explanation.pathExplanation)}</div>
+                <div class="graph-card-quote">${escapeHtml(explanation.summary)}</div>
+                <div class="graph-card-body">${escapeHtml(explanation.ecosystemExplanation)}</div>
+                <div class="graph-card-chips">
+                    <span>${escapeHtml(explanation.typeLabel)}</span>
+                    <span>${escapeHtml(explanation.confidence.shortLabel || explanation.confidence.label || 'PENDING')}</span>
+                    <span>${escapeHtml(sourceState)}</span>
+                    <span>${escapeHtml(sourceAge)}</span>
+                    <span>${escapeHtml(sourceHost)}</span>
+                    ${isSecBackedConnection(link) ? '<span>SEC-backed</span>' : ''}
+                </div>
+            `;
+        }
+
+        function renderEcosystemOverlayCard(overlay) {
+            const strongest = overlay.strongest;
+            const strongestLabel = strongest
+                ? `${strongest.source?.ticker || '?'} to ${strongest.target?.ticker || '?'}`
+                : 'No visible matching edge';
+            return `
+                <div class="graph-card-header">
+                    <div>
+                        <div class="graph-card-eyebrow">Ecosystem Overlay</div>
+                        <div class="graph-card-title">${escapeHtml(overlay.label)}</div>
+                    </div>
+                    <button type="button" onclick="toggleEcosystemOverlay('${escapeInlineJsString(overlay.key)}')" class="graph-card-close" aria-label="Clear ecosystem overlay"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="graph-card-body">${escapeHtml(overlay.reason)}</div>
+                <div class="graph-card-metrics">
+                    <div><span>${overlay.nodes.length}</span><small>nodes</small></div>
+                    <div><span>${overlay.links.length}</span><small>edges</small></div>
+                    <div><span>${overlay.evidence.secBacked}</span><small>SEC</small></div>
+                    <div><span>${Math.round((overlay.evidence.sourcedRatio || 0) * 100)}%</span><small>sourced</small></div>
+                </div>
+                <div class="graph-card-chips">
+                    <span style="border-color:${overlay.color}; color:${overlay.color};">${escapeHtml(overlay.shortLabel)}</span>
+                    <span>${escapeHtml(strongestLabel)}</span>
+                    ${overlay.relationshipTypes.slice(0, 2).map(([label, count]) => `<span>${escapeHtml(label)} ${count}</span>`).join('')}
+                </div>
+            `;
+        }
+
+        function renderSourceCoverageCard(sourceCoverage) {
+            const states = sourceCoverage?.states || {};
+            const counts = new Map(sourceCoverage?.counts || []);
+            return `
+                <div class="graph-card-header">
+                    <div>
+                        <div class="graph-card-eyebrow">Source Coverage Lens</div>
+                        <div class="graph-card-title">Evidence States</div>
+                    </div>
+                    <button type="button" onclick="toggleSourceCoverageLens(false)" class="graph-card-close" aria-label="Clear source coverage lens"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="graph-card-body">Edges are colored by existing evidence state: SEC-backed, sourced, candidate preview, stale review, or pending source coverage.</div>
+                <div class="graph-source-state-grid">
+                    ${Object.values(states).map(state => `
+                        <div class="graph-source-state">
+                            <span style="background:${state.color};"></span>
+                            <div>${escapeHtml(state.label)}</div>
+                            <strong>${counts.get(state.key) || 0}</strong>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function toggleEcosystemOverlay(key) {
+            const nextKey = activeEcosystemOverlayKey === key ? '' : key;
+            setEcosystemOverlay(nextKey, { fit: Boolean(nextKey) });
+        }
+
+        function setEcosystemOverlay(key, options = {}) {
+            activeEcosystemOverlayKey = stockGraphIntelligence.getEcosystemDefinition(key) ? key : '';
+            graphStoryMode = activeEcosystemOverlayKey ? 'overlay' : '';
+            refreshGraphIntelligenceModel();
+            if (options.fit && graphIntelligenceModel.overlay?.nodes?.length) {
+                fitGraphToNodes(graphIntelligenceModel.overlay.nodes, true, 120);
+            }
+            triggerPulse(520);
+            requestDraw();
+        }
+
+        function toggleSourceCoverageLens(force) {
+            sourceCoverageLensEnabled = typeof force === 'boolean' ? force : !sourceCoverageLensEnabled;
+            graphStoryMode = sourceCoverageLensEnabled ? 'source' : graphStoryMode === 'source' ? '' : graphStoryMode;
+            refreshGraphIntelligenceModel();
+            triggerPulse(420);
+            requestDraw();
+        }
+
+        function clearGraphIntelligenceOverlays() {
+            activeEcosystemOverlayKey = '';
+            sourceCoverageLensEnabled = false;
+            activeRelationshipRoute = null;
+            selectedRelationshipLink = null;
+            graphStoryMode = '';
+            focusNeighborIds = selectedNode ? focusNeighborIds : new Set();
+            focusLinkKeys = selectedNode ? focusLinkKeys : new Set();
+            activeClusterNodeIds = selectedNode ? activeClusterNodeIds : new Set();
+            refreshGraphIntelligenceModel();
+            requestDraw();
+        }
+
+        function clearRelationshipRoute() {
+            activeRelationshipRoute = null;
+            graphStoryMode = selectedNode ? 'overview' : graphStoryMode === 'route' ? '' : graphStoryMode;
+            refreshGraphIntelligenceModel();
+            requestDraw();
+        }
+
+        function clearSelectedRelationship() {
+            selectedRelationshipLink = null;
+            activeRelationshipRoute = null;
+            graphStoryMode = '';
+            focusNeighborIds = new Set();
+            focusLinkKeys = new Set();
+            activeClusterNodeIds = new Set();
+            refreshVisibleGraph();
+            refreshGraphIntelligenceModel();
+            requestDraw();
+        }
+
+        function traceRelationshipRoute(mode) {
+            activeRelationshipRoute = stockGraphIntelligence.buildRoute(mode, getGraphIntelligenceContext());
+            graphStoryMode = 'route';
+            if (activeRelationshipRoute.ecosystemKey && !activeEcosystemOverlayKey) {
+                activeEcosystemOverlayKey = activeRelationshipRoute.ecosystemKey;
+            }
+            refreshGraphIntelligenceModel();
+            if (activeRelationshipRoute.nodes?.length > 1) {
+                fitGraphToNodes(activeRelationshipRoute.nodes, true, 150);
+            }
+            triggerPulse(700);
+            requestDraw();
+        }
+
+        function applyGuidedTraversal(mode) {
+            if (mode === 'cluster') {
+                graphStoryMode = 'cluster';
+                activeRelationshipRoute = null;
+                refreshGraphIntelligenceModel();
+                const clusterNodes = [...activeClusterNodeIds].map(id => nodeById.get(id)).filter(Boolean);
+                if (clusterNodes.length) fitGraphToNodes(clusterNodes, true, 150);
+                triggerPulse(680);
+                requestDraw();
+                return;
+            }
+
+            if (mode === 'ecosystem') {
+                const primary = graphIntelligenceModel.selectedStory?.primaryEcosystem;
+                if (primary) {
+                    setEcosystemOverlay(primary.key, { fit: true });
+                    return;
+                }
+            }
+
+            traceRelationshipRoute(mode);
+        }
+
+        function selectProductionRelationship(link) {
+            if (!link) return;
+            stopOrbitForInteraction();
+            selectedNode = null;
+            selectedSecPreviewNode = null;
+            selectedSecPreviewLink = null;
+            selectedRelationshipLink = link;
+            activeRelationshipRoute = null;
+            graphStoryMode = 'relationship';
+            focusNeighborIds = new Set([link.source?.id, link.target?.id].filter(Boolean));
+            focusLinkKeys = new Set([link.key]);
+            activeClusterNodeIds = new Set([link.source?.id, link.target?.id].filter(Boolean));
+            refreshVisibleGraph();
+            refreshGraphIntelligenceModel();
+            triggerPulse(PULSE_DURATION_MS);
+            requestDraw();
+        }
+
+        function fitGraphToNodes(targetNodes, animate = true, padding = 130) {
+            const nodesToFit = targetNodes.filter(Boolean);
+            if (!nodesToFit.length) return;
+            refreshGraphWorkspaceBounds();
+            const bounds = graphViewport.getBoundsForNodes(nodesToFit, getNodeLayoutPosition);
+            const nextView = graphViewport.getFitView(bounds, {
+                canvasWidth,
+                canvasHeight,
+                padding,
+                minScale: MIN_SCALE,
+                maxScale: MAX_SCALE,
+                clamp
+            });
+            if (animate) animateView(nextView.scale, nextView.offsetX, nextView.offsetY, FIT_ANIMATION_MS);
+            else setView(nextView.scale, nextView.offsetX, nextView.offsetY);
         }
 
         function getPortfolioContextForNode(node) {
@@ -4079,6 +4553,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             focusModeEnabled = false;
             signalStrengthThreshold = 0;
             secPreviewEnabled = true;
+            selectedRelationshipLink = null;
+            activeEcosystemOverlayKey = '';
+            sourceCoverageLensEnabled = false;
+            activeRelationshipRoute = null;
+            graphStoryMode = '';
             setOrbMapEnabled(false);
             resetPortfolioState();
             document.getElementById('sector-filter').value = '';
@@ -4566,10 +5045,32 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             mergeSecPreviewProductionEndpointsIntoVisibleNodes();
             rebuildLayoutPositions();
             refreshGraphWorkspaceBounds();
+            syncRouteAfterVisibilityChange();
+            refreshGraphIntelligenceModel({ render: false });
             updateGraphOverlayStats();
+            renderGraphExplorerDock();
+            renderGraphNativeIntelligenceCard();
             updateVisibleGraphStatus();
             updateOrbMapData();
-            if (!selectedNode && !selectedSecPreviewNode && !selectedSecPreviewLink) renderDefaultDashboard();
+            if (!selectedNode && !selectedSecPreviewNode && !selectedSecPreviewLink && !selectedRelationshipLink) renderDefaultDashboard();
+        }
+
+        function syncRouteAfterVisibilityChange() {
+            if (!activeRelationshipRoute?.linkKeys?.size) return;
+            const visibleRouteLinks = (activeRelationshipRoute.links || []).filter(link => visibleLinkKeys.has(link.key));
+            if (visibleRouteLinks.length === activeRelationshipRoute.links.length) return;
+            if (!visibleRouteLinks.length) {
+                activeRelationshipRoute = null;
+                return;
+            }
+            const routeNodes = [...new Map(visibleRouteLinks.flatMap(link => [link.source, link.target]).filter(Boolean).map(node => [node.id, node])).values()];
+            activeRelationshipRoute = {
+                ...activeRelationshipRoute,
+                links: visibleRouteLinks,
+                nodes: routeNodes,
+                linkKeys: new Set(visibleRouteLinks.map(link => link.key)),
+                nodeIds: new Set(routeNodes.map(node => node.id))
+            };
         }
 
         function updateVisibleGraphStatus() {
@@ -4673,6 +5174,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             updatePerspectiveOverlayHint();
             appendSecPreviewOverlayStats();
             appendOrbMapOverlayStats();
+            appendGraphIntelligenceOverlayStats();
             updateSecPreviewControl();
             updateOrbMapControl();
         }
@@ -4710,6 +5212,35 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </span>
             `);
         }
+
+        function appendGraphIntelligenceOverlayStats() {
+            const overlay = document.getElementById('graph-overlay-stats');
+            if (!overlay) return;
+
+            if (graphIntelligenceModel.overlay) {
+                overlay.insertAdjacentHTML('beforeend', `
+                    <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] font-mono tracking-[1.1px]" style="border-color:${graphIntelligenceModel.overlay.color}; color:${graphIntelligenceModel.overlay.color}; background:rgba(3,7,18,0.74);">
+                        ${escapeHtml(graphIntelligenceModel.overlay.shortLabel)} ${graphIntelligenceModel.overlay.links.length} edges
+                    </span>
+                `);
+            }
+
+            if (activeRelationshipRoute?.linkKeys?.size) {
+                overlay.insertAdjacentHTML('beforeend', `
+                    <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-white/85 font-mono tracking-[1.1px] border border-white/30 bg-white/10">
+                        Route ${activeRelationshipRoute.linkKeys.size} edges
+                    </span>
+                `);
+            }
+
+            if (sourceCoverageLensEnabled) {
+                overlay.insertAdjacentHTML('beforeend', `
+                    <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/80 font-mono tracking-[1.1px] border border-cyan-300/22 bg-cyan-300/10">
+                        Source Coverage Lens
+                    </span>
+                `);
+            }
+        }
         function syncSelectionAfterVisibilityChange() {
             if (selectedSecPreviewNode && !visibleSecPreviewNodes.some(node => node.id === selectedSecPreviewNode.id)) {
                 clearSelection(false);
@@ -4717,6 +5248,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }
             if (selectedSecPreviewLink && !visibleSecPreviewLinks.some(link => link.key === selectedSecPreviewLink.key)) {
                 clearSelection(false);
+                return true;
+            }
+            if (selectedRelationshipLink && !visibleLinkKeys.has(selectedRelationshipLink.key)) {
+                clearSelectedRelationship();
                 return true;
             }
             if (!selectedNode) return false;
@@ -5149,6 +5684,24 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 worldToScreen,
                 getScreenNodeRadius
             });
+        }
+
+        function findProductionLinkAt(screenX, screenY) {
+            let closest = null;
+            let closestDistance = Infinity;
+
+            visibleLinks.forEach(link => {
+                const geometry = getProductionLinkScreenGeometry(link);
+                if (!geometry) return;
+                const distance = getDistanceToQuadratic(screenX, screenY, geometry);
+                const hitRadius = 7 + getConnectionStrength(link) * 8 + (getGraphLinkIntelligenceVisual(link).forceDraw ? 8 : 0);
+                if (distance <= hitRadius && distance < closestDistance) {
+                    closest = link;
+                    closestDistance = distance;
+                }
+            });
+
+            return closest;
         }
 
         function findSecPreviewLinkAt(screenX, screenY) {

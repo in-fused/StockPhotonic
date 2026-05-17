@@ -20,7 +20,7 @@ Keep this order deterministic. `mobile.css` is intentionally last because it con
 
 - `base.css`: font import, CSS tokens, scrollbar defaults, reset/box sizing, body defaults, global typography helpers.
 - `shell.css`: shared page chrome, product tabs, app tabs, interaction dock, shared button states, shared glass panels, help modal.
-- `graph.css`: Stock 2D graph stage, shared graph canvas behavior, graph controls, overlay stats, fullscreen HUD/panels, graph sidebar scrolling.
+- `graph.css`: Stock 2D graph stage, shared graph canvas behavior, graph controls, overlay stats, ecosystem explorer dock, graph-adjacent intelligence cards, fullscreen HUD/panels, graph sidebar scrolling.
 - `stock.css`: StockPhotonic-specific controls, selected-company workspace, stock dashboard/sidebar helpers.
 - `crypto.css`: CryptoPhotonic-only graph surface, side panels, investigation workspace, status panels, wallet lookup/history/replay/audit surfaces.
 - `review.css`: source/evidence review queue, source chips, confidence/trust badges, relationship evidence cards, Source Workbench, candidate review UI.

@@ -195,7 +195,8 @@
             y: link.target._screenY ?? targetFallback.y
         };
         const relationshipVisual = context.getRelationshipVisualMeta?.(link) || {};
-        const color = relationshipVisual.color || context.EDGE_COLORS[link.relationship_type] || context.EDGE_COLORS[link.type] || context.DEFAULT_EDGE_COLOR;
+        const intelligenceVisual = context.getGraphLinkIntelligenceVisual?.(link) || {};
+        let color = intelligenceVisual.color || relationshipVisual.color || context.EDGE_COLORS[link.relationship_type] || context.EDGE_COLORS[link.type] || context.DEFAULT_EDGE_COLOR;
         const isFocused = context.selectedNode && context.focusLinkKeys.has(link.key);
         const isHoveredLink = context.hoveredNode && (context.hoveredNode.id === link.source.id || context.hoveredNode.id === link.target.id);
         const hasFocus = Boolean(context.selectedNode);
@@ -234,6 +235,26 @@
             width = Math.max(width + 0.65, 1.35 + strength * 2.5);
         }
 
+        if (intelligenceVisual.dimmed && !isFocused && !isHoveredLink && !isPortfolioLink) {
+            alpha *= 0.36;
+            width = Math.max(0.2, width * 0.72);
+        }
+
+        if (intelligenceVisual.sourceCoverage && !intelligenceVisual.route && !intelligenceVisual.selected) {
+            alpha = Math.max(alpha, 0.28 + strength * 0.18 + (intelligenceVisual.alphaBoost || 0));
+            width = Math.max(width + (intelligenceVisual.widthBoost || 0), 0.8 + strength * 0.75);
+        }
+
+        if (intelligenceVisual.overlay && !intelligenceVisual.route && !intelligenceVisual.selected) {
+            alpha = Math.max(alpha, 0.48 + strength * 0.24 + (intelligenceVisual.alphaBoost || 0));
+            width = Math.max(width + (intelligenceVisual.widthBoost || 0), 1.15 + strength * 1.6);
+        }
+
+        if (intelligenceVisual.route || intelligenceVisual.selected) {
+            alpha = Math.max(alpha, intelligenceVisual.selected ? 0.92 : 0.78);
+            width = Math.max(width + (intelligenceVisual.widthBoost || 0), intelligenceVisual.selected ? 3.7 : 3.1);
+        }
+
         if (!isFocused && !isHoveredLink && !isPortfolioLink) {
             alpha *= relationshipVisual.alphaMultiplier || 1;
             width = Math.max(0.18, width + (relationshipVisual.widthBoost || 0));
@@ -242,9 +263,13 @@
         ctx.globalAlpha = alpha * perspectiveShade;
         ctx.strokeStyle = color;
         ctx.lineWidth = width;
-        ctx.shadowBlur = isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
+        ctx.shadowBlur = intelligenceVisual.route || intelligenceVisual.selected
+            ? 34
+            : isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : intelligenceVisual.overlay ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
         ctx.shadowColor = isPortfolioLink ? '#ffd700' : color;
-        ctx.setLineDash(Array.isArray(relationshipVisual.dashPattern) ? relationshipVisual.dashPattern : []);
+        ctx.setLineDash(Array.isArray(intelligenceVisual.dashPattern)
+            ? intelligenceVisual.dashPattern
+            : Array.isArray(relationshipVisual.dashPattern) ? relationshipVisual.dashPattern : []);
 
         const midX = (source.x + target.x) / 2;
         const midY = (source.y + target.y) / 2;
@@ -284,7 +309,9 @@
         const focusDimmed = !context.isFocusModeActive() && context.selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isCorrelationHintNode && !isPortfolioHolding && !isPortfolioAdjacent && !industryMatched;
         const isDimmed = focusDimmed || industryDimmed;
         const perspectiveShade = getPerspectiveShade(context, node);
-        const alpha = (industryDimmed ? 0.16 : focusDimmed ? 0.18 : isPortfolioTopNexus ? 0.96 : isPortfolioRepeatedExposure ? 0.92 : isPortfolioAdjacent ? 0.84 : isCorrelationHintNode ? 0.78 : 1) * perspectiveShade;
+        const intelligenceVisual = context.getGraphNodeIntelligenceVisual?.(node) || {};
+        let alpha = (industryDimmed ? 0.16 : focusDimmed ? 0.18 : isPortfolioTopNexus ? 0.96 : isPortfolioRepeatedExposure ? 0.92 : isPortfolioAdjacent ? 0.84 : isCorrelationHintNode ? 0.78 : 1) * perspectiveShade;
+        if (intelligenceVisual.emphasized && !industryDimmed) alpha = Math.max(alpha, intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint ? 0.98 : 0.82);
         const color = node.color || '#00f9ff';
         const portfolioHaloColor = isPortfolioHolding
             ? '#ffd700'
@@ -294,11 +321,13 @@
                     ? '#34d399'
                     : isPortfolioAdjacent
                         ? '#a5f3fc'
-                        : color;
+                        : intelligenceVisual.emphasized
+                            ? intelligenceVisual.color || color
+                            : color;
 
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.shadowBlur = isSelected ? 34 : isPortfolioHolding ? 38 : isSearchHighlighted ? 42 : isHovered ? 22 : isPortfolioTopNexus ? 32 : isPortfolioRepeatedExposure ? 24 : isPortfolioAdjacent ? 18 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
+        ctx.shadowBlur = isSelected ? 34 : isPortfolioHolding ? 38 : isSearchHighlighted ? 42 : intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint ? 36 : isHovered ? 22 : isPortfolioTopNexus ? 32 : intelligenceVisual.overlay ? 24 : isPortfolioRepeatedExposure ? 24 : isPortfolioAdjacent ? 18 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
         ctx.shadowColor = isSelected ? '#ffffff' : portfolioHaloColor;
 
         const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
@@ -381,6 +410,13 @@
             ctx.arc(point.x, point.y, radius * 1.9, 0, Math.PI * 2);
             ctx.stroke();
         }
+
+        drawNodeIntelligenceCue(context, ctx, point, radius, intelligenceVisual, {
+            industryDimmed,
+            focusDimmed,
+            isSelected,
+            isHovered
+        });
 
         if (isSelected || isHovered) {
             const pulse = context.now() < context.pulseUntil ? 1 + Math.sin(timestamp * 0.006) * 0.08 : 1;
@@ -491,8 +527,11 @@
 
     function shouldDrawLabel(context, node, labelMode) {
         if (labelMode === 'none') return false;
+        const intelligenceVisual = context.getGraphNodeIntelligenceVisual?.(node) || {};
         if (context.selectedNode && context.selectedNode.id === node.id) return true;
         if (context.hoveredNode && context.hoveredNode.id === node.id) return true;
+        if (intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint) return true;
+        if (intelligenceVisual.overlay && context.scale > 0.56 && intelligenceVisual.role?.key !== 'normal') return true;
         if (context.isPortfolioAnalysisActive() && context.isPortfolioHighlightedNode(node)) return true;
         if (context.selectedNode && context.focusNeighborIds.has(node.id)) return true;
         if (context.selectedNode && context.activeClusterNodeIds.has(node.id) && !context.isFocusModeActive()) return true;
@@ -502,8 +541,12 @@
     }
 
     function labelPriority(context, node) {
+        const intelligenceVisual = context.getGraphNodeIntelligenceVisual?.(node) || {};
+        if (intelligenceVisual.route) return 1100 + (node.degree || 0);
+        if (intelligenceVisual.selectedEdgeEndpoint) return 1060 + (node.degree || 0);
         if (context.selectedNode && context.selectedNode.id === node.id) return 1000;
         if (context.hoveredNode && context.hoveredNode.id === node.id) return 900;
+        if (intelligenceVisual.overlay && intelligenceVisual.role?.key !== 'normal') return 830 + (node.degree || 0);
         if (context.isPortfolioNode(node)) return 780 + node.degree;
         if (context.isPortfolioTopNexusNode(node)) return 720 + node.degree;
         if (context.isPortfolioRepeatedExposureNode(node)) return 670 + node.degree;
@@ -609,10 +652,11 @@
 
     function shouldDrawLink(context, link) {
         const isFocused = context.selectedNode && context.focusLinkKeys.has(link.key);
+        const intelligenceVisual = context.getGraphLinkIntelligenceVisual?.(link) || {};
         const industryFilterActive = context.isIndustryGroupFilterActive();
         const touchesIndustryGroup = industryFilterActive && context.linkTouchesCurrentIndustryGroup(link);
         const isPortfolioLink = context.isPortfolioAnalysisActive() && context.portfolioEdgeKeys.has(link.key);
-        if (context.signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && !isPortfolioLink && link.strength < getWeakEdgeThreshold(context)) return false;
+        if (context.signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && !isPortfolioLink && !intelligenceVisual.forceDraw && link.strength < getWeakEdgeThreshold(context)) return false;
 
         const sourceX = link.source._screenX;
         const sourceY = link.source._screenY;
@@ -623,6 +667,67 @@
         const minY = Math.min(sourceY, targetY) - context.FRAME_MARGIN;
         const maxY = Math.max(sourceY, targetY) + context.FRAME_MARGIN;
         return maxX >= 0 && minX <= context.canvasWidth && maxY >= 0 && minY <= context.canvasHeight;
+    }
+
+    function drawNodeIntelligenceCue(context, ctx, point, radius, visual, state) {
+        if (!visual?.emphasized) return;
+
+        const color = visual.color || '#67e8f9';
+        const alpha = state.industryDimmed
+            ? 0.18
+            : visual.route || visual.selectedEdgeEndpoint
+                ? 0.82
+                : visual.sourceCoverage
+                    ? 0.58
+                    : visual.overlay
+                        ? 0.46
+                        : visual.cluster ? 0.38 : 0.28;
+        if (alpha <= 0) return;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = visual.route || visual.selectedEdgeEndpoint ? 2.2 : visual.sourceCoverage ? 1.55 : 1.15;
+        ctx.shadowBlur = visual.route || visual.selectedEdgeEndpoint ? 28 : 16;
+        ctx.shadowColor = color;
+        if (visual.sourceCoverage?.key === 'missing_source') {
+            ctx.setLineDash([3, 6]);
+        } else if (visual.cluster && !visual.route) {
+            ctx.setLineDash([6, 5]);
+        }
+
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius * (visual.route || visual.selectedEdgeEndpoint ? 2.75 : 2.32), 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (visual.route || visual.selectedEdgeEndpoint || (visual.sourceCoverage && context.scale > 0.68) || (visual.overlay && context.scale > 0.56 && visual.role?.key !== 'normal')) {
+            drawNodeIntelligenceBadge(ctx, point, radius, visual.badgeLabel || visual.role?.shortLabel || '', color);
+        }
+
+        ctx.restore();
+    }
+
+    function drawNodeIntelligenceBadge(ctx, point, radius, label, color) {
+        if (!label) return;
+        ctx.save();
+        ctx.setLineDash([]);
+        ctx.font = '9px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const width = Math.max(24, ctx.measureText(label).width + 12);
+        const x = point.x - width / 2;
+        const y = point.y - radius * 2.9 - 10;
+        ctx.globalAlpha = 0.88;
+        ctx.fillStyle = 'rgba(3, 7, 18, 0.82)';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        roundedRect(ctx, x, y, width, 17, 8);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = 0.92;
+        ctx.fillText(label, point.x, y + 8.5);
+        ctx.restore();
     }
 
     function getWeakEdgeThreshold(context) {
@@ -688,6 +793,8 @@
         getLabelLimit,
         shouldDrawLabel,
         labelPriority,
+        drawNodeIntelligenceCue,
+        drawNodeIntelligenceBadge,
         getPerspectiveShade,
         sortByPerspectiveDepth,
         sortLinkByPerspectiveDepth,

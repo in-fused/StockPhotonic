@@ -131,6 +131,63 @@
                 padding: 0.5rem !important;
             }
 
+            .graph-explorer-dock {
+                top: 0.65rem;
+                left: 0.65rem;
+                right: 0.65rem;
+                max-width: none;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 0.15rem;
+                scrollbar-width: thin;
+            }
+
+            .graph-explorer-group {
+                flex: 0 0 auto;
+                gap: 0.28rem;
+                padding: 0.28rem;
+            }
+
+            .graph-explorer-label {
+                display: none;
+            }
+
+            .graph-explorer-action {
+                min-height: 2.2rem;
+                padding: 0.45rem 0.56rem;
+                font-size: 0.62rem;
+            }
+
+            .graph-intelligence-card {
+                top: auto;
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(0.65rem, env(safe-area-inset-right));
+                bottom: calc(4.4rem + env(safe-area-inset-bottom));
+                width: auto;
+                max-height: min(36dvh, 18.5rem);
+                padding: 0.68rem;
+            }
+
+            .graph-card-title {
+                font-size: 0.95rem;
+            }
+
+            .graph-card-metrics {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .graph-card-actions {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 0.15rem;
+                scrollbar-width: thin;
+            }
+
+            .graph-card-action {
+                flex: 0 0 auto;
+                min-height: 2.15rem;
+            }
+
             #graph-canvas,
             .orb-map-canvas,
             .crypto-canvas-wrap,

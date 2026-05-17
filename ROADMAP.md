@@ -2,7 +2,7 @@
 
 Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph application using `data/companies.json` and `data/connections.json` as production source of truth.
 
-- Graph Intelligence (2D): Current main work surface for exploring curated companies and edges with filters, search, relationship taxonomy, source/confidence/review filters, Focus Mode, signal thresholds, portfolio exposure, SEC-backed edge indicators, hub/nexus layouts, cluster intelligence, shared exposure, hidden relationship hints, and industry correlations.
+- Graph Intelligence (2D): Current main work surface for exploring curated companies and edges with filters, search, relationship taxonomy, source/confidence/review filters, Focus Mode, signal thresholds, portfolio exposure, SEC-backed edge indicators, hub/nexus layouts, cluster intelligence, shared exposure, hidden relationship hints, industry correlations, ecosystem overlays, source coverage lens, route tracing, guided traversal, and graph-adjacent intelligence cards.
 - 3D Network capabilities: Three.js production-network view with orbiting camera, search, labels, filters, SEC emphasis, neighborhood depth, selected details, and fullscreen exploration.
 - Source Workbench pipeline: Static, read-only guide and candidate preview surface for the local SEC workflow.
 - SEC ingestion + candidate system: Local scripts support SEC fetch/cache, filing inspection, signal extraction, candidate preview, candidate writing, job manifests, schedule previews, and policy gates.
@@ -19,7 +19,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 ## CURRENT FOCUS
 
 - UI/UX polish for the 2D Graph Intelligence workflow.
-- Intelligence layer clarity: company investigation workspace, why-connected relationship cards, source/confidence labels, hubs, clusters, shared exposure, hidden relationships, industry correlations, portfolio exposure, and SEC-backed edge visibility.
+- Intelligence layer clarity: company investigation workspace, graph-adjacent storytelling cards, why-connected relationship cards, source/confidence labels, hubs, bridges, corridors, clusters, shared exposure, hidden relationships, ecosystem overlays, route tracing, industry correlations, portfolio exposure, and SEC-backed edge visibility.
 - Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, triage artifacts, and candidate-vs-production overlap comparison.
 - CSS maintainability: keep the D139 split across `base.css`, `shell.css`, `graph.css`, `stock.css`, `crypto.css`, `review.css`, and `mobile.css`; do not return to a single shared catch-all stylesheet.
 - 3D immersion and usability while staying tied to the production static dataset.
@@ -36,6 +36,13 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
 - Optional backend/auth layer only after the static app and source workflow remain stable.
 - Optional larger graph rendering/performance work as source-backed data grows.
+
+## D141 FOLLOW-ON
+
+- Precompute ecosystem and route indexes when the graph grows beyond the current static core.
+- Add optional route target selection after the current guided routes are validated with users.
+- Add reviewer-authored ecosystem notes only when they are source-backed and schema-validated.
+- Expand route types only through existing metadata contracts, not browser ingestion.
 
 ## D140 FOLLOW-ON
 

@@ -1,0 +1,733 @@
+{
+  "metadata": {
+    "artifact_status": "review_owned_registry",
+    "auto_promotion_allowed": false,
+    "auto_trust_escalation_allowed": false,
+    "generated_at_utc": "2026-05-17T06:35:01+00:00",
+    "generated_by": "scripts/source_registry_governance.py",
+    "notes": [
+      "Hosts are inventory and classification aids.",
+      "Host registration never proves a relationship by itself.",
+      "Reviewers may tighten or remove hosts before promotion workflows use them."
+    ],
+    "production_write_allowed": false,
+    "schema_version": 1
+  },
+  "records": [
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "amd.com",
+      "observed_sources": {
+        "production_connection": 2
+      },
+      "observed_url_count": 2,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.amd.com/en/newsroom/press-releases/2025-4-14-amd-achieves-first-tsmc-n2-product-silicon-milesto.html",
+        "https://www.amd.com/en/newsroom/press-releases/2024-5-21-amd-instinct-mi300x-accelerators-power-microsoft-a.html"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "apple.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.apple.com/newsroom/2023/11/apple-announces-expanded-partnership-with-amkor-for-silicon-packaging/"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_ir",
+      "category_label": "Official company IR source",
+      "host": "asml.com",
+      "observed_sources": {
+        "production_connection": 2
+      },
+      "observed_url_count": 2,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.asml.com/en/investors/annual-report"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "cadence.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.cadence.com/en_US/home/company/newsroom/press-releases/pr/2026/cadence-and-nvidia-unveil-accelerated-engineering-solutions.html"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_sec_filing",
+      "category_label": "Official SEC filing root",
+      "host": "data.sec.gov",
+      "observed_sources": {
+        "cik_mapping": 349
+      },
+      "observed_url_count": 349,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://data.sec.gov/submissions/CIK0001090872.json",
+        "https://data.sec.gov/submissions/CIK0000006201.json",
+        "https://data.sec.gov/submissions/CIK0000320193.json",
+        "https://data.sec.gov/submissions/CIK0001551152.json",
+        "https://data.sec.gov/submissions/CIK0001559720.json"
+      ],
+      "source_tier": 1,
+      "trust_effect": "classification_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_ir",
+      "category_label": "Official company IR source",
+      "host": "investor.marvell.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://investor.marvell.com/news-events/press-releases/detail/263/marvell-extends-data-infrastructure-leadership-with-tsmc-3nm-platform"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_ir",
+      "category_label": "Official company IR source",
+      "host": "investor.synopsys.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://investor.synopsys.com/news/news-details/2025/NVIDIA-and-Synopsys-Announce-Strategic-Partnership-to-Revolutionize-Engineering-and-Design/default.aspx"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_ir",
+      "category_label": "Official company IR source",
+      "host": "investor.tsmc.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://investor.tsmc.com/static/annualReports/2025/english/index.html"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_ir",
+      "category_label": "Official company IR source",
+      "host": "investors.broadcom.com",
+      "observed_sources": {
+        "production_connection": 2
+      },
+      "observed_url_count": 2,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://investors.broadcom.com/news-releases/news-release-details/broadcom-delivers-industrys-first-35d-f2f-technology-ai-xpus",
+        "https://investors.broadcom.com/news-releases/news-release-details/broadcom-announces-extended-partnership-meta-deploy-technology"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_ir",
+      "category_label": "Official company IR source",
+      "host": "investors.micron.com",
+      "observed_sources": {
+        "production_connection": 2
+      },
+      "observed_url_count": 2,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://investors.micron.com/news-releases/news-release-details/micron-high-volume-production-hbm4-designed-nvidia-vera-rubin",
+        "https://investors.micron.com/news-releases/news-release-details/micron-hbm-designed-leading-amd-ai-platform"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_ir",
+      "category_label": "Official company IR source",
+      "host": "ir.amd.com",
+      "observed_sources": {
+        "production_connection": 2
+      },
+      "observed_url_count": 2,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://ir.amd.com/financial-information/sec-filings/content/0000002488-24-000012/amd-20231230.htm"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "marvell.com",
+      "observed_sources": {
+        "production_connection": 2
+      },
+      "observed_url_count": 2,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.marvell.com/company/newsroom/marvell-expands-strategic-collaboration-aws-enable-accelerated-infrastructure-ai-cloud.html",
+        "https://www.marvell.com/company/newsroom/nvidia-ai-ecosystem-expands-marvell-joins-forces-through-nvlink-fusion.html"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "newsroom.bankofamerica.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://newsroom.bankofamerica.com/content/newsroom/press-releases/2025/12/bofa-offers-exclusive-fifa-world-cup-2026--custom-card-design-an.html"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "newsroom.intel.com",
+      "observed_sources": {
+        "production_connection": 4
+      },
+      "observed_url_count": 4,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://newsroom.intel.com/press-kit/intel-high-na-euv",
+        "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "nvidianews.nvidia.com",
+      "observed_sources": {
+        "production_connection": 4
+      },
+      "observed_url_count": 4,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://nvidianews.nvidia.com/news/nvidia-blackwell-platform-arrives-to-power-a-new-era-of-computing",
+        "https://nvidianews.nvidia.com/news/microsoft-nvidia-generative-ai-enterprises",
+        "https://nvidianews.nvidia.com/news/meta-builds-ai-infrastructure-with-nvidia",
+        "https://nvidianews.nvidia.com/news/oracle-nvidia-speed-ai-adoption"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "pr.tsmc.com",
+      "observed_sources": {
+        "production_connection": 5
+      },
+      "observed_url_count": 5,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://pr.tsmc.com/japanese/news/1597",
+        "https://pr.tsmc.com/english/news/1734",
+        "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "qualcomm.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.qualcomm.com/news/onq/2014/08/how-arm-architecture-and-snapdragon-processors-are-supporting-64-bit-future"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "salesforce.com",
+      "observed_sources": {
+        "production_connection": 2
+      },
+      "observed_url_count": 2,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.salesforce.com/news/stories/salesforce-cdp-snowflake-partnership/",
+        "https://www.salesforce.com/partners/snowflake/"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_sec_filing",
+      "category_label": "Official SEC filing root",
+      "host": "sec.gov",
+      "observed_sources": {
+        "candidate_relationship": 10,
+        "candidate_universe": 293,
+        "production_connection": 192
+      },
+      "observed_url_count": 495,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/avgo-20251102.htm",
+        "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm",
+        "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
+        "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+        "https://www.sec.gov/Archives/edgar/data/804328/000080432825000085/qcom-20250928.htm"
+      ],
+      "source_tier": 1,
+      "trust_effect": "classification_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "servicenow.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.servicenow.com/company/media/press-room/microsoft-and-servicenow-announce-strategic-partnership.html"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "slb.com",
+      "observed_sources": {
+        "production_connection": 2
+      },
+      "observed_url_count": 2,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.slb.com/news-and-insights/newsroom/press-release/2019/pr-2019-0917-slb-sis-microsoft-chevron",
+        "https://www.slb.com/newsroom/press-release/2022/pr-2022-03-07-conocophillips-delfi"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "snowflake.com",
+      "observed_sources": {
+        "production_connection": 3
+      },
+      "observed_url_count": 3,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.snowflake.com/en/news/press-releases/snowflake-and-aws-significantly-deepen-commitment-to-driving-customer-focused-innovation/",
+        "https://www.snowflake.com/en/blog/openflow-connector-oracle/",
+        "https://www.snowflake.com/en/news/press-releases/snowflake-expands-partnership-with-microsoft-to-bring-large-scale-generative-ai-models-and-increased-machine-learning-capabilities-to-the-data-cloud-2/"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "usa.visa.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://usa.visa.com/about-visa/newsroom/press-releases.releaseId.9416.html"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_partner_customer_page",
+      "category_label": "Official partner/customer page",
+      "host": "paloaltonetworks.com",
+      "observed_sources": {
+        "production_connection": 2
+      },
+      "observed_url_count": 2,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.paloaltonetworks.com/partners/nextwave-for-csp/microsoft-azure-and-palo-alto-networks",
+        "https://www.paloaltonetworks.com/partners/nextwave-for-csp/aws-and-palo-alto-networks"
+      ],
+      "source_tier": 2,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_partner_customer_page",
+      "category_label": "Official partner/customer page",
+      "host": "partners.jpmorgan.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://partners.jpmorgan.com/visa.html"
+      ],
+      "source_tier": 2,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_partner_customer_page",
+      "category_label": "Official partner/customer page",
+      "host": "synopsys.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.synopsys.com/partners/arm.html"
+      ],
+      "source_tier": 2,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "observed_source_host",
+      "category_label": "Observed source host",
+      "host": "aerospace.honeywell.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://aerospace.honeywell.com/us/en/products-and-services/aircraft/boeing"
+      ],
+      "source_tier": 3,
+      "trust_effect": "inventory_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "observed_source_host",
+      "category_label": "Observed source host",
+      "host": "aws.amazon.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://aws.amazon.com/nvidia/project-ceiba/"
+      ],
+      "source_tier": 3,
+      "trust_effect": "inventory_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "observed_source_host",
+      "category_label": "Observed source host",
+      "host": "cloud.google.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://cloud.google.com/blog/products/compute/introducing-a3-supercomputers-with-nvidia-h100-gpus?e=48754805"
+      ],
+      "source_tier": 3,
+      "trust_effect": "inventory_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "observed_source_host",
+      "category_label": "Observed source host",
+      "host": "developer.apple.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://developer.apple.com/documentation/apple-silicon"
+      ],
+      "source_tier": 3,
+      "trust_effect": "inventory_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "observed_source_host",
+      "category_label": "Observed source host",
+      "host": "geaerospace.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.geaerospace.com/GE9X"
+      ],
+      "source_tier": 3,
+      "trust_effect": "inventory_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "observed_source_host",
+      "category_label": "Observed source host",
+      "host": "jpmorgan.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.jpmorgan.com/solutions/commercial-card"
+      ],
+      "source_tier": 3,
+      "trust_effect": "inventory_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "observed_source_host",
+      "category_label": "Observed source host",
+      "host": "mcdonalds.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.mcdonalds.com/us/en-us/product/coca-cola-small.html"
+      ],
+      "source_tier": 3,
+      "trust_effect": "inventory_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "observed_source_host",
+      "category_label": "Observed source host",
+      "host": "nvidia.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://www.nvidia.com/en-us/data-center/nvlink-fusion/"
+      ],
+      "source_tier": 3,
+      "trust_effect": "inventory_only"
+    }
+  ],
+  "source_categories": {
+    "observed_source_host": {
+      "label": "Observed source host",
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "source_tier": 3,
+      "trust_effect": "inventory_only"
+    },
+    "official_company_ir": {
+      "label": "Official company IR source",
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    "official_company_newsroom": {
+      "label": "Official company newsroom",
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    "official_partner_customer_page": {
+      "label": "Official partner/customer page",
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "source_tier": 2,
+      "trust_effect": "review_priority_only"
+    },
+    "official_sec_filing": {
+      "label": "Official SEC filing root",
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "source_tier": 1,
+      "trust_effect": "classification_only"
+    },
+    "trusted_industry_report": {
+      "label": "Trusted industry/report source",
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "source_tier": 2,
+      "trust_effect": "context_and_review_priority"
+    }
+  }
+}

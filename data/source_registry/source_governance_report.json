@@ -1,0 +1,5062 @@
+{
+  "corridor_maintenance": {
+    "corridor_rows": [
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "ai_compute_foundry_cloud",
+        "coverage_ratio": 1.0,
+        "density_score": 93.6,
+        "edge_count": 56,
+        "label": "AI compute/foundry/cloud",
+        "maintenance_cadence_days": 120,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "MU"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "TSM"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "AMD"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "MSFT"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "GOOGL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "AMZN"
+          }
+        ],
+        "source_backed_count": 56,
+        "stale_edge_count": 0,
+        "strong_edge_count": 30
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "payment_networks_banks",
+        "coverage_ratio": 1.0,
+        "density_score": 29.1,
+        "edge_count": 18,
+        "label": "Payment networks/banks",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "MA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "PYPL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "MA",
+            "target_ticker": "PYPL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "AXP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MA",
+            "target_ticker": "AXP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "JPM"
+          }
+        ],
+        "source_backed_count": 18,
+        "stale_edge_count": 0,
+        "strong_edge_count": 8
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "pbm_pharma_insurance",
+        "coverage_ratio": 1.0,
+        "density_score": 28.8,
+        "edge_count": 20,
+        "label": "PBM/pharma/insurance",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "LLY",
+            "target_ticker": "MRK"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "LLY",
+            "target_ticker": "ABBV"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "LLY",
+            "target_ticker": "PFE"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "UNH",
+            "target_ticker": "CVS"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "UNH",
+            "target_ticker": "CI"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "CVS",
+            "target_ticker": "CI"
+          }
+        ],
+        "source_backed_count": 20,
+        "stale_edge_count": 0,
+        "strong_edge_count": 3
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "enterprise_saas_cloud",
+        "coverage_ratio": 1.0,
+        "density_score": 21.45,
+        "edge_count": 15,
+        "label": "Enterprise SaaS/cloud",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "AMZN"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "ORCL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "CRM"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "NOW"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "AMZN",
+            "target_ticker": "ORCL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "AMZN",
+            "target_ticker": "SNOW"
+          }
+        ],
+        "source_backed_count": 15,
+        "stale_edge_count": 0,
+        "strong_edge_count": 2
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "energy_infrastructure",
+        "coverage_ratio": 1.0,
+        "density_score": 15.3,
+        "edge_count": 10,
+        "label": "Energy infrastructure",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "investment",
+            "source_backed": true,
+            "source_ticker": "BRK-B",
+            "target_ticker": "CVX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "XOM",
+            "target_ticker": "CVX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "XOM",
+            "target_ticker": "COP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "CVX",
+            "target_ticker": "COP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "SLB",
+            "target_ticker": "XOM"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "SLB",
+            "target_ticker": "CVX"
+          }
+        ],
+        "source_backed_count": 10,
+        "stale_edge_count": 0,
+        "strong_edge_count": 3
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "retail_consumer",
+        "coverage_ratio": 1.0,
+        "density_score": 12.15,
+        "edge_count": 9,
+        "label": "Retail/consumer",
+        "maintenance_cadence_days": 240,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "WMT",
+            "target_ticker": "COST"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "WMT",
+            "target_ticker": "AMZN"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "COST",
+            "target_ticker": "AMZN"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "HD",
+            "target_ticker": "WMT"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "HD",
+            "target_ticker": "COST"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "MCD",
+            "target_ticker": "KO"
+          }
+        ],
+        "source_backed_count": 9,
+        "stale_edge_count": 0,
+        "strong_edge_count": 0
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "aerospace_oem",
+        "coverage_ratio": 1.0,
+        "density_score": 8.7,
+        "edge_count": 6,
+        "label": "Aerospace/OEM",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "GE",
+            "target_ticker": "BA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "RTX",
+            "target_ticker": "BA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "HON",
+            "target_ticker": "BA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "GE",
+            "target_ticker": "RTX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "HON",
+            "target_ticker": "RTX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "HON",
+            "target_ticker": "GE"
+          }
+        ],
+        "source_backed_count": 6,
+        "stale_edge_count": 0,
+        "strong_edge_count": 1
+      }
+    ],
+    "maintenance_queue": [],
+    "review_only": true,
+    "strongest_corridor_growth_opportunities": [
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "ai_compute_foundry_cloud",
+        "coverage_ratio": 1.0,
+        "density_score": 93.6,
+        "edge_count": 56,
+        "label": "AI compute/foundry/cloud",
+        "maintenance_cadence_days": 120,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "MU"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "TSM"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "AMD"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "MSFT"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "GOOGL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "AMZN"
+          }
+        ],
+        "source_backed_count": 56,
+        "stale_edge_count": 0,
+        "strong_edge_count": 30
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "payment_networks_banks",
+        "coverage_ratio": 1.0,
+        "density_score": 29.1,
+        "edge_count": 18,
+        "label": "Payment networks/banks",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "MA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "PYPL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "MA",
+            "target_ticker": "PYPL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "AXP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MA",
+            "target_ticker": "AXP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "JPM"
+          }
+        ],
+        "source_backed_count": 18,
+        "stale_edge_count": 0,
+        "strong_edge_count": 8
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "pbm_pharma_insurance",
+        "coverage_ratio": 1.0,
+        "density_score": 28.8,
+        "edge_count": 20,
+        "label": "PBM/pharma/insurance",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "LLY",
+            "target_ticker": "MRK"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "LLY",
+            "target_ticker": "ABBV"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "LLY",
+            "target_ticker": "PFE"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "UNH",
+            "target_ticker": "CVS"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "UNH",
+            "target_ticker": "CI"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "CVS",
+            "target_ticker": "CI"
+          }
+        ],
+        "source_backed_count": 20,
+        "stale_edge_count": 0,
+        "strong_edge_count": 3
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "enterprise_saas_cloud",
+        "coverage_ratio": 1.0,
+        "density_score": 21.45,
+        "edge_count": 15,
+        "label": "Enterprise SaaS/cloud",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "AMZN"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "ORCL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "CRM"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "NOW"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "AMZN",
+            "target_ticker": "ORCL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "AMZN",
+            "target_ticker": "SNOW"
+          }
+        ],
+        "source_backed_count": 15,
+        "stale_edge_count": 0,
+        "strong_edge_count": 2
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "energy_infrastructure",
+        "coverage_ratio": 1.0,
+        "density_score": 15.3,
+        "edge_count": 10,
+        "label": "Energy infrastructure",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "investment",
+            "source_backed": true,
+            "source_ticker": "BRK-B",
+            "target_ticker": "CVX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "XOM",
+            "target_ticker": "CVX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "XOM",
+            "target_ticker": "COP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "CVX",
+            "target_ticker": "COP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "SLB",
+            "target_ticker": "XOM"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "SLB",
+            "target_ticker": "CVX"
+          }
+        ],
+        "source_backed_count": 10,
+        "stale_edge_count": 0,
+        "strong_edge_count": 3
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "retail_consumer",
+        "coverage_ratio": 1.0,
+        "density_score": 12.15,
+        "edge_count": 9,
+        "label": "Retail/consumer",
+        "maintenance_cadence_days": 240,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "WMT",
+            "target_ticker": "COST"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "WMT",
+            "target_ticker": "AMZN"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "COST",
+            "target_ticker": "AMZN"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "HD",
+            "target_ticker": "WMT"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "HD",
+            "target_ticker": "COST"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "MCD",
+            "target_ticker": "KO"
+          }
+        ],
+        "source_backed_count": 9,
+        "stale_edge_count": 0,
+        "strong_edge_count": 0
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "aerospace_oem",
+        "coverage_ratio": 1.0,
+        "density_score": 8.7,
+        "edge_count": 6,
+        "label": "Aerospace/OEM",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "GE",
+            "target_ticker": "BA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "RTX",
+            "target_ticker": "BA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "HON",
+            "target_ticker": "BA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "GE",
+            "target_ticker": "RTX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "HON",
+            "target_ticker": "RTX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "HON",
+            "target_ticker": "GE"
+          }
+        ],
+        "source_backed_count": 6,
+        "stale_edge_count": 0,
+        "strong_edge_count": 1
+      }
+    ],
+    "weakest_corridor_coverage": [
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "ai_compute_foundry_cloud",
+        "coverage_ratio": 1.0,
+        "density_score": 93.6,
+        "edge_count": 56,
+        "label": "AI compute/foundry/cloud",
+        "maintenance_cadence_days": 120,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "MU"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "TSM"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "AMD"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "MSFT"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "GOOGL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "NVDA",
+            "target_ticker": "AMZN"
+          }
+        ],
+        "source_backed_count": 56,
+        "stale_edge_count": 0,
+        "strong_edge_count": 30
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "pbm_pharma_insurance",
+        "coverage_ratio": 1.0,
+        "density_score": 28.8,
+        "edge_count": 20,
+        "label": "PBM/pharma/insurance",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "LLY",
+            "target_ticker": "MRK"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "LLY",
+            "target_ticker": "ABBV"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "LLY",
+            "target_ticker": "PFE"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "UNH",
+            "target_ticker": "CVS"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "UNH",
+            "target_ticker": "CI"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "CVS",
+            "target_ticker": "CI"
+          }
+        ],
+        "source_backed_count": 20,
+        "stale_edge_count": 0,
+        "strong_edge_count": 3
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "payment_networks_banks",
+        "coverage_ratio": 1.0,
+        "density_score": 29.1,
+        "edge_count": 18,
+        "label": "Payment networks/banks",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "MA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "PYPL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "MA",
+            "target_ticker": "PYPL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "AXP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MA",
+            "target_ticker": "AXP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "V",
+            "target_ticker": "JPM"
+          }
+        ],
+        "source_backed_count": 18,
+        "stale_edge_count": 0,
+        "strong_edge_count": 8
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "enterprise_saas_cloud",
+        "coverage_ratio": 1.0,
+        "density_score": 21.45,
+        "edge_count": 15,
+        "label": "Enterprise SaaS/cloud",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "AMZN"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "ORCL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "CRM"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "MSFT",
+            "target_ticker": "NOW"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "AMZN",
+            "target_ticker": "ORCL"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "AMZN",
+            "target_ticker": "SNOW"
+          }
+        ],
+        "source_backed_count": 15,
+        "stale_edge_count": 0,
+        "strong_edge_count": 2
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "energy_infrastructure",
+        "coverage_ratio": 1.0,
+        "density_score": 15.3,
+        "edge_count": 10,
+        "label": "Energy infrastructure",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "investment",
+            "source_backed": true,
+            "source_ticker": "BRK-B",
+            "target_ticker": "CVX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "XOM",
+            "target_ticker": "CVX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "XOM",
+            "target_ticker": "COP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "CVX",
+            "target_ticker": "COP"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "SLB",
+            "target_ticker": "XOM"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "SLB",
+            "target_ticker": "CVX"
+          }
+        ],
+        "source_backed_count": 10,
+        "stale_edge_count": 0,
+        "strong_edge_count": 3
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "retail_consumer",
+        "coverage_ratio": 1.0,
+        "density_score": 12.15,
+        "edge_count": 9,
+        "label": "Retail/consumer",
+        "maintenance_cadence_days": 240,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "WMT",
+            "target_ticker": "COST"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "WMT",
+            "target_ticker": "AMZN"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "COST",
+            "target_ticker": "AMZN"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "HD",
+            "target_ticker": "WMT"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "HD",
+            "target_ticker": "COST"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "MCD",
+            "target_ticker": "KO"
+          }
+        ],
+        "source_backed_count": 9,
+        "stale_edge_count": 0,
+        "strong_edge_count": 0
+      },
+      {
+        "aging_edge_count": 0,
+        "corridor_key": "aerospace_oem",
+        "coverage_ratio": 1.0,
+        "density_score": 8.7,
+        "edge_count": 6,
+        "label": "Aerospace/OEM",
+        "maintenance_cadence_days": 180,
+        "maintenance_priority": "growth",
+        "manual_promotion_allowed": false,
+        "missing_source_count": 0,
+        "reason": "Corridor is source-backed enough for adjacent reviewer-led scouting.",
+        "review_only": true,
+        "sample_edges": [
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "GE",
+            "target_ticker": "BA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "RTX",
+            "target_ticker": "BA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "supply",
+            "source_backed": true,
+            "source_ticker": "HON",
+            "target_ticker": "BA"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "GE",
+            "target_ticker": "RTX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "competitor",
+            "source_backed": true,
+            "source_ticker": "HON",
+            "target_ticker": "RTX"
+          },
+          {
+            "age_state": "verified_recently",
+            "relationship_type": "ecosystem",
+            "source_backed": true,
+            "source_ticker": "HON",
+            "target_ticker": "GE"
+          }
+        ],
+        "source_backed_count": 6,
+        "stale_edge_count": 0,
+        "strong_edge_count": 1
+      }
+    ]
+  },
+  "ecosystem_expansion_planning": {
+    "adjacency_opportunities": [
+      {
+        "corridor_key": "ai_compute_foundry_cloud",
+        "density_score": 93.6,
+        "label": "AI compute/foundry/cloud",
+        "reason": "Dense source-backed corridor can guide reviewer-led adjacent sourcing; it does not imply missing relationships.",
+        "review_only": true,
+        "source_backed_count": 56
+      },
+      {
+        "corridor_key": "payment_networks_banks",
+        "density_score": 29.1,
+        "label": "Payment networks/banks",
+        "reason": "Dense source-backed corridor can guide reviewer-led adjacent sourcing; it does not imply missing relationships.",
+        "review_only": true,
+        "source_backed_count": 18
+      },
+      {
+        "corridor_key": "pbm_pharma_insurance",
+        "density_score": 28.8,
+        "label": "PBM/pharma/insurance",
+        "reason": "Dense source-backed corridor can guide reviewer-led adjacent sourcing; it does not imply missing relationships.",
+        "review_only": true,
+        "source_backed_count": 20
+      },
+      {
+        "corridor_key": "enterprise_saas_cloud",
+        "density_score": 21.45,
+        "label": "Enterprise SaaS/cloud",
+        "reason": "Dense source-backed corridor can guide reviewer-led adjacent sourcing; it does not imply missing relationships.",
+        "review_only": true,
+        "source_backed_count": 15
+      },
+      {
+        "corridor_key": "energy_infrastructure",
+        "density_score": 15.3,
+        "label": "Energy infrastructure",
+        "reason": "Dense source-backed corridor can guide reviewer-led adjacent sourcing; it does not imply missing relationships.",
+        "review_only": true,
+        "source_backed_count": 10
+      },
+      {
+        "corridor_key": "retail_consumer",
+        "density_score": 12.15,
+        "label": "Retail/consumer",
+        "reason": "Dense source-backed corridor can guide reviewer-led adjacent sourcing; it does not imply missing relationships.",
+        "review_only": true,
+        "source_backed_count": 9
+      },
+      {
+        "corridor_key": "aerospace_oem",
+        "density_score": 8.7,
+        "label": "Aerospace/OEM",
+        "reason": "Dense source-backed corridor can guide reviewer-led adjacent sourcing; it does not imply missing relationships.",
+        "review_only": true,
+        "source_backed_count": 6
+      }
+    ],
+    "isolated_hub_opportunities": [
+      {
+        "multi_corridor_count": 1,
+        "reason": "High hub score with low multi-corridor breadth; reviewer may scout adjacent source-backed context.",
+        "review_only": true,
+        "strategic_hub_score": 36.8,
+        "ticker": "NVDA"
+      },
+      {
+        "multi_corridor_count": 1,
+        "reason": "High hub score with low multi-corridor breadth; reviewer may scout adjacent source-backed context.",
+        "review_only": true,
+        "strategic_hub_score": 24.1,
+        "ticker": "TSM"
+      },
+      {
+        "multi_corridor_count": 1,
+        "reason": "High hub score with low multi-corridor breadth; reviewer may scout adjacent source-backed context.",
+        "review_only": true,
+        "strategic_hub_score": 23.6,
+        "ticker": "GOOGL"
+      },
+      {
+        "multi_corridor_count": 1,
+        "reason": "High hub score with low multi-corridor breadth; reviewer may scout adjacent source-backed context.",
+        "review_only": true,
+        "strategic_hub_score": 22.4,
+        "ticker": "INTC"
+      },
+      {
+        "multi_corridor_count": 1,
+        "reason": "High hub score with low multi-corridor breadth; reviewer may scout adjacent source-backed context.",
+        "review_only": true,
+        "strategic_hub_score": 20.4,
+        "ticker": "LLY"
+      },
+      {
+        "multi_corridor_count": 1,
+        "reason": "High hub score with low multi-corridor breadth; reviewer may scout adjacent source-backed context.",
+        "review_only": true,
+        "strategic_hub_score": 17.9,
+        "ticker": "MA"
+      },
+      {
+        "multi_corridor_count": 1,
+        "reason": "High hub score with low multi-corridor breadth; reviewer may scout adjacent source-backed context.",
+        "review_only": true,
+        "strategic_hub_score": 17.85,
+        "ticker": "AMD"
+      },
+      {
+        "multi_corridor_count": 1,
+        "reason": "High hub score with low multi-corridor breadth; reviewer may scout adjacent source-backed context.",
+        "review_only": true,
+        "strategic_hub_score": 17.85,
+        "ticker": "META"
+      }
+    ],
+    "manual_promotion_allowed": false,
+    "missing_corridor_companies": [],
+    "missing_supplier_chains": [],
+    "review_only": true,
+    "underrepresented_sectors": [],
+    "weak_ecosystem_density": []
+  },
+  "large_graph_scaling_readiness": {
+    "density_bucket": "dense_growth_graph",
+    "edge_count": 134,
+    "edge_to_node_density": 2.2333,
+    "hub_cache_size": 20,
+    "hub_cache_tickers": [
+      "NVDA",
+      "AAPL",
+      "MSFT",
+      "AMZN",
+      "BRK-B",
+      "TSM",
+      "GOOGL",
+      "INTC",
+      "ORCL",
+      "KO",
+      "LLY",
+      "MA",
+      "AMD",
+      "META",
+      "WMT",
+      "QCOM",
+      "CRM",
+      "AMAT",
+      "AXP",
+      "JNJ"
+    ],
+    "label_priority_seed_count": 20,
+    "label_priority_seed_tickers": [
+      "NVDA",
+      "AAPL",
+      "MSFT",
+      "AMZN",
+      "BRK-B",
+      "TSM",
+      "GOOGL",
+      "INTC",
+      "ORCL",
+      "KO",
+      "LLY",
+      "MA",
+      "AMD",
+      "META",
+      "WMT",
+      "QCOM"
+    ],
+    "node_count": 60,
+    "overlay_cache_keys": [
+      "ai_compute_foundry_cloud",
+      "payment_networks_banks",
+      "pbm_pharma_insurance",
+      "enterprise_saas_cloud",
+      "energy_infrastructure",
+      "retail_consumer",
+      "aerospace_oem"
+    ],
+    "recommended_label_limit": 28,
+    "render_heuristics": {
+      "mobile_compact_legend_required": false,
+      "prefer_route_and_overlay_labels": true,
+      "preserve_selected_hover_route_labels": true,
+      "throttle_unfocused_labels": true,
+      "weak_edge_threshold_lift": true
+    },
+    "review_only": true,
+    "route_cache_precompute_keys": [
+      "strongest",
+      "sec_backed",
+      "source_backed",
+      "ai_compute_foundry_cloud",
+      "payment_networks_banks",
+      "pbm_pharma_insurance",
+      "enterprise_saas_cloud",
+      "energy_infrastructure",
+      "retail_consumer",
+      "aerospace_oem"
+    ]
+  },
+  "metadata": {
+    "artifact_status": "review_only",
+    "auto_promotion_allowed": false,
+    "auto_trust_escalation_allowed": false,
+    "candidate_files_read": {
+      "candidate_relationships": "data/candidates/sec_relationship_candidates.json",
+      "cik_mappings": "data/candidates/cik_mappings.json",
+      "official_universe": "data/candidates/official_ticker_universe.json"
+    },
+    "generated_at_utc": "2026-05-17T06:35:01+00:00",
+    "generated_by": "scripts/source_registry_governance.py",
+    "network_calls": 0,
+    "output_path": "data/source_registry/source_governance_report.json",
+    "production_files_read": {
+      "companies": "data/companies.json",
+      "connections": "data/connections.json"
+    },
+    "production_write_allowed": false,
+    "registry_dir": "data/source_registry"
+  },
+  "openalex_expansion_safety": {
+    "artifact_record_counts": {
+      "cluster": 9,
+      "ecosystem": 94,
+      "institution": 0,
+      "topic": 0
+    },
+    "cache_lifecycle": {
+      "cache_entry_count": 0,
+      "cache_path": "data/cache/openalex/entity_resolution_cache.json",
+      "review_only": true,
+      "stale_cache_entry_count": 0,
+      "ttl_days": 45
+    },
+    "entity_resolution_tracking": {
+      "alias_conflict_count": 0,
+      "alias_conflict_samples": [],
+      "entity_resolution_rows": 94,
+      "review_only": true
+    },
+    "promotion_authority": false,
+    "relationship_authority": false,
+    "review_only": true,
+    "source_role": "context_only_reinforcement",
+    "source_role_visibility": [
+      "OpenAlex may reinforce context only.",
+      "OpenAlex does not prove a relationship.",
+      "OpenAlex records cannot promote companies or connections."
+    ],
+    "source_system": "OpenAlex"
+  },
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_calls": 0,
+    "production_writes": 0,
+    "review_only": true,
+    "unsafe_auto_promotion": false
+  },
+  "source_governance": {
+    "duplicate_source_reduction": [
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm",
+        "usage_count": 8
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm",
+        "usage_count": 7
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
+        "usage_count": 6
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
+        "usage_count": 6
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+        "usage_count": 6
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm",
+        "usage_count": 5
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm",
+        "usage_count": 5
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml",
+        "usage_count": 5
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
+        "usage_count": 5
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm",
+        "usage_count": 5
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm",
+        "usage_count": 5
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm",
+        "usage_count": 5
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm",
+        "usage_count": 5
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
+        "usage_count": 5
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000008/abbv-20251231.htm",
+        "usage_count": 4
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm",
+        "usage_count": 4
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/34088/000003408826000045/xom-20251231.htm",
+        "usage_count": 4
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/4962/000000496226000080/axp-20251231.htm",
+        "usage_count": 4
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm",
+        "usage_count": 4
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm",
+        "usage_count": 4
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/101829/000010182926000006/rtx-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/crm-20260131.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1163165/000116316526000009/cop-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/12927/000162828026004357/ba-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1318605/000162828026003952/tsla-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/meta-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000008/snow-20260131.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1739940/000173994026000006/ci-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/18230/000001823026000008/cat-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000008/ge-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/64803/000006480326000010/cvs-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/6951/000162828025056742/amat-20251026.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/70858/000007085826000157/bac-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/731766/000073176626000062/unh-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/773840/000077384026000013/hon-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/87347/000119312526021017/slb-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/927628/000092762826000024/cof-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/93410/000009341026000078/cvx-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/97745/000009774526000018/tmo-20251231.htm",
+        "usage_count": 3
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://ir.amd.com/financial-information/sec-filings/content/0000002488-24-000012/amd-20231230.htm",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.asml.com/en/investors/annual-report",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1327567/000132756725000027/panw-20250731.htm",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1341439/000095017025087926/orcl-20250531.htm",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1633917/000163391726000024/pypl-20251231.htm",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/avgo-20251102.htm",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/315189/000110465925122321/de-20251102x10k.htm",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000035/mcd-20251231.htm",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/707549/000070754925000075/lrcx-20250629.htm",
+        "usage_count": 2
+      },
+      {
+        "duplicate_reduction_allowed": true,
+        "production_write_allowed": false,
+        "review_only": true,
+        "url": "https://www.sec.gov/Archives/edgar/data/804328/000080432825000085/qcom-20250928.htm",
+        "usage_count": 2
+      }
+    ],
+    "invalid_source_detection": [],
+    "quality_summary": {
+      "duplicate_source_url_count": 55,
+      "invalid_source_url_count": 0,
+      "source_age_counts": {
+        "verified_recently": 134
+      },
+      "source_category_counts": {
+        "observed_source_host": 12,
+        "official_company_ir": 11,
+        "official_company_newsroom": 25,
+        "official_partner_customer_page": 5,
+        "official_sec_filing": 192
+      },
+      "stale_or_missing_date_count": 0
+    },
+    "review_only": true,
+    "source_aging": {
+      "verified_recently": 134
+    },
+    "source_quality_classification": {
+      "observed_source_host": 12,
+      "official_company_ir": 11,
+      "official_company_newsroom": 25,
+      "official_partner_customer_page": 5,
+      "official_sec_filing": 192
+    },
+    "stale_source_review_queue": []
+  },
+  "source_registry_visibility": {
+    "corridor_source_registry_path": "data/source_registry/corridor_source_registry.json",
+    "official_company_samples": [
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Consumer Devices, Services, and Silicon",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "Apple Inc.",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "registered_sec_root",
+        "review_only": true,
+        "sector": "Cloud / Big Tech",
+        "source_roots": [
+          {
+            "category": "official_sec_filing",
+            "cik": "0000320193",
+            "promotion_authority": false,
+            "relationship_authority": false,
+            "review_status": "approved_for_fetch",
+            "source_tier": 1,
+            "source_type": "sec_filing",
+            "url": "https://data.sec.gov/submissions/CIK0000320193.json"
+          }
+        ],
+        "ticker": "AAPL",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Pharmaceuticals",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "AbbVie Inc.",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "registered_sec_root",
+        "review_only": true,
+        "sector": "Healthcare / Pharma / PBM",
+        "source_roots": [
+          {
+            "category": "official_sec_filing",
+            "cik": "0001551152",
+            "promotion_authority": false,
+            "relationship_authority": false,
+            "review_status": "approved_for_fetch",
+            "source_tier": 1,
+            "source_type": "sec_filing",
+            "url": "https://data.sec.gov/submissions/CIK0001551152.json"
+          }
+        ],
+        "ticker": "ABBV",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Semiconductor Manufacturing Equipment",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "Applied Materials, Inc.",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "registered_sec_root",
+        "review_only": true,
+        "sector": "AI / Semiconductors",
+        "source_roots": [
+          {
+            "category": "official_sec_filing",
+            "cik": "0000006951",
+            "promotion_authority": false,
+            "relationship_authority": false,
+            "review_status": "approved_for_fetch",
+            "source_tier": 1,
+            "source_type": "sec_filing",
+            "url": "https://data.sec.gov/submissions/CIK0000006951.json"
+          }
+        ],
+        "ticker": "AMAT",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "CPUs, GPUs, and Data Center Accelerators",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "Advanced Micro Devices, Inc.",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "registered_sec_root",
+        "review_only": true,
+        "sector": "AI / Semiconductors",
+        "source_roots": [
+          {
+            "category": "official_sec_filing",
+            "cik": "0000002488",
+            "promotion_authority": false,
+            "relationship_authority": false,
+            "review_status": "approved_for_fetch",
+            "source_tier": 1,
+            "source_type": "sec_filing",
+            "url": "https://data.sec.gov/submissions/CIK0000002488.json"
+          }
+        ],
+        "ticker": "AMD",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "E-Commerce, Cloud, and Digital Infrastructure",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "Amazon.com, Inc.",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "registered_sec_root",
+        "review_only": true,
+        "sector": "Cloud / Big Tech",
+        "source_roots": [
+          {
+            "category": "official_sec_filing",
+            "cik": "0001018724",
+            "promotion_authority": false,
+            "relationship_authority": false,
+            "review_status": "approved_for_fetch",
+            "source_tier": 1,
+            "source_type": "sec_filing",
+            "url": "https://data.sec.gov/submissions/CIK0001018724.json"
+          }
+        ],
+        "ticker": "AMZN",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Semiconductor IP and CPU Architecture",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_sec_filing_root",
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "Arm Holdings plc",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "metadata_shell_missing_official_root",
+        "review_only": true,
+        "sector": "AI / Semiconductors",
+        "source_roots": [],
+        "ticker": "ARM",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Semiconductor Lithography Equipment",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_sec_filing_root",
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "ASML Holding N.V.",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "metadata_shell_missing_official_root",
+        "review_only": true,
+        "sector": "AI / Semiconductors",
+        "source_roots": [],
+        "ticker": "ASML",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Custom Silicon, Networking, and Infrastructure Software",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "Broadcom Inc.",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "registered_sec_root",
+        "review_only": true,
+        "sector": "AI / Semiconductors",
+        "source_roots": [
+          {
+            "category": "official_sec_filing",
+            "cik": "0001730168",
+            "promotion_authority": false,
+            "relationship_authority": false,
+            "review_status": "approved_for_fetch",
+            "source_tier": 1,
+            "source_type": "sec_filing",
+            "url": "https://data.sec.gov/submissions/CIK0001730168.json"
+          }
+        ],
+        "ticker": "AVGO",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Card Issuing and Payments Network",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "American Express Company",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "registered_sec_root",
+        "review_only": true,
+        "sector": "Payments / Financial Infrastructure",
+        "source_roots": [
+          {
+            "category": "official_sec_filing",
+            "cik": "0000004962",
+            "promotion_authority": false,
+            "relationship_authority": false,
+            "review_status": "approved_for_fetch",
+            "source_tier": 1,
+            "source_type": "sec_filing",
+            "url": "https://data.sec.gov/submissions/CIK0000004962.json"
+          }
+        ],
+        "ticker": "AXP",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Commercial Aerospace and Defense",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "The Boeing Company",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "registered_sec_root",
+        "review_only": true,
+        "sector": "Energy / Industrials",
+        "source_roots": [
+          {
+            "category": "official_sec_filing",
+            "cik": "0000012927",
+            "promotion_authority": false,
+            "relationship_authority": false,
+            "review_status": "approved_for_fetch",
+            "source_tier": 1,
+            "source_type": "sec_filing",
+            "url": "https://data.sec.gov/submissions/CIK0000012927.json"
+          }
+        ],
+        "ticker": "BA",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Consumer and Commercial Banking",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "Bank of America Corporation",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "registered_sec_root",
+        "review_only": true,
+        "sector": "Payments / Financial Infrastructure",
+        "source_roots": [
+          {
+            "category": "official_sec_filing",
+            "cik": "0000070858",
+            "promotion_authority": false,
+            "relationship_authority": false,
+            "review_status": "approved_for_fetch",
+            "source_tier": 1,
+            "source_type": "sec_filing",
+            "url": "https://data.sec.gov/submissions/CIK0000070858.json"
+          }
+        ],
+        "ticker": "BAC",
+        "trusted_partner_customer_roots": []
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "industry": "Diversified Holding Company and Insurance",
+        "manual_review_required": true,
+        "missing_registry_fields": [
+          "official_sec_filing_root",
+          "official_company_ir_url",
+          "official_newsroom_root",
+          "trusted_partner_customer_root"
+        ],
+        "name": "Berkshire Hathaway Inc.",
+        "official_company_ir_urls": [],
+        "official_newsroom_roots": [],
+        "production_write_allowed": false,
+        "registry_status": "metadata_shell_missing_official_root",
+        "review_only": true,
+        "sector": "Payments / Financial Infrastructure",
+        "source_roots": [],
+        "ticker": "BRK-B",
+        "trusted_partner_customer_roots": []
+      }
+    ],
+    "official_company_sources_path": "data/source_registry/official_company_sources.json",
+    "review_only": true,
+    "trusted_host_samples": [
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "amd.com",
+        "observed_sources": {
+          "production_connection": 2
+        },
+        "observed_url_count": 2,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.amd.com/en/newsroom/press-releases/2025-4-14-amd-achieves-first-tsmc-n2-product-silicon-milesto.html",
+          "https://www.amd.com/en/newsroom/press-releases/2024-5-21-amd-instinct-mi300x-accelerators-power-microsoft-a.html"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "apple.com",
+        "observed_sources": {
+          "production_connection": 1
+        },
+        "observed_url_count": 1,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.apple.com/newsroom/2023/11/apple-announces-expanded-partnership-with-amkor-for-silicon-packaging/"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_ir",
+        "category_label": "Official company IR source",
+        "host": "asml.com",
+        "observed_sources": {
+          "production_connection": 2
+        },
+        "observed_url_count": 2,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.asml.com/en/investors/annual-report"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "cadence.com",
+        "observed_sources": {
+          "production_connection": 1
+        },
+        "observed_url_count": 1,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.cadence.com/en_US/home/company/newsroom/press-releases/pr/2026/cadence-and-nvidia-unveil-accelerated-engineering-solutions.html"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_sec_filing",
+        "category_label": "Official SEC filing root",
+        "host": "data.sec.gov",
+        "observed_sources": {
+          "cik_mapping": 349
+        },
+        "observed_url_count": 349,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://data.sec.gov/submissions/CIK0001090872.json",
+          "https://data.sec.gov/submissions/CIK0000006201.json",
+          "https://data.sec.gov/submissions/CIK0000320193.json",
+          "https://data.sec.gov/submissions/CIK0001551152.json",
+          "https://data.sec.gov/submissions/CIK0001559720.json"
+        ],
+        "source_tier": 1,
+        "trust_effect": "classification_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_ir",
+        "category_label": "Official company IR source",
+        "host": "investor.marvell.com",
+        "observed_sources": {
+          "production_connection": 1
+        },
+        "observed_url_count": 1,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://investor.marvell.com/news-events/press-releases/detail/263/marvell-extends-data-infrastructure-leadership-with-tsmc-3nm-platform"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_ir",
+        "category_label": "Official company IR source",
+        "host": "investor.synopsys.com",
+        "observed_sources": {
+          "production_connection": 1
+        },
+        "observed_url_count": 1,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://investor.synopsys.com/news/news-details/2025/NVIDIA-and-Synopsys-Announce-Strategic-Partnership-to-Revolutionize-Engineering-and-Design/default.aspx"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_ir",
+        "category_label": "Official company IR source",
+        "host": "investor.tsmc.com",
+        "observed_sources": {
+          "production_connection": 1
+        },
+        "observed_url_count": 1,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://investor.tsmc.com/static/annualReports/2025/english/index.html"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_ir",
+        "category_label": "Official company IR source",
+        "host": "investors.broadcom.com",
+        "observed_sources": {
+          "production_connection": 2
+        },
+        "observed_url_count": 2,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://investors.broadcom.com/news-releases/news-release-details/broadcom-delivers-industrys-first-35d-f2f-technology-ai-xpus",
+          "https://investors.broadcom.com/news-releases/news-release-details/broadcom-announces-extended-partnership-meta-deploy-technology"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_ir",
+        "category_label": "Official company IR source",
+        "host": "investors.micron.com",
+        "observed_sources": {
+          "production_connection": 2
+        },
+        "observed_url_count": 2,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://investors.micron.com/news-releases/news-release-details/micron-high-volume-production-hbm4-designed-nvidia-vera-rubin",
+          "https://investors.micron.com/news-releases/news-release-details/micron-hbm-designed-leading-amd-ai-platform"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_ir",
+        "category_label": "Official company IR source",
+        "host": "ir.amd.com",
+        "observed_sources": {
+          "production_connection": 2
+        },
+        "observed_url_count": 2,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://ir.amd.com/financial-information/sec-filings/content/0000002488-24-000012/amd-20231230.htm"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "marvell.com",
+        "observed_sources": {
+          "production_connection": 2
+        },
+        "observed_url_count": 2,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.marvell.com/company/newsroom/marvell-expands-strategic-collaboration-aws-enable-accelerated-infrastructure-ai-cloud.html",
+          "https://www.marvell.com/company/newsroom/nvidia-ai-ecosystem-expands-marvell-joins-forces-through-nvlink-fusion.html"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "newsroom.bankofamerica.com",
+        "observed_sources": {
+          "production_connection": 1
+        },
+        "observed_url_count": 1,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://newsroom.bankofamerica.com/content/newsroom/press-releases/2025/12/bofa-offers-exclusive-fifa-world-cup-2026--custom-card-design-an.html"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "newsroom.intel.com",
+        "observed_sources": {
+          "production_connection": 4
+        },
+        "observed_url_count": 4,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://newsroom.intel.com/press-kit/intel-high-na-euv",
+          "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "nvidianews.nvidia.com",
+        "observed_sources": {
+          "production_connection": 4
+        },
+        "observed_url_count": 4,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://nvidianews.nvidia.com/news/nvidia-blackwell-platform-arrives-to-power-a-new-era-of-computing",
+          "https://nvidianews.nvidia.com/news/microsoft-nvidia-generative-ai-enterprises",
+          "https://nvidianews.nvidia.com/news/meta-builds-ai-infrastructure-with-nvidia",
+          "https://nvidianews.nvidia.com/news/oracle-nvidia-speed-ai-adoption"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "pr.tsmc.com",
+        "observed_sources": {
+          "production_connection": 5
+        },
+        "observed_url_count": 5,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://pr.tsmc.com/japanese/news/1597",
+          "https://pr.tsmc.com/english/news/1734",
+          "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "qualcomm.com",
+        "observed_sources": {
+          "production_connection": 1
+        },
+        "observed_url_count": 1,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.qualcomm.com/news/onq/2014/08/how-arm-architecture-and-snapdragon-processors-are-supporting-64-bit-future"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "salesforce.com",
+        "observed_sources": {
+          "production_connection": 2
+        },
+        "observed_url_count": 2,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.salesforce.com/news/stories/salesforce-cdp-snowflake-partnership/",
+          "https://www.salesforce.com/partners/snowflake/"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_sec_filing",
+        "category_label": "Official SEC filing root",
+        "host": "sec.gov",
+        "observed_sources": {
+          "candidate_relationship": 10,
+          "candidate_universe": 293,
+          "production_connection": 192
+        },
+        "observed_url_count": 495,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/avgo-20251102.htm",
+          "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm",
+          "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
+          "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+          "https://www.sec.gov/Archives/edgar/data/804328/000080432825000085/qcom-20250928.htm"
+        ],
+        "source_tier": 1,
+        "trust_effect": "classification_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "servicenow.com",
+        "observed_sources": {
+          "production_connection": 1
+        },
+        "observed_url_count": 1,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.servicenow.com/company/media/press-room/microsoft-and-servicenow-announce-strategic-partnership.html"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "slb.com",
+        "observed_sources": {
+          "production_connection": 2
+        },
+        "observed_url_count": 2,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.slb.com/news-and-insights/newsroom/press-release/2019/pr-2019-0917-slb-sis-microsoft-chevron",
+          "https://www.slb.com/newsroom/press-release/2022/pr-2022-03-07-conocophillips-delfi"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "snowflake.com",
+        "observed_sources": {
+          "production_connection": 3
+        },
+        "observed_url_count": 3,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.snowflake.com/en/news/press-releases/snowflake-and-aws-significantly-deepen-commitment-to-driving-customer-focused-innovation/",
+          "https://www.snowflake.com/en/blog/openflow-connector-oracle/",
+          "https://www.snowflake.com/en/news/press-releases/snowflake-expands-partnership-with-microsoft-to-bring-large-scale-generative-ai-models-and-increased-machine-learning-capabilities-to-the-data-cloud-2/"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_company_newsroom",
+        "category_label": "Official company newsroom",
+        "host": "usa.visa.com",
+        "observed_sources": {
+          "production_connection": 1
+        },
+        "observed_url_count": 1,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://usa.visa.com/about-visa/newsroom/press-releases.releaseId.9416.html"
+        ],
+        "source_tier": 1,
+        "trust_effect": "review_priority_only"
+      },
+      {
+        "auto_trust_escalation_allowed": false,
+        "category": "official_partner_customer_page",
+        "category_label": "Official partner/customer page",
+        "host": "paloaltonetworks.com",
+        "observed_sources": {
+          "production_connection": 2
+        },
+        "observed_url_count": 2,
+        "promotion_authority": false,
+        "relationship_authority": false,
+        "review_only": true,
+        "review_status": "registered_observed_host",
+        "sample_urls": [
+          "https://www.paloaltonetworks.com/partners/nextwave-for-csp/microsoft-azure-and-palo-alto-networks",
+          "https://www.paloaltonetworks.com/partners/nextwave-for-csp/aws-and-palo-alto-networks"
+        ],
+        "source_tier": 2,
+        "trust_effect": "review_priority_only"
+      }
+    ],
+    "trusted_source_hosts_path": "data/source_registry/trusted_source_hosts.json"
+  },
+  "strategic_hub_evolution": {
+    "hub_profiles": [
+      {
+        "bridge_significance_score": 8.4,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 16
+        },
+        "degree": 16,
+        "ecosystem_breadth_score": 5.4,
+        "multi_corridor_count": 1,
+        "name": "NVIDIA Corporation",
+        "repeated_exposure_score": 4,
+        "review_only": true,
+        "source_backed_edge_count": 16,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 36.8,
+        "ticker": "NVDA"
+      },
+      {
+        "bridge_significance_score": 15.2,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 7,
+          "enterprise_saas_cloud": 1,
+          "payment_networks_banks": 1
+        },
+        "degree": 9,
+        "ecosystem_breadth_score": 10.2,
+        "multi_corridor_count": 3,
+        "name": "Apple Inc.",
+        "repeated_exposure_score": 2,
+        "review_only": true,
+        "source_backed_edge_count": 9,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 35.65,
+        "ticker": "AAPL"
+      },
+      {
+        "bridge_significance_score": 10.0,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 4,
+          "enterprise_saas_cloud": 8
+        },
+        "degree": 12,
+        "ecosystem_breadth_score": 6.0,
+        "multi_corridor_count": 2,
+        "name": "Microsoft Corporation",
+        "repeated_exposure_score": 4,
+        "review_only": true,
+        "source_backed_edge_count": 12,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 34.8,
+        "ticker": "MSFT"
+      },
+      {
+        "bridge_significance_score": 14.0,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 4,
+          "enterprise_saas_cloud": 4,
+          "retail_consumer": 2
+        },
+        "degree": 10,
+        "ecosystem_breadth_score": 9.0,
+        "multi_corridor_count": 3,
+        "name": "Amazon.com, Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 10,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 33.7,
+        "ticker": "AMZN"
+      },
+      {
+        "bridge_significance_score": 12.4,
+        "corridor_exposures": {
+          "energy_infrastructure": 1,
+          "payment_networks_banks": 4
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 8.4,
+        "multi_corridor_count": 2,
+        "name": "Berkshire Hathaway Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 24.45,
+        "ticker": "BRK-B"
+      },
+      {
+        "bridge_significance_score": 7.2,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 10
+        },
+        "degree": 10,
+        "ecosystem_breadth_score": 4.2,
+        "multi_corridor_count": 1,
+        "name": "Taiwan Semiconductor Manufacturing Company Limited",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 10,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 24.1,
+        "ticker": "TSM"
+      },
+      {
+        "bridge_significance_score": 7.2,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 8
+        },
+        "degree": 8,
+        "ecosystem_breadth_score": 4.2,
+        "multi_corridor_count": 1,
+        "name": "Alphabet Inc.",
+        "repeated_exposure_score": 2,
+        "review_only": true,
+        "source_backed_edge_count": 8,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 23.6,
+        "ticker": "GOOGL"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 8
+        },
+        "degree": 8,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Intel Corporation",
+        "repeated_exposure_score": 2,
+        "review_only": true,
+        "source_backed_edge_count": 8,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 22.4,
+        "ticker": "INTC"
+      },
+      {
+        "bridge_significance_score": 10.0,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 2,
+          "enterprise_saas_cloud": 3
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 6.0,
+        "multi_corridor_count": 2,
+        "name": "Oracle Corporation",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 22.05,
+        "ticker": "ORCL"
+      },
+      {
+        "bridge_significance_score": 10.0,
+        "corridor_exposures": {
+          "payment_networks_banks": 1,
+          "retail_consumer": 3
+        },
+        "degree": 4,
+        "ecosystem_breadth_score": 6.0,
+        "multi_corridor_count": 2,
+        "name": "The Coca-Cola Company",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 4,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 20.8,
+        "ticker": "KO"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "pbm_pharma_insurance": 8
+        },
+        "degree": 8,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Eli Lilly and Company",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 8,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 20.4,
+        "ticker": "LLY"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "payment_networks_banks": 6
+        },
+        "degree": 6,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Mastercard Incorporated",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 6,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 17.9,
+        "ticker": "MA"
+      },
+      {
+        "bridge_significance_score": 7.2,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 4.2,
+        "multi_corridor_count": 1,
+        "name": "Advanced Micro Devices, Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 17.85,
+        "ticker": "AMD"
+      },
+      {
+        "bridge_significance_score": 7.2,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 4.2,
+        "multi_corridor_count": 1,
+        "name": "Meta Platforms, Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 17.85,
+        "ticker": "META"
+      },
+      {
+        "bridge_significance_score": 7.2,
+        "corridor_exposures": {
+          "retail_consumer": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 4.2,
+        "multi_corridor_count": 1,
+        "name": "Walmart Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 17.85,
+        "ticker": "WMT"
+      },
+      {
+        "bridge_significance_score": 8.4,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 4
+        },
+        "degree": 4,
+        "ecosystem_breadth_score": 5.4,
+        "multi_corridor_count": 1,
+        "name": "QUALCOMM Incorporated",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 4,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 17.8,
+        "ticker": "QCOM"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "enterprise_saas_cloud": 4
+        },
+        "degree": 4,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Salesforce, Inc.",
+        "repeated_exposure_score": 2,
+        "review_only": true,
+        "source_backed_edge_count": 4,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 17.4,
+        "ticker": "CRM"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Applied Materials, Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.65,
+        "ticker": "AMAT"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "payment_networks_banks": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "American Express Company",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.65,
+        "ticker": "AXP"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "pbm_pharma_insurance": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Johnson & Johnson",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.65,
+        "ticker": "JNJ"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "payment_networks_banks": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "JPMorgan Chase & Co.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.65,
+        "ticker": "JPM"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "pbm_pharma_insurance": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Merck & Co., Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.65,
+        "ticker": "MRK"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "pbm_pharma_insurance": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Pfizer Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.65,
+        "ticker": "PFE"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "enterprise_saas_cloud": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Snowflake Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.65,
+        "ticker": "SNOW"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "payment_networks_banks": 5
+        },
+        "degree": 5,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Visa Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 5,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.65,
+        "ticker": "V"
+      },
+      {
+        "bridge_significance_score": 7.2,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 4
+        },
+        "degree": 4,
+        "ecosystem_breadth_score": 4.2,
+        "multi_corridor_count": 1,
+        "name": "Broadcom Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 4,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.6,
+        "ticker": "AVGO"
+      },
+      {
+        "bridge_significance_score": 7.2,
+        "corridor_exposures": {
+          "retail_consumer": 4
+        },
+        "degree": 4,
+        "ecosystem_breadth_score": 4.2,
+        "multi_corridor_count": 1,
+        "name": "Costco Wholesale Corporation",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 4,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.6,
+        "ticker": "COST"
+      },
+      {
+        "bridge_significance_score": 7.2,
+        "corridor_exposures": {
+          "energy_infrastructure": 4
+        },
+        "degree": 4,
+        "ecosystem_breadth_score": 4.2,
+        "multi_corridor_count": 1,
+        "name": "Chevron Corporation",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 4,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.6,
+        "ticker": "CVX"
+      },
+      {
+        "bridge_significance_score": 7.2,
+        "corridor_exposures": {
+          "ai_compute_foundry_cloud": 4
+        },
+        "degree": 4,
+        "ecosystem_breadth_score": 4.2,
+        "multi_corridor_count": 1,
+        "name": "Marvell Technology, Inc.",
+        "repeated_exposure_score": 0,
+        "review_only": true,
+        "source_backed_edge_count": 4,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.6,
+        "ticker": "MRVL"
+      },
+      {
+        "bridge_significance_score": 6.0,
+        "corridor_exposures": {
+          "energy_infrastructure": 3
+        },
+        "degree": 3,
+        "ecosystem_breadth_score": 3.0,
+        "multi_corridor_count": 1,
+        "name": "Caterpillar Inc.",
+        "repeated_exposure_score": 2,
+        "review_only": true,
+        "source_backed_edge_count": 3,
+        "source_backed_hub_quality": "strong",
+        "source_backed_ratio": 1.0,
+        "strategic_hub_score": 16.15,
+        "ticker": "CAT"
+      }
+    ],
+    "review_only": true
+  },
+  "summary": {
+    "corridor_count": 7,
+    "density_bucket": "dense_growth_graph",
+    "official_company_registry_count": 60,
+    "openalex_alias_conflict_count": 0,
+    "production_company_count": 60,
+    "production_edge_count": 134,
+    "registered_sec_root_count": 56,
+    "review_only": true,
+    "source_category_count": 6,
+    "stale_source_review_count": 0,
+    "trusted_source_host_count": 34,
+    "universe_blocked_existing_count": 0,
+    "universe_candidate_count": 293,
+    "universe_ready_for_review_count": 293
+  },
+  "universe_expansion": {
+    "alias_conflict_detection": {
+      "alias_conflict_count": 0,
+      "review_only": true,
+      "sample_conflicts": []
+    },
+    "candidate_universe_count": 293,
+    "cik_mapping_count": 349,
+    "duplicate_ticker_prevention": {
+      "duplicate_in_candidate_file_count": 0,
+      "duplicate_in_candidate_file_tickers": [],
+      "duplicate_with_production_count": 0,
+      "duplicate_with_production_tickers": [],
+      "production_write_allowed": false,
+      "review_only": true
+    },
+    "missing_metadata_detection": {
+      "missing_metadata_count": 0,
+      "review_only": true,
+      "sample_rows": []
+    },
+    "readiness_rows": [
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Zoetis Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "ZTS"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Zscaler, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "ZS"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "ZIONS BANCORPORATION, NATIONAL ASSOCIATION /UT/",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "ZION"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "ZIMMER BIOMET HOLDINGS, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "ZBH"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "YUM BRANDS INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "YUM"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Xylem Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "XYL"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "WEST PHARMACEUTICAL SERVICES INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WST"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "BERKLEY W R CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WRB"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "WILLIAMS COMPANIES, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WMB"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "WASTE MANAGEMENT INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WM"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "WELLS FARGO & COMPANY/MN",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WFC"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "WESTERN DIGITAL CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WDC"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Workday, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WDAY"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Warner Bros. Discovery, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WBD"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "WATERS CORP /DE/",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WAT"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "WESTINGHOUSE AIR BRAKE TECHNOLOGIES CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "WAB"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "VERIZON COMMUNICATIONS INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "VZ"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Viatris Inc",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "VTRS"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "VERTEX PHARMACEUTICALS INC / MA",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "VRTX"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "VERISIGN INC/CA",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "VRSN"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Verisk Analytics, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "VRSK"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Viper Energy, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "VNOM"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "VALERO ENERGY CORP/TX",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "VLO"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "US BANCORP DE",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "USB"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "UNITED RENTALS, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "URI"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "UNITED PARCEL SERVICE INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "UPS"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "UNION PACIFIC CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "UNP"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "UNIVERSAL HEALTH SERVICES INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "UHS"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Uber Technologies, Inc",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "UBER"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "United Airlines Holdings, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "UAL"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TYLER TECHNOLOGIES INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TYL"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TEXTRON INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TXT"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TEXAS INSTRUMENTS INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TXN"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TAKE TWO INTERACTIVE SOFTWARE INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TTWO"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TotalEnergies SE",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TTE"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Trane Technologies plc",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TT"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TRAVELERS COMPANIES, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TRV"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TC ENERGY CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TRP"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PRICE T ROWE GROUP INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TROW"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Targa Resources Corp.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TRGP"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Texas Pacific Land Corp",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TPL"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "T-Mobile US, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TMUS"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TJX COMPANIES INC /DE/",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TJX"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TARGET CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TGT"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TELEFLEX INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TFX"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TRUIST FINANCIAL CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TFC"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TERADYNE, INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TER"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TE Connectivity plc",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TEL"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "BIO-TECHNE Corp",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TECH"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Atlassian Corp",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TEAM"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "TransDigm Group INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TDG"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "MOLSON COORS BEVERAGE CO",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "TAP"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "AT&T INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "T"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "STRYKER CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SYK"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Synchrony Financial",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SYF"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "SKYWORKS SOLUTIONS, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SWKS"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "STANLEY BLACK & DECKER, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SWK"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Sunoco LP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SUN"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "SUNCOR ENERGY INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SU"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "CONSTELLATION BRANDS, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "STZ"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Seagate Technology Holdings plc",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "STX"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "STATE STREET CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "STT"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "STERIS plc",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "STE"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "S&P Global Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SPGI"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Super Micro Computer, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SMCI"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "SHOPIFY INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SHOP"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Shell plc",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SHEL"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "SCHWAB CHARLES CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SCHW"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "STARBUCKS CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "SBUX"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "REVVITY, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "RVTY"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "REPUBLIC SERVICES, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "RSG"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "RANGE RESOURCES CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "RRC"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "ROSS STORES, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "ROST"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "ROPER TECHNOLOGIES INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "ROP"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "ROCKWELL AUTOMATION, INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "ROK"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "RESMED INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "RMD"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "RAYMOND JAMES FINANCIAL INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "RJF"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Rivian Automotive, Inc. / DE",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "RIVN"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "REGIONS FINANCIAL CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "RF"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "REGENERON PHARMACEUTICALS, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "REGN"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "ROYAL CARIBBEAN CRUISES LTD",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "RCL"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Qorvo, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "QRVO"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PTC INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PTC"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Phillips 66",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PSX"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Permian Resources Corp",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PR"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "INSULET CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PODD"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PENTAIR plc",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PNR"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PNC FINANCIAL SERVICES GROUP, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PNC"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Philip Morris International Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PM"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Palantir Technologies Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PLTR"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Parker-Hannifin Corp",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PH"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PROGRESSIVE CORP/OH/",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PGR"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PROCTER & GAMBLE Co",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PG"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PEPSICO INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PEP"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PACCAR INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PCAR"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PAYCHEX INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PAYX"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "UiPath, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PATH"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "PLAINS ALL AMERICAN PIPELINE LP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "PAA"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "OCCIDENTAL PETROLEUM CORP /DE/",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "OXY"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "BLUE OWL CAPITAL INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "OWL"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Otis Worldwide Corp",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "OTIS"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "ON SEMICONDUCTOR CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "ON"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "OMNICOM GROUP INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "OMC"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Okta, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "OKTA"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "ONEOK INC /NEW/",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "OKE"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "OLD DOMINION FREIGHT LINE, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "ODFL"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NXP Semiconductors N.V.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NXPI"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NORTHERN TRUST CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NTRS"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NetApp, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NTAP"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NORFOLK SOUTHERN CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NSC"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NOV Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NOV"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NORTHROP GRUMMAN CORP /DE/",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NOC"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NIKE, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NKE"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NETFLIX INC",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NFLX"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Cloudflare, Inc.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NET"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NORDSON CORP",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NDSN"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "Nasdaq",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "NASDAQ, INC.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NDAQ"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Norwegian Cruise Line Holdings Ltd.",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "NCLH"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "Matador Resources Co",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "MTDR"
+      },
+      {
+        "blockers": [],
+        "ecosystem_fit_state": "requires_reviewer_sector_and_corridor_assignment",
+        "exchange": "NYSE",
+        "has_cik_mapping": true,
+        "has_valid_listing_source": true,
+        "manual_promotion_allowed": false,
+        "name": "METTLER TOLEDO INTERNATIONAL INC/",
+        "readiness_state": "ready_for_review",
+        "review_only": true,
+        "source_readiness_score": 100,
+        "source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+        "ticker": "MTD"
+      }
+    ],
+    "safety": {
+      "auto_promotion_allowed": false,
+      "production_writes": 0,
+      "review_only": true
+    },
+    "source_readiness_scoring": {
+      "blocked_existing_production_count": 0,
+      "ready_for_review_count": 293,
+      "review_only": true,
+      "state_counts": {
+        "ready_for_review": 293
+      }
+    }
+  }
+}

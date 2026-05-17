@@ -1,0 +1,184 @@
+{
+  "corridors": [
+    {
+      "corridor_key": "ai_compute_foundry_cloud",
+      "label": "AI compute/foundry/cloud",
+      "maintenance_cadence_days": 120,
+      "manual_promotion_allowed": false,
+      "review_keywords": [
+        "ai",
+        "gpu",
+        "accelerator",
+        "hbm",
+        "foundry",
+        "cloud",
+        "data center",
+        "semiconductor",
+        "custom silicon",
+        "memory",
+        "lithography"
+      ],
+      "review_only": true,
+      "source_categories": [
+        "official_sec_filing",
+        "official_company_ir",
+        "official_company_newsroom",
+        "official_partner_customer_page"
+      ]
+    },
+    {
+      "corridor_key": "payment_networks_banks",
+      "label": "Payment networks/banks",
+      "maintenance_cadence_days": 180,
+      "manual_promotion_allowed": false,
+      "review_keywords": [
+        "payment",
+        "payments",
+        "card",
+        "issuer",
+        "bank",
+        "banking",
+        "credit",
+        "network",
+        "merchant"
+      ],
+      "review_only": true,
+      "source_categories": [
+        "official_sec_filing",
+        "official_company_ir",
+        "official_company_newsroom"
+      ]
+    },
+    {
+      "corridor_key": "pbm_pharma_insurance",
+      "label": "PBM/pharma/insurance",
+      "maintenance_cadence_days": 180,
+      "manual_promotion_allowed": false,
+      "review_keywords": [
+        "pbm",
+        "pharma",
+        "pharmaceutical",
+        "drug",
+        "formulary",
+        "reimbursement",
+        "managed care",
+        "insurance",
+        "biotech",
+        "life sciences"
+      ],
+      "review_only": true,
+      "source_categories": [
+        "official_sec_filing",
+        "official_company_ir",
+        "official_company_newsroom"
+      ]
+    },
+    {
+      "corridor_key": "aerospace_oem",
+      "label": "Aerospace/OEM",
+      "maintenance_cadence_days": 180,
+      "manual_promotion_allowed": false,
+      "review_keywords": [
+        "aerospace",
+        "aircraft",
+        "engine",
+        "avionics",
+        "defense",
+        "boeing",
+        "oem",
+        "propulsion"
+      ],
+      "review_only": true,
+      "source_categories": [
+        "official_sec_filing",
+        "official_company_ir",
+        "official_company_newsroom",
+        "official_partner_customer_page"
+      ]
+    },
+    {
+      "corridor_key": "energy_infrastructure",
+      "label": "Energy infrastructure",
+      "maintenance_cadence_days": 180,
+      "manual_promotion_allowed": false,
+      "review_keywords": [
+        "energy",
+        "oil",
+        "gas",
+        "power",
+        "grid",
+        "oilfield",
+        "pipeline",
+        "utility",
+        "data center power"
+      ],
+      "review_only": true,
+      "source_categories": [
+        "official_sec_filing",
+        "official_company_ir",
+        "official_company_newsroom"
+      ]
+    },
+    {
+      "corridor_key": "enterprise_saas_cloud",
+      "label": "Enterprise SaaS/cloud",
+      "maintenance_cadence_days": 180,
+      "manual_promotion_allowed": false,
+      "review_keywords": [
+        "saas",
+        "workflow",
+        "crm",
+        "productivity",
+        "data platform",
+        "cloud security",
+        "enterprise software",
+        "cloud"
+      ],
+      "review_only": true,
+      "source_categories": [
+        "official_sec_filing",
+        "official_company_ir",
+        "official_company_newsroom",
+        "official_partner_customer_page"
+      ]
+    },
+    {
+      "corridor_key": "retail_consumer",
+      "label": "Retail/consumer",
+      "maintenance_cadence_days": 240,
+      "manual_promotion_allowed": false,
+      "review_keywords": [
+        "retail",
+        "consumer",
+        "e-commerce",
+        "ecommerce",
+        "warehouse",
+        "grocery",
+        "restaurant",
+        "beverage",
+        "distribution"
+      ],
+      "review_only": true,
+      "source_categories": [
+        "official_sec_filing",
+        "official_company_ir",
+        "official_company_newsroom",
+        "official_partner_customer_page"
+      ]
+    }
+  ],
+  "metadata": {
+    "artifact_status": "review_owned_registry",
+    "auto_promotion_allowed": false,
+    "generated_at_utc": "2026-05-17T06:35:01+00:00",
+    "generated_by": "scripts/source_registry_governance.py",
+    "notes": [
+      "Corridor definitions organize source maintenance only.",
+      "Corridor membership is derived from current graph metadata during report generation.",
+      "This file does not create or promote relationships."
+    ],
+    "production_write_allowed": false,
+    "relationship_authority": false,
+    "schema_version": 1
+  }
+}

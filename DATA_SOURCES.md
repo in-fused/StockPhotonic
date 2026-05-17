@@ -6,9 +6,10 @@ Document: StockPhotonic Data Sources. Production graph data is static JSON: `dat
 - 3D Network capabilities: Renders the same production dataset with Three.js; it does not create, promote, or alter data.
 - Source Workbench pipeline: Read-only browser surface for local source commands, candidate review, triage artifacts, and data expansion preflight. It can display static artifact contents served from the repo, but cannot run ingestion or write production data.
 - SEC ingestion + candidate system: SEC cache, filing inspection, signal extraction, candidate preview/write, job, schedule, and policy scripts operate locally and keep staged records under `data/candidates/`.
-- Scheduled review orchestration: GitHub Actions and local scripts can refresh review-only SEC, OpenAlex, preflight, source coverage, and pipeline summary artifacts. They upload artifacts only and do not commit or promote production graph data.
+- Scheduled review orchestration: GitHub Actions and local scripts can refresh review-only SEC, OpenAlex, preflight, source coverage, source governance, and pipeline summary artifacts. They upload artifacts only and do not commit or promote production graph data.
 - OpenAlex intelligence layer: Local/script-side enrichment for ecosystem, topic, institution, and clustering hints. OpenAlex is context, not relationship proof or promotion authority.
 - Tiered evidence policy: Browser helpers and review-only scripts classify relationship display state as `VERIFIED`, `STRONG_INFERRED`, `CONTEXT_ONLY`, or `NEEDS_REVIEW`. These labels improve graph clarity and reviewer priority, but never authorize automatic promotion.
+- Source registry governance: Reviewer-owned source registry artifacts under `data/source_registry/` track official source roots, trusted host visibility, corridor maintenance, universe expansion readiness, graph scaling state, and OpenAlex safety. These artifacts are not production graph data.
 - Promotion + validation flow: SEC-backed candidates can become production edges only after preview, manual review, explicit promotion, and validation.
 
 ## CORE RULES
@@ -18,6 +19,7 @@ Document: StockPhotonic Data Sources. Production graph data is static JSON: `dat
 - Candidate -> preview -> manual promotion only.
 - No backend in the current app.
 - `data/companies.json` and `data/connections.json` are the production source of truth.
+- `data/source_registry/` is review governance only and cannot create relationships.
 
 ## HOW DATA ENTERS THE SYSTEM
 
@@ -28,6 +30,23 @@ Document: StockPhotonic Data Sources. Production graph data is static JSON: `dat
 5. Promotion preview identifies which candidates are safe to consider.
 6. Manual promotion can append validated edges to `data/connections.json`.
 7. `python scripts/validate_data.py` must pass after production changes.
+
+## SOURCE REGISTRY GOVERNANCE
+
+D146 introduces `scripts/source_registry_governance.py`:
+
+```text
+production JSON + candidate artifacts + OpenAlex cache -> source registry report -> Workbench governance console
+```
+
+Generated files:
+
+- `data/source_registry/official_company_sources.json`
+- `data/source_registry/trusted_source_hosts.json`
+- `data/source_registry/corridor_source_registry.json`
+- `data/source_registry/source_governance_report.json`
+
+The registry validates URL shape, source age, duplicate URL usage, host categories, universe expansion blockers, corridor maintenance queues, strategic hub scores, and large-graph readiness. It performs no network calls and writes no production graph files.
 
 ## SEC PIPELINE SUMMARY
 

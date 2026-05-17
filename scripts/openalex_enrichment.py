@@ -681,6 +681,7 @@ def resolve_company_institutions(
             "company_name": clean_string(company.get("name")),
             "query": "",
             "status": "missing_query",
+            "entity_resolution": entity_resolution_state(company, [], "missing_query"),
             "institution_candidates": [],
         }
 
@@ -698,8 +699,61 @@ def resolve_company_institutions(
         "company_name": clean_string(company.get("name")),
         "query": query,
         "status": status,
+        "entity_resolution": entity_resolution_state(company, results, status),
         "institution_candidates": results[: args.per_page],
     }
+
+
+def entity_resolution_state(
+    company: dict[str, Any],
+    results: list[dict[str, Any]],
+    status: str,
+) -> dict[str, Any]:
+    expected_name = normalize_name_for_resolution(company.get("name"))
+    ticker = normalize_ticker(company.get("ticker"))
+    candidates: list[dict[str, Any]] = []
+    alias_conflicts: list[dict[str, Any]] = []
+    for result in results[:5]:
+        display_name = clean_string(result.get("display_name"))
+        normalized_display = normalize_name_for_resolution(display_name)
+        name_match = bool(expected_name and normalized_display and expected_name in normalized_display)
+        candidate = {
+            "openalex_id": clean_string(result.get("id")),
+            "display_name": display_name,
+            "works_count": safe_int(result.get("works_count")),
+            "name_match": name_match,
+            "review_only": True,
+        }
+        candidates.append(candidate)
+        if display_name and expected_name and not name_match:
+            alias_conflicts.append(candidate)
+    if not results:
+        review_state = "unresolved_context"
+    elif alias_conflicts and not any(candidate["name_match"] for candidate in candidates):
+        review_state = "alias_conflict_review"
+    elif alias_conflicts:
+        review_state = "mixed_alias_review"
+    else:
+        review_state = "context_resolved"
+    return {
+        "ticker": ticker,
+        "company_name": clean_string(company.get("name")),
+        "query_status": status,
+        "candidate_count": len(results),
+        "review_state": review_state,
+        "candidate_summaries": candidates,
+        "alias_conflict_count": len(alias_conflicts),
+        "relationship_authority": False,
+        "promotion_authority": False,
+        "review_only": True,
+    }
+
+
+def normalize_name_for_resolution(value: Any) -> str:
+    text = clean_string(value) or ""
+    text = COMPANY_SUFFIX_PATTERN.sub("", text)
+    text = re.sub(r"[^a-z0-9]+", " ", text.lower())
+    return " ".join(text.split())
 
 
 def resolve_ecosystem_topics(
@@ -828,6 +882,15 @@ def build_ecosystem_artifact(
                     "match_reasons": match["match_reasons"],
                     "openalex_topic_candidates": topics,
                     "openalex_institution_candidates": institution_candidates[:3],
+                    "entity_resolution": resolution.get("entity_resolution")
+                    if isinstance(resolution.get("entity_resolution"), dict)
+                    else {
+                        "ticker": ticker,
+                        "review_state": "unresolved_context",
+                        "relationship_authority": False,
+                        "promotion_authority": False,
+                        "review_only": True,
+                    },
                     "confidence_label": confidence_label(
                         match_count=len(match["match_reasons"]),
                         openalex_count=len(topics) + len(institution_candidates),
@@ -1209,6 +1272,11 @@ def build_artifacts(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str,
         )
 
     generated_at = datetime.now(timezone.utc).replace(microsecond=0)
+    entity_resolution_states = [
+        resolution.get("entity_resolution")
+        for resolution in institution_resolutions.values()
+        if isinstance(resolution.get("entity_resolution"), dict)
+    ]
     metadata = {
         "artifact_status": "review_only",
         "generated_by": "scripts/openalex_enrichment.py",
@@ -1232,10 +1300,21 @@ def build_artifacts(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str,
         "max_entities": args.max_entities,
         "per_page": args.per_page,
         "cache_ttl_days": args.cache_ttl_days,
+        "entity_resolution_tracked_count": len(entity_resolution_states),
+        "entity_resolution_alias_conflict_count": sum(
+            int(state.get("alias_conflict_count") or 0)
+            for state in entity_resolution_states
+        ),
+        "entity_resolution_unresolved_count": sum(
+            1
+            for state in entity_resolution_states
+            if state.get("review_state") == "unresolved_context"
+        ),
         "notes": [
             "OpenAlex records are review-only enrichment hints.",
             "OpenAlex does not prove production relationships.",
             "No candidate is promoted by this artifact.",
+            "Entity resolution state is visible for alias review only.",
         ],
     }
 

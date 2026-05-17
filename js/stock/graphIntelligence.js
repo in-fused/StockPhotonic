@@ -317,6 +317,7 @@
         });
         const evidenceGaps = buildEvidenceGapDiscovery(context);
         const defaultDiscovery = buildDefaultDiscoveryModel(context);
+        const largeGraphScaling = buildLargeGraphScalingSummary(context);
 
         return {
             overlay,
@@ -325,7 +326,8 @@
             sourceCoverage,
             guidedDiscovery,
             evidenceGaps,
-            defaultDiscovery
+            defaultDiscovery,
+            largeGraphScaling
         };
     }
 
@@ -1235,6 +1237,15 @@
             cross_sector_anchor: 'Cross-sector anchor'
         }[role] || role));
         const sourceBackedRatio = items.length ? sourceBackedCount / items.length : 0;
+        const multiCorridorScore = corridorCount * 2.2;
+        const repeatedExposureScore = strongEdgeCount * 0.85 + Math.max(0, degree - 3) * 0.35;
+        const sourceBackedHubQuality = sourceBackedRatio >= 0.75
+            ? 'strong_source_backed_hub'
+            : sourceBackedRatio >= 0.45
+                ? 'mixed_source_backed_hub'
+                : 'needs_source_review';
+        const ecosystemBreadthScore = ecosystems.length * 1.4 + sectors.size * 1.1 + groups.size * 0.8;
+        const bridgeSignificanceScore = ecosystemBreadthScore + multiCorridorScore + sourceBackedRatio * 3;
         const score =
             degree * 1.25 +
             sectors.size * 1.6 +
@@ -1242,6 +1253,8 @@
             ecosystems.length * 1.2 +
             strongEdgeCount * 0.9 +
             sourceBackedRatio * 4 +
+            multiCorridorScore +
+            repeatedExposureScore * 0.35 +
             (seededHub ? 5 : 0);
         const primaryReason = STRATEGIC_HUB_REASONS[ticker] ||
             (ecosystems[0]
@@ -1261,13 +1274,38 @@
             degree,
             ecosystemCount: ecosystems.length,
             corridorCount,
+            multiCorridorScore,
             sectorCount: sectors.size,
             industryGroupCount: groups.size,
             sourceBackedCount,
             sourceBackedRatio,
+            sourceBackedHubQuality,
+            repeatedExposureScore,
+            ecosystemBreadthScore,
+            bridgeSignificanceScore,
             strongEdgeCount,
             seededHub
         };
+    }
+
+    function buildLargeGraphScalingSummary(context) {
+        const scalingTools = window.StockPhotonicStock?.graphScaling;
+        const model = scalingTools?.buildScalingModel?.({
+            ...context,
+            stockGraphIntelligence: window.StockPhotonicStock?.graphIntelligence
+        });
+        if (!model) {
+            const nodeCount = (context.visibleNodes || []).length;
+            const edgeCount = (context.visibleLinks || []).length;
+            return {
+                density: { key: 'core', label: 'Core graph', nodeCount, edgeCount, ratio: edgeCount / Math.max(1, nodeCount) },
+                hubSummaries: [],
+                corridorBuckets: [],
+                routeSummary: { visibleEdgeCount: edgeCount },
+                labelPriorityIds: []
+            };
+        }
+        return model;
     }
 
     function getNodeVisualMeta(node, context) {
@@ -1540,6 +1578,7 @@
         getRouteLabel,
         getStrategicHubProfile,
         getStrategicHubProfiles,
+        buildLargeGraphScalingSummary,
         getNodeVisualMeta,
         getLinkVisualMeta,
         getNodeRole,

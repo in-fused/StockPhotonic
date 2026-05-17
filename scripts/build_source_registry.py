@@ -13,7 +13,15 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE_REGISTRY_DIR = ROOT / "data" / "source_registry"
+OFFICIAL_COMPANY_SOURCES_PATH = SOURCE_REGISTRY_DIR / "official_company_sources.json"
+TRUSTED_SOURCE_HOSTS_PATH = SOURCE_REGISTRY_DIR / "trusted_source_hosts.json"
+CORRIDOR_SOURCE_REGISTRY_PATH = SOURCE_REGISTRY_DIR / "corridor_source_registry.json"
 
 
 RELATIONSHIP_CATEGORIES: set[str] = {
@@ -253,6 +261,39 @@ def registry_payload() -> dict[str, Any]:
         "relationship_categories": sorted(RELATIONSHIP_CATEGORIES),
         "production_relationship_types": sorted(PRODUCTION_RELATIONSHIP_TYPES),
         "required_candidate_fields": list(REQUIRED_CANDIDATE_FIELDS),
+        "reviewer_owned_registry": load_reviewer_owned_registry(),
+    }
+
+
+def load_optional_json(path: Path) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    with path.open("r", encoding="utf-8") as file:
+        payload = json.load(file)
+    return payload if isinstance(payload, dict) else None
+
+
+def load_reviewer_owned_registry() -> dict[str, Any]:
+    official = load_optional_json(OFFICIAL_COMPANY_SOURCES_PATH) or {}
+    trusted_hosts = load_optional_json(TRUSTED_SOURCE_HOSTS_PATH) or {}
+    corridors = load_optional_json(CORRIDOR_SOURCE_REGISTRY_PATH) or {}
+    return {
+        "official_company_source_count": len(official.get("records", []))
+        if isinstance(official.get("records"), list)
+        else 0,
+        "trusted_source_host_count": len(trusted_hosts.get("records", []))
+        if isinstance(trusted_hosts.get("records"), list)
+        else 0,
+        "corridor_registry_count": len(corridors.get("corridors", []))
+        if isinstance(corridors.get("corridors"), list)
+        else 0,
+        "paths": {
+            "official_company_sources": "data/source_registry/official_company_sources.json",
+            "trusted_source_hosts": "data/source_registry/trusted_source_hosts.json",
+            "corridor_source_registry": "data/source_registry/corridor_source_registry.json",
+        },
+        "production_write_allowed": False,
+        "auto_trust_escalation_allowed": False,
     }
 
 
@@ -267,6 +308,11 @@ def print_summary() -> None:
             f"{relationship_count} allowed relationship type(s)"
         )
     print(f"Candidate fields: {', '.join(REQUIRED_CANDIDATE_FIELDS)}")
+    reviewer_registry = load_reviewer_owned_registry()
+    print("Reviewer-owned registry")
+    print(f"- official company records: {reviewer_registry['official_company_source_count']}")
+    print(f"- trusted source hosts: {reviewer_registry['trusted_source_host_count']}")
+    print(f"- corridor registries: {reviewer_registry['corridor_registry_count']}")
 
 
 def main() -> int:

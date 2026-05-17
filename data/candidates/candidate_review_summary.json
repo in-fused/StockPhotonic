@@ -540,7 +540,7 @@
   "metadata": {
     "artifact_status": "review_only",
     "candidate_file": "data\\candidates\\sec_relationship_candidates.json",
-    "generated_at_utc": "2026-05-17T03:07:14+00:00",
+    "generated_at_utc": "2026-05-17T06:35:01+00:00",
     "generated_by": "scripts/sec_candidate_triage.py",
     "network_calls": 0,
     "production_files_read": {
@@ -828,7 +828,7 @@
     "low_priority_count": 3,
     "medium_priority_count": 6,
     "new_pair_candidates": 9,
-    "production_edges_missing_source_urls": 78,
+    "production_edges_missing_source_urls": 0,
     "queue_count": 10,
     "reject_priority_count": 0,
     "review_only": true,

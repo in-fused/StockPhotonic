@@ -1,0 +1,1838 @@
+{
+  "metadata": {
+    "artifact_status": "review_owned_registry",
+    "auto_promotion_allowed": false,
+    "auto_trust_escalation_allowed": false,
+    "generated_at_utc": "2026-05-17T06:35:01+00:00",
+    "generated_by": "scripts/source_registry_governance.py",
+    "notes": [
+      "Only observed SEC CIK mapping source URLs are registered automatically.",
+      "Company IR/newsroom/partner roots remain empty until a reviewer adds real URLs.",
+      "A registered official source root improves review visibility only."
+    ],
+    "production_write_allowed": false,
+    "schema_version": 1
+  },
+  "records": [
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Consumer Devices, Services, and Silicon",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Apple Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000320193",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000320193.json"
+        }
+      ],
+      "ticker": "AAPL",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Pharmaceuticals",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "AbbVie Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001551152",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001551152.json"
+        }
+      ],
+      "ticker": "ABBV",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Semiconductor Manufacturing Equipment",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Applied Materials, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000006951",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000006951.json"
+        }
+      ],
+      "ticker": "AMAT",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "CPUs, GPUs, and Data Center Accelerators",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Advanced Micro Devices, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000002488",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000002488.json"
+        }
+      ],
+      "ticker": "AMD",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "E-Commerce, Cloud, and Digital Infrastructure",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Amazon.com, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001018724",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001018724.json"
+        }
+      ],
+      "ticker": "AMZN",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Semiconductor IP and CPU Architecture",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_sec_filing_root",
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Arm Holdings plc",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "metadata_shell_missing_official_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [],
+      "ticker": "ARM",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Semiconductor Lithography Equipment",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_sec_filing_root",
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "ASML Holding N.V.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "metadata_shell_missing_official_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [],
+      "ticker": "ASML",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Custom Silicon, Networking, and Infrastructure Software",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Broadcom Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001730168",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001730168.json"
+        }
+      ],
+      "ticker": "AVGO",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Card Issuing and Payments Network",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "American Express Company",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Payments / Financial Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000004962",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000004962.json"
+        }
+      ],
+      "ticker": "AXP",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Commercial Aerospace and Defense",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "The Boeing Company",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000012927",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000012927.json"
+        }
+      ],
+      "ticker": "BA",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Consumer and Commercial Banking",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Bank of America Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Payments / Financial Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000070858",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000070858.json"
+        }
+      ],
+      "ticker": "BAC",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Diversified Holding Company and Insurance",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_sec_filing_root",
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Berkshire Hathaway Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "metadata_shell_missing_official_root",
+      "review_only": true,
+      "sector": "Payments / Financial Infrastructure",
+      "source_roots": [],
+      "ticker": "BRK-B",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Heavy Machinery and Industrial Equipment",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Caterpillar Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000018230",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000018230.json"
+        }
+      ],
+      "ticker": "CAT",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Electronic Design Automation",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Cadence Design Systems, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000813672",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000813672.json"
+        }
+      ],
+      "ticker": "CDNS",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Managed Care and PBM",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "The Cigna Group",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001739940",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001739940.json"
+        }
+      ],
+      "ticker": "CI",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Consumer Credit and Card Issuing",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Capital One Financial Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Payments / Financial Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000927628",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000927628.json"
+        }
+      ],
+      "ticker": "COF",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Oil and Gas Exploration and Production",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "ConocoPhillips",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001163165",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001163165.json"
+        }
+      ],
+      "ticker": "COP",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Warehouse Club Retail",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Costco Wholesale Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Consumer Mega-Caps",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000909832",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000909832.json"
+        }
+      ],
+      "ticker": "COST",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Enterprise SaaS and Customer Relationship Management",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Salesforce, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001108524",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001108524.json"
+        }
+      ],
+      "ticker": "CRM",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Retail Pharmacy, PBM, and Managed Care",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "CVS Health Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000064803",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000064803.json"
+        }
+      ],
+      "ticker": "CVS",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Integrated Oil and Gas",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Chevron Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000093410",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000093410.json"
+        }
+      ],
+      "ticker": "CVX",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Agricultural and Construction Machinery",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Deere & Company",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000315189",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000315189.json"
+        }
+      ],
+      "ticker": "DE",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Commercial and Defense Aerospace",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "GE Aerospace",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000040545",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000040545.json"
+        }
+      ],
+      "ticker": "GE",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Search, Advertising, Cloud, and AI",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Alphabet Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001652044",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001652044.json"
+        }
+      ],
+      "ticker": "GOOGL",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Home Improvement Retail",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "The Home Depot, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Consumer Mega-Caps",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000354950",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000354950.json"
+        }
+      ],
+      "ticker": "HD",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Industrial Automation and Aerospace Systems",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Honeywell International Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000773840",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000773840.json"
+        }
+      ],
+      "ticker": "HON",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Integrated Device Manufacturing and Foundry",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Intel Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000050863",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000050863.json"
+        }
+      ],
+      "ticker": "INTC",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Robotic Surgery Systems",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Intuitive Surgical, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001035267",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001035267.json"
+        }
+      ],
+      "ticker": "ISRG",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Pharmaceuticals and MedTech",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Johnson & Johnson",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000200406",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000200406.json"
+        }
+      ],
+      "ticker": "JNJ",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Money Center Banking and Payments",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "JPMorgan Chase & Co.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Payments / Financial Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000019617",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000019617.json"
+        }
+      ],
+      "ticker": "JPM",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Process Control and Yield Management",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "KLA Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000319201",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000319201.json"
+        }
+      ],
+      "ticker": "KLAC",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Non-Alcoholic Beverages",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "The Coca-Cola Company",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Consumer Mega-Caps",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000021344",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000021344.json"
+        }
+      ],
+      "ticker": "KO",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Pharmaceuticals",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Eli Lilly and Company",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000059478",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000059478.json"
+        }
+      ],
+      "ticker": "LLY",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Wafer Fabrication Equipment",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Lam Research Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000707549",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000707549.json"
+        }
+      ],
+      "ticker": "LRCX",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Card Payment Networks",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Mastercard Incorporated",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Payments / Financial Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001141391",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001141391.json"
+        }
+      ],
+      "ticker": "MA",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Quick-Service Restaurants",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "McDonald's Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Consumer Mega-Caps",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000063908",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000063908.json"
+        }
+      ],
+      "ticker": "MCD",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Social Platforms, Advertising, and AI Infrastructure",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Meta Platforms, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001326801",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001326801.json"
+        }
+      ],
+      "ticker": "META",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Power Management Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Monolithic Power Systems, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001280452",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001280452.json"
+        }
+      ],
+      "ticker": "MPWR",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Pharmaceuticals",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Merck & Co., Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000310158",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000310158.json"
+        }
+      ],
+      "ticker": "MRK",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Data Infrastructure Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Marvell Technology, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001835632",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001835632.json"
+        }
+      ],
+      "ticker": "MRVL",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Cloud Platforms and Productivity Software",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Microsoft Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000789019",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000789019.json"
+        }
+      ],
+      "ticker": "MSFT",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Memory and High-Bandwidth Memory",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Micron Technology, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000723125",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000723125.json"
+        }
+      ],
+      "ticker": "MU",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Enterprise Workflow Software",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "ServiceNow, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001373715",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001373715.json"
+        }
+      ],
+      "ticker": "NOW",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Graphics Processing Units and AI Accelerators",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "NVIDIA Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001045810",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001045810.json"
+        }
+      ],
+      "ticker": "NVDA",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Enterprise Software and Cloud Infrastructure",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Oracle Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001341439",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001341439.json"
+        }
+      ],
+      "ticker": "ORCL",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Cloud and Network Security",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Palo Alto Networks, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001327567",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001327567.json"
+        }
+      ],
+      "ticker": "PANW",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Pharmaceuticals",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Pfizer Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000078003",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000078003.json"
+        }
+      ],
+      "ticker": "PFE",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Digital Payments",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "PayPal Holdings, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Payments / Financial Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001633917",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001633917.json"
+        }
+      ],
+      "ticker": "PYPL",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Mobile and Edge Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "QUALCOMM Incorporated",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000804328",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000804328.json"
+        }
+      ],
+      "ticker": "QCOM",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Aerospace and Defense Systems",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "RTX Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000101829",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000101829.json"
+        }
+      ],
+      "ticker": "RTX",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Oilfield Services and Technology",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Schlumberger Limited",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000087347",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000087347.json"
+        }
+      ],
+      "ticker": "SLB",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Cloud Data Platforms",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Snowflake Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Cloud / Big Tech",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001640147",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001640147.json"
+        }
+      ],
+      "ticker": "SNOW",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Electronic Design Automation and IP",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Synopsys, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000883241",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000883241.json"
+        }
+      ],
+      "ticker": "SNPS",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Life Sciences Tools and Diagnostics",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Thermo Fisher Scientific Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000097745",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000097745.json"
+        }
+      ],
+      "ticker": "TMO",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Electric Vehicles and Energy Storage",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Tesla, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Consumer Mega-Caps",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001318605",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001318605.json"
+        }
+      ],
+      "ticker": "TSLA",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Semiconductor Foundry",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_sec_filing_root",
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Taiwan Semiconductor Manufacturing Company Limited",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "metadata_shell_missing_official_root",
+      "review_only": true,
+      "sector": "AI / Semiconductors",
+      "source_roots": [],
+      "ticker": "TSM",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Managed Care and PBM",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "UnitedHealth Group Incorporated",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Healthcare / Pharma / PBM",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000731766",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000731766.json"
+        }
+      ],
+      "ticker": "UNH",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Card Payment Networks",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Visa Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Payments / Financial Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001403161",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001403161.json"
+        }
+      ],
+      "ticker": "V",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Mass-Market Retail",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Walmart Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Consumer Mega-Caps",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000104169",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000104169.json"
+        }
+      ],
+      "ticker": "WMT",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Integrated Oil and Gas",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Exxon Mobil Corporation",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Energy / Industrials",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000034088",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000034088.json"
+        }
+      ],
+      "ticker": "XOM",
+      "trusted_partner_customer_roots": []
+    }
+  ]
+}

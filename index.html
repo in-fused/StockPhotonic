@@ -514,6 +514,7 @@
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_overlap_report.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/review_pipeline_summary.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/source_coverage_refresh_report.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/source_registry/*.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/openalex_*.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">docs/candidate_reviewer_checklist.md</div>
                         </div>
@@ -596,7 +597,7 @@
                             </div>
                             <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-review-refresh">python scripts/review_artifact_refresh.py --write --force</code></pre>
                             <p class="mt-2 text-xs text-white/54">
-                                Refreshes triage, preflight, source coverage, OpenAlex cache-only enrichment, validation, and a review pipeline summary. It does not run promotion.
+                                Refreshes triage, preflight, source coverage, source governance, OpenAlex cache-only enrichment, validation, and a review pipeline summary. It does not run promotion.
                             </p>
                         </div>
 
@@ -608,6 +609,17 @@
                             <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-openalex">python scripts/openalex_enrichment.py --write --force --max-requests 24 --max-entities 20</code></pre>
                             <p class="mt-2 text-xs text-white/54">
                                 Generates review-only OpenAlex ecosystem, topic, institution, and cluster hints. Add <span class="font-mono text-cyan-50/78">--allow-network</span> only when local budget and cache settings are acceptable.
+                            </p>
+                        </div>
+
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3D.</span> Source Registry Governance</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-source-governance', this)" aria-label="Copy source registry governance command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-source-governance">python scripts/source_registry_governance.py --write --force --sync-registry</code></pre>
+                            <p class="mt-2 text-xs text-white/54">
+                                Refreshes reviewer-owned registry, universe readiness, corridor maintenance, graph scaling, and OpenAlex safety summaries. It performs zero production writes.
                             </p>
                         </div>
 
@@ -836,6 +848,25 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                             <div id="source-fast-track-batches" class="hidden source-coverage-refresh-queue mb-3"></div>
                             <div id="source-coverage-refresh-queue" class="hidden source-coverage-refresh-queue mb-3"></div>
                         </div>
+                        <div class="source-governance-section mt-4 pt-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="source-workbench-label mb-2">Source Registry Governance</div>
+                                    <p class="text-sm text-white/56">
+                                        Reviewer-owned official source registry, universe expansion readiness, corridor maintenance, graph scaling, and OpenAlex safety state from <span class="font-mono text-cyan-50/78">scripts/source_registry_governance.py</span>.
+                                    </p>
+                                </div>
+                                <div id="source-governance-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING GOVERNANCE</div>
+                            </div>
+                            <div id="source-governance-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                                Source governance report is not present yet. Run the registry governance command to generate review-only artifacts.
+                            </div>
+                            <div id="source-governance-summary" class="hidden source-governance-grid mb-3"></div>
+                            <div id="source-governance-registry" class="hidden source-governance-list mb-3"></div>
+                            <div id="source-governance-universe" class="hidden source-governance-list mb-3"></div>
+                            <div id="source-governance-corridors" class="hidden source-governance-list mb-3"></div>
+                            <div id="source-governance-scaling" class="hidden source-governance-list mb-3"></div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -994,10 +1025,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/utils/math.js"></script>
     <script src="js/utils/formatting.js"></script>
     <script src="js/utils/dom.js"></script>
-    <script src="js/stock/sourceReview.js?v=d144-tiered-evidence"></script>
+    <script src="js/stock/sourceRegistry.js?v=d146-source-governance"></script>
+    <script src="js/stock/sourceReview.js?v=d146-source-governance"></script>
     <script src="js/stock/evidencePolicy.js?v=d144-tiered-evidence"></script>
     <script src="js/stock/relationships.js?v=d144-tiered-evidence"></script>
-    <script src="js/stock/graphIntelligence.js?v=d144-tiered-evidence"></script>
+    <script src="js/stock/graphScaling.js?v=d146-source-governance"></script>
+    <script src="js/stock/graphIntelligence.js?v=d146-source-governance"></script>
     <script src="js/core/data.js"></script>
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
@@ -1078,11 +1111,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic controls module failed to load');
         }
 
-        if (!window.StockPhotonicStock?.sourceReview || !window.StockPhotonicStock?.evidencePolicy || !window.StockPhotonicStock?.relationships) {
+        if (!window.StockPhotonicStock?.sourceRegistry || !window.StockPhotonicStock?.sourceReview || !window.StockPhotonicStock?.evidencePolicy || !window.StockPhotonicStock?.relationships) {
             throw new Error('StockPhotonic relationship intelligence module failed to load');
         }
 
-        if (!window.StockPhotonicStock?.graphIntelligence) {
+        if (!window.StockPhotonicStock?.graphScaling || !window.StockPhotonicStock?.graphIntelligence) {
             throw new Error('StockPhotonic graph intelligence module failed to load');
         }
 
@@ -1132,8 +1165,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             getDatasetTrustMetrics
         } = window.StockPhotonicData;
         const sourceReviewTools = window.StockPhotonicStock.sourceReview;
+        const sourceRegistryTools = window.StockPhotonicStock.sourceRegistry;
         const evidencePolicyTools = window.StockPhotonicStock.evidencePolicy;
         const relationshipTools = window.StockPhotonicStock.relationships;
+        const stockGraphScaling = window.StockPhotonicStock.graphScaling;
         const stockGraphIntelligence = window.StockPhotonicStock.graphIntelligence;
         const {
             getRelationshipTypeKey,
@@ -1277,8 +1312,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             sourceCoverage: null,
             guidedDiscovery: null,
             evidenceGaps: null,
-            defaultDiscovery: null
+            defaultDiscovery: null,
+            largeGraphScaling: null
         };
+        let graphScalingModel = null;
         let graphNodeIntelligenceVisualCache = new Map();
         let graphLinkIntelligenceVisualCache = new Map();
 
@@ -1406,6 +1443,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             get selectedRelationshipLink() { return selectedRelationshipLink; },
             get activeEcosystemOverlayKey() { return activeEcosystemOverlayKey; },
             get graphIntelligenceModel() { return graphIntelligenceModel; },
+            get graphScalingModel() { return graphScalingModel; },
             get sourceCoverageLensEnabled() { return sourceCoverageLensEnabled; },
             get graphStoryMode() { return graphStoryMode; },
             get signalStrengthThreshold() { return signalStrengthThreshold; },
@@ -2479,6 +2517,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 activeGuidedDiscoveryKey,
                 graphStoryMode,
                 graphIntelligenceModel,
+                graphScalingModel,
+                stockGraphIntelligence,
                 activeClusterNodeIds,
                 adjacencyById,
                 nodeById,
@@ -2523,6 +2563,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             degreeById = graphIndex.degreeById;
             adjacencyById = graphIndex.adjacencyById;
             graphIntelligenceCache = new Map();
+            graphScalingModel = null;
             activeClusterNodeIds = new Set();
 
             const sectors = [...new Set(companies.map(company => company.sector || 'Other'))].sort();
@@ -3608,7 +3649,17 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return clamp(Number(link?.strength) || 0, 0, 1);
         }
 
+        function refreshGraphScalingModel() {
+            graphScalingModel = stockGraphScaling.buildScalingModel(getGraphIntelligenceContext({
+                stockGraphIntelligence
+            }));
+            if (graphScalingModel?.labelPriorityIds?.length) {
+                topLabelIds = new Set(graphScalingModel.labelPriorityIds);
+            }
+        }
+
         function refreshGraphIntelligenceModel(options = {}) {
+            if (!graphScalingModel) refreshGraphScalingModel();
             graphIntelligenceModel = stockGraphIntelligence.buildGraphIntelligenceModel(getGraphIntelligenceContext());
             graphNodeIntelligenceVisualCache = new Map();
             graphLinkIntelligenceVisualCache = new Map();
@@ -3811,6 +3862,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const strategicHub = summary.strategicHubs?.[0];
             const bridge = summary.bridgeNodes?.[0]?.node;
             const sourceRatio = Math.round((evidence.sourcedRatio || 0) * 100);
+            const scaling = graphIntelligenceModel.largeGraphScaling || graphScalingModel || {};
+            const density = scaling.density || {};
             return `
                 <div class="graph-card-header">
                     <div>
@@ -3827,6 +3880,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <div><span>${evidence.secBacked || 0}</span><small>SEC</small></div>
                 </div>
                 <div class="graph-card-chips">
+                    <span>${escapeHtml(density.label || 'Core graph')}</span>
                     ${strategicHub ? `<span>Anchor ${escapeHtml(strategicHub.node.ticker || strategicHub.node.name || '')}</span>` : ''}
                     ${topHub ? `<span>Hub ${escapeHtml(topHub.ticker || topHub.name || '')}</span>` : '<span>Hub pending</span>'}
                     ${bridge ? `<span>Bridge ${escapeHtml(bridge.ticker || bridge.name || '')}</span>` : '<span>Bridge scan ready</span>'}
@@ -5525,6 +5579,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             visibleNodeIds = new Set(visibleNodes.map(node => node.id));
             refreshSecPreviewVisibility();
             mergeSecPreviewProductionEndpointsIntoVisibleNodes();
+            refreshGraphScalingModel();
             rebuildLayoutPositions();
             refreshGraphWorkspaceBounds();
             syncRouteAfterVisibilityChange();
@@ -6892,11 +6947,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const topicCount = artifacts.topic?.summary?.topic_candidate_count ?? 0;
             const institutionCount = artifacts.institution?.summary?.institution_overlap_count ?? 0;
             const clusterCount = artifacts.cluster?.summary?.cluster_hint_count ?? 0;
+            const metadata = artifacts.ecosystem?.metadata || artifacts.topic?.metadata || {};
             return [
                 renderReviewArtifactMetric('ECOSYSTEM HINTS', ecosystemCount, 'source-openalex-card'),
                 renderReviewArtifactMetric('TOPIC OVERLAPS', topicCount, 'source-openalex-card'),
                 renderReviewArtifactMetric('INSTITUTION OVERLAPS', institutionCount, 'source-openalex-card'),
-                renderReviewArtifactMetric('CLUSTER HINTS', clusterCount, 'source-openalex-card')
+                renderReviewArtifactMetric('CLUSTER HINTS', clusterCount, 'source-openalex-card'),
+                renderReviewArtifactMetric('SOURCE ROLE', metadata.source_role || 'context_only', 'source-openalex-card'),
+                renderReviewArtifactMetric('REL AUTH', metadata.relationship_claim_authority === true ? 'unsafe' : 'none', 'source-openalex-card')
             ].join('');
         }
 
@@ -6922,6 +6980,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         <div class="mt-2 flex flex-wrap gap-1.5">
                             <span class="evidence-tier-badge context_only">CONTEXT</span>
                             <span class="source-host-chip">ENRICHMENT ONLY</span>
+                            <span class="source-host-chip">SOURCE ROLE</span>
                             <span class="source-host-chip">${sourceCount} SOURCE${sourceCount === 1 ? '' : 'S'}</span>
                             <span class="source-host-chip">NO CLAIM</span>
                         </div>
@@ -7154,6 +7213,170 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderCoverageRefreshReport(report);
         }
 
+        function renderSourceGovernanceSummary(model) {
+            const summary = model.summary || {};
+            return [
+                renderReviewArtifactMetric('SEC ROOTS', summary.registered_sec_root_count ?? 0, 'source-governance-card'),
+                renderReviewArtifactMetric('HOSTS', summary.trusted_source_host_count ?? 0, 'source-governance-card'),
+                renderReviewArtifactMetric('STALE QUEUE', summary.stale_source_review_count ?? 0, 'source-governance-card'),
+                renderReviewArtifactMetric('UNIVERSE', summary.universe_candidate_count ?? 0, 'source-governance-card'),
+                renderReviewArtifactMetric('READY', summary.universe_ready_for_review_count ?? 0, 'source-governance-card'),
+                renderReviewArtifactMetric('DENSITY', summary.density_bucket || 'core', 'source-governance-card')
+            ].join('');
+        }
+
+        function renderSourceGovernanceRegistry(model) {
+            const hosts = model.trustedHosts.slice(0, 8);
+            const stale = model.staleQueue.slice(0, 6);
+            const official = model.officialCompanySamples.slice(0, 4);
+            return `
+                ${official.map(row => `
+                    <div class="source-governance-item rounded-2xl p-3">
+                        <div class="text-xs text-white/86 font-semibold">${escapeHtml(row.ticker || 'Ticker')} official registry</div>
+                        <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(row.registry_status || 'review-owned source shell')}</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(row.source_roots?.length ?? 0))} ROOTS</span>
+                            <span class="source-host-chip">NO AUTO TRUST</span>
+                        </div>
+                    </div>
+                `).join('')}
+                ${hosts.map(host => `
+                    <div class="source-governance-item rounded-2xl p-3">
+                        <div class="text-xs text-white/86 font-semibold">${escapeHtml(host.host || 'source host')}</div>
+                        <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(host.category_label || host.category || 'Registered observed host')}</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(host.observed_url_count ?? 0))} URLS</span>
+                            <span class="source-host-chip">${escapeHtml(host.trust_effect || 'classification')}</span>
+                        </div>
+                    </div>
+                `).join('')}
+                ${stale.map(row => `
+                    <div class="source-governance-item rounded-2xl p-3">
+                        <div class="text-xs text-white/86 font-semibold">${escapeHtml(formatCandidateCell(row.source_ticker))} -> ${escapeHtml(formatCandidateCell(row.target_ticker))}</div>
+                        <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(row.reason || row.label || 'Stale source review.')}</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-age-chip">${escapeHtml(row.age_state || 'date review')}</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(row.age_days ?? '-'))} DAYS</span>
+                        </div>
+                    </div>
+                `).join('')}
+            ` || '<div class="text-sm text-white/35">No source registry rows are present.</div>';
+        }
+
+        function renderSourceGovernanceUniverse(model) {
+            const rows = model.universeReadiness.slice(0, 10);
+            const blockers = model.universeBlockers || {};
+            const conflicts = model.aliasConflicts || {};
+            return `
+                <div class="source-governance-item rounded-2xl p-3">
+                    <div class="text-xs text-white/86 font-semibold">Universe blockers</div>
+                    <div class="mt-1 text-xs text-white/52 leading-relaxed">Duplicate ticker prevention and alias conflict checks are review-only blockers before any company staging.</div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(blockers.duplicate_with_production_count ?? 0))} PROD DUPES</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(conflicts.alias_conflict_count ?? 0))} ALIASES</span>
+                    </div>
+                </div>
+                ${rows.map(row => `
+                    <div class="source-governance-item rounded-2xl p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-xs text-white/86 font-semibold">${escapeHtml(row.ticker || 'Ticker')} ${escapeHtml(row.name || '')}</div>
+                                <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(row.ecosystem_fit_state || row.readiness_state || 'review-only staging')}</div>
+                            </div>
+                            <span class="review-action-chip">${escapeHtml(formatCandidateCell(row.source_readiness_score ?? 0))}</span>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(row.readiness_state || 'review')}</span>
+                            <span class="source-host-chip">${row.has_cik_mapping ? 'CIK' : 'NO CIK'}</span>
+                            <span class="source-host-chip">${row.has_valid_listing_source ? 'SOURCE' : 'NO SOURCE'}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        function renderSourceGovernanceCorridors(model) {
+            const rows = [...model.maintenanceQueue, ...model.corridorRows]
+                .filter((row, index, array) => array.findIndex(item => item.corridor_key === row.corridor_key) === index)
+                .slice(0, 10);
+            if (!rows.length) return '<div class="text-sm text-white/35">No corridor maintenance rows are present.</div>';
+            return rows.map(row => `
+                <div class="source-governance-item rounded-2xl p-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-xs text-white/86 font-semibold">${escapeHtml(row.label || row.corridor_key || 'Corridor')}</div>
+                            <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(row.reason || 'Corridor maintenance state.')}</div>
+                        </div>
+                        <span class="review-action-chip">${escapeHtml(row.maintenance_priority || 'review')}</span>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(row.edge_count ?? 0))} EDGES</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(Math.round(Number(row.coverage_ratio || 0) * 100)))}% SRC</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(row.stale_edge_count ?? 0))} STALE</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSourceGovernanceScaling(model) {
+            const scaling = model.scaling || {};
+            const openAlex = model.openAlex || {};
+            const cache = openAlex.cache_lifecycle || {};
+            const entity = openAlex.entity_resolution_tracking || {};
+            return `
+                <div class="source-governance-item rounded-2xl p-3">
+                    <div class="text-xs text-white/86 font-semibold">Large-graph render readiness</div>
+                    <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(scaling.density_bucket || 'core graph')} with cached route, hub, overlay, and label-priority seeds.</div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(scaling.node_count ?? 0))} NODES</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(scaling.edge_count ?? 0))} EDGES</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(scaling.recommended_label_limit ?? 0))} LABELS</span>
+                    </div>
+                </div>
+                <div class="source-governance-item rounded-2xl p-3">
+                    <div class="text-xs text-white/86 font-semibold">OpenAlex context boundary</div>
+                    <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(openAlex.source_role || 'context-only reinforcement')} with no relationship or promotion authority.</div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="evidence-tier-badge context_only">CONTEXT</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(cache.cache_entry_count ?? 0))} CACHE</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(entity.alias_conflict_count ?? 0))} ALIAS REVIEW</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSourceGovernanceReport(report) {
+            const empty = document.getElementById('source-governance-empty');
+            const summary = document.getElementById('source-governance-summary');
+            const registry = document.getElementById('source-governance-registry');
+            const universe = document.getElementById('source-governance-universe');
+            const corridors = document.getElementById('source-governance-corridors');
+            const scaling = document.getElementById('source-governance-scaling');
+            if (!empty || !summary || !registry || !universe || !corridors || !scaling) return;
+
+            const model = sourceRegistryTools.buildWorkbenchModel(report);
+            if (!model) {
+                [summary, registry, universe, corridors, scaling].forEach(element => element.classList.add('hidden'));
+                empty.classList.remove('hidden');
+                setWorkbenchArtifactStatus('source-governance-status', 'GOVERNANCE UNAVAILABLE', 'warning');
+                return;
+            }
+
+            summary.innerHTML = renderSourceGovernanceSummary(model);
+            registry.innerHTML = renderSourceGovernanceRegistry(model);
+            universe.innerHTML = renderSourceGovernanceUniverse(model);
+            corridors.innerHTML = renderSourceGovernanceCorridors(model);
+            scaling.innerHTML = renderSourceGovernanceScaling(model);
+            [summary, registry, universe, corridors, scaling].forEach(element => element.classList.remove('hidden'));
+            empty.classList.add('hidden');
+            setWorkbenchArtifactStatus('source-governance-status', `${model.summary.trusted_source_host_count || 0} HOST${Number(model.summary.trusted_source_host_count || 0) === 1 ? '' : 'S'}`);
+        }
+
+        async function loadSourceGovernanceReport() {
+            const report = await fetchOptionalWorkbenchJson('data/source_registry/source_governance_report.json');
+            renderSourceGovernanceReport(report);
+        }
+
         function roundedRect(ctx, x, y, width, height, radius) {
             graphRender.roundedRect(ctx, x, y, width, height, radius);
         }
@@ -7171,6 +7394,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         loadReviewPipelineSummary();
         loadOpenAlexArtifacts();
         loadCoverageRefreshReport();
+        loadSourceGovernanceReport();
         loadData();
     </script>
 </body>

@@ -2,7 +2,7 @@
   "metadata": {
     "artifact_status": "review_only",
     "candidate_file": "data\\candidates\\sec_relationship_candidates.json",
-    "generated_at_utc": "2026-05-17T03:07:14+00:00",
+    "generated_at_utc": "2026-05-17T06:35:01+00:00",
     "generated_by": "scripts/sec_candidate_triage.py",
     "network_calls": 0,
     "production_files_read": {
@@ -559,7 +559,7 @@
         "existing_production_relationship_types": [
           "competitor"
         ],
-        "production_edges_missing_source_urls": 1,
+        "production_edges_missing_source_urls": 0,
         "state": "same_pair_different_type"
       },
       "queue_id": "sec-candidate-0008",

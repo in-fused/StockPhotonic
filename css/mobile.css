@@ -709,9 +709,11 @@
             .source-review-pipeline-grid,
             .source-openalex-grid,
             .source-coverage-refresh-grid,
+            .source-governance-grid,
             .source-preflight-priorities,
             .source-openalex-hints,
             .source-coverage-refresh-queue,
+            .source-governance-list,
             .evidence-policy-grid,
             .source-candidate-groups {
                 grid-template-columns: 1fr !important;
@@ -754,6 +756,8 @@
             .source-openalex-hint,
             .source-coverage-refresh-card,
             .source-coverage-refresh-item,
+            .source-governance-card,
+            .source-governance-item,
             .source-checklist-panel,
             .source-candidate-group {
                 min-width: 0;

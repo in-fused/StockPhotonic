@@ -435,7 +435,8 @@
         .source-expansion-section,
         .source-review-pipeline-section,
         .source-openalex-section,
-        .source-coverage-refresh-section {
+        .source-coverage-refresh-section,
+        .source-governance-section {
             border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
@@ -482,9 +483,10 @@
             gap: 0.65rem;
         }
 
-.source-review-pipeline-grid,
+        .source-review-pipeline-grid,
         .source-openalex-grid,
-        .source-coverage-refresh-grid {
+        .source-coverage-refresh-grid,
+        .source-governance-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 0.65rem;
@@ -496,8 +498,9 @@
             gap: 0.65rem;
         }
 
-.source-openalex-hints,
-        .source-coverage-refresh-queue {
+        .source-openalex-hints,
+        .source-coverage-refresh-queue,
+        .source-governance-list {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0.65rem;
@@ -509,7 +512,9 @@
         .source-openalex-card,
         .source-openalex-hint,
         .source-coverage-refresh-card,
-        .source-coverage-refresh-item {
+        .source-coverage-refresh-item,
+        .source-governance-card,
+        .source-governance-item {
             border: 1px solid rgba(125, 211, 252, 0.14);
             background:
                 linear-gradient(135deg, rgba(0, 249, 255, 0.055), rgba(255, 255, 255, 0.028)),

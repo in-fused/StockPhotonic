@@ -154,7 +154,7 @@
   "high_value_unsourced_edges": [],
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-17T05:23:18+00:00",
+    "generated_at_utc": "2026-05-17T06:35:01+00:00",
     "generated_by": "scripts/data_expansion_preflight.py",
     "network_calls": 0,
     "optional_files_read": {

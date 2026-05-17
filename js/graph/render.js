@@ -529,11 +529,16 @@
 
     function getLabelLimit(context, labelMode) {
         const density = getDensityProfile(context);
+        const heuristics = context.graphScalingModel?.renderHeuristics || {};
+        const fullLimit = Number(heuristics.labelLimitFull);
+        const tickerLimit = Number(heuristics.labelLimitTicker);
         if (labelMode === 'full') {
+            if (Number.isFinite(fullLimit) && !context.selectedNode) return fullLimit;
             if (density.veryDense && !context.selectedNode) return 32;
             if (density.dense && !context.selectedNode) return 42;
             return context.selectedNode ? 68 : 54;
         }
+        if (Number.isFinite(tickerLimit) && !context.selectedNode) return tickerLimit;
         if (density.veryDense && !context.selectedNode) return 22;
         if (density.dense && !context.selectedNode) return 28;
         return context.selectedNode ? 52 : 36;

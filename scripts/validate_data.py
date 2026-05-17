@@ -29,6 +29,11 @@ CANDIDATE_OVERLAP_PATH = ROOT / "data" / "candidates" / "candidate_overlap_repor
 DATA_EXPANSION_PREFLIGHT_PATH = ROOT / "data" / "candidates" / "data_expansion_preflight_report.json"
 SOURCE_COVERAGE_REFRESH_PATH = ROOT / "data" / "candidates" / "source_coverage_refresh_report.json"
 REVIEW_PIPELINE_SUMMARY_PATH = ROOT / "data" / "candidates" / "review_pipeline_summary.json"
+SOURCE_REGISTRY_DIR = ROOT / "data" / "source_registry"
+OFFICIAL_COMPANY_SOURCES_PATH = SOURCE_REGISTRY_DIR / "official_company_sources.json"
+TRUSTED_SOURCE_HOSTS_PATH = SOURCE_REGISTRY_DIR / "trusted_source_hosts.json"
+CORRIDOR_SOURCE_REGISTRY_PATH = SOURCE_REGISTRY_DIR / "corridor_source_registry.json"
+SOURCE_GOVERNANCE_REPORT_PATH = SOURCE_REGISTRY_DIR / "source_governance_report.json"
 OPENALEX_CACHE_PATH = ROOT / "data" / "cache" / "openalex" / "entity_resolution_cache.json"
 OPENALEX_ARTIFACT_PATHS = (
     (ROOT / "data" / "candidates" / "openalex_ecosystem_candidates.json", "openalex_ecosystem_candidates"),
@@ -385,6 +390,63 @@ def validate_review_pipeline_summary_file(
         errors.append(f"{artifact_name} steps must be a list.")
 
 
+def validate_review_owned_registry_file(
+    path: Path,
+    artifact_name: str,
+    errors: list[str],
+    warnings: list[str],
+    *,
+    record_key: str = "records",
+) -> None:
+    if not path.exists():
+        warnings.append(f"{artifact_name} registry file is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} registry must contain an object.")
+        return
+
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        errors.append(f"{artifact_name} registry metadata must be an object.")
+    else:
+        if metadata.get("artifact_status") != "review_owned_registry":
+            errors.append(f"{artifact_name} registry metadata.artifact_status must be review_owned_registry.")
+        if metadata.get("production_write_allowed") is not False:
+            errors.append(f"{artifact_name} registry cannot allow production writes.")
+        if metadata.get("auto_promotion_allowed") is True:
+            errors.append(f"{artifact_name} registry cannot allow auto promotion.")
+
+    records = payload.get(record_key)
+    if records is not None and not isinstance(records, list):
+        errors.append(f"{artifact_name} registry {record_key} must be a list when present.")
+
+
+def validate_source_governance_report_file(
+    path: Path,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    artifact_name = "source_governance_report"
+    if not path.exists():
+        warnings.append(f"{artifact_name} artifact is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} must contain an object.")
+        return
+    validate_review_only_metadata(payload, artifact_name, errors)
+    validate_safety_zero_writes(payload, artifact_name, errors)
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        errors.append(f"{artifact_name} summary must be an object.")
+    for key in ("source_governance", "universe_expansion", "corridor_maintenance", "large_graph_scaling_readiness", "openalex_expansion_safety"):
+        if not isinstance(payload.get(key), dict):
+            errors.append(f"{artifact_name} {key} must be an object.")
+
+
 def validate_preflight_artifact_file(
     path: Path,
     errors: list[str],
@@ -666,6 +728,30 @@ def validate(strict_confidence: bool = False) -> int:
     )
     validate_review_pipeline_summary_file(
         REVIEW_PIPELINE_SUMMARY_PATH,
+        errors,
+        warnings,
+    )
+    validate_review_owned_registry_file(
+        OFFICIAL_COMPANY_SOURCES_PATH,
+        "official_company_sources",
+        errors,
+        warnings,
+    )
+    validate_review_owned_registry_file(
+        TRUSTED_SOURCE_HOSTS_PATH,
+        "trusted_source_hosts",
+        errors,
+        warnings,
+    )
+    validate_review_owned_registry_file(
+        CORRIDOR_SOURCE_REGISTRY_PATH,
+        "corridor_source_registry",
+        errors,
+        warnings,
+        record_key="corridors",
+    )
+    validate_source_governance_report_file(
+        SOURCE_GOVERNANCE_REPORT_PATH,
         errors,
         warnings,
     )

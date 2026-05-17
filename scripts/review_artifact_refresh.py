@@ -32,6 +32,7 @@ PRODUCTION_DATA_PATHS = (
 SEC_TRIAGE_SCRIPT = ROOT / "scripts" / "sec_candidate_triage.py"
 PREFLIGHT_SCRIPT = ROOT / "scripts" / "data_expansion_preflight.py"
 SOURCE_COVERAGE_SCRIPT = ROOT / "scripts" / "source_coverage_refresh.py"
+SOURCE_GOVERNANCE_SCRIPT = ROOT / "scripts" / "source_registry_governance.py"
 OPENALEX_SCRIPT = ROOT / "scripts" / "openalex_enrichment.py"
 VALIDATE_SCRIPT = ROOT / "scripts" / "validate_data.py"
 
@@ -63,6 +64,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--skip-triage", action="store_true")
     parser.add_argument("--skip-preflight", action="store_true")
     parser.add_argument("--skip-source-coverage", action="store_true")
+    parser.add_argument("--skip-source-governance", action="store_true")
     parser.add_argument("--skip-openalex", action="store_true")
     parser.add_argument(
         "--allow-openalex-network",
@@ -236,6 +238,18 @@ def planned_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 step_command(SOURCE_COVERAGE_SCRIPT, write=args.write, force=args.force),
             )
         )
+    if not args.skip_source_governance:
+        steps.append(
+            (
+                "source_registry_governance",
+                step_command(
+                    SOURCE_GOVERNANCE_SCRIPT,
+                    write=args.write,
+                    force=args.force,
+                    extra=["--sync-registry"] if args.write else None,
+                ),
+            )
+        )
     if not args.skip_openalex:
         extra = [
             "--max-requests",
@@ -294,6 +308,10 @@ def build_summary(args: argparse.Namespace, results: list[StepResult], started_a
             "candidate_overlap_report": "data/candidates/candidate_overlap_report.json",
             "data_expansion_preflight": "data/candidates/data_expansion_preflight_report.json",
             "source_coverage_refresh": "data/candidates/source_coverage_refresh_report.json",
+            "source_governance_report": "data/source_registry/source_governance_report.json",
+            "official_company_sources": "data/source_registry/official_company_sources.json",
+            "trusted_source_hosts": "data/source_registry/trusted_source_hosts.json",
+            "corridor_source_registry": "data/source_registry/corridor_source_registry.json",
             "openalex_ecosystem_candidates": "data/candidates/openalex_ecosystem_candidates.json",
             "openalex_topic_overlap": "data/candidates/openalex_topic_overlap.json",
             "openalex_institution_overlap": "data/candidates/openalex_institution_overlap.json",

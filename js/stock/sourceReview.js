@@ -288,6 +288,12 @@
                 return String(url || '').toLowerCase();
             }
         })();
+        const registryTools = window.StockPhotonicStock?.sourceRegistry;
+        const registryCategory = registryTools?.classifyUrl?.(url);
+        const mappedRegistryKey = registryTools?.toSourceReviewCategoryKey?.(registryCategory?.key);
+        if (host && mappedRegistryKey && SOURCE_HOST_CATEGORIES[mappedRegistryKey]) {
+            return SOURCE_HOST_CATEGORIES[mappedRegistryKey];
+        }
 
         if (!host && isCandidateRecord(record)) return SOURCE_HOST_CATEGORIES.candidate_only;
         if (/(\.|^)sec\.gov$/i.test(host)) return SOURCE_HOST_CATEGORIES.sec_source;

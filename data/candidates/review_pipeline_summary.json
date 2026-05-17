@@ -3,20 +3,24 @@
     "candidate_overlap_report": "data/candidates/candidate_overlap_report.json",
     "candidate_review_queue": "data/candidates/candidate_review_queue.json",
     "candidate_review_summary": "data/candidates/candidate_review_summary.json",
+    "corridor_source_registry": "data/source_registry/corridor_source_registry.json",
     "data_expansion_preflight": "data/candidates/data_expansion_preflight_report.json",
+    "official_company_sources": "data/source_registry/official_company_sources.json",
     "openalex_cluster_hints": "data/candidates/openalex_cluster_hints.json",
     "openalex_ecosystem_candidates": "data/candidates/openalex_ecosystem_candidates.json",
     "openalex_institution_overlap": "data/candidates/openalex_institution_overlap.json",
     "openalex_topic_overlap": "data/candidates/openalex_topic_overlap.json",
-    "source_coverage_refresh": "data/candidates/source_coverage_refresh_report.json"
+    "source_coverage_refresh": "data/candidates/source_coverage_refresh_report.json",
+    "source_governance_report": "data/source_registry/source_governance_report.json",
+    "trusted_source_hosts": "data/source_registry/trusted_source_hosts.json"
   },
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-17T03:07:15+00:00",
+    "generated_at_utc": "2026-05-17T06:35:02+00:00",
     "generated_by": "scripts/review_artifact_refresh.py",
     "network_calls": 0,
     "output_path": "data/candidates/review_pipeline_summary.json",
-    "pipeline_started_at_utc": "2026-05-17T03:07:14+00:00",
+    "pipeline_started_at_utc": "2026-05-17T06:35:01+00:00",
     "production_write_allowed": false
   },
   "safety": {
@@ -38,7 +42,7 @@
         "Enrichment opportunities: 1",
         "Exact duplicates: 0",
         "Same-pair different-type: 1",
-        "Production edges missing source URLs: 78",
+        "Production edges missing source URLs: 0",
         "Production writes: 0",
         "",
         "Artifacts",
@@ -59,10 +63,10 @@
         "Data expansion preflight",
         "========================",
         "Production companies: 60",
-        "Production edges: 121",
-        "Sourced ratio: 36%",
-        "Unsourced edges: 78",
-        "SEC-backed edges: 14",
+        "Production edges: 134",
+        "Sourced ratio: 100%",
+        "Unsourced edges: 0",
+        "SEC-backed edges: 104",
         "Stale review edges: 0",
         "Candidate previews: 10",
         "Candidate blocker flags: 19",
@@ -79,13 +83,33 @@
       "stdout_tail": [
         "Source coverage refresh",
         "=======================",
-        "Unsourced edges: 78",
+        "Unsourced edges: 0",
         "Stale review edges: 0",
-        "Weak relationship categories: 4",
-        "Ecosystem gaps: 5",
-        "Reviewer priorities: 30",
+        "Weak relationship categories: 0",
+        "Ecosystem gaps: 0",
+        "Reviewer priorities: 10",
         "Production writes: 0",
         "Report path: data\\candidates\\source_coverage_refresh_report.json"
+      ]
+    },
+    {
+      "command": "python scripts/source_registry_governance.py --write --force --sync-registry",
+      "name": "source_registry_governance",
+      "return_code": 0,
+      "status": "passed",
+      "stderr_tail": [],
+      "stdout_tail": [
+        "Source registry governance",
+        "==========================",
+        "Official company records: 60",
+        "Registered SEC roots: 56",
+        "Trusted source hosts: 34",
+        "Stale source queue: 0",
+        "Universe candidates: 293",
+        "Ready for review: 293",
+        "Density bucket: dense_growth_graph",
+        "Production writes: 0",
+        "Report path: data/source_registry/source_governance_report.json"
       ]
     },
     {
@@ -101,10 +125,10 @@
         "Companies processed: 20",
         "Network requests used: 0 / 24",
         "Budget skips: 0",
-        "Ecosystem hints: 26",
+        "Ecosystem hints: 31",
         "Topic candidates: 0",
         "Institution overlaps: 0",
-        "Cluster hints: 6",
+        "Cluster hints: 8",
         "Production writes: 0"
       ]
     },
@@ -115,28 +139,28 @@
       "status": "passed",
       "stderr_tail": [],
       "stdout_tail": [
+        "- Connection 8: Confidence mismatch: expected 5, found 4.",
+        "- Connection 11: Confidence mismatch: expected 5, found 4.",
+        "- Connection 13: Confidence mismatch: expected 5, found 4.",
+        "- Connection 14: Confidence mismatch: expected 5, found 4.",
+        "- Connection 15: Confidence mismatch: expected 5, found 4.",
+        "- Connection 16: Confidence mismatch: expected 5, found 4.",
+        "- Connection 20: Confidence mismatch: expected 4, found 5.",
         "- Connection 25: Confidence mismatch: expected 5, found 4.",
         "- Connection 26: Confidence mismatch: expected 5, found 4.",
         "- Connection 27: Confidence mismatch: expected 5, found 4.",
         "- Connection 49: Confidence mismatch: expected 4, found 5.",
-        "- Connection 50: Confidence mismatch: expected 5, found 4.",
-        "- Connection 93: Confidence mismatch: expected 3, found 4.",
-        "- Connection 94: Confidence mismatch: expected 3, found 4.",
-        "- Connection 95: Confidence mismatch: expected 3, found 4.",
-        "- Connection 100: Confidence mismatch: expected 3, found 4.",
-        "- Connection 101: Confidence mismatch: expected 3, found 4.",
-        "- Connection 113: Confidence mismatch: expected 3, found 4.",
-        "- Connection 117: Confidence mismatch: expected 3, found 4."
+        "- Connection 50: Confidence mismatch: expected 5, found 4."
       ]
     }
   ],
   "summary": {
     "failed_step_count": 0,
-    "latest_review_pipeline_timestamp": "2026-05-17T03:07:15+00:00",
+    "latest_review_pipeline_timestamp": "2026-05-17T06:35:02+00:00",
     "openalex_network_enabled": false,
     "review_only": true,
     "status": "passed",
-    "step_count": 5,
+    "step_count": 6,
     "write_enabled": true
   }
 }

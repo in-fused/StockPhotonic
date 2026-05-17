@@ -264,6 +264,36 @@
                     <span>SEC Preview On</span>
                 </button>
 
+                <button id="candidate-company-toggle" onclick="toggleCandidateCompanyPreview()" aria-pressed="false" title="Show or hide review-only candidate companies as preview nodes." class="focus-button px-4 py-3 text-xs rounded-3xl border border-lime-300/25 flex items-center gap-x-2">
+                    <i class="fa-solid fa-building-circle-check"></i>
+                    <span>Company Preview Off</span>
+                </button>
+
+                <button id="candidate-company-only-toggle" onclick="toggleCandidateCompanyPreviewOnlyFilter()" aria-pressed="false" title="Show candidate-company preview nodes and their corridor-planning anchors only." class="focus-button px-4 py-3 text-xs rounded-3xl border border-lime-300/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-filter"></i>
+                    <span>Preview Only</span>
+                </button>
+
+                <button id="candidate-company-hub-toggle" onclick="toggleCandidateCompanyStrategicHubOnlyFilter()" aria-pressed="false" title="Show staged candidate companies with higher bridge or corridor hub preview scores." class="focus-button px-4 py-3 text-xs rounded-3xl border border-lime-300/20 flex items-center gap-x-2">
+                    <i class="fa-solid fa-circle-nodes"></i>
+                    <span>Hub Candidates</span>
+                </button>
+
+                <select id="candidate-density-mode" aria-label="Candidate company density" title="Control candidate-company preview density." onchange="setCandidateCompanyDensityMode(this.value)" class="bg-black/40 border border-lime-300/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="balanced">Candidate Density: Balanced</option>
+                    <option value="compact">Candidate Density: Compact</option>
+                    <option value="hubs">Candidate Density: Hubs</option>
+                    <option value="all">Candidate Density: All</option>
+                </select>
+
+                <select id="candidate-ecosystem-focus" aria-label="Candidate ecosystem focus" title="Focus candidate-company preview by reviewer-proposed ecosystem assignment." onchange="setCandidateCompanyEcosystemFocus(this.value)" class="bg-black/40 border border-lime-300/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="">All Candidate Ecosystems</option>
+                </select>
+
+                <select id="candidate-corridor-focus" aria-label="Candidate corridor focus" title="Focus candidate-company preview by reviewer-proposed corridor assignment." onchange="setCandidateCompanyCorridorFocus(this.value)" class="bg-black/40 border border-lime-300/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="">All Candidate Corridors</option>
+                </select>
+
                 <button id="graph-hud-toggle" type="button" onclick="toggleGraphHud()" aria-pressed="false" class="fullscreen-hud-toggle focus-button px-4 py-3 text-xs rounded-3xl border border-white/20 items-center gap-x-2" title="Hide fullscreen HUD">
                     <i class="fa-solid fa-eye-slash"></i>
                     <span>Hide HUD</span>
@@ -735,6 +765,39 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                                 <tbody id="source-candidate-rows"></tbody>
                             </table>
                         </div>
+                        <div class="source-candidate-company-section mt-4 pt-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="source-workbench-label mb-2">Candidate Company Preview Center</div>
+                                    <p class="text-sm text-white/56">
+                                        Review-only universe staging from <span class="font-mono text-cyan-50/78">data/candidates/candidate_companies.json</span>. Candidate companies can appear only as preview nodes with corridor-planning anchors.
+                                    </p>
+                                </div>
+                                <div id="source-candidate-company-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING COMPANY PREVIEW</div>
+                            </div>
+                            <div id="source-candidate-company-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                                Candidate-company preview artifacts are not present yet. Run the universe expansion batch script locally to generate review-only staging files.
+                            </div>
+                            <div id="source-candidate-company-summary" class="hidden source-candidate-company-grid mb-3"></div>
+                            <div id="source-candidate-company-batches" class="hidden source-candidate-company-batches mb-3"></div>
+                            <div id="source-candidate-company-table-wrap" class="hidden overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+                                <table class="source-candidate-company-table w-full border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-3 py-2">Ticker</th>
+                                            <th class="px-3 py-2">Company</th>
+                                            <th class="px-3 py-2">Batch</th>
+                                            <th class="px-3 py-2">Readiness</th>
+                                            <th class="px-3 py-2">Assignments</th>
+                                            <th class="px-3 py-2">Blockers</th>
+                                            <th class="px-3 py-2">Sources</th>
+                                            <th class="px-3 py-2">Hub</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="source-candidate-company-rows"></tbody>
+                                </table>
+                            </div>
+                        </div>
                         <div class="source-triage-section mt-4 pt-4">
                             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
                                 <div>
@@ -1027,6 +1090,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/utils/dom.js"></script>
     <script src="js/stock/sourceRegistry.js?v=d146-source-governance"></script>
     <script src="js/stock/sourceReview.js?v=d146-source-governance"></script>
+    <script src="js/stock/universeExpansion.js?v=d147-candidate-company-preview"></script>
     <script src="js/stock/evidencePolicy.js?v=d144-tiered-evidence"></script>
     <script src="js/stock/relationships.js?v=d144-tiered-evidence"></script>
     <script src="js/stock/graphScaling.js?v=d146-source-governance"></script>
@@ -1042,7 +1106,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/intelligence/portfolioNexus.js"></script>
     <script src="js/ui/dashboard.js?v=d144-tiered-evidence"></script>
     <script src="js/ui/sidebar.js?v=d144-tiered-evidence"></script>
-    <script src="js/ui/search.js"></script>
+    <script src="js/ui/search.js?v=d147-candidate-company-preview"></script>
     <script src="js/ui/controls.js"></script>
     <script src="js/crypto/core.js"></script>
     <script src="js/crypto/graph.js"></script>
@@ -1111,7 +1175,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic controls module failed to load');
         }
 
-        if (!window.StockPhotonicStock?.sourceRegistry || !window.StockPhotonicStock?.sourceReview || !window.StockPhotonicStock?.evidencePolicy || !window.StockPhotonicStock?.relationships) {
+        if (!window.StockPhotonicStock?.sourceRegistry || !window.StockPhotonicStock?.sourceReview || !window.StockPhotonicStock?.universeExpansion || !window.StockPhotonicStock?.evidencePolicy || !window.StockPhotonicStock?.relationships) {
             throw new Error('StockPhotonic relationship intelligence module failed to load');
         }
 
@@ -1166,6 +1230,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         } = window.StockPhotonicData;
         const sourceReviewTools = window.StockPhotonicStock.sourceReview;
         const sourceRegistryTools = window.StockPhotonicStock.sourceRegistry;
+        const universeExpansionTools = window.StockPhotonicStock.universeExpansion;
         const evidencePolicyTools = window.StockPhotonicStock.evidencePolicy;
         const relationshipTools = window.StockPhotonicStock.relationships;
         const stockGraphScaling = window.StockPhotonicStock.graphScaling;
@@ -1265,6 +1330,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         const SEC_PREVIEW_ENDPOINT_HALO = '#38bdf8';
         const SEC_PREVIEW_EDGE_HIT_RADIUS = 12;
         const SEC_BACKED_EDGE_COLOR = '#fbbf24';
+        const CANDIDATE_COMPANY_NODE_COLOR = '#a3e635';
+        const CANDIDATE_COMPANY_EDGE_COLOR = '#bef264';
+        const CANDIDATE_COMPANY_HALO_COLOR = '#fef08a';
+        const CANDIDATE_COMPANY_EDGE_HIT_RADIUS = 13;
         const RECENT_SEC_PROMOTION_LIMIT = 3;
 
         /* ==============================
@@ -1299,6 +1368,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let visibleSecPreviewLinks = [];
         let selectedSecPreviewNode = null;
         let selectedSecPreviewLink = null;
+        let candidateCompanyPreviewEnabled = false;
+        let candidateCompanyPreviewPayload = null;
+        let candidateCompanyPreviewModel = null;
+        let candidateCompanyPreviewNodes = [];
+        let candidateCompanyPreviewLinks = [];
+        let visibleCandidateCompanyPreviewNodes = [];
+        let visibleCandidateCompanyPreviewLinks = [];
+        let selectedCandidateCompanyPreviewNode = null;
+        let selectedCandidateCompanyPreviewLink = null;
         let selectedRelationshipLink = null;
         let activeEcosystemOverlayKey = '';
         let sourceCoverageLensEnabled = false;
@@ -1335,6 +1413,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let secBackedOnlyFilter = false;
         let staleReviewFilter = false;
         let candidatePreviewOnlyFilter = false;
+        let candidateCompanyPreviewOnlyFilter = false;
+        let candidateCompanyStrategicHubOnlyFilter = false;
+        let candidateCompanyDensityMode = 'balanced';
+        let candidateCompanyEcosystemFocus = '';
+        let candidateCompanyCorridorFocus = '';
         let missingEvidenceFilter = false;
         let portfolioConnectedOnlyFilter = false;
         let crossSectorOnlyFilter = false;
@@ -1979,6 +2062,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 updatePortfolioPanel();
                 initGraphData();
                 await loadSecPreviewCandidateGraph();
+                await loadCandidateCompanyPreviewGraph();
                 refreshGraphIntelligenceModel();
                 resizeCanvas();
                 fitGraph(false, { keepOrbit: true });
@@ -2166,6 +2250,160 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 : 'SEC preview relationship candidates unavailable or empty';
         }
 
+        async function loadCandidateCompanyPreviewGraph() {
+            try {
+                const response = await fetch(`data/candidates/candidate_companies.json?v=${CACHE_BUST}`);
+                if (!response.ok) throw new Error('Candidate company file unavailable');
+                candidateCompanyPreviewPayload = await response.json();
+                buildCandidateCompanyPreviewGraph();
+                buildCandidateCompanyFocusFilters();
+            } catch (error) {
+                console.warn('Candidate company preview unavailable', error);
+                candidateCompanyPreviewPayload = null;
+                candidateCompanyPreviewModel = null;
+                candidateCompanyPreviewNodes = [];
+                candidateCompanyPreviewLinks = [];
+                visibleCandidateCompanyPreviewNodes = [];
+                visibleCandidateCompanyPreviewLinks = [];
+            }
+
+            refreshCandidateCompanyPreviewVisibility();
+            updateCandidateCompanyPreviewControls();
+        }
+
+        function buildCandidateCompanyPreviewGraph() {
+            const productionNodeByTicker = getNodeByTickerMap();
+            candidateCompanyPreviewModel = universeExpansionTools.buildPreviewGraph(candidateCompanyPreviewPayload, {
+                productionNodeByTicker,
+                nodeColor: CANDIDATE_COMPANY_NODE_COLOR,
+                anchorLinkColor: CANDIDATE_COMPANY_EDGE_COLOR
+            });
+            candidateCompanyPreviewNodes = candidateCompanyPreviewModel.nodes || [];
+            candidateCompanyPreviewLinks = candidateCompanyPreviewModel.links || [];
+            candidateCompanyPreviewNodes.forEach(node => {
+                node.previewLinks = candidateCompanyPreviewLinks.filter(link => link.source?.id === node.id || link.target?.id === node.id);
+            });
+            positionCandidateCompanyPreviewNodes();
+        }
+
+        function positionCandidateCompanyPreviewNodes() {
+            if (!candidateCompanyPreviewNodes.length) return;
+            const productionNodeByTicker = getNodeByTickerMap();
+            universeExpansionTools.positionPreviewNodes(candidateCompanyPreviewNodes, {
+                hashNumber,
+                clusterSpacing: candidateCompanyDensityMode === 'compact' ? 0.74 : candidateCompanyDensityMode === 'all' ? 1.08 : 0.92,
+                getAnchorPosition: ticker => {
+                    const anchor = productionNodeByTicker.get(ticker);
+                    return anchor ? getNodeLayoutPosition(anchor) : null;
+                }
+            });
+        }
+
+        function buildCandidateCompanyFocusFilters() {
+            const ecosystemSelect = document.getElementById('candidate-ecosystem-focus');
+            const corridorSelect = document.getElementById('candidate-corridor-focus');
+            const indexes = candidateCompanyPreviewModel?.indexes;
+            if (ecosystemSelect) {
+                ecosystemSelect.innerHTML = '<option value="">All Candidate Ecosystems</option>' + (indexes?.ecosystemOptions || [])
+                    .map(option => `<option value="${escapeHtml(option.key)}">${escapeHtml(option.label)}</option>`)
+                    .join('');
+                ecosystemSelect.value = getExistingSelectValue('candidate-ecosystem-focus', candidateCompanyEcosystemFocus);
+                candidateCompanyEcosystemFocus = ecosystemSelect.value;
+            }
+            if (corridorSelect) {
+                corridorSelect.innerHTML = '<option value="">All Candidate Corridors</option>' + (indexes?.corridorOptions || [])
+                    .map(option => `<option value="${escapeHtml(option.key)}">${escapeHtml(option.label)}</option>`)
+                    .join('');
+                corridorSelect.value = getExistingSelectValue('candidate-corridor-focus', candidateCompanyCorridorFocus);
+                candidateCompanyCorridorFocus = corridorSelect.value;
+            }
+        }
+
+        function isCandidateCompanyPreviewNode(node) {
+            return Boolean(node?.isCandidateCompanyPreviewNode);
+        }
+
+        function isCandidateCompanyPreviewLink(link) {
+            return Boolean(link?.isCandidateCompanyPreviewLink);
+        }
+
+        function toggleCandidateCompanyPreview() {
+            stopOrbitForInteraction();
+            candidateCompanyPreviewEnabled = !candidateCompanyPreviewEnabled;
+            if (!candidateCompanyPreviewEnabled && (selectedCandidateCompanyPreviewNode || selectedCandidateCompanyPreviewLink)) {
+                clearSelection(false);
+            } else {
+                refreshVisibleGraph();
+            }
+            updateCandidateCompanyPreviewControls();
+            updateSearchMatches();
+            renderSearchPanel();
+            requestDraw();
+        }
+
+        function toggleCandidateCompanyPreviewOnlyFilter() {
+            candidateCompanyPreviewOnlyFilter = !candidateCompanyPreviewOnlyFilter;
+            if (candidateCompanyPreviewOnlyFilter) candidateCompanyPreviewEnabled = true;
+            applyRelationshipFilterChange();
+        }
+
+        function toggleCandidateCompanyStrategicHubOnlyFilter() {
+            candidateCompanyStrategicHubOnlyFilter = !candidateCompanyStrategicHubOnlyFilter;
+            if (candidateCompanyStrategicHubOnlyFilter) {
+                candidateCompanyPreviewEnabled = true;
+                candidateCompanyPreviewOnlyFilter = true;
+            }
+            applyRelationshipFilterChange();
+        }
+
+        function setCandidateCompanyDensityMode(mode) {
+            candidateCompanyDensityMode = ['compact', 'balanced', 'hubs', 'all'].includes(mode) ? mode : 'balanced';
+            candidateCompanyPreviewEnabled = true;
+            positionCandidateCompanyPreviewNodes();
+            applyRelationshipFilterChange();
+        }
+
+        function setCandidateCompanyEcosystemFocus(value) {
+            candidateCompanyEcosystemFocus = String(value || '');
+            if (candidateCompanyEcosystemFocus) {
+                candidateCompanyPreviewEnabled = true;
+                candidateCompanyPreviewOnlyFilter = true;
+            }
+            applyRelationshipFilterChange();
+        }
+
+        function setCandidateCompanyCorridorFocus(value) {
+            candidateCompanyCorridorFocus = String(value || '');
+            if (candidateCompanyCorridorFocus) {
+                candidateCompanyPreviewEnabled = true;
+                candidateCompanyPreviewOnlyFilter = true;
+            }
+            applyRelationshipFilterChange();
+        }
+
+        function updateCandidateCompanyPreviewControls() {
+            const toggle = document.getElementById('candidate-company-toggle');
+            if (toggle) {
+                const label = toggle.querySelector('span');
+                toggle.setAttribute('aria-pressed', candidateCompanyPreviewEnabled ? 'true' : 'false');
+                toggle.classList.toggle('is-active', candidateCompanyPreviewEnabled);
+                if (label) label.innerText = candidateCompanyPreviewEnabled ? 'Company Preview On' : 'Company Preview Off';
+                const visible = candidateCompanyPreviewEnabled ? visibleCandidateCompanyPreviewNodes.length : 0;
+                const total = candidateCompanyPreviewNodes.length;
+                toggle.title = total
+                    ? `${visible} of ${total} candidate companies visible as review-only preview nodes`
+                    : 'Candidate company preview file unavailable or empty';
+            }
+            updateRelationshipToggle('candidate-company-only-toggle', candidateCompanyPreviewOnlyFilter);
+            updateRelationshipToggle('candidate-company-hub-toggle', candidateCompanyStrategicHubOnlyFilter);
+            const density = document.getElementById('candidate-density-mode');
+            if (density) density.value = candidateCompanyDensityMode;
+            const ecosystem = document.getElementById('candidate-ecosystem-focus');
+            if (ecosystem) ecosystem.value = getExistingSelectValue('candidate-ecosystem-focus', candidateCompanyEcosystemFocus);
+            const corridor = document.getElementById('candidate-corridor-focus');
+            if (corridor) corridor.value = getExistingSelectValue('candidate-corridor-focus', candidateCompanyCorridorFocus);
+        }
+
         /* ==============================
            FILTERS
         ================================ */
@@ -2243,10 +2481,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             stopOrbitForInteraction();
             updateRelationshipFilterControls();
             refreshVisibleGraph();
+            updateSearchMatches();
+            renderSearchPanel();
             const selectionCleared = syncSelectionAfterVisibilityChange();
             if (!selectionCleared && selectedNode) showNodeDetails(selectedNode);
             if (!selectionCleared && selectedSecPreviewNode) showSecPreviewNodeDetails(selectedSecPreviewNode);
             if (!selectionCleared && selectedSecPreviewLink) showSecPreviewEdgeDetails(selectedSecPreviewLink);
+            if (!selectionCleared && selectedCandidateCompanyPreviewNode) showCandidateCompanyPreviewNodeDetails(selectedCandidateCompanyPreviewNode);
+            if (!selectionCleared && selectedCandidateCompanyPreviewLink) showCandidateCompanyPreviewEdgeDetails(selectedCandidateCompanyPreviewLink);
             triggerPulse(360);
             requestDraw();
         }
@@ -2256,6 +2498,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             updateRelationshipToggle('sec-backed-only-toggle', secBackedOnlyFilter);
             updateRelationshipToggle('stale-review-toggle', staleReviewFilter);
             updateRelationshipToggle('candidate-preview-only-toggle', candidatePreviewOnlyFilter);
+            updateCandidateCompanyPreviewControls();
             updateRelationshipToggle('missing-evidence-toggle', missingEvidenceFilter);
             updateRelationshipToggle('portfolio-connected-only-toggle', portfolioConnectedOnlyFilter);
             updateRelationshipToggle('cross-sector-only-toggle', crossSectorOnlyFilter);
@@ -2278,6 +2521,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (secBackedOnlyFilter) labels.push('SEC-backed only');
             if (staleReviewFilter) labels.push('Stale review');
             if (candidatePreviewOnlyFilter) labels.push('Candidate preview');
+            if (candidateCompanyPreviewOnlyFilter) labels.push('Candidate companies only');
+            if (candidateCompanyStrategicHubOnlyFilter) labels.push('Candidate hubs');
+            if (candidateCompanyEcosystemFocus) labels.push(`${universeExpansionTools.formatKeyLabel(candidateCompanyEcosystemFocus)} preview`);
+            if (candidateCompanyCorridorFocus) labels.push(`${universeExpansionTools.formatKeyLabel(candidateCompanyCorridorFocus)} corridor`);
             if (missingEvidenceFilter) labels.push('Missing evidence');
             if (portfolioConnectedOnlyFilter) labels.push('Portfolio links');
             if (crossSectorOnlyFilter) labels.push('Cross-sector');
@@ -2308,6 +2555,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 secBackedOnlyFilter ||
                 staleReviewFilter ||
                 candidatePreviewOnlyFilter ||
+                candidateCompanyPreviewOnlyFilter ||
+                candidateCompanyStrategicHubOnlyFilter ||
+                candidateCompanyEcosystemFocus ||
+                candidateCompanyCorridorFocus ||
                 missingEvidenceFilter ||
                 portfolioConnectedOnlyFilter ||
                 crossSectorOnlyFilter
@@ -2330,6 +2581,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 secBackedOnlyFilter,
                 staleReviewFilter,
                 candidatePreviewOnlyFilter,
+                candidateCompanyPreviewOnlyFilter,
+                candidateCompanyStrategicHubOnlyFilter,
+                candidateCompanyEcosystemFocus,
+                candidateCompanyCorridorFocus,
                 missingEvidenceFilter,
                 portfolioConnectedOnlyFilter,
                 crossSectorOnlyFilter,
@@ -2424,6 +2679,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 secBackedOnlyFilter,
                 staleReviewFilter,
                 candidatePreviewOnlyFilter,
+                candidateCompanyPreviewOnlyFilter,
+                candidateCompanyStrategicHubOnlyFilter,
+                candidateCompanyEcosystemFocus,
+                candidateCompanyCorridorFocus,
                 missingEvidenceFilter,
                 portfolioConnectedOnlyFilter,
                 crossSectorOnlyFilter,
@@ -2511,6 +2770,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 visibleLinkKeys,
                 selectedNode,
                 selectedRelationshipLink,
+                selectedCandidateCompanyPreviewNode,
+                selectedCandidateCompanyPreviewLink,
                 activeEcosystemOverlayKey,
                 sourceCoverageLensEnabled,
                 activeRelationshipRoute,
@@ -2527,6 +2788,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 secPreviewCandidateCount: secPreviewCandidates.length,
                 secPreviewLinkCount: secPreviewLinks.length,
                 visibleSecPreviewLinkCount: visibleSecPreviewLinks.length,
+                candidateCompanyPreviewCount: candidateCompanyPreviewNodes.length,
+                candidateCompanyVisibleCount: visibleCandidateCompanyPreviewNodes.length,
+                visibleCandidateCompanyPreviewNodes,
+                visibleCandidateCompanyPreviewLinks,
+                candidateCompanyDensityMode,
                 getRelationshipTypeKey,
                 getRelationshipTypeLabel,
                 getRelationshipTypeColor,
@@ -2825,10 +3091,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 } else {
                     const productionLink = findProductionLinkAt(screen.x, screen.y);
                     const previewLink = productionLink ? null : findSecPreviewLinkAt(screen.x, screen.y);
+                    const candidateCompanyLink = productionLink || previewLink ? null : findCandidateCompanyPreviewLinkAt(screen.x, screen.y);
                     if (productionLink) {
                         selectProductionRelationship(productionLink);
                     } else if (previewLink) {
                         selectSecPreviewEdge(previewLink.key);
+                    } else if (candidateCompanyLink) {
+                        selectCandidateCompanyPreviewEdge(candidateCompanyLink.key);
                     } else {
                         clearSelection();
                     }
@@ -3014,6 +3283,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             graphRender.drawGraph(renderContext, timestamp);
             drawSecProductionLayer(timestamp);
             drawSecPreviewLayer(timestamp);
+            drawCandidateCompanyPreviewLayer(timestamp);
         }
 
         function drawSecProductionLayer(timestamp = 0) {
@@ -3248,6 +3518,173 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return point;
         }
 
+        function drawCandidateCompanyPreviewLayer(timestamp = 0) {
+            if (!candidateCompanyPreviewEnabled || (!visibleCandidateCompanyPreviewLinks.length && !visibleCandidateCompanyPreviewNodes.length)) return;
+
+            const canvas = document.getElementById('graph-canvas');
+            const ctx = canvas?.getContext('2d');
+            if (!ctx) return;
+
+            ctx.save();
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            visibleCandidateCompanyPreviewLinks.forEach(link => drawCandidateCompanyPreviewLink(ctx, link, timestamp));
+            drawCandidateCompanyPreviewAnchorHalos(ctx, timestamp);
+            visibleCandidateCompanyPreviewNodes.forEach(node => drawCandidateCompanyPreviewNode(ctx, node, timestamp));
+            ctx.restore();
+        }
+
+        function drawCandidateCompanyPreviewLink(ctx, link, timestamp = 0) {
+            const geometry = getCandidateCompanyPreviewLinkGeometry(link);
+            if (!geometry) return;
+
+            const isSelected = selectedCandidateCompanyPreviewLink?.key === link.key ||
+                selectedCandidateCompanyPreviewNode?.id === link.source.id ||
+                selectedCandidateCompanyPreviewNode?.id === link.target.id;
+            const pulse = isSelected ? 0.08 + Math.sin(timestamp * 0.006) * 0.05 : 0;
+            const strength = clamp(Number(link.strength) || 0.34, 0.1, 0.72);
+
+            ctx.save();
+            ctx.globalAlpha = isSelected ? 0.84 : 0.19 + strength * 0.22 + pulse;
+            ctx.strokeStyle = CANDIDATE_COMPANY_EDGE_COLOR;
+            ctx.lineWidth = isSelected ? 2.35 : 1.05 + strength * 0.72;
+            ctx.setLineDash([3, 7, 10, 7]);
+            ctx.lineDashOffset = -((timestamp * 0.012) % 27);
+            ctx.shadowBlur = isSelected ? 26 : 12;
+            ctx.shadowColor = CANDIDATE_COMPANY_EDGE_COLOR;
+            ctx.beginPath();
+            ctx.moveTo(geometry.source.x, geometry.source.y);
+            ctx.quadraticCurveTo(geometry.control.x, geometry.control.y, geometry.target.x, geometry.target.y);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawCandidateCompanyPreviewAnchorHalos(ctx, timestamp = 0) {
+            const endpoints = new Map();
+            visibleCandidateCompanyPreviewLinks.forEach(link => {
+                if (link.source && !isCandidateCompanyPreviewNode(link.source)) endpoints.set(link.source.id, link.source);
+                if (link.target && !isCandidateCompanyPreviewNode(link.target)) endpoints.set(link.target.id, link.target);
+            });
+
+            endpoints.forEach(node => {
+                const point = getCandidateCompanyPreviewScreenPoint(node);
+                if (!point) return;
+                const radius = (node._screenRadius ?? getScreenNodeRadius(node)) + 10;
+                const isSelected = selectedCandidateCompanyPreviewLink &&
+                    (selectedCandidateCompanyPreviewLink.source.id === node.id || selectedCandidateCompanyPreviewLink.target.id === node.id);
+                const pulse = isSelected ? 1 + Math.sin(timestamp * 0.006) * 0.07 : 1;
+
+                ctx.save();
+                ctx.globalAlpha = isSelected ? 0.62 : 0.24;
+                ctx.strokeStyle = CANDIDATE_COMPANY_HALO_COLOR;
+                ctx.lineWidth = isSelected ? 1.7 : 1.05;
+                ctx.setLineDash([2, 5]);
+                ctx.shadowBlur = isSelected ? 22 : 10;
+                ctx.shadowColor = CANDIDATE_COMPANY_HALO_COLOR;
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius * pulse, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            });
+        }
+
+        function drawCandidateCompanyPreviewNode(ctx, node, timestamp = 0) {
+            const point = getCandidateCompanyPreviewScreenPoint(node);
+            if (!point) return;
+
+            const record = node.candidateCompany || {};
+            const radius = Math.max(5.8, node._screenRadius ?? getScreenNodeRadius(node));
+            const isSelected = selectedCandidateCompanyPreviewNode?.id === node.id;
+            const isHovered = hoveredNode?.id === node.id;
+            const hubCandidate = Boolean(record.strategic_hub_preview?.strategic_hub_candidate);
+            const pulse = isSelected || isHovered ? 1 + Math.sin(timestamp * 0.006) * 0.08 : 1;
+
+            ctx.save();
+            ctx.globalAlpha = isSelected ? 0.88 : isHovered ? 0.74 : hubCandidate ? 0.58 : 0.46;
+            ctx.shadowBlur = isSelected ? 30 : hubCandidate ? 22 : 16;
+            ctx.shadowColor = hubCandidate ? CANDIDATE_COMPANY_HALO_COLOR : CANDIDATE_COMPANY_NODE_COLOR;
+            const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.35);
+            glow.addColorStop(0, hexToRgba(CANDIDATE_COMPANY_NODE_COLOR, isSelected ? 0.42 : 0.25));
+            glow.addColorStop(1, hexToRgba(CANDIDATE_COMPANY_NODE_COLOR, 0));
+            ctx.fillStyle = glow;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius * 4.35, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = hexToRgba(CANDIDATE_COMPANY_NODE_COLOR, hubCandidate ? 0.4 : 0.31);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.globalAlpha = isSelected ? 0.95 : 0.68;
+            ctx.strokeStyle = hubCandidate ? CANDIDATE_COMPANY_HALO_COLOR : CANDIDATE_COMPANY_NODE_COLOR;
+            ctx.lineWidth = isSelected ? 2.1 : hubCandidate ? 1.7 : 1.25;
+            ctx.setLineDash(hubCandidate ? [2, 3] : [6, 4]);
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, radius * 2.05 * pulse, 0, Math.PI * 2);
+            ctx.stroke();
+
+            drawCandidateCompanyPreviewNodeLabel(ctx, node, point, radius, isSelected || isHovered || hubCandidate);
+            ctx.restore();
+        }
+
+        function drawCandidateCompanyPreviewNodeLabel(ctx, node, point, radius, emphasized) {
+            const label = node.ticker || 'CAND';
+            ctx.save();
+            ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+            const width = ctx.measureText(label).width;
+            const x = point.x - width / 2;
+            const y = point.y + radius + 16;
+            ctx.globalAlpha = emphasized ? 0.9 : 0.56;
+            ctx.fillStyle = 'rgba(3, 7, 18, 0.74)';
+            ctx.strokeStyle = 'rgba(190, 242, 100, 0.42)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([]);
+            roundedRect(ctx, x - 5, y - 11, width + 10, 16, 6);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = CANDIDATE_COMPANY_NODE_COLOR;
+            ctx.fillText(label, x, y);
+            ctx.restore();
+        }
+
+        function getCandidateCompanyPreviewLinkGeometry(link) {
+            if (!link) return null;
+            const source = getCandidateCompanyPreviewScreenPoint(link.source);
+            const target = getCandidateCompanyPreviewScreenPoint(link.target);
+            if (!source || !target) return null;
+
+            const midX = (source.x + target.x) / 2;
+            const midY = (source.y + target.y) / 2;
+            const dx = target.x - source.x;
+            const dy = target.y - source.y;
+            const distance = Math.max(1, Math.hypot(dx, dy));
+            const curve = (Number(link.curveOffset) || 30) * scale;
+            return {
+                source,
+                target,
+                control: {
+                    x: midX + (-dy / distance) * curve,
+                    y: midY + (dx / distance) * curve
+                }
+            };
+        }
+
+        function getCandidateCompanyPreviewScreenPoint(node) {
+            if (!node) return null;
+            if (!isCandidateCompanyPreviewNode(node) && Number.isFinite(node._screenX) && Number.isFinite(node._screenY)) {
+                return { x: node._screenX, y: node._screenY };
+            }
+
+            const position = getNodeLayoutPosition(node);
+            const point = worldToScreen(position.x, position.y);
+            if (isCandidateCompanyPreviewNode(node)) {
+                node._screenX = point.x;
+                node._screenY = point.y;
+                node._screenRadius = getScreenNodeRadius(node) * (point.perspectiveScale || 1);
+            }
+            return point;
+        }
+
         function drawBackground(ctx) {
             graphRender.drawBackground(renderContext, ctx);
         }
@@ -3296,6 +3733,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             stopOrbitForInteraction();
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = null;
+            selectedCandidateCompanyPreviewNode = null;
+            selectedCandidateCompanyPreviewLink = null;
             selectedRelationshipLink = null;
             activeRelationshipRoute = null;
             graphStoryMode = 'overview';
@@ -3326,6 +3765,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 selectSecPreviewNode(node);
                 return;
             }
+            if (isCandidateCompanyPreviewNode(node)) {
+                selectCandidateCompanyPreviewNode(node);
+                return;
+            }
             selectNode(node);
         }
 
@@ -3337,6 +3780,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             graphStoryMode = '';
             selectedSecPreviewNode = node;
             selectedSecPreviewLink = null;
+            selectedCandidateCompanyPreviewNode = null;
+            selectedCandidateCompanyPreviewLink = null;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set((node.previewLinks || []).map(link => link.key));
             activeClusterNodeIds = new Set();
@@ -3360,12 +3805,60 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             graphStoryMode = '';
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = link;
+            selectedCandidateCompanyPreviewNode = null;
+            selectedCandidateCompanyPreviewLink = null;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set([link.key]);
             activeClusterNodeIds = new Set();
             focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
             refreshVisibleGraph();
             showSecPreviewEdgeDetails(link);
+            triggerPulse(PULSE_DURATION_MS);
+            requestDraw();
+        }
+
+        function selectCandidateCompanyPreviewNode(node) {
+            stopOrbitForInteraction();
+            selectedNode = null;
+            selectedRelationshipLink = null;
+            activeRelationshipRoute = null;
+            graphStoryMode = '';
+            selectedSecPreviewNode = null;
+            selectedSecPreviewLink = null;
+            selectedCandidateCompanyPreviewNode = node;
+            selectedCandidateCompanyPreviewLink = null;
+            focusNeighborIds = new Set();
+            focusLinkKeys = new Set((node.previewLinks || []).map(link => link.key));
+            activeClusterNodeIds = new Set();
+            focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
+            refreshVisibleGraph();
+            showCandidateCompanyPreviewNodeDetails(node);
+            recordRecentNode(node);
+            triggerPulse(PULSE_DURATION_MS);
+            requestDraw();
+        }
+
+        function selectCandidateCompanyPreviewEdge(keyOrLink) {
+            stopOrbitForInteraction();
+            const link = typeof keyOrLink === 'string'
+                ? candidateCompanyPreviewLinks.find(item => item.key === keyOrLink)
+                : keyOrLink;
+            if (!link) return;
+
+            selectedNode = null;
+            selectedRelationshipLink = null;
+            activeRelationshipRoute = null;
+            graphStoryMode = '';
+            selectedSecPreviewNode = null;
+            selectedSecPreviewLink = null;
+            selectedCandidateCompanyPreviewNode = null;
+            selectedCandidateCompanyPreviewLink = link;
+            focusNeighborIds = new Set();
+            focusLinkKeys = new Set([link.key]);
+            activeClusterNodeIds = new Set();
+            focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
+            refreshVisibleGraph();
+            showCandidateCompanyPreviewEdgeDetails(link);
             triggerPulse(PULSE_DURATION_MS);
             requestDraw();
         }
@@ -3393,6 +3886,228 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }));
         }
 
+        function showCandidateCompanyPreviewNodeDetails(node) {
+            const sidebar = document.getElementById('sidebar');
+            const empty = document.getElementById('empty-sidebar');
+            if (!sidebar || !empty) return;
+
+            const record = node.candidateCompany || {};
+            const visibleLinksForNode = (node.previewLinks || [])
+                .filter(link => visibleCandidateCompanyPreviewLinks.some(visible => visible.key === link.key));
+            const sourceUrls = getCandidateCompanySourceUrls(record);
+            const sourceSummary = record.source_readiness_summary || {};
+            const hub = record.strategic_hub_preview || {};
+            const blockers = Array.isArray(record.blockers) ? record.blockers : [];
+
+            sidebar.innerHTML = `
+                ${renderActiveContextStrip(getSidebarRenderContext())}
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <div class="min-w-0">
+                        <div class="text-xs text-lime-200/82 font-mono tracking-[2px]">CANDIDATE COMPANY PREVIEW</div>
+                        <h2 class="font-display text-3xl text-white mt-1">${escapeHtml(record.ticker || node.ticker || '')}</h2>
+                        <div class="text-sm text-white/64 mt-1">${escapeHtml(record.name || node.name || '')}</div>
+                        <div class="text-xs text-white/44 mt-1 leading-snug">${escapeHtml(record.sector_proposal || node.sector || 'Sector proposal pending')} / ${escapeHtml(record.industry_group_proposal || node.industryGroup || 'Industry group pending')}</div>
+                    </div>
+                    <button onclick="clearSelection()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70" aria-label="Clear selection">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="candidate-company-preview-warning rounded-2xl p-4 mb-4">
+                    <div class="text-[10px] text-lime-100/75 font-mono tracking-[1.2px]">REVIEW-ONLY STAGING</div>
+                    <div class="text-sm text-white/72 mt-1 leading-relaxed">This node is not part of production companies. Preview links are corridor-planning anchors only and do not create relationship proof, ecosystem membership authority, or production writes.</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-5">
+                    <div class="summary-tile rounded-2xl p-3">
+                        <div class="text-[10px] text-white/40 font-mono">READINESS</div>
+                        <div class="text-sm text-white font-semibold">${escapeHtml(record.expansion_readiness_label || record.readiness_state || 'Review')}</div>
+                    </div>
+                    <div class="summary-tile rounded-2xl p-3">
+                        <div class="text-[10px] text-white/40 font-mono">SCORE</div>
+                        <div class="font-display text-xl text-white">${escapeHtml(formatCandidateCell(record.readiness_score ?? '-'))}</div>
+                    </div>
+                    <div class="summary-tile rounded-2xl p-3">
+                        <div class="text-[10px] text-white/40 font-mono">ANCHORS</div>
+                        <div class="font-display text-xl text-white">${visibleLinksForNode.length}</div>
+                    </div>
+                    <div class="summary-tile rounded-2xl p-3">
+                        <div class="text-[10px] text-white/40 font-mono">SOURCE URLS</div>
+                        <div class="font-display text-xl text-white">${sourceUrls.length}</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Expansion Governance</div>
+                    <div class="candidate-company-sidebar-card rounded-2xl p-3">
+                        <div class="text-sm text-white/80 leading-relaxed">${escapeHtml(record.expansion_rationale || 'Reviewer-owned expansion rationale pending.')}</div>
+                        <div class="mt-3 flex flex-wrap gap-1.5">
+                            <span class="evidence-tier-badge context_only">PREVIEW ONLY</span>
+                            <span class="source-host-chip">NO AUTO PROMOTION</span>
+                            <span class="source-host-chip">NO RELATIONSHIP PROOF</span>
+                            <span class="source-host-chip">${record.manual_promotion_required === false ? 'PROMOTION DISABLED' : 'MANUAL REVIEW'}</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-1.5">
+                        ${blockers.length ? blockers.map(blocker => `<span class="review-action-chip">${escapeHtml(blocker)}</span>`).join('') : '<span class="source-host-chip">NO BLOCKERS</span>'}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Reviewer Assignments</div>
+                    <div class="candidate-company-sidebar-card rounded-2xl p-3">
+                        <div class="text-[10px] text-white/38 font-mono">ECOSYSTEM PROPOSALS</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">${renderCandidateCompanyAssignmentChips(record.ecosystem_assignments, 'ecosystem_key')}</div>
+                        <div class="text-[10px] text-white/38 font-mono mt-4">CORRIDOR PROPOSALS</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">${renderCandidateCompanyAssignmentChips(record.corridor_assignments, 'corridor_key')}</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Strategic Hub Preview</div>
+                    <div class="candidate-company-hub-grid">
+                        ${renderCandidateCompanyHubMetric('Hub', hub.strategic_hub_candidate ? 'YES' : 'REVIEW')}
+                        ${renderCandidateCompanyHubMetric('Centrality', hub.corridor_centrality_score)}
+                        ${renderCandidateCompanyHubMetric('Breadth', hub.ecosystem_breadth_score)}
+                        ${renderCandidateCompanyHubMetric('Bridge', hub.bridge_significance_score)}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Source Readiness</div>
+                    <div class="candidate-company-sidebar-card rounded-2xl p-3">
+                        <div class="flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${sourceSummary.has_official_listing_source ? 'OFFICIAL LISTING' : 'LISTING REVIEW'}</span>
+                            <span class="source-host-chip">${sourceSummary.has_sec_submission_source ? 'SEC CIK' : 'CIK REVIEW'}</span>
+                            <span class="source-host-chip">${escapeHtml(sourceSummary.source_lifecycle_state || 'source lifecycle pending')}</span>
+                            <span class="source-host-chip">NO TRUST ESCALATION</span>
+                        </div>
+                        <div class="mt-3 space-y-2">${renderCandidateCompanySourceRows(sourceUrls)}</div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Preview Anchors</div>
+                    <div class="space-y-2">
+                        ${visibleLinksForNode.map(link => renderCandidateCompanyAnchorRow(link)).join('') || '<div class="text-sm text-white/35">No visible anchor rows under current filters.</div>'}
+                    </div>
+                </div>
+            `;
+            sidebar.classList.remove('hidden');
+            empty.classList.add('hidden');
+        }
+
+        function showCandidateCompanyPreviewEdgeDetails(link) {
+            const sidebar = document.getElementById('sidebar');
+            const empty = document.getElementById('empty-sidebar');
+            if (!sidebar || !empty || !link) return;
+
+            const record = link.candidateCompany || {};
+            sidebar.innerHTML = `
+                ${renderActiveContextStrip(getSidebarRenderContext())}
+                <div class="flex items-start justify-between gap-4 mb-5">
+                    <div>
+                        <div class="text-xs text-lime-200/82 font-mono tracking-[2px]">CANDIDATE PREVIEW ANCHOR</div>
+                        <h2 class="font-display text-2xl text-white mt-1">${escapeHtml(link.sourceTicker || link.source?.ticker || '?')} to ${escapeHtml(link.targetTicker || record.ticker || '?')}</h2>
+                        <div class="text-sm text-white/58 mt-1">Corridor assignment preview, not a production relationship.</div>
+                    </div>
+                    <button onclick="clearSelection()" class="focus-button w-9 h-9 rounded-full border border-white/15 text-white/70" aria-label="Clear selection">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="candidate-company-preview-warning rounded-2xl p-4 mb-4">
+                    <div class="text-[10px] text-lime-100/75 font-mono tracking-[1.2px]">NO RELATIONSHIP CLAIM</div>
+                    <div class="text-sm text-white/72 mt-1 leading-relaxed">This dashed edge only shows where a reviewer proposed placing ${escapeHtml(record.ticker || 'the candidate')} during universe planning. It cannot promote companies, prove relationships, or write production data.</div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Preview Semantics</div>
+                    <div class="candidate-company-sidebar-card rounded-2xl p-3">
+                        <div class="flex flex-wrap gap-1.5">
+                            <span class="evidence-tier-badge context_only">${escapeHtml(link.previewSemantics || 'corridor_assignment_not_relationship')}</span>
+                            <span class="source-host-chip">REL AUTH ${link.relationship_authority ? 'UNSAFE' : 'NONE'}</span>
+                            <span class="source-host-chip">PROD WRITE ${link.production_write_allowed ? 'UNSAFE' : 'OFF'}</span>
+                            <span class="source-host-chip">CLAIM ${link.relationship_claim_created ? 'UNSAFE' : 'NONE'}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Candidate Context</div>
+                    <div class="candidate-company-sidebar-card rounded-2xl p-3">
+                        <div class="text-sm text-white/82 font-semibold">${escapeHtml(record.ticker || '')} ${escapeHtml(record.name || '')}</div>
+                        <div class="text-xs text-white/54 mt-1 leading-relaxed">${escapeHtml(record.expansion_rationale || 'Review-only expansion rationale.')}</div>
+                        <div class="mt-3 flex flex-wrap gap-1.5">
+                            ${renderCandidateCompanyAssignmentChips(record.ecosystem_assignments, 'ecosystem_key')}
+                            ${renderCandidateCompanyAssignmentChips(record.corridor_assignments, 'corridor_key')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            sidebar.classList.remove('hidden');
+            empty.classList.add('hidden');
+        }
+
+        function getCandidateCompanySourceUrls(record) {
+            return Array.isArray(record?.source_urls)
+                ? record.source_urls.filter(Boolean)
+                : [record?.official_listing_source_url, record?.sec_submission_source_url].filter(Boolean);
+        }
+
+        function renderCandidateCompanyAssignmentChips(assignments, keyName) {
+            const rows = Array.isArray(assignments) ? assignments : [];
+            if (!rows.length) return '<span class="source-host-chip">PENDING REVIEW</span>';
+            return rows.slice(0, 8).map(row => `
+                <span class="source-host-chip">${escapeHtml(row.label || universeExpansionTools.formatKeyLabel(row[keyName]))}</span>
+            `).join('');
+        }
+
+        function renderCandidateCompanyHubMetric(label, value) {
+            return `
+                <div class="candidate-company-sidebar-card rounded-2xl p-3">
+                    <div class="text-[10px] text-white/40 font-mono">${escapeHtml(label)}</div>
+                    <div class="font-display text-lg text-white">${escapeHtml(formatCandidateCell(value))}</div>
+                </div>
+            `;
+        }
+
+        function renderCandidateCompanySourceRows(urls) {
+            if (!urls.length) return '<div class="text-sm text-white/35">No source URL attached.</div>';
+            return urls.slice(0, 4).map(url => {
+                const diversity = getSourceHostDiversity({ source_urls: [url] });
+                const category = diversity.primaryCategory?.shortLabel || 'URL';
+                let host = url;
+                try {
+                    host = new URL(url).hostname.replace(/^www\./i, '');
+                } catch (error) {
+                    host = url;
+                }
+                return `
+                    <div class="rounded-2xl border border-white/10 bg-black/20 p-3">
+                        <div class="text-xs text-white/82 break-all">${escapeHtml(host)}</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(category)}</span>
+                            <span class="source-host-chip">IDENTITY SOURCE</span>
+                            <span class="source-host-chip">NO REL PROOF</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCandidateCompanyAnchorRow(link) {
+            const anchor = isCandidateCompanyPreviewNode(link.source) ? link.target : link.source;
+            return `
+                <button type="button" onclick="selectCandidateCompanyPreviewEdge('${escapeInlineJsString(link.key)}')" class="candidate-company-anchor-row rounded-2xl p-3 w-full text-left">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-sm text-white/82 font-semibold">${escapeHtml(anchor?.ticker || link.sourceTicker || '?')}</div>
+                            <div class="text-xs text-white/48 truncate">${escapeHtml(anchor?.name || 'Production anchor')}</div>
+                        </div>
+                        <span class="review-action-chip">ANCHOR</span>
+                    </div>
+                </button>
+            `;
+        }
+
         function clearSelection(refit = true) {
             stopOrbitForInteraction();
             const wasHubActive = isHubLayoutActive();
@@ -3401,6 +4116,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             selectedNode = null;
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = null;
+            selectedCandidateCompanyPreviewNode = null;
+            selectedCandidateCompanyPreviewLink = null;
             selectedRelationshipLink = null;
             activeRelationshipRoute = null;
             graphStoryMode = '';
@@ -4066,12 +4783,16 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 ? selectedNode.ticker || selectedNode.name || 'Selected company'
                 : selectedSecPreviewNode
                     ? `${selectedSecPreviewNode.ticker || 'Preview'} preview`
-                    : 'None';
+                    : selectedCandidateCompanyPreviewNode
+                        ? `${selectedCandidateCompanyPreviewNode.ticker || 'Candidate'} candidate`
+                        : 'None';
             const selectedRelationship = selectedRelationshipLink
                 ? `${selectedRelationshipLink.source?.ticker || '?'} to ${selectedRelationshipLink.target?.ticker || '?'}`
                 : selectedSecPreviewLink
                     ? `${selectedSecPreviewLink.sourceTicker || '?'} to ${selectedSecPreviewLink.targetTicker || '?'} preview`
-                    : 'None';
+                    : selectedCandidateCompanyPreviewLink
+                        ? `${selectedCandidateCompanyPreviewLink.sourceTicker || '?'} to ${selectedCandidateCompanyPreviewLink.targetTicker || '?'} candidate`
+                        : 'None';
             const filterCount = getActiveGraphFilterCount();
             const guide = graphIntelligenceModel.guidedDiscovery;
             const tierStates = graphIntelligenceModel.sourceCoverage?.tierStates || stockGraphIntelligence.EVIDENCE_TIER_META || {};
@@ -4086,8 +4807,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     ${renderLegendItem('Overlay', overlay ? overlay.shortLabel : 'Off', overlay?.color || '')}
                     ${renderLegendItem('Route', route ? `${route.label || 'Route'} (${route.linkKeys?.size || 0})` : 'Off', route ? '#ffffff' : '')}
                     ${renderLegendItem('Sources', sourceCoverageLensEnabled ? 'Lens on' : 'Lens off', sourceCoverageLensEnabled ? '#22d3ee' : '')}
-                    ${renderLegendItem('Company', selectedCompany, selectedNode ? '#ffffff' : '')}
-                    ${renderLegendItem('Edge', selectedRelationship, selectedRelationshipLink ? '#ffffff' : '')}
+                    ${renderLegendItem('Company', selectedCompany, selectedNode ? '#ffffff' : selectedCandidateCompanyPreviewNode ? '#a3e635' : '')}
+                    ${renderLegendItem('Edge', selectedRelationship, selectedRelationshipLink ? '#ffffff' : selectedCandidateCompanyPreviewLink ? '#bef264' : '')}
                     ${renderLegendItem('Filters', `${filterCount} active`, filterCount ? '#fbbf24' : '')}
                 </div>
                 <div class="graph-active-legend-swatches">
@@ -4095,6 +4816,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <span><i style="background:${tierStates.strong_inferred?.color || '#7dd3fc'}"></i>Strong</span>
                     <span><i style="background:${tierStates.context_only?.color || '#c4b5fd'}"></i>Context</span>
                     <span><i style="background:${tierStates.needs_review?.color || '#fb923c'}"></i>Review</span>
+                    <span><i style="background:${CANDIDATE_COMPANY_NODE_COLOR}"></i>Candidate</span>
                     <span><i class="graph-route-swatch"></i>Route/selected</span>
                 </div>
             `;
@@ -4120,6 +4842,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 secBackedOnlyFilter,
                 staleReviewFilter,
                 candidatePreviewOnlyFilter,
+                candidateCompanyPreviewEnabled,
+                candidateCompanyPreviewOnlyFilter,
+                candidateCompanyStrategicHubOnlyFilter,
+                candidateCompanyEcosystemFocus,
+                candidateCompanyCorridorFocus,
+                candidateCompanyDensityMode !== 'balanced',
                 missingEvidenceFilter,
                 portfolioConnectedOnlyFilter,
                 crossSectorOnlyFilter,
@@ -4288,6 +5016,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             selectedNode = null;
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = null;
+            selectedCandidateCompanyPreviewNode = null;
+            selectedCandidateCompanyPreviewLink = null;
             selectedRelationshipLink = link;
             activeRelationshipRoute = null;
             graphStoryMode = 'relationship';
@@ -5037,6 +5767,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!selectionCleared && selectedNode) showNodeDetails(selectedNode);
             if (!selectionCleared && selectedSecPreviewNode) showSecPreviewNodeDetails(selectedSecPreviewNode);
             if (!selectionCleared && selectedSecPreviewLink) showSecPreviewEdgeDetails(selectedSecPreviewLink);
+            if (!selectionCleared && selectedCandidateCompanyPreviewNode) showCandidateCompanyPreviewNodeDetails(selectedCandidateCompanyPreviewNode);
+            if (!selectionCleared && selectedCandidateCompanyPreviewLink) showCandidateCompanyPreviewEdgeDetails(selectedCandidateCompanyPreviewLink);
             triggerPulse(360);
             requestDraw();
         }
@@ -5086,6 +5818,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             focusModeEnabled = false;
             signalStrengthThreshold = 0;
             secPreviewEnabled = true;
+            candidateCompanyPreviewEnabled = false;
+            candidateCompanyPreviewOnlyFilter = false;
+            candidateCompanyStrategicHubOnlyFilter = false;
+            candidateCompanyDensityMode = 'balanced';
+            candidateCompanyEcosystemFocus = '';
+            candidateCompanyCorridorFocus = '';
             selectedRelationshipLink = null;
             activeEcosystemOverlayKey = '';
             sourceCoverageLensEnabled = false;
@@ -5305,7 +6043,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 return;
             }
 
-            searchMatches = nodes
+            const searchableNodes = candidateCompanyPreviewEnabled
+                ? [...nodes, ...candidateCompanyPreviewNodes]
+                : nodes;
+
+            searchMatches = searchableNodes
                 .map(node => ({ node, score: getSearchMatchScore(node, currentSearch) }))
                 .filter(item => item.score >= 0)
                 .sort((a, b) =>
@@ -5328,12 +6070,16 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const sector = String(node.sector || '').toLowerCase();
             const industry = String(node.industry || '').toLowerCase();
             const industryGroup = String(getCompanyIndustryGroup(node) || '').toLowerCase();
+            const candidateText = isCandidateCompanyPreviewNode(node)
+                ? universeExpansionTools.getCandidateSearchText(node)
+                : '';
 
             if (ticker === term) return 0;
             if (ticker.startsWith(term)) return 1;
             if (name.startsWith(term)) return 2;
             if (ticker.includes(term)) return 3;
             if (name.includes(term)) return 4;
+            if (candidateText.includes(term)) return 4.5;
             if (sector.includes(term)) return 5;
             if (industry.includes(term)) return 6;
             if (industryGroup.includes(term)) return 7;
@@ -5342,6 +6088,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function getFilterSearchPenalty(node) {
             let penalty = 0;
+            if (isCandidateCompanyPreviewNode(node)) {
+                const record = node.candidateCompany || {};
+                if (!candidateCompanyPreviewEnabled) penalty += 2;
+                if (currentSector && record.sector_proposal !== currentSector) penalty += 1;
+                if (currentIndustryGroup && record.industry_group_proposal !== currentIndustryGroup) penalty += 1;
+                return penalty;
+            }
             if (currentSector && node.sector !== currentSector) penalty += 1;
             if (currentIndustryGroup && !nodeMatchesCurrentIndustryGroup(node)) penalty += 1;
             return penalty;
@@ -5419,7 +6172,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!node) return;
             stopOrbitForInteraction();
             ensureNodeVisibleForJump(node);
-            selectNode(node);
+            selectGraphNode(node);
             highlightSearchNode(node);
             if (isHubLayoutActive() || isNexusLayoutActive()) {
                 fitGraph();
@@ -5436,6 +6189,34 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const sectorFilter = document.getElementById('sector-filter');
             const industryGroupFilter = document.getElementById('industry-group-filter');
             const searchInput = document.getElementById('search-input');
+
+            if (isCandidateCompanyPreviewNode(node)) {
+                if (!candidateCompanyPreviewEnabled) {
+                    candidateCompanyPreviewEnabled = true;
+                    changed = true;
+                }
+                if (currentSector && node.candidateCompany?.sector_proposal !== currentSector) {
+                    currentSector = '';
+                    if (sectorFilter) sectorFilter.value = '';
+                    changed = true;
+                }
+                if (currentIndustryGroup && node.candidateCompany?.industry_group_proposal !== currentIndustryGroup) {
+                    currentIndustryGroup = '';
+                    if (industryGroupFilter) industryGroupFilter.value = '';
+                    changed = true;
+                }
+                if (currentSearch && getSearchMatchScore(node, currentSearch) < 0) {
+                    currentSearch = '';
+                    if (searchInput) searchInput.value = '';
+                    changed = true;
+                }
+                if (changed || !visibleCandidateCompanyPreviewNodes.some(item => item.id === node.id)) {
+                    refreshVisibleGraph();
+                    updateCandidateCompanyPreviewControls();
+                    updateSearchMatches();
+                }
+                return;
+            }
 
             if (currentSector && node.sector !== currentSector) {
                 currentSector = '';
@@ -5505,8 +6286,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function getNodeFromDomId(id) {
             const numericId = Number(id);
             if (Number.isFinite(numericId) && nodeById.has(numericId)) return nodeById.get(numericId);
-            return nodeById.get(id);
+            return nodeById.get(id) || candidateCompanyPreviewNodes.find(node => node.id === id) || null;
         }
+
+        function selectSearchNodeByIdFromDom(id) {
+            const node = getNodeFromDomId(id);
+            if (node) jumpToSearchNode(node);
+        }
+        window.selectSearchNodeByIdFromDom = selectSearchNodeByIdFromDom;
 
         /* ==============================
            UTILITIES
@@ -5579,8 +6366,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             visibleNodeIds = new Set(visibleNodes.map(node => node.id));
             refreshSecPreviewVisibility();
             mergeSecPreviewProductionEndpointsIntoVisibleNodes();
+            refreshCandidateCompanyPreviewVisibility();
+            mergeCandidateCompanyPreviewAnchorsIntoVisibleNodes();
             refreshGraphScalingModel();
             rebuildLayoutPositions();
+            positionCandidateCompanyPreviewNodes();
             refreshGraphWorkspaceBounds();
             syncRouteAfterVisibilityChange();
             refreshGraphIntelligenceModel({ render: false });
@@ -5590,7 +6380,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderActiveGraphLegend();
             updateVisibleGraphStatus();
             updateOrbMapData();
-            if (!selectedNode && !selectedSecPreviewNode && !selectedSecPreviewLink && !selectedRelationshipLink) renderDefaultDashboard();
+            if (!selectedNode && !selectedSecPreviewNode && !selectedSecPreviewLink && !selectedCandidateCompanyPreviewNode && !selectedCandidateCompanyPreviewLink && !selectedRelationshipLink) renderDefaultDashboard();
         }
 
         function syncRouteAfterVisibilityChange() {
@@ -5615,8 +6405,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const nodeCount = document.getElementById('node-count');
             const connectionCount = document.getElementById('connection-count');
             const status = document.getElementById('view-status');
-            if (nodeCount) nodeCount.innerText = `${visibleNodes.length} VISIBLE NODES`;
-            if (connectionCount) connectionCount.innerText = `${visibleLinks.length} VISIBLE EDGES`;
+            const previewNodeCount = candidateCompanyPreviewEnabled ? visibleCandidateCompanyPreviewNodes.length : 0;
+            const previewEdgeCount = candidateCompanyPreviewEnabled ? visibleCandidateCompanyPreviewLinks.length : 0;
+            if (nodeCount) nodeCount.innerText = previewNodeCount
+                ? `${visibleNodes.length} PROD + ${previewNodeCount} PREVIEW NODES`
+                : `${visibleNodes.length} VISIBLE NODES`;
+            if (connectionCount) connectionCount.innerText = previewEdgeCount
+                ? `${visibleLinks.length} PROD + ${previewEdgeCount} PREVIEW EDGES`
+                : `${visibleLinks.length} VISIBLE EDGES`;
             if (status) status.innerText = hasRelationshipFiltersActive() || currentSector || currentIndustryGroup || currentSearch || signalStrengthThreshold > 0
                 ? 'FILTERED'
                 : 'READY';
@@ -5651,6 +6447,100 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (endpointIds.size === visibleNodeIds.size) return;
             visibleNodes = nodes.filter(node => endpointIds.has(node.id));
             visibleNodeIds = new Set(visibleNodes.map(node => node.id));
+        }
+
+        function refreshCandidateCompanyPreviewVisibility() {
+            if (!candidateCompanyPreviewEnabled || !candidateCompanyPreviewLinks.length) {
+                visibleCandidateCompanyPreviewNodes = [];
+                visibleCandidateCompanyPreviewLinks = [];
+                return;
+            }
+
+            const selectedNodeId = selectedCandidateCompanyPreviewNode?.id || '';
+            const selectedLinkKey = selectedCandidateCompanyPreviewLink?.key || '';
+            let candidateNodes = candidateCompanyPreviewNodes
+                .filter(node => candidateCompanyNodePassesBaseFilters(node))
+                .sort(sortCandidateCompanyPreviewNodes);
+
+            const densityLimit = universeExpansionTools.getDensityLimit(candidateCompanyDensityMode);
+            if (Number.isFinite(densityLimit) && !selectedNodeId) {
+                candidateNodes = candidateNodes.slice(0, densityLimit);
+            }
+
+            const visibleCandidateIds = new Set(candidateNodes.map(node => node.id));
+            if (selectedNodeId) visibleCandidateIds.add(selectedNodeId);
+
+            visibleCandidateCompanyPreviewLinks = candidateCompanyPreviewLinks
+                .filter(link => {
+                    if (selectedLinkKey) return link.key === selectedLinkKey;
+                    const candidateNode = isCandidateCompanyPreviewNode(link.source) ? link.source : link.target;
+                    return candidateNode && visibleCandidateIds.has(candidateNode.id);
+                })
+                .filter(candidateCompanyPreviewLinkPassesVisibleGraphFilters);
+
+            const linkedCandidateIds = new Set();
+            visibleCandidateCompanyPreviewLinks.forEach(link => {
+                if (isCandidateCompanyPreviewNode(link.source)) linkedCandidateIds.add(link.source.id);
+                if (isCandidateCompanyPreviewNode(link.target)) linkedCandidateIds.add(link.target.id);
+            });
+            if (selectedNodeId) linkedCandidateIds.add(selectedNodeId);
+            visibleCandidateCompanyPreviewNodes = candidateCompanyPreviewNodes
+                .filter(node => linkedCandidateIds.has(node.id))
+                .sort(sortCandidateCompanyPreviewNodes);
+        }
+
+        function mergeCandidateCompanyPreviewAnchorsIntoVisibleNodes() {
+            if (!candidateCompanyPreviewEnabled || !visibleCandidateCompanyPreviewLinks.length) return;
+            const endpointIds = new Set(visibleNodeIds);
+            visibleCandidateCompanyPreviewLinks.forEach(link => {
+                if (link.source && !isCandidateCompanyPreviewNode(link.source)) endpointIds.add(link.source.id);
+                if (link.target && !isCandidateCompanyPreviewNode(link.target)) endpointIds.add(link.target.id);
+            });
+            if (endpointIds.size === visibleNodeIds.size) return;
+            visibleNodes = nodes.filter(node => endpointIds.has(node.id));
+            visibleNodeIds = new Set(visibleNodes.map(node => node.id));
+        }
+
+        function sortCandidateCompanyPreviewNodes(a, b) {
+            const hubA = Number(a?.candidateCompany?.strategic_hub_preview?.staged_hub_score || 0);
+            const hubB = Number(b?.candidateCompany?.strategic_hub_preview?.staged_hub_score || 0);
+            const readyA = Number(a?.candidateCompany?.readiness_score || 0);
+            const readyB = Number(b?.candidateCompany?.readiness_score || 0);
+            return hubB - hubA || readyB - readyA || String(a?.ticker || '').localeCompare(String(b?.ticker || ''));
+        }
+
+        function candidateCompanyNodePassesBaseFilters(node) {
+            if (!node) return false;
+            const record = node.candidateCompany || {};
+            const effectiveHubOnly = candidateCompanyStrategicHubOnlyFilter || candidateCompanyDensityMode === 'hubs';
+            return universeExpansionTools.recordMatchesFocus(record, {
+                ecosystemKey: candidateCompanyEcosystemFocus,
+                corridorKey: candidateCompanyCorridorFocus,
+                strategicHubOnly: effectiveHubOnly,
+                search: currentSearch,
+                sector: currentSector,
+                industryGroup: currentIndustryGroup
+            });
+        }
+
+        function candidateCompanyPreviewLinkPassesVisibleGraphFilters(link) {
+            if (!link) return false;
+            if (selectedCandidateCompanyPreviewLink) return link.key === selectedCandidateCompanyPreviewLink.key;
+            if (selectedCandidateCompanyPreviewNode) {
+                return link.source?.id === selectedCandidateCompanyPreviewNode.id || link.target?.id === selectedCandidateCompanyPreviewNode.id;
+            }
+            if (isFocusModeActive() && selectedNode) {
+                return link.source?.id === selectedNode.id || link.target?.id === selectedNode.id;
+            }
+            const anchor = isCandidateCompanyPreviewNode(link.source) ? link.target : link.source;
+            if (!anchor) return false;
+            if (candidateCompanyPreviewOnlyFilter || candidateCompanyEcosystemFocus || candidateCompanyCorridorFocus || candidateCompanyStrategicHubOnlyFilter) {
+                return true;
+            }
+            if (currentSearch) {
+                return nodePassesBaseFilters(anchor) || visibleNodeIds.has(anchor.id);
+            }
+            return visibleNodeIds.has(anchor.id);
         }
 
         function secPreviewLinkPassesBaseFilters(link) {
@@ -5711,9 +6601,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             });
             updatePerspectiveOverlayHint();
             appendSecPreviewOverlayStats();
+            appendCandidateCompanyOverlayStats();
             appendOrbMapOverlayStats();
             appendGraphIntelligenceOverlayStats();
             updateSecPreviewControl();
+            updateCandidateCompanyPreviewControls();
             updateOrbMapControl();
         }
 
@@ -5733,6 +6625,23 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             overlay.insertAdjacentHTML('beforeend', `
                 <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/75 font-mono tracking-[1.1px] border border-cyan-300/20 bg-cyan-300/10">
                     ${escapeHtml(String(visibleSecPreviewLinks.length))} SEC Preview Edges
+                </span>
+            `);
+        }
+
+        function appendCandidateCompanyOverlayStats() {
+            const overlay = document.getElementById('graph-overlay-stats');
+            if (!overlay || !candidateCompanyPreviewEnabled) return;
+
+            const total = candidateCompanyPreviewNodes.length;
+            if (!total) return;
+
+            overlay.insertAdjacentHTML('beforeend', `
+                <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-lime-100/80 font-mono tracking-[1.1px] border border-lime-300/24 bg-lime-300/10">
+                    ${escapeHtml(String(visibleCandidateCompanyPreviewNodes.length))} Candidate Companies
+                </span>
+                <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-yellow-100/75 font-mono tracking-[1.1px] border border-yellow-300/22 bg-yellow-300/10">
+                    ${escapeHtml(candidateCompanyDensityMode.toUpperCase())} Density
                 </span>
             `);
         }
@@ -5796,6 +6705,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 clearSelection(false);
                 return true;
             }
+            if (selectedCandidateCompanyPreviewNode && !visibleCandidateCompanyPreviewNodes.some(node => node.id === selectedCandidateCompanyPreviewNode.id)) {
+                clearSelection(false);
+                return true;
+            }
+            if (selectedCandidateCompanyPreviewLink && !visibleCandidateCompanyPreviewLinks.some(link => link.key === selectedCandidateCompanyPreviewLink.key)) {
+                clearSelection(false);
+                return true;
+            }
             if (selectedRelationshipLink && !visibleLinkKeys.has(selectedRelationshipLink.key)) {
                 clearSelectedRelationship();
                 return true;
@@ -5846,6 +6763,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (secBackedOnlyFilter && !isSecBackedConnection(link)) return false;
             if (staleReviewFilter && !relationshipIsStaleForReview(link)) return false;
             if (candidatePreviewOnlyFilter && !relationshipIsCandidatePreview(link)) return false;
+            if (candidateCompanyPreviewOnlyFilter && !options.isCandidateCompanyPreview) return false;
             if (missingEvidenceFilter && !relationshipIsMissingEvidence(link)) return false;
             if (portfolioConnectedOnlyFilter && !options.isPreview && !portfolioEdgeKeys.has(link.key)) return false;
             if (portfolioConnectedOnlyFilter && options.isPreview) return false;
@@ -5906,6 +6824,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function getNodeLayoutPosition(node) {
             if (isSecPreviewNode(node)) return { x: node.x, y: node.y };
+            if (isCandidateCompanyPreviewNode(node)) return { x: node.x, y: node.y };
             return graphLayouts.getNodeLayoutPosition(node, {
                 ...getLayoutCalculationOptions(),
                 isHubActive: isHubLayoutActive(),
@@ -5916,6 +6835,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function setNodeLayoutPosition(node, x, y) {
             const position = clampGraphNodePosition(node, x, y);
             if (isSecPreviewNode(node)) {
+                node.x = position.x;
+                node.y = position.y;
+                return;
+            }
+            if (isCandidateCompanyPreviewNode(node)) {
                 node.x = position.x;
                 node.y = position.y;
                 return;
@@ -5939,8 +6863,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 isHubActive: isHubLayoutActive(),
                 isNexusActive: isNexusLayoutActive()
             });
-            if (!secPreviewEnabled || !visibleSecPreviewNodes.length) return fitNodes;
-            return [...fitNodes, ...visibleSecPreviewNodes];
+            const extraNodes = [];
+            if (secPreviewEnabled && visibleSecPreviewNodes.length) extraNodes.push(...visibleSecPreviewNodes);
+            if (candidateCompanyPreviewEnabled && visibleCandidateCompanyPreviewNodes.length) extraNodes.push(...visibleCandidateCompanyPreviewNodes);
+            return extraNodes.length ? [...fitNodes, ...extraNodes] : fitNodes;
         }
 
         function rebuildLayoutPositions() {
@@ -6225,8 +7151,16 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             });
             if (productionNode) return productionNode;
 
-            return graphInteractions.findNodeAt(screenX, screenY, {
+            const secPreviewNode = graphInteractions.findNodeAt(screenX, screenY, {
                 visibleNodes: visibleSecPreviewNodes,
+                getNodeLayoutPosition,
+                worldToScreen,
+                getScreenNodeRadius
+            });
+            if (secPreviewNode) return secPreviewNode;
+
+            return graphInteractions.findNodeAt(screenX, screenY, {
+                visibleNodes: visibleCandidateCompanyPreviewNodes,
                 getNodeLayoutPosition,
                 worldToScreen,
                 getScreenNodeRadius
@@ -6261,6 +7195,23 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 if (!geometry) return;
                 const distance = getDistanceToQuadratic(screenX, screenY, geometry);
                 if (distance <= SEC_PREVIEW_EDGE_HIT_RADIUS && distance < closestDistance) {
+                    closest = link;
+                    closestDistance = distance;
+                }
+            });
+            return closest;
+        }
+
+        function findCandidateCompanyPreviewLinkAt(screenX, screenY) {
+            if (!candidateCompanyPreviewEnabled || !visibleCandidateCompanyPreviewLinks.length) return null;
+
+            let closest = null;
+            let closestDistance = Infinity;
+            visibleCandidateCompanyPreviewLinks.forEach(link => {
+                const geometry = getCandidateCompanyPreviewLinkGeometry(link);
+                if (!geometry) return;
+                const distance = getDistanceToQuadratic(screenX, screenY, geometry);
+                if (distance <= CANDIDATE_COMPANY_EDGE_HIT_RADIUS && distance < closestDistance) {
                     closest = link;
                     closestDistance = distance;
                 }
@@ -6634,6 +7585,160 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }
         }
 
+        function setSourceCandidateCompanyStatus(label, tone = 'info') {
+            setWorkbenchArtifactStatus('source-candidate-company-status', label, tone);
+        }
+
+        function renderCandidateCompanyMetric(label, value) {
+            return renderReviewArtifactMetric(label, value, 'source-candidate-company-card');
+        }
+
+        function getCandidateCompanyWorkbenchModel(companyPayload, batchPayload) {
+            const records = universeExpansionTools.extractRecords(companyPayload);
+            const batches = [
+                ...universeExpansionTools.extractBatches(companyPayload),
+                ...universeExpansionTools.extractBatches(batchPayload)
+            ];
+            const dedupedBatches = [...new Map(batches.map(batch => [batch.batch_id || batch.label, batch]).filter(([key]) => Boolean(key))).values()];
+            const indexes = universeExpansionTools.buildPreviewIndexes(records, dedupedBatches);
+            const readyCount = records.filter(record => record.readiness_state === 'ready_for_preview').length;
+            const hubCount = records.filter(record => record.strategic_hub_preview?.strategic_hub_candidate).length;
+            const blockerCount = records.reduce((sum, record) => sum + (Array.isArray(record.blockers) ? record.blockers.length : 0), 0);
+            const sourceUrlCount = records.reduce((sum, record) => sum + getCandidateCompanySourceUrls(record).length, 0);
+            return {
+                records,
+                batches: dedupedBatches,
+                indexes,
+                readyCount,
+                hubCount,
+                blockerCount,
+                sourceUrlCount
+            };
+        }
+
+        function renderCandidateCompanyWorkbenchSummary(model) {
+            return [
+                renderCandidateCompanyMetric('CANDIDATES', model.records.length),
+                renderCandidateCompanyMetric('BATCHES', model.batches.length),
+                renderCandidateCompanyMetric('READY', model.readyCount),
+                renderCandidateCompanyMetric('HUB CANDIDATES', model.hubCount),
+                renderCandidateCompanyMetric('BLOCKERS', model.blockerCount),
+                renderCandidateCompanyMetric('SOURCE URLS', model.sourceUrlCount)
+            ].join('');
+        }
+
+        function renderCandidateCompanyBatchCards(model) {
+            if (!model.batches.length) return '<div class="text-sm text-white/35">No expansion batch records are present.</div>';
+            return model.batches.slice(0, 8).map(batch => `
+                <div class="source-candidate-company-item rounded-2xl p-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-xs text-white/86 font-semibold">${escapeHtml(batch.label || batch.batch_id || 'Expansion batch')}</div>
+                            <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(batch.expansion_rationale || batch.theme || 'Reviewer-owned universe staging batch.')}</div>
+                        </div>
+                        <span class="review-action-chip">${escapeHtml(batch.priority || 'review')}</span>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(batch.candidate_count ?? batch.tickers?.length ?? 0))} CANDIDATES</span>
+                        <span class="source-host-chip">NO AUTO PROMOTION</span>
+                        <span class="source-host-chip">NO REL AUTH</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCandidateCompanyPreviewRows(model) {
+            return model.records
+                .slice()
+                .sort((a, b) =>
+                    Number(b?.strategic_hub_preview?.staged_hub_score || 0) - Number(a?.strategic_hub_preview?.staged_hub_score || 0) ||
+                    Number(b?.readiness_score || 0) - Number(a?.readiness_score || 0) ||
+                    String(a?.ticker || '').localeCompare(String(b?.ticker || ''))
+                )
+                .slice(0, 64)
+                .map(record => {
+                    const batch = record.primary_batch_id || record.expansion_batch_ids?.[0] || 'review';
+                    const blockers = Array.isArray(record.blockers) && record.blockers.length
+                        ? record.blockers.slice(0, 3).join(', ')
+                        : 'none';
+                    const ecosystems = (record.ecosystem_assignments || []).map(row => row.label || row.ecosystem_key).slice(0, 2).join(', ');
+                    const corridors = (record.corridor_assignments || []).map(row => row.label || row.corridor_key).slice(0, 2).join(', ');
+                    const hub = record.strategic_hub_preview || {};
+                    return `
+                        <tr>
+                            <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(record.ticker))}</td>
+                            <td class="px-3 py-2">
+                                <div class="font-semibold text-white/82">${escapeHtml(formatCandidateCell(record.name))}</div>
+                                <div class="text-white/45 mt-1">${escapeHtml(formatCandidateCell(record.industry_group_proposal))}</div>
+                            </td>
+                            <td class="px-3 py-2">${escapeHtml(formatCandidateCell(batch))}</td>
+                            <td class="px-3 py-2">
+                                <div>${escapeHtml(formatCandidateCell(record.expansion_readiness_label || record.readiness_state))}</div>
+                                <div class="mt-1 flex flex-wrap gap-1">
+                                    <span class="source-host-chip">SCORE ${escapeHtml(formatCandidateCell(record.readiness_score ?? 0))}</span>
+                                    <span class="source-host-chip">MANUAL REVIEW</span>
+                                </div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div>${escapeHtml(ecosystems || 'ecosystem review')}</div>
+                                <div class="text-white/45 mt-1">${escapeHtml(corridors || 'corridor review')}</div>
+                            </td>
+                            <td class="px-3 py-2">${escapeHtml(blockers)}</td>
+                            <td class="px-3 py-2">
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="source-host-chip">${getCandidateCompanySourceUrls(record).length} URLS</span>
+                                    <span class="source-host-chip">${record.cik ? 'CIK' : 'CIK REVIEW'}</span>
+                                    <span class="source-host-chip">NO REL PROOF</span>
+                                </div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <span class="review-action-chip">${hub.strategic_hub_candidate ? 'HUB' : 'REVIEW'} ${escapeHtml(formatCandidateCell(hub.staged_hub_score ?? ''))}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+        }
+
+        function renderCandidateCompanyWorkbench(companyPayload, batchPayload) {
+            const empty = document.getElementById('source-candidate-company-empty');
+            const summary = document.getElementById('source-candidate-company-summary');
+            const batches = document.getElementById('source-candidate-company-batches');
+            const tableWrap = document.getElementById('source-candidate-company-table-wrap');
+            const rows = document.getElementById('source-candidate-company-rows');
+            if (!empty || !summary || !batches || !tableWrap || !rows) return;
+
+            const model = getCandidateCompanyWorkbenchModel(companyPayload, batchPayload);
+            if (!model.records.length) {
+                summary.classList.add('hidden');
+                batches.classList.add('hidden');
+                tableWrap.classList.add('hidden');
+                empty.classList.remove('hidden');
+                setSourceCandidateCompanyStatus('0 COMPANY CANDIDATES', 'warning');
+                return;
+            }
+
+            summary.innerHTML = renderCandidateCompanyWorkbenchSummary(model);
+            batches.innerHTML = renderCandidateCompanyBatchCards(model);
+            rows.innerHTML = renderCandidateCompanyPreviewRows(model);
+            summary.classList.remove('hidden');
+            batches.classList.remove('hidden');
+            tableWrap.classList.remove('hidden');
+            empty.classList.add('hidden');
+            setSourceCandidateCompanyStatus(`${model.records.length} COMPANY CANDIDATE${model.records.length === 1 ? '' : 'S'}`);
+        }
+
+        async function loadCandidateCompanyWorkbench() {
+            const [companyPayload, batchPayload] = await Promise.all([
+                fetchOptionalWorkbenchJson('data/candidates/candidate_companies.json'),
+                fetchOptionalWorkbenchJson('data/candidates/universe_expansion_batches.json')
+            ]);
+            if (!companyPayload) {
+                renderCandidateCompanyWorkbench(null, batchPayload);
+                return;
+            }
+            renderCandidateCompanyWorkbench(companyPayload, batchPayload);
+        }
+
         function setSourceTriageStatus(label, tone = 'info') {
             const status = document.getElementById('source-triage-status');
             if (!status) return;
@@ -6871,8 +7976,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 renderPreflightMetric('UNSOURCED EDGES', coverage.unsourced_edges ?? 0),
                 renderPreflightMetric('SEC BACKED', coverage.sec_backed_edges ?? 0),
                 renderPreflightMetric('STALE REVIEW', coverage.stale_review_edges ?? 0),
-                renderPreflightMetric('CANDIDATES', report.candidate_preview_count ?? 0),
-                renderPreflightMetric('BLOCKERS', blockers.total_blocker_count ?? 0)
+                renderPreflightMetric('COMPANY PREVIEW', report.candidate_company_preview_count ?? 0),
+                renderPreflightMetric('BATCHES', report.expansion_batch_count ?? 0)
             ].join('');
             summary.classList.remove('hidden');
 
@@ -7219,8 +8324,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 renderReviewArtifactMetric('SEC ROOTS', summary.registered_sec_root_count ?? 0, 'source-governance-card'),
                 renderReviewArtifactMetric('HOSTS', summary.trusted_source_host_count ?? 0, 'source-governance-card'),
                 renderReviewArtifactMetric('STALE QUEUE', summary.stale_source_review_count ?? 0, 'source-governance-card'),
-                renderReviewArtifactMetric('UNIVERSE', summary.universe_candidate_count ?? 0, 'source-governance-card'),
-                renderReviewArtifactMetric('READY', summary.universe_ready_for_review_count ?? 0, 'source-governance-card'),
+                renderReviewArtifactMetric('COMPANY PREVIEW', summary.candidate_company_preview_count ?? 0, 'source-governance-card'),
+                renderReviewArtifactMetric('EXPANSION BATCHES', summary.expansion_batch_count ?? 0, 'source-governance-card'),
                 renderReviewArtifactMetric('DENSITY', summary.density_bucket || 'core', 'source-governance-card')
             ].join('');
         }
@@ -7265,6 +8370,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function renderSourceGovernanceUniverse(model) {
             const rows = model.universeReadiness.slice(0, 10);
+            const batches = model.expansionBatches || [];
+            const candidatePreview = model.candidateCompanyPreview || {};
             const blockers = model.universeBlockers || {};
             const conflicts = model.aliasConflicts || {};
             return `
@@ -7276,6 +8383,26 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         <span class="source-host-chip">${escapeHtml(formatCandidateCell(conflicts.alias_conflict_count ?? 0))} ALIASES</span>
                     </div>
                 </div>
+                <div class="source-governance-item rounded-2xl p-3">
+                    <div class="text-xs text-white/86 font-semibold">Candidate-company preview gate</div>
+                    <div class="mt-1 text-xs text-white/52 leading-relaxed">Company candidates are preview-visible only; assignments and sources stay reviewer-owned before any future manual promotion process.</div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(candidatePreview.records?.length ?? 0))} PREVIEW ROWS</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(candidatePreview.duplicate_ticker_warning_count ?? 0))} DUPES</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(candidatePreview.alias_conflict_warning_count ?? 0))} ALIAS</span>
+                    </div>
+                </div>
+                ${batches.slice(0, 4).map(batch => `
+                    <div class="source-governance-item rounded-2xl p-3">
+                        <div class="text-xs text-white/86 font-semibold">${escapeHtml(batch.label || batch.batch_id || 'Expansion batch')}</div>
+                        <div class="mt-1 text-xs text-white/52 leading-relaxed">Review-only batch with corridor and ecosystem assignment proposals.</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(batch.candidate_count ?? batch.tickers?.length ?? 0))} CANDIDATES</span>
+                            <span class="source-host-chip">NO AUTO PROMOTION</span>
+                            <span class="source-host-chip">NO REL AUTH</span>
+                        </div>
+                    </div>
+                `).join('')}
                 ${rows.map(row => `
                     <div class="source-governance-item rounded-2xl p-3">
                         <div class="flex items-start justify-between gap-3">
@@ -7323,6 +8450,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const openAlex = model.openAlex || {};
             const cache = openAlex.cache_lifecycle || {};
             const entity = openAlex.entity_resolution_tracking || {};
+            const candidateHints = openAlex.candidate_company_context_hints || {};
+            const lifecycle = model.sourceLifecycle || {};
+            const hubProfiles = Array.isArray(model.strategicHubEvolution?.hub_profiles)
+                ? model.strategicHubEvolution.hub_profiles.slice(0, 4)
+                : [];
             return `
                 <div class="source-governance-item rounded-2xl p-3">
                     <div class="text-xs text-white/86 font-semibold">Large-graph render readiness</div>
@@ -7334,14 +8466,35 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     </div>
                 </div>
                 <div class="source-governance-item rounded-2xl p-3">
+                    <div class="text-xs text-white/86 font-semibold">Source lifecycle queues</div>
+                    <div class="mt-1 text-xs text-white/52 leading-relaxed">Reviewer-added official roots and aging queues are tracked without trust auto-escalation.</div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(lifecycle.candidate_company_source_url_count ?? 0))} CAND URLS</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(lifecycle.lifecycle_states?.reviewer_added_official_roots ?? 0))} ROOTS</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(lifecycle.lifecycle_states?.stale_source_aging_queue ?? 0))} STALE</span>
+                    </div>
+                </div>
+                <div class="source-governance-item rounded-2xl p-3">
                     <div class="text-xs text-white/86 font-semibold">OpenAlex context boundary</div>
                     <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(openAlex.source_role || 'context-only reinforcement')} with no relationship or promotion authority.</div>
                     <div class="mt-2 flex flex-wrap gap-1.5">
                         <span class="evidence-tier-badge context_only">CONTEXT</span>
                         <span class="source-host-chip">${escapeHtml(formatCandidateCell(cache.cache_entry_count ?? 0))} CACHE</span>
                         <span class="source-host-chip">${escapeHtml(formatCandidateCell(entity.alias_conflict_count ?? 0))} ALIAS REVIEW</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(candidateHints.candidate_company_count ?? 0))} CAND CONTEXT</span>
                     </div>
                 </div>
+                ${hubProfiles.map(profile => `
+                    <div class="source-governance-item rounded-2xl p-3">
+                        <div class="text-xs text-white/86 font-semibold">${escapeHtml(profile.ticker || 'Hub')} strategic hub scoring</div>
+                        <div class="mt-1 text-xs text-white/52 leading-relaxed">Corridor centrality, ecosystem breadth, source-backed hub quality, and bridge significance are reviewer-visible graph signals.</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">SCORE ${escapeHtml(formatCandidateCell(profile.strategic_hub_score ?? 0))}</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(profile.multi_corridor_count ?? 0))} CORRIDORS</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(profile.source_backed_hub_quality || 'review'))}</span>
+                        </div>
+                    </div>
+                `).join('')}
             `;
         }
 
@@ -7389,6 +8542,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         setupHelpGuide();
         setupOrbMap();
         loadSourceCandidatePreview();
+        loadCandidateCompanyWorkbench();
         loadSourceTriageArtifacts();
         loadDataExpansionPreflightReport();
         loadReviewPipelineSummary();

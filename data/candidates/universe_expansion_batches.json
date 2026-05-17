@@ -1,0 +1,424 @@
+{
+  "batches": [
+    {
+      "auto_promotion_allowed": false,
+      "batch_id": "ai_infrastructure_expansion",
+      "candidate_count": 8,
+      "corridor_keys": [
+        "ai_compute_foundry_cloud",
+        "energy_infrastructure"
+      ],
+      "corridor_labels": [
+        "AI compute/foundry/cloud",
+        "Energy infrastructure"
+      ],
+      "ecosystem_keys": [
+        "ai_infrastructure",
+        "cloud_hyperscaler",
+        "energy_infrastructure"
+      ],
+      "ecosystem_labels": [
+        "AI Infrastructure",
+        "Cloud / Hyperscaler",
+        "Energy Infrastructure"
+      ],
+      "expansion_rationale": "data-center compute, systems, power, cooling, and interconnect suppliers",
+      "label": "AI Infrastructure Expansion",
+      "preview_anchor_tickers": [
+        "NVDA",
+        "MSFT",
+        "AMZN",
+        "AVGO"
+      ],
+      "priority": "high",
+      "production_write_allowed": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "pending_reviewer_preview",
+      "theme": "data-center compute, systems, power, cooling, and interconnect suppliers",
+      "tickers": [
+        "DELL",
+        "HPE",
+        "SMCI",
+        "ETN",
+        "TT",
+        "APH",
+        "GLW",
+        "JCI"
+      ],
+      "trust_tier_label": "Official listing/SEC identity sources; assignments remain reviewer-proposed"
+    },
+    {
+      "auto_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "candidate_count": 9,
+      "corridor_keys": [
+        "ai_compute_foundry_cloud"
+      ],
+      "corridor_labels": [
+        "AI compute/foundry/cloud"
+      ],
+      "ecosystem_keys": [
+        "semiconductor_supply_chain",
+        "ai_infrastructure"
+      ],
+      "ecosystem_labels": [
+        "Semiconductor Supply Chain",
+        "AI Infrastructure"
+      ],
+      "expansion_rationale": "analog, embedded, test, RF, and equipment-adjacent semiconductor suppliers",
+      "label": "Semiconductor Supplier Batch",
+      "preview_anchor_tickers": [
+        "NVDA",
+        "TSM",
+        "ASML",
+        "AMAT"
+      ],
+      "priority": "high",
+      "production_write_allowed": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "pending_reviewer_preview",
+      "theme": "analog, embedded, test, RF, and equipment-adjacent semiconductor suppliers",
+      "tickers": [
+        "ON",
+        "ADI",
+        "MCHP",
+        "TXN",
+        "TER",
+        "NXPI",
+        "SWKS",
+        "QRVO",
+        "KEYS"
+      ],
+      "trust_tier_label": "Official listing/SEC identity sources; assignments remain reviewer-proposed"
+    },
+    {
+      "auto_promotion_allowed": false,
+      "batch_id": "aerospace_supplier_batch",
+      "candidate_count": 7,
+      "corridor_keys": [
+        "aerospace_oem",
+        "energy_infrastructure"
+      ],
+      "corridor_labels": [
+        "Aerospace/OEM",
+        "Energy infrastructure"
+      ],
+      "ecosystem_keys": [
+        "aerospace_oem",
+        "energy_infrastructure"
+      ],
+      "ecosystem_labels": [
+        "Aerospace / Defense",
+        "Energy Infrastructure"
+      ],
+      "expansion_rationale": "defense primes, aircraft systems, propulsion, and aerospace manufacturing",
+      "label": "Aerospace Supplier Batch",
+      "preview_anchor_tickers": [
+        "BA",
+        "RTX",
+        "GE",
+        "HON"
+      ],
+      "priority": "medium",
+      "production_write_allowed": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "pending_reviewer_preview",
+      "theme": "defense primes, aircraft systems, propulsion, and aerospace manufacturing",
+      "tickers": [
+        "LMT",
+        "NOC",
+        "GD",
+        "TXT",
+        "TDG",
+        "HWM",
+        "HII"
+      ],
+      "trust_tier_label": "Official listing/SEC identity sources; assignments remain reviewer-proposed"
+    },
+    {
+      "auto_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "candidate_count": 9,
+      "corridor_keys": [
+        "payment_networks_banks"
+      ],
+      "corridor_labels": [
+        "Payment networks/banks"
+      ],
+      "ecosystem_keys": [
+        "financial_payments"
+      ],
+      "ecosystem_labels": [
+        "Financial / Payments"
+      ],
+      "expansion_rationale": "exchanges, market data, ratings, asset management, and investment banking",
+      "label": "Financial Infrastructure Batch",
+      "preview_anchor_tickers": [
+        "JPM",
+        "V",
+        "MA",
+        "AXP"
+      ],
+      "priority": "high",
+      "production_write_allowed": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "pending_reviewer_preview",
+      "theme": "exchanges, market data, ratings, asset management, and investment banking",
+      "tickers": [
+        "ICE",
+        "CME",
+        "NDAQ",
+        "SPGI",
+        "MCO",
+        "BLK",
+        "GS",
+        "MS",
+        "CBOE"
+      ],
+      "trust_tier_label": "Official listing/SEC identity sources; assignments remain reviewer-proposed"
+    },
+    {
+      "auto_promotion_allowed": false,
+      "batch_id": "healthcare_adjacency_batch",
+      "candidate_count": 12,
+      "corridor_keys": [
+        "pbm_pharma_insurance"
+      ],
+      "corridor_labels": [
+        "PBM/pharma/insurance"
+      ],
+      "ecosystem_keys": [
+        "healthcare_biotech"
+      ],
+      "ecosystem_labels": [
+        "Healthcare / Biotech"
+      ],
+      "expansion_rationale": "medtech, hospitals, life-sciences tools, biopharma, and distribution adjacencies",
+      "label": "Healthcare Adjacency Batch",
+      "preview_anchor_tickers": [
+        "LLY",
+        "UNH",
+        "CVS",
+        "JNJ",
+        "TMO"
+      ],
+      "priority": "medium",
+      "production_write_allowed": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "pending_reviewer_preview",
+      "theme": "medtech, hospitals, life-sciences tools, biopharma, and distribution adjacencies",
+      "tickers": [
+        "DHR",
+        "SYK",
+        "MDT",
+        "HCA",
+        "ELV",
+        "AMGN",
+        "GILD",
+        "REGN",
+        "VRTX",
+        "BSX",
+        "ABT",
+        "MCK"
+      ],
+      "trust_tier_label": "Official listing/SEC identity sources; assignments remain reviewer-proposed"
+    },
+    {
+      "auto_promotion_allowed": false,
+      "batch_id": "energy_infrastructure_batch",
+      "candidate_count": 13,
+      "corridor_keys": [
+        "energy_infrastructure"
+      ],
+      "corridor_labels": [
+        "Energy infrastructure"
+      ],
+      "ecosystem_keys": [
+        "energy_infrastructure"
+      ],
+      "ecosystem_labels": [
+        "Energy Infrastructure"
+      ],
+      "expansion_rationale": "midstream, refining, upstream, and oilfield service expansion candidates",
+      "label": "Energy Infrastructure Batch",
+      "preview_anchor_tickers": [
+        "XOM",
+        "CVX",
+        "COP",
+        "SLB"
+      ],
+      "priority": "high",
+      "production_write_allowed": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "pending_reviewer_preview",
+      "theme": "midstream, refining, upstream, and oilfield service expansion candidates",
+      "tickers": [
+        "MPC",
+        "PSX",
+        "OKE",
+        "KMI",
+        "ENB",
+        "PAA",
+        "WMB",
+        "EOG",
+        "OXY",
+        "HAL",
+        "BKR",
+        "VLO",
+        "ET"
+      ],
+      "trust_tier_label": "Official listing/SEC identity sources; assignments remain reviewer-proposed"
+    },
+    {
+      "auto_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "candidate_count": 12,
+      "corridor_keys": [
+        "retail_consumer"
+      ],
+      "corridor_labels": [
+        "Retail/consumer"
+      ],
+      "ecosystem_keys": [
+        "retail_consumer",
+        "enterprise_saas_workflow"
+      ],
+      "ecosystem_labels": [
+        "Retail / Consumer",
+        "Enterprise SaaS / Workflow"
+      ],
+      "expansion_rationale": "transport, distribution, retail operations, and delivery platform breadth",
+      "label": "Retail Logistics Distribution Batch",
+      "preview_anchor_tickers": [
+        "WMT",
+        "COST",
+        "HD",
+        "AMZN"
+      ],
+      "priority": "medium",
+      "production_write_allowed": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "pending_reviewer_preview",
+      "theme": "transport, distribution, retail operations, and delivery platform breadth",
+      "tickers": [
+        "UPS",
+        "FDX",
+        "UNP",
+        "CSX",
+        "ODFL",
+        "URI",
+        "LOW",
+        "TGT",
+        "SBUX",
+        "CMG",
+        "DASH",
+        "UBER"
+      ],
+      "trust_tier_label": "Official listing/SEC identity sources; assignments remain reviewer-proposed"
+    },
+    {
+      "auto_promotion_allowed": false,
+      "batch_id": "cloud_security_workflow_batch",
+      "candidate_count": 8,
+      "corridor_keys": [
+        "enterprise_saas_cloud"
+      ],
+      "corridor_labels": [
+        "Enterprise SaaS/cloud"
+      ],
+      "ecosystem_keys": [
+        "enterprise_saas_workflow",
+        "cloud_hyperscaler"
+      ],
+      "ecosystem_labels": [
+        "Enterprise SaaS / Workflow",
+        "Cloud / Hyperscaler"
+      ],
+      "expansion_rationale": "security, observability, data, collaboration, and developer workflow expansion",
+      "label": "Cloud Security Workflow Batch",
+      "preview_anchor_tickers": [
+        "MSFT",
+        "GOOGL",
+        "ORCL",
+        "CRM",
+        "PANW"
+      ],
+      "priority": "medium",
+      "production_write_allowed": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "pending_reviewer_preview",
+      "theme": "security, observability, data, collaboration, and developer workflow expansion",
+      "tickers": [
+        "FTNT",
+        "CRWD",
+        "DDOG",
+        "MDB",
+        "NET",
+        "ZS",
+        "TEAM",
+        "ADSK"
+      ],
+      "trust_tier_label": "Official listing/SEC identity sources; assignments remain reviewer-proposed"
+    }
+  ],
+  "graph_growth_metrics": {
+    "candidate_company_count": 78,
+    "candidate_visibility_index_cached": true,
+    "density_default_mode": "balanced",
+    "label_throttle_required": true,
+    "preview_total_company_count": 138,
+    "production_company_count": 60,
+    "review_only": true,
+    "route_summary_cache_required": true
+  },
+  "metadata": {
+    "app_load_allowed": "preview_only",
+    "artifact_status": "review_only",
+    "auto_promotion_allowed": false,
+    "batch_output_path": "data/candidates/universe_expansion_batches.json",
+    "browser_ingestion": false,
+    "candidate_output_path": "data/candidates/candidate_companies.json",
+    "generated_at_utc": "2026-05-17T13:11:50+00:00",
+    "generated_by": "scripts/universe_expansion_batches.py",
+    "manual_promotion_required": true,
+    "network_calls": 0,
+    "notes": [
+      "Candidate companies are preview-only staging records.",
+      "Corridor and ecosystem assignments are reviewer-proposed planning context, not production memberships.",
+      "Preview anchor lines are corridor-planning guides and do not assert relationships."
+    ],
+    "production_write_allowed": false,
+    "relationship_claim_authority": false,
+    "schema_version": 1
+  },
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "production_writes": 0,
+    "relationship_claims_created": 0,
+    "review_only": true,
+    "unsafe_auto_promotion": false
+  },
+  "summary": {
+    "candidate_company_count": 78,
+    "corridor_count": 7,
+    "duplicate_candidate_ticker_count": 0,
+    "ecosystem_count": 9,
+    "expansion_batch_count": 8,
+    "needs_source_review_count": 0,
+    "ready_for_preview_count": 78,
+    "review_only": true,
+    "skipped_existing_production_count": 0,
+    "skipped_missing_source_count": 0
+  }
+}

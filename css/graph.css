@@ -134,6 +134,14 @@
             box-shadow: 0 0 24px rgba(251, 191, 36, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
         }
 
+#candidate-company-toggle.is-active,
+        #candidate-company-only-toggle.is-active,
+        #candidate-company-hub-toggle.is-active {
+            border-color: rgba(190, 242, 100, 0.62);
+            background: linear-gradient(135deg, rgba(163, 230, 53, 0.18), rgba(251, 240, 138, 0.08));
+            box-shadow: 0 0 24px rgba(163, 230, 53, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+        }
+
 .orb-map-canvas {
             position: absolute;
             inset: 0.75rem;

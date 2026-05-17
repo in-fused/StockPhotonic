@@ -432,6 +432,7 @@
         }
 
 .source-triage-section,
+        .source-candidate-company-section,
         .source-expansion-section,
         .source-review-pipeline-section,
         .source-openalex-section,
@@ -450,12 +451,17 @@
             min-width: 860px;
         }
 
+.source-candidate-company-table {
+            min-width: 1080px;
+        }
+
 .source-overlap-table,
         .source-preflight-table {
             min-width: 980px;
         }
 
 .source-candidate-table th,
+        .source-candidate-company-table th,
         .source-overlap-table th,
         .source-preflight-table th {
             color: rgba(165, 243, 252, 0.82);
@@ -468,6 +474,7 @@
         }
 
 .source-candidate-table td,
+        .source-candidate-company-table td,
         .source-overlap-table td,
         .source-preflight-table td {
             border-top: 1px solid rgba(255, 255, 255, 0.07);
@@ -486,6 +493,7 @@
         .source-review-pipeline-grid,
         .source-openalex-grid,
         .source-coverage-refresh-grid,
+        .source-candidate-company-grid,
         .source-governance-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -500,6 +508,7 @@
 
         .source-openalex-hints,
         .source-coverage-refresh-queue,
+        .source-candidate-company-batches,
         .source-governance-list {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -513,12 +522,40 @@
         .source-openalex-hint,
         .source-coverage-refresh-card,
         .source-coverage-refresh-item,
+        .source-candidate-company-card,
+        .source-candidate-company-item,
         .source-governance-card,
         .source-governance-item {
             border: 1px solid rgba(125, 211, 252, 0.14);
             background:
                 linear-gradient(135deg, rgba(0, 249, 255, 0.055), rgba(255, 255, 255, 0.028)),
                 rgba(3, 7, 18, 0.36);
+        }
+
+.candidate-company-preview-warning,
+        .candidate-company-sidebar-card,
+        .candidate-company-anchor-row {
+            border: 1px solid rgba(190, 242, 100, 0.16);
+            background:
+                linear-gradient(135deg, rgba(163, 230, 53, 0.075), rgba(251, 240, 138, 0.035)),
+                rgba(3, 7, 18, 0.38);
+        }
+
+.candidate-company-anchor-row {
+            transition: border-color 160ms ease, background 160ms ease;
+        }
+
+.candidate-company-anchor-row:hover {
+            border-color: rgba(190, 242, 100, 0.34);
+            background:
+                linear-gradient(135deg, rgba(163, 230, 53, 0.12), rgba(251, 240, 138, 0.055)),
+                rgba(3, 7, 18, 0.46);
+        }
+
+.candidate-company-hub-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem;
         }
 
 .review-action-chip {

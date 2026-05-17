@@ -27,6 +27,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_COMPANIES_PATH = ROOT / "data" / "companies.json"
 DEFAULT_CONNECTIONS_PATH = ROOT / "data" / "connections.json"
 DEFAULT_CANDIDATES_PATH = ROOT / "data" / "candidates" / "sec_relationship_candidates.json"
+DEFAULT_CANDIDATE_COMPANIES_PATH = ROOT / "data" / "candidates" / "candidate_companies.json"
+DEFAULT_EXPANSION_BATCHES_PATH = ROOT / "data" / "candidates" / "universe_expansion_batches.json"
 DEFAULT_OFFICIAL_UNIVERSE_PATH = ROOT / "data" / "candidates" / "official_ticker_universe.json"
 DEFAULT_CIK_MAPPINGS_PATH = ROOT / "data" / "candidates" / "cik_mappings.json"
 DEFAULT_OPENALEX_CACHE_PATH = ROOT / "data" / "cache" / "openalex" / "entity_resolution_cache.json"
@@ -40,6 +42,7 @@ DEFAULT_OUTPUT_PATH = DEFAULT_REGISTRY_DIR / "source_governance_report.json"
 OFFICIAL_COMPANY_SOURCES_PATH = DEFAULT_REGISTRY_DIR / "official_company_sources.json"
 TRUSTED_SOURCE_HOSTS_PATH = DEFAULT_REGISTRY_DIR / "trusted_source_hosts.json"
 CORRIDOR_SOURCE_REGISTRY_PATH = DEFAULT_REGISTRY_DIR / "corridor_source_registry.json"
+REVIEWER_SOURCE_ROOTS_PATH = DEFAULT_REGISTRY_DIR / "reviewer_source_roots.json"
 
 PRODUCTION_DATA_PATHS = (
     DEFAULT_COMPANIES_PATH,
@@ -253,8 +256,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--companies", default=str(DEFAULT_COMPANIES_PATH))
     parser.add_argument("--connections", default=str(DEFAULT_CONNECTIONS_PATH))
     parser.add_argument("--candidates", default=str(DEFAULT_CANDIDATES_PATH))
+    parser.add_argument("--candidate-companies", default=str(DEFAULT_CANDIDATE_COMPANIES_PATH))
+    parser.add_argument("--expansion-batches", default=str(DEFAULT_EXPANSION_BATCHES_PATH))
     parser.add_argument("--official-universe", default=str(DEFAULT_OFFICIAL_UNIVERSE_PATH))
     parser.add_argument("--cik-mappings", default=str(DEFAULT_CIK_MAPPINGS_PATH))
+    parser.add_argument("--reviewer-source-roots", default=str(REVIEWER_SOURCE_ROOTS_PATH))
     parser.add_argument("--openalex-cache", default=str(DEFAULT_OPENALEX_CACHE_PATH))
     parser.add_argument("--openalex-ecosystem", default=str(DEFAULT_OPENALEX_ECOSYSTEM_PATH))
     parser.add_argument("--openalex-topic", default=str(DEFAULT_OPENALEX_TOPIC_PATH))
@@ -355,6 +361,25 @@ def valid_url(value: Any) -> bool:
     return isinstance(value, str) and URL_PATTERN.match(value.strip()) is not None
 
 
+def strict_official_root_url(value: Any) -> bool:
+    if not valid_url(value):
+        return False
+    try:
+        parsed = urlparse(str(value).strip())
+    except ValueError:
+        return False
+    if parsed.scheme != "https":
+        return False
+    if parsed.username or parsed.password:
+        return False
+    host = parsed.hostname.lower() if parsed.hostname else ""
+    if "." not in host or host.endswith((".example.com", ".invalid", ".test")):
+        return False
+    if parsed.fragment:
+        return False
+    return True
+
+
 def url_host(url: str) -> str:
     try:
         parsed = urlparse(url)
@@ -440,6 +465,61 @@ def load_array_payload(path: Path, label: str, key: str | None = None) -> list[d
     if isinstance(payload, dict) and isinstance(payload.get("records"), list):
         return [item for item in payload["records"] if isinstance(item, dict)]
     return []
+
+
+def load_batch_payload(path: Path) -> list[dict[str, Any]]:
+    payload = load_json(path, "expansion batches", required=False)
+    if payload is None:
+        return []
+    if isinstance(payload, dict) and isinstance(payload.get("batches"), list):
+        return [item for item in payload["batches"] if isinstance(item, dict)]
+    if isinstance(payload, dict) and isinstance(payload.get("expansion_batches"), list):
+        return [item for item in payload["expansion_batches"] if isinstance(item, dict)]
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    return []
+
+
+def reviewer_source_roots_by_ticker(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    allowed_categories = {
+        "official_company_ir",
+        "official_company_newsroom",
+        "official_partner_customer_page",
+    }
+    grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in rows:
+        ticker = normalize_ticker(row.get("ticker"))
+        url = clean_string(row.get("url"))
+        category = clean_string(row.get("category")) or "official_company_ir"
+        if not ticker or category not in allowed_categories:
+            continue
+        if not strict_official_root_url(url):
+            grouped[ticker].append(
+                {
+                    "category": category,
+                    "url": url,
+                    "review_status": "invalid_root_url",
+                    "relationship_authority": False,
+                    "promotion_authority": False,
+                    "auto_trust_escalation_allowed": False,
+                    "review_only": True,
+                }
+            )
+            continue
+        grouped[ticker].append(
+            {
+                "category": category,
+                "url": url,
+                "source_type": clean_string(row.get("source_type")) or category,
+                "source_tier": row.get("source_tier", SOURCE_CATEGORY_META[category]["source_tier"]),
+                "review_status": clean_string(row.get("review_status")) or "reviewer_added_pending_lifecycle_review",
+                "relationship_authority": False,
+                "promotion_authority": False,
+                "auto_trust_escalation_allowed": False,
+                "review_only": True,
+            }
+        )
+    return grouped
 
 
 def load_companies(path: Path) -> list[dict[str, Any]]:
@@ -542,6 +622,7 @@ def build_official_company_sources(
     *,
     companies: list[dict[str, Any]],
     cik_mappings: list[dict[str, Any]],
+    reviewer_source_roots: list[dict[str, Any]],
     generated_at: datetime,
 ) -> dict[str, Any]:
     cik_by_ticker = {
@@ -549,6 +630,7 @@ def build_official_company_sources(
         for mapping in cik_mappings
         if (ticker := normalize_ticker(mapping.get("ticker")))
     }
+    reviewer_roots = reviewer_source_roots_by_ticker(reviewer_source_roots)
     records: list[dict[str, Any]] = []
     for company in sorted(companies, key=lambda item: normalize_ticker(item.get("ticker")) or ""):
         ticker = normalize_ticker(company.get("ticker"))
@@ -571,13 +653,16 @@ def build_official_company_sources(
         missing = []
         if not sec_root:
             missing.append("official_sec_filing_root")
-        missing.extend(
-            [
-                "official_company_ir_url",
-                "official_newsroom_root",
-                "trusted_partner_customer_root",
-            ]
-        )
+        roots = reviewer_roots.get(ticker, [])
+        official_ir_urls = [root["url"] for root in roots if root.get("category") == "official_company_ir" and root.get("review_status") != "invalid_root_url"]
+        official_newsroom_roots = [root["url"] for root in roots if root.get("category") == "official_company_newsroom" and root.get("review_status") != "invalid_root_url"]
+        trusted_partner_customer_roots = [root["url"] for root in roots if root.get("category") == "official_partner_customer_page" and root.get("review_status") != "invalid_root_url"]
+        if not official_ir_urls:
+            missing.append("official_company_ir_url")
+        if not official_newsroom_roots:
+            missing.append("official_newsroom_root")
+        if not trusted_partner_customer_roots:
+            missing.append("trusted_partner_customer_root")
         records.append(
             {
                 "ticker": ticker,
@@ -585,10 +670,10 @@ def build_official_company_sources(
                 "sector": clean_string(company.get("sector")),
                 "industry": clean_string(company.get("industry")),
                 "registry_status": "registered_sec_root" if sec_root else "metadata_shell_missing_official_root",
-                "source_roots": [sec_root] if sec_root else [],
-                "official_company_ir_urls": [],
-                "official_newsroom_roots": [],
-                "trusted_partner_customer_roots": [],
+                "source_roots": ([sec_root] if sec_root else []) + roots,
+                "official_company_ir_urls": official_ir_urls,
+                "official_newsroom_roots": official_newsroom_roots,
+                "trusted_partner_customer_roots": trusted_partner_customer_roots,
                 "missing_registry_fields": missing,
                 "manual_review_required": True,
                 "auto_trust_escalation_allowed": False,
@@ -607,8 +692,8 @@ def build_official_company_sources(
             "auto_trust_escalation_allowed": False,
             "notes": [
                 "Only observed SEC CIK mapping source URLs are registered automatically.",
-                "Company IR/newsroom/partner roots remain empty until a reviewer adds real URLs.",
-                "A registered official source root improves review visibility only.",
+                "Reviewer-added company IR, newsroom, and partner/customer roots are supported through data/source_registry/reviewer_source_roots.json.",
+                "A registered official source root improves review visibility only and never proves a relationship.",
             ],
         },
         "records": records,
@@ -619,16 +704,20 @@ def build_trusted_source_hosts(
     *,
     connections: list[dict[str, Any]],
     candidates: list[dict[str, Any]],
+    candidate_companies: list[dict[str, Any]],
     official_universe: list[dict[str, Any]],
     cik_mappings: list[dict[str, Any]],
+    reviewer_source_roots: list[dict[str, Any]],
     generated_at: datetime,
 ) -> dict[str, Any]:
     url_records: list[tuple[str, str]] = []
     for source_name, rows in (
         ("production_connection", connections),
         ("candidate_relationship", candidates),
+        ("candidate_company_preview", candidate_companies),
         ("candidate_universe", official_universe),
         ("cik_mapping", cik_mappings),
+        ("reviewer_source_root", reviewer_source_roots),
     ):
         for row in rows:
             for url in source_urls(row):
@@ -883,8 +972,86 @@ def corridor_maintenance_rows(
     )
 
 
+def candidate_company_preview_readiness_rows(
+    candidate_companies: list[dict[str, Any]],
+    production_by_ticker: dict[str, dict[str, Any]],
+) -> list[dict[str, Any]]:
+    production_tickers = set(production_by_ticker)
+    candidate_tickers = Counter(
+        ticker for row in candidate_companies if (ticker := normalize_ticker(row.get("ticker")))
+    )
+    rows: list[dict[str, Any]] = []
+    for row in candidate_companies:
+        ticker = normalize_ticker(row.get("ticker"))
+        if not ticker:
+            continue
+        source_urls_list = source_urls(row)
+        blockers = list(row.get("blockers") if isinstance(row.get("blockers"), list) else [])
+        if ticker in production_tickers:
+            blockers.append("already_in_production_universe")
+        if candidate_tickers[ticker] > 1:
+            blockers.append("duplicate_candidate_company_ticker")
+        if not source_urls_list:
+            blockers.append("missing_candidate_company_source_url")
+        readiness_score = int(row.get("readiness_score") or 0)
+        readiness = clean_string(row.get("readiness_state")) or (
+            "ready_for_preview" if readiness_score >= 75 and not blockers else "needs_source_review"
+        )
+        rows.append(
+            {
+                "ticker": ticker,
+                "name": clean_string(row.get("name")),
+                "exchange": clean_string(row.get("exchange")),
+                "source_url": source_urls_list[0] if source_urls_list else clean_string(row.get("source_url")),
+                "source_urls": source_urls_list,
+                "has_valid_listing_source": any(valid_url(url) for url in source_urls_list),
+                "has_cik_mapping": bool(clean_string(row.get("cik")) or clean_string(row.get("sec_submission_source_url"))),
+                "source_readiness_score": readiness_score,
+                "readiness_state": readiness,
+                "blockers": sorted(set(str(blocker) for blocker in blockers if blocker)),
+                "ecosystem_fit_state": "reviewer_proposed_assignment",
+                "ecosystem_assignments": row.get("ecosystem_assignments") if isinstance(row.get("ecosystem_assignments"), list) else [],
+                "corridor_assignments": row.get("corridor_assignments") if isinstance(row.get("corridor_assignments"), list) else [],
+                "expansion_batch_ids": row.get("expansion_batch_ids") if isinstance(row.get("expansion_batch_ids"), list) else [],
+                "expansion_readiness_label": clean_string(row.get("expansion_readiness_label")) or readiness,
+                "strategic_hub_preview": row.get("strategic_hub_preview") if isinstance(row.get("strategic_hub_preview"), dict) else {},
+                "manual_promotion_allowed": False,
+                "is_candidate_company_preview": True,
+                "relationship_authority": False,
+                "review_only": True,
+            }
+        )
+    return sorted(rows, key=lambda item: (-int(item.get("source_readiness_score") or 0), str(item.get("ticker"))))
+
+
+def expansion_batch_summary_rows(expansion_batches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for batch in expansion_batches:
+        tickers = batch.get("tickers") if isinstance(batch.get("tickers"), list) else []
+        rows.append(
+            {
+                "batch_id": clean_string(batch.get("batch_id")),
+                "label": clean_string(batch.get("label")),
+                "priority": clean_string(batch.get("priority")) or "review",
+                "review_status": clean_string(batch.get("review_status")) or "pending_reviewer_preview",
+                "candidate_count": len(tickers),
+                "tickers": tickers,
+                "ecosystem_keys": batch.get("ecosystem_keys") if isinstance(batch.get("ecosystem_keys"), list) else [],
+                "corridor_keys": batch.get("corridor_keys") if isinstance(batch.get("corridor_keys"), list) else [],
+                "preview_anchor_tickers": batch.get("preview_anchor_tickers") if isinstance(batch.get("preview_anchor_tickers"), list) else [],
+                "relationship_authority": False,
+                "auto_promotion_allowed": False,
+                "production_write_allowed": False,
+                "review_only": True,
+            }
+        )
+    return rows
+
+
 def candidate_universe_readiness(
     official_universe: list[dict[str, Any]],
+    candidate_companies: list[dict[str, Any]],
+    expansion_batches: list[dict[str, Any]],
     cik_mappings: list[dict[str, Any]],
     production_by_ticker: dict[str, dict[str, Any]],
 ) -> dict[str, Any]:
@@ -946,11 +1113,19 @@ def candidate_universe_readiness(
         if missing:
             missing_metadata_rows.append({"ticker": ticker, "missing_fields": missing, "review_only": True})
 
-    alias_conflicts = alias_conflict_rows(official_universe, production_by_ticker)
+    candidate_preview_rows = candidate_company_preview_readiness_rows(candidate_companies, production_by_ticker)
+    candidate_preview_tickers = {row["ticker"] for row in candidate_preview_rows}
+    alias_conflicts = alias_conflict_rows([*official_universe, *candidate_companies], production_by_ticker)
+    official_rows = [row for row in readiness_rows if row.get("ticker") not in candidate_preview_tickers]
+    readiness_rows = [*candidate_preview_rows, *official_rows]
     score_counts = Counter(row["readiness_state"] for row in readiness_rows)
-    readiness_rows.sort(key=lambda row: (row["source_readiness_score"], row["ticker"]), reverse=True)
+    preview_score_counts = Counter(row["readiness_state"] for row in candidate_preview_rows)
+    batch_rows = expansion_batch_summary_rows(expansion_batches)
+    readiness_rows.sort(key=lambda row: (bool(row.get("is_candidate_company_preview")), row["source_readiness_score"], row["ticker"]), reverse=True)
     return {
         "candidate_universe_count": len(official_universe),
+        "candidate_company_preview_count": len(candidate_companies),
+        "expansion_batch_count": len(batch_rows),
         "cik_mapping_count": len(cik_mappings),
         "duplicate_ticker_prevention": {
             "duplicate_with_production_count": len(duplicate_with_production),
@@ -973,7 +1148,32 @@ def candidate_universe_readiness(
         "source_readiness_scoring": {
             "state_counts": dict(sorted(score_counts.items())),
             "ready_for_review_count": score_counts.get("ready_for_review", 0),
+            "ready_for_preview_count": score_counts.get("ready_for_preview", 0),
             "blocked_existing_production_count": score_counts.get("blocked_existing_production", 0),
+            "candidate_company_preview_state_counts": dict(sorted(preview_score_counts.items())),
+            "review_only": True,
+        },
+        "candidate_company_preview": {
+            "records": candidate_preview_rows[:160],
+            "duplicate_ticker_warning_count": sum(1 for row in candidate_preview_rows if "duplicate_candidate_company_ticker" in row.get("blockers", [])),
+            "alias_conflict_warning_count": len(alias_conflicts),
+            "source_ready_count": preview_score_counts.get("ready_for_preview", 0),
+            "manual_promotion_allowed": False,
+            "relationship_authority": False,
+            "review_only": True,
+        },
+        "expansion_batches": {
+            "batches": batch_rows,
+            "review_only": True,
+            "manual_promotion_allowed": False,
+            "auto_promotion_allowed": False,
+        },
+        "graph_growth_metrics": {
+            "production_company_count": len(production_by_ticker),
+            "candidate_company_preview_count": len(candidate_companies),
+            "preview_total_company_count": len(production_by_ticker) + len(candidate_companies),
+            "candidate_visibility_index_cached": True,
+            "density_controls_required": len(production_by_ticker) + len(candidate_companies) > 100,
             "review_only": True,
         },
         "readiness_rows": readiness_rows[:120],
@@ -1207,6 +1407,61 @@ def ecosystem_expansion_planning(
     }
 
 
+def source_lifecycle_tracking(
+    official_sources: dict[str, Any],
+    trusted_hosts: dict[str, Any],
+    stale_queue: list[dict[str, Any]],
+    reviewer_source_roots: list[dict[str, Any]],
+    candidate_companies: list[dict[str, Any]],
+) -> dict[str, Any]:
+    official_records = official_sources.get("records") if isinstance(official_sources, dict) else []
+    host_records = trusted_hosts.get("records") if isinstance(trusted_hosts, dict) else []
+    root_categories = Counter()
+    invalid_roots = []
+    for row in reviewer_source_roots:
+        category = clean_string(row.get("category")) or "official_company_ir"
+        root_categories[category] += 1
+        if not strict_official_root_url(row.get("url")):
+            invalid_roots.append(
+                {
+                    "ticker": normalize_ticker(row.get("ticker")),
+                    "category": category,
+                    "url": clean_string(row.get("url")),
+                    "reason": "Reviewer-added roots must be strict https URLs with valid hosts.",
+                    "review_only": True,
+                }
+            )
+    candidate_source_urls = sum(len(source_urls(row)) for row in candidate_companies)
+    missing_registry = [
+        {
+            "ticker": row.get("ticker"),
+            "missing_registry_fields": row.get("missing_registry_fields"),
+            "review_only": True,
+        }
+        for row in official_records
+        if isinstance(row, dict) and row.get("missing_registry_fields")
+    ][:30]
+    return {
+        "reviewer_added_root_count": len(reviewer_source_roots),
+        "reviewer_added_root_category_counts": dict(sorted(root_categories.items())),
+        "invalid_reviewer_root_count": len(invalid_roots),
+        "invalid_reviewer_root_samples": invalid_roots[:20],
+        "official_registry_missing_field_queue": missing_registry,
+        "stale_source_aging_queue_count": len(stale_queue),
+        "trusted_host_lifecycle_count": len(host_records),
+        "candidate_company_source_url_count": candidate_source_urls,
+        "lifecycle_states": {
+            "reviewer_added_official_roots": len(reviewer_source_roots),
+            "stale_source_aging_queue": len(stale_queue),
+            "candidate_preview_identity_sources": candidate_source_urls,
+            "observed_trusted_hosts": len(host_records),
+        },
+        "auto_trust_escalation_allowed": False,
+        "relationship_authority": False,
+        "review_only": True,
+    }
+
+
 def openalex_safety_summary(
     cache_path: Path,
     ecosystem_path: Path,
@@ -1214,6 +1469,7 @@ def openalex_safety_summary(
     institution_path: Path,
     cluster_path: Path,
     production_by_ticker: dict[str, dict[str, Any]],
+    candidate_companies: list[dict[str, Any]],
     now: datetime,
 ) -> dict[str, Any]:
     cache = load_json(cache_path, "OpenAlex cache", required=False) or {}
@@ -1289,6 +1545,14 @@ def openalex_safety_summary(
             "alias_conflict_samples": alias_conflicts[:16],
             "review_only": True,
         },
+        "candidate_company_context_hints": {
+            "candidate_company_count": len(candidate_companies),
+            "unresolved_candidate_entity_count": len(candidate_companies),
+            "context_boundary": "Candidate-company OpenAlex context is unresolved until a reviewer runs bounded enrichment; it remains CONTEXT_ONLY.",
+            "relationship_authority": False,
+            "promotion_authority": False,
+            "review_only": True,
+        },
         "source_role_visibility": [
             "OpenAlex may reinforce context only.",
             "OpenAlex does not prove a relationship.",
@@ -1302,8 +1566,11 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, An
     companies_path = resolve_path(args.companies)
     connections_path = resolve_path(args.connections)
     candidates_path = resolve_path(args.candidates)
+    candidate_companies_path = resolve_path(args.candidate_companies)
+    expansion_batches_path = resolve_path(args.expansion_batches)
     official_universe_path = resolve_path(args.official_universe)
     cik_mappings_path = resolve_path(args.cik_mappings)
+    reviewer_source_roots_path = resolve_path(args.reviewer_source_roots)
     openalex_cache_path = resolve_path(args.openalex_cache)
     openalex_ecosystem_path = resolve_path(args.openalex_ecosystem)
     openalex_topic_path = resolve_path(args.openalex_topic)
@@ -1316,29 +1583,48 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, An
     companies = load_companies(companies_path)
     connections = load_connections(connections_path)
     candidates = load_array_payload(candidates_path, "candidate relationships", "candidates")
+    candidate_companies = load_array_payload(candidate_companies_path, "candidate companies", "records")
+    expansion_batches = load_batch_payload(expansion_batches_path)
     official_universe = load_array_payload(official_universe_path, "official ticker universe", "candidates")
     cik_mappings = load_array_payload(cik_mappings_path, "CIK mappings", "mappings")
+    reviewer_source_roots = load_array_payload(reviewer_source_roots_path, "reviewer source roots", "records")
     company_by_id, production_by_ticker = company_index(companies)
 
     official_sources = build_official_company_sources(
         companies=companies,
         cik_mappings=cik_mappings,
+        reviewer_source_roots=reviewer_source_roots,
         generated_at=generated_at,
     )
     trusted_hosts = build_trusted_source_hosts(
         connections=connections,
         candidates=candidates,
+        candidate_companies=candidate_companies,
         official_universe=official_universe,
         cik_mappings=cik_mappings,
+        reviewer_source_roots=reviewer_source_roots,
         generated_at=generated_at,
     )
     corridor_registry = build_corridor_registry(generated_at)
     source_quality, stale_queue, duplicate_urls, invalid_urls = source_quality_rows(connections, company_by_id, generated_at)
     corridor_rows = corridor_maintenance_rows(connections, company_by_id, generated_at)
-    universe = candidate_universe_readiness(official_universe, cik_mappings, production_by_ticker)
+    universe = candidate_universe_readiness(
+        official_universe,
+        candidate_companies,
+        expansion_batches,
+        cik_mappings,
+        production_by_ticker,
+    )
     hubs = strategic_hub_profiles(connections, company_by_id, generated_at)
     graph_scaling = large_graph_scaling_readiness(companies, connections, hubs, corridor_rows)
     ecosystem_planning = ecosystem_expansion_planning(corridor_rows, hubs)
+    lifecycle = source_lifecycle_tracking(
+        official_sources,
+        trusted_hosts,
+        stale_queue,
+        reviewer_source_roots,
+        candidate_companies,
+    )
     openalex_safety = openalex_safety_summary(
         openalex_cache_path,
         openalex_ecosystem_path,
@@ -1346,6 +1632,7 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, An
         openalex_institution_path,
         openalex_cluster_path,
         production_by_ticker,
+        candidate_companies,
         generated_at,
     )
 
@@ -1368,8 +1655,11 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, An
             },
             "candidate_files_read": {
                 "candidate_relationships": display_path(candidates_path),
+                "candidate_companies": display_path(candidate_companies_path),
+                "expansion_batches": display_path(expansion_batches_path),
                 "official_universe": display_path(official_universe_path),
                 "cik_mappings": display_path(cik_mappings_path),
+                "reviewer_source_roots": display_path(reviewer_source_roots_path),
             },
         },
         "summary": {
@@ -1382,7 +1672,10 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, An
             "stale_source_review_count": len(stale_queue),
             "corridor_count": len(corridor_rows),
             "universe_candidate_count": universe["candidate_universe_count"],
+            "candidate_company_preview_count": universe["candidate_company_preview_count"],
+            "expansion_batch_count": universe["expansion_batch_count"],
             "universe_ready_for_review_count": universe["source_readiness_scoring"]["ready_for_review_count"],
+            "universe_ready_for_preview_count": universe["source_readiness_scoring"]["ready_for_preview_count"],
             "universe_blocked_existing_count": universe["source_readiness_scoring"]["blocked_existing_production_count"],
             "openalex_alias_conflict_count": openalex_safety["entity_resolution_tracking"]["alias_conflict_count"],
             "density_bucket": graph_scaling["density_bucket"],
@@ -1403,6 +1696,7 @@ def build_report(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str, An
             "stale_source_review_queue": stale_queue[:80],
             "invalid_source_detection": invalid_urls[:80],
             "duplicate_source_reduction": duplicate_urls[:80],
+            "source_lifecycle_tracking": lifecycle,
             "review_only": True,
         },
         "universe_expansion": universe,

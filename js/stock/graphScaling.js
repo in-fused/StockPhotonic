@@ -6,10 +6,17 @@
     function buildScalingModel(context = {}) {
         const nodes = Array.isArray(context.visibleNodes) ? context.visibleNodes : [];
         const links = Array.isArray(context.visibleLinks) ? context.visibleLinks : [];
-        const cached = getCachedModel(nodes, links);
+        const candidateNodes = Array.isArray(context.visibleCandidateCompanyPreviewNodes)
+            ? context.visibleCandidateCompanyPreviewNodes
+            : [];
+        const candidateLinks = Array.isArray(context.visibleCandidateCompanyPreviewLinks)
+            ? context.visibleCandidateCompanyPreviewLinks
+            : [];
+        const hasCandidatePreview = candidateNodes.length > 0 || candidateLinks.length > 0;
+        const cached = hasCandidatePreview ? null : getCachedModel(nodes, links);
         if (cached) return cached;
 
-        const density = getDensityBucket(nodes.length, links.length);
+        const density = getDensityBucket(nodes.length + candidateNodes.length, links.length + candidateLinks.length);
         const hubSummaries = buildHubSummaries(nodes, links, context);
         const corridorBuckets = buildCorridorBuckets(links, context);
         const labelPriorityIds = hubSummaries
@@ -30,10 +37,18 @@
                 weakEdgeThresholdLift: density.key === 'dense' || density.key === 'very_dense',
                 preserveRouteLabels: true,
                 preserveSelectedLabels: true,
-                preserveOverlayLabels: true
+                preserveOverlayLabels: true,
+                candidatePreviewLabelLimit: getCandidatePreviewLabelLimit(density)
+            },
+            candidatePreviewScaling: {
+                visibleCandidateNodeCount: candidateNodes.length,
+                visibleCandidateEdgeCount: candidateLinks.length,
+                candidateIndexesCached: true,
+                previewDensityControl: context.candidateCompanyDensityMode || 'balanced',
+                graphSafePreview: true
             }
         };
-        cacheModel(nodes, links, model);
+        if (!hasCandidatePreview) cacheModel(nodes, links, model);
         return model;
     }
 
@@ -192,6 +207,13 @@
         if (density.key === 'dense') return 38;
         if (density.key === 'growth') return 46;
         return 60;
+    }
+
+    function getCandidatePreviewLabelLimit(density) {
+        if (density.key === 'very_dense') return 14;
+        if (density.key === 'dense') return 20;
+        if (density.key === 'growth') return 28;
+        return 36;
     }
 
     window.StockPhotonicStock.graphScaling = {

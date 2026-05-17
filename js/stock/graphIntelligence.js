@@ -1244,8 +1244,10 @@
             : sourceBackedRatio >= 0.45
                 ? 'mixed_source_backed_hub'
                 : 'needs_source_review';
+        const sourceBackedHubScore = sourceBackedRatio * 4 + sourceBackedCount * 0.35;
         const ecosystemBreadthScore = ecosystems.length * 1.4 + sectors.size * 1.1 + groups.size * 0.8;
-        const bridgeSignificanceScore = ecosystemBreadthScore + multiCorridorScore + sourceBackedRatio * 3;
+        const corridorCentralityScore = multiCorridorScore + corridorCount * 0.8 + Math.min(4, degree * 0.18);
+        const bridgeSignificanceScore = ecosystemBreadthScore + corridorCentralityScore + sourceBackedHubScore * 0.75;
         const score =
             degree * 1.25 +
             sectors.size * 1.6 +
@@ -1275,10 +1277,12 @@
             ecosystemCount: ecosystems.length,
             corridorCount,
             multiCorridorScore,
+            corridorCentralityScore,
             sectorCount: sectors.size,
             industryGroupCount: groups.size,
             sourceBackedCount,
             sourceBackedRatio,
+            sourceBackedHubScore,
             sourceBackedHubQuality,
             repeatedExposureScore,
             ecosystemBreadthScore,

@@ -19,8 +19,10 @@ from typing import Any
 
 from data_expansion_preflight import (  # type: ignore
     DEFAULT_CANDIDATES_PATH,
+    DEFAULT_CANDIDATE_COMPANIES_PATH,
     DEFAULT_COMPANIES_PATH,
     DEFAULT_CONNECTIONS_PATH,
+    DEFAULT_EXPANSION_BATCHES_PATH,
     DEFAULT_REVIEW_QUEUE_PATH,
     DEFAULT_REVIEW_SUMMARY_PATH,
     PreflightError,
@@ -98,6 +100,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--companies", default=str(DEFAULT_COMPANIES_PATH))
     parser.add_argument("--connections", default=str(DEFAULT_CONNECTIONS_PATH))
     parser.add_argument("--candidates", default=str(DEFAULT_CANDIDATES_PATH))
+    parser.add_argument("--candidate-companies", default=str(DEFAULT_CANDIDATE_COMPANIES_PATH))
+    parser.add_argument("--expansion-batches", default=str(DEFAULT_EXPANSION_BATCHES_PATH))
     parser.add_argument("--review-summary", default=str(DEFAULT_REVIEW_SUMMARY_PATH))
     parser.add_argument("--review-queue", default=str(DEFAULT_REVIEW_QUEUE_PATH))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH))
@@ -675,6 +679,8 @@ def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
     companies_path = resolve_path(args.companies)
     connections_path = resolve_path(args.connections)
     candidates_path = resolve_path(args.candidates)
+    candidate_companies_path = resolve_path(args.candidate_companies)
+    expansion_batches_path = resolve_path(args.expansion_batches)
     review_summary_path = resolve_path(args.review_summary)
     review_queue_path = resolve_path(args.review_queue)
     output_path = resolve_path(args.output)
@@ -685,6 +691,8 @@ def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
             companies_path=companies_path,
             connections_path=connections_path,
             candidates_path=candidates_path,
+            candidate_companies_path=candidate_companies_path,
+            expansion_batches_path=expansion_batches_path,
             review_summary_path=review_summary_path,
             review_queue_path=review_queue_path,
         )

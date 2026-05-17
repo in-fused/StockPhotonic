@@ -30,6 +30,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_COMPANIES_PATH = ROOT / "data" / "companies.json"
 DEFAULT_CONNECTIONS_PATH = ROOT / "data" / "connections.json"
 DEFAULT_CANDIDATES_PATH = ROOT / "data" / "candidates" / "sec_relationship_candidates.json"
+DEFAULT_CANDIDATE_COMPANIES_PATH = ROOT / "data" / "candidates" / "candidate_companies.json"
+DEFAULT_EXPANSION_BATCHES_PATH = ROOT / "data" / "candidates" / "universe_expansion_batches.json"
 DEFAULT_REVIEW_SUMMARY_PATH = ROOT / "data" / "candidates" / "candidate_review_summary.json"
 DEFAULT_REVIEW_QUEUE_PATH = ROOT / "data" / "candidates" / "candidate_review_queue.json"
 DEFAULT_OUTPUT_PATH = ROOT / "data" / "candidates" / "data_expansion_preflight_report.json"
@@ -50,6 +52,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--companies", default=str(DEFAULT_COMPANIES_PATH))
     parser.add_argument("--connections", default=str(DEFAULT_CONNECTIONS_PATH))
     parser.add_argument("--candidates", default=str(DEFAULT_CANDIDATES_PATH))
+    parser.add_argument("--candidate-companies", default=str(DEFAULT_CANDIDATE_COMPANIES_PATH))
+    parser.add_argument("--expansion-batches", default=str(DEFAULT_EXPANSION_BATCHES_PATH))
     parser.add_argument("--review-summary", default=str(DEFAULT_REVIEW_SUMMARY_PATH))
     parser.add_argument("--review-queue", default=str(DEFAULT_REVIEW_QUEUE_PATH))
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH))
@@ -181,6 +185,17 @@ def load_candidates(path: Path) -> list[dict[str, Any]]:
         return []
     if isinstance(payload, dict) and isinstance(payload.get("candidates"), list):
         return [item for item in payload["candidates"] if isinstance(item, dict)]
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    return []
+
+
+def load_records(path: Path, label: str, key: str) -> list[dict[str, Any]]:
+    payload = load_json(path, label, required=False)
+    if payload is None:
+        return []
+    if isinstance(payload, dict) and isinstance(payload.get(key), list):
+        return [item for item in payload[key] if isinstance(item, dict)]
     if isinstance(payload, list):
         return [item for item in payload if isinstance(item, dict)]
     return []
@@ -425,12 +440,16 @@ def build_report(
     companies_path: Path,
     connections_path: Path,
     candidates_path: Path,
+    candidate_companies_path: Path,
+    expansion_batches_path: Path,
     review_summary_path: Path,
     review_queue_path: Path,
 ) -> dict[str, Any]:
     companies, company_by_id, production_tickers = load_companies(companies_path)
     connections = load_connections(connections_path)
     candidates = load_candidates(candidates_path)
+    candidate_companies = load_records(candidate_companies_path, "candidate companies", "records")
+    expansion_batches = load_records(expansion_batches_path, "expansion batches", "batches")
     review_summary = load_json(review_summary_path, "review summary", required=False) or {}
     review_queue = load_json(review_queue_path, "review queue", required=False) or {}
     generated_at = datetime.now(timezone.utc).replace(microsecond=0)
@@ -451,6 +470,11 @@ def build_report(
     }
     type_gaps = build_relationship_type_gaps(connections)
     blockers, missing_tickers = candidate_blockers(candidates, production_tickers)
+    candidate_company_blockers = Counter(
+        str(blocker)
+        for record in candidate_companies
+        for blocker in (record.get("blockers") if isinstance(record.get("blockers"), list) else [])
+    )
     high_value_unsourced = build_high_value_unsourced_edges(connections, company_by_id)
     edge_policies = [
         build_edge_policy(edge, company_by_id.get(edge.get("source")), company_by_id.get(edge.get("target")))
@@ -475,6 +499,8 @@ def build_report(
             },
             "optional_files_read": {
                 "candidates": display_path(candidates_path),
+                "candidate_companies": display_path(candidate_companies_path),
+                "expansion_batches": display_path(expansion_batches_path),
                 "review_summary": display_path(review_summary_path),
                 "review_queue": display_path(review_queue_path),
             },
@@ -486,8 +512,28 @@ def build_report(
         "high_value_unsourced_edges": high_value_unsourced,
         "fast_track_source_targets": fast_track_source_targets,
         "candidate_preview_count": len(candidates),
+        "candidate_company_preview_count": len(candidate_companies),
+        "expansion_batch_count": len(expansion_batches),
         "candidate_tickers_missing_from_production_universe": missing_tickers,
         "candidate_promotion_blockers": blockers,
+        "candidate_company_preview_governance": {
+            "candidate_company_count": len(candidate_companies),
+            "ready_for_preview_count": sum(1 for row in candidate_companies if row.get("readiness_state") == "ready_for_preview"),
+            "blocker_counts": dict(sorted(candidate_company_blockers.items())),
+            "duplicate_ticker_warning_count": sum(1 for row in candidate_companies if row.get("duplicate_ticker_warning") is True),
+            "manual_promotion_allowed": False,
+            "auto_promotion_allowed": False,
+            "relationship_authority": False,
+            "review_only": True,
+        },
+        "large_universe_growth_metrics": {
+            "production_company_count": len(companies),
+            "candidate_company_preview_count": len(candidate_companies),
+            "preview_company_total": len(companies) + len(candidate_companies),
+            "expansion_batch_count": len(expansion_batches),
+            "density_controls_required": len(companies) + len(candidate_companies) > 100,
+            "review_only": True,
+        },
         "review_artifact_snapshot": {
             "review_summary_present": bool(review_summary),
             "review_queue_present": bool(review_queue),
@@ -534,6 +580,8 @@ def print_human(report: dict[str, Any], output_path: Path) -> None:
     print(f"SEC-backed edges: {coverage['sec_backed_edges']}")
     print(f"Stale review edges: {coverage['stale_review_edges']}")
     print(f"Candidate previews: {report['candidate_preview_count']}")
+    print(f"Candidate companies: {report['candidate_company_preview_count']}")
+    print(f"Expansion batches: {report['expansion_batch_count']}")
     print(f"Candidate blocker flags: {blockers['total_blocker_count']}")
     print("Production writes: 0")
     print(f"Report path: {display_path(output_path)}")
@@ -544,6 +592,8 @@ def main(argv: list[str] | None = None) -> int:
     companies_path = resolve_path(args.companies)
     connections_path = resolve_path(args.connections)
     candidates_path = resolve_path(args.candidates)
+    candidate_companies_path = resolve_path(args.candidate_companies)
+    expansion_batches_path = resolve_path(args.expansion_batches)
     review_summary_path = resolve_path(args.review_summary)
     review_queue_path = resolve_path(args.review_queue)
     output_path = resolve_path(args.output)
@@ -553,6 +603,8 @@ def main(argv: list[str] | None = None) -> int:
             companies_path=companies_path,
             connections_path=connections_path,
             candidates_path=candidates_path,
+            candidate_companies_path=candidate_companies_path,
+            expansion_batches_path=expansion_batches_path,
             review_summary_path=review_summary_path,
             review_queue_path=review_queue_path,
         )

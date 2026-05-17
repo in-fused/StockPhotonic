@@ -30,6 +30,7 @@ PRODUCTION_DATA_PATHS = (
 )
 
 SEC_TRIAGE_SCRIPT = ROOT / "scripts" / "sec_candidate_triage.py"
+UNIVERSE_EXPANSION_SCRIPT = ROOT / "scripts" / "universe_expansion_batches.py"
 PREFLIGHT_SCRIPT = ROOT / "scripts" / "data_expansion_preflight.py"
 SOURCE_COVERAGE_SCRIPT = ROOT / "scripts" / "source_coverage_refresh.py"
 SOURCE_GOVERNANCE_SCRIPT = ROOT / "scripts" / "source_registry_governance.py"
@@ -62,6 +63,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--write", action="store_true", help="Write review-only artifacts.")
     parser.add_argument("--force", action="store_true", help="Overwrite review artifacts when --write is used.")
     parser.add_argument("--skip-triage", action="store_true")
+    parser.add_argument("--skip-universe-expansion", action="store_true")
     parser.add_argument("--skip-preflight", action="store_true")
     parser.add_argument("--skip-source-coverage", action="store_true")
     parser.add_argument("--skip-source-governance", action="store_true")
@@ -224,6 +226,13 @@ def planned_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 step_command(SEC_TRIAGE_SCRIPT, write=args.write, force=args.force),
             )
         )
+    if not args.skip_universe_expansion:
+        steps.append(
+            (
+                "universe_expansion_batches",
+                step_command(UNIVERSE_EXPANSION_SCRIPT, write=args.write, force=args.force),
+            )
+        )
     if not args.skip_preflight:
         steps.append(
             (
@@ -306,6 +315,8 @@ def build_summary(args: argparse.Namespace, results: list[StepResult], started_a
             "candidate_review_queue": "data/candidates/candidate_review_queue.json",
             "candidate_review_summary": "data/candidates/candidate_review_summary.json",
             "candidate_overlap_report": "data/candidates/candidate_overlap_report.json",
+            "candidate_companies": "data/candidates/candidate_companies.json",
+            "universe_expansion_batches": "data/candidates/universe_expansion_batches.json",
             "data_expansion_preflight": "data/candidates/data_expansion_preflight_report.json",
             "source_coverage_refresh": "data/candidates/source_coverage_refresh_report.json",
             "source_governance_report": "data/source_registry/source_governance_report.json",

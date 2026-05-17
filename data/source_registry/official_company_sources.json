@@ -3,12 +3,12 @@
     "artifact_status": "review_owned_registry",
     "auto_promotion_allowed": false,
     "auto_trust_escalation_allowed": false,
-    "generated_at_utc": "2026-05-17T06:35:01+00:00",
+    "generated_at_utc": "2026-05-17T13:11:51+00:00",
     "generated_by": "scripts/source_registry_governance.py",
     "notes": [
       "Only observed SEC CIK mapping source URLs are registered automatically.",
-      "Company IR/newsroom/partner roots remain empty until a reviewer adds real URLs.",
-      "A registered official source root improves review visibility only."
+      "Reviewer-added company IR, newsroom, and partner/customer roots are supported through data/source_registry/reviewer_source_roots.json.",
+      "A registered official source root improves review visibility only and never proves a relationship."
     ],
     "production_write_allowed": false,
     "schema_version": 1

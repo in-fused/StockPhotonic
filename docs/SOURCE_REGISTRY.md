@@ -73,6 +73,13 @@ Every candidate connection must include:
 
 `data/candidates/official_ticker_universe.json` stages future real public-company candidates only. It must not be loaded by the app, and it must not directly write to `data/companies.json` or `data/connections.json`.
 
+D147 candidate-company preview files are a narrower reviewer surface derived from approved identity metadata:
+
+- `data/candidates/candidate_companies.json`
+- `data/candidates/universe_expansion_batches.json`
+
+These files may be loaded by the static app only as review tables and graph-preview nodes. Their preview edges are corridor-planning anchors, not relationship claims. They cannot prove ecosystem membership, promote companies, or create production connections.
+
 Candidate ticker-universe records, when present, must include:
 
 - `ticker`
@@ -167,6 +174,8 @@ Candidate CIK mapping records, when present, must include:
 - `required metadata`: `source_url`, `capture_date`, `extraction_text`, `confidence_candidate`, `signal_score`, `review_status`
 
 Unknown-source candidates must not be promoted to production data.
+
+Reviewer-added official IR, newsroom, and partner/customer roots are staged in `data/source_registry/reviewer_source_roots.json`. Roots must be HTTPS URLs with valid hosts. They classify lifecycle/source review state only and cannot escalate trust automatically.
 
 ---
 

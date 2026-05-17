@@ -1,4 +1,15 @@
 {
+  "candidate_company_preview_count": 78,
+  "candidate_company_preview_governance": {
+    "auto_promotion_allowed": false,
+    "blocker_counts": {},
+    "candidate_company_count": 78,
+    "duplicate_ticker_warning_count": 0,
+    "manual_promotion_allowed": false,
+    "ready_for_preview_count": 78,
+    "relationship_authority": false,
+    "review_only": true
+  },
   "candidate_preview_count": 10,
   "candidate_promotion_blockers": {
     "counts": {
@@ -150,15 +161,26 @@
       "title": "Keep candidate preview before manual promotion"
     }
   ],
+  "expansion_batch_count": 8,
   "fast_track_source_targets": [],
   "high_value_unsourced_edges": [],
+  "large_universe_growth_metrics": {
+    "candidate_company_preview_count": 78,
+    "density_controls_required": true,
+    "expansion_batch_count": 8,
+    "preview_company_total": 138,
+    "production_company_count": 60,
+    "review_only": true
+  },
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-17T06:35:01+00:00",
+    "generated_at_utc": "2026-05-17T13:11:50+00:00",
     "generated_by": "scripts/data_expansion_preflight.py",
     "network_calls": 0,
     "optional_files_read": {
+      "candidate_companies": "data\\candidates\\candidate_companies.json",
       "candidates": "data\\candidates\\sec_relationship_candidates.json",
+      "expansion_batches": "data\\candidates\\universe_expansion_batches.json",
       "review_queue": "data\\candidates\\candidate_review_queue.json",
       "review_summary": "data\\candidates\\candidate_review_summary.json"
     },

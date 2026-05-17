@@ -49,21 +49,35 @@
     function renderSearchResult(node, index, context) {
         const { highlightedSearchIndex, escapeHtml, getCompanyIndustryGroup } = context;
         const activeClass = index === highlightedSearchIndex ? ' is-active' : '';
+        const isCandidatePreview = Boolean(node?.isCandidateCompanyPreviewNode);
+        const nodeId = String(node?.id || '');
         return `
                 <button type="button"
-                        data-search-node-id="${escapeHtml(node.id)}"
+                        data-search-node-id="${escapeHtml(nodeId)}"
                         data-search-index="${index}"
+                        onmousedown="window.selectSearchNodeByIdFromDom && window.selectSearchNodeByIdFromDom('${escapeInlineJsString(nodeId)}'); if (event) event.preventDefault();"
+                        onclick="window.selectSearchNodeByIdFromDom && window.selectSearchNodeByIdFromDom('${escapeInlineJsString(nodeId)}')"
                         class="search-result${activeClass} w-full rounded-2xl border border-white/10 px-3 py-2 text-left flex items-center justify-between gap-3">
                     <div class="min-w-0">
                         <div class="flex items-baseline gap-2">
                             <span class="font-display text-white text-sm">${escapeHtml(node.ticker || '')}</span>
                             <span class="text-xs text-white/62 truncate">${escapeHtml(node.name || '')}</span>
                         </div>
-                        <div class="text-[11px] text-cyan-200/58 mt-0.5 truncate">${escapeHtml(node.sector || 'Unknown Sector')} / ${escapeHtml(getCompanyIndustryGroup(node))}</div>
+                        <div class="text-[11px] text-cyan-200/58 mt-0.5 truncate">${escapeHtml(node.sector || 'Unknown Sector')} / ${escapeHtml(getCompanyIndustryGroup(node))}${isCandidatePreview ? ' / Candidate preview' : ''}</div>
                     </div>
-                    <i class="fa-solid fa-location-crosshairs text-cyan-300/70 shrink-0"></i>
+                    <i class="fa-solid ${isCandidatePreview ? 'fa-eye' : 'fa-location-crosshairs'} ${isCandidatePreview ? 'text-lime-300/75' : 'text-cyan-300/70'} shrink-0"></i>
                 </button>
             `;
+    }
+
+    function escapeInlineJsString(value) {
+        return String(value || '')
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/\r/g, '\\r')
+            .replace(/\n/g, '\\n')
+            .replace(/</g, '\\x3c')
+            .replace(/>/g, '\\x3e');
     }
 
     function getSearchPanelNodes(context) {

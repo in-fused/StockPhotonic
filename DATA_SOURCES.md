@@ -4,7 +4,7 @@ Document: StockPhotonic Data Sources. Production graph data is static JSON: `dat
 
 - Graph Intelligence (2D): Reads production companies/connections only, then derives filters, dashboards, relationship taxonomy, confidence tiers, source visibility, clusters, shared exposure, hidden relationships, portfolio exposure, and industry correlations in the browser.
 - 3D Network capabilities: Renders the same production dataset with Three.js; it does not create, promote, or alter data.
-- Source Workbench pipeline: Read-only browser surface for local source commands, candidate review, triage artifacts, and data expansion preflight. It can display static artifact contents served from the repo, but cannot run ingestion or write production data.
+- Source Workbench pipeline: Read-only browser surface for local source commands, candidate review, candidate-company expansion staging, triage artifacts, and data expansion preflight. It can display static artifact contents served from the repo, but cannot run ingestion or write production data.
 - SEC ingestion + candidate system: SEC cache, filing inspection, signal extraction, candidate preview/write, job, schedule, and policy scripts operate locally and keep staged records under `data/candidates/`.
 - Scheduled review orchestration: GitHub Actions and local scripts can refresh review-only SEC, OpenAlex, preflight, source coverage, source governance, and pipeline summary artifacts. They upload artifacts only and do not commit or promote production graph data.
 - OpenAlex intelligence layer: Local/script-side enrichment for ecosystem, topic, institution, and clustering hints. OpenAlex is context, not relationship proof or promotion authority.
@@ -38,6 +38,23 @@ D146 introduces `scripts/source_registry_governance.py`:
 ```text
 production JSON + candidate artifacts + OpenAlex cache -> source registry report -> Workbench governance console
 ```
+
+## Candidate Company Preview
+
+D147 adds review-only company expansion artifacts:
+
+- `data/candidates/candidate_companies.json`
+- `data/candidates/universe_expansion_batches.json`
+
+These files can be loaded by the static browser UI only as preview nodes, preview tables, and expansion batch summaries. Candidate-company preview edges are corridor-planning anchors with `corridor_assignment_not_relationship` semantics. They do not prove a relationship, do not assign ecosystem membership authoritatively, do not create production edges, and do not write production companies.
+
+Generate them locally with:
+
+```bash
+python scripts/universe_expansion_batches.py --write --force
+```
+
+The batch engine guards production hashes, checks duplicate tickers against production, reads official ticker/CIK staging data, and writes only review artifacts under `data/candidates/`.
 
 Generated files:
 
@@ -299,3 +316,5 @@ Recommended open or source-friendly inputs:
 - Reputable secondary sources only as review support, not as unsupported production claims.
 
 Do not wire paid/API-only sources into the static frontend. Any future source expansion should preserve candidate preview, manual promotion, and validation gates.
+
+Reviewer-added official IR, newsroom, and partner/customer roots belong in `data/source_registry/reviewer_source_roots.json`. They must be real HTTPS roots and remain lifecycle context only; they do not escalate trust automatically or prove relationships.

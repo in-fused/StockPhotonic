@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "artifact_status": "review_owned_registry",
+    "schema_version": 1,
+    "generated_by": "manual_reviewer_registry_shell",
+    "production_write_allowed": false,
+    "auto_promotion_allowed": false,
+    "auto_trust_escalation_allowed": false,
+    "relationship_authority": false,
+    "notes": [
+      "Reviewer-added official IR, newsroom, and partner/customer roots belong here.",
+      "Roots must be real https URLs with valid hosts.",
+      "Adding a root improves review visibility only; it does not prove relationships or promote companies."
+    ]
+  },
+  "records": []
+}

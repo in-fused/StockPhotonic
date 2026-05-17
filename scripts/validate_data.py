@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parents[1]
 COMPANIES_PATH = ROOT / "data" / "companies.json"
 CONNECTIONS_PATH = ROOT / "data" / "connections.json"
 CANDIDATE_PATH = ROOT / "data" / "candidates" / "sec_relationship_candidates.json"
+CANDIDATE_COMPANIES_PATH = ROOT / "data" / "candidates" / "candidate_companies.json"
+UNIVERSE_EXPANSION_BATCHES_PATH = ROOT / "data" / "candidates" / "universe_expansion_batches.json"
 CANDIDATE_QUEUE_PATH = ROOT / "data" / "candidates" / "candidate_review_queue.json"
 CANDIDATE_SUMMARY_PATH = ROOT / "data" / "candidates" / "candidate_review_summary.json"
 CANDIDATE_OVERLAP_PATH = ROOT / "data" / "candidates" / "candidate_overlap_report.json"
@@ -34,6 +36,7 @@ OFFICIAL_COMPANY_SOURCES_PATH = SOURCE_REGISTRY_DIR / "official_company_sources.
 TRUSTED_SOURCE_HOSTS_PATH = SOURCE_REGISTRY_DIR / "trusted_source_hosts.json"
 CORRIDOR_SOURCE_REGISTRY_PATH = SOURCE_REGISTRY_DIR / "corridor_source_registry.json"
 SOURCE_GOVERNANCE_REPORT_PATH = SOURCE_REGISTRY_DIR / "source_governance_report.json"
+REVIEWER_SOURCE_ROOTS_PATH = SOURCE_REGISTRY_DIR / "reviewer_source_roots.json"
 OPENALEX_CACHE_PATH = ROOT / "data" / "cache" / "openalex" / "entity_resolution_cache.json"
 OPENALEX_ARTIFACT_PATHS = (
     (ROOT / "data" / "candidates" / "openalex_ecosystem_candidates.json", "openalex_ecosystem_candidates"),
@@ -191,6 +194,114 @@ def validate_candidate_file(errors: list[str], warnings: list[str]) -> None:
         archive_url = candidate.get("archive_url")
         if archive_url is not None and not valid_url(archive_url):
             errors.append(f"SEC candidate {index}: archive_url must be http(s).")
+
+
+def validate_candidate_company_file(
+    path: Path,
+    production_tickers: set[str],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    artifact_name = "candidate_companies"
+    if not path.exists():
+        warnings.append(f"{artifact_name} artifact is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} must contain an object.")
+        return
+    validate_review_only_metadata(payload, artifact_name, errors)
+    validate_safety_zero_writes(payload, artifact_name, errors)
+    records = payload.get("records")
+    if not isinstance(records, list):
+        errors.append(f"{artifact_name} records must be a list.")
+        return
+
+    ticker_counts: Counter[str] = Counter()
+    for index, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            errors.append(f"{artifact_name} record {index}: must be an object.")
+            continue
+        ticker = clean_string(record.get("ticker"))
+        if ticker is None:
+            errors.append(f"{artifact_name} record {index}: ticker is required.")
+            continue
+        normalized_ticker = ticker.upper()
+        ticker_counts[normalized_ticker] += 1
+        if normalized_ticker in production_tickers:
+            errors.append(f"{artifact_name} record {index}: ticker {normalized_ticker} already exists in production.")
+        if record.get("review_only") is not True:
+            errors.append(f"{artifact_name} record {index}: review_only must be true.")
+        if record.get("production_write_allowed") is not False:
+            errors.append(f"{artifact_name} record {index}: production_write_allowed must be false.")
+        if record.get("auto_promotion_allowed") is not False:
+            errors.append(f"{artifact_name} record {index}: auto_promotion_allowed must be false.")
+        if record.get("relationship_authority") is not False:
+            errors.append(f"{artifact_name} record {index}: relationship_authority must be false.")
+        if record.get("ecosystem_membership_authority") is not False:
+            errors.append(f"{artifact_name} record {index}: ecosystem_membership_authority must be false.")
+        source_urls = record.get("source_urls")
+        if not isinstance(source_urls, list) or not source_urls:
+            errors.append(f"{artifact_name} record {index}: source_urls must contain at least one official URL.")
+        else:
+            for url_index, source_url in enumerate(source_urls):
+                if not valid_url(source_url):
+                    errors.append(f"{artifact_name} record {index}: source_urls[{url_index}] must be http(s).")
+        preview = record.get("preview")
+        if not isinstance(preview, dict):
+            errors.append(f"{artifact_name} record {index}: preview must be an object.")
+        else:
+            if preview.get("relationship_claim_created") is not False:
+                errors.append(f"{artifact_name} record {index}: preview.relationship_claim_created must be false.")
+            if preview.get("preview_edge_semantics") != "corridor_assignment_not_relationship":
+                errors.append(f"{artifact_name} record {index}: preview edge semantics must be non-relationship corridor assignment.")
+
+    for ticker, count in sorted(ticker_counts.items()):
+        if count > 1:
+            errors.append(f"{artifact_name}: duplicate candidate ticker {ticker}.")
+
+
+def validate_universe_expansion_batches_file(
+    path: Path,
+    candidate_tickers: set[str],
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    artifact_name = "universe_expansion_batches"
+    if not path.exists():
+        warnings.append(f"{artifact_name} artifact is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} must contain an object.")
+        return
+    validate_review_only_metadata(payload, artifact_name, errors)
+    validate_safety_zero_writes(payload, artifact_name, errors)
+    batches = payload.get("batches")
+    if not isinstance(batches, list):
+        errors.append(f"{artifact_name} batches must be a list.")
+        return
+    for index, batch in enumerate(batches, start=1):
+        if not isinstance(batch, dict):
+            errors.append(f"{artifact_name} batch {index}: must be an object.")
+            continue
+        if batch.get("review_only") is not True:
+            errors.append(f"{artifact_name} batch {index}: review_only must be true.")
+        if batch.get("production_write_allowed") is not False:
+            errors.append(f"{artifact_name} batch {index}: production_write_allowed must be false.")
+        if batch.get("auto_promotion_allowed") is not False:
+            errors.append(f"{artifact_name} batch {index}: auto_promotion_allowed must be false.")
+        if batch.get("relationship_authority") is not False:
+            errors.append(f"{artifact_name} batch {index}: relationship_authority must be false.")
+        tickers = batch.get("tickers")
+        if not isinstance(tickers, list):
+            errors.append(f"{artifact_name} batch {index}: tickers must be a list.")
+            continue
+        missing = sorted({str(ticker).upper() for ticker in tickers if str(ticker).upper() not in candidate_tickers})
+        if missing:
+            errors.append(f"{artifact_name} batch {index}: tickers missing from candidate companies: {', '.join(missing[:8])}.")
 
 
 def validate_triage_artifact_file(
@@ -565,6 +676,7 @@ def validate(strict_confidence: bool = False) -> int:
     for ticker, count in sorted(ticker_counts.items()):
         if count > 1:
             errors.append(f"Duplicate ticker: {ticker}.")
+    production_tickers = set(ticker_counts)
 
     edge_keys: Counter[tuple[int, int, str]] = Counter()
     connected_company_ids: set[int] = set()
@@ -698,6 +810,24 @@ def validate(strict_confidence: bool = False) -> int:
         )
 
     validate_candidate_file(errors, warnings)
+    candidate_company_payload = load_json(CANDIDATE_COMPANIES_PATH) if CANDIDATE_COMPANIES_PATH.exists() else {}
+    candidate_company_tickers = {
+        str(record.get("ticker", "")).strip().upper()
+        for record in candidate_company_payload.get("records", [])
+        if isinstance(record, dict) and str(record.get("ticker", "")).strip()
+    } if isinstance(candidate_company_payload, dict) else set()
+    validate_candidate_company_file(
+        CANDIDATE_COMPANIES_PATH,
+        production_tickers,
+        errors,
+        warnings,
+    )
+    validate_universe_expansion_batches_file(
+        UNIVERSE_EXPANSION_BATCHES_PATH,
+        candidate_company_tickers,
+        errors,
+        warnings,
+    )
     validate_triage_artifact_file(
         CANDIDATE_QUEUE_PATH,
         "candidate_review_queue",
@@ -749,6 +879,12 @@ def validate(strict_confidence: bool = False) -> int:
         errors,
         warnings,
         record_key="corridors",
+    )
+    validate_review_owned_registry_file(
+        REVIEWER_SOURCE_ROOTS_PATH,
+        "reviewer_source_roots",
+        errors,
+        warnings,
     )
     validate_source_governance_report_file(
         SOURCE_GOVERNANCE_REPORT_PATH,

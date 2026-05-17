@@ -1,5 +1,6 @@
 {
   "artifact_paths": {
+    "candidate_companies": "data/candidates/candidate_companies.json",
     "candidate_overlap_report": "data/candidates/candidate_overlap_report.json",
     "candidate_review_queue": "data/candidates/candidate_review_queue.json",
     "candidate_review_summary": "data/candidates/candidate_review_summary.json",
@@ -12,15 +13,16 @@
     "openalex_topic_overlap": "data/candidates/openalex_topic_overlap.json",
     "source_coverage_refresh": "data/candidates/source_coverage_refresh_report.json",
     "source_governance_report": "data/source_registry/source_governance_report.json",
-    "trusted_source_hosts": "data/source_registry/trusted_source_hosts.json"
+    "trusted_source_hosts": "data/source_registry/trusted_source_hosts.json",
+    "universe_expansion_batches": "data/candidates/universe_expansion_batches.json"
   },
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-17T06:35:02+00:00",
+    "generated_at_utc": "2026-05-17T13:11:51+00:00",
     "generated_by": "scripts/review_artifact_refresh.py",
     "network_calls": 0,
     "output_path": "data/candidates/review_pipeline_summary.json",
-    "pipeline_started_at_utc": "2026-05-17T06:35:01+00:00",
+    "pipeline_started_at_utc": "2026-05-17T13:11:50+00:00",
     "production_write_allowed": false
   },
   "safety": {
@@ -54,14 +56,31 @@
       ]
     },
     {
+      "command": "python scripts/universe_expansion_batches.py --write --force",
+      "name": "universe_expansion_batches",
+      "return_code": 0,
+      "status": "passed",
+      "stderr_tail": [],
+      "stdout_tail": [
+        "Candidate company expansion batches",
+        "===================================",
+        "Candidate companies: 78",
+        "Expansion batches: 8",
+        "Ready for preview: 78",
+        "Needs source review: 0",
+        "Skipped production duplicates: 0",
+        "Production writes: 0",
+        "Candidate path: data/candidates/candidate_companies.json",
+        "Batch path: data/candidates/universe_expansion_batches.json"
+      ]
+    },
+    {
       "command": "python scripts/data_expansion_preflight.py --write --force",
       "name": "data_expansion_preflight",
       "return_code": 0,
       "status": "passed",
       "stderr_tail": [],
       "stdout_tail": [
-        "Data expansion preflight",
-        "========================",
         "Production companies: 60",
         "Production edges: 134",
         "Sourced ratio: 100%",
@@ -69,6 +88,8 @@
         "SEC-backed edges: 104",
         "Stale review edges: 0",
         "Candidate previews: 10",
+        "Candidate companies: 78",
+        "Expansion batches: 8",
         "Candidate blocker flags: 19",
         "Production writes: 0",
         "Report path: data\\candidates\\data_expansion_preflight_report.json"
@@ -106,30 +127,10 @@
         "Trusted source hosts: 34",
         "Stale source queue: 0",
         "Universe candidates: 293",
-        "Ready for review: 293",
+        "Ready for review: 215",
         "Density bucket: dense_growth_graph",
         "Production writes: 0",
         "Report path: data/source_registry/source_governance_report.json"
-      ]
-    },
-    {
-      "command": "python scripts/openalex_enrichment.py --write --force --max-requests 24 --max-entities 20",
-      "name": "openalex_enrichment",
-      "return_code": 0,
-      "status": "passed",
-      "stderr_tail": [],
-      "stdout_tail": [
-        "OpenAlex review-only enrichment",
-        "===============================",
-        "Mode: cache-only/dry-run",
-        "Companies processed: 20",
-        "Network requests used: 0 / 24",
-        "Budget skips: 0",
-        "Ecosystem hints: 31",
-        "Topic candidates: 0",
-        "Institution overlaps: 0",
-        "Cluster hints: 8",
-        "Production writes: 0"
       ]
     },
     {
@@ -156,7 +157,7 @@
   ],
   "summary": {
     "failed_step_count": 0,
-    "latest_review_pipeline_timestamp": "2026-05-17T06:35:02+00:00",
+    "latest_review_pipeline_timestamp": "2026-05-17T13:11:51+00:00",
     "openalex_network_enabled": false,
     "review_only": true,
     "status": "passed",

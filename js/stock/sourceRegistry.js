@@ -114,10 +114,12 @@
         const corridors = report.corridor_maintenance || {};
         const scaling = report.large_graph_scaling_readiness || {};
         const openAlex = report.openalex_expansion_safety || {};
+        const strategicHubEvolution = report.strategic_hub_evolution || {};
         return {
             summary,
             staleQueue: Array.isArray(governance.stale_source_review_queue) ? governance.stale_source_review_queue : [],
             duplicateSourceRows: Array.isArray(governance.duplicate_source_reduction) ? governance.duplicate_source_reduction : [],
+            sourceLifecycle: governance.source_lifecycle_tracking || {},
             trustedHosts: Array.isArray(report.source_registry_visibility?.trusted_host_samples)
                 ? report.source_registry_visibility.trusted_host_samples
                 : [],
@@ -125,12 +127,15 @@
                 ? report.source_registry_visibility.official_company_samples
                 : [],
             universeReadiness: Array.isArray(universe.readiness_rows) ? universe.readiness_rows : [],
+            candidateCompanyPreview: universe.candidate_company_preview || {},
+            expansionBatches: Array.isArray(universe.expansion_batches?.batches) ? universe.expansion_batches.batches : [],
             universeBlockers: universe.duplicate_ticker_prevention || {},
             aliasConflicts: universe.alias_conflict_detection || {},
             corridorRows: Array.isArray(corridors.corridor_rows) ? corridors.corridor_rows : [],
             maintenanceQueue: Array.isArray(corridors.maintenance_queue) ? corridors.maintenance_queue : [],
             scaling,
             openAlex,
+            strategicHubEvolution,
             safety: report.safety || {}
         };
     }

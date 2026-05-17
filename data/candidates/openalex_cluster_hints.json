@@ -8,11 +8,11 @@
     "candidates_read": "data/candidates/sec_relationship_candidates.json",
     "companies_read": "data/companies.json",
     "dry_run": true,
-    "generated_at_utc": "2026-05-17T03:07:14+00:00",
+    "generated_at_utc": "2026-05-17T05:17:04+00:00",
     "generated_by": "scripts/openalex_enrichment.py",
     "input_company_count": 60,
-    "max_entities": 20,
-    "max_requests": 24,
+    "max_entities": 60,
+    "max_requests": 0,
     "network_enabled": false,
     "network_requests_skipped_for_budget": 0,
     "network_requests_used": 0,
@@ -22,7 +22,7 @@
       "No candidate is promoted by this artifact."
     ],
     "per_page": 5,
-    "processed_company_count": 20,
+    "processed_company_count": 60,
     "production_write_allowed": false,
     "relationship_claim_authority": false,
     "source_role": "enrichment_context_only",
@@ -30,89 +30,21 @@
   },
   "records": [
     {
-      "cluster_id": "openalex-ecosystem-ai_infrastructure",
+      "cluster_id": "openalex-ecosystem-aerospace_defense_supply_chain",
       "cluster_type": "ecosystem_context",
       "confidence_label": "ecosystem_cluster_hint",
-      "ecosystem_key": "ai_infrastructure",
-      "ecosystem_label": "AI Infrastructure",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ticker_count": 4
+      },
+      "ecosystem_key": "aerospace_defense_supply_chain",
+      "ecosystem_label": "Aerospace / Defense Supply Chain",
       "relationship_claim_created": false,
       "review_only": true,
-      "source_attribution": [
-        {
-          "lookup_status": "cache_or_bounded_lookup",
-          "review_only": true,
-          "source": "OpenAlex",
-          "source_type": "topic_or_institution_context"
-        }
-      ],
-      "ticker_count": 7,
-      "tickers": [
-        "AVGO",
-        "COST",
-        "GOOGL",
-        "META",
-        "NVDA",
-        "TSM",
-        "WMT"
-      ]
-    },
-    {
-      "cluster_id": "openalex-ecosystem-cloud_hyperscaler",
-      "cluster_type": "ecosystem_context",
-      "confidence_label": "ecosystem_cluster_hint",
-      "ecosystem_key": "cloud_hyperscaler",
-      "ecosystem_label": "Cloud / Hyperscaler",
-      "relationship_claim_created": false,
-      "review_only": true,
-      "source_attribution": [
-        {
-          "lookup_status": "cache_or_bounded_lookup",
-          "review_only": true,
-          "source": "OpenAlex",
-          "source_type": "topic_or_institution_context"
-        }
-      ],
-      "ticker_count": 7,
-      "tickers": [
-        "AAPL",
-        "AMZN",
-        "AVGO",
-        "GOOGL",
-        "META",
-        "MSFT",
-        "ORCL"
-      ]
-    },
-    {
-      "cluster_id": "openalex-ecosystem-energy_infrastructure",
-      "cluster_type": "ecosystem_context",
-      "confidence_label": "ecosystem_cluster_hint",
-      "ecosystem_key": "energy_infrastructure",
-      "ecosystem_label": "Energy Infrastructure",
-      "relationship_claim_created": false,
-      "review_only": true,
-      "source_attribution": [
-        {
-          "lookup_status": "cache_or_bounded_lookup",
-          "review_only": true,
-          "source": "OpenAlex",
-          "source_type": "topic_or_institution_context"
-        }
-      ],
-      "ticker_count": 2,
-      "tickers": [
-        "TSLA",
-        "XOM"
-      ]
-    },
-    {
-      "cluster_id": "openalex-ecosystem-financial_market_infrastructure",
-      "cluster_type": "ecosystem_context",
-      "confidence_label": "ecosystem_cluster_hint",
-      "ecosystem_key": "financial_market_infrastructure",
-      "ecosystem_label": "Financial Market Infrastructure",
-      "relationship_claim_created": false,
-      "review_only": true,
+      "sector_overlap_hint": {
+        "relationship_authority": false,
+        "source": "OpenAlex ecosystem context and static company metadata"
+      },
       "source_attribution": [
         {
           "lookup_status": "cache_or_bounded_lookup",
@@ -123,9 +55,241 @@
       ],
       "ticker_count": 4,
       "tickers": [
+        "BA",
+        "GE",
+        "HON",
+        "RTX"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-ai_infrastructure",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ticker_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "relationship_authority": false,
+        "source": "OpenAlex ecosystem context and static company metadata"
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 23,
+      "tickers": [
+        "AMAT",
+        "AMD",
+        "ARM",
+        "ASML",
+        "AVGO",
+        "CDNS",
+        "COST",
+        "CVS",
+        "GOOGL",
+        "HD",
+        "INTC",
+        "KLAC",
+        "LRCX",
+        "META",
+        "MPWR",
+        "MRK",
+        "MRVL",
+        "MU",
+        "NVDA",
+        "QCOM",
+        "SNPS",
+        "TSM",
+        "WMT"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-cloud_hyperscaler",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ticker_count": 11
+      },
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "relationship_authority": false,
+        "source": "OpenAlex ecosystem context and static company metadata"
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 11,
+      "tickers": [
+        "AAPL",
+        "AMZN",
+        "AVGO",
+        "CRM",
+        "GOOGL",
+        "META",
+        "MSFT",
+        "NOW",
+        "ORCL",
+        "PANW",
+        "SNOW"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-consumer_retail_platforms",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ticker_count": 6
+      },
+      "ecosystem_key": "consumer_retail_platforms",
+      "ecosystem_label": "Consumer / Retail Platforms",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "relationship_authority": false,
+        "source": "OpenAlex ecosystem context and static company metadata"
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 6,
+      "tickers": [
+        "AMZN",
+        "COST",
+        "CVS",
+        "HD",
+        "KO",
+        "WMT"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-energy_infrastructure",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ticker_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "relationship_authority": false,
+        "source": "OpenAlex ecosystem context and static company metadata"
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 12,
+      "tickers": [
+        "BA",
+        "CAT",
+        "COP",
+        "CVX",
+        "DE",
+        "GE",
+        "HON",
+        "MPWR",
+        "RTX",
+        "SLB",
+        "TSLA",
+        "XOM"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-enterprise_saas_workflow",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ticker_count": 4
+      },
+      "ecosystem_key": "enterprise_saas_workflow",
+      "ecosystem_label": "Enterprise SaaS / Workflow",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "relationship_authority": false,
+        "source": "OpenAlex ecosystem context and static company metadata"
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 4,
+      "tickers": [
+        "CRM",
+        "MSFT",
+        "NOW",
+        "ORCL"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-financial_market_infrastructure",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ticker_count": 8
+      },
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "relationship_authority": false,
+        "source": "OpenAlex ecosystem context and static company metadata"
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 8,
+      "tickers": [
+        "AXP",
+        "BAC",
         "BRK-B",
+        "COF",
         "JPM",
         "MA",
+        "PYPL",
         "V"
       ]
     },
@@ -133,10 +297,18 @@
       "cluster_id": "openalex-ecosystem-healthcare_biotech",
       "cluster_type": "ecosystem_context",
       "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ticker_count": 10
+      },
       "ecosystem_key": "healthcare_biotech",
       "ecosystem_label": "Healthcare / Biotech",
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "relationship_authority": false,
+        "source": "OpenAlex ecosystem context and static company metadata"
+      },
       "source_attribution": [
         {
           "lookup_status": "cache_or_bounded_lookup",
@@ -145,10 +317,17 @@
           "source_type": "topic_or_institution_context"
         }
       ],
-      "ticker_count": 3,
+      "ticker_count": 10,
       "tickers": [
+        "ABBV",
+        "CI",
+        "CVS",
+        "ISRG",
         "JNJ",
         "LLY",
+        "MRK",
+        "PFE",
+        "TMO",
         "UNH"
       ]
     },
@@ -156,10 +335,18 @@
       "cluster_id": "openalex-ecosystem-semiconductor_supply_chain",
       "cluster_type": "ecosystem_context",
       "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ticker_count": 16
+      },
       "ecosystem_key": "semiconductor_supply_chain",
       "ecosystem_label": "Semiconductor Supply Chain",
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "relationship_authority": false,
+        "source": "OpenAlex ecosystem context and static company metadata"
+      },
       "source_attribution": [
         {
           "lookup_status": "cache_or_bounded_lookup",
@@ -168,10 +355,23 @@
           "source_type": "topic_or_institution_context"
         }
       ],
-      "ticker_count": 3,
+      "ticker_count": 16,
       "tickers": [
+        "AMAT",
+        "AMD",
+        "ARM",
+        "ASML",
         "AVGO",
+        "CDNS",
+        "INTC",
+        "KLAC",
+        "LRCX",
+        "MPWR",
+        "MRVL",
+        "MU",
         "NVDA",
+        "QCOM",
+        "SNPS",
         "TSM"
       ]
     }
@@ -187,7 +387,7 @@
     "review_only": true
   },
   "summary": {
-    "cluster_hint_count": 6,
+    "cluster_hint_count": 9,
     "review_only": true
   }
 }

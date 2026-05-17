@@ -226,9 +226,13 @@
     "type": "competitor",
     "strength": 0.68,
     "label": "Data infrastructure semiconductor competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/avgo-20251102.htm",
+      "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm"
+    ]
   },
   {
     "source": 4,
@@ -236,9 +240,13 @@
     "type": "ecosystem",
     "strength": 0.74,
     "label": "Custom AI accelerator and networking silicon ecosystem",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/avgo-20251102.htm",
+      "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm"
+    ]
   },
   {
     "source": 4,
@@ -272,9 +280,13 @@
     "type": "competitor",
     "strength": 0.62,
     "label": "Premium device silicon platform competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/804328/000080432825000085/qcom-20250928.htm",
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
+    ]
   },
   {
     "source": 5,
@@ -295,9 +307,13 @@
     "type": "competitor",
     "strength": 0.54,
     "label": "Memory and semiconductor manufacturing peer exposure",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/723125/000072312525000028/mu-20250828.htm",
+      "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm"
+    ]
   },
   {
     "source": 7,
@@ -370,9 +386,13 @@
     "type": "ecosystem",
     "strength": 0.62,
     "label": "Semiconductor capital equipment ecosystem",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.asml.com/en/investors/annual-report",
+      "https://www.sec.gov/Archives/edgar/data/6951/000162828025056742/amat-20251026.htm"
+    ]
   },
   {
     "source": 8,
@@ -380,9 +400,13 @@
     "type": "ecosystem",
     "strength": 0.58,
     "label": "Wafer equipment purchasing-cycle ecosystem",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.asml.com/en/investors/annual-report",
+      "https://www.sec.gov/Archives/edgar/data/707549/000070754925000075/lrcx-20250629.htm"
+    ]
   },
   {
     "source": 10,
@@ -390,9 +414,13 @@
     "type": "competitor",
     "strength": 0.7,
     "label": "Wafer fabrication equipment competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/6951/000162828025056742/amat-20251026.htm",
+      "https://www.sec.gov/Archives/edgar/data/707549/000070754925000075/lrcx-20250629.htm"
+    ]
   },
   {
     "source": 10,
@@ -400,9 +428,13 @@
     "type": "ecosystem",
     "strength": 0.62,
     "label": "Semiconductor manufacturing equipment cycle exposure",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/6951/000162828025056742/amat-20251026.htm",
+      "https://www.sec.gov/Archives/edgar/data/319201/000031920125000024/klac-20250630.htm"
+    ]
   },
   {
     "source": 15,
@@ -449,9 +481,14 @@
     "type": "ecosystem",
     "strength": 0.66,
     "label": "Cloud data infrastructure silicon exposure",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.marvell.com/company/newsroom/marvell-expands-strategic-collaboration-aws-enable-accelerated-infrastructure-ai-cloud.html",
+      "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm",
+      "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
+    ]
   },
   {
     "source": 14,
@@ -459,9 +496,13 @@
     "type": "ecosystem",
     "strength": 0.58,
     "label": "AI server power management ecosystem",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1280452/000143774926006113/mpwr20251231_10k.htm",
+      "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
+    ]
   },
   {
     "source": 17,
@@ -521,9 +562,14 @@
     "type": "ecosystem",
     "strength": 0.56,
     "label": "Enterprise workflow and productivity software overlap",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.servicenow.com/company/media/press-room/microsoft-and-servicenow-announce-strategic-partnership.html",
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
+      "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
+    ]
   },
   {
     "source": 18,
@@ -531,9 +577,13 @@
     "type": "competitor",
     "strength": 0.84,
     "label": "Cloud platform and advertising-adjacent AI competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
+    ]
   },
   {
     "source": 18,
@@ -541,9 +591,13 @@
     "type": "competitor",
     "strength": 0.82,
     "label": "Digital advertising and AI platform competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/meta-20251231.htm"
+    ]
   },
   {
     "source": 18,
@@ -551,9 +605,13 @@
     "type": "competitor",
     "strength": 0.6,
     "label": "Mobile ecosystem and AI assistant competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
+    ]
   },
   {
     "source": 19,
@@ -561,9 +619,13 @@
     "type": "competitor",
     "strength": 0.72,
     "label": "Enterprise cloud infrastructure competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1341439/000095017025087926/orcl-20250531.htm"
+    ]
   },
   {
     "source": 19,
@@ -584,9 +646,13 @@
     "type": "competitor",
     "strength": 0.52,
     "label": "Consumer device platform and app ecosystem tension",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/meta-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
+    ]
   },
   {
     "source": 21,
@@ -620,9 +686,15 @@
     "type": "ecosystem",
     "strength": 0.58,
     "label": "Enterprise customer data platform ecosystem",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.salesforce.com/partners/snowflake/",
+      "https://www.salesforce.com/news/stories/salesforce-cdp-snowflake-partnership/",
+      "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/crm-20260131.htm",
+      "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000008/snow-20260131.htm"
+    ]
   },
   {
     "source": 23,
@@ -630,9 +702,13 @@
     "type": "competitor",
     "strength": 0.66,
     "label": "Enterprise workflow and CRM software competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/crm-20260131.htm",
+      "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
+    ]
   },
   {
     "source": 24,
@@ -640,9 +716,13 @@
     "type": "ecosystem",
     "strength": 0.54,
     "label": "Enterprise SaaS data and workflow ecosystem",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000008/snow-20260131.htm",
+      "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
+    ]
   },
   {
     "source": 26,
@@ -650,9 +730,14 @@
     "type": "partnership",
     "strength": 0.58,
     "label": "Cloud security marketplace and platform integration",
-    "confidence": 3,
-    "provenance": "Public filings and company partnership announcements",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Public filings and company partnership announcements; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.paloaltonetworks.com/partners/nextwave-for-csp/microsoft-azure-and-palo-alto-networks",
+      "https://www.sec.gov/Archives/edgar/data/1327567/000132756725000027/panw-20250731.htm",
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm"
+    ]
   },
   {
     "source": 26,
@@ -660,9 +745,14 @@
     "type": "partnership",
     "strength": 0.58,
     "label": "AWS cloud security marketplace ecosystem",
-    "confidence": 3,
-    "provenance": "Public filings and company partnership announcements",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Public filings and company partnership announcements; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.paloaltonetworks.com/partners/nextwave-for-csp/aws-and-palo-alto-networks",
+      "https://www.sec.gov/Archives/edgar/data/1327567/000132756725000027/panw-20250731.htm",
+      "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
+    ]
   },
   {
     "source": 27,
@@ -670,9 +760,13 @@
     "type": "competitor",
     "strength": 0.92,
     "label": "Global card payment network competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
+      "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm"
+    ]
   },
   {
     "source": 27,
@@ -680,9 +774,13 @@
     "type": "ecosystem",
     "strength": 0.74,
     "label": "Digital wallet acceptance network exposure",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
+      "https://www.sec.gov/Archives/edgar/data/1633917/000163391726000024/pypl-20251231.htm"
+    ]
   },
   {
     "source": 28,
@@ -690,9 +788,13 @@
     "type": "ecosystem",
     "strength": 0.72,
     "label": "Digital wallet acceptance network exposure",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1633917/000163391726000024/pypl-20251231.htm"
+    ]
   },
   {
     "source": 27,
@@ -700,9 +802,13 @@
     "type": "competitor",
     "strength": 0.66,
     "label": "Card network and premium card spend competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
+      "https://www.sec.gov/Archives/edgar/data/4962/000000496226000080/axp-20251231.htm"
+    ]
   },
   {
     "source": 28,
@@ -710,9 +816,13 @@
     "type": "competitor",
     "strength": 0.66,
     "label": "Card network and premium card spend competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/4962/000000496226000080/axp-20251231.htm"
+    ]
   },
   {
     "source": 27,
@@ -720,9 +830,15 @@
     "type": "ecosystem",
     "strength": 0.78,
     "label": "Issuer and card network payments ecosystem",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://partners.jpmorgan.com/visa.html",
+      "https://www.jpmorgan.com/solutions/commercial-card",
+      "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
+      "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm"
+    ]
   },
   {
     "source": 28,
@@ -730,9 +846,13 @@
     "type": "ecosystem",
     "strength": 0.78,
     "label": "Issuer and card network payments ecosystem",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm"
+    ]
   },
   {
     "source": 27,
@@ -740,9 +860,15 @@
     "type": "ecosystem",
     "strength": 0.72,
     "label": "Consumer card issuing and network ecosystem",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://usa.visa.com/about-visa/newsroom/press-releases.releaseId.9416.html",
+      "https://newsroom.bankofamerica.com/content/newsroom/press-releases/2025/12/bofa-offers-exclusive-fifa-world-cup-2026--custom-card-design-an.html",
+      "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
+      "https://www.sec.gov/Archives/edgar/data/70858/000007085826000157/bac-20251231.htm"
+    ]
   },
   {
     "source": 28,
@@ -750,9 +876,13 @@
     "type": "ecosystem",
     "strength": 0.72,
     "label": "Consumer card issuing and network ecosystem",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/70858/000007085826000157/bac-20251231.htm"
+    ]
   },
   {
     "source": 31,
@@ -760,9 +890,13 @@
     "type": "competitor",
     "strength": 0.82,
     "label": "Large bank deposit and credit competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/70858/000007085826000157/bac-20251231.htm"
+    ]
   },
   {
     "source": 30,
@@ -770,9 +904,13 @@
     "type": "competitor",
     "strength": 0.64,
     "label": "Consumer card lending competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/4962/000000496226000080/axp-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/927628/000092762826000024/cof-20251231.htm"
+    ]
   },
   {
     "source": 31,
@@ -780,9 +918,13 @@
     "type": "competitor",
     "strength": 0.62,
     "label": "Consumer credit card issuing competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/927628/000092762826000024/cof-20251231.htm"
+    ]
   },
   {
     "source": 33,
@@ -855,9 +997,13 @@
     "type": "competitor",
     "strength": 0.62,
     "label": "Large-cap pharmaceutical portfolio competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm"
+    ]
   },
   {
     "source": 35,
@@ -865,9 +1011,13 @@
     "type": "competitor",
     "strength": 0.62,
     "label": "Large-cap pharmaceutical portfolio competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000008/abbv-20251231.htm"
+    ]
   },
   {
     "source": 35,
@@ -875,9 +1025,13 @@
     "type": "competitor",
     "strength": 0.56,
     "label": "Large-cap pharmaceutical portfolio competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
+    ]
   },
   {
     "source": 36,
@@ -885,9 +1039,13 @@
     "type": "competitor",
     "strength": 0.78,
     "label": "Managed care and PBM competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/731766/000073176626000062/unh-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/64803/000006480326000010/cvs-20251231.htm"
+    ]
   },
   {
     "source": 36,
@@ -895,9 +1053,13 @@
     "type": "competitor",
     "strength": 0.82,
     "label": "Managed care and PBM competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/731766/000073176626000062/unh-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1739940/000173994026000006/ci-20251231.htm"
+    ]
   },
   {
     "source": 37,
@@ -905,9 +1067,13 @@
     "type": "competitor",
     "strength": 0.82,
     "label": "PBM and pharmacy benefit competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/64803/000006480326000010/cvs-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1739940/000173994026000006/ci-20251231.htm"
+    ]
   },
   {
     "source": 36,
@@ -915,9 +1081,13 @@
     "type": "ecosystem",
     "strength": 0.58,
     "label": "Insurer and pharmaceutical reimbursement ecosystem",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/731766/000073176626000062/unh-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm"
+    ]
   },
   {
     "source": 37,
@@ -925,9 +1095,13 @@
     "type": "ecosystem",
     "strength": 0.6,
     "label": "PBM formulary and pharmaceutical distribution exposure",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/64803/000006480326000010/cvs-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm"
+    ]
   },
   {
     "source": 38,
@@ -935,9 +1109,13 @@
     "type": "ecosystem",
     "strength": 0.58,
     "label": "PBM formulary and pharmaceutical reimbursement exposure",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1739940/000173994026000006/ci-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm"
+    ]
   },
   {
     "source": 39,
@@ -945,9 +1123,13 @@
     "type": "competitor",
     "strength": 0.58,
     "label": "Large-cap pharmaceutical portfolio competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm",
+      "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm"
+    ]
   },
   {
     "source": 39,
@@ -955,9 +1137,13 @@
     "type": "competitor",
     "strength": 0.58,
     "label": "Immunology and pharmaceutical portfolio competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm",
+      "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000008/abbv-20251231.htm"
+    ]
   },
   {
     "source": 40,
@@ -965,9 +1151,13 @@
     "type": "competitor",
     "strength": 0.58,
     "label": "Large-cap pharmaceutical portfolio competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
+    ]
   },
   {
     "source": 41,
@@ -975,9 +1165,13 @@
     "type": "competitor",
     "strength": 0.54,
     "label": "Large-cap pharmaceutical portfolio competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000008/abbv-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
+    ]
   },
   {
     "source": 43,
@@ -985,9 +1179,13 @@
     "type": "competitor",
     "strength": 0.46,
     "label": "MedTech and surgical device market overlap",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1035267/000103526726000010/isrg-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm"
+    ]
   },
   {
     "source": 44,
@@ -995,9 +1193,13 @@
     "type": "supply",
     "strength": 0.5,
     "label": "Life sciences tools and biopharma research exposure",
-    "confidence": 3,
-    "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/97745/000009774526000018/tmo-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm"
+    ]
   },
   {
     "source": 44,
@@ -1005,9 +1207,13 @@
     "type": "supply",
     "strength": 0.5,
     "label": "Life sciences tools and biopharma research exposure",
-    "confidence": 3,
-    "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/97745/000009774526000018/tmo-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
+    ]
   },
   {
     "source": 44,
@@ -1015,9 +1221,13 @@
     "type": "supply",
     "strength": 0.48,
     "label": "Life sciences tools and drug development ecosystem",
-    "confidence": 3,
-    "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/97745/000009774526000018/tmo-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm"
+    ]
   },
   {
     "source": 45,
@@ -1025,9 +1235,13 @@
     "type": "competitor",
     "strength": 0.9,
     "label": "Integrated oil major competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/34088/000003408826000045/xom-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/93410/000009341026000078/cvx-20251231.htm"
+    ]
   },
   {
     "source": 45,
@@ -1035,9 +1249,13 @@
     "type": "competitor",
     "strength": 0.78,
     "label": "Upstream oil and gas production competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/34088/000003408826000045/xom-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1163165/000116316526000009/cop-20251231.htm"
+    ]
   },
   {
     "source": 46,
@@ -1045,9 +1263,13 @@
     "type": "competitor",
     "strength": 0.78,
     "label": "Upstream oil and gas production competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/93410/000009341026000078/cvx-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1163165/000116316526000009/cop-20251231.htm"
+    ]
   },
   {
     "source": 48,
@@ -1055,9 +1277,13 @@
     "type": "supply",
     "strength": 0.68,
     "label": "Oilfield services exposure to upstream producers",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/87347/000119312526021017/slb-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/34088/000003408826000045/xom-20251231.htm"
+    ]
   },
   {
     "source": 48,
@@ -1065,9 +1291,14 @@
     "type": "supply",
     "strength": 0.66,
     "label": "Oilfield services exposure to upstream producers",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.slb.com/news-and-insights/newsroom/press-release/2019/pr-2019-0917-slb-sis-microsoft-chevron",
+      "https://www.sec.gov/Archives/edgar/data/87347/000119312526021017/slb-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/93410/000009341026000078/cvx-20251231.htm"
+    ]
   },
   {
     "source": 48,
@@ -1075,9 +1306,14 @@
     "type": "supply",
     "strength": 0.66,
     "label": "Oilfield services exposure to upstream producers",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.slb.com/newsroom/press-release/2022/pr-2022-03-07-conocophillips-delfi",
+      "https://www.sec.gov/Archives/edgar/data/87347/000119312526021017/slb-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1163165/000116316526000009/cop-20251231.htm"
+    ]
   },
   {
     "source": 49,
@@ -1085,9 +1321,13 @@
     "type": "competitor",
     "strength": 0.64,
     "label": "Heavy machinery and construction equipment competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/18230/000001823026000008/cat-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/315189/000110465925122321/de-20251102x10k.htm"
+    ]
   },
   {
     "source": 49,
@@ -1095,9 +1335,13 @@
     "type": "ecosystem",
     "strength": 0.48,
     "label": "Energy and mining capital equipment demand exposure",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/18230/000001823026000008/cat-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/34088/000003408826000045/xom-20251231.htm"
+    ]
   },
   {
     "source": 50,
@@ -1105,9 +1349,13 @@
     "type": "ecosystem",
     "strength": 0.44,
     "label": "Industrial equipment cycle overlap",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/315189/000110465925122321/de-20251102x10k.htm",
+      "https://www.sec.gov/Archives/edgar/data/18230/000001823026000008/cat-20251231.htm"
+    ]
   },
   {
     "source": 51,
@@ -1115,9 +1363,14 @@
     "type": "supply",
     "strength": 0.82,
     "label": "Commercial aircraft engine supplier exposure",
-    "confidence": 4,
-    "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.geaerospace.com/GE9X",
+      "https://www.sec.gov/Archives/edgar/data/40545/000004054526000008/ge-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/12927/000162828026004357/ba-20251231.htm"
+    ]
   },
   {
     "source": 53,
@@ -1125,9 +1378,13 @@
     "type": "supply",
     "strength": 0.72,
     "label": "Commercial aerospace systems supplier exposure",
-    "confidence": 4,
-    "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/101829/000010182926000006/rtx-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/12927/000162828026004357/ba-20251231.htm"
+    ]
   },
   {
     "source": 52,
@@ -1135,9 +1392,14 @@
     "type": "supply",
     "strength": 0.58,
     "label": "Aerospace avionics and systems supplier exposure",
-    "confidence": 4,
-    "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://aerospace.honeywell.com/us/en/products-and-services/aircraft/boeing",
+      "https://www.sec.gov/Archives/edgar/data/773840/000077384026000013/hon-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/12927/000162828026004357/ba-20251231.htm"
+    ]
   },
   {
     "source": 51,
@@ -1145,9 +1407,13 @@
     "type": "competitor",
     "strength": 0.52,
     "label": "Aerospace propulsion and defense systems overlap",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/40545/000004054526000008/ge-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/101829/000010182926000006/rtx-20251231.htm"
+    ]
   },
   {
     "source": 52,
@@ -1155,9 +1421,13 @@
     "type": "competitor",
     "strength": 0.58,
     "label": "Aerospace and defense systems competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/773840/000077384026000013/hon-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/101829/000010182926000006/rtx-20251231.htm"
+    ]
   },
   {
     "source": 52,
@@ -1165,9 +1435,13 @@
     "type": "ecosystem",
     "strength": 0.5,
     "label": "Industrial automation and aerospace cycle exposure",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/773840/000077384026000013/hon-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/40545/000004054526000008/ge-20251231.htm"
+    ]
   },
   {
     "source": 55,
@@ -1175,9 +1449,13 @@
     "type": "ecosystem",
     "strength": 0.52,
     "label": "AI compute demand and autonomous systems ecosystem",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1318605/000162828026003952/tsla-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
+    ]
   },
   {
     "source": 55,
@@ -1185,9 +1463,13 @@
     "type": "ecosystem",
     "strength": 0.46,
     "label": "Automotive compute and edge AI semiconductor ecosystem",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1318605/000162828026003952/tsla-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/804328/000080432825000085/qcom-20250928.htm"
+    ]
   },
   {
     "source": 55,
@@ -1195,9 +1477,13 @@
     "type": "ecosystem",
     "strength": 0.4,
     "label": "Consumer hardware and services ecosystem overlap",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1318605/000162828026003952/tsla-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
+    ]
   },
   {
     "source": 56,
@@ -1205,9 +1491,13 @@
     "type": "competitor",
     "strength": 0.72,
     "label": "Large-format retail and grocery competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm",
+      "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm"
+    ]
   },
   {
     "source": 56,
@@ -1215,9 +1505,13 @@
     "type": "competitor",
     "strength": 0.68,
     "label": "Retail marketplace and fulfillment competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm",
+      "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
+    ]
   },
   {
     "source": 57,
@@ -1225,9 +1519,13 @@
     "type": "competitor",
     "strength": 0.54,
     "label": "Retail membership and e-commerce competition",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm",
+      "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
+    ]
   },
   {
     "source": 58,
@@ -1235,9 +1533,13 @@
     "type": "ecosystem",
     "strength": 0.42,
     "label": "Consumer retail spending cycle exposure",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm",
+      "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm"
+    ]
   },
   {
     "source": 58,
@@ -1245,9 +1547,13 @@
     "type": "ecosystem",
     "strength": 0.4,
     "label": "Household retail spending cycle exposure",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm",
+      "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm"
+    ]
   },
   {
     "source": 59,
@@ -1255,9 +1561,14 @@
     "type": "supply",
     "strength": 0.68,
     "label": "Restaurant beverage supplier ecosystem",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 5,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.mcdonalds.com/us/en-us/product/coca-cola-small.html",
+      "https://www.sec.gov/Archives/edgar/data/63908/000006390826000035/mcd-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm"
+    ]
   },
   {
     "source": 60,
@@ -1265,9 +1576,13 @@
     "type": "ecosystem",
     "strength": 0.52,
     "label": "Beverage distribution through mass retail channels",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm"
+    ]
   },
   {
     "source": 60,
@@ -1275,9 +1590,13 @@
     "type": "ecosystem",
     "strength": 0.48,
     "label": "Beverage distribution through warehouse retail channels",
-    "confidence": 3,
-    "provenance": "Company disclosures and public investor materials",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm"
+    ]
   },
   {
     "source": 59,
@@ -1285,9 +1604,13 @@
     "type": "ecosystem",
     "strength": 0.38,
     "label": "Consumer spending and food retail demand exposure",
-    "confidence": 3,
-    "provenance": "Market structure / direct peer relationship",
-    "verified_date": "2026-04-29"
+    "confidence": 4,
+    "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
+    "verified_date": "2026-05-17",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/63908/000006390826000035/mcd-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm"
+    ]
   },
   {
     "source": 21,
@@ -1295,10 +1618,13 @@
     "type": "partnership",
     "strength": 0.86,
     "label": "SEC filing relationship: licensing/search distribution",
-    "confidence": 4,
-    "provenance": "SEC filing",
-    "source_urls": [],
-    "verified_date": "2026-05-01"
+    "confidence": 5,
+    "provenance": "SEC filing; source coverage refreshed in D145",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+      "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm"
+    ],
+    "verified_date": "2026-05-17"
   },
   {
     "source": 3,
@@ -1338,5 +1664,192 @@
       "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm"
     ],
     "verified_date": "2026-01-23"
+  },
+  {
+    "source": 13,
+    "target": 7,
+    "type": "supply",
+    "strength": 0.74,
+    "label": "Advanced-node data infrastructure silicon manufacturing ecosystem",
+    "confidence": 5,
+    "provenance": "Company announcements, TSMC annual report, and SEC/company disclosures",
+    "source_urls": [
+      "https://investor.marvell.com/news-events/press-releases/detail/263/marvell-extends-data-infrastructure-leadership-with-tsmc-3nm-platform",
+      "https://investor.tsmc.com/static/annualReports/2025/english/index.html",
+      "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 13,
+    "target": 1,
+    "type": "partnership",
+    "strength": 0.7,
+    "label": "NVLink Fusion custom silicon and AI networking ecosystem",
+    "confidence": 5,
+    "provenance": "Company announcements and AI infrastructure ecosystem disclosures",
+    "source_urls": [
+      "https://www.marvell.com/company/newsroom/nvidia-ai-ecosystem-expands-marvell-joins-forces-through-nvlink-fusion.html",
+      "https://www.nvidia.com/en-us/data-center/nvlink-fusion/",
+      "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm",
+      "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 16,
+    "target": 1,
+    "type": "partnership",
+    "strength": 0.72,
+    "label": "AI-accelerated EDA and engineering design collaboration",
+    "confidence": 5,
+    "provenance": "Company-announced strategic partnership",
+    "source_urls": [
+      "https://investor.synopsys.com/news/news-details/2025/NVIDIA-and-Synopsys-Announce-Strategic-Partnership-to-Revolutionize-Engineering-and-Design/default.aspx",
+      "https://www.sec.gov/Archives/edgar/data/883241/000088324125000028/snps-20251031.htm",
+      "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 17,
+    "target": 24,
+    "type": "partnership",
+    "strength": 0.66,
+    "label": "Azure AI and Snowflake Data Cloud partnership",
+    "confidence": 5,
+    "provenance": "Company-announced cloud and AI partnership",
+    "source_urls": [
+      "https://www.snowflake.com/en/news/press-releases/snowflake-expands-partnership-with-microsoft-to-bring-large-scale-generative-ai-models-and-increased-machine-learning-capabilities-to-the-data-cloud-2/",
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
+      "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000008/snow-20260131.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 17,
+    "target": 23,
+    "type": "ecosystem",
+    "strength": 0.62,
+    "label": "Enterprise customer data and productivity workflow ecosystem",
+    "confidence": 4,
+    "provenance": "SEC filings and enterprise software ecosystem disclosures",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
+      "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/crm-20260131.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 19,
+    "target": 20,
+    "type": "competitor",
+    "strength": 0.7,
+    "label": "Digital advertising, AI infrastructure, and platform competition",
+    "confidence": 4,
+    "provenance": "SEC annual reports and market structure disclosures",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/meta-20251231.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 18,
+    "target": 22,
+    "type": "competitor",
+    "strength": 0.66,
+    "label": "Enterprise cloud infrastructure competition",
+    "confidence": 4,
+    "provenance": "SEC annual reports and cloud infrastructure competition disclosures",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1341439/000095017025087926/orcl-20250531.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 17,
+    "target": 21,
+    "type": "competitor",
+    "strength": 0.64,
+    "label": "Operating system, productivity, device, and services competition",
+    "confidence": 4,
+    "provenance": "SEC annual reports and platform competition disclosures",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 35,
+    "target": 39,
+    "type": "competitor",
+    "strength": 0.54,
+    "label": "Large-cap pharmaceutical and medtech portfolio competition",
+    "confidence": 4,
+    "provenance": "SEC annual reports and healthcare market competition disclosures",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 40,
+    "target": 41,
+    "type": "competitor",
+    "strength": 0.56,
+    "label": "Large-cap pharmaceutical portfolio and immunology competition",
+    "confidence": 4,
+    "provenance": "SEC annual reports and pharmaceutical portfolio competition disclosures",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000008/abbv-20251231.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 39,
+    "target": 42,
+    "type": "competitor",
+    "strength": 0.54,
+    "label": "Large-cap pharmaceutical and healthcare portfolio competition",
+    "confidence": 4,
+    "provenance": "SEC annual reports and healthcare market competition disclosures",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm",
+      "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 30,
+    "target": 31,
+    "type": "ecosystem",
+    "strength": 0.6,
+    "label": "Issuer, card spend, and commercial payments ecosystem",
+    "confidence": 4,
+    "provenance": "SEC annual reports and payments infrastructure disclosures",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/4962/000000496226000080/axp-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm"
+    ],
+    "verified_date": "2026-05-17"
+  },
+  {
+    "source": 28,
+    "target": 34,
+    "type": "ecosystem",
+    "strength": 0.62,
+    "label": "Card issuing and global payment network ecosystem",
+    "confidence": 4,
+    "provenance": "SEC annual reports and payments infrastructure disclosures",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
+      "https://www.sec.gov/Archives/edgar/data/927628/000092762826000024/cof-20251231.htm"
+    ],
+    "verified_date": "2026-05-17"
   }
 ]

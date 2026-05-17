@@ -1,6 +1,6 @@
 # CURRENT SYSTEM STATE
 
-Document: StockPhotonic Data Sources. Production graph data is static JSON: `data/companies.json` and `data/connections.json`. The current production dataset is 60 real public companies and 121 curated connections.
+Document: StockPhotonic Data Sources. Production graph data is static JSON: `data/companies.json` and `data/connections.json`. The current production dataset is 60 real public companies and 134 curated connections.
 
 - Graph Intelligence (2D): Reads production companies/connections only, then derives filters, dashboards, relationship taxonomy, confidence tiers, source visibility, clusters, shared exposure, hidden relationships, portfolio exposure, and industry correlations in the browser.
 - 3D Network capabilities: Renders the same production dataset with Three.js; it does not create, promote, or alter data.
@@ -140,6 +140,30 @@ Trusted relationship classes are derived from existing metadata and endpoint con
 Reviewer decision states are review-only labels: `accepted_for_visibility`, `accepted_for_review`, `blocked`, `weak_signal`, `enrichment_only`, and `ready_for_promotion_review`.
 
 Fast-track source coverage means strong inferred edges can stay visible while reviewers prioritize source enrichment batches. It does not create source URLs, infer partnerships, or promote production data.
+
+## D145 LARGE-SCALE SOURCE AND ECOSYSTEM EXPANSION
+
+D145 source-refreshed production coverage and expanded the source-backed graph while preserving the static production data contract:
+
+- Production edges: 134.
+- Source-backed production edges: 134.
+- Unsourced production edges: 0.
+- Candidate auto-promotion: none.
+- Browser ingestion: none.
+
+Source coverage now includes SEC filings, official company reports, investor-relations pages, official partnership announcements, and official partner/customer pages. The D145 expansion script is `scripts/d145_source_expand_graph.py`; it is an audit helper for this phase, not a live ingestion path.
+
+Source Workbench refresh artifacts now expose corridor planning lanes even after the source backlog is clear:
+
+- AI compute -> foundry -> cloud
+- Payment network -> banks
+- PBM -> pharma -> insurance
+- Oilfield services -> energy majors
+- Aerospace suppliers -> OEMs
+- Enterprise SaaS -> cloud platforms
+- Retail -> consumer distribution
+
+These lanes are source-review planning metadata only. They do not create claims, fabricate memberships, or authorize automatic promotion.
 
 ## CANDIDATE VS PRODUCTION
 

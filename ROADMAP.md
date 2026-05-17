@@ -42,7 +42,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Future open-data review workflow: source registry rules that can pre-classify URL host categories, expose review aging thresholds, and export reviewer checklists while preserving candidate -> preview -> manual promotion.
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
 - Optional backend/auth layer only after the static app and source workflow remain stable.
-- Optional larger graph rendering/performance work as source-backed data grows.
+- Larger graph rendering/performance work as source-backed data grows, using density-aware labels, route indexes, source-backed corridor lanes, and strategic hub summaries.
 
 ## D141 FOLLOW-ON
 
@@ -74,11 +74,19 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Add optional strict validation for evidence tier fields after the policy stabilizes.
 - Keep OpenAlex as `CONTEXT_ONLY` enrichment and never relationship proof.
 
+## D145 FOLLOW-ON
+
+- Add a reviewer-owned source registry for recurring official filing, IR, partner, and customer URLs.
+- Add corridor maintenance checklists for AI compute, payments, PBM/pharma, oilfield energy, aerospace OEM, enterprise SaaS, and consumer retail lanes.
+- Add source-aging alerts by corridor now that production coverage has a zero-unsourced-edge baseline.
+- Add optional precomputed large-graph layout and route summaries for future source-backed node expansion.
+- Keep source-backed corridor planning review-only; no browser ingestion and no automatic candidate promotion.
+
 ## D140 FOLLOW-ON
 
 - Expand approved CIK/ticker coverage only through local SEC candidate runs.
 - Add reviewer decisions as explicit review-only fields before any new promotion logic.
-- Improve production source coverage for the 78 current production edges missing source URLs.
+- Maintain production source coverage after D145's zero-unsourced-edge baseline.
 - Keep ownership/ETF overlap behind explicit schema and validation support.
 
 ## NOT CURRENT

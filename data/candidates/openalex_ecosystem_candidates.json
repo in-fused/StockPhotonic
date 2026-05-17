@@ -1,11 +1,14 @@
 {
   "ecosystem_counts": {
-    "ai_infrastructure": 7,
-    "cloud_hyperscaler": 7,
-    "energy_infrastructure": 2,
-    "financial_market_infrastructure": 4,
-    "healthcare_biotech": 3,
-    "semiconductor_supply_chain": 3
+    "aerospace_defense_supply_chain": 4,
+    "ai_infrastructure": 23,
+    "cloud_hyperscaler": 11,
+    "consumer_retail_platforms": 6,
+    "energy_infrastructure": 12,
+    "enterprise_saas_workflow": 4,
+    "financial_market_infrastructure": 8,
+    "healthcare_biotech": 10,
+    "semiconductor_supply_chain": 16
   },
   "metadata": {
     "artifact_status": "review_only",
@@ -16,11 +19,11 @@
     "candidates_read": "data/candidates/sec_relationship_candidates.json",
     "companies_read": "data/companies.json",
     "dry_run": true,
-    "generated_at_utc": "2026-05-17T03:07:14+00:00",
+    "generated_at_utc": "2026-05-17T05:17:04+00:00",
     "generated_by": "scripts/openalex_enrichment.py",
     "input_company_count": 60,
-    "max_entities": 20,
-    "max_requests": 24,
+    "max_entities": 60,
+    "max_requests": 0,
     "network_enabled": false,
     "network_requests_skipped_for_budget": 0,
     "network_requests_used": 0,
@@ -30,7 +33,7 @@
       "No candidate is promoted by this artifact."
     ],
     "per_page": 5,
-    "processed_company_count": 20,
+    "processed_company_count": 60,
     "production_write_allowed": false,
     "relationship_claim_authority": false,
     "source_role": "enrichment_context_only",
@@ -38,10 +41,20 @@
   },
   "records": [
     {
+      "company_industry": "Graphics Processing Units and AI Accelerators",
       "company_name": "NVIDIA Corporation",
+      "company_sector": "AI / Semiconductors",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
       "ecosystem_key": "ai_infrastructure",
       "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "accelerator",
         "ai"
@@ -50,6 +63,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -61,10 +80,20 @@
       "ticker": "NVDA"
     },
     {
+      "company_industry": "Graphics Processing Units and AI Accelerators",
       "company_name": "NVIDIA Corporation",
+      "company_sector": "AI / Semiconductors",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
       "ecosystem_key": "semiconductor_supply_chain",
       "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "semiconductor"
       ],
@@ -72,6 +101,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -83,10 +118,20 @@
       "ticker": "NVDA"
     },
     {
+      "company_industry": "Cloud Platforms and Productivity Software",
       "company_name": "Microsoft Corporation",
+      "company_sector": "Cloud / Big Tech",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
       "ecosystem_key": "cloud_hyperscaler",
       "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "cloud"
       ],
@@ -94,6 +139,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -105,10 +156,58 @@
       "ticker": "MSFT"
     },
     {
-      "company_name": "Apple Inc.",
+      "company_industry": "Cloud Platforms and Productivity Software",
+      "company_name": "Microsoft Corporation",
+      "company_sector": "Cloud / Big Tech",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 4
+      },
+      "ecosystem_key": "enterprise_saas_workflow",
+      "ecosystem_label": "Enterprise SaaS / Workflow",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "productivity"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 4,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MSFT"
+    },
+    {
+      "company_industry": "Consumer Devices, Services, and Silicon",
+      "company_name": "Apple Inc.",
+      "company_sector": "Cloud / Big Tech",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
       "ecosystem_key": "cloud_hyperscaler",
       "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "cloud"
       ],
@@ -116,6 +215,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -127,10 +232,20 @@
       "ticker": "AAPL"
     },
     {
+      "company_industry": "Search, Advertising, Cloud, and AI",
       "company_name": "Alphabet Inc.",
+      "company_sector": "Cloud / Big Tech",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
       "ecosystem_key": "ai_infrastructure",
       "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "ai"
       ],
@@ -138,6 +253,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 2,
+        "sector_count": 4
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -149,10 +270,20 @@
       "ticker": "GOOGL"
     },
     {
+      "company_industry": "Search, Advertising, Cloud, and AI",
       "company_name": "Alphabet Inc.",
+      "company_sector": "Cloud / Big Tech",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
       "ecosystem_key": "cloud_hyperscaler",
       "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "cloud"
       ],
@@ -160,6 +291,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -171,10 +308,20 @@
       "ticker": "GOOGL"
     },
     {
+      "company_industry": "E-Commerce, Cloud, and Digital Infrastructure",
       "company_name": "Amazon.com, Inc.",
+      "company_sector": "Cloud / Big Tech",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
       "ecosystem_key": "cloud_hyperscaler",
       "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "cloud"
       ],
@@ -182,6 +329,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -193,10 +346,58 @@
       "ticker": "AMZN"
     },
     {
-      "company_name": "Meta Platforms, Inc.",
+      "company_industry": "E-Commerce, Cloud, and Digital Infrastructure",
+      "company_name": "Amazon.com, Inc.",
+      "company_sector": "Cloud / Big Tech",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 6
+      },
+      "ecosystem_key": "consumer_retail_platforms",
+      "ecosystem_label": "Consumer / Retail Platforms",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "e-commerce"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 1,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AMZN"
+    },
+    {
+      "company_industry": "Social Platforms, Advertising, and AI Infrastructure",
+      "company_name": "Meta Platforms, Inc.",
+      "company_sector": "Cloud / Big Tech",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
       "ecosystem_key": "ai_infrastructure",
       "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "ai"
       ],
@@ -204,6 +405,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 2,
+        "sector_count": 4
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -215,10 +422,20 @@
       "ticker": "META"
     },
     {
+      "company_industry": "Social Platforms, Advertising, and AI Infrastructure",
       "company_name": "Meta Platforms, Inc.",
+      "company_sector": "Cloud / Big Tech",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
       "ecosystem_key": "cloud_hyperscaler",
       "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "cloud"
       ],
@@ -226,6 +443,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -237,10 +460,20 @@
       "ticker": "META"
     },
     {
+      "company_industry": "Semiconductor Foundry",
       "company_name": "Taiwan Semiconductor Manufacturing Company Limited",
+      "company_sector": "AI / Semiconductors",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
       "ecosystem_key": "ai_infrastructure",
       "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "ai"
       ],
@@ -248,6 +481,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -259,10 +498,20 @@
       "ticker": "TSM"
     },
     {
+      "company_industry": "Semiconductor Foundry",
       "company_name": "Taiwan Semiconductor Manufacturing Company Limited",
+      "company_sector": "AI / Semiconductors",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
       "ecosystem_key": "semiconductor_supply_chain",
       "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "foundry",
         "semiconductor"
@@ -271,6 +520,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -282,10 +537,20 @@
       "ticker": "TSM"
     },
     {
+      "company_industry": "Custom Silicon, Networking, and Infrastructure Software",
       "company_name": "Broadcom Inc.",
+      "company_sector": "AI / Semiconductors",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
       "ecosystem_key": "ai_infrastructure",
       "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "ai"
       ],
@@ -293,6 +558,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -304,10 +575,20 @@
       "ticker": "AVGO"
     },
     {
+      "company_industry": "Custom Silicon, Networking, and Infrastructure Software",
       "company_name": "Broadcom Inc.",
+      "company_sector": "AI / Semiconductors",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
       "ecosystem_key": "semiconductor_supply_chain",
       "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "semiconductor"
       ],
@@ -315,6 +596,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -326,10 +613,20 @@
       "ticker": "AVGO"
     },
     {
+      "company_industry": "Custom Silicon, Networking, and Infrastructure Software",
       "company_name": "Broadcom Inc.",
+      "company_sector": "AI / Semiconductors",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
       "ecosystem_key": "cloud_hyperscaler",
       "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "networking"
       ],
@@ -337,6 +634,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 1,
+        "sector_count": 2
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -348,10 +651,20 @@
       "ticker": "AVGO"
     },
     {
+      "company_industry": "Diversified Holding Company and Insurance",
       "company_name": "Berkshire Hathaway Inc.",
+      "company_sector": "Payments / Financial Infrastructure",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 8
+      },
       "ecosystem_key": "financial_market_infrastructure",
       "ecosystem_label": "Financial Market Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "financial",
         "payment",
@@ -361,6 +674,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Payments / Financial Infrastructure",
+        "same_sector_count": 8,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -372,10 +691,20 @@
       "ticker": "BRK-B"
     },
     {
+      "company_industry": "Electric Vehicles and Energy Storage",
       "company_name": "Tesla, Inc.",
+      "company_sector": "Consumer Mega-Caps",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
       "ecosystem_key": "energy_infrastructure",
       "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "energy"
       ],
@@ -383,6 +712,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Consumer Mega-Caps",
+        "same_sector_count": 1,
+        "sector_count": 3
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -394,10 +729,20 @@
       "ticker": "TSLA"
     },
     {
+      "company_industry": "Money Center Banking and Payments",
       "company_name": "JPMorgan Chase & Co.",
+      "company_sector": "Payments / Financial Infrastructure",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 8
+      },
       "ecosystem_key": "financial_market_infrastructure",
       "ecosystem_label": "Financial Market Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "bank",
         "banking",
@@ -409,6 +754,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Payments / Financial Infrastructure",
+        "same_sector_count": 8,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -420,10 +771,20 @@
       "ticker": "JPM"
     },
     {
+      "company_industry": "Mass-Market Retail",
       "company_name": "Walmart Inc.",
+      "company_sector": "Consumer Mega-Caps",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
       "ecosystem_key": "ai_infrastructure",
       "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "ai"
       ],
@@ -431,6 +792,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Consumer Mega-Caps",
+        "same_sector_count": 3,
+        "sector_count": 4
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -442,10 +809,58 @@
       "ticker": "WMT"
     },
     {
-      "company_name": "Eli Lilly and Company",
+      "company_industry": "Mass-Market Retail",
+      "company_name": "Walmart Inc.",
+      "company_sector": "Consumer Mega-Caps",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 6
+      },
+      "ecosystem_key": "consumer_retail_platforms",
+      "ecosystem_label": "Consumer / Retail Platforms",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "retail"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Consumer Mega-Caps",
+        "same_sector_count": 4,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "WMT"
+    },
+    {
+      "company_industry": "Pharmaceuticals",
+      "company_name": "Eli Lilly and Company",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
       "ecosystem_key": "healthcare_biotech",
       "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "pharma",
         "pharmaceutical"
@@ -454,6 +869,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -465,10 +886,20 @@
       "ticker": "LLY"
     },
     {
+      "company_industry": "Card Payment Networks",
       "company_name": "Visa Inc.",
+      "company_sector": "Payments / Financial Infrastructure",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 8
+      },
       "ecosystem_key": "financial_market_infrastructure",
       "ecosystem_label": "Financial Market Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "financial",
         "payment",
@@ -478,6 +909,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Payments / Financial Infrastructure",
+        "same_sector_count": 8,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -489,10 +926,20 @@
       "ticker": "V"
     },
     {
+      "company_industry": "Enterprise Software and Cloud Infrastructure",
       "company_name": "Oracle Corporation",
+      "company_sector": "Cloud / Big Tech",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
       "ecosystem_key": "cloud_hyperscaler",
       "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "cloud"
       ],
@@ -500,6 +947,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -511,10 +964,59 @@
       "ticker": "ORCL"
     },
     {
-      "company_name": "Mastercard Incorporated",
+      "company_industry": "Enterprise Software and Cloud Infrastructure",
+      "company_name": "Oracle Corporation",
+      "company_sector": "Cloud / Big Tech",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 4
+      },
+      "ecosystem_key": "enterprise_saas_workflow",
+      "ecosystem_label": "Enterprise SaaS / Workflow",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "enterprise",
+        "enterprise software"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 4,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "ORCL"
+    },
+    {
+      "company_industry": "Card Payment Networks",
+      "company_name": "Mastercard Incorporated",
+      "company_sector": "Payments / Financial Infrastructure",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 8
+      },
       "ecosystem_key": "financial_market_infrastructure",
       "ecosystem_label": "Financial Market Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "financial",
         "payment",
@@ -524,6 +1026,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Payments / Financial Infrastructure",
+        "same_sector_count": 8,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -535,10 +1043,20 @@
       "ticker": "MA"
     },
     {
+      "company_industry": "Integrated Oil and Gas",
       "company_name": "Exxon Mobil Corporation",
+      "company_sector": "Energy / Industrials",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
       "ecosystem_key": "energy_infrastructure",
       "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "energy",
         "oil"
@@ -547,6 +1065,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -558,10 +1082,20 @@
       "ticker": "XOM"
     },
     {
+      "company_industry": "Warehouse Club Retail",
       "company_name": "Costco Wholesale Corporation",
+      "company_sector": "Consumer Mega-Caps",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
       "ecosystem_key": "ai_infrastructure",
       "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "ai"
       ],
@@ -569,6 +1103,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Consumer Mega-Caps",
+        "same_sector_count": 3,
+        "sector_count": 4
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -580,10 +1120,59 @@
       "ticker": "COST"
     },
     {
-      "company_name": "Johnson & Johnson",
+      "company_industry": "Warehouse Club Retail",
+      "company_name": "Costco Wholesale Corporation",
+      "company_sector": "Consumer Mega-Caps",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 6
+      },
+      "ecosystem_key": "consumer_retail_platforms",
+      "ecosystem_label": "Consumer / Retail Platforms",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "retail",
+        "warehouse club"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Consumer Mega-Caps",
+        "same_sector_count": 4,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "COST"
+    },
+    {
+      "company_industry": "Pharmaceuticals and MedTech",
+      "company_name": "Johnson & Johnson",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
       "ecosystem_key": "healthcare_biotech",
       "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "pharma",
         "pharmaceutical"
@@ -592,6 +1181,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -603,10 +1198,20 @@
       "ticker": "JNJ"
     },
     {
+      "company_industry": "Managed Care and PBM",
       "company_name": "UnitedHealth Group Incorporated",
+      "company_sector": "Healthcare / Pharma / PBM",
       "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
       "ecosystem_key": "healthcare_biotech",
       "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
       "match_reasons": [
         "pharma"
       ],
@@ -614,6 +1219,12 @@
       "openalex_topic_candidates": [],
       "relationship_claim_created": false,
       "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
       "source_attribution": [
         {
           "lookup_status": "static_match",
@@ -623,6 +1234,2435 @@
         }
       ],
       "ticker": "UNH"
+    },
+    {
+      "company_industry": "Home Improvement Retail",
+      "company_name": "The Home Depot, Inc.",
+      "company_sector": "Consumer Mega-Caps",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Consumer Mega-Caps",
+        "same_sector_count": 3,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "HD"
+    },
+    {
+      "company_industry": "Home Improvement Retail",
+      "company_name": "The Home Depot, Inc.",
+      "company_sector": "Consumer Mega-Caps",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 6
+      },
+      "ecosystem_key": "consumer_retail_platforms",
+      "ecosystem_label": "Consumer / Retail Platforms",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "retail"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Consumer Mega-Caps",
+        "same_sector_count": 4,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "HD"
+    },
+    {
+      "company_industry": "Pharmaceuticals",
+      "company_name": "AbbVie Inc.",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "pharma",
+        "pharmaceutical"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "ABBV"
+    },
+    {
+      "company_industry": "Semiconductor Lithography Equipment",
+      "company_name": "ASML Holding N.V.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "ASML"
+    },
+    {
+      "company_industry": "Semiconductor Lithography Equipment",
+      "company_name": "ASML Holding N.V.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "lithography",
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "ASML"
+    },
+    {
+      "company_industry": "Consumer and Commercial Banking",
+      "company_name": "Bank of America Corporation",
+      "company_sector": "Payments / Financial Infrastructure",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 8
+      },
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "bank",
+        "banking",
+        "financial",
+        "payment",
+        "payments"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Payments / Financial Infrastructure",
+        "same_sector_count": 8,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "BAC"
+    },
+    {
+      "company_industry": "CPUs, GPUs, and Data Center Accelerators",
+      "company_name": "Advanced Micro Devices, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "accelerator",
+        "ai",
+        "data center",
+        "gpu"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AMD"
+    },
+    {
+      "company_industry": "CPUs, GPUs, and Data Center Accelerators",
+      "company_name": "Advanced Micro Devices, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AMD"
+    },
+    {
+      "company_industry": "Integrated Oil and Gas",
+      "company_name": "Chevron Corporation",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "energy",
+        "oil"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CVX"
+    },
+    {
+      "company_industry": "Non-Alcoholic Beverages",
+      "company_name": "The Coca-Cola Company",
+      "company_sector": "Consumer Mega-Caps",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 6
+      },
+      "ecosystem_key": "consumer_retail_platforms",
+      "ecosystem_label": "Consumer / Retail Platforms",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "beverage"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Consumer Mega-Caps",
+        "same_sector_count": 4,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "KO"
+    },
+    {
+      "company_industry": "Card Issuing and Payments Network",
+      "company_name": "American Express Company",
+      "company_sector": "Payments / Financial Infrastructure",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 8
+      },
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "financial",
+        "payment",
+        "payments"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Payments / Financial Infrastructure",
+        "same_sector_count": 8,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AXP"
+    },
+    {
+      "company_industry": "Enterprise SaaS and Customer Relationship Management",
+      "company_name": "Salesforce, Inc.",
+      "company_sector": "Cloud / Big Tech",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "cloud"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CRM"
+    },
+    {
+      "company_industry": "Enterprise SaaS and Customer Relationship Management",
+      "company_name": "Salesforce, Inc.",
+      "company_sector": "Cloud / Big Tech",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 4
+      },
+      "ecosystem_key": "enterprise_saas_workflow",
+      "ecosystem_label": "Enterprise SaaS / Workflow",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "crm",
+        "enterprise",
+        "saas"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 4,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CRM"
+    },
+    {
+      "company_industry": "Commercial and Defense Aerospace",
+      "company_name": "GE Aerospace",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "energy"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "GE"
+    },
+    {
+      "company_industry": "Commercial and Defense Aerospace",
+      "company_name": "GE Aerospace",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 4
+      },
+      "ecosystem_key": "aerospace_defense_supply_chain",
+      "ecosystem_label": "Aerospace / Defense Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "aerospace",
+        "defense"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 4,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "GE"
+    },
+    {
+      "company_industry": "Pharmaceuticals",
+      "company_name": "Merck & Co., Inc.",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 2,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MRK"
+    },
+    {
+      "company_industry": "Pharmaceuticals",
+      "company_name": "Merck & Co., Inc.",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "clinical trial",
+        "pharma",
+        "pharmaceutical",
+        "therapy"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MRK"
+    },
+    {
+      "company_industry": "Life Sciences Tools and Diagnostics",
+      "company_name": "Thermo Fisher Scientific Inc.",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "life sciences",
+        "pharma"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "TMO"
+    },
+    {
+      "company_industry": "Enterprise Workflow Software",
+      "company_name": "ServiceNow, Inc.",
+      "company_sector": "Cloud / Big Tech",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "cloud"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "NOW"
+    },
+    {
+      "company_industry": "Enterprise Workflow Software",
+      "company_name": "ServiceNow, Inc.",
+      "company_sector": "Cloud / Big Tech",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 4
+      },
+      "ecosystem_key": "enterprise_saas_workflow",
+      "ecosystem_label": "Enterprise SaaS / Workflow",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "enterprise",
+        "workflow"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 4,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "NOW"
+    },
+    {
+      "company_industry": "Mobile and Edge Semiconductors",
+      "company_name": "QUALCOMM Incorporated",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "QCOM"
+    },
+    {
+      "company_industry": "Mobile and Edge Semiconductors",
+      "company_name": "QUALCOMM Incorporated",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "QCOM"
+    },
+    {
+      "company_industry": "Heavy Machinery and Industrial Equipment",
+      "company_name": "Caterpillar Inc.",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "energy"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CAT"
+    },
+    {
+      "company_industry": "Robotic Surgery Systems",
+      "company_name": "Intuitive Surgical, Inc.",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "pharma"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "ISRG"
+    },
+    {
+      "company_industry": "Aerospace and Defense Systems",
+      "company_name": "RTX Corporation",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "energy"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "RTX"
+    },
+    {
+      "company_industry": "Aerospace and Defense Systems",
+      "company_name": "RTX Corporation",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 4
+      },
+      "ecosystem_key": "aerospace_defense_supply_chain",
+      "ecosystem_label": "Aerospace / Defense Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "aerospace",
+        "defense"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 4,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "RTX"
+    },
+    {
+      "company_industry": "Semiconductor Manufacturing Equipment",
+      "company_name": "Applied Materials, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AMAT"
+    },
+    {
+      "company_industry": "Semiconductor Manufacturing Equipment",
+      "company_name": "Applied Materials, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AMAT"
+    },
+    {
+      "company_industry": "Memory and High-Bandwidth Memory",
+      "company_name": "Micron Technology, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MU"
+    },
+    {
+      "company_industry": "Memory and High-Bandwidth Memory",
+      "company_name": "Micron Technology, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "memory",
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MU"
+    },
+    {
+      "company_industry": "Commercial Aerospace and Defense",
+      "company_name": "The Boeing Company",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "energy"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "BA"
+    },
+    {
+      "company_industry": "Commercial Aerospace and Defense",
+      "company_name": "The Boeing Company",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 4
+      },
+      "ecosystem_key": "aerospace_defense_supply_chain",
+      "ecosystem_label": "Aerospace / Defense Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "aerospace",
+        "commercial aerospace",
+        "defense"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 4,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "BA"
+    },
+    {
+      "company_industry": "Oil and Gas Exploration and Production",
+      "company_name": "ConocoPhillips",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "energy",
+        "oil"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "COP"
+    },
+    {
+      "company_industry": "Industrial Automation and Aerospace Systems",
+      "company_name": "Honeywell International Inc.",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "energy"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "HON"
+    },
+    {
+      "company_industry": "Industrial Automation and Aerospace Systems",
+      "company_name": "Honeywell International Inc.",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 4
+      },
+      "ecosystem_key": "aerospace_defense_supply_chain",
+      "ecosystem_label": "Aerospace / Defense Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "aerospace"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 4,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "HON"
+    },
+    {
+      "company_industry": "Integrated Device Manufacturing and Foundry",
+      "company_name": "Intel Corporation",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "INTC"
+    },
+    {
+      "company_industry": "Integrated Device Manufacturing and Foundry",
+      "company_name": "Intel Corporation",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "foundry",
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "INTC"
+    },
+    {
+      "company_industry": "Semiconductor IP and CPU Architecture",
+      "company_name": "Arm Holdings plc",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "ARM"
+    },
+    {
+      "company_industry": "Semiconductor IP and CPU Architecture",
+      "company_name": "Arm Holdings plc",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "ARM"
+    },
+    {
+      "company_industry": "Pharmaceuticals",
+      "company_name": "Pfizer Inc.",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "pharma",
+        "pharmaceutical",
+        "therapy"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "PFE"
+    },
+    {
+      "company_industry": "Agricultural and Construction Machinery",
+      "company_name": "Deere & Company",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "energy"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "DE"
+    },
+    {
+      "company_industry": "Wafer Fabrication Equipment",
+      "company_name": "Lam Research Corporation",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "LRCX"
+    },
+    {
+      "company_industry": "Wafer Fabrication Equipment",
+      "company_name": "Lam Research Corporation",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor",
+        "wafer"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "LRCX"
+    },
+    {
+      "company_industry": "Cloud and Network Security",
+      "company_name": "Palo Alto Networks, Inc.",
+      "company_sector": "Cloud / Big Tech",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "cloud"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "PANW"
+    },
+    {
+      "company_industry": "Process Control and Yield Management",
+      "company_name": "KLA Corporation",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "KLAC"
+    },
+    {
+      "company_industry": "Process Control and Yield Management",
+      "company_name": "KLA Corporation",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "KLAC"
+    },
+    {
+      "company_industry": "Electronic Design Automation",
+      "company_name": "Cadence Design Systems, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CDNS"
+    },
+    {
+      "company_industry": "Electronic Design Automation",
+      "company_name": "Cadence Design Systems, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CDNS"
+    },
+    {
+      "company_industry": "Managed Care and PBM",
+      "company_name": "The Cigna Group",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "pharma"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CI"
+    },
+    {
+      "company_industry": "Electronic Design Automation and IP",
+      "company_name": "Synopsys, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "SNPS"
+    },
+    {
+      "company_industry": "Electronic Design Automation and IP",
+      "company_name": "Synopsys, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "SNPS"
+    },
+    {
+      "company_industry": "Consumer Credit and Card Issuing",
+      "company_name": "Capital One Financial Corporation",
+      "company_sector": "Payments / Financial Infrastructure",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 8
+      },
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "financial",
+        "payment",
+        "payments"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Payments / Financial Infrastructure",
+        "same_sector_count": 8,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "COF"
+    },
+    {
+      "company_industry": "Retail Pharmacy, PBM, and Managed Care",
+      "company_name": "CVS Health Corporation",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 2,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CVS"
+    },
+    {
+      "company_industry": "Retail Pharmacy, PBM, and Managed Care",
+      "company_name": "CVS Health Corporation",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 10
+      },
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "pharma"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 10,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CVS"
+    },
+    {
+      "company_industry": "Retail Pharmacy, PBM, and Managed Care",
+      "company_name": "CVS Health Corporation",
+      "company_sector": "Healthcare / Pharma / PBM",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "emerging_context_cluster",
+        "ecosystem_company_count": 6
+      },
+      "ecosystem_key": "consumer_retail_platforms",
+      "ecosystem_label": "Consumer / Retail Platforms",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "retail"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Healthcare / Pharma / PBM",
+        "same_sector_count": 1,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "CVS"
+    },
+    {
+      "company_industry": "Data Infrastructure Semiconductors",
+      "company_name": "Marvell Technology, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MRVL"
+    },
+    {
+      "company_industry": "Data Infrastructure Semiconductors",
+      "company_name": "Marvell Technology, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MRVL"
+    },
+    {
+      "company_industry": "Digital Payments",
+      "company_name": "PayPal Holdings, Inc.",
+      "company_sector": "Payments / Financial Infrastructure",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 8
+      },
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "financial",
+        "payment",
+        "payments"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "Payments / Financial Infrastructure",
+        "same_sector_count": 8,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "PYPL"
+    },
+    {
+      "company_industry": "Oilfield Services and Technology",
+      "company_name": "Schlumberger Limited",
+      "company_sector": "Energy / Industrials",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "energy",
+        "oil"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Energy / Industrials",
+        "same_sector_count": 10,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "SLB"
+    },
+    {
+      "company_industry": "Cloud Data Platforms",
+      "company_name": "Snowflake Inc.",
+      "company_sector": "Cloud / Big Tech",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 11
+      },
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "cloud",
+        "data platform"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "Cloud / Big Tech",
+        "same_sector_count": 10,
+        "sector_count": 2
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "SNOW"
+    },
+    {
+      "company_industry": "Power Management Semiconductors",
+      "company_name": "Monolithic Power Systems, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 23
+      },
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 4
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MPWR"
+    },
+    {
+      "company_industry": "Power Management Semiconductors",
+      "company_name": "Monolithic Power Systems, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 16
+      },
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": false,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 16,
+        "sector_count": 1
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MPWR"
+    },
+    {
+      "company_industry": "Power Management Semiconductors",
+      "company_name": "Monolithic Power Systems, Inc.",
+      "company_sector": "AI / Semiconductors",
+      "confidence_label": "low_context_hint",
+      "ecosystem_density_hint": {
+        "density_label": "dense_context_cluster",
+        "ecosystem_company_count": 12
+      },
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "institution_adjacency_hint": {
+        "candidate_count": 0,
+        "status": "cache_miss_dry_run"
+      },
+      "match_reasons": [
+        "power"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "sector_overlap_hint": {
+        "cross_sector_context": true,
+        "matched_sector": "AI / Semiconductors",
+        "same_sector_count": 1,
+        "sector_count": 3
+      },
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MPWR"
     }
   ],
   "safety": {
@@ -636,8 +3676,8 @@
     "review_only": true
   },
   "summary": {
-    "ecosystem_count": 6,
-    "ecosystem_hint_count": 26,
+    "ecosystem_count": 9,
+    "ecosystem_hint_count": 94,
     "openalex_institution_candidate_count": 0,
     "openalex_topic_candidate_count": 0,
     "review_only": true

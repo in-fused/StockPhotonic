@@ -1,6 +1,22 @@
 (function () {
     window.StockPhotonicStock = window.StockPhotonicStock || {};
     const evidencePolicy = window.StockPhotonicStock.evidencePolicy || {};
+    const ecosystemMatchCache = new WeakMap();
+    const routeIndexCache = new WeakMap();
+
+    const STRATEGIC_HUB_TICKERS = new Set(['NVDA', 'MSFT', 'AMZN', 'AVGO', 'JPM', 'XOM', 'LLY', 'GOOGL', 'AAPL', 'TSM']);
+    const STRATEGIC_HUB_REASONS = {
+        NVDA: 'it anchors AI accelerator demand across cloud, silicon, memory, power, and design-tool corridors',
+        MSFT: 'it bridges cloud infrastructure, productivity software, enterprise SaaS, and AI platform demand',
+        AMZN: 'it connects hyperscale cloud, retail, payments-adjacent infrastructure, and AI compute demand',
+        AVGO: 'it links custom silicon, networking, cloud infrastructure, and semiconductor supply-chain exposure',
+        JPM: 'it anchors bank, issuer, card-network, and commercial payments corridors',
+        XOM: 'it concentrates energy-major exposure across upstream production, services, and industrial demand',
+        LLY: 'it anchors pharmaceutical, PBM, insurance, and life-sciences adjacency in the healthcare graph',
+        GOOGL: 'it connects search, cloud, AI infrastructure, advertising, devices, and enterprise platform competition',
+        AAPL: 'it bridges consumer devices, silicon, services, mobile ecosystems, and platform competition',
+        TSM: 'it anchors advanced-node foundry capacity behind AI, cloud, and semiconductor manufacturing corridors'
+    };
 
     const ECOSYSTEMS = {
         ai_infrastructure: {
@@ -482,7 +498,9 @@
         const topHubs = getTopNodesForLinks(visibleNodes, visibleLinks, context, 4);
         const bridgeNodes = getBridgeNodes(visibleNodes, visibleLinks, context, 3);
         const clusterAnchors = getClusterAnchorNodes(visibleNodes, context, 3);
+        const strategicHubs = getStrategicHubProfiles(visibleNodes, context, 4);
         const highlightedNodes = uniqueNodes([
+            ...strategicHubs.map(item => item.node),
             ...topHubs.map(item => item.node),
             ...bridgeNodes.map(item => item.node),
             ...clusterAnchors.map(item => item.node)
@@ -491,6 +509,7 @@
             topHubs,
             bridgeNodes,
             clusterAnchors,
+            strategicHubs,
             nodeIds: new Set(highlightedNodes.map(node => node.id)),
             evidence: buildSourceCoverageSummary(context),
             highlightedNodes
@@ -668,7 +687,7 @@
             .map(ecosystem => {
                 const matches = (context.adjacencyById?.get(node.id) || [])
                     .map(item => {
-                        const match = getLinkEcosystemMatch(item.link, ecosystem, context);
+                        const match = getCachedLinkEcosystemMatch(item.link, ecosystem, context);
                         return match.matched ? { ...item, match } : null;
                     })
                     .filter(Boolean);
@@ -695,12 +714,28 @@
 
     function getLinkEcosystemKeys(link, context) {
         return getEcosystemDefinitions()
-            .filter(ecosystem => getLinkEcosystemMatch(link, ecosystem, context).matched)
+            .filter(ecosystem => getCachedLinkEcosystemMatch(link, ecosystem, context).matched)
             .map(ecosystem => ecosystem.key);
     }
 
     function getLinkEcosystemMatch(link, ecosystem, context) {
+        return getCachedLinkEcosystemMatch(link, ecosystem, context);
+    }
+
+    function getCachedLinkEcosystemMatch(link, ecosystem, context) {
         if (!link || !ecosystem) return { matched: false, score: 0, reason: 'no link' };
+        let cache = ecosystemMatchCache.get(link);
+        if (!cache) {
+            cache = new Map();
+            ecosystemMatchCache.set(link, cache);
+        }
+        if (cache.has(ecosystem.key)) return cache.get(ecosystem.key);
+        const match = computeLinkEcosystemMatch(link, ecosystem, context);
+        cache.set(ecosystem.key, match);
+        return match;
+    }
+
+    function computeLinkEcosystemMatch(link, ecosystem, context) {
 
         const typeKey = normalizeText(context.getRelationshipTypeKey?.(link) || link.relationship_type || link.type);
         const rawType = normalizeText(link.raw_type || link.type);
@@ -775,6 +810,7 @@
         const ecosystems = getDominantEcosystemsForNode(node, context);
         const sourceSummary = summarizeLinksEvidence(items.map(item => item.link), context);
         const cluster = buildClusterStory(node, context);
+        const strategicHubProfile = getStrategicHubProfile(node, context);
         const role = getNodeRole(node, context);
         const strongest = [...items].sort((a, b) => getStrength(b.link) - getStrength(a.link))[0] || null;
         const bridgeSectorCount = sectorCounts.filter(([sector]) => sector && sector !== node.sector).length;
@@ -791,12 +827,14 @@
             primaryEcosystem: ecosystems[0] || null,
             sourceSummary,
             cluster,
+            strategicHubProfile,
             role,
             strongest,
             bridgeSectorCount,
             headline: buildSelectedNodeHeadline(node, {
                 degree,
                 ecosystems,
+                strategicHubProfile,
                 role,
                 typeCounts,
                 bridgeSectorCount
@@ -808,6 +846,9 @@
         const ticker = node.ticker || node.name || 'Selected company';
         const ecosystem = model.ecosystems[0]?.label;
         const dominantType = model.typeCounts[0]?.[0];
+        if (model.strategicHubProfile?.isStrategic) {
+            return `${ticker} matters as a ${model.strategicHubProfile.primaryRoleLabel.toLowerCase()} because ${model.strategicHubProfile.primaryReason}.`;
+        }
         if (ecosystem && model.ecosystems[0].count >= 2) {
             return `${ticker} is prominent in ${ecosystem} through ${model.ecosystems[0].count} direct edge${model.ecosystems[0].count === 1 ? '' : 's'}.`;
         }
@@ -1071,22 +1112,53 @@
     }
 
     function getRouteEligibleLinks(mode, ecosystemKey, context) {
-        const visibleLinks = context.visibleLinks || [];
-        if (mode === 'strongest') return visibleLinks;
-        if (mode === 'supply') {
-            return visibleLinks.filter(link => {
-                const group = context.getRelationshipGroupKey?.(link);
-                const type = context.getRelationshipTypeKey?.(link);
-                return group === 'supply' || ['supplier_customer', 'semiconductor_supply_chain', 'data_center_power'].includes(type);
-            });
-        }
-        if (mode === 'sec') return visibleLinks.filter(link => context.isSecBackedConnection?.(link));
-        if (mode === 'portfolio') return visibleLinks.filter(link => context.portfolioEdgeKeys?.has(link.key));
+        const index = getRouteLinkIndex(context);
+        if (mode === 'strongest') return index.strongest;
+        if (mode === 'supply') return index.supply;
+        if (mode === 'sec') return index.sec;
+        if (mode === 'portfolio') return index.all.filter(link => context.portfolioEdgeKeys?.has(link.key));
         if (ecosystemKey) {
             const ecosystem = getEcosystemDefinition(ecosystemKey);
-            return ecosystem ? visibleLinks.filter(link => getLinkEcosystemMatch(link, ecosystem, context).matched) : [];
+            return ecosystem ? (index.ecosystems.get(ecosystem.key) || []) : [];
         }
-        return visibleLinks;
+        return index.all;
+    }
+
+    function getRouteLinkIndex(context) {
+        const visibleLinks = context.visibleLinks || [];
+        const cached = routeIndexCache.get(visibleLinks);
+        if (cached) return cached;
+
+        const index = {
+            all: visibleLinks,
+            strongest: [...visibleLinks].sort((a, b) => getStrength(b) - getStrength(a)),
+            supply: [],
+            sec: [],
+            ecosystems: new Map()
+        };
+        getEcosystemDefinitions().forEach(ecosystem => {
+            index.ecosystems.set(ecosystem.key, []);
+        });
+        visibleLinks.forEach(link => {
+            const group = context.getRelationshipGroupKey?.(link);
+            const type = context.getRelationshipTypeKey?.(link);
+            if (group === 'supply' || ['supplier_customer', 'semiconductor_supply_chain', 'data_center_power'].includes(type)) {
+                index.supply.push(link);
+            }
+            if (context.isSecBackedConnection?.(link)) {
+                index.sec.push(link);
+            }
+            getEcosystemDefinitions().forEach(ecosystem => {
+                if (getCachedLinkEcosystemMatch(link, ecosystem, context).matched) {
+                    index.ecosystems.get(ecosystem.key).push(link);
+                }
+            });
+        });
+        index.supply.sort((a, b) => getStrength(b) - getStrength(a));
+        index.sec.sort((a, b) => getStrength(b) - getStrength(a));
+        index.ecosystems.forEach(links => links.sort((a, b) => getStrength(b) - getStrength(a)));
+        routeIndexCache.set(visibleLinks, index);
+        return index;
     }
 
     function routeModeToEcosystemKey(mode, context) {
@@ -1112,6 +1184,90 @@
             if (active) return `${active.shortLabel} Route`;
         }
         return 'Relationship Route';
+    }
+
+    function getStrategicHubProfiles(sourceNodes, context, limit = 4) {
+        return [...(sourceNodes || [])]
+            .map(node => ({ node, profile: getStrategicHubProfile(node, context) }))
+            .filter(item => item.profile.isStrategic)
+            .sort((a, b) =>
+                b.profile.score - a.profile.score ||
+                b.profile.degree - a.profile.degree ||
+                String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
+            )
+            .slice(0, limit);
+    }
+
+    function getStrategicHubProfile(node, context) {
+        if (!node) {
+            return {
+                isStrategic: false,
+                roles: [],
+                roleLabels: [],
+                score: 0,
+                degree: 0,
+                primaryReason: ''
+            };
+        }
+        const items = context.adjacencyById?.get(node.id) || [];
+        const degree = node.degree || items.length;
+        const ticker = String(node.ticker || '').toUpperCase();
+        const sectors = new Set(items.map(item => item.node?.sector).filter(Boolean));
+        const groups = new Set(items.map(item => context.getCompanyIndustryGroup?.(item.node)).filter(Boolean));
+        const ecosystems = getDominantEcosystemsForNode(node, context);
+        const sourceBackedCount = items.filter(item => context.relationshipHasSourceEvidence?.(item.link)).length;
+        const strongEdgeCount = items.filter(item => getStrength(item.link) >= 0.7).length;
+        const corridorCount = ecosystems.filter(item => item.count >= 2).length;
+        const seededHub = STRATEGIC_HUB_TICKERS.has(ticker);
+        const roles = [];
+
+        if (seededHub || degree >= 8) roles.push('strategic_hub');
+        if (sectors.size >= 3 || groups.size >= 4 || ecosystems.length >= 3) roles.push('ecosystem_bridge');
+        if (corridorCount || ecosystems[0]?.count >= 2) roles.push('corridor_company');
+        if (strongEdgeCount >= 3 || degree >= 7) roles.push('repeated_exposure_hub');
+        if (sectors.size >= 4 || (seededHub && sectors.size >= 2)) roles.push('cross_sector_anchor');
+
+        const roleLabels = roles.map(role => ({
+            strategic_hub: 'Strategic hub',
+            ecosystem_bridge: 'Ecosystem bridge',
+            corridor_company: 'Corridor company',
+            repeated_exposure_hub: 'Repeated exposure hub',
+            cross_sector_anchor: 'Cross-sector anchor'
+        }[role] || role));
+        const sourceBackedRatio = items.length ? sourceBackedCount / items.length : 0;
+        const score =
+            degree * 1.25 +
+            sectors.size * 1.6 +
+            groups.size * 1.05 +
+            ecosystems.length * 1.2 +
+            strongEdgeCount * 0.9 +
+            sourceBackedRatio * 4 +
+            (seededHub ? 5 : 0);
+        const primaryReason = STRATEGIC_HUB_REASONS[ticker] ||
+            (ecosystems[0]
+                ? `it concentrates ${ecosystems[0].count} ${ecosystems[0].label.toLowerCase()} edge${ecosystems[0].count === 1 ? '' : 's'}`
+                : sectors.size > 1
+                    ? `it bridges ${sectors.size} visible sector${sectors.size === 1 ? '' : 's'}`
+                    : `it has ${degree} relationship${degree === 1 ? '' : 's'} in the loaded graph`);
+
+        return {
+            isStrategic: roles.length > 0,
+            ticker,
+            roles,
+            roleLabels,
+            primaryRoleLabel: roleLabels[0] || 'Network node',
+            primaryReason,
+            score,
+            degree,
+            ecosystemCount: ecosystems.length,
+            corridorCount,
+            sectorCount: sectors.size,
+            industryGroupCount: groups.size,
+            sourceBackedCount,
+            sourceBackedRatio,
+            strongEdgeCount,
+            seededHub
+        };
     }
 
     function getNodeVisualMeta(node, context) {
@@ -1214,6 +1370,23 @@
         const sectorCount = new Set(items.map(item => item.node?.sector).filter(Boolean)).size;
         const groupCount = new Set(items.map(item => context.getCompanyIndustryGroup?.(item.node)).filter(Boolean)).size;
         const ecosystems = getDominantEcosystemsForNode(node, context);
+        const hubProfile = getStrategicHubProfile(node, context);
+
+        if (hubProfile.roles.includes('strategic_hub')) {
+            return { key: 'strategic_hub', label: 'Strategic hub', shortLabel: 'HUB', color: '#22d3ee' };
+        }
+        if (hubProfile.roles.includes('cross_sector_anchor')) {
+            return { key: 'cross_sector_anchor', label: 'Cross-sector anchor', shortLabel: 'ANCH', color: '#fbbf24' };
+        }
+        if (hubProfile.roles.includes('ecosystem_bridge')) {
+            return { key: 'ecosystem_bridge', label: 'Ecosystem bridge', shortLabel: 'BRG', color: '#f0abfc' };
+        }
+        if (hubProfile.roles.includes('corridor_company')) {
+            return { key: 'corridor_company', label: 'Corridor company', shortLabel: 'COR', color: ecosystems[0]?.color || '#34d399' };
+        }
+        if (hubProfile.roles.includes('repeated_exposure_hub')) {
+            return { key: 'repeated_exposure_hub', label: 'Repeated exposure hub', shortLabel: 'REP', color: '#a5f3fc' };
+        }
 
         if (degree >= Math.max(6, p75)) {
             return { key: 'hub', label: 'Strategic hub', shortLabel: 'HUB', color: '#22d3ee' };
@@ -1365,6 +1538,8 @@
         buildRelationshipExplanation,
         buildRoute,
         getRouteLabel,
+        getStrategicHubProfile,
+        getStrategicHubProfiles,
         getNodeVisualMeta,
         getLinkVisualMeta,
         getNodeRole,

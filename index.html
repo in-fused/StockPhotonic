@@ -3732,6 +3732,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const dominantType = story.typeCounts[0]?.[0] || 'Mixed relationships';
             const cluster = story.cluster || {};
             const sourceSummary = story.sourceSummary || {};
+            const hubProfile = story.strategicHubProfile || {};
             const routeBanner = activeRelationshipRoute ? renderRouteTraceCard(activeRelationshipRoute, { embedded: true }) : '';
             const ecosystemButton = primary
                 ? `<button type="button" onclick="applyGuidedTraversal('ecosystem')" class="graph-card-action"><i class="fa-solid fa-compass"></i><span>Explore ${escapeHtml(primary.shortLabel)}</span></button>`
@@ -3758,6 +3759,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
                 <div class="graph-card-chips">
                     <span>${escapeHtml(dominantType)}</span>
+                    ${hubProfile.isStrategic ? `<span>${escapeHtml(hubProfile.primaryRoleLabel || 'Strategic hub')}</span>` : ''}
+                    ${hubProfile.sectorCount > 1 ? `<span>${escapeHtml(formatCandidateCell(hubProfile.sectorCount))} sectors</span>` : ''}
                     ${primary ? `<span style="border-color:${primary.color}; color:${primary.color};">${escapeHtml(primary.label)}</span>` : ''}
                     ${cluster.strongestHub ? `<span>Hub ${escapeHtml(cluster.strongestHub.ticker || cluster.strongestHub.name || '')}</span>` : ''}
                 </div>
@@ -3805,6 +3808,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const summary = graphIntelligenceModel.defaultDiscovery || {};
             const evidence = graphIntelligenceModel.evidenceGaps || {};
             const topHub = summary.topHubs?.[0]?.node;
+            const strategicHub = summary.strategicHubs?.[0];
             const bridge = summary.bridgeNodes?.[0]?.node;
             const sourceRatio = Math.round((evidence.sourcedRatio || 0) * 100);
             return `
@@ -3823,6 +3827,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <div><span>${evidence.secBacked || 0}</span><small>SEC</small></div>
                 </div>
                 <div class="graph-card-chips">
+                    ${strategicHub ? `<span>Anchor ${escapeHtml(strategicHub.node.ticker || strategicHub.node.name || '')}</span>` : ''}
                     ${topHub ? `<span>Hub ${escapeHtml(topHub.ticker || topHub.name || '')}</span>` : '<span>Hub pending</span>'}
                     ${bridge ? `<span>Bridge ${escapeHtml(bridge.ticker || bridge.name || '')}</span>` : '<span>Bridge scan ready</span>'}
                     <span>${evidence.missingCount || 0} evidence gaps</span>
@@ -6961,12 +6966,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function renderCoverageRefreshSummary(report) {
             const summary = report?.summary || {};
+            const growth = report?.graph_growth_metrics || {};
+            const sourceRatio = Math.round(Number(growth.sourced_ratio ?? report?.source_coverage_refresh_state?.source_coverage_ratio ?? 0) * 100);
             return [
                 renderReviewArtifactMetric('UNSOURCED', summary.unsourced_edges ?? 0, 'source-coverage-refresh-card'),
+                renderReviewArtifactMetric('SOURCED RATIO', `${sourceRatio}%`, 'source-coverage-refresh-card'),
                 renderReviewArtifactMetric('FAST-TRACK', summary.fast_track_visibility_count ?? summary.fast_track_source_target_count ?? 0, 'source-coverage-refresh-card'),
-                renderReviewArtifactMetric('NEEDS REVIEW', summary.needs_review_count ?? 0, 'source-coverage-refresh-card'),
-                renderReviewArtifactMetric('WEAK TYPES', summary.weak_relationship_category_count ?? 0, 'source-coverage-refresh-card'),
-                renderReviewArtifactMetric('ECOSYSTEM GAPS', summary.ecosystem_gap_count ?? 0, 'source-coverage-refresh-card'),
+                renderReviewArtifactMetric('CORRIDORS', summary.corridor_source_lane_count ?? 0, 'source-coverage-refresh-card'),
+                renderReviewArtifactMetric('EXPANSION', summary.ecosystem_expansion_opportunity_count ?? 0, 'source-coverage-refresh-card'),
                 renderReviewArtifactMetric('PRIORITIES', summary.reviewer_priority_count ?? 0, 'source-coverage-refresh-card')
             ].join('');
         }
@@ -7006,11 +7013,75 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const hubs = Array.isArray(report?.hub_source_gaps)
                 ? report.hub_source_gaps.slice(0, 4)
                 : [];
-            if (!batches.length && !targets.length && !hubs.length) {
+            const lanes = Array.isArray(report?.corridor_source_lanes)
+                ? report.corridor_source_lanes.slice(0, 6)
+                : [];
+            const opportunities = Array.isArray(report?.ecosystem_expansion_opportunities)
+                ? report.ecosystem_expansion_opportunities.slice(0, 4)
+                : [];
+            const backlog = report?.source_backlog_visibility || null;
+            const growth = report?.graph_growth_metrics || null;
+            if (!batches.length && !targets.length && !hubs.length && !lanes.length && !opportunities.length && !backlog && !growth) {
                 return '<div class="text-sm text-white/35">No fast-track source coverage batches are present in the current report.</div>';
             }
 
             return `
+                ${growth ? `
+                    <div class="source-coverage-refresh-item rounded-2xl p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-xs text-white/86 font-semibold">Graph growth metrics</div>
+                                <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(growth.coverage_state || 'source coverage state')}</div>
+                            </div>
+                            <span class="review-action-chip">${escapeHtml(formatCandidateCell(growth.total_edges ?? 0))} EDGES</span>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(growth.sourced_edges ?? 0))} SOURCED</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(growth.sec_backed_edges ?? 0))} SEC</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(growth.trusted_relationship_class_count ?? 0))} CLASSES</span>
+                        </div>
+                    </div>
+                ` : ''}
+                ${backlog ? `
+                    <div class="source-coverage-refresh-item rounded-2xl p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-xs text-white/86 font-semibold">Source backlog visibility</div>
+                                <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(backlog.reason || 'Source backlog grouped for review.')}</div>
+                            </div>
+                            <span class="review-action-chip">${escapeHtml(backlog.status || 'pending')}</span>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(backlog.unsourced_edges ?? 0))} UNSOURCED</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(Math.round(Number(backlog.sourced_ratio || 0) * 100)))}% SOURCED</span>
+                        </div>
+                    </div>
+                ` : ''}
+                ${lanes.map(lane => `
+                    <div class="source-coverage-refresh-item rounded-2xl p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-xs text-white/86 font-semibold">${escapeHtml(lane.label || lane.lane_key || 'Corridor source lane')}</div>
+                                <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(lane.reason || 'Corridor source lane.')}</div>
+                            </div>
+                            <span class="review-action-chip">LANE</span>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(lane.edge_count ?? 0))} EDGES</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(lane.fast_track_count ?? 0))} FAST</span>
+                        </div>
+                    </div>
+                `).join('')}
+                ${opportunities.map(item => `
+                    <div class="source-coverage-refresh-item rounded-2xl p-3">
+                        <div class="text-xs text-white/86 font-semibold">${escapeHtml(item.label || item.opportunity_key || 'Expansion opportunity')}</div>
+                        <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(item.reason || 'Review-only ecosystem expansion opportunity.')}</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(item.unresolved_edge_count ?? 0))} OPEN</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(item.fast_track_count ?? 0))} FAST</span>
+                        </div>
+                    </div>
+                `).join('')}
                 ${batches.map(batch => `
                     <div class="source-coverage-refresh-item rounded-2xl p-3">
                         <div class="flex items-start justify-between gap-3">

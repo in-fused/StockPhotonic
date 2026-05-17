@@ -260,6 +260,13 @@
             width = Math.max(0.18, width + (relationshipVisual.widthBoost || 0));
         }
 
+        const density = getDensityProfile(context);
+        const densityProtected = Boolean(isFocused || isHoveredLink || isPortfolioLink || touchesIndustryGroup || intelligenceVisual.forceDraw);
+        if (density.dense && !densityProtected) {
+            alpha *= density.veryDense ? 0.58 : 0.72;
+            width = Math.max(0.16, width * (density.veryDense ? 0.74 : 0.86));
+        }
+
         ctx.globalAlpha = alpha * perspectiveShade;
         ctx.strokeStyle = color;
         ctx.lineWidth = width;
@@ -521,22 +528,32 @@
     }
 
     function getLabelLimit(context, labelMode) {
-        if (labelMode === 'full') return context.selectedNode ? 68 : 54;
+        const density = getDensityProfile(context);
+        if (labelMode === 'full') {
+            if (density.veryDense && !context.selectedNode) return 32;
+            if (density.dense && !context.selectedNode) return 42;
+            return context.selectedNode ? 68 : 54;
+        }
+        if (density.veryDense && !context.selectedNode) return 22;
+        if (density.dense && !context.selectedNode) return 28;
         return context.selectedNode ? 52 : 36;
     }
 
     function shouldDrawLabel(context, node, labelMode) {
         if (labelMode === 'none') return false;
+        const density = getDensityProfile(context);
         const intelligenceVisual = context.getGraphNodeIntelligenceVisual?.(node) || {};
         if (context.selectedNode && context.selectedNode.id === node.id) return true;
         if (context.hoveredNode && context.hoveredNode.id === node.id) return true;
         if (intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint) return true;
-        if (intelligenceVisual.guided && context.scale > 0.5) return true;
-        if (intelligenceVisual.defaultDiscovery && context.scale > 0.56 && intelligenceVisual.role?.key !== 'normal') return true;
-        if (intelligenceVisual.overlay && context.scale > 0.56 && intelligenceVisual.role?.key !== 'normal') return true;
+        if (intelligenceVisual.guided && context.scale > (density.dense ? 0.62 : 0.5)) return true;
+        if (intelligenceVisual.defaultDiscovery && context.scale > (density.dense ? 0.68 : 0.56) && intelligenceVisual.role?.key !== 'normal') return true;
+        if (intelligenceVisual.overlay && context.scale > (density.dense ? 0.68 : 0.56) && intelligenceVisual.role?.key !== 'normal') return true;
         if (context.isPortfolioAnalysisActive() && context.isPortfolioHighlightedNode(node)) return true;
         if (context.selectedNode && context.focusNeighborIds.has(node.id)) return true;
         if (context.selectedNode && context.activeClusterNodeIds.has(node.id) && !context.isFocusModeActive()) return true;
+        if (density.veryDense && !context.selectedNode) return context.scale > 0.82 && (context.topLabelIds.has(node.id) || node.degree >= 8);
+        if (density.dense && !context.selectedNode) return context.scale > 0.74 && (context.topLabelIds.has(node.id) || node.degree >= 6);
         if (labelMode === 'full') return true;
         if (context.scale > 0.68 && node.degree >= 2) return true;
         return context.topLabelIds.has(node.id) || node.degree >= 6;
@@ -739,10 +756,28 @@
     }
 
     function getWeakEdgeThreshold(context) {
-        if (context.scale < 0.3) return 0.42;
-        if (context.scale < 0.46) return 0.32;
-        if (context.scale < 0.62) return 0.2;
+        const density = getDensityProfile(context);
+        const densityLift = density.veryDense ? 0.12 : density.dense ? 0.07 : density.large ? 0.04 : 0;
+        if (context.scale < 0.3) return Math.min(0.58, 0.42 + densityLift);
+        if (context.scale < 0.46) return Math.min(0.5, 0.32 + densityLift);
+        if (context.scale < 0.62) return Math.min(0.38, 0.2 + densityLift);
+        if (density.veryDense && context.scale < 0.82) return 0.14;
+        if (density.dense && context.scale < 0.76) return 0.08;
         return 0;
+    }
+
+    function getDensityProfile(context) {
+        const edgeCount = Array.isArray(context.visibleLinks) ? context.visibleLinks.length : 0;
+        const nodeCount = Array.isArray(context.visibleNodes) ? context.visibleNodes.length : 0;
+        const density = nodeCount ? edgeCount / Math.max(1, nodeCount) : 0;
+        return {
+            nodeCount,
+            edgeCount,
+            density,
+            large: nodeCount > 70 || edgeCount > 115,
+            dense: density > 2.15 || edgeCount > 125,
+            veryDense: density > 2.75 || edgeCount > 165
+        };
     }
 
     function getScreenNodeRadius(context, node) {
@@ -810,6 +845,7 @@
         isNodeInFrame,
         shouldDrawLink,
         getWeakEdgeThreshold,
+        getDensityProfile,
         getScreenNodeRadius,
         getOrbitRenderFrame,
         getPseudoDepth,

@@ -39,6 +39,48 @@ PRODUCTION_DATA_PATHS = (
     ROOT / "data" / "companies.json",
     ROOT / "data" / "connections.json",
 )
+FAST_TRACK_TARGET_LIMIT = 48
+REVIEW_QUEUE_SOURCE_GAP_LIMIT = 40
+
+CORRIDOR_LANE_DEFINITIONS: dict[str, dict[str, Any]] = {
+    "ai_compute_foundry_cloud": {
+        "label": "AI compute -> foundry -> cloud",
+        "keywords": ("ai", "gpu", "accelerator", "hbm", "foundry", "cloud", "data center", "custom silicon"),
+    },
+    "payment_network_bank": {
+        "label": "Payment network -> banks",
+        "keywords": ("payment", "card", "issuer", "bank", "credit", "network"),
+    },
+    "pbm_pharma_insurance": {
+        "label": "PBM -> pharma -> insurance",
+        "keywords": ("pbm", "pharma", "pharmaceutical", "reimbursement", "formulary", "managed care", "insurance"),
+    },
+    "oilfield_energy_majors": {
+        "label": "Oilfield services -> energy majors",
+        "keywords": ("oilfield", "oil", "gas", "upstream", "energy", "pipeline"),
+    },
+    "aerospace_supplier_oem": {
+        "label": "Aerospace suppliers -> OEMs",
+        "keywords": ("aerospace", "aircraft", "engine", "avionics", "defense", "boeing", "oem"),
+    },
+    "enterprise_saas_cloud": {
+        "label": "Enterprise SaaS -> cloud platforms",
+        "keywords": ("saas", "workflow", "crm", "data platform", "cloud security", "enterprise software"),
+    },
+    "consumer_retail_distribution": {
+        "label": "Retail -> consumer distribution",
+        "keywords": ("retail", "warehouse", "grocery", "restaurant", "beverage", "e-commerce", "consumer"),
+    },
+}
+CORRIDOR_LANE_PRIORITY = (
+    "payment_network_bank",
+    "pbm_pharma_insurance",
+    "oilfield_energy_majors",
+    "aerospace_supplier_oem",
+    "enterprise_saas_cloud",
+    "consumer_retail_distribution",
+    "ai_compute_foundry_cloud",
+)
 
 
 class SourceCoverageRefreshError(Exception):
@@ -75,6 +117,11 @@ def write_json(path: Path, payload: dict[str, Any], *, force: bool) -> None:
     with path.open("w", encoding="utf-8", newline="\n") as file:
         json.dump(payload, file, indent=2, sort_keys=True)
         file.write("\n")
+
+
+def load_json(path: Path) -> Any:
+    with path.open("r", encoding="utf-8") as file:
+        return json.load(file)
 
 
 def production_hashes() -> dict[Path, str]:
@@ -183,7 +230,7 @@ def ecosystem_gap_rows(preflight: dict[str, Any]) -> list[dict[str, Any]]:
 
 def build_reviewer_priority_queue(preflight: dict[str, Any]) -> list[dict[str, Any]]:
     queue: list[dict[str, Any]] = []
-    for row in (preflight.get("high_value_unsourced_edges") or [])[:20]:
+    for row in (preflight.get("high_value_unsourced_edges") or [])[:REVIEW_QUEUE_SOURCE_GAP_LIMIT]:
         if not isinstance(row, dict):
             continue
         fast_track = bool(row.get("fast_track_visibility"))
@@ -237,7 +284,7 @@ def fast_track_source_targets(preflight: dict[str, Any]) -> list[dict[str, Any]]
             if isinstance(row, dict) and row.get("fast_track_visibility")
         ]
     targets: list[dict[str, Any]] = []
-    for row in rows[:18]:
+    for row in rows[:FAST_TRACK_TARGET_LIMIT]:
         if not isinstance(row, dict):
             continue
         targets.append(
@@ -337,6 +384,293 @@ def hub_source_gaps(preflight: dict[str, Any]) -> list[dict[str, Any]]:
     return hubs[:10]
 
 
+def infer_corridor_lane(row: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
+    text = " ".join(
+        str(row.get(field) or "").lower()
+        for field in (
+            "relationship_type",
+            "label",
+            "source_industry",
+            "target_industry",
+            "source_ticker",
+            "target_ticker",
+            "trusted_relationship_class",
+            "trusted_relationship_class_label",
+            "source_search_query",
+        )
+    )
+    for lane_key in CORRIDOR_LANE_PRIORITY:
+        definition = CORRIDOR_LANE_DEFINITIONS[lane_key]
+        if any(keyword in text for keyword in definition["keywords"]):
+            return lane_key, definition
+    return None
+
+
+def corridor_source_lanes(preflight: dict[str, Any], targets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows = [
+        row for row in (preflight.get("high_value_unsourced_edges") or [])
+        if isinstance(row, dict)
+    ]
+    target_keys = {
+        (
+            str(target.get("source_ticker") or ""),
+            str(target.get("target_ticker") or ""),
+            str(target.get("relationship_type") or ""),
+        )
+        for target in targets
+    }
+    lane_map: dict[str, dict[str, Any]] = {
+        key: {
+            "lane_key": key,
+            "label": definition["label"],
+            "edge_count": 0,
+            "fast_track_count": 0,
+            "source_search_queries": [],
+            "sample_edges": [],
+            "manual_promotion_allowed": False,
+            "review_only": True,
+        }
+        for key, definition in CORRIDOR_LANE_DEFINITIONS.items()
+    }
+
+    for row in rows:
+        inferred = infer_corridor_lane(row)
+        if inferred is None:
+            continue
+        lane_key, _definition = inferred
+        lane = lane_map[lane_key]
+        lane["edge_count"] += 1
+        row_key = (
+            str(row.get("source_ticker") or ""),
+            str(row.get("target_ticker") or ""),
+            str(row.get("relationship_type") or ""),
+        )
+        if row.get("fast_track_visibility") or row_key in target_keys:
+            lane["fast_track_count"] += 1
+        query = row.get("source_search_query")
+        if query and len(lane["source_search_queries"]) < 5 and query not in lane["source_search_queries"]:
+            lane["source_search_queries"].append(query)
+        if len(lane["sample_edges"]) < 5:
+            lane["sample_edges"].append(
+                {
+                    "source_ticker": row.get("source_ticker"),
+                    "target_ticker": row.get("target_ticker"),
+                    "relationship_type": row.get("relationship_type"),
+                    "evidence_tier": row.get("evidence_tier"),
+                }
+            )
+
+    lanes = [lane for lane in lane_map.values() if lane["edge_count"] > 0]
+    for lane in lanes:
+        lane["priority"] = "source" if lane["fast_track_count"] else "review"
+        lane["reason"] = "Corridor source lane groups related enrichment targets so reviewers can source clusters without auto-promotion."
+    return sorted(lanes, key=lambda row: (-int(row["edge_count"]), -int(row["fast_track_count"]), str(row["label"])))
+
+
+def production_corridor_lanes(companies_path: Path, connections_path: Path) -> list[dict[str, Any]]:
+    companies = load_json(companies_path)
+    connections = load_json(connections_path)
+    if not isinstance(companies, list) or not isinstance(connections, list):
+        return []
+    company_by_id = {
+        int(company.get("id")): company
+        for company in companies
+        if isinstance(company, dict) and company.get("id") is not None
+    }
+    lane_map: dict[str, dict[str, Any]] = {}
+    for edge in connections:
+        if not isinstance(edge, dict):
+            continue
+        source = company_by_id.get(int(edge.get("source") or -1), {})
+        target = company_by_id.get(int(edge.get("target") or -1), {})
+        row = {
+            "source_ticker": source.get("ticker"),
+            "target_ticker": target.get("ticker"),
+            "source_sector": source.get("sector"),
+            "target_sector": target.get("sector"),
+            "source_industry": source.get("industry"),
+            "target_industry": target.get("industry"),
+            "relationship_type": edge.get("type"),
+            "label": edge.get("label"),
+        }
+        inferred = infer_corridor_lane(row)
+        if inferred is None:
+            continue
+        lane_key, definition = inferred
+        lane = lane_map.setdefault(
+            lane_key,
+            {
+                "lane_key": lane_key,
+                "label": definition["label"],
+                "edge_count": 0,
+                "source_backed_count": 0,
+                "sample_edges": [],
+                "priority": "source",
+                "manual_promotion_allowed": False,
+                "review_only": True,
+            },
+        )
+        lane["edge_count"] += 1
+        if edge.get("source_urls"):
+            lane["source_backed_count"] += 1
+        if len(lane["sample_edges"]) < 5:
+            lane["sample_edges"].append(
+                {
+                    "source_ticker": source.get("ticker"),
+                    "target_ticker": target.get("ticker"),
+                    "relationship_type": edge.get("type"),
+                    "source_backed": bool(edge.get("source_urls")),
+                }
+            )
+    lanes = list(lane_map.values())
+    for lane in lanes:
+        lane["fast_track_count"] = 0
+        lane["coverage_ratio"] = (
+            round(float(lane["source_backed_count"]) / float(lane["edge_count"]), 4)
+            if lane["edge_count"]
+            else 0
+        )
+        lane["reason"] = "Source-backed production corridor lane; use for maintenance sourcing and adjacent ecosystem planning without auto-promotion."
+    return sorted(lanes, key=lambda row: (-int(row["edge_count"]), str(row["label"])))
+
+
+def merge_corridor_lanes(*lane_sets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[str, dict[str, Any]] = {}
+    for lanes in lane_sets:
+        for lane in lanes:
+            key = str(lane.get("lane_key") or lane.get("label") or "unknown")
+            existing = merged.setdefault(key, {**lane})
+            if existing is lane:
+                continue
+            existing["edge_count"] = max(int(existing.get("edge_count") or 0), int(lane.get("edge_count") or 0))
+            existing["fast_track_count"] = max(int(existing.get("fast_track_count") or 0), int(lane.get("fast_track_count") or 0))
+            existing["source_backed_count"] = max(int(existing.get("source_backed_count") or 0), int(lane.get("source_backed_count") or 0))
+            if not existing.get("source_search_queries") and lane.get("source_search_queries"):
+                existing["source_search_queries"] = lane.get("source_search_queries")
+            samples = existing.setdefault("sample_edges", [])
+            for sample in lane.get("sample_edges", []):
+                if len(samples) >= 5:
+                    break
+                if sample not in samples:
+                    samples.append(sample)
+            if "coverage_ratio" in lane:
+                existing["coverage_ratio"] = lane["coverage_ratio"]
+            if "reason" in lane:
+                existing["reason"] = lane["reason"]
+    return sorted(merged.values(), key=lambda row: (-int(row.get("edge_count") or 0), str(row.get("label") or "")))
+
+
+def ecosystem_expansion_opportunities(
+    preflight: dict[str, Any],
+    targets: list[dict[str, Any]],
+    corridor_lanes: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    gaps = ecosystem_gap_rows(preflight)
+    target_counts = Counter(
+        str(target.get("trusted_relationship_class_label") or target.get("trusted_relationship_class") or "Unclassified")
+        for target in targets
+    )
+    rows: list[dict[str, Any]] = []
+    for gap in gaps:
+        rows.append(
+            {
+                "opportunity_key": gap["ecosystem_key"],
+                "label": str(gap["ecosystem_key"]).replace("_", " ").title(),
+                "priority": "source",
+                "unresolved_edge_count": gap["unsourced_high_value_count"],
+                "fast_track_count": 0,
+                "sample_edges": gap.get("sample_edges", []),
+                "reason": "Ecosystem has unresolved high-value source gaps in production edges.",
+                "manual_promotion_allowed": False,
+                "review_only": True,
+            }
+        )
+    for label, count in target_counts.most_common(10):
+        rows.append(
+            {
+                "opportunity_key": label.lower().replace(" ", "_").replace("/", "_"),
+                "label": label,
+                "priority": "source",
+                "unresolved_edge_count": count,
+                "fast_track_count": count,
+                "sample_edges": [],
+                "reason": "Trusted strong-inferred class has clustered source-enrichment targets.",
+                "manual_promotion_allowed": False,
+                "review_only": True,
+            }
+        )
+    deduped: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        key = str(row["opportunity_key"])
+        existing = deduped.get(key)
+        if not existing or int(row["unresolved_edge_count"]) > int(existing["unresolved_edge_count"]):
+            deduped[key] = row
+    if not deduped and corridor_lanes:
+        for lane in corridor_lanes[:8]:
+            key = str(lane.get("lane_key") or lane.get("label") or "corridor")
+            deduped[key] = {
+                "opportunity_key": key,
+                "label": lane.get("label"),
+                "priority": "planning",
+                "unresolved_edge_count": 0,
+                "fast_track_count": lane.get("fast_track_count", 0),
+                "source_backed_edge_count": lane.get("source_backed_count", lane.get("edge_count", 0)),
+                "sample_edges": lane.get("sample_edges", []),
+                "reason": "Source-backed corridor is dense enough for adjacent ecosystem scouting; still review-only and not promotion authority.",
+                "manual_promotion_allowed": False,
+                "review_only": True,
+            }
+    return sorted(deduped.values(), key=lambda row: (-int(row["unresolved_edge_count"]), str(row["label"])))[:12]
+
+
+def source_backlog_visibility(preflight: dict[str, Any], hub_gaps: list[dict[str, Any]]) -> dict[str, Any]:
+    coverage = preflight.get("production_edge_source_coverage") or {}
+    type_rows = [
+        row for row in (preflight.get("relationship_type_source_gaps") or [])
+        if isinstance(row, dict)
+    ]
+    unsourced_edges = int(coverage.get("unsourced_edges") or 0)
+    return {
+        "status": "clear" if unsourced_edges == 0 else "pending",
+        "total_edges": int(coverage.get("total_edges") or 0),
+        "sourced_edges": int(coverage.get("sourced_edges") or 0),
+        "unsourced_edges": unsourced_edges,
+        "sourced_ratio": round(float(coverage.get("sourced_ratio") or 0), 4),
+        "type_backlog": [
+            {
+                "relationship_type": row.get("relationship_type"),
+                "unsourced_edges": int(row.get("unsourced_edges") or 0),
+                "sourced_ratio": round(float(row.get("sourced_ratio") or 0), 4),
+                "review_only": True,
+            }
+            for row in type_rows
+        ],
+        "hub_backlog": hub_gaps[:8],
+        "reason": "Source backlog is grouped by relationship type and hub so source work can scale without flooding manual promotion queues.",
+        "review_only": True,
+    }
+
+
+def graph_growth_metrics(preflight: dict[str, Any], fast_track_targets: list[dict[str, Any]], lanes: list[dict[str, Any]]) -> dict[str, Any]:
+    coverage = preflight.get("production_edge_source_coverage") or {}
+    policy_summary = preflight.get("tiered_evidence_policy_summary") or {}
+    trusted_classes = policy_summary.get("trusted_relationship_class_counts")
+    trusted_class_count = len(trusted_classes) if isinstance(trusted_classes, dict) else 0
+    return {
+        "total_edges": int(coverage.get("total_edges") or 0),
+        "sourced_edges": int(coverage.get("sourced_edges") or 0),
+        "unsourced_edges": int(coverage.get("unsourced_edges") or 0),
+        "sec_backed_edges": int(coverage.get("sec_backed_edges") or 0),
+        "sourced_ratio": round(float(coverage.get("sourced_ratio") or 0), 4),
+        "fast_track_source_target_count": len(fast_track_targets),
+        "corridor_lane_count": len(lanes),
+        "trusted_relationship_class_count": trusted_class_count,
+        "coverage_state": "all_source_backed" if int(coverage.get("unsourced_edges") or 0) == 0 else "source_expansion_pending",
+        "manual_promotion_allowed": False,
+        "review_only": True,
+    }
+
+
 def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
     companies_path = resolve_path(args.companies)
     connections_path = resolve_path(args.connections)
@@ -363,6 +697,12 @@ def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
     fast_track_targets = fast_track_source_targets(preflight)
     expansion_batches = source_expansion_batches(preflight, fast_track_targets)
     hub_gaps = hub_source_gaps(preflight)
+    gap_corridor_lanes = corridor_source_lanes(preflight, fast_track_targets)
+    production_lanes = production_corridor_lanes(companies_path, connections_path)
+    corridor_lanes = merge_corridor_lanes(gap_corridor_lanes, production_lanes)
+    ecosystem_opportunities = ecosystem_expansion_opportunities(preflight, fast_track_targets, corridor_lanes)
+    backlog = source_backlog_visibility(preflight, hub_gaps)
+    growth_metrics = graph_growth_metrics(preflight, fast_track_targets, corridor_lanes)
     coverage = preflight.get("production_edge_source_coverage") or {}
     policy_summary = preflight.get("tiered_evidence_policy_summary") or {}
 
@@ -393,6 +733,9 @@ def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
             "reviewer_priority_count": len(queue),
             "fast_track_visibility_count": policy_summary.get("fast_track_visibility_count", 0),
             "fast_track_source_target_count": len(fast_track_targets),
+            "source_expansion_batch_count": len(expansion_batches),
+            "corridor_source_lane_count": len(corridor_lanes),
+            "ecosystem_expansion_opportunity_count": len(ecosystem_opportunities),
             "needs_review_count": policy_summary.get("needs_review_count", 0),
             "context_only_count": policy_summary.get("context_only_count", 0),
             "missing_production_ticker_count": len(
@@ -413,6 +756,10 @@ def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
         "fast_track_source_targets": fast_track_targets,
         "source_expansion_batches": expansion_batches,
         "hub_source_gaps": hub_gaps,
+        "corridor_source_lanes": corridor_lanes,
+        "ecosystem_expansion_opportunities": ecosystem_opportunities,
+        "source_backlog_visibility": backlog,
+        "graph_growth_metrics": growth_metrics,
         "missing_production_tickers": preflight.get("candidate_tickers_missing_from_production_universe") or [],
         "reviewer_priority_queue": queue,
         "safety": {

@@ -163,6 +163,61 @@ ECOSYSTEM_DEFINITIONS: dict[str, dict[str, Any]] = {
             "risk management",
         ],
     },
+    "enterprise_saas_workflow": {
+        "label": "Enterprise SaaS / Workflow",
+        "queries": [
+            "enterprise SaaS workflow automation",
+            "customer data platform cloud",
+            "enterprise productivity software integration",
+        ],
+        "keywords": [
+            "enterprise",
+            "saas",
+            "workflow",
+            "crm",
+            "productivity",
+            "data cloud",
+            "service management",
+            "customer data",
+            "enterprise software",
+        ],
+    },
+    "aerospace_defense_supply_chain": {
+        "label": "Aerospace / Defense Supply Chain",
+        "queries": [
+            "aerospace supply chain",
+            "aircraft engines defense systems",
+            "commercial aerospace suppliers",
+        ],
+        "keywords": [
+            "aerospace",
+            "aircraft",
+            "avionics",
+            "jet engine",
+            "defense",
+            "oem",
+            "commercial aerospace",
+            "propulsion",
+        ],
+    },
+    "consumer_retail_platforms": {
+        "label": "Consumer / Retail Platforms",
+        "queries": [
+            "retail supply chain ecommerce",
+            "consumer platforms warehouse retail",
+            "quick service restaurant beverage supply chain",
+        ],
+        "keywords": [
+            "retail",
+            "ecommerce",
+            "e-commerce",
+            "warehouse club",
+            "quick service restaurant",
+            "beverage",
+            "consumer spending",
+            "grocery",
+        ],
+    },
 }
 
 
@@ -766,6 +821,8 @@ def build_ecosystem_artifact(
                 {
                     "ticker": ticker,
                     "company_name": clean_string(company.get("name")),
+                    "company_sector": clean_string(company.get("sector")),
+                    "company_industry": clean_string(company.get("industry")),
                     "ecosystem_key": match["ecosystem_key"],
                     "ecosystem_label": match["ecosystem_label"],
                     "match_reasons": match["match_reasons"],
@@ -775,6 +832,10 @@ def build_ecosystem_artifact(
                         match_count=len(match["match_reasons"]),
                         openalex_count=len(topics) + len(institution_candidates),
                     ),
+                    "institution_adjacency_hint": {
+                        "candidate_count": len(institution_candidates[:3]),
+                        "status": clean_string(resolution.get("status")) or "unknown",
+                    },
                     "source_attribution": attributions,
                     "relationship_claim_created": False,
                     "review_only": True,
@@ -783,6 +844,28 @@ def build_ecosystem_artifact(
 
     records = records[:MAX_ARTIFACT_RECORDS]
     ecosystem_counts = Counter(record["ecosystem_key"] for record in records)
+    sector_counts_by_ecosystem: dict[str, Counter[str]] = defaultdict(Counter)
+    for record in records:
+        sector = clean_string(record.get("company_sector")) or "Unknown"
+        sector_counts_by_ecosystem[record["ecosystem_key"]][sector] += 1
+    for record in records:
+        ecosystem_count = ecosystem_counts[record["ecosystem_key"]]
+        sector_counts = sector_counts_by_ecosystem.get(record["ecosystem_key"], Counter())
+        sector = clean_string(record.get("company_sector")) or "Unknown"
+        record["ecosystem_density_hint"] = {
+            "ecosystem_company_count": ecosystem_count,
+            "density_label": "dense_context_cluster"
+            if ecosystem_count >= 8
+            else "emerging_context_cluster"
+            if ecosystem_count >= 3
+            else "sparse_context_cluster",
+        }
+        record["sector_overlap_hint"] = {
+            "matched_sector": sector,
+            "same_sector_count": sector_counts.get(sector, 0),
+            "sector_count": len(sector_counts),
+            "cross_sector_context": len(sector_counts) > 1,
+        }
     return {
         "metadata": metadata,
         "summary": {
@@ -829,6 +912,10 @@ def build_topic_overlap_artifact(
                     "works_count": topic.get("works_count"),
                     "cited_by_count": topic.get("cited_by_count"),
                     "matched_tickers": sorted(set(tickers_by_ecosystem.get(ecosystem_key, [])))[:30],
+                    "ecosystem_density_hint": {
+                        "matched_ticker_count": len(set(tickers_by_ecosystem.get(ecosystem_key, []))),
+                        "topic_rank_role": "broad_context_topic",
+                    },
                     "confidence_label": "topic_context_hint",
                     "source_attribution": [
                         source_attribution(
@@ -901,6 +988,10 @@ def build_institution_overlap_artifact(
                     "shared_topic_count": len(overlap),
                     "source_institution_candidates": ticker_institutions.get(left, [])[:2],
                     "target_institution_candidates": ticker_institutions.get(right, [])[:2],
+                    "institution_adjacency_hint": {
+                        "shared_topic_count": len(overlap),
+                        "relationship_authority": False,
+                    },
                     "confidence_label": "institution_topic_overlap_hint",
                     "source_attribution": [
                         source_attribution(
@@ -951,6 +1042,18 @@ def build_cluster_hints_artifact(
                 "ecosystem_label": ECOSYSTEM_DEFINITIONS.get(ecosystem_key, {}).get("label", ecosystem_key),
                 "tickers": tickers[:50],
                 "ticker_count": len(tickers),
+                "ecosystem_density_hint": {
+                    "ticker_count": len(tickers),
+                    "density_label": "dense_context_cluster"
+                    if len(tickers) >= 8
+                    else "emerging_context_cluster"
+                    if len(tickers) >= 3
+                    else "sparse_context_cluster",
+                },
+                "sector_overlap_hint": {
+                    "source": "OpenAlex ecosystem context and static company metadata",
+                    "relationship_authority": False,
+                },
                 "confidence_label": "ecosystem_cluster_hint",
                 "source_attribution": [
                     source_attribution(
@@ -979,6 +1082,10 @@ def build_cluster_hints_artifact(
                 "topic_display_name": clean_string(topic.get("topic_display_name")),
                 "tickers": sorted({str(ticker) for ticker in tickers})[:50],
                 "ticker_count": len(set(tickers)),
+                "ecosystem_density_hint": {
+                    "ticker_count": len(set(tickers)),
+                    "density_label": "topic_overlap_context",
+                },
                 "confidence_label": "topic_cluster_hint",
                 "source_attribution": topic.get("source_attribution") or [],
                 "relationship_claim_created": False,
@@ -993,6 +1100,10 @@ def build_cluster_hints_artifact(
                 "cluster_id": "openalex-institution-topic-overlap",
                 "cluster_type": "institution_overlap_context",
                 "overlap_record_count": institution_overlap_count,
+                "institution_adjacency_hint": {
+                    "overlap_record_count": institution_overlap_count,
+                    "relationship_authority": False,
+                },
                 "confidence_label": "institution_overlap_cluster_hint",
                 "source_attribution": [
                     source_attribution(

@@ -473,10 +473,13 @@
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_review_queue.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_review_summary.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_overlap_report.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/review_pipeline_summary.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/source_coverage_refresh_report.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/openalex_*.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">docs/candidate_reviewer_checklist.md</div>
                         </div>
                         <p class="text-sm text-white/58 mt-4">
-                            Candidate files are review-only staging artifacts. They do not create production nodes or edges, and SEC graph visibility remains preview-only.
+                            Candidate and enrichment files are review-only staging artifacts. They do not create production nodes or edges, and SEC/OpenAlex graph visibility remains preview-only.
                         </p>
                     </div>
                 </div>
@@ -498,6 +501,8 @@
                         <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Reviewed Job Plan</span>
                         <span class="pipeline-arrow">-&gt;</span>
                         <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Bulk Candidate Generation</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Review Artifact Refresh</span>
                         <span class="pipeline-arrow">-&gt;</span>
                         <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Promotion Preview</span>
                         <span class="pipeline-arrow">-&gt;</span>
@@ -542,6 +547,28 @@
                             <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-triage">python scripts/sec_candidate_triage.py --write --force</code></pre>
                             <p class="mt-2 text-xs text-white/54">
                                 Generates review-only queue, summary, overlap, and checklist artifacts. It reads production data only for comparison and writes no production graph data.
+                            </p>
+                        </div>
+
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3B.</span> Review Artifact Refresh</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-review-refresh', this)" aria-label="Copy review artifact refresh command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-review-refresh">python scripts/review_artifact_refresh.py --write --force</code></pre>
+                            <p class="mt-2 text-xs text-white/54">
+                                Refreshes triage, preflight, source coverage, OpenAlex cache-only enrichment, validation, and a review pipeline summary. It does not run promotion.
+                            </p>
+                        </div>
+
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3C.</span> OpenAlex Enrichment</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-openalex', this)" aria-label="Copy OpenAlex enrichment command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-openalex">python scripts/openalex_enrichment.py --write --force --max-requests 24 --max-entities 20</code></pre>
+                            <p class="mt-2 text-xs text-white/54">
+                                Generates review-only OpenAlex ecosystem, topic, institution, and cluster hints. Add <span class="font-mono text-cyan-50/78">--allow-network</span> only when local budget and cache settings are acceptable.
                             </p>
                         </div>
 
@@ -720,6 +747,53 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                                     <tbody id="source-preflight-gap-rows"></tbody>
                                 </table>
                             </div>
+                        </div>
+                        <div class="source-review-pipeline-section mt-4 pt-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="source-workbench-label mb-2">Review Pipeline Refresh State</div>
+                                    <p class="text-sm text-white/56">
+                                        Static status from <span class="font-mono text-cyan-50/78">scripts/review_artifact_refresh.py</span>. Scheduled runs upload these files as artifacts only.
+                                    </p>
+                                </div>
+                                <div id="source-review-pipeline-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING PIPELINE</div>
+                            </div>
+                            <div id="source-review-pipeline-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                                Review pipeline summary is not present yet. Run the refresh command locally or download it from a scheduled workflow artifact.
+                            </div>
+                            <div id="source-review-pipeline-summary" class="hidden source-review-pipeline-grid mb-3"></div>
+                        </div>
+                        <div class="source-openalex-section mt-4 pt-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="source-workbench-label mb-2">OpenAlex Intelligence Hints</div>
+                                    <p class="text-sm text-white/56">
+                                        Review-only ecosystem, topic, institution, and cluster hints. OpenAlex context is not production proof and cannot promote relationships.
+                                    </p>
+                                </div>
+                                <div id="source-openalex-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING OPENALEX</div>
+                            </div>
+                            <div id="source-openalex-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                                OpenAlex artifacts are not present yet. Generate them locally or download them from the scheduled enrichment workflow artifacts.
+                            </div>
+                            <div id="source-openalex-summary" class="hidden source-openalex-grid mb-3"></div>
+                            <div id="source-openalex-hints" class="hidden source-openalex-hints mb-3"></div>
+                        </div>
+                        <div class="source-coverage-refresh-section mt-4 pt-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="source-workbench-label mb-2">Source Coverage Refresh Queue</div>
+                                    <p class="text-sm text-white/56">
+                                        Review-only source coverage state and reviewer priorities from <span class="font-mono text-cyan-50/78">scripts/source_coverage_refresh.py</span>.
+                                    </p>
+                                </div>
+                                <div id="source-coverage-refresh-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING COVERAGE</div>
+                            </div>
+                            <div id="source-coverage-refresh-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                                Source coverage refresh report is not present yet.
+                            </div>
+                            <div id="source-coverage-refresh-summary" class="hidden source-coverage-refresh-grid mb-3"></div>
+                            <div id="source-coverage-refresh-queue" class="hidden source-coverage-refresh-queue mb-3"></div>
                         </div>
                     </div>
                 </div>
@@ -6647,6 +6721,190 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderDataExpansionPreflight(report);
         }
 
+        function setWorkbenchArtifactStatus(elementId, label, tone = 'info') {
+            const status = document.getElementById(elementId);
+            if (!status) return;
+
+            status.innerText = label;
+            status.classList.toggle('text-yellow-100/70', tone === 'warning');
+            status.classList.toggle('border-yellow-300/20', tone === 'warning');
+            status.classList.toggle('bg-yellow-300/10', tone === 'warning');
+            status.classList.toggle('text-cyan-100/70', tone !== 'warning');
+            status.classList.toggle('border-cyan-300/20', tone !== 'warning');
+            status.classList.toggle('bg-cyan-300/10', tone !== 'warning');
+        }
+
+        function renderReviewArtifactMetric(label, value, cardClass = 'source-review-pipeline-card') {
+            return `
+                <div class="${cardClass} rounded-2xl p-3">
+                    <div class="text-[10px] text-white/42 font-mono">${escapeHtml(label)}</div>
+                    <div class="font-display text-xl text-white">${escapeHtml(formatCandidateCell(value))}</div>
+                </div>
+            `;
+        }
+
+        function renderReviewPipelineSummary(payload) {
+            const empty = document.getElementById('source-review-pipeline-empty');
+            const summaryWrap = document.getElementById('source-review-pipeline-summary');
+            if (!empty || !summaryWrap) return;
+
+            if (!payload) {
+                summaryWrap.classList.add('hidden');
+                empty.classList.remove('hidden');
+                setWorkbenchArtifactStatus('source-review-pipeline-status', 'PIPELINE UNAVAILABLE', 'warning');
+                return;
+            }
+
+            const summary = payload.summary || {};
+            summaryWrap.innerHTML = [
+                renderReviewArtifactMetric('STATUS', summary.status || 'review'),
+                renderReviewArtifactMetric('STEPS', summary.step_count ?? 0),
+                renderReviewArtifactMetric('FAILED', summary.failed_step_count ?? 0),
+                renderReviewArtifactMetric('LATEST UTC', summary.latest_review_pipeline_timestamp || payload.metadata?.generated_at_utc || 'pending')
+            ].join('');
+            summaryWrap.classList.remove('hidden');
+            empty.classList.add('hidden');
+            setWorkbenchArtifactStatus('source-review-pipeline-status', `${String(summary.status || 'PIPELINE').toUpperCase()}`);
+        }
+
+        async function loadReviewPipelineSummary() {
+            const payload = await fetchOptionalWorkbenchJson('data/candidates/review_pipeline_summary.json');
+            renderReviewPipelineSummary(payload);
+        }
+
+        function renderOpenAlexSummary(artifacts) {
+            const ecosystemCount = artifacts.ecosystem?.summary?.ecosystem_hint_count ?? 0;
+            const topicCount = artifacts.topic?.summary?.topic_candidate_count ?? 0;
+            const institutionCount = artifacts.institution?.summary?.institution_overlap_count ?? 0;
+            const clusterCount = artifacts.cluster?.summary?.cluster_hint_count ?? 0;
+            return [
+                renderReviewArtifactMetric('ECOSYSTEM HINTS', ecosystemCount, 'source-openalex-card'),
+                renderReviewArtifactMetric('TOPIC OVERLAPS', topicCount, 'source-openalex-card'),
+                renderReviewArtifactMetric('INSTITUTION OVERLAPS', institutionCount, 'source-openalex-card'),
+                renderReviewArtifactMetric('CLUSTER HINTS', clusterCount, 'source-openalex-card')
+            ].join('');
+        }
+
+        function renderOpenAlexHintRows(artifacts) {
+            const rows = Array.isArray(artifacts.ecosystem?.records)
+                ? artifacts.ecosystem.records.slice(0, 8)
+                : [];
+            if (!rows.length) {
+                return '<div class="text-sm text-white/35">No OpenAlex ecosystem hint rows in the current artifacts.</div>';
+            }
+            return rows.map(row => {
+                const sourceCount = Array.isArray(row.source_attribution) ? row.source_attribution.length : 0;
+                const reasons = Array.isArray(row.match_reasons) ? row.match_reasons.slice(0, 3).join(', ') : '';
+                return `
+                    <div class="source-openalex-hint rounded-2xl p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-xs text-white/86 font-semibold">${escapeHtml(formatCandidateCell(row.ticker))} ${escapeHtml(row.ecosystem_label || 'OpenAlex context')}</div>
+                                <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(reasons || 'Review-only ecosystem context hint.')}</div>
+                            </div>
+                            <span class="review-action-chip">${escapeHtml(row.confidence_label || 'context_hint')}</span>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${sourceCount} SOURCE${sourceCount === 1 ? '' : 'S'}</span>
+                            <span class="source-host-chip">NO CLAIM</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderOpenAlexArtifacts(artifacts) {
+            const empty = document.getElementById('source-openalex-empty');
+            const summaryWrap = document.getElementById('source-openalex-summary');
+            const hintsWrap = document.getElementById('source-openalex-hints');
+            if (!empty || !summaryWrap || !hintsWrap) return;
+
+            const hasAny = Boolean(artifacts.ecosystem || artifacts.topic || artifacts.institution || artifacts.cluster);
+            if (!hasAny) {
+                summaryWrap.classList.add('hidden');
+                hintsWrap.classList.add('hidden');
+                empty.classList.remove('hidden');
+                setWorkbenchArtifactStatus('source-openalex-status', 'OPENALEX UNAVAILABLE', 'warning');
+                return;
+            }
+
+            summaryWrap.innerHTML = renderOpenAlexSummary(artifacts);
+            summaryWrap.classList.remove('hidden');
+            hintsWrap.innerHTML = renderOpenAlexHintRows(artifacts);
+            hintsWrap.classList.remove('hidden');
+            empty.classList.add('hidden');
+            const ecosystemCount = Number(artifacts.ecosystem?.summary?.ecosystem_hint_count || 0);
+            setWorkbenchArtifactStatus('source-openalex-status', `${ecosystemCount} OPENALEX HINT${ecosystemCount === 1 ? '' : 'S'}`);
+        }
+
+        async function loadOpenAlexArtifacts() {
+            const [ecosystem, topic, institution, cluster] = await Promise.all([
+                fetchOptionalWorkbenchJson('data/candidates/openalex_ecosystem_candidates.json'),
+                fetchOptionalWorkbenchJson('data/candidates/openalex_topic_overlap.json'),
+                fetchOptionalWorkbenchJson('data/candidates/openalex_institution_overlap.json'),
+                fetchOptionalWorkbenchJson('data/candidates/openalex_cluster_hints.json')
+            ]);
+            renderOpenAlexArtifacts({ ecosystem, topic, institution, cluster });
+        }
+
+        function renderCoverageRefreshSummary(report) {
+            const summary = report?.summary || {};
+            return [
+                renderReviewArtifactMetric('UNSOURCED', summary.unsourced_edges ?? 0, 'source-coverage-refresh-card'),
+                renderReviewArtifactMetric('WEAK TYPES', summary.weak_relationship_category_count ?? 0, 'source-coverage-refresh-card'),
+                renderReviewArtifactMetric('ECOSYSTEM GAPS', summary.ecosystem_gap_count ?? 0, 'source-coverage-refresh-card'),
+                renderReviewArtifactMetric('PRIORITIES', summary.reviewer_priority_count ?? 0, 'source-coverage-refresh-card')
+            ].join('');
+        }
+
+        function renderCoverageRefreshQueue(report) {
+            const queue = Array.isArray(report?.reviewer_priority_queue)
+                ? report.reviewer_priority_queue.slice(0, 8)
+                : [];
+            if (!queue.length) {
+                return '<div class="text-sm text-white/35">No reviewer priority rows in the source coverage report.</div>';
+            }
+            return queue.map(item => `
+                <div class="source-coverage-refresh-item rounded-2xl p-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-xs text-white/86 font-semibold">${escapeHtml(formatCandidateCell(item.source_ticker))} -> ${escapeHtml(formatCandidateCell(item.target_ticker))}</div>
+                            <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(item.reason || item.queue_type || 'Review priority')}</div>
+                        </div>
+                        <span class="review-action-chip">${escapeHtml(item.priority || 'review')}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCoverageRefreshReport(report) {
+            const empty = document.getElementById('source-coverage-refresh-empty');
+            const summaryWrap = document.getElementById('source-coverage-refresh-summary');
+            const queueWrap = document.getElementById('source-coverage-refresh-queue');
+            if (!empty || !summaryWrap || !queueWrap) return;
+
+            if (!report) {
+                summaryWrap.classList.add('hidden');
+                queueWrap.classList.add('hidden');
+                empty.classList.remove('hidden');
+                setWorkbenchArtifactStatus('source-coverage-refresh-status', 'COVERAGE UNAVAILABLE', 'warning');
+                return;
+            }
+
+            summaryWrap.innerHTML = renderCoverageRefreshSummary(report);
+            summaryWrap.classList.remove('hidden');
+            queueWrap.innerHTML = renderCoverageRefreshQueue(report);
+            queueWrap.classList.remove('hidden');
+            empty.classList.add('hidden');
+            const priorities = Number(report.summary?.reviewer_priority_count || 0);
+            setWorkbenchArtifactStatus('source-coverage-refresh-status', `${priorities} PRIORIT${priorities === 1 ? 'Y' : 'IES'}`);
+        }
+
+        async function loadCoverageRefreshReport() {
+            const report = await fetchOptionalWorkbenchJson('data/candidates/source_coverage_refresh_report.json');
+            renderCoverageRefreshReport(report);
+        }
+
         function roundedRect(ctx, x, y, width, height, radius) {
             graphRender.roundedRect(ctx, x, y, width, height, radius);
         }
@@ -6661,6 +6919,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         loadSourceCandidatePreview();
         loadSourceTriageArtifacts();
         loadDataExpansionPreflightReport();
+        loadReviewPipelineSummary();
+        loadOpenAlexArtifacts();
+        loadCoverageRefreshReport();
         loadData();
     </script>
 </body>

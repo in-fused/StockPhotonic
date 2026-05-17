@@ -1,0 +1,142 @@
+{
+  "artifact_paths": {
+    "candidate_overlap_report": "data/candidates/candidate_overlap_report.json",
+    "candidate_review_queue": "data/candidates/candidate_review_queue.json",
+    "candidate_review_summary": "data/candidates/candidate_review_summary.json",
+    "data_expansion_preflight": "data/candidates/data_expansion_preflight_report.json",
+    "openalex_cluster_hints": "data/candidates/openalex_cluster_hints.json",
+    "openalex_ecosystem_candidates": "data/candidates/openalex_ecosystem_candidates.json",
+    "openalex_institution_overlap": "data/candidates/openalex_institution_overlap.json",
+    "openalex_topic_overlap": "data/candidates/openalex_topic_overlap.json",
+    "source_coverage_refresh": "data/candidates/source_coverage_refresh_report.json"
+  },
+  "metadata": {
+    "artifact_status": "review_only",
+    "generated_at_utc": "2026-05-17T03:07:15+00:00",
+    "generated_by": "scripts/review_artifact_refresh.py",
+    "network_calls": 0,
+    "output_path": "data/candidates/review_pipeline_summary.json",
+    "pipeline_started_at_utc": "2026-05-17T03:07:14+00:00",
+    "production_write_allowed": false
+  },
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "production_writes": 0,
+    "review_only": true
+  },
+  "steps": [
+    {
+      "command": "python scripts/sec_candidate_triage.py --write --force",
+      "name": "sec_candidate_triage",
+      "return_code": 0,
+      "status": "passed",
+      "stderr_tail": [],
+      "stdout_tail": [
+        "Enrichment opportunities: 1",
+        "Exact duplicates: 0",
+        "Same-pair different-type: 1",
+        "Production edges missing source URLs: 78",
+        "Production writes: 0",
+        "",
+        "Artifacts",
+        "---------",
+        "- queue: data\\candidates\\candidate_review_queue.json",
+        "- summary: data\\candidates\\candidate_review_summary.json",
+        "- overlap: data\\candidates\\candidate_overlap_report.json",
+        "- checklist: docs\\candidate_reviewer_checklist.md"
+      ]
+    },
+    {
+      "command": "python scripts/data_expansion_preflight.py --write --force",
+      "name": "data_expansion_preflight",
+      "return_code": 0,
+      "status": "passed",
+      "stderr_tail": [],
+      "stdout_tail": [
+        "Data expansion preflight",
+        "========================",
+        "Production companies: 60",
+        "Production edges: 121",
+        "Sourced ratio: 36%",
+        "Unsourced edges: 78",
+        "SEC-backed edges: 14",
+        "Stale review edges: 0",
+        "Candidate previews: 10",
+        "Candidate blocker flags: 19",
+        "Production writes: 0",
+        "Report path: data\\candidates\\data_expansion_preflight_report.json"
+      ]
+    },
+    {
+      "command": "python scripts/source_coverage_refresh.py --write --force",
+      "name": "source_coverage_refresh",
+      "return_code": 0,
+      "status": "passed",
+      "stderr_tail": [],
+      "stdout_tail": [
+        "Source coverage refresh",
+        "=======================",
+        "Unsourced edges: 78",
+        "Stale review edges: 0",
+        "Weak relationship categories: 4",
+        "Ecosystem gaps: 5",
+        "Reviewer priorities: 30",
+        "Production writes: 0",
+        "Report path: data\\candidates\\source_coverage_refresh_report.json"
+      ]
+    },
+    {
+      "command": "python scripts/openalex_enrichment.py --write --force --max-requests 24 --max-entities 20",
+      "name": "openalex_enrichment",
+      "return_code": 0,
+      "status": "passed",
+      "stderr_tail": [],
+      "stdout_tail": [
+        "OpenAlex review-only enrichment",
+        "===============================",
+        "Mode: cache-only/dry-run",
+        "Companies processed: 20",
+        "Network requests used: 0 / 24",
+        "Budget skips: 0",
+        "Ecosystem hints: 26",
+        "Topic candidates: 0",
+        "Institution overlaps: 0",
+        "Cluster hints: 6",
+        "Production writes: 0"
+      ]
+    },
+    {
+      "command": "python scripts/validate_data.py",
+      "name": "validation",
+      "return_code": 0,
+      "status": "passed",
+      "stderr_tail": [],
+      "stdout_tail": [
+        "- Connection 25: Confidence mismatch: expected 5, found 4.",
+        "- Connection 26: Confidence mismatch: expected 5, found 4.",
+        "- Connection 27: Confidence mismatch: expected 5, found 4.",
+        "- Connection 49: Confidence mismatch: expected 4, found 5.",
+        "- Connection 50: Confidence mismatch: expected 5, found 4.",
+        "- Connection 93: Confidence mismatch: expected 3, found 4.",
+        "- Connection 94: Confidence mismatch: expected 3, found 4.",
+        "- Connection 95: Confidence mismatch: expected 3, found 4.",
+        "- Connection 100: Confidence mismatch: expected 3, found 4.",
+        "- Connection 101: Confidence mismatch: expected 3, found 4.",
+        "- Connection 113: Confidence mismatch: expected 3, found 4.",
+        "- Connection 117: Confidence mismatch: expected 3, found 4."
+      ]
+    }
+  ],
+  "summary": {
+    "failed_step_count": 0,
+    "latest_review_pipeline_timestamp": "2026-05-17T03:07:15+00:00",
+    "openalex_network_enabled": false,
+    "review_only": true,
+    "status": "passed",
+    "step_count": 5,
+    "write_enabled": true
+  }
+}

@@ -1,0 +1,100 @@
+name: Review Artifact Refresh
+
+on:
+  schedule:
+    - cron: "29 12 * * 3"
+  workflow_dispatch:
+    inputs:
+      allow_openalex_network:
+        description: "Allow bounded OpenAlex lookups during refresh"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      openalex_max_requests:
+        description: "Hard OpenAlex request cap"
+        required: true
+        default: "24"
+      openalex_max_entities:
+        description: "Maximum companies to resolve through OpenAlex"
+        required: true
+        default: "20"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: review-artifact-refresh
+  cancel-in-progress: false
+
+jobs:
+  review-refresh:
+    name: Refresh Review-Only Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore OpenAlex cache
+        uses: actions/cache@v4
+        with:
+          path: data/cache/openalex
+          key: openalex-cache-${{ runner.os }}-${{ hashFiles('data/companies.json', 'data/candidates/sec_relationship_candidates.json') }}
+          restore-keys: |
+            openalex-cache-${{ runner.os }}-
+
+      - name: Compile Python scripts
+        run: python -m py_compile scripts/*.py
+
+      - name: Refresh review artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ALLOW_OPENALEX_NETWORK="${{ inputs.allow_openalex_network || 'false' }}"
+          OPENALEX_MAX_REQUESTS="${{ inputs.openalex_max_requests || '24' }}"
+          OPENALEX_MAX_ENTITIES="${{ inputs.openalex_max_entities || '20' }}"
+          EXTRA_ARGS=()
+
+          if [ "${{ github.event_name }}" = "schedule" ] && [ -n "${OPENALEX_API_KEY:-}" ]; then
+            ALLOW_OPENALEX_NETWORK="true"
+          fi
+
+          if [ "$ALLOW_OPENALEX_NETWORK" = "true" ]; then
+            EXTRA_ARGS+=(--allow-openalex-network)
+          fi
+
+          python scripts/review_artifact_refresh.py \
+            --write \
+            --force \
+            --openalex-max-requests "$OPENALEX_MAX_REQUESTS" \
+            --openalex-max-entities "$OPENALEX_MAX_ENTITIES" \
+            "${EXTRA_ARGS[@]}"
+
+      - name: Validate static data and review artifacts
+        run: python scripts/validate_data.py
+
+      - name: Upload refreshed review artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-artifact-refresh
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            data/candidates/*.json
+            data/cache/openalex/*.json
+            docs/candidate_reviewer_checklist.md

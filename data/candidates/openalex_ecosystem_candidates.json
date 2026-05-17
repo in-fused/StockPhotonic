@@ -1,0 +1,645 @@
+{
+  "ecosystem_counts": {
+    "ai_infrastructure": 7,
+    "cloud_hyperscaler": 7,
+    "energy_infrastructure": 2,
+    "financial_market_infrastructure": 4,
+    "healthcare_biotech": 3,
+    "semiconductor_supply_chain": 3
+  },
+  "metadata": {
+    "artifact_status": "review_only",
+    "auto_promotion_allowed": false,
+    "cache_path": "data/cache/openalex/entity_resolution_cache.json",
+    "cache_ttl_days": 45,
+    "candidate_count": 10,
+    "candidates_read": "data/candidates/sec_relationship_candidates.json",
+    "companies_read": "data/companies.json",
+    "dry_run": true,
+    "generated_at_utc": "2026-05-17T03:07:14+00:00",
+    "generated_by": "scripts/openalex_enrichment.py",
+    "input_company_count": 60,
+    "max_entities": 20,
+    "max_requests": 24,
+    "network_enabled": false,
+    "network_requests_skipped_for_budget": 0,
+    "network_requests_used": 0,
+    "notes": [
+      "OpenAlex records are review-only enrichment hints.",
+      "OpenAlex does not prove production relationships.",
+      "No candidate is promoted by this artifact."
+    ],
+    "per_page": 5,
+    "processed_company_count": 20,
+    "production_write_allowed": false,
+    "relationship_claim_authority": false,
+    "source_role": "enrichment_context_only",
+    "source_system": "OpenAlex"
+  },
+  "records": [
+    {
+      "company_name": "NVIDIA Corporation",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "match_reasons": [
+        "accelerator",
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "NVDA"
+    },
+    {
+      "company_name": "NVIDIA Corporation",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "NVDA"
+    },
+    {
+      "company_name": "Microsoft Corporation",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "match_reasons": [
+        "cloud"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MSFT"
+    },
+    {
+      "company_name": "Apple Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "match_reasons": [
+        "cloud"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AAPL"
+    },
+    {
+      "company_name": "Alphabet Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "GOOGL"
+    },
+    {
+      "company_name": "Alphabet Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "match_reasons": [
+        "cloud"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "GOOGL"
+    },
+    {
+      "company_name": "Amazon.com, Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "match_reasons": [
+        "cloud"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AMZN"
+    },
+    {
+      "company_name": "Meta Platforms, Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "META"
+    },
+    {
+      "company_name": "Meta Platforms, Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "match_reasons": [
+        "cloud"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "META"
+    },
+    {
+      "company_name": "Taiwan Semiconductor Manufacturing Company Limited",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "TSM"
+    },
+    {
+      "company_name": "Taiwan Semiconductor Manufacturing Company Limited",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "match_reasons": [
+        "foundry",
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "TSM"
+    },
+    {
+      "company_name": "Broadcom Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AVGO"
+    },
+    {
+      "company_name": "Broadcom Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "match_reasons": [
+        "semiconductor"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AVGO"
+    },
+    {
+      "company_name": "Broadcom Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "match_reasons": [
+        "networking"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "AVGO"
+    },
+    {
+      "company_name": "Berkshire Hathaway Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "match_reasons": [
+        "financial",
+        "payment",
+        "payments"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "BRK-B"
+    },
+    {
+      "company_name": "Tesla, Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "match_reasons": [
+        "energy"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "TSLA"
+    },
+    {
+      "company_name": "JPMorgan Chase & Co.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "match_reasons": [
+        "bank",
+        "banking",
+        "financial",
+        "payment",
+        "payments"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "JPM"
+    },
+    {
+      "company_name": "Walmart Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "WMT"
+    },
+    {
+      "company_name": "Eli Lilly and Company",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "match_reasons": [
+        "pharma",
+        "pharmaceutical"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "LLY"
+    },
+    {
+      "company_name": "Visa Inc.",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "match_reasons": [
+        "financial",
+        "payment",
+        "payments"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "V"
+    },
+    {
+      "company_name": "Oracle Corporation",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "match_reasons": [
+        "cloud"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "ORCL"
+    },
+    {
+      "company_name": "Mastercard Incorporated",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "match_reasons": [
+        "financial",
+        "payment",
+        "payments"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "MA"
+    },
+    {
+      "company_name": "Exxon Mobil Corporation",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "match_reasons": [
+        "energy",
+        "oil"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "XOM"
+    },
+    {
+      "company_name": "Costco Wholesale Corporation",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "match_reasons": [
+        "ai"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "COST"
+    },
+    {
+      "company_name": "Johnson & Johnson",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "match_reasons": [
+        "pharma",
+        "pharmaceutical"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "JNJ"
+    },
+    {
+      "company_name": "UnitedHealth Group Incorporated",
+      "confidence_label": "low_context_hint",
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "match_reasons": [
+        "pharma"
+      ],
+      "openalex_institution_candidates": [],
+      "openalex_topic_candidates": [],
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "static_match",
+          "review_only": true,
+          "source": "StockPhotonic static metadata",
+          "source_type": "company_or_candidate_text"
+        }
+      ],
+      "ticker": "UNH"
+    }
+  ],
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "relationship_claims_created": 0,
+    "review_only": true
+  },
+  "summary": {
+    "ecosystem_count": 6,
+    "ecosystem_hint_count": 26,
+    "openalex_institution_candidate_count": 0,
+    "openalex_topic_candidate_count": 0,
+    "review_only": true
+  }
+}

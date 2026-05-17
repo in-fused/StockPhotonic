@@ -26,6 +26,16 @@ CANDIDATE_PATH = ROOT / "data" / "candidates" / "sec_relationship_candidates.jso
 CANDIDATE_QUEUE_PATH = ROOT / "data" / "candidates" / "candidate_review_queue.json"
 CANDIDATE_SUMMARY_PATH = ROOT / "data" / "candidates" / "candidate_review_summary.json"
 CANDIDATE_OVERLAP_PATH = ROOT / "data" / "candidates" / "candidate_overlap_report.json"
+DATA_EXPANSION_PREFLIGHT_PATH = ROOT / "data" / "candidates" / "data_expansion_preflight_report.json"
+SOURCE_COVERAGE_REFRESH_PATH = ROOT / "data" / "candidates" / "source_coverage_refresh_report.json"
+REVIEW_PIPELINE_SUMMARY_PATH = ROOT / "data" / "candidates" / "review_pipeline_summary.json"
+OPENALEX_CACHE_PATH = ROOT / "data" / "cache" / "openalex" / "entity_resolution_cache.json"
+OPENALEX_ARTIFACT_PATHS = (
+    (ROOT / "data" / "candidates" / "openalex_ecosystem_candidates.json", "openalex_ecosystem_candidates"),
+    (ROOT / "data" / "candidates" / "openalex_topic_overlap.json", "openalex_topic_overlap"),
+    (ROOT / "data" / "candidates" / "openalex_institution_overlap.json", "openalex_institution_overlap"),
+    (ROOT / "data" / "candidates" / "openalex_cluster_hints.json", "openalex_cluster_hints"),
+)
 
 ALLOWED_TYPES = {
     "supply",
@@ -235,6 +245,200 @@ def validate_triage_artifact_file(
                     errors.append(
                         f"{artifact_name} comparison {index}: unsupported reviewer action {action!r}."
                     )
+
+
+def validate_review_only_metadata(
+    payload: dict[str, Any],
+    artifact_name: str,
+    errors: list[str],
+) -> dict[str, Any] | None:
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        errors.append(f"{artifact_name} metadata must be an object.")
+        return None
+    if metadata.get("artifact_status") != "review_only":
+        errors.append(f"{artifact_name} metadata.artifact_status must be review_only.")
+    if metadata.get("production_write_allowed") is not False:
+        errors.append(f"{artifact_name} metadata.production_write_allowed must be false.")
+    return metadata
+
+
+def validate_safety_zero_writes(
+    payload: dict[str, Any],
+    artifact_name: str,
+    errors: list[str],
+) -> None:
+    safety = payload.get("safety")
+    if not isinstance(safety, dict):
+        errors.append(f"{artifact_name} safety must be an object.")
+        return
+    if safety.get("production_writes") != 0:
+        errors.append(f"{artifact_name} safety.production_writes must be 0.")
+    if safety.get("companies_written", 0) != 0:
+        errors.append(f"{artifact_name} safety.companies_written must be 0.")
+    if safety.get("connections_written", 0) != 0:
+        errors.append(f"{artifact_name} safety.connections_written must be 0.")
+    if safety.get("browser_ingestion") is True:
+        errors.append(f"{artifact_name} safety.browser_ingestion must not be true.")
+
+
+def validate_openalex_artifact_file(
+    path: Path,
+    artifact_name: str,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    if not path.exists():
+        warnings.append(f"{artifact_name} artifact is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} artifact must contain an object.")
+        return
+
+    validate_review_only_metadata(payload, artifact_name, errors)
+    validate_safety_zero_writes(payload, artifact_name, errors)
+    records = payload.get("records")
+    if not isinstance(records, list):
+        errors.append(f"{artifact_name} records must be a list.")
+        return
+
+    for index, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            errors.append(f"{artifact_name} record {index}: must be an object.")
+            continue
+        if record.get("review_only") is not True:
+            errors.append(f"{artifact_name} record {index}: review_only must be true.")
+        if record.get("relationship_claim_created") is not False:
+            errors.append(
+                f"{artifact_name} record {index}: relationship_claim_created must be false."
+            )
+        if clean_string(record.get("confidence_label")) is None:
+            errors.append(f"{artifact_name} record {index}: confidence_label is required.")
+        source_attribution = record.get("source_attribution")
+        if not isinstance(source_attribution, list) or not source_attribution:
+            errors.append(f"{artifact_name} record {index}: source_attribution is required.")
+        else:
+            for source_index, source in enumerate(source_attribution, start=1):
+                if not isinstance(source, dict):
+                    errors.append(
+                        f"{artifact_name} record {index} source {source_index}: must be an object."
+                    )
+                    continue
+                if clean_string(source.get("source")) is None:
+                    errors.append(
+                        f"{artifact_name} record {index} source {source_index}: source is required."
+                    )
+                if clean_string(source.get("source_type")) is None:
+                    errors.append(
+                        f"{artifact_name} record {index} source {source_index}: source_type is required."
+                    )
+
+
+def validate_source_coverage_refresh_file(
+    path: Path,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    artifact_name = "source_coverage_refresh_report"
+    if not path.exists():
+        warnings.append(f"{artifact_name} artifact is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} must contain an object.")
+        return
+    validate_review_only_metadata(payload, artifact_name, errors)
+    validate_safety_zero_writes(payload, artifact_name, errors)
+    queue = payload.get("reviewer_priority_queue")
+    if not isinstance(queue, list):
+        errors.append(f"{artifact_name} reviewer_priority_queue must be a list.")
+        return
+    for index, row in enumerate(queue, start=1):
+        if not isinstance(row, dict):
+            errors.append(f"{artifact_name} queue row {index}: must be an object.")
+            continue
+        if row.get("review_only") is not True:
+            errors.append(f"{artifact_name} queue row {index}: review_only must be true.")
+
+
+def validate_review_pipeline_summary_file(
+    path: Path,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    artifact_name = "review_pipeline_summary"
+    if not path.exists():
+        warnings.append(f"{artifact_name} artifact is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} must contain an object.")
+        return
+    validate_review_only_metadata(payload, artifact_name, errors)
+    validate_safety_zero_writes(payload, artifact_name, errors)
+    steps = payload.get("steps")
+    if not isinstance(steps, list):
+        errors.append(f"{artifact_name} steps must be a list.")
+
+
+def validate_preflight_artifact_file(
+    path: Path,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    artifact_name = "data_expansion_preflight_report"
+    if not path.exists():
+        warnings.append(f"{artifact_name} artifact is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} must contain an object.")
+        return
+    validate_review_only_metadata(payload, artifact_name, errors)
+    validate_safety_zero_writes(payload, artifact_name, errors)
+    if not isinstance(payload.get("high_value_unsourced_edges"), list):
+        errors.append(f"{artifact_name} high_value_unsourced_edges must be a list.")
+
+
+def validate_openalex_cache_file(
+    path: Path,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    if not path.exists():
+        warnings.append("OpenAlex cache is absent; cache validation skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append("OpenAlex cache must contain an object.")
+        return
+    metadata = payload.get("metadata")
+    if not isinstance(metadata, dict):
+        errors.append("OpenAlex cache metadata must be an object.")
+    else:
+        if metadata.get("cache_status") != "review_only_cache":
+            errors.append("OpenAlex cache metadata.cache_status must be review_only_cache.")
+        if metadata.get("production_write_allowed") is not False:
+            errors.append("OpenAlex cache metadata.production_write_allowed must be false.")
+    entries = payload.get("entries")
+    if not isinstance(entries, dict):
+        errors.append("OpenAlex cache entries must be an object.")
+        return
+    for key, entry in entries.items():
+        if not isinstance(key, str) or not isinstance(entry, dict):
+            errors.append("OpenAlex cache entries must map string keys to objects.")
+            continue
+        if "api_key" in key.lower():
+            errors.append("OpenAlex cache key must not expose api_key.")
+        params = entry.get("params")
+        if isinstance(params, dict) and any("api_key" in str(item).lower() for item in params):
+            errors.append("OpenAlex cache params must not expose api_key.")
 
 
 def validate(strict_confidence: bool = False) -> int:
@@ -447,6 +651,33 @@ def validate(strict_confidence: bool = False) -> int:
     validate_triage_artifact_file(
         CANDIDATE_OVERLAP_PATH,
         "candidate_overlap_report",
+        errors,
+        warnings,
+    )
+    validate_preflight_artifact_file(
+        DATA_EXPANSION_PREFLIGHT_PATH,
+        errors,
+        warnings,
+    )
+    validate_source_coverage_refresh_file(
+        SOURCE_COVERAGE_REFRESH_PATH,
+        errors,
+        warnings,
+    )
+    validate_review_pipeline_summary_file(
+        REVIEW_PIPELINE_SUMMARY_PATH,
+        errors,
+        warnings,
+    )
+    for artifact_path, artifact_name in OPENALEX_ARTIFACT_PATHS:
+        validate_openalex_artifact_file(
+            artifact_path,
+            artifact_name,
+            errors,
+            warnings,
+        )
+    validate_openalex_cache_file(
+        OPENALEX_CACHE_PATH,
         errors,
         warnings,
     )

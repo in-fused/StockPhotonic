@@ -1,0 +1,99 @@
+name: OpenAlex Review Enrichment
+
+on:
+  schedule:
+    - cron: "43 14 * * 2"
+  workflow_dispatch:
+    inputs:
+      allow_network:
+        description: "Allow bounded OpenAlex API lookups"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      max_requests:
+        description: "Hard OpenAlex request cap"
+        required: true
+        default: "24"
+      max_entities:
+        description: "Maximum production companies to resolve"
+        required: true
+        default: "20"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openalex-review-enrichment
+  cancel-in-progress: false
+
+jobs:
+  openalex-review:
+    name: Generate OpenAlex Review Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore OpenAlex cache
+        uses: actions/cache@v4
+        with:
+          path: data/cache/openalex
+          key: openalex-cache-${{ runner.os }}-${{ hashFiles('data/companies.json', 'data/candidates/sec_relationship_candidates.json') }}
+          restore-keys: |
+            openalex-cache-${{ runner.os }}-
+
+      - name: Compile Python scripts
+        run: python -m py_compile scripts/*.py
+
+      - name: Generate OpenAlex review artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ALLOW_NETWORK="${{ inputs.allow_network || 'false' }}"
+          MAX_REQUESTS="${{ inputs.max_requests || '24' }}"
+          MAX_ENTITIES="${{ inputs.max_entities || '20' }}"
+          EXTRA_ARGS=()
+
+          if [ "${{ github.event_name }}" = "schedule" ] && [ -n "${OPENALEX_API_KEY:-}" ]; then
+            ALLOW_NETWORK="true"
+          fi
+
+          if [ "$ALLOW_NETWORK" = "true" ]; then
+            EXTRA_ARGS+=(--allow-network)
+          fi
+
+          python scripts/openalex_enrichment.py \
+            --write \
+            --force \
+            --max-requests "$MAX_REQUESTS" \
+            --max-entities "$MAX_ENTITIES" \
+            "${EXTRA_ARGS[@]}"
+
+      - name: Validate static data and OpenAlex artifacts
+        run: python scripts/validate_data.py
+
+      - name: Upload OpenAlex review artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: openalex-review-artifacts
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            data/candidates/openalex_*.json
+            data/cache/openalex/*.json

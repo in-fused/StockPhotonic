@@ -6,6 +6,8 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - 3D Network capabilities: Three.js production-network view with orbiting camera, search, labels, filters, SEC emphasis, neighborhood depth, selected details, and fullscreen exploration.
 - Source Workbench pipeline: Static, read-only guide and candidate preview surface for the local SEC workflow.
 - SEC ingestion + candidate system: Local scripts support SEC fetch/cache, filing inspection, signal extraction, candidate preview, candidate writing, job manifests, schedule previews, and policy gates.
+- Scheduled review orchestration: Local/GitHub Actions review pipelines refresh SEC, OpenAlex, source coverage, preflight, and pipeline summary artifacts without production writes.
+- OpenAlex intelligence layer: Cache-first enrichment for ecosystem, topic, institution, and cluster hints. It is review-only context, not relationship proof.
 - Promotion + validation flow: Source-backed candidates must pass preview, manual review, explicit promotion, and `scripts/validate_data.py` before production use.
 
 ## CORE RULES
@@ -31,6 +33,8 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Data expansion through SEC-backed candidates, not direct production writes.
 - Broader source coverage from SEC filings, company disclosures, official pages, and reputable secondary sources when needed.
 - Better review ergonomics for candidate evaluation, clustering, overlap reports, checklist exports, data expansion preflight, and promotion previews.
+- Scheduled review artifact refreshes that reduce manual triage burden while keeping artifacts review-only.
+- OpenAlex enrichment cache quality, entity resolution accuracy, and reviewer-visible topic/institution context.
 - Relationship evidence depth: short source snippets, filing references, source aging review queues, source-host diversity, and relationship-specific confidence explanations.
 - Future open-data review workflow: source registry rules that can pre-classify URL host categories, expose review aging thresholds, and export reviewer checklists while preserving candidate -> preview -> manual promotion.
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
@@ -50,6 +54,14 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Add route target selection after guided discovery proves useful with reviewers.
 - Expand Source Workbench preflight into reviewer-owned checklists without automatic promotion.
 - Add source-backed expansion batches only after preflight, candidate preview, manual review, promotion preview, and validation all pass.
+
+## D143 FOLLOW-ON
+
+- Add reviewer decisions to OpenAlex and source coverage artifact rows before any future promotion tooling consumes them.
+- Improve deterministic ticker-to-OpenAlex entity mapping with reviewed aliases and blocked false-positive mappings.
+- Add artifact aging/retention policy for stale OpenAlex cache entries and scheduled workflow artifacts.
+- Add optional source registry joins for official company/IR URLs after they have validation rules.
+- Keep larger-graph expansion behind candidate preview, manual review, promotion preview, and validation.
 
 ## D140 FOLLOW-ON
 

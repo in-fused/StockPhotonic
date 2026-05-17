@@ -1,0 +1,110 @@
+name: SEC Candidate Review Pipeline
+
+on:
+  schedule:
+    - cron: "17 13 * * 1"
+  workflow_dispatch:
+    inputs:
+      job_id:
+        description: "Reviewed SEC job id from data/candidates/sec_jobs.json"
+        required: true
+        default: "mega_cap_core"
+      allow_network:
+        description: "Allow SEC network fetches with SEC_USER_AGENT"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      write_candidates:
+        description: "Write review-only SEC candidate file in the workflow workspace"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sec-candidate-review-pipeline
+  cancel-in-progress: false
+
+jobs:
+  sec-candidate-review:
+    name: Generate SEC Review Artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore SEC cache
+        uses: actions/cache@v4
+        with:
+          path: data/cache/sec
+          key: sec-cache-${{ runner.os }}-${{ hashFiles('data/candidates/cik_mappings.json', 'data/candidates/sec_jobs.json') }}
+          restore-keys: |
+            sec-cache-${{ runner.os }}-
+
+      - name: Compile Python scripts
+        run: python -m py_compile scripts/*.py
+
+      - name: Preview scheduled plan
+        run: |
+          mkdir -p data/candidates
+          python scripts/sec_scheduled_run_preview.py --schedule-id weekly_mega_cap_core_preview --json > data/candidates/sec_scheduled_preview_report.json
+
+      - name: Optional bounded SEC candidate generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          JOB_ID="${{ inputs.job_id || 'mega_cap_core' }}"
+          ALLOW_NETWORK="${{ inputs.allow_network || 'true' }}"
+          WRITE_CANDIDATES="${{ inputs.write_candidates || 'true' }}"
+
+          if [ "$ALLOW_NETWORK" != "true" ]; then
+            echo "SEC network generation skipped by workflow input."
+            exit 0
+          fi
+
+          if [ -z "${SEC_USER_AGENT:-}" ]; then
+            echo "SEC_USER_AGENT secret is not configured; skipping network generation."
+            exit 0
+          fi
+
+          COMMAND=(python scripts/sec_job_run.py --job-id "$JOB_ID" --allow-network --user-agent "$SEC_USER_AGENT")
+          if [ "$WRITE_CANDIDATES" = "true" ]; then
+            COMMAND+=(--write-candidates --force)
+          fi
+          "${COMMAND[@]}"
+
+      - name: Refresh review-only artifacts
+        run: python scripts/review_artifact_refresh.py --write --force --skip-openalex
+
+      - name: Validate static data and review artifacts
+        run: python scripts/validate_data.py
+
+      - name: Upload review artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sec-candidate-review-artifacts
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            data/candidates/*.json
+            docs/candidate_reviewer_checklist.md

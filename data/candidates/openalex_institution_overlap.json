@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "artifact_status": "review_only",
+    "auto_promotion_allowed": false,
+    "cache_path": "data/cache/openalex/entity_resolution_cache.json",
+    "cache_ttl_days": 45,
+    "candidate_count": 10,
+    "candidates_read": "data/candidates/sec_relationship_candidates.json",
+    "companies_read": "data/companies.json",
+    "dry_run": true,
+    "generated_at_utc": "2026-05-17T03:07:14+00:00",
+    "generated_by": "scripts/openalex_enrichment.py",
+    "input_company_count": 60,
+    "max_entities": 20,
+    "max_requests": 24,
+    "network_enabled": false,
+    "network_requests_skipped_for_budget": 0,
+    "network_requests_used": 0,
+    "notes": [
+      "OpenAlex records are review-only enrichment hints.",
+      "OpenAlex does not prove production relationships.",
+      "No candidate is promoted by this artifact."
+    ],
+    "per_page": 5,
+    "processed_company_count": 20,
+    "production_write_allowed": false,
+    "relationship_claim_authority": false,
+    "source_role": "enrichment_context_only",
+    "source_system": "OpenAlex"
+  },
+  "records": [],
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "relationship_claims_created": 0,
+    "review_only": true
+  },
+  "summary": {
+    "institution_overlap_count": 0,
+    "review_only": true,
+    "tickers_with_openalex_topic_context": 0
+  }
+}

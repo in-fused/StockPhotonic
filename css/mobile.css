@@ -706,7 +706,12 @@
             .source-candidate-review-grid,
             .source-triage-grid,
             .source-preflight-grid,
+            .source-review-pipeline-grid,
+            .source-openalex-grid,
+            .source-coverage-refresh-grid,
             .source-preflight-priorities,
+            .source-openalex-hints,
+            .source-coverage-refresh-queue,
             .source-candidate-groups {
                 grid-template-columns: 1fr !important;
             }
@@ -741,6 +746,11 @@
             .source-triage-card,
             .source-preflight-card,
             .source-preflight-priority,
+            .source-review-pipeline-card,
+            .source-openalex-card,
+            .source-openalex-hint,
+            .source-coverage-refresh-card,
+            .source-coverage-refresh-item,
             .source-checklist-panel,
             .source-candidate-group {
                 min-width: 0;

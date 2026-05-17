@@ -6,6 +6,8 @@ Document: StockPhotonic Data Sources. Production graph data is static JSON: `dat
 - 3D Network capabilities: Renders the same production dataset with Three.js; it does not create, promote, or alter data.
 - Source Workbench pipeline: Read-only browser surface for local source commands, candidate review, triage artifacts, and data expansion preflight. It can display static artifact contents served from the repo, but cannot run ingestion or write production data.
 - SEC ingestion + candidate system: SEC cache, filing inspection, signal extraction, candidate preview/write, job, schedule, and policy scripts operate locally and keep staged records under `data/candidates/`.
+- Scheduled review orchestration: GitHub Actions and local scripts can refresh review-only SEC, OpenAlex, preflight, source coverage, and pipeline summary artifacts. They upload artifacts only and do not commit or promote production graph data.
+- OpenAlex intelligence layer: Local/script-side enrichment for ecosystem, topic, institution, and clustering hints. OpenAlex is context, not relationship proof or promotion authority.
 - Promotion + validation flow: SEC-backed candidates can become production edges only after preview, manual review, explicit promotion, and validation.
 
 ## CORE RULES
@@ -71,6 +73,50 @@ Generated review-only artifacts:
 - `docs/candidate_reviewer_checklist.md`
 
 The triage artifacts cluster candidates by source ticker, target ticker, relationship type, filing form, repeated pair, repeated evidence phrase, and source host/category. They also compare candidates to `data/connections.json`, identify same-pair overlaps, production edges missing source URLs, and candidate evidence that could enrich an existing edge. These are labels for review only; they do not merge or promote data.
+
+## SCHEDULED REVIEW ORCHESTRATION
+
+D143 adds review-only scheduled/local orchestration:
+
+```text
+python scripts/review_artifact_refresh.py --write --force
+```
+
+Generated review-only artifacts:
+
+- `data/candidates/review_pipeline_summary.json`
+- `data/candidates/source_coverage_refresh_report.json`
+- `data/candidates/openalex_ecosystem_candidates.json`
+- `data/candidates/openalex_topic_overlap.json`
+- `data/candidates/openalex_institution_overlap.json`
+- `data/candidates/openalex_cluster_hints.json`
+
+GitHub Actions workflows:
+
+- `.github/workflows/sec_candidate_pipeline.yml`
+- `.github/workflows/openalex_enrichment.yml`
+- `.github/workflows/review_artifact_refresh.yml`
+
+These workflows restore caches, run bounded local scripts, validate outputs, and upload artifacts. They do not push commits, mutate production graph data, or run promotion.
+
+## OPENALEX ENRICHMENT
+
+OpenAlex is used for ecosystem discovery, topic overlap, research clustering, institution overlap, and company/topic proximity hints:
+
+```text
+python scripts/openalex_enrichment.py --write --force
+python scripts/openalex_enrichment.py --write --force --allow-network --max-requests 24 --max-entities 20
+```
+
+Default mode is cache-only/dry-run. Network mode requires explicit `--allow-network`, respects a hard request cap, reuses `data/cache/openalex/entity_resolution_cache.json`, and never writes API keys to artifacts or cache. `OPENALEX_API_KEY` can be provided locally or as a GitHub Secret.
+
+OpenAlex-derived records must remain:
+
+- `review_only`
+- source-attributed
+- confidence-labeled
+- `relationship_claim_created: false`
+- outside production promotion unless separately reviewed through the existing candidate workflow
 
 ## CANDIDATE VS PRODUCTION
 

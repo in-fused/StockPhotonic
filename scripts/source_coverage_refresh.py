@@ -1,0 +1,355 @@
+#!/usr/bin/env python3
+"""Build a review-only source coverage refresh report.
+
+This helper expands the D142 preflight output into a reviewer priority queue.
+It reads production data and candidate/preflight artifacts, but never mutates
+production companies or connections.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sys
+from collections import Counter
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+from data_expansion_preflight import (  # type: ignore
+    DEFAULT_CANDIDATES_PATH,
+    DEFAULT_COMPANIES_PATH,
+    DEFAULT_CONNECTIONS_PATH,
+    DEFAULT_REVIEW_QUEUE_PATH,
+    DEFAULT_REVIEW_SUMMARY_PATH,
+    PreflightError,
+    build_report,
+    display_path,
+    resolve_path,
+)
+
+
+sys.dont_write_bytecode = True
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_OUTPUT_PATH = ROOT / "data" / "candidates" / "source_coverage_refresh_report.json"
+PRODUCTION_DATA_PATHS = (
+    ROOT / "data" / "companies.json",
+    ROOT / "data" / "connections.json",
+)
+
+
+class SourceCoverageRefreshError(Exception):
+    """Raised for clear source coverage refresh failures."""
+
+
+def parse_args(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Generate a review-only source coverage refresh report with "
+            "reviewer priority queues. Performs no network calls and no "
+            "production writes."
+        )
+    )
+    parser.add_argument("--companies", default=str(DEFAULT_COMPANIES_PATH))
+    parser.add_argument("--connections", default=str(DEFAULT_CONNECTIONS_PATH))
+    parser.add_argument("--candidates", default=str(DEFAULT_CANDIDATES_PATH))
+    parser.add_argument("--review-summary", default=str(DEFAULT_REVIEW_SUMMARY_PATH))
+    parser.add_argument("--review-queue", default=str(DEFAULT_REVIEW_QUEUE_PATH))
+    parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH))
+    parser.add_argument("--write", action="store_true", help="Write the review-only report.")
+    parser.add_argument("--force", action="store_true", help="Overwrite the report when --write is used.")
+    parser.add_argument("--json", action="store_true", help="Print report JSON.")
+    args = parser.parse_args(argv)
+    if args.force and not args.write:
+        parser.error("--force can only be used with --write.")
+    return args
+
+
+def write_json(path: Path, payload: dict[str, Any], *, force: bool) -> None:
+    if path.exists() and not force:
+        raise SourceCoverageRefreshError(f"{display_path(path)} already exists; pass --force.")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="\n") as file:
+        json.dump(payload, file, indent=2, sort_keys=True)
+        file.write("\n")
+
+
+def production_hashes() -> dict[Path, str]:
+    hashes: dict[Path, str] = {}
+    for path in PRODUCTION_DATA_PATHS:
+        try:
+            hashes[path] = hashlib.sha256(path.read_bytes()).hexdigest()
+        except OSError as exc:
+            raise SourceCoverageRefreshError(
+                f"could not read production guard file {display_path(path)}: {exc}"
+            ) from exc
+    return hashes
+
+
+def assert_production_unchanged(initial_hashes: dict[Path, str]) -> None:
+    current = production_hashes()
+    changed = [
+        display_path(path)
+        for path, initial_hash in initial_hashes.items()
+        if current.get(path) != initial_hash
+    ]
+    if changed:
+        raise SourceCoverageRefreshError(
+            "production data changed during source coverage refresh: "
+            f"{', '.join(changed)}"
+        )
+
+
+def weak_relationship_categories(preflight: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = preflight.get("relationship_type_source_gaps")
+    if not isinstance(rows, list):
+        return []
+    weak_rows: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        total = int(row.get("total_edges") or 0)
+        unsourced = int(row.get("unsourced_edges") or 0)
+        sourced_ratio = float(row.get("sourced_ratio") or 0)
+        if unsourced <= 0:
+            continue
+        weak_rows.append(
+            {
+                "relationship_type": row.get("relationship_type"),
+                "total_edges": total,
+                "unsourced_edges": unsourced,
+                "sourced_ratio": round(sourced_ratio, 4),
+                "priority": "high" if unsourced >= 10 or sourced_ratio < 0.5 else "medium",
+                "review_only": True,
+            }
+        )
+    return sorted(
+        weak_rows,
+        key=lambda row: (
+            {"high": 2, "medium": 1}.get(str(row["priority"]), 0),
+            int(row["unsourced_edges"]),
+            str(row["relationship_type"]),
+        ),
+        reverse=True,
+    )
+
+
+def ecosystem_gap_rows(preflight: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = preflight.get("high_value_unsourced_edges")
+    if not isinstance(rows, list):
+        return []
+    keyword_groups = {
+        "ai_infrastructure": ("ai", "gpu", "data center", "accelerator", "cloud"),
+        "semiconductor_supply_chain": ("semiconductor", "chip", "wafer", "foundry", "memory"),
+        "healthcare_biotech": ("pharma", "biotech", "clinical", "drug", "therapy"),
+        "energy_infrastructure": ("energy", "power", "grid", "pipeline", "oil", "gas"),
+        "financial_market_infrastructure": ("bank", "payment", "exchange", "asset", "financial"),
+    }
+    gaps: Counter[str] = Counter()
+    samples: dict[str, list[dict[str, Any]]] = {key: [] for key in keyword_groups}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        text = " ".join(
+            str(row.get(field) or "").lower()
+            for field in ("relationship_type", "label", "source_ticker", "target_ticker")
+        )
+        for ecosystem, keywords in keyword_groups.items():
+            if any(keyword in text for keyword in keywords):
+                gaps[ecosystem] += 1
+                if len(samples[ecosystem]) < 5:
+                    samples[ecosystem].append(
+                        {
+                            "connection_index": row.get("connection_index"),
+                            "source_ticker": row.get("source_ticker"),
+                            "target_ticker": row.get("target_ticker"),
+                            "relationship_type": row.get("relationship_type"),
+                            "priority": row.get("priority"),
+                        }
+                    )
+    return [
+        {
+            "ecosystem_key": ecosystem,
+            "unsourced_high_value_count": count,
+            "sample_edges": samples.get(ecosystem, []),
+            "review_only": True,
+        }
+        for ecosystem, count in sorted(gaps.items(), key=lambda item: (-item[1], item[0]))
+    ]
+
+
+def build_reviewer_priority_queue(preflight: dict[str, Any]) -> list[dict[str, Any]]:
+    queue: list[dict[str, Any]] = []
+    for row in (preflight.get("high_value_unsourced_edges") or [])[:20]:
+        if not isinstance(row, dict):
+            continue
+        queue.append(
+            {
+                "queue_id": f"source-gap-{row.get('connection_index')}",
+                "queue_type": "production_edge_missing_source_url",
+                "priority": row.get("priority") or "review",
+                "source_ticker": row.get("source_ticker"),
+                "target_ticker": row.get("target_ticker"),
+                "relationship_type": row.get("relationship_type"),
+                "reason": "High-value production edge lacks source URLs.",
+                "review_only": True,
+            }
+        )
+
+    blockers = preflight.get("candidate_promotion_blockers")
+    samples = blockers.get("sample_blockers") if isinstance(blockers, dict) else []
+    if isinstance(samples, list):
+        for sample in samples[:12]:
+            if not isinstance(sample, dict):
+                continue
+            queue.append(
+                {
+                    "queue_id": f"candidate-blocker-{sample.get('candidate_index')}",
+                    "queue_type": "candidate_promotion_blocker",
+                    "priority": "high" if "missing_production_ticker" in (sample.get("blockers") or []) else "medium",
+                    "source_ticker": sample.get("source_ticker"),
+                    "target_ticker": sample.get("target_ticker"),
+                    "relationship_type": sample.get("relationship_type"),
+                    "reason": ", ".join(sample.get("blockers") or []) or "Candidate blocker requires review.",
+                    "review_only": True,
+                }
+            )
+    return queue
+
+
+def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
+    companies_path = resolve_path(args.companies)
+    connections_path = resolve_path(args.connections)
+    candidates_path = resolve_path(args.candidates)
+    review_summary_path = resolve_path(args.review_summary)
+    review_queue_path = resolve_path(args.review_queue)
+    output_path = resolve_path(args.output)
+    generated_at = datetime.now(timezone.utc).replace(microsecond=0)
+
+    try:
+        preflight = build_report(
+            companies_path=companies_path,
+            connections_path=connections_path,
+            candidates_path=candidates_path,
+            review_summary_path=review_summary_path,
+            review_queue_path=review_queue_path,
+        )
+    except PreflightError as exc:
+        raise SourceCoverageRefreshError(str(exc)) from exc
+
+    weak_categories = weak_relationship_categories(preflight)
+    ecosystem_gaps = ecosystem_gap_rows(preflight)
+    queue = build_reviewer_priority_queue(preflight)
+    coverage = preflight.get("production_edge_source_coverage") or {}
+
+    report = {
+        "metadata": {
+            "artifact_status": "review_only",
+            "generated_by": "scripts/source_coverage_refresh.py",
+            "generated_at_utc": generated_at.isoformat(),
+            "production_write_allowed": False,
+            "network_calls": 0,
+            "production_files_read": {
+                "companies": display_path(companies_path),
+                "connections": display_path(connections_path),
+            },
+            "optional_files_read": {
+                "candidates": display_path(candidates_path),
+                "review_summary": display_path(review_summary_path),
+                "review_queue": display_path(review_queue_path),
+            },
+            "output_path": display_path(output_path),
+        },
+        "summary": {
+            "total_edges": coverage.get("total_edges", 0),
+            "unsourced_edges": coverage.get("unsourced_edges", 0),
+            "stale_review_edges": coverage.get("stale_review_edges", 0),
+            "weak_relationship_category_count": len(weak_categories),
+            "ecosystem_gap_count": len(ecosystem_gaps),
+            "reviewer_priority_count": len(queue),
+            "missing_production_ticker_count": len(
+                preflight.get("candidate_tickers_missing_from_production_universe") or []
+            ),
+            "review_only": True,
+        },
+        "source_coverage_refresh_state": {
+            "latest_refresh_at_utc": generated_at.isoformat(),
+            "source_coverage_ratio": coverage.get("sourced_ratio", 0),
+            "preflight_present": True,
+            "production_writes": 0,
+            "review_only": True,
+        },
+        "weak_relationship_categories": weak_categories,
+        "ecosystem_gaps": ecosystem_gaps,
+        "missing_production_tickers": preflight.get("candidate_tickers_missing_from_production_universe") or [],
+        "reviewer_priority_queue": queue,
+        "safety": {
+            "review_only": True,
+            "network_calls": 0,
+            "production_writes": 0,
+            "companies_written": 0,
+            "connections_written": 0,
+            "browser_ingestion": False,
+        },
+    }
+    validate_report(report)
+    return report
+
+
+def validate_report(report: dict[str, Any]) -> None:
+    metadata = report.get("metadata")
+    if not isinstance(metadata, dict):
+        raise SourceCoverageRefreshError("report metadata is required.")
+    if metadata.get("artifact_status") != "review_only":
+        raise SourceCoverageRefreshError("source coverage report must be review_only.")
+    if metadata.get("production_write_allowed") is not False:
+        raise SourceCoverageRefreshError("source coverage report cannot allow production writes.")
+    if report.get("safety", {}).get("production_writes") != 0:
+        raise SourceCoverageRefreshError("source coverage report safety must show zero production writes.")
+    queue = report.get("reviewer_priority_queue")
+    if not isinstance(queue, list):
+        raise SourceCoverageRefreshError("reviewer_priority_queue must be a list.")
+    for item in queue:
+        if not isinstance(item, dict) or item.get("review_only") is not True:
+            raise SourceCoverageRefreshError("reviewer priority rows must be review_only objects.")
+
+
+def print_human(report: dict[str, Any], output_path: Path) -> None:
+    summary = report["summary"]
+    print("Source coverage refresh")
+    print("=======================")
+    print(f"Unsourced edges: {summary['unsourced_edges']}")
+    print(f"Stale review edges: {summary['stale_review_edges']}")
+    print(f"Weak relationship categories: {summary['weak_relationship_category_count']}")
+    print(f"Ecosystem gaps: {summary['ecosystem_gap_count']}")
+    print(f"Reviewer priorities: {summary['reviewer_priority_count']}")
+    print("Production writes: 0")
+    print(f"Report path: {display_path(output_path)}")
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv if argv is not None else sys.argv[1:])
+    output_path = resolve_path(args.output)
+    initial_hashes = production_hashes()
+    try:
+        report = build_refresh_report(args)
+        if args.write:
+            write_json(output_path, report, force=args.force)
+        assert_production_unchanged(initial_hashes)
+    except SourceCoverageRefreshError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        print("production writes: 0", file=sys.stderr)
+        return 2
+
+    if args.json:
+        json.dump(report, sys.stdout, indent=2, sort_keys=True)
+        print()
+    else:
+        print_human(report, output_path)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

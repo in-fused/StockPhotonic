@@ -6,6 +6,8 @@ Document: StockPhotonic Architecture. StockPhotonic is a static browser app. `in
 - 3D Network capabilities: Three.js production graph with camera controls, labels, SEC emphasis, sector/type filters, neighborhood depth, search, details panel, and fullscreen mode.
 - Source Workbench pipeline: Static UI tab documenting local SEC commands, candidate files, workflow stages, candidate preview status, and generated triage/overlap artifacts when present.
 - SEC ingestion + candidate system: Python scripts under `scripts/` handle local SEC cache/fetch/inspect/report/candidate workflows and keep staging output under `data/candidates/`.
+- Scheduled review orchestration: GitHub Actions and local Python wrappers refresh review-only SEC, OpenAlex, preflight, source coverage, and pipeline summary artifacts without commits or production graph writes.
+- OpenAlex intelligence layer: Script-side cache-first enrichment for ecosystem/topic/institution/cluster hints. It never runs in the browser and never proves or promotes relationships.
 - Promotion + validation flow: Candidate data is previewed and manually promoted into production JSON, then validated before use.
 
 ## CORE RULES
@@ -34,6 +36,7 @@ StockPhotonic/
     connections.json          # Production connections
     candidates/               # Review-only staging data
     cache/sec/                # Local SEC cache artifacts
+    cache/openalex/           # Local OpenAlex entity/topic cache, ignored by git
   js/
     core/                     # Dataset loading and normalization
     graph/                    # 2D render/viewport/layout plus 3D view
@@ -61,6 +64,7 @@ D141/D142 graph overlays and guides are read-only visual interpretations of exis
 - Graph controls: sector, industry group, relationship type, confidence tier, source-host category, sourced-only, SEC-backed-only, stale-review, candidate-preview, missing-evidence, portfolio-connected, cross-sector, layout, search, focus, threshold, orbit, portfolio input, SEC preview visibility, guided discovery dock, ecosystem overlay dock, active graph legend, source coverage lens, guided traversal, and route tracing.
 - Sidebar/dashboard: selected company investigation workspace, relationship evidence cards, evidence review queue, relationship timeline context, connection rows, SEC evidence cues, source/confidence/freshness/host-diversity summaries, nexus view, shared exposure, hidden relationships, cluster context, portfolio exposure, trust summary.
 - Source Workbench: command reference, evidence-state contract, source aging/host-category rules, pipeline overview, candidate file list, recommended local workflow, grouped candidate review snapshot, static candidate preview table, triage metric cards, checklist status, candidate-vs-production overlap comparison, and optional data expansion preflight report display.
+- Scheduled review artifacts: Source Workbench can also display review pipeline timestamps, OpenAlex enrichment summaries, source coverage refresh queues, and missing-artifact fallback states.
 
 CSS ownership is split by layer. Shared shell styles live in `css/shell.css`, graph/fullscreen styles in `css/graph.css`, StockPhotonic styles in `css/stock.css`, CryptoPhotonic styles in `css/crypto.css`, review/source styles in `css/review.css`, and responsive overrides in `css/mobile.css`. Do not use `css/crypto.css` as a shared catch-all.
 
@@ -78,15 +82,19 @@ The graph renderer uses these same derived fields to strengthen sourced/high-con
 
 D142 adds `scripts/data_expansion_preflight.py` as a local-only review report helper. It reads production JSON and optional candidate/triage artifacts, then writes only `data/candidates/data_expansion_preflight_report.json` when explicitly requested. Source Workbench can display that static artifact if present. The helper reports production source coverage, high-value unsourced edges, relationship type gaps, candidate blockers, and missing production-universe tickers without network calls or production writes.
 
+D143 adds `scripts/source_coverage_refresh.py`, `scripts/openalex_enrichment.py`, and `scripts/review_artifact_refresh.py`. These scripts generate review-only artifacts for reviewer queues, OpenAlex ecosystem/topic/institution/cluster hints, and pipeline refresh status. OpenAlex networking is disabled unless explicitly requested and is bounded by request/entity caps plus cache reuse. The app only reads generated JSON files; it does not call OpenAlex or SEC from the browser.
+
 ## PIPELINE COMPONENTS
 
 - Source registry and candidate validators define allowed source and relationship metadata.
 - SEC scripts fetch/cache filings only when explicitly requested and properly identified.
 - Candidate scripts generate review-only relationship records with short snippets, filing references, ticker-pairing metadata, and safe confidence hints.
 - Triage scripts generate queue, summary, overlap, and checklist artifacts without production writes.
+- OpenAlex scripts generate source-labeled context hints without production writes, relationship proof, or promotion authority.
+- Scheduled workflow scripts refresh review artifacts and validate outputs, then upload artifacts only.
 - Promotion preview classifies candidates before production writes.
 - Manual promotion can write reviewed edges to `data/connections.json`.
-- `scripts/validate_data.py` enforces production dataset integrity and validates candidate/triage artifact shape when those review files exist.
+- `scripts/validate_data.py` enforces production dataset integrity and validates candidate, triage, preflight, source coverage, OpenAlex, cache, and pipeline artifact shape when those review files exist.
 
 ## SEC CANDIDATE INTELLIGENCE
 

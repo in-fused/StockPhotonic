@@ -1,0 +1,193 @@
+{
+  "metadata": {
+    "artifact_status": "review_only",
+    "auto_promotion_allowed": false,
+    "cache_path": "data/cache/openalex/entity_resolution_cache.json",
+    "cache_ttl_days": 45,
+    "candidate_count": 10,
+    "candidates_read": "data/candidates/sec_relationship_candidates.json",
+    "companies_read": "data/companies.json",
+    "dry_run": true,
+    "generated_at_utc": "2026-05-17T03:07:14+00:00",
+    "generated_by": "scripts/openalex_enrichment.py",
+    "input_company_count": 60,
+    "max_entities": 20,
+    "max_requests": 24,
+    "network_enabled": false,
+    "network_requests_skipped_for_budget": 0,
+    "network_requests_used": 0,
+    "notes": [
+      "OpenAlex records are review-only enrichment hints.",
+      "OpenAlex does not prove production relationships.",
+      "No candidate is promoted by this artifact."
+    ],
+    "per_page": 5,
+    "processed_company_count": 20,
+    "production_write_allowed": false,
+    "relationship_claim_authority": false,
+    "source_role": "enrichment_context_only",
+    "source_system": "OpenAlex"
+  },
+  "records": [
+    {
+      "cluster_id": "openalex-ecosystem-ai_infrastructure",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_key": "ai_infrastructure",
+      "ecosystem_label": "AI Infrastructure",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 7,
+      "tickers": [
+        "AVGO",
+        "COST",
+        "GOOGL",
+        "META",
+        "NVDA",
+        "TSM",
+        "WMT"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-cloud_hyperscaler",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_key": "cloud_hyperscaler",
+      "ecosystem_label": "Cloud / Hyperscaler",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 7,
+      "tickers": [
+        "AAPL",
+        "AMZN",
+        "AVGO",
+        "GOOGL",
+        "META",
+        "MSFT",
+        "ORCL"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-energy_infrastructure",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_key": "energy_infrastructure",
+      "ecosystem_label": "Energy Infrastructure",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 2,
+      "tickers": [
+        "TSLA",
+        "XOM"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-financial_market_infrastructure",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_key": "financial_market_infrastructure",
+      "ecosystem_label": "Financial Market Infrastructure",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 4,
+      "tickers": [
+        "BRK-B",
+        "JPM",
+        "MA",
+        "V"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-healthcare_biotech",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_key": "healthcare_biotech",
+      "ecosystem_label": "Healthcare / Biotech",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 3,
+      "tickers": [
+        "JNJ",
+        "LLY",
+        "UNH"
+      ]
+    },
+    {
+      "cluster_id": "openalex-ecosystem-semiconductor_supply_chain",
+      "cluster_type": "ecosystem_context",
+      "confidence_label": "ecosystem_cluster_hint",
+      "ecosystem_key": "semiconductor_supply_chain",
+      "ecosystem_label": "Semiconductor Supply Chain",
+      "relationship_claim_created": false,
+      "review_only": true,
+      "source_attribution": [
+        {
+          "lookup_status": "cache_or_bounded_lookup",
+          "review_only": true,
+          "source": "OpenAlex",
+          "source_type": "topic_or_institution_context"
+        }
+      ],
+      "ticker_count": 3,
+      "tickers": [
+        "AVGO",
+        "NVDA",
+        "TSM"
+      ]
+    }
+  ],
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "relationship_claims_created": 0,
+    "review_only": true
+  },
+  "summary": {
+    "cluster_hint_count": 6,
+    "review_only": true
+  }
+}

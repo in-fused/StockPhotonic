@@ -1,0 +1,538 @@
+{
+  "ecosystem_gaps": [
+    {
+      "ecosystem_key": "ai_infrastructure",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "connection_index": 99,
+          "priority": "medium",
+          "relationship_type": "supply",
+          "source_ticker": "GE",
+          "target_ticker": "BA"
+        },
+        {
+          "connection_index": 43,
+          "priority": "medium",
+          "relationship_type": "competitor",
+          "source_ticker": "GOOGL",
+          "target_ticker": "AMZN"
+        },
+        {
+          "connection_index": 44,
+          "priority": "medium",
+          "relationship_type": "competitor",
+          "source_ticker": "GOOGL",
+          "target_ticker": "META"
+        },
+        {
+          "connection_index": 18,
+          "priority": "medium",
+          "relationship_type": "ecosystem",
+          "source_ticker": "AVGO",
+          "target_ticker": "GOOGL"
+        },
+        {
+          "connection_index": 46,
+          "priority": "medium",
+          "relationship_type": "competitor",
+          "source_ticker": "AMZN",
+          "target_ticker": "ORCL"
+        }
+      ],
+      "unsourced_high_value_count": 8
+    },
+    {
+      "ecosystem_key": "energy_infrastructure",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "connection_index": 90,
+          "priority": "medium",
+          "relationship_type": "competitor",
+          "source_ticker": "XOM",
+          "target_ticker": "CVX"
+        },
+        {
+          "connection_index": 93,
+          "priority": "medium",
+          "relationship_type": "supply",
+          "source_ticker": "SLB",
+          "target_ticker": "XOM"
+        },
+        {
+          "connection_index": 94,
+          "priority": "medium",
+          "relationship_type": "supply",
+          "source_ticker": "SLB",
+          "target_ticker": "CVX"
+        },
+        {
+          "connection_index": 95,
+          "priority": "medium",
+          "relationship_type": "supply",
+          "source_ticker": "SLB",
+          "target_ticker": "COP"
+        },
+        {
+          "connection_index": 91,
+          "priority": "medium",
+          "relationship_type": "competitor",
+          "source_ticker": "XOM",
+          "target_ticker": "COP"
+        }
+      ],
+      "unsourced_high_value_count": 6
+    },
+    {
+      "ecosystem_key": "financial_market_infrastructure",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "connection_index": 56,
+          "priority": "medium",
+          "relationship_type": "competitor",
+          "source_ticker": "V",
+          "target_ticker": "MA"
+        },
+        {
+          "connection_index": 65,
+          "priority": "medium",
+          "relationship_type": "competitor",
+          "source_ticker": "JPM",
+          "target_ticker": "BAC"
+        },
+        {
+          "connection_index": 61,
+          "priority": "medium",
+          "relationship_type": "ecosystem",
+          "source_ticker": "V",
+          "target_ticker": "JPM"
+        },
+        {
+          "connection_index": 62,
+          "priority": "medium",
+          "relationship_type": "ecosystem",
+          "source_ticker": "MA",
+          "target_ticker": "JPM"
+        }
+      ],
+      "unsourced_high_value_count": 4
+    },
+    {
+      "ecosystem_key": "healthcare_biotech",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "connection_index": 78,
+          "priority": "medium",
+          "relationship_type": "competitor",
+          "source_ticker": "CVS",
+          "target_ticker": "CI"
+        }
+      ],
+      "unsourced_high_value_count": 1
+    },
+    {
+      "ecosystem_key": "semiconductor_supply_chain",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "connection_index": 31,
+          "priority": "medium",
+          "relationship_type": "competitor",
+          "source_ticker": "AMAT",
+          "target_ticker": "LRCX"
+        }
+      ],
+      "unsourced_high_value_count": 1
+    }
+  ],
+  "metadata": {
+    "artifact_status": "review_only",
+    "generated_at_utc": "2026-05-17T03:07:14+00:00",
+    "generated_by": "scripts/source_coverage_refresh.py",
+    "network_calls": 0,
+    "optional_files_read": {
+      "candidates": "data\\candidates\\sec_relationship_candidates.json",
+      "review_queue": "data\\candidates\\candidate_review_queue.json",
+      "review_summary": "data\\candidates\\candidate_review_summary.json"
+    },
+    "output_path": "data\\candidates\\source_coverage_refresh_report.json",
+    "production_files_read": {
+      "companies": "data\\companies.json",
+      "connections": "data\\connections.json"
+    },
+    "production_write_allowed": false
+  },
+  "missing_production_tickers": [
+    "ENB",
+    "ET",
+    "KMI",
+    "MPLX",
+    "MRNA",
+    "PAA",
+    "SUN"
+  ],
+  "reviewer_priority_queue": [
+    {
+      "priority": "high",
+      "queue_id": "source-gap-117",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "partnership",
+      "review_only": true,
+      "source_ticker": "AAPL",
+      "target_ticker": "GOOGL"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-99",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "supply",
+      "review_only": true,
+      "source_ticker": "GE",
+      "target_ticker": "BA"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-56",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "V",
+      "target_ticker": "MA"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-43",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "GOOGL",
+      "target_ticker": "AMZN"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-90",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "XOM",
+      "target_ticker": "CVX"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-44",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "GOOGL",
+      "target_ticker": "META"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-100",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "supply",
+      "review_only": true,
+      "source_ticker": "RTX",
+      "target_ticker": "BA"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-93",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "supply",
+      "review_only": true,
+      "source_ticker": "SLB",
+      "target_ticker": "XOM"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-113",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "supply",
+      "review_only": true,
+      "source_ticker": "MCD",
+      "target_ticker": "KO"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-65",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "JPM",
+      "target_ticker": "BAC"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-77",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "UNH",
+      "target_ticker": "CI"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-94",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "supply",
+      "review_only": true,
+      "source_ticker": "SLB",
+      "target_ticker": "CVX"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-95",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "supply",
+      "review_only": true,
+      "source_ticker": "SLB",
+      "target_ticker": "COP"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-78",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "CVS",
+      "target_ticker": "CI"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-61",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "ecosystem",
+      "review_only": true,
+      "source_ticker": "V",
+      "target_ticker": "JPM"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-18",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "ecosystem",
+      "review_only": true,
+      "source_ticker": "AVGO",
+      "target_ticker": "GOOGL"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-62",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "ecosystem",
+      "review_only": true,
+      "source_ticker": "MA",
+      "target_ticker": "JPM"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-91",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "XOM",
+      "target_ticker": "COP"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-76",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "UNH",
+      "target_ticker": "CVS"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "source-gap-92",
+      "queue_type": "production_edge_missing_source_url",
+      "reason": "High-value production edge lacks source URLs.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_ticker": "CVX",
+      "target_ticker": "COP"
+    },
+    {
+      "priority": "high",
+      "queue_id": "candidate-blocker-1",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "missing_production_ticker, pending_manual_review",
+      "relationship_type": "partnership",
+      "review_only": true,
+      "source_ticker": "PAA",
+      "target_ticker": "ENB"
+    },
+    {
+      "priority": "high",
+      "queue_id": "candidate-blocker-2",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "missing_production_ticker, pending_manual_review",
+      "relationship_type": "partnership",
+      "review_only": true,
+      "source_ticker": "ET",
+      "target_ticker": "KMI"
+    },
+    {
+      "priority": "high",
+      "queue_id": "candidate-blocker-3",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "missing_production_ticker, pending_manual_review",
+      "relationship_type": "partnership",
+      "review_only": true,
+      "source_ticker": "ET",
+      "target_ticker": "ENB"
+    },
+    {
+      "priority": "high",
+      "queue_id": "candidate-blocker-4",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "missing_production_ticker, pending_manual_review",
+      "relationship_type": "partnership",
+      "review_only": true,
+      "source_ticker": "ET",
+      "target_ticker": "SUN"
+    },
+    {
+      "priority": "high",
+      "queue_id": "candidate-blocker-5",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "missing_production_ticker, pending_manual_review",
+      "relationship_type": "supplier_customer",
+      "review_only": true,
+      "source_ticker": "ET",
+      "target_ticker": "KMI"
+    },
+    {
+      "priority": "high",
+      "queue_id": "candidate-blocker-6",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "missing_production_ticker, pending_manual_review",
+      "relationship_type": "supplier_customer",
+      "review_only": true,
+      "source_ticker": "PAA",
+      "target_ticker": "ENB"
+    },
+    {
+      "priority": "high",
+      "queue_id": "candidate-blocker-7",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "missing_production_ticker, pending_manual_review",
+      "relationship_type": "partnership",
+      "review_only": true,
+      "source_ticker": "MRK",
+      "target_ticker": "MRNA"
+    },
+    {
+      "priority": "medium",
+      "queue_id": "candidate-blocker-8",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "pending_manual_review",
+      "relationship_type": "partnership",
+      "review_only": true,
+      "source_ticker": "MRK",
+      "target_ticker": "PFE"
+    },
+    {
+      "priority": "high",
+      "queue_id": "candidate-blocker-9",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "missing_production_ticker, pending_manual_review",
+      "relationship_type": "investment",
+      "review_only": true,
+      "source_ticker": "ET",
+      "target_ticker": "SUN"
+    },
+    {
+      "priority": "high",
+      "queue_id": "candidate-blocker-10",
+      "queue_type": "candidate_promotion_blocker",
+      "reason": "missing_production_ticker, pending_manual_review",
+      "relationship_type": "partnership",
+      "review_only": true,
+      "source_ticker": "MPLX",
+      "target_ticker": "ET"
+    }
+  ],
+  "safety": {
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_calls": 0,
+    "production_writes": 0,
+    "review_only": true
+  },
+  "source_coverage_refresh_state": {
+    "latest_refresh_at_utc": "2026-05-17T03:07:14+00:00",
+    "preflight_present": true,
+    "production_writes": 0,
+    "review_only": true,
+    "source_coverage_ratio": 0.3554
+  },
+  "summary": {
+    "ecosystem_gap_count": 5,
+    "missing_production_ticker_count": 7,
+    "review_only": true,
+    "reviewer_priority_count": 30,
+    "stale_review_edges": 0,
+    "total_edges": 121,
+    "unsourced_edges": 78,
+    "weak_relationship_category_count": 4
+  },
+  "weak_relationship_categories": [
+    {
+      "priority": "high",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "sourced_ratio": 0.1628,
+      "total_edges": 43,
+      "unsourced_edges": 36
+    },
+    {
+      "priority": "high",
+      "relationship_type": "ecosystem",
+      "review_only": true,
+      "sourced_ratio": 0.2564,
+      "total_edges": 39,
+      "unsourced_edges": 29
+    },
+    {
+      "priority": "high",
+      "relationship_type": "supply",
+      "review_only": true,
+      "sourced_ratio": 0.6,
+      "total_edges": 25,
+      "unsourced_edges": 10
+    },
+    {
+      "priority": "medium",
+      "relationship_type": "partnership",
+      "review_only": true,
+      "sourced_ratio": 0.625,
+      "total_edges": 8,
+      "unsourced_edges": 3
+    }
+  ]
+}

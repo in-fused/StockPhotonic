@@ -2,7 +2,7 @@
   "metadata": {
     "artifact_status": "review_only",
     "candidate_file": "data\\candidates\\sec_relationship_candidates.json",
-    "generated_at_utc": "2026-05-15T02:12:58+00:00",
+    "generated_at_utc": "2026-05-17T03:07:14+00:00",
     "generated_by": "scripts/sec_candidate_triage.py",
     "network_calls": 0,
     "production_files_read": {
@@ -45,7 +45,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 77,
+        "age_days": 79,
         "date": "2026-02-27",
         "state": "recent_filing"
       },
@@ -117,7 +117,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 85,
+        "age_days": 87,
         "date": "2026-02-19",
         "state": "recent_filing"
       },
@@ -189,7 +189,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 85,
+        "age_days": 87,
         "date": "2026-02-19",
         "state": "recent_filing"
       },
@@ -261,7 +261,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 85,
+        "age_days": 87,
         "date": "2026-02-19",
         "state": "recent_filing"
       },
@@ -333,7 +333,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 85,
+        "age_days": 87,
         "date": "2026-02-19",
         "state": "recent_filing"
       },
@@ -405,7 +405,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 77,
+        "age_days": 79,
         "date": "2026-02-27",
         "state": "recent_filing"
       },
@@ -477,7 +477,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 11,
+        "age_days": 13,
         "date": "2026-05-04",
         "state": "recent_filing"
       },
@@ -549,7 +549,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 11,
+        "age_days": 13,
         "date": "2026-05-04",
         "state": "recent_filing"
       },
@@ -623,7 +623,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 85,
+        "age_days": 87,
         "date": "2026-02-19",
         "state": "recent_filing"
       },
@@ -695,7 +695,7 @@
       },
       "evidence_count": 2,
       "freshness": {
-        "age_days": 10,
+        "age_days": 12,
         "date": "2026-05-05",
         "state": "recent_filing"
       },

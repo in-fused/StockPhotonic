@@ -227,6 +227,7 @@
             context.currentIndustryGroup || '',
             context.currentRelationshipType ? context.getRelationshipTypeLabel?.(context.currentRelationshipType) : '',
             context.currentConfidenceTier ? `Confidence: ${context.currentConfidenceTier}` : '',
+            context.currentEvidenceTier ? `Evidence: ${context.getEvidenceTierLabel?.(context.currentEvidenceTier) || context.currentEvidenceTier}` : '',
             context.sourceHostCategoryFilter ? `Source: ${context.getSourceHostCategoryLabel?.(context.sourceHostCategoryFilter) || context.sourceHostCategoryFilter}` : '',
             context.sourcedOnlyFilter ? 'Sourced only' : '',
             context.secBackedOnlyFilter ? 'SEC-backed only' : '',
@@ -266,6 +267,10 @@
             formatNumber,
             getRelationshipTypeLabel,
             getRelationshipConfidenceTier,
+            getRelationshipEvidencePolicy,
+            getRelationshipEvidenceTier,
+            getTrustedRelationshipClass,
+            getReviewerDecisionState,
             getRelationshipSourceStatus,
             getRelationshipEvidenceCount,
             getRelationshipSourceAgeInfo
@@ -349,8 +354,11 @@
                     <div class="mt-3 flex flex-wrap gap-2">
                         ${categoryLabels.map(label => `<span class="relationship-category-chip px-2.5 py-1 rounded-full text-[10px] font-mono">${escapeHtml(label)}</span>`).join('') || '<span class="text-xs text-white/35">No relationship categories available.</span>'}
                     </div>
+                    <div class="mt-3 trust-tier-summary">
+                        ${renderTrustTierSummary(summary, context)}
+                    </div>
                     <div class="mt-3 text-[11px] text-white/45 leading-relaxed">
-                        Relationship categories, source state, and confidence are derived from loaded static fields only. Missing evidence is shown as pending instead of inferred.
+                        Relationship categories, evidence tiers, source state, and confidence are derived from loaded static fields only. Strong inferred is a visibility label, not promotion authority.
                     </div>
                 </div>
             `;
@@ -360,6 +368,7 @@
         const {
             getRelationshipTypeKey,
             getRelationshipConfidenceTier,
+            getRelationshipEvidencePolicy,
             getRelationshipEvidenceCount,
             getRelationshipSourceAgeInfo,
             getSourceHostDiversity,
@@ -374,6 +383,11 @@
         const staleReviewCount = (connectionsForNode || []).filter(item => getRelationshipSourceAgeInfo?.(item.link)?.key === 'stale_review_recommended').length;
         const missingDateCount = (connectionsForNode || []).filter(item => getRelationshipSourceAgeInfo?.(item.link)?.key === 'no_verified_date').length;
         const highConfidenceCount = (connectionsForNode || []).filter(item => getRelationshipConfidenceTier?.(item.link)?.key === 'high').length;
+        const evidencePolicies = (connectionsForNode || []).map(item => getRelationshipEvidencePolicy?.(item.link)).filter(Boolean);
+        const tierCounts = countSummary(evidencePolicies, policy => policy.tier?.key || 'needs_review');
+        const trustedClassCounts = countSummary(evidencePolicies, policy => policy.trustedClassLabel || '');
+        const fastTrackVisibilityCount = evidencePolicies.filter(policy => policy.fastTrackVisibility).length;
+        const needsReviewCount = evidencePolicies.filter(policy => policy.tier?.key === 'needs_review').length;
         const sourceCategoryKeys = new Set();
         const sourceHosts = new Set();
         (connectionsForNode || []).forEach(item => {
@@ -401,11 +415,47 @@
             sourceHostCount: sourceHosts.size,
             highConfidenceCount,
             pendingCount,
+            tierCounts,
+            trustedClassCounts,
+            fastTrackVisibilityCount,
+            needsReviewCount,
             strongest,
             visibleCount: context.visibleLinkKeys
                 ? (connectionsForNode || []).filter(item => context.visibleLinkKeys.has(item.link.key)).length
                 : (connectionsForNode || []).length
         };
+    }
+
+    function countSummary(items, getKey) {
+        const counts = new Map();
+        items.forEach(item => {
+            const key = String(getKey(item) || '').trim();
+            if (!key) return;
+            counts.set(key, (counts.get(key) || 0) + 1);
+        });
+        return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    }
+
+    function renderTrustTierSummary(summary, context) {
+        const { escapeHtml, getEvidenceTierLabel } = context;
+        const tierRows = (summary.tierCounts || []).slice(0, 4);
+        const classRows = (summary.trustedClassCounts || []).slice(0, 3);
+        return `
+            <div class="grid grid-cols-2 gap-2">
+                <div class="trust-tier-mini rounded-xl p-2">
+                    <div class="text-[10px] text-white/38 font-mono">FAST-TRACK VISIBLE</div>
+                    <div class="font-display text-lg text-white">${summary.fastTrackVisibilityCount || 0}</div>
+                </div>
+                <div class="trust-tier-mini rounded-xl p-2">
+                    <div class="text-[10px] text-white/38 font-mono">NEEDS REVIEW</div>
+                    <div class="font-display text-lg text-white">${summary.needsReviewCount || 0}</div>
+                </div>
+            </div>
+            <div class="mt-2 flex flex-wrap gap-1.5">
+                ${tierRows.map(([key, count]) => `<span class="evidence-tier-badge ${escapeHtml(key)}">${escapeHtml(getEvidenceTierLabel?.(key) || key)} · ${count}</span>`).join('') || '<span class="text-xs text-white/35">No tier summary</span>'}
+                ${classRows.map(([label, count]) => `<span class="trusted-class-chip">${escapeHtml(label)} · ${count}</span>`).join('')}
+            </div>
+        `;
     }
 
     function getRelationshipTimelineContext(connectionsForNode, context) {
@@ -514,6 +564,8 @@
         const { escapeHtml, escapeInlineJsString } = context;
         const sourceAge = item.sourceAge?.shortLabel || 'PENDING';
         const confidence = item.confidence?.shortLabel || 'PENDING';
+        const tier = item.evidenceTier?.shortLabel || 'REVIEW';
+        const decision = item.reviewerDecisionState?.shortLabel || 'REVIEW';
         const sourceCategory = item.diversity?.primaryCategory?.shortLabel || 'NO URL';
         const evidenceText = `${item.evidenceCount || 0} evidence`;
         const reasons = (item.reasons || []).slice(0, 3);
@@ -535,6 +587,8 @@
                     </div>
                     <div class="mt-2 flex flex-wrap gap-1.5">
                         <span class="source-age-chip">${escapeHtml(sourceAge)}</span>
+                        <span class="evidence-tier-badge ${escapeHtml(item.evidenceTier?.key || 'needs_review')}">${escapeHtml(tier)}</span>
+                        <span class="source-host-chip">${escapeHtml(decision)}</span>
                         <span class="source-host-chip">${escapeHtml(sourceCategory)}</span>
                         <span class="source-host-chip">${escapeHtml(confidence)}</span>
                         <span class="source-host-chip">${escapeHtml(evidenceText)}</span>
@@ -574,6 +628,10 @@
             getRelationshipTypeColor,
             getRelationshipTypeMeaning,
             getRelationshipConfidenceTier,
+            getRelationshipEvidencePolicy,
+            getRelationshipEvidenceTier,
+            getTrustedRelationshipClass,
+            getReviewerDecisionState,
             getRelationshipSourceStatus,
             getRelationshipEvidenceCount,
             getRelationshipSourceAgeInfo,
@@ -588,6 +646,10 @@
         const typeLabel = getRelationshipTypeLabel?.(link) || link.relationship_type_label || 'Curated relationship';
         const color = getRelationshipTypeColor?.(link) || context.EDGE_COLORS?.[link.type] || context.DEFAULT_EDGE_COLOR;
         const confidence = getRelationshipConfidenceTier?.(link) || { key: 'pending', shortLabel: 'PENDING', label: 'Evidence pending' };
+        const policy = getRelationshipEvidencePolicy?.(link) || {};
+        const tier = getRelationshipEvidenceTier?.(link) || policy.tier || { key: 'needs_review', shortLabel: 'REVIEW', label: 'Needs review' };
+        const trustedClass = getTrustedRelationshipClass?.(link) || policy.trustedClass || null;
+        const reviewerState = getReviewerDecisionState?.(link) || policy.reviewerDecisionState || { key: 'accepted_for_review', label: 'Accepted for review', shortLabel: 'REVIEW' };
         const sourceStatus = getRelationshipSourceStatus?.(link) || { key: 'missing_source', label: 'No source URL attached yet', shortLabel: 'NO URL' };
         const evidenceCount = getRelationshipEvidenceCount?.(link) || 0;
         const sourceAge = getRelationshipSourceAgeInfo?.(link) || { key: 'no_verified_date', shortLabel: 'NO DATE', label: 'No verified date' };
@@ -603,7 +665,9 @@
         const explanation = link.relationship_summary || link.label || 'Evidence pending. Relationship type from curated dataset.';
         const typeMeaning = getRelationshipTypeMeaning?.(link, context) || 'Relationship category derived from existing edge metadata.';
         const sourceExplanation = sourceStatus.key === 'missing_source'
-            ? 'No source URL is attached yet; treat this as an evidence gap until reviewed.'
+            ? (policy.fastTrackVisibility
+                ? policy.explanation || 'Strong inferred relationship; source enrichment remains useful but review pressure is reduced.'
+                : 'No source URL is attached yet; treat this as an evidence gap until reviewed.')
             : sourceStatus.key === 'candidate_preview'
                 ? 'Candidate preview evidence is review-only and not production graph data.'
                 : `${sourceStatus.label}; ${sourceAge.label || sourceAge.shortLabel || 'date state unavailable'}.`;
@@ -645,16 +709,23 @@
                         <span class="text-white/38 font-mono">Type:</span> ${escapeHtml(typeMeaning)}
                     </div>
                     <div class="mt-2 text-[11px] text-white/52 leading-relaxed">
+                        <span class="text-white/38 font-mono">Evidence tier:</span> ${escapeHtml(policy.explanation || tier.label || 'Needs review')}
+                    </div>
+                    <div class="mt-2 text-[11px] text-white/52 leading-relaxed">
                         <span class="text-white/38 font-mono">Source/confidence:</span> ${escapeHtml(sourceExplanation)}
                     </div>
                     <div class="mt-3 flex flex-wrap items-center gap-2">
+                        <span class="evidence-tier-badge ${escapeHtml(tier.key)}">${escapeHtml(tier.shortLabel || tier.label || 'REVIEW')}</span>
                         <span class="confidence-badge ${escapeHtml(confidence.key)} px-2 py-0.5 rounded-full text-[10px] font-mono">CONF ${escapeHtml(String(confidenceScore))} · ${escapeHtml(confidence.shortLabel)}</span>
                         <span class="source-indicator px-2 py-0.5 rounded-full text-[10px] text-cyan-200/78 font-mono">${escapeHtml(sourceCountText)}</span>
                         <span class="source-age-chip">${escapeHtml(sourceAge.shortLabel || sourceAge.label || 'NO DATE')}</span>
                         ${secBadge}
+                        ${trustedClass ? `<span class="trusted-class-chip">${escapeHtml(trustedClass.shortLabel || trustedClass.label)}</span>` : ''}
                         <span class="text-[10px] text-white/42 font-mono">VERIFIED ${escapeHtml(formatVerifiedDate?.(link.verified_date || link.candidate?.filing_date) || '-')}</span>
                     </div>
                     <div class="trust-metric-strip mt-2">
+                        <span>${escapeHtml(tier.label || 'Needs review')}</span>
+                        <span>${escapeHtml(reviewerState.label || 'Accepted for review')}</span>
                         <span>${escapeHtml(confidence.label || 'Evidence pending')}</span>
                         <span>${evidenceCount} evidence</span>
                         <span>${sourceDiversity.hostCount || 0} hosts</span>

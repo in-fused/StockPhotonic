@@ -17,6 +17,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from evidence_policy import (  # type: ignore
+    build_edge_policy,
+    source_search_query,
+    summarize_policies,
+)
+
 
 sys.dont_write_bytecode = True
 
@@ -210,6 +216,9 @@ def build_high_value_unsourced_edges(
         if source_urls(edge):
             continue
         priority, score = edge_priority(edge, company_by_id)
+        source_company = company_by_id.get(edge.get("source"))
+        target_company = company_by_id.get(edge.get("target"))
+        policy = build_edge_policy(edge, source_company, target_company)
         rows.append(
             {
                 "connection_index": index,
@@ -222,6 +231,24 @@ def build_high_value_unsourced_edges(
                 "verified_date": clean_string(edge.get("verified_date")),
                 "priority": priority,
                 "priority_score": score,
+                "source_coverage_lane": "fast_track_source_enrichment"
+                if policy["fast_track_visibility"]
+                else "manual_review_first",
+                "evidence_tier": policy["evidence_tier"],
+                "trusted_relationship_class": policy["trusted_relationship_class"],
+                "trusted_relationship_class_label": policy["trusted_relationship_class_label"],
+                "reviewer_decision_state": policy["reviewer_decision_state"],
+                "fast_track_visibility": policy["fast_track_visibility"],
+                "manual_promotion_allowed": False,
+                "source_search_query": source_search_query(
+                    {
+                        "source_ticker": edge_ticker(edge, company_by_id, "source"),
+                        "target_ticker": edge_ticker(edge, company_by_id, "target"),
+                    },
+                    policy,
+                    source_company,
+                    target_company,
+                ),
                 "review_only": True,
             }
         )
@@ -319,8 +346,11 @@ def build_priorities(
     type_gaps: list[dict[str, Any]],
     blockers: dict[str, Any],
     missing_tickers: list[str],
+    policy_summary: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     priorities: list[dict[str, Any]] = []
+    policy_summary = policy_summary or {}
+    fast_track_count = int(policy_summary.get("fast_track_visibility_count") or 0)
     if coverage["unsourced_edges"]:
         top_type = next((row for row in type_gaps if row["unsourced_edges"] > 0), None)
         priorities.append(
@@ -333,6 +363,19 @@ def build_priorities(
                     + (f"; {top_type['relationship_type']} has the largest gap." if top_type else ".")
                 ),
                 "next_step": "Use the preflight gap rows to choose source-backed review targets.",
+            }
+        )
+    if fast_track_count:
+        priorities.append(
+            {
+                "priority": "source",
+                "area": "fast_track_source_coverage",
+                "title": "Enrich strong inferred visibility edges",
+                "reason": (
+                    f"{fast_track_count} production edges qualify for strong-inferred visibility; "
+                    "they still benefit from source coverage but should not crowd the manual-review queue."
+                ),
+                "next_step": "Use fast_track_source_enrichment rows for source-target batches; do not promote claims automatically.",
             }
         )
     if coverage["stale_review_edges"]:
@@ -408,8 +451,16 @@ def build_report(
     }
     type_gaps = build_relationship_type_gaps(connections)
     blockers, missing_tickers = candidate_blockers(candidates, production_tickers)
-    priorities = build_priorities(coverage, type_gaps, blockers, missing_tickers)
     high_value_unsourced = build_high_value_unsourced_edges(connections, company_by_id)
+    edge_policies = [
+        build_edge_policy(edge, company_by_id.get(edge.get("source")), company_by_id.get(edge.get("target")))
+        for edge in connections
+    ]
+    policy_summary = summarize_policies(edge_policies)
+    priorities = build_priorities(coverage, type_gaps, blockers, missing_tickers, policy_summary)
+    fast_track_source_targets = [
+        row for row in high_value_unsourced if row.get("fast_track_visibility")
+    ][:12]
 
     report = {
         "metadata": {
@@ -430,8 +481,10 @@ def build_report(
         },
         "production_company_count": len(companies),
         "production_edge_source_coverage": coverage,
+        "tiered_evidence_policy_summary": policy_summary,
         "relationship_type_source_gaps": type_gaps,
         "high_value_unsourced_edges": high_value_unsourced,
+        "fast_track_source_targets": fast_track_source_targets,
         "candidate_preview_count": len(candidates),
         "candidate_tickers_missing_from_production_universe": missing_tickers,
         "candidate_promotion_blockers": blockers,

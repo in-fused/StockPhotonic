@@ -938,6 +938,14 @@ body.graph-fullscreen-active > header {
             font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         }
 
+.graph-active-legend-swatches span {
+            min-width: 0;
+        }
+
+.graph-active-legend-swatches i {
+            flex-shrink: 0;
+        }
+
 #graph-intelligence-view.is-graph-fullscreen .graph-explorer-dock {
             top: min(24vh, 13.5rem);
             left: 1rem;

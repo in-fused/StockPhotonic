@@ -1,6 +1,7 @@
 (function () {
     window.StockPhotonicStock = window.StockPhotonicStock || {};
     const sourceReview = window.StockPhotonicStock.sourceReview || {};
+    const evidencePolicy = window.StockPhotonicStock.evidencePolicy || {};
 
     const DEFAULT_RELATIONSHIP_TYPE = 'curated_manual_relationship';
     const SOURCE_STATUS = {
@@ -354,14 +355,20 @@
         const typeInfo = inferRelationshipType(connection);
         const confidence = getConfidenceTier(connection);
         const sourceStatus = getSourceStatus(connection);
+        const policy = getEvidencePolicy(connection);
         const tags = [
             typeInfo.shortLabel,
             confidence.shortLabel,
-            sourceStatus.shortLabel
+            sourceStatus.shortLabel,
+            policy.tier?.shortLabel,
+            policy.trustedClass?.shortLabel,
+            policy.reviewerDecisionState?.shortLabel
         ];
 
         if (isSecBackedRelationship(connection)) tags.push('SEC-backed');
         if (isCandidateRelationship(connection)) tags.push('Candidate preview');
+        if (policy.fastTrackVisibility) tags.push('Fast-track visible');
+        if (policy.openAlex) tags.push('OpenAlex context only');
         if (!getValidSourceUrls(connection?.source_urls).length) tags.push('No source URL attached yet');
         const sourceAge = getSourceAgeInfo(connection);
         if (sourceAge.key === 'stale_review_recommended') tags.push(sourceAge.label);
@@ -379,6 +386,15 @@
         const confidenceScore = getConfidenceScore(connection);
         const sourceStatus = getSourceStatus(connection);
         const sourceUrls = getValidSourceUrls(connection?.source_urls);
+        const evidenceCount = getEvidenceCount(connection);
+        const policy = getEvidencePolicy({
+            ...connection,
+            relationship_type: relationshipTypeKey,
+            confidence_score: confidenceScore,
+            confidence_tier: confidence.key,
+            evidence_count: evidenceCount,
+            source_status: sourceStatus.key
+        });
         const sourceAge = getSourceAgeInfo(connection);
         const hostDiversity = sourceReview.getSourceHostDiversity?.(connection) || {
             categories: [],
@@ -399,10 +415,20 @@
             confidence_score: confidenceScore,
             confidence_tier: confidence.key,
             confidence_tier_label: confidence.label,
-            evidence_count: getEvidenceCount(connection),
+            evidence_count: evidenceCount,
             source_count: sourceUrls.length,
             source_status: sourceStatus.key,
             source_status_label: sourceStatus.label,
+            evidence_tier: policy.tier?.key || 'needs_review',
+            evidence_tier_label: policy.tier?.label || 'Needs review',
+            evidence_tier_short_label: policy.tier?.shortLabel || 'REVIEW',
+            evidence_tier_rank: policy.tier?.rank || 1,
+            trusted_relationship_class: policy.trustedClassKey || '',
+            trusted_relationship_class_label: policy.trustedClassLabel || '',
+            trusted_relationship_fast_track: Boolean(policy.fastTrackVisibility),
+            reviewer_decision_state: policy.reviewerDecisionState?.key || 'accepted_for_review',
+            reviewer_decision_label: policy.reviewerDecisionState?.label || 'Accepted for review',
+            evidence_policy_explanation: policy.explanation,
             source_stale: sourceAge.isStale,
             source_age_key: sourceAge.key,
             source_age_label: sourceAge.label,
@@ -453,6 +479,42 @@
         return TAXONOMY[key]?.groupKey || inferRelationshipType(connection).groupKey || 'other';
     }
 
+    function getEvidencePolicy(connection) {
+        if (evidencePolicy.getEvidencePolicy) {
+            return evidencePolicy.getEvidencePolicy(connection, { evidenceCount: getEvidenceCount(connection) });
+        }
+        const sourceStatus = getSourceStatus(connection);
+        const confidence = getConfidenceTier(connection);
+        const fallbackTier = sourceStatus.key === SOURCE_STATUS.sec_backed.key || confidence.key === CONFIDENCE_TIERS.high.key
+            ? { key: 'verified', label: 'Verified', shortLabel: 'VERIFIED', rank: 4, color: '#7cffc8' }
+            : { key: 'needs_review', label: 'Needs review', shortLabel: 'REVIEW', rank: 1, color: '#fb923c' };
+        return {
+            tier: fallbackTier,
+            tierKey: fallbackTier.key,
+            trustedClass: null,
+            trustedClassKey: '',
+            trustedClassLabel: '',
+            reviewerDecisionState: { key: 'accepted_for_review', label: 'Accepted for review', shortLabel: 'REVIEW' },
+            reviewerDecisionKey: 'accepted_for_review',
+            explanation: fallbackTier.label,
+            fastTrackVisibility: false,
+            openAlex: false,
+            candidate: isCandidateRelationship(connection)
+        };
+    }
+
+    function getEvidenceTier(connection) {
+        return getEvidencePolicy(connection).tier;
+    }
+
+    function getTrustedRelationshipClass(connection) {
+        return getEvidencePolicy(connection).trustedClass;
+    }
+
+    function getReviewerDecisionState(connection) {
+        return getEvidencePolicy(connection).reviewerDecisionState;
+    }
+
     function getRelationshipFilterOptions(connections) {
         return TAXONOMY_LIST
             .sort((a, b) => a.label.localeCompare(b.label));
@@ -463,6 +525,8 @@
         const sourceStatus = getSourceStatus(connection);
         const evidenceCount = getEvidenceCount(connection);
         const sourceAge = getSourceAgeInfo(connection);
+        const policy = getEvidencePolicy(connection);
+        const tierKey = policy.tier?.key || 'needs_review';
         const isCandidate = isCandidateRelationship(connection);
         const isWeakEvidence = sourceStatus.key === SOURCE_STATUS.missing_source.key ||
             confidence.key === CONFIDENCE_TIERS.low.key ||
@@ -471,19 +535,37 @@
             sourceAge.key === 'no_verified_date';
         const isStrongEvidence = evidenceCount > 0 &&
             sourceAge.key !== 'stale_review_recommended' &&
-            (confidence.key === CONFIDENCE_TIERS.high.key || sourceStatus.key === SOURCE_STATUS.sec_backed.key);
+            (confidence.key === CONFIDENCE_TIERS.high.key || sourceStatus.key === SOURCE_STATUS.sec_backed.key || tierKey === 'verified');
         const staleOrPending = sourceAge.key === 'stale_review_recommended' || sourceAge.key === 'no_verified_date';
+        const tierMuted = tierKey === 'context_only' || tierKey === 'needs_review';
+        const tierWidthBoost = tierKey === 'verified'
+            ? 0.36
+            : tierKey === 'strong_inferred'
+                ? 0.16
+                : tierKey === 'context_only'
+                    ? -0.12
+                    : -0.3;
+        const tierAlphaMultiplier = tierKey === 'verified'
+            ? 1.14
+            : tierKey === 'strong_inferred'
+                ? 0.92
+                : tierKey === 'context_only'
+                    ? 0.68
+                    : 0.46;
 
         return {
             color: getRelationshipTypeColor(connection),
-            alphaMultiplier: staleOrPending ? 0.42 : isWeakEvidence ? 0.52 : isStrongEvidence ? 1.12 : 1,
-            widthBoost: staleOrPending ? -0.28 : isWeakEvidence ? -0.22 : isStrongEvidence ? 0.28 : 0,
-            dashPattern: isCandidate ? [7, 6] : staleOrPending ? [3, 7] : null,
-            muted: isWeakEvidence,
+            alphaMultiplier: staleOrPending && tierKey !== 'strong_inferred' ? 0.42 : isWeakEvidence && tierKey !== 'strong_inferred' ? 0.52 : tierAlphaMultiplier,
+            widthBoost: staleOrPending && tierKey !== 'strong_inferred' ? -0.28 : isWeakEvidence && tierKey !== 'strong_inferred' ? -0.22 : isStrongEvidence ? 0.28 + tierWidthBoost : tierWidthBoost,
+            dashPattern: isCandidate ? [7, 6] : tierKey === 'context_only' ? [2, 6] : tierKey === 'needs_review' ? [3, 7] : staleOrPending && tierKey !== 'strong_inferred' ? [3, 7] : null,
+            muted: isWeakEvidence || tierMuted,
             strong: isStrongEvidence,
             confidenceKey: confidence.key,
             sourceStatusKey: sourceStatus.key,
-            sourceAgeKey: sourceAge.key
+            sourceAgeKey: sourceAge.key,
+            evidenceTierKey: tierKey,
+            trustedClassKey: policy.trustedClassKey || '',
+            fastTrackVisibility: Boolean(policy.fastTrackVisibility)
         };
     }
 
@@ -519,6 +601,10 @@
         getRelationshipTypeColor,
         getRelationshipGroupKey,
         getRelationshipFilterOptions,
+        getEvidencePolicy,
+        getEvidenceTier,
+        getTrustedRelationshipClass,
+        getReviewerDecisionState,
         getConfidenceScore,
         getConfidenceTier,
         getSourceStatus,

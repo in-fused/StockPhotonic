@@ -148,9 +148,441 @@
       "unsourced_high_value_count": 1
     }
   ],
+  "fast_track_source_targets": [
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-56",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_search_query": "V MA Competitor company source relationship",
+      "source_ticker": "V",
+      "target_ticker": "MA",
+      "trusted_relationship_class": "competitor",
+      "trusted_relationship_class_label": "Competitor"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-43",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_search_query": "GOOGL AMZN Competitor company source relationship",
+      "source_ticker": "GOOGL",
+      "target_ticker": "AMZN",
+      "trusted_relationship_class": "competitor",
+      "trusted_relationship_class_label": "Competitor"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-90",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_search_query": "XOM CVX Competitor company source relationship",
+      "source_ticker": "XOM",
+      "target_ticker": "CVX",
+      "trusted_relationship_class": "competitor",
+      "trusted_relationship_class_label": "Competitor"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-44",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_search_query": "GOOGL META Competitor company source relationship",
+      "source_ticker": "GOOGL",
+      "target_ticker": "META",
+      "trusted_relationship_class": "competitor",
+      "trusted_relationship_class_label": "Competitor"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-65",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_search_query": "JPM BAC Competitor company source relationship",
+      "source_ticker": "JPM",
+      "target_ticker": "BAC",
+      "trusted_relationship_class": "competitor",
+      "trusted_relationship_class_label": "Competitor"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-77",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_search_query": "UNH CI Competitor company source relationship",
+      "source_ticker": "UNH",
+      "target_ticker": "CI",
+      "trusted_relationship_class": "competitor",
+      "trusted_relationship_class_label": "Competitor"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-78",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_search_query": "CVS CI Competitor company source relationship",
+      "source_ticker": "CVS",
+      "target_ticker": "CI",
+      "trusted_relationship_class": "competitor",
+      "trusted_relationship_class_label": "Competitor"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-61",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "ecosystem",
+      "review_only": true,
+      "source_search_query": "V JPM Financial infrastructure overlap company source relationship",
+      "source_ticker": "V",
+      "target_ticker": "JPM",
+      "trusted_relationship_class": "financial_infrastructure_overlap",
+      "trusted_relationship_class_label": "Financial infrastructure overlap"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-18",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "ecosystem",
+      "review_only": true,
+      "source_search_query": "AVGO GOOGL Cloud / hyperscaler exposure company source relationship",
+      "source_ticker": "AVGO",
+      "target_ticker": "GOOGL",
+      "trusted_relationship_class": "cloud_hyperscaler_exposure",
+      "trusted_relationship_class_label": "Cloud / hyperscaler exposure"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-62",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "ecosystem",
+      "review_only": true,
+      "source_search_query": "MA JPM Financial infrastructure overlap company source relationship",
+      "source_ticker": "MA",
+      "target_ticker": "JPM",
+      "trusted_relationship_class": "financial_infrastructure_overlap",
+      "trusted_relationship_class_label": "Financial infrastructure overlap"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-91",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_search_query": "XOM COP Competitor company source relationship",
+      "source_ticker": "XOM",
+      "target_ticker": "COP",
+      "trusted_relationship_class": "competitor",
+      "trusted_relationship_class_label": "Competitor"
+    },
+    {
+      "evidence_tier": "strong_inferred",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "queue_id": "fast-track-source-76",
+      "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+      "relationship_type": "competitor",
+      "review_only": true,
+      "source_search_query": "UNH CVS Competitor company source relationship",
+      "source_ticker": "UNH",
+      "target_ticker": "CVS",
+      "trusted_relationship_class": "competitor",
+      "trusted_relationship_class_label": "Competitor"
+    }
+  ],
+  "hub_source_gaps": [
+    {
+      "fast_track_edge_count": 4,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "verified",
+          "source_ticker": "AAPL",
+          "target_ticker": "GOOGL"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "GOOGL",
+          "target_ticker": "AMZN"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "GOOGL",
+          "target_ticker": "META"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "AVGO",
+          "target_ticker": "GOOGL"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "GOOGL",
+          "target_ticker": "AAPL"
+        }
+      ],
+      "ticker": "GOOGL",
+      "unsourced_edge_count": 5
+    },
+    {
+      "fast_track_edge_count": 4,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "V",
+          "target_ticker": "MA"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "V",
+          "target_ticker": "JPM"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "V",
+          "target_ticker": "PYPL"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "V",
+          "target_ticker": "BAC"
+        }
+      ],
+      "ticker": "V",
+      "unsourced_edge_count": 4
+    },
+    {
+      "fast_track_edge_count": 4,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "V",
+          "target_ticker": "MA"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "MA",
+          "target_ticker": "JPM"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "MA",
+          "target_ticker": "BAC"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "MA",
+          "target_ticker": "PYPL"
+        }
+      ],
+      "ticker": "MA",
+      "unsourced_edge_count": 4
+    },
+    {
+      "fast_track_edge_count": 3,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "JPM",
+          "target_ticker": "BAC"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "V",
+          "target_ticker": "JPM"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "MA",
+          "target_ticker": "JPM"
+        }
+      ],
+      "ticker": "JPM",
+      "unsourced_edge_count": 3
+    },
+    {
+      "fast_track_edge_count": 3,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "JPM",
+          "target_ticker": "BAC"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "V",
+          "target_ticker": "BAC"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "MA",
+          "target_ticker": "BAC"
+        }
+      ],
+      "ticker": "BAC",
+      "unsourced_edge_count": 3
+    },
+    {
+      "fast_track_edge_count": 3,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "GOOGL",
+          "target_ticker": "AMZN"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "AMZN",
+          "target_ticker": "ORCL"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "WMT",
+          "target_ticker": "AMZN"
+        }
+      ],
+      "ticker": "AMZN",
+      "unsourced_edge_count": 3
+    },
+    {
+      "fast_track_edge_count": 2,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "XOM",
+          "target_ticker": "CVX"
+        },
+        {
+          "evidence_tier": "context_only",
+          "source_ticker": "SLB",
+          "target_ticker": "XOM"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "XOM",
+          "target_ticker": "COP"
+        }
+      ],
+      "ticker": "XOM",
+      "unsourced_edge_count": 3
+    },
+    {
+      "fast_track_edge_count": 2,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "XOM",
+          "target_ticker": "CVX"
+        },
+        {
+          "evidence_tier": "context_only",
+          "source_ticker": "SLB",
+          "target_ticker": "CVX"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "CVX",
+          "target_ticker": "COP"
+        }
+      ],
+      "ticker": "CVX",
+      "unsourced_edge_count": 3
+    },
+    {
+      "fast_track_edge_count": 2,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "context_only",
+          "source_ticker": "SLB",
+          "target_ticker": "COP"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "XOM",
+          "target_ticker": "COP"
+        },
+        {
+          "evidence_tier": "strong_inferred",
+          "source_ticker": "CVX",
+          "target_ticker": "COP"
+        }
+      ],
+      "ticker": "COP",
+      "unsourced_edge_count": 3
+    },
+    {
+      "fast_track_edge_count": 0,
+      "reason": "Strong graph hub with source coverage gaps; review-only source enrichment target.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "evidence_tier": "context_only",
+          "source_ticker": "SLB",
+          "target_ticker": "XOM"
+        },
+        {
+          "evidence_tier": "context_only",
+          "source_ticker": "SLB",
+          "target_ticker": "CVX"
+        },
+        {
+          "evidence_tier": "context_only",
+          "source_ticker": "SLB",
+          "target_ticker": "COP"
+        }
+      ],
+      "ticker": "SLB",
+      "unsourced_edge_count": 3
+    }
+  ],
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-17T03:07:14+00:00",
+    "generated_at_utc": "2026-05-17T04:29:23+00:00",
     "generated_by": "scripts/source_coverage_refresh.py",
     "network_calls": 0,
     "optional_files_read": {
@@ -176,204 +608,324 @@
   ],
   "reviewer_priority_queue": [
     {
+      "evidence_tier": "verified",
+      "fast_track_visibility": false,
+      "manual_promotion_allowed": false,
       "priority": "high",
       "queue_id": "source-gap-117",
       "queue_type": "production_edge_missing_source_url",
       "reason": "High-value production edge lacks source URLs.",
       "relationship_type": "partnership",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "AAPL GOOGL Cloud / hyperscaler exposure company source relationship",
       "source_ticker": "AAPL",
-      "target_ticker": "GOOGL"
+      "target_ticker": "GOOGL",
+      "trusted_relationship_class": "cloud_hyperscaler_exposure"
     },
     {
+      "evidence_tier": "context_only",
+      "fast_track_visibility": false,
+      "manual_promotion_allowed": false,
       "priority": "medium",
       "queue_id": "source-gap-99",
       "queue_type": "production_edge_missing_source_url",
       "reason": "High-value production edge lacks source URLs.",
       "relationship_type": "supply",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_review",
+      "source_search_query": "GE BA Supplier ecosystem company source relationship",
       "source_ticker": "GE",
-      "target_ticker": "BA"
+      "target_ticker": "BA",
+      "trusted_relationship_class": "supplier_ecosystem"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-56",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "V MA Competitor company source relationship",
       "source_ticker": "V",
-      "target_ticker": "MA"
+      "target_ticker": "MA",
+      "trusted_relationship_class": "competitor"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-43",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "GOOGL AMZN Competitor company source relationship",
       "source_ticker": "GOOGL",
-      "target_ticker": "AMZN"
+      "target_ticker": "AMZN",
+      "trusted_relationship_class": "competitor"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-90",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "XOM CVX Competitor company source relationship",
       "source_ticker": "XOM",
-      "target_ticker": "CVX"
+      "target_ticker": "CVX",
+      "trusted_relationship_class": "competitor"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-44",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "GOOGL META Competitor company source relationship",
       "source_ticker": "GOOGL",
-      "target_ticker": "META"
+      "target_ticker": "META",
+      "trusted_relationship_class": "competitor"
     },
     {
+      "evidence_tier": "context_only",
+      "fast_track_visibility": false,
+      "manual_promotion_allowed": false,
       "priority": "medium",
       "queue_id": "source-gap-100",
       "queue_type": "production_edge_missing_source_url",
       "reason": "High-value production edge lacks source URLs.",
       "relationship_type": "supply",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_review",
+      "source_search_query": "RTX BA Supplier ecosystem company source relationship",
       "source_ticker": "RTX",
-      "target_ticker": "BA"
+      "target_ticker": "BA",
+      "trusted_relationship_class": "supplier_ecosystem"
     },
     {
+      "evidence_tier": "context_only",
+      "fast_track_visibility": false,
+      "manual_promotion_allowed": false,
       "priority": "medium",
       "queue_id": "source-gap-93",
       "queue_type": "production_edge_missing_source_url",
       "reason": "High-value production edge lacks source URLs.",
       "relationship_type": "supply",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_review",
+      "source_search_query": "SLB XOM Supplier ecosystem company source relationship",
       "source_ticker": "SLB",
-      "target_ticker": "XOM"
+      "target_ticker": "XOM",
+      "trusted_relationship_class": "supplier_ecosystem"
     },
     {
+      "evidence_tier": "context_only",
+      "fast_track_visibility": false,
+      "manual_promotion_allowed": false,
       "priority": "medium",
       "queue_id": "source-gap-113",
       "queue_type": "production_edge_missing_source_url",
       "reason": "High-value production edge lacks source URLs.",
       "relationship_type": "supply",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_review",
+      "source_search_query": "MCD KO Supplier ecosystem company source relationship",
       "source_ticker": "MCD",
-      "target_ticker": "KO"
+      "target_ticker": "KO",
+      "trusted_relationship_class": "supplier_ecosystem"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-65",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "JPM BAC Competitor company source relationship",
       "source_ticker": "JPM",
-      "target_ticker": "BAC"
+      "target_ticker": "BAC",
+      "trusted_relationship_class": "competitor"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-77",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "UNH CI Competitor company source relationship",
       "source_ticker": "UNH",
-      "target_ticker": "CI"
+      "target_ticker": "CI",
+      "trusted_relationship_class": "competitor"
     },
     {
+      "evidence_tier": "context_only",
+      "fast_track_visibility": false,
+      "manual_promotion_allowed": false,
       "priority": "medium",
       "queue_id": "source-gap-94",
       "queue_type": "production_edge_missing_source_url",
       "reason": "High-value production edge lacks source URLs.",
       "relationship_type": "supply",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_review",
+      "source_search_query": "SLB CVX Supplier ecosystem company source relationship",
       "source_ticker": "SLB",
-      "target_ticker": "CVX"
+      "target_ticker": "CVX",
+      "trusted_relationship_class": "supplier_ecosystem"
     },
     {
+      "evidence_tier": "context_only",
+      "fast_track_visibility": false,
+      "manual_promotion_allowed": false,
       "priority": "medium",
       "queue_id": "source-gap-95",
       "queue_type": "production_edge_missing_source_url",
       "reason": "High-value production edge lacks source URLs.",
       "relationship_type": "supply",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_review",
+      "source_search_query": "SLB COP Supplier ecosystem company source relationship",
       "source_ticker": "SLB",
-      "target_ticker": "COP"
+      "target_ticker": "COP",
+      "trusted_relationship_class": "supplier_ecosystem"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-78",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "CVS CI Competitor company source relationship",
       "source_ticker": "CVS",
-      "target_ticker": "CI"
+      "target_ticker": "CI",
+      "trusted_relationship_class": "competitor"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-61",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "ecosystem",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "V JPM Financial infrastructure overlap company source relationship",
       "source_ticker": "V",
-      "target_ticker": "JPM"
+      "target_ticker": "JPM",
+      "trusted_relationship_class": "financial_infrastructure_overlap"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-18",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "ecosystem",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "AVGO GOOGL Cloud / hyperscaler exposure company source relationship",
       "source_ticker": "AVGO",
-      "target_ticker": "GOOGL"
+      "target_ticker": "GOOGL",
+      "trusted_relationship_class": "cloud_hyperscaler_exposure"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-62",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "ecosystem",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "MA JPM Financial infrastructure overlap company source relationship",
       "source_ticker": "MA",
-      "target_ticker": "JPM"
+      "target_ticker": "JPM",
+      "trusted_relationship_class": "financial_infrastructure_overlap"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-91",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "XOM COP Competitor company source relationship",
       "source_ticker": "XOM",
-      "target_ticker": "COP"
+      "target_ticker": "COP",
+      "trusted_relationship_class": "competitor"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-76",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "UNH CVS Competitor company source relationship",
       "source_ticker": "UNH",
-      "target_ticker": "CVS"
+      "target_ticker": "CVS",
+      "trusted_relationship_class": "competitor"
     },
     {
-      "priority": "medium",
+      "evidence_tier": "strong_inferred",
+      "fast_track_visibility": true,
+      "manual_promotion_allowed": false,
+      "priority": "source",
       "queue_id": "source-gap-92",
-      "queue_type": "production_edge_missing_source_url",
-      "reason": "High-value production edge lacks source URLs.",
+      "queue_type": "fast_track_source_coverage_target",
+      "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure.",
       "relationship_type": "competitor",
       "review_only": true,
+      "reviewer_decision_state": "accepted_for_visibility",
+      "source_search_query": "CVX COP Competitor company source relationship",
       "source_ticker": "CVX",
-      "target_ticker": "COP"
+      "target_ticker": "COP",
+      "trusted_relationship_class": "competitor"
     },
     {
       "priority": "high",
@@ -485,21 +1037,124 @@
     "review_only": true
   },
   "source_coverage_refresh_state": {
-    "latest_refresh_at_utc": "2026-05-17T03:07:14+00:00",
+    "latest_refresh_at_utc": "2026-05-17T04:29:23+00:00",
     "preflight_present": true,
     "production_writes": 0,
     "review_only": true,
     "source_coverage_ratio": 0.3554
   },
+  "source_expansion_batches": [
+    {
+      "batch_key": "competitor",
+      "edge_count": 9,
+      "fast_track_count": 9,
+      "label": "Competitor",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "reason": "Clustered review-only source enrichment batch. No URLs are fabricated and no production writes are authorized.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "source_search_query": "V MA Competitor company source relationship",
+          "source_ticker": "V",
+          "target_ticker": "MA"
+        },
+        {
+          "source_search_query": "GOOGL AMZN Competitor company source relationship",
+          "source_ticker": "GOOGL",
+          "target_ticker": "AMZN"
+        },
+        {
+          "source_search_query": "XOM CVX Competitor company source relationship",
+          "source_ticker": "XOM",
+          "target_ticker": "CVX"
+        },
+        {
+          "source_search_query": "GOOGL META Competitor company source relationship",
+          "source_ticker": "GOOGL",
+          "target_ticker": "META"
+        },
+        {
+          "source_search_query": "JPM BAC Competitor company source relationship",
+          "source_ticker": "JPM",
+          "target_ticker": "BAC"
+        }
+      ]
+    },
+    {
+      "batch_key": "financial_infrastructure_overlap",
+      "edge_count": 2,
+      "fast_track_count": 2,
+      "label": "Financial infrastructure overlap",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "reason": "Clustered review-only source enrichment batch. No URLs are fabricated and no production writes are authorized.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "source_search_query": "V JPM Financial infrastructure overlap company source relationship",
+          "source_ticker": "V",
+          "target_ticker": "JPM"
+        },
+        {
+          "source_search_query": "MA JPM Financial infrastructure overlap company source relationship",
+          "source_ticker": "MA",
+          "target_ticker": "JPM"
+        }
+      ]
+    },
+    {
+      "batch_key": "cloud_hyperscaler_exposure",
+      "edge_count": 1,
+      "fast_track_count": 1,
+      "label": "Cloud / hyperscaler exposure",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "reason": "Clustered review-only source enrichment batch. No URLs are fabricated and no production writes are authorized.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "source_search_query": "AVGO GOOGL Cloud / hyperscaler exposure company source relationship",
+          "source_ticker": "AVGO",
+          "target_ticker": "GOOGL"
+        }
+      ]
+    }
+  ],
   "summary": {
+    "context_only_count": 19,
     "ecosystem_gap_count": 5,
+    "fast_track_source_target_count": 12,
+    "fast_track_visibility_count": 58,
     "missing_production_ticker_count": 7,
+    "needs_review_count": 0,
     "review_only": true,
     "reviewer_priority_count": 30,
     "stale_review_edges": 0,
     "total_edges": 121,
     "unsourced_edges": 78,
     "weak_relationship_category_count": 4
+  },
+  "tiered_evidence_policy_summary": {
+    "context_only_count": 19,
+    "fast_track_visibility_count": 58,
+    "needs_review_count": 0,
+    "review_only": true,
+    "strong_inferred_count": 58,
+    "tier_counts": {
+      "context_only": 19,
+      "strong_inferred": 58,
+      "verified": 44
+    },
+    "trusted_relationship_class_counts": {
+      "cloud_hyperscaler_exposure": 20,
+      "competitor": 58,
+      "ecosystem_overlap": 3,
+      "financial_infrastructure_overlap": 10,
+      "semiconductor_supply_chain": 20,
+      "supplier_ecosystem": 10
+    },
+    "verified_count": 44
   },
   "weak_relationship_categories": [
     {

@@ -41,7 +41,7 @@ StockPhotonic/
     core/                     # Dataset loading and normalization
     graph/                    # 2D render/viewport/layout plus 3D view
     intelligence/             # Clusters, correlations, portfolio nexus
-    stock/                    # StockPhotonic relationship taxonomy/evidence helpers
+    stock/                    # StockPhotonic relationship taxonomy/evidence/trust helpers
     ui/                       # Controls, dashboard, search, sidebar
     utils/                    # DOM, formatting, math helpers
   scripts/                    # Local ingestion, candidate, promotion, validation tools
@@ -52,7 +52,7 @@ StockPhotonic/
 
 2D Graph Intelligence is the default exploration surface. It renders production nodes and edges, applies visible graph filters, supports focus and signal-threshold pruning, and derives dashboard/sidebar intelligence from existing data only.
 
-The StockPhotonic relationship intelligence layer lives in `js/stock/relationships.js`, `js/stock/sourceReview.js`, and `js/stock/graphIntelligence.js`. It normalizes existing edge fields at runtime into additive metadata such as `relationship_type`, `confidence_tier`, `evidence_count`, `source_status`, `source_age_key`, `source_host_categories`, and `relationship_summary`, then derives graph-native overlays, guided discovery flows, active-state summaries, route traces, node roles, cluster summaries, evidence gaps, and compact relationship explanations. These derived fields do not create new relationship claims; missing evidence is surfaced as pending.
+The StockPhotonic relationship intelligence layer lives in `js/stock/evidencePolicy.js`, `js/stock/relationships.js`, `js/stock/sourceReview.js`, and `js/stock/graphIntelligence.js`. It normalizes existing edge fields at runtime into additive metadata such as `relationship_type`, `confidence_tier`, `evidence_count`, `source_status`, `source_age_key`, `source_host_categories`, `evidence_tier`, `trusted_relationship_class`, `reviewer_decision_state`, and `relationship_summary`, then derives graph-native overlays, guided discovery flows, active-state summaries, route traces, node roles, cluster summaries, evidence gaps, and compact relationship explanations. These derived fields do not create new relationship claims; missing evidence is surfaced as pending unless a safe public class qualifies for strong-inferred graph visibility.
 
 D141/D142 graph overlays and guides are read-only visual interpretations of existing static metadata. AI infrastructure, semiconductor chain, cloud/hyperscaler, payments, energy, healthcare, and enterprise SaaS overlays match edge type, edge label/provenance/summary, and endpoint sector/industry-group metadata. Guided discovery reuses these overlays plus visible hub, source-backed, evidence-gap, and portfolio-exposure derivations. Route tracing follows visible graph edges only and never creates production data.
 
@@ -61,7 +61,7 @@ D141/D142 graph overlays and guides are read-only visual interpretations of exis
 ## UI LAYERS
 
 - App tabs: Graph Intelligence, Source Workbench, 3D Network.
-- Graph controls: sector, industry group, relationship type, confidence tier, source-host category, sourced-only, SEC-backed-only, stale-review, candidate-preview, missing-evidence, portfolio-connected, cross-sector, layout, search, focus, threshold, orbit, portfolio input, SEC preview visibility, guided discovery dock, ecosystem overlay dock, active graph legend, source coverage lens, guided traversal, and route tracing.
+- Graph controls: sector, industry group, relationship type, confidence tier, evidence tier, source-host category, sourced-only, SEC-backed-only, stale-review, candidate-preview, missing-evidence, portfolio-connected, cross-sector, layout, search, focus, threshold, orbit, portfolio input, SEC preview visibility, guided discovery dock, ecosystem overlay dock, active graph legend, evidence/source coverage lens, guided traversal, and route tracing.
 - Sidebar/dashboard: selected company investigation workspace, relationship evidence cards, evidence review queue, relationship timeline context, connection rows, SEC evidence cues, source/confidence/freshness/host-diversity summaries, nexus view, shared exposure, hidden relationships, cluster context, portfolio exposure, trust summary.
 - Source Workbench: command reference, evidence-state contract, source aging/host-category rules, pipeline overview, candidate file list, recommended local workflow, grouped candidate review snapshot, static candidate preview table, triage metric cards, checklist status, candidate-vs-production overlap comparison, and optional data expansion preflight report display.
 - Scheduled review artifacts: Source Workbench can also display review pipeline timestamps, OpenAlex enrichment summaries, source coverage refresh queues, and missing-artifact fallback states.
@@ -72,17 +72,20 @@ CSS ownership is split by layer. Shared shell styles live in `css/shell.css`, gr
 
 Evidence review UI is static-browser only. It reads production JSON and candidate JSON served by the local static server, then derives:
 
+- Tiered evidence policy: `VERIFIED`, `STRONG_INFERRED`, `CONTEXT_ONLY`, and `NEEDS_REVIEW`.
+- Trusted relationship classes for competitor, ecosystem overlap, supplier ecosystem, cloud/hyperscaler exposure, semiconductor supply chain, and financial infrastructure overlap.
+- Reviewer decision states: `accepted_for_visibility`, `accepted_for_review`, `blocked`, `weak_signal`, `enrichment_only`, and `ready_for_promotion_review`.
 - Evidence aging from existing verified or filing dates.
 - Source-host categories from URL host/path patterns.
 - Review queue groups for low confidence, missing source, stale review, candidate preview, and SEC preview.
 - Trust panels showing confidence tier, evidence count, source diversity, freshness, SEC-backed state, candidate/preview state, and missing-evidence warnings.
 - Optional triage artifacts showing candidate clusters, review priorities, overlap states, source quality, and checklist counts.
 
-The graph renderer uses these same derived fields to strengthen sourced/high-confidence edges and soften stale, pending, candidate, or unsourced edges. No browser ingestion, backend code, provider calls, API keys, or automatic candidate promotion are part of this layer.
+The graph renderer uses these same derived fields to strengthen verified edges, label strong-inferred public ecosystem/competitive edges, and soften context-only, stale, pending, candidate, or review-required edges. No browser ingestion, backend code, provider calls, API keys, or automatic candidate promotion are part of this layer.
 
-D142 adds `scripts/data_expansion_preflight.py` as a local-only review report helper. It reads production JSON and optional candidate/triage artifacts, then writes only `data/candidates/data_expansion_preflight_report.json` when explicitly requested. Source Workbench can display that static artifact if present. The helper reports production source coverage, high-value unsourced edges, relationship type gaps, candidate blockers, and missing production-universe tickers without network calls or production writes.
+D142 adds `scripts/data_expansion_preflight.py` as a local-only review report helper. It reads production JSON and optional candidate/triage artifacts, then writes only `data/candidates/data_expansion_preflight_report.json` when explicitly requested. Source Workbench can display that static artifact if present. The helper reports production source coverage, high-value unsourced edges, relationship type gaps, candidate blockers, missing production-universe tickers, tiered evidence summaries, and fast-track source targets without network calls or production writes.
 
-D143 adds `scripts/source_coverage_refresh.py`, `scripts/openalex_enrichment.py`, and `scripts/review_artifact_refresh.py`. These scripts generate review-only artifacts for reviewer queues, OpenAlex ecosystem/topic/institution/cluster hints, and pipeline refresh status. OpenAlex networking is disabled unless explicitly requested and is bounded by request/entity caps plus cache reuse. The app only reads generated JSON files; it does not call OpenAlex or SEC from the browser.
+D143 adds `scripts/source_coverage_refresh.py`, `scripts/openalex_enrichment.py`, and `scripts/review_artifact_refresh.py`. D144 extends source coverage refresh with `fast_track_source_targets`, `source_expansion_batches`, `hub_source_gaps`, and per-row evidence tier/reviewer state metadata. These scripts generate review-only artifacts for reviewer queues, OpenAlex ecosystem/topic/institution/cluster hints, source coverage enrichment, and pipeline refresh status. OpenAlex networking is disabled unless explicitly requested and is bounded by request/entity caps plus cache reuse. The app only reads generated JSON files; it does not call OpenAlex or SEC from the browser.
 
 ## PIPELINE COMPONENTS
 

@@ -8,6 +8,7 @@ Document: StockPhotonic Data Sources. Production graph data is static JSON: `dat
 - SEC ingestion + candidate system: SEC cache, filing inspection, signal extraction, candidate preview/write, job, schedule, and policy scripts operate locally and keep staged records under `data/candidates/`.
 - Scheduled review orchestration: GitHub Actions and local scripts can refresh review-only SEC, OpenAlex, preflight, source coverage, and pipeline summary artifacts. They upload artifacts only and do not commit or promote production graph data.
 - OpenAlex intelligence layer: Local/script-side enrichment for ecosystem, topic, institution, and clustering hints. OpenAlex is context, not relationship proof or promotion authority.
+- Tiered evidence policy: Browser helpers and review-only scripts classify relationship display state as `VERIFIED`, `STRONG_INFERRED`, `CONTEXT_ONLY`, or `NEEDS_REVIEW`. These labels improve graph clarity and reviewer priority, but never authorize automatic promotion.
 - Promotion + validation flow: SEC-backed candidates can become production edges only after preview, manual review, explicit promotion, and validation.
 
 ## CORE RULES
@@ -117,6 +118,28 @@ OpenAlex-derived records must remain:
 - confidence-labeled
 - `relationship_claim_created: false`
 - outside production promotion unless separately reviewed through the existing candidate workflow
+
+## TIERED EVIDENCE AND FAST-TRACK SOURCE COVERAGE
+
+D144 adds a formal display policy for production and review-only relationship rows:
+
+- `VERIFIED`: SEC, official company, or strong source-backed production evidence.
+- `STRONG_INFERRED`: obvious public competitor/ecosystem relationship from stable metadata. Safe for graph visibility, not official partnership/customer proof.
+- `CONTEXT_ONLY`: OpenAlex/topic overlap, weak ecosystem hints, or enrichment context. Never relationship proof.
+- `NEEDS_REVIEW`: ambiguous, candidate-only, weak, conflicting, or unresolved signals.
+
+Trusted relationship classes are derived from existing metadata and endpoint context:
+
+- `competitor`
+- `ecosystem_overlap`
+- `supplier_ecosystem`
+- `cloud_hyperscaler_exposure`
+- `semiconductor_supply_chain`
+- `financial_infrastructure_overlap`
+
+Reviewer decision states are review-only labels: `accepted_for_visibility`, `accepted_for_review`, `blocked`, `weak_signal`, `enrichment_only`, and `ready_for_promotion_review`.
+
+Fast-track source coverage means strong inferred edges can stay visible while reviewers prioritize source enrichment batches. It does not create source URLs, infer partnerships, or promote production data.
 
 ## CANDIDATE VS PRODUCTION
 

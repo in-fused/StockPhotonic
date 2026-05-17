@@ -351,6 +351,7 @@
         const peerId = item.peer?.id || item.source?.id || item.target?.id || '';
         const sourceAge = item.sourceAge?.shortLabel || 'PENDING';
         const confidence = item.confidence?.shortLabel || 'PENDING';
+        const tier = item.evidenceTier?.shortLabel || 'REVIEW';
         const sourceCategory = item.diversity?.primaryCategory?.shortLabel || 'NO URL';
         const buttonAction = item.kind === 'sec_preview'
             ? `selectSecPreviewEdge('${escapeInlineJsString(item.link?.key || '')}')`
@@ -365,10 +366,11 @@
                         </div>
                         <span class="review-queue-chip">${escapeHtml(item.groupShortLabel || 'REVIEW')}</span>
                     </div>
-                    <div class="mt-2 flex flex-wrap gap-1.5">
-                        <span class="source-age-chip">${escapeHtml(sourceAge)}</span>
-                        <span class="source-host-chip">${escapeHtml(sourceCategory)}</span>
-                        <span class="source-host-chip">${escapeHtml(confidence)}</span>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="evidence-tier-badge ${escapeHtml(item.evidenceTier?.key || 'needs_review')}">${escapeHtml(tier)}</span>
+                            <span class="source-age-chip">${escapeHtml(sourceAge)}</span>
+                            <span class="source-host-chip">${escapeHtml(sourceCategory)}</span>
+                            <span class="source-host-chip">${escapeHtml(confidence)}</span>
                     </div>
                 </button>
             `;
@@ -603,7 +605,9 @@
     }
 
     function renderDashboardTrustSummary(metrics, context) {
-        const { escapeHtml, formatVerifiedDate } = context;
+        const { escapeHtml, formatVerifiedDate, getEvidenceTierLabel } = context;
+        const tierRows = Array.isArray(metrics.evidenceTierCounts) ? metrics.evidenceTierCounts.slice(0, 4) : [];
+        const classRows = Array.isArray(metrics.trustedClassCounts) ? metrics.trustedClassCounts.slice(0, 4) : [];
         return `
                 <div class="trust-panel rounded-2xl p-4">
                     <div class="grid grid-cols-2 gap-3">
@@ -631,6 +635,18 @@
                             <div class="text-[10px] text-white/40 font-mono">MISSING EVIDENCE</div>
                             <div class="font-display text-xl text-white">${metrics.missingEvidenceCount || 0}</div>
                         </div>
+                        <div>
+                            <div class="text-[10px] text-white/40 font-mono">FAST-TRACK</div>
+                            <div class="font-display text-xl text-white">${metrics.fastTrackVisibilityCount || 0}</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-white/40 font-mono">REVIEW TIER</div>
+                            <div class="font-display text-xl text-white">${metrics.reviewRequiredCount || 0}</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-1.5">
+                        ${tierRows.map(([key, count]) => `<span class="evidence-tier-badge ${escapeHtml(key)}">${escapeHtml(getEvidenceTierLabel?.(key) || key)} · ${count}</span>`).join('')}
+                        ${classRows.map(([label, count]) => `<span class="trusted-class-chip">${escapeHtml(label)} · ${count}</span>`).join('')}
                     </div>
                     <div class="mt-3 pt-3 border-t border-white/10 text-[10px] text-cyan-100/58 font-mono tracking-[1.2px]">STATIC DATASET ONLY</div>
                 </div>

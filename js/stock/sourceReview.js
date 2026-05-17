@@ -131,6 +131,18 @@
             label: 'No verified date',
             shortLabel: 'NO DATE',
             priority: 1
+        },
+        needs_review: {
+            key: 'needs_review',
+            label: 'Needs review',
+            shortLabel: 'REVIEW',
+            priority: 4
+        },
+        context_only: {
+            key: 'context_only',
+            label: 'Context-only signal',
+            shortLabel: 'CONTEXT',
+            priority: 1
         }
     };
 
@@ -343,6 +355,7 @@
         const sourceAge = getSourceAgeInfo(record, options);
         const candidatePreview = isCandidateRecord(record);
         const secPreview = isSecPreviewRecord(record);
+        const policy = getEvidencePolicy(record, { evidenceCount });
 
         return {
             lowConfidence: confidenceScore === null || confidenceScore <= 2,
@@ -351,6 +364,10 @@
             noVerifiedDate: sourceAge.key === SOURCE_AGE_STATES.no_verified_date.key,
             candidatePreview,
             secPreview,
+            fastTrackVisibility: Boolean(policy.fastTrackVisibility),
+            evidenceTierKey: policy.tier?.key || 'needs_review',
+            reviewerDecisionKey: policy.reviewerDecisionState?.key || 'accepted_for_review',
+            reviewPressureReduced: shouldReduceReviewPressure(record, { evidenceCount }),
             sourceAge,
             sourceUrls,
             confidenceScore
@@ -359,11 +376,14 @@
 
     function getReviewGroup(record, options = {}) {
         const flags = getReviewFlags(record, options);
+        if (flags.reviewPressureReduced) return null;
         if (flags.secPreview && flags.candidatePreview) return REVIEW_GROUPS.sec_preview_review;
+        if (flags.evidenceTierKey === 'needs_review' && !flags.candidatePreview) return REVIEW_GROUPS.needs_review;
         if (flags.missingSource) return REVIEW_GROUPS.missing_source;
         if (flags.staleReview) return REVIEW_GROUPS.stale_review;
         if (flags.lowConfidence) return REVIEW_GROUPS.low_confidence;
         if (flags.candidatePreview) return REVIEW_GROUPS.candidate_preview;
+        if (flags.evidenceTierKey === 'context_only') return REVIEW_GROUPS.context_only;
         if (flags.noVerifiedDate) return REVIEW_GROUPS.no_verified_date;
         return null;
     }
@@ -373,6 +393,10 @@
         const labels = [];
         if (flags.secPreview && flags.candidatePreview) labels.push('SEC preview');
         if (flags.candidatePreview) labels.push('Candidate preview');
+        if (flags.fastTrackVisibility) labels.push('Fast-track visible');
+        if (flags.reviewPressureReduced) labels.push('Review pressure reduced');
+        if (flags.evidenceTierKey === 'context_only') labels.push('Context-only');
+        if (flags.evidenceTierKey === 'needs_review') labels.push('Needs review');
         if (flags.missingSource) labels.push('Missing source');
         if (flags.staleReview) labels.push('Stale review recommended');
         if (flags.noVerifiedDate) labels.push('No verified date');
@@ -386,10 +410,26 @@
 
     function getReviewPriority(record, options = {}) {
         const group = getReviewGroup(record, options);
+        if (!group) return 0;
         const confidenceScore = getConfidenceScore(record) || 0;
         const ageInfo = getSourceAgeInfo(record, options);
         const ageBoost = ageInfo.ageDays ? Math.min(3, Math.floor(ageInfo.ageDays / STALE_REVIEW_DAYS)) : 0;
         return (group?.priority || 0) * 10 + ageBoost + (confidenceScore <= 2 ? 1 : 0);
+    }
+
+    function getEvidencePolicy(record, options = {}) {
+        const tools = window.StockPhotonicStock?.evidencePolicy;
+        if (tools?.getEvidencePolicy) return tools.getEvidencePolicy(record, options);
+        return {
+            tier: { key: 'needs_review', label: 'Needs review', shortLabel: 'REVIEW' },
+            reviewerDecisionState: { key: 'accepted_for_review', label: 'Accepted for review', shortLabel: 'REVIEW' },
+            fastTrackVisibility: false
+        };
+    }
+
+    function shouldReduceReviewPressure(record, options = {}) {
+        const tools = window.StockPhotonicStock?.evidencePolicy;
+        return Boolean(tools?.shouldReduceReviewPressure?.(record, options));
     }
 
     window.StockPhotonicStock.sourceReview = {
@@ -417,6 +457,7 @@
         getReviewGroup,
         getReviewReasonLabels,
         shouldQueueRelationship,
-        getReviewPriority
+        getReviewPriority,
+        getEvidencePolicy
     };
 })();

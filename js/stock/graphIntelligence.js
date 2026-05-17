@@ -1,5 +1,6 @@
 (function () {
     window.StockPhotonicStock = window.StockPhotonicStock || {};
+    const evidencePolicy = window.StockPhotonicStock.evidencePolicy || {};
 
     const ECOSYSTEMS = {
         ai_infrastructure: {
@@ -215,6 +216,37 @@
             shortLabel: 'PEND',
             color: '#f97316',
             rank: 0
+        }
+    };
+
+    const EVIDENCE_TIER_META = evidencePolicy.TIERS || {
+        verified: {
+            key: 'verified',
+            label: 'Verified',
+            shortLabel: 'VERIFIED',
+            color: '#7cffc8',
+            rank: 4
+        },
+        strong_inferred: {
+            key: 'strong_inferred',
+            label: 'Strong inferred',
+            shortLabel: 'STRONG',
+            color: '#7dd3fc',
+            rank: 3
+        },
+        context_only: {
+            key: 'context_only',
+            label: 'Context only',
+            shortLabel: 'CONTEXT',
+            color: '#c4b5fd',
+            rank: 2
+        },
+        needs_review: {
+            key: 'needs_review',
+            label: 'Needs review',
+            shortLabel: 'REVIEW',
+            color: '#fb923c',
+            rank: 1
         }
     };
 
@@ -475,6 +507,9 @@
         const missing = productionLinks.filter(link => !context.relationshipHasSourceEvidence?.(link));
         const highValueUnsourced = getHighValueUnsourcedLinks(productionLinks, context, 10);
         const visibleHighValueUnsourced = getHighValueUnsourcedLinks(visibleLinks, context, 8);
+        const fastTrackUnsourced = getFastTrackSourceCoverageLinks(productionLinks, context, 10);
+        const visibleFastTrackUnsourced = getFastTrackSourceCoverageLinks(visibleLinks, context, 6);
+        const manualReviewLinks = getManualReviewLinks(productionLinks, context, 12);
         const relationshipTypeGaps = countBy(missing, link => context.getRelationshipTypeLabel?.(link) || link.type || 'Relationship')
             .map(([label, count]) => {
                 const totalForType = productionLinks.filter(link => (context.getRelationshipTypeLabel?.(link) || link.type || 'Relationship') === label).length;
@@ -485,6 +520,9 @@
                     sourcedRatio: totalForType ? (totalForType - count) / totalForType : 0
                 };
             });
+        const tierCounts = countBy(productionLinks, link => getLinkEvidencePolicy(link, context).tier?.key || 'needs_review');
+        const trustedClassCounts = countBy(productionLinks, link => getLinkEvidencePolicy(link, context).trustedClassLabel || 'Unclassified')
+            .filter(([label]) => label !== 'Unclassified');
 
         return {
             total: productionLinks.length,
@@ -496,7 +534,14 @@
             missingCount: missing.length,
             highValueUnsourced,
             visibleHighValueUnsourced,
-            relationshipTypeGaps
+            fastTrackUnsourced,
+            visibleFastTrackUnsourced,
+            manualReviewLinks,
+            relationshipTypeGaps,
+            tierCounts,
+            trustedClassCounts,
+            fastTrackCount: fastTrackUnsourced.length,
+            manualReviewCount: manualReviewLinks.length
         };
     }
 
@@ -512,6 +557,27 @@
             .sort((a, b) => b.score - a.score || getStrength(b.link) - getStrength(a.link))
             .slice(0, limit)
             .map(item => item.link);
+    }
+
+    function getFastTrackSourceCoverageLinks(sourceLinks, context, limit = 8) {
+        return [...(sourceLinks || [])]
+            .filter(link => !context.relationshipHasSourceEvidence?.(link))
+            .filter(link => getLinkEvidencePolicy(link, context).fastTrackVisibility)
+            .sort((a, b) => getPolicyLinkScore(b, context) - getPolicyLinkScore(a, context))
+            .slice(0, limit);
+    }
+
+    function getManualReviewLinks(sourceLinks, context, limit = 8) {
+        return [...(sourceLinks || [])]
+            .filter(link => getLinkEvidencePolicy(link, context).tier?.key === 'needs_review')
+            .sort((a, b) => getPolicyLinkScore(b, context) - getPolicyLinkScore(a, context))
+            .slice(0, limit);
+    }
+
+    function getPolicyLinkScore(link, context) {
+        return getStrength(link) * 4 +
+            ((Number(link.confidence_score ?? link.confidence) || 0) / 5) +
+            (((link.source?.degree || 0) + (link.target?.degree || 0)) * 0.025);
     }
 
     function getTopNodesForLinks(sourceNodes, sourceLinks, context, limit = 4) {
@@ -789,6 +855,7 @@
         const sourceAge = context.getRelationshipSourceAgeInfo?.(link) || { label: 'No verified date', shortLabel: 'NO DATE', key: 'no_verified_date' };
         const diversity = context.getSourceHostDiversity?.(link) || { primaryCategory: null, hostCount: 0, categoryCount: 0 };
         const evidenceCount = Number(context.getRelationshipEvidenceCount?.(link) || link.evidence_count || 0);
+        const evidencePolicy = getLinkEvidencePolicy(link, context);
         const ecosystems = getLinkEcosystemKeys(link, context).map(getEcosystemDefinition).filter(Boolean);
         const sameSector = source.sector && source.sector === target.sector;
         const sourceGroup = context.getCompanyIndustryGroup?.(source);
@@ -805,16 +872,18 @@
                 : sameSector
                     ? `Shared context: both endpoints sit in ${source.sector}.`
                     : 'Shared context: this edge bridges different visible sector or industry groups.';
-        const trustExplanation = context.isSecBackedConnection?.(link)
-            ? 'Evidence state: SEC-backed production edge.'
-            : `${sourceStatus.label}; ${confidence.label}; ${evidenceCount} evidence item${evidenceCount === 1 ? '' : 's'}.`;
+        const trustExplanation = evidencePolicy.explanation ||
+            (context.isSecBackedConnection?.(link)
+                ? 'Evidence state: SEC-backed production edge.'
+                : `${sourceStatus.label}; ${confidence.label}; ${evidenceCount} evidence item${evidenceCount === 1 ? '' : 's'}.`);
         const typeMeaning = getRelationshipTypeMeaning(link, context);
         const sourceExplanation = buildSourceExplanation({
             sourceStatus,
             sourceAge,
             diversity,
             evidenceCount,
-            secBacked: Boolean(context.isSecBackedConnection?.(link))
+            secBacked: Boolean(context.isSecBackedConnection?.(link)),
+            evidencePolicy
         });
         const routeContext = context.activeRelationshipRoute?.linkKeys?.has(link.key)
             ? `This edge is currently part of the active ${context.activeRelationshipRoute.label || 'relationship route'}.`
@@ -844,11 +913,21 @@
             sourceAge,
             diversity,
             evidenceCount,
+            evidencePolicy,
             ecosystems
         };
     }
 
     function buildSourceExplanation(details) {
+        if (details.evidencePolicy?.tier?.key === 'strong_inferred') {
+            return `Source-confidence: ${details.evidencePolicy.explanation}`;
+        }
+        if (details.evidencePolicy?.tier?.key === 'context_only') {
+            return `Source-confidence: context-only enrichment; ${details.evidencePolicy.explanation}`;
+        }
+        if (details.evidencePolicy?.tier?.key === 'needs_review' && details.evidencePolicy?.candidate) {
+            return 'Source-confidence: review-only candidate evidence; manual promotion review is required.';
+        }
         if (details.secBacked) {
             return `Source-confidence: SEC-backed production edge with ${details.evidenceCount} evidence item${details.evidenceCount === 1 ? '' : 's'}.`;
         }
@@ -1050,7 +1129,7 @@
             (context.selectedRelationshipLink.source?.id === node.id || context.selectedRelationshipLink.target?.id === node.id);
         const cluster = context.graphStoryMode === 'cluster' && context.activeClusterNodeIds?.has(node.id);
         const sourceCoverage = context.sourceCoverageLensEnabled
-            ? getNodeSourceCoverageState(node, context)
+            ? getNodeTrustTierState(node, context)
             : null;
         const role = getNodeRole(node, context);
         const primaryEcosystem = getDominantEcosystemsForNode(node, context)[0] || null;
@@ -1091,7 +1170,7 @@
         const overlay = context.graphIntelligenceModel?.overlay?.linkKeys?.has(link.key);
         const guided = context.graphIntelligenceModel?.guidedDiscovery?.linkKeys?.has(link.key);
         const sourceCoverage = context.sourceCoverageLensEnabled
-            ? getLinkSourceCoverageState(link, context)
+            ? getLinkTrustTierState(link, context)
             : null;
         const overlayColor = context.graphIntelligenceModel?.overlay?.color;
         const guidedColor = context.graphIntelligenceModel?.guidedDiscovery?.color;
@@ -1109,7 +1188,7 @@
             color: route ? routeColor : selected ? '#ffffff' : sourceColor || guidedColor || overlayColor || '',
             widthBoost: route ? 2.25 : selected ? 2.4 : guided ? 1.35 : overlay ? 1.1 : sourceCoverage ? 0.35 : 0,
             alphaBoost: route ? 0.45 : selected ? 0.52 : guided ? 0.34 : overlay ? 0.28 : sourceCoverage ? 0.18 : 0,
-            dashPattern: sourceCoverage?.key === 'missing_source' ? [3, 7] : sourceCoverage?.key === 'candidate_preview' ? [8, 6] : null
+            dashPattern: sourceCoverage?.key === 'needs_review' ? [3, 7] : sourceCoverage?.key === 'context_only' ? [2, 6] : null
         };
     }
 
@@ -1162,6 +1241,16 @@
         return SOURCE_STATE_META.source_attached;
     }
 
+    function getNodeTrustTierState(node, context) {
+        const items = context.adjacencyById?.get(node.id) || [];
+        if (!items.length) return EVIDENCE_TIER_META.needs_review;
+        const states = items.map(item => getLinkTrustTierState(item.link, context));
+        if (states.some(state => state.key === 'verified')) return EVIDENCE_TIER_META.verified;
+        if (states.some(state => state.key === 'strong_inferred')) return EVIDENCE_TIER_META.strong_inferred;
+        if (states.some(state => state.key === 'context_only')) return EVIDENCE_TIER_META.context_only;
+        return EVIDENCE_TIER_META.needs_review;
+    }
+
     function getLinkSourceCoverageState(link, context) {
         if (context.isSecBackedConnection?.(link)) return SOURCE_STATE_META.sec_backed;
         const status = context.getRelationshipSourceStatus?.(link);
@@ -1172,13 +1261,37 @@
         return SOURCE_STATE_META.source_attached;
     }
 
+    function getLinkTrustTierState(link, context) {
+        const tier = getLinkEvidencePolicy(link, context).tier;
+        return EVIDENCE_TIER_META[tier?.key] || EVIDENCE_TIER_META.needs_review;
+    }
+
+    function getLinkEvidencePolicy(link, context) {
+        if (context.getRelationshipEvidencePolicy) return context.getRelationshipEvidencePolicy(link);
+        if (evidencePolicy.getEvidencePolicy) return evidencePolicy.getEvidencePolicy(link, {
+            evidenceCount: context.getRelationshipEvidenceCount?.(link)
+        });
+        return {
+            tier: EVIDENCE_TIER_META.needs_review,
+            trustedClassLabel: '',
+            fastTrackVisibility: false,
+            explanation: 'Review required before promotion.'
+        };
+    }
+
     function buildSourceCoverageSummary(context) {
         const links = context.visibleLinks || [];
         const counts = countBy(links, link => getLinkSourceCoverageState(link, context).key);
+        const tierCounts = countBy(links, link => getLinkTrustTierState(link, context).key);
+        const trustedClassCounts = countBy(links, link => getLinkEvidencePolicy(link, context).trustedClassLabel || 'Unclassified')
+            .filter(([label]) => label !== 'Unclassified');
         return {
             total: links.length,
             counts,
-            states: SOURCE_STATE_META
+            states: SOURCE_STATE_META,
+            tierCounts,
+            tierStates: EVIDENCE_TIER_META,
+            trustedClassCounts
         };
     }
 
@@ -1233,6 +1346,7 @@
         ECOSYSTEMS,
         ECOSYSTEM_SEQUENCE,
         SOURCE_STATE_META,
+        EVIDENCE_TIER_META,
         getEcosystemDefinitions,
         getEcosystemDefinition,
         getGuidedDiscoveryFlows,
@@ -1256,6 +1370,8 @@
         getNodeRole,
         getNodeSourceCoverageState,
         getLinkSourceCoverageState,
+        getNodeTrustTierState,
+        getLinkTrustTierState,
         buildSourceCoverageSummary
     };
 })();

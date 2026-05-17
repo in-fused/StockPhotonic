@@ -712,6 +712,7 @@
             .source-preflight-priorities,
             .source-openalex-hints,
             .source-coverage-refresh-queue,
+            .evidence-policy-grid,
             .source-candidate-groups {
                 grid-template-columns: 1fr !important;
             }
@@ -727,6 +728,8 @@
             .relationship-evidence-tag,
             .source-indicator,
             .confidence-badge,
+            .evidence-tier-badge,
+            .trusted-class-chip,
             .source-age-chip,
             .source-host-chip,
             .review-action-chip,

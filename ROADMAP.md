@@ -8,6 +8,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - SEC ingestion + candidate system: Local scripts support SEC fetch/cache, filing inspection, signal extraction, candidate preview, candidate writing, job manifests, schedule previews, and policy gates.
 - Scheduled review orchestration: Local/GitHub Actions review pipelines refresh SEC, OpenAlex, source coverage, preflight, and pipeline summary artifacts without production writes.
 - OpenAlex intelligence layer: Cache-first enrichment for ecosystem, topic, institution, and cluster hints. It is review-only context, not relationship proof.
+- Tiered evidence policy: Graph and Source Workbench distinguish verified, strong-inferred, context-only, and needs-review relationships while keeping promotion manual.
 - Promotion + validation flow: Source-backed candidates must pass preview, manual review, explicit promotion, and `scripts/validate_data.py` before production use.
 
 ## CORE RULES
@@ -23,6 +24,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - UI/UX polish for the 2D Graph Intelligence workflow, especially guided discovery, default graph onboarding, active state comprehension, and mobile graph usability.
 - Intelligence layer clarity: company investigation workspace, graph-adjacent storytelling cards, why-connected relationship cards, source/confidence labels, hubs, bridges, corridors, clusters, shared exposure, hidden relationships, ecosystem overlays, active graph legend, route tracing, industry correlations, portfolio exposure, and SEC-backed edge visibility.
 - Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, triage artifacts, candidate-vs-production overlap comparison, and data expansion preflight reporting.
+- Trust layer clarity: trusted relationship classes, evidence tier filters, strong-inferred fast-track visibility, reviewer decision states, and OpenAlex context-only boundaries.
 - CSS maintainability: keep the D139 split across `base.css`, `shell.css`, `graph.css`, `stock.css`, `crypto.css`, `review.css`, and `mobile.css`; do not return to a single shared catch-all stylesheet.
 - 3D immersion and usability while staying tied to the production static dataset.
 - Source coverage quality for existing high-value relationships.
@@ -33,6 +35,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Data expansion through SEC-backed candidates, not direct production writes.
 - Broader source coverage from SEC filings, company disclosures, official pages, and reputable secondary sources when needed.
 - Better review ergonomics for candidate evaluation, clustering, overlap reports, checklist exports, data expansion preflight, and promotion previews.
+- Source coverage fast-track batches that target strong-inferred public relationships for enrichment without adding manual-promotion pressure.
 - Scheduled review artifact refreshes that reduce manual triage burden while keeping artifacts review-only.
 - OpenAlex enrichment cache quality, entity resolution accuracy, and reviewer-visible topic/institution context.
 - Relationship evidence depth: short source snippets, filing references, source aging review queues, source-host diversity, and relationship-specific confidence explanations.
@@ -62,6 +65,14 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Add artifact aging/retention policy for stale OpenAlex cache entries and scheduled workflow artifacts.
 - Add optional source registry joins for official company/IR URLs after they have validation rules.
 - Keep larger-graph expansion behind candidate preview, manual review, promotion preview, and validation.
+
+## D144 FOLLOW-ON
+
+- Add reviewed source-registry joins for official company/IR source suggestions without fabricating URLs.
+- Add tier-aware large-graph decluttering indexes before expanding beyond the current static core.
+- Add reviewer-owned batch export for `fast_track_source_targets`, preserving review-only artifacts and manual promotion.
+- Add optional strict validation for evidence tier fields after the policy stabilizes.
+- Keep OpenAlex as `CONTEXT_ONLY` enrichment and never relationship proof.
 
 ## D140 FOLLOW-ON
 

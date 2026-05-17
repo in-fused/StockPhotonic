@@ -158,6 +158,14 @@
                     <option value="pending">Evidence pending</option>
                 </select>
 
+                <select id="evidence-tier-filter" aria-label="Evidence Tier" title="Filter StockPhotonic edges by tiered evidence policy." onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="">All Evidence Tiers</option>
+                    <option value="verified">Verified</option>
+                    <option value="strong_inferred">Strong inferred</option>
+                    <option value="context_only">Context-only</option>
+                    <option value="needs_review">Needs review</option>
+                </select>
+
                 <select id="source-host-filter" aria-label="Source Host Category" title="Filter relationships by URL-derived source host category." onchange="filterGraph()" class="bg-black/40 border border-white/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
                     <option value="">All Source Hosts</option>
                 </select>
@@ -416,6 +424,37 @@
                         <div class="source-evidence-state rounded-2xl p-3">
                             <div class="text-xs font-mono text-violet-100/80">Host category</div>
                             <p class="mt-2 text-xs text-white/58 leading-relaxed">Source host badges are derived from URL hosts and paths, including SEC, IR, partner/customer, research, candidate-only, and other URLs.</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 source-workbench-label mb-3">Tiered Evidence Policy</div>
+                    <div class="evidence-policy-grid">
+                        <div class="evidence-policy-card verified rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="evidence-tier-badge verified">VERIFIED</span>
+                                <span class="review-action-chip">visibility</span>
+                            </div>
+                            <p class="mt-2 text-xs text-white/58 leading-relaxed">SEC, official company, or strong source-backed production relationship evidence.</p>
+                        </div>
+                        <div class="evidence-policy-card strong_inferred rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="evidence-tier-badge strong_inferred">STRONG</span>
+                                <span class="review-action-chip">fast-track</span>
+                            </div>
+                            <p class="mt-2 text-xs text-white/58 leading-relaxed">Obvious public competitor or ecosystem overlap. Safe graph visibility, not official partnership proof.</p>
+                        </div>
+                        <div class="evidence-policy-card context_only rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="evidence-tier-badge context_only">CONTEXT</span>
+                                <span class="review-action-chip">enrichment</span>
+                            </div>
+                            <p class="mt-2 text-xs text-white/58 leading-relaxed">OpenAlex, topic overlap, research context, or weak ecosystem hints. Never relationship proof.</p>
+                        </div>
+                        <div class="evidence-policy-card needs_review rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="evidence-tier-badge needs_review">REVIEW</span>
+                                <span class="review-action-chip">manual only</span>
+                            </div>
+                            <p class="mt-2 text-xs text-white/58 leading-relaxed">Ambiguous, weak, candidate-only, conflicting, or unresolved records stay review-first.</p>
                         </div>
                     </div>
                 </div>
@@ -793,6 +832,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                                 Source coverage refresh report is not present yet.
                             </div>
                             <div id="source-coverage-refresh-summary" class="hidden source-coverage-refresh-grid mb-3"></div>
+                            <div class="source-workbench-label mb-2">Fast-Track Source Coverage Batches</div>
+                            <div id="source-fast-track-batches" class="hidden source-coverage-refresh-queue mb-3"></div>
                             <div id="source-coverage-refresh-queue" class="hidden source-coverage-refresh-queue mb-3"></div>
                         </div>
                     </div>
@@ -953,9 +994,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/utils/math.js"></script>
     <script src="js/utils/formatting.js"></script>
     <script src="js/utils/dom.js"></script>
-    <script src="js/stock/sourceReview.js"></script>
-    <script src="js/stock/relationships.js"></script>
-    <script src="js/stock/graphIntelligence.js"></script>
+    <script src="js/stock/sourceReview.js?v=d144-tiered-evidence"></script>
+    <script src="js/stock/evidencePolicy.js?v=d144-tiered-evidence"></script>
+    <script src="js/stock/relationships.js?v=d144-tiered-evidence"></script>
+    <script src="js/stock/graphIntelligence.js?v=d144-tiered-evidence"></script>
     <script src="js/core/data.js"></script>
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
@@ -965,8 +1007,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/intelligence/clusters.js"></script>
     <script src="js/intelligence/industryCorrelations.js"></script>
     <script src="js/intelligence/portfolioNexus.js"></script>
-    <script src="js/ui/dashboard.js"></script>
-    <script src="js/ui/sidebar.js"></script>
+    <script src="js/ui/dashboard.js?v=d144-tiered-evidence"></script>
+    <script src="js/ui/sidebar.js?v=d144-tiered-evidence"></script>
     <script src="js/ui/search.js"></script>
     <script src="js/ui/controls.js"></script>
     <script src="js/crypto/core.js"></script>
@@ -1036,7 +1078,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic controls module failed to load');
         }
 
-        if (!window.StockPhotonicStock?.sourceReview || !window.StockPhotonicStock?.relationships) {
+        if (!window.StockPhotonicStock?.sourceReview || !window.StockPhotonicStock?.evidencePolicy || !window.StockPhotonicStock?.relationships) {
             throw new Error('StockPhotonic relationship intelligence module failed to load');
         }
 
@@ -1090,6 +1132,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             getDatasetTrustMetrics
         } = window.StockPhotonicData;
         const sourceReviewTools = window.StockPhotonicStock.sourceReview;
+        const evidencePolicyTools = window.StockPhotonicStock.evidencePolicy;
         const relationshipTools = window.StockPhotonicStock.relationships;
         const stockGraphIntelligence = window.StockPhotonicStock.graphIntelligence;
         const {
@@ -1099,6 +1142,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             getRelationshipGroupKey,
             getRelationshipFilterOptions,
             getRelationshipVisualMeta,
+            getEvidencePolicy: getRelationshipEvidencePolicy,
+            getEvidenceTier: getRelationshipEvidenceTier,
+            getTrustedRelationshipClass,
+            getReviewerDecisionState,
             getConfidenceTier: getRelationshipConfidenceTier,
             getSourceStatus: getRelationshipSourceStatus,
             getEvidenceCount: getRelationshipEvidenceCount,
@@ -1245,6 +1292,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let currentIndustryGroup = '';
         let currentRelationshipType = '';
         let currentConfidenceTier = '';
+        let currentEvidenceTier = '';
         let sourceHostCategoryFilter = '';
         let sourcedOnlyFilter = false;
         let secBackedOnlyFilter = false;
@@ -2186,6 +2234,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const labels = [];
             if (currentRelationshipType) labels.push(getRelationshipTypeLabel(currentRelationshipType));
             if (currentConfidenceTier) labels.push(`${getConfidenceTierLabel(currentConfidenceTier)} confidence`);
+            if (currentEvidenceTier) labels.push(`${getEvidenceTierLabel(currentEvidenceTier)} evidence`);
             if (sourceHostCategoryFilter) labels.push(getSourceHostCategoryLabel(sourceHostCategoryFilter));
             if (sourcedOnlyFilter) labels.push('Sourced only');
             if (secBackedOnlyFilter) labels.push('SEC-backed only');
@@ -2207,10 +2256,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return labelByTier[tier] || 'All';
         }
 
+        function getEvidenceTierLabel(tier) {
+            return evidencePolicyTools?.TIERS?.[tier]?.label || 'Evidence tier';
+        }
+
         function hasRelationshipFiltersActive() {
             return Boolean(
                 currentRelationshipType ||
                 currentConfidenceTier ||
+                currentEvidenceTier ||
                 sourceHostCategoryFilter ||
                 sourcedOnlyFilter ||
                 secBackedOnlyFilter ||
@@ -2232,6 +2286,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 currentIndustryGroup,
                 currentRelationshipType,
                 currentConfidenceTier,
+                currentEvidenceTier,
                 sourceHostCategoryFilter,
                 sourcedOnlyFilter,
                 secBackedOnlyFilter,
@@ -2267,6 +2322,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 isSecBackedConnection,
                 getSourceHostDiversity,
                 getRelationshipSourceAgeInfo,
+                getRelationshipEvidencePolicy,
+                getRelationshipEvidenceTier,
+                getEvidenceTierLabel,
                 getEvidenceReviewQueueItems,
                 getRelationshipTypeLabel,
                 getRelationshipTypeColor,
@@ -2302,6 +2360,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 getRelationshipGroupKey,
                 getRelationshipTypeMeaning: stockGraphIntelligence.getRelationshipTypeMeaning,
                 getRelationshipConfidenceTier,
+                getRelationshipEvidencePolicy,
+                getRelationshipEvidenceTier,
+                getTrustedRelationshipClass,
+                getReviewerDecisionState,
+                getEvidenceTierLabel,
                 getRelationshipSourceStatus,
                 getRelationshipEvidenceCount,
                 getRelationshipSourceAgeInfo,
@@ -2317,6 +2380,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 currentIndustryGroup,
                 currentRelationshipType,
                 currentConfidenceTier,
+                currentEvidenceTier,
                 sourceHostCategoryFilter,
                 sourcedOnlyFilter,
                 secBackedOnlyFilter,
@@ -2428,6 +2492,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 getRelationshipTypeColor,
                 getRelationshipGroupKey,
                 getRelationshipConfidenceTier,
+                getRelationshipEvidencePolicy,
+                getRelationshipEvidenceTier,
+                getTrustedRelationshipClass,
+                getReviewerDecisionState,
                 getRelationshipSourceStatus,
                 getRelationshipEvidenceCount,
                 getRelationshipSourceAgeInfo,
@@ -3889,6 +3957,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function renderSourceCoverageCard(sourceCoverage) {
             const states = sourceCoverage?.states || {};
             const counts = new Map(sourceCoverage?.counts || []);
+            const tierStates = sourceCoverage?.tierStates || {};
+            const tierCounts = new Map(sourceCoverage?.tierCounts || []);
             const gaps = graphIntelligenceModel.evidenceGaps || {};
             return `
                 <div class="graph-card-header">
@@ -3898,24 +3968,27 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     </div>
                     <button type="button" onclick="toggleSourceCoverageLens(false)" class="graph-card-close" aria-label="Clear source coverage lens"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div class="graph-card-body">Edges are colored by existing evidence state: SEC-backed, sourced, candidate preview, stale review, or pending source coverage.</div>
+                <div class="graph-card-body">Edges are colored by tiered evidence policy. Strong inferred edges stay visible with honest labels; context-only and review-required edges remain visually softer.</div>
                 <div class="graph-source-state-grid">
-                    ${Object.values(states).map(state => `
+                    ${Object.values(tierStates).map(state => `
                         <div class="graph-source-state">
                             <span style="background:${state.color};"></span>
                             <div>${escapeHtml(state.label)}</div>
-                            <strong>${counts.get(state.key) || 0}</strong>
+                            <strong>${tierCounts.get(state.key) || 0}</strong>
                         </div>
                     `).join('')}
+                </div>
+                <div class="graph-card-chips">
+                    ${Object.values(states).slice(0, 4).map(state => `<span>${escapeHtml(state.shortLabel || state.label)} ${counts.get(state.key) || 0}</span>`).join('')}
                 </div>
                 <div class="graph-card-metrics">
                     <div><span>${gaps.secBacked || 0}</span><small>SEC</small></div>
                     <div><span>${Math.round((gaps.sourcedRatio || 0) * 100)}%</span><small>sourced</small></div>
-                    <div><span>${gaps.staleReview || 0}</span><small>stale</small></div>
-                    <div><span>${gaps.candidatePreviewCount || 0}</span><small>preview</small></div>
+                    <div><span>${gaps.fastTrackCount || 0}</span><small>fast-track</small></div>
+                    <div><span>${gaps.manualReviewCount || 0}</span><small>review</small></div>
                 </div>
                 <div class="graph-card-chips">
-                    ${(gaps.visibleHighValueUnsourced || []).slice(0, 3).map(link => `<span>${escapeHtml(link.source?.ticker || '?')} to ${escapeHtml(link.target?.ticker || '?')}</span>`).join('') || '<span>No visible high-value gaps</span>'}
+                    ${(gaps.visibleFastTrackUnsourced || gaps.visibleHighValueUnsourced || []).slice(0, 3).map(link => `<span>${escapeHtml(link.source?.ticker || '?')} to ${escapeHtml(link.target?.ticker || '?')}</span>`).join('') || '<span>No visible high-value gaps</span>'}
                 </div>
                 <div class="graph-card-actions">
                     <button type="button" onclick="startGuidedDiscovery('evidence_gaps')" class="graph-card-action"><i class="fa-solid fa-link-slash"></i><span>Review Gaps</span></button>
@@ -3942,7 +4015,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     : 'None';
             const filterCount = getActiveGraphFilterCount();
             const guide = graphIntelligenceModel.guidedDiscovery;
-            const sourceStates = graphIntelligenceModel.sourceCoverage?.states || {};
+            const tierStates = graphIntelligenceModel.sourceCoverage?.tierStates || stockGraphIntelligence.EVIDENCE_TIER_META || {};
 
             legend.innerHTML = `
                 <div class="graph-active-legend-header">
@@ -3959,9 +4032,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     ${renderLegendItem('Filters', `${filterCount} active`, filterCount ? '#fbbf24' : '')}
                 </div>
                 <div class="graph-active-legend-swatches">
-                    <span><i style="background:${sourceStates.sec_backed?.color || '#fbbf24'}"></i>SEC</span>
-                    <span><i style="background:${sourceStates.source_attached?.color || '#22d3ee'}"></i>Sourced</span>
-                    <span><i style="background:${sourceStates.missing_source?.color || '#f97316'}"></i>Pending</span>
+                    <span><i style="background:${tierStates.verified?.color || '#7cffc8'}"></i>Verified</span>
+                    <span><i style="background:${tierStates.strong_inferred?.color || '#7dd3fc'}"></i>Strong</span>
+                    <span><i style="background:${tierStates.context_only?.color || '#c4b5fd'}"></i>Context</span>
+                    <span><i style="background:${tierStates.needs_review?.color || '#fb923c'}"></i>Review</span>
                     <span><i class="graph-route-swatch"></i>Route/selected</span>
                 </div>
             `;
@@ -4592,6 +4666,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const sourceAge = getRelationshipSourceAgeInfo(link);
             const diversity = getSourceHostDiversity(link);
             const reasons = getReviewReasonLabels(link, { evidenceCount: getRelationshipEvidenceCount(link) });
+            const policy = getRelationshipEvidencePolicy(link);
 
             return {
                 kind: 'production',
@@ -4605,6 +4680,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 pairLabel: `${source?.ticker || '?'} to ${target?.ticker || '?'}`,
                 typeLabel: getRelationshipTypeLabel(link),
                 reasons,
+                evidenceTier: policy.tier,
+                trustedClass: policy.trustedClass,
+                reviewerDecisionState: policy.reviewerDecisionState,
+                fastTrackVisibility: policy.fastTrackVisibility,
                 sourceAge,
                 diversity,
                 confidence: getRelationshipConfidenceTier(link),
@@ -4626,6 +4705,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             };
             const sourceAge = getRelationshipSourceAgeInfo(link);
             const diversity = getSourceHostDiversity(link);
+            const policy = getRelationshipEvidencePolicy(link);
 
             return {
                 kind: 'sec_preview',
@@ -4639,6 +4719,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 pairLabel: `${link.sourceTicker || source?.ticker || '?'} to ${link.targetTicker || target?.ticker || '?'}`,
                 typeLabel: getRelationshipTypeLabel(link),
                 reasons: getReviewReasonLabels(link, { evidenceCount: getRelationshipEvidenceCount(link) }),
+                evidenceTier: policy.tier,
+                trustedClass: policy.trustedClass,
+                reviewerDecisionState: policy.reviewerDecisionState,
+                fastTrackVisibility: policy.fastTrackVisibility,
                 sourceAge,
                 diversity,
                 confidence: getRelationshipConfidenceTier(link),
@@ -4655,6 +4739,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const staleReviewCount = sourceConnections.filter(relationshipIsStaleForReview).length;
             const missingEvidenceCount = sourceConnections.filter(relationshipIsMissingEvidence).length;
             const noVerifiedDateCount = sourceConnections.filter(connection => getRelationshipSourceAgeInfo(connection).key === 'no_verified_date').length;
+            const policySummary = evidencePolicyTools.summarizeEvidencePolicies?.(sourceConnections) || {
+                tierCounts: [],
+                trustedClassCounts: [],
+                fastTrackVisibilityCount: 0,
+                reviewRequiredCount: 0
+            };
 
             return {
                 ...baseMetrics,
@@ -4662,7 +4752,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 sourceUrlEdgeCount,
                 staleReviewCount,
                 missingEvidenceCount,
-                noVerifiedDateCount
+                noVerifiedDateCount,
+                evidenceTierCounts: policySummary.tierCounts,
+                trustedClassCounts: policySummary.trustedClassCounts,
+                fastTrackVisibilityCount: policySummary.fastTrackVisibilityCount,
+                reviewRequiredCount: policySummary.reviewRequiredCount
             };
         }
 
@@ -4901,6 +4995,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             currentIndustryGroup = document.getElementById('industry-group-filter').value;
             currentRelationshipType = document.getElementById('relationship-type-filter')?.value || '';
             currentConfidenceTier = document.getElementById('confidence-tier-filter')?.value || '';
+            currentEvidenceTier = document.getElementById('evidence-tier-filter')?.value || '';
             sourceHostCategoryFilter = document.getElementById('source-host-filter')?.value || '';
             currentSearch = document.getElementById('search-input').value.trim().toLowerCase();
             updateRelationshipFilterControls();
@@ -4918,6 +5013,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             currentIndustryGroup = '';
             currentRelationshipType = '';
             currentConfidenceTier = '';
+            currentEvidenceTier = '';
             sourceHostCategoryFilter = '';
             sourcedOnlyFilter = false;
             secBackedOnlyFilter = false;
@@ -4943,9 +5039,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             document.getElementById('industry-group-filter').value = '';
             const relationshipTypeFilter = document.getElementById('relationship-type-filter');
             const confidenceTierFilter = document.getElementById('confidence-tier-filter');
+            const evidenceTierFilter = document.getElementById('evidence-tier-filter');
             const sourceHostFilter = document.getElementById('source-host-filter');
             if (relationshipTypeFilter) relationshipTypeFilter.value = '';
             if (confidenceTierFilter) confidenceTierFilter.value = '';
+            if (evidenceTierFilter) evidenceTierFilter.value = '';
             if (sourceHostFilter) sourceHostFilter.value = '';
             document.getElementById('search-input').value = '';
             document.getElementById('layout-mode').value = LAYOUT_MODE_SECTOR;
@@ -5624,7 +5722,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (sourceCoverageLensEnabled) {
                 overlay.insertAdjacentHTML('beforeend', `
                     <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/80 font-mono tracking-[1.1px] border border-cyan-300/22 bg-cyan-300/10">
-                        Source Coverage Lens
+                        Evidence Tier Lens
                     </span>
                 `);
             }
@@ -5682,6 +5780,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!link) return false;
             if (currentRelationshipType && getRelationshipTypeKey(link) !== currentRelationshipType) return false;
             if (currentConfidenceTier && getRelationshipConfidenceTier(link).key !== currentConfidenceTier) return false;
+            if (currentEvidenceTier && getRelationshipEvidenceTier(link).key !== currentEvidenceTier) return false;
             if (sourceHostCategoryFilter && !relationshipMatchesSourceHostCategory(link, sourceHostCategoryFilter)) return false;
             if (sourcedOnlyFilter && !relationshipHasSourceEvidence(link)) return false;
             if (secBackedOnlyFilter && !isSecBackedConnection(link)) return false;
@@ -6290,6 +6389,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 const diversity = getSourceHostDiversity(candidate);
                 const filingAge = sourceReviewTools.getDateAgeInfo(candidate?.filing_date);
                 const confidenceTier = getCandidateConfidenceTier(candidate);
+                const policy = evidencePolicyTools.getEvidencePolicy(candidate, {
+                    evidenceCount: sourceUrls.length + (candidate?.evidence_snippet ? 1 : 0)
+                });
                 const reviewStatus = formatCandidateCell(candidate?.review_status);
                 return {
                     candidate,
@@ -6298,6 +6400,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     diversity,
                     filingAge,
                     confidenceTier,
+                    evidenceTier: policy.tier,
+                    reviewerDecisionState: policy.reviewerDecisionState,
+                    trustedClass: policy.trustedClass,
                     reviewStatus,
                     relationshipType: formatCandidateCell(candidate?.relationship_type)
                 };
@@ -6306,6 +6411,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const byConfidence = countBy(records, item => item.confidenceTier.label);
             const byType = countBy(records, item => item.relationshipType);
             const byReviewStatus = countBy(records, item => item.reviewStatus);
+            const byEvidenceTier = countBy(records, item => item.evidenceTier?.label || 'Needs review');
             const bySourceCategory = countBy(records, item => item.diversity.primaryCategory?.label || 'No source URL');
             const pendingCount = records.filter(item => /pending/i.test(item.reviewStatus)).length;
             const secSourceCount = records.filter(item => item.diversity.categoryKeys.includes('sec_source')).length;
@@ -6320,6 +6426,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 byConfidence,
                 byType,
                 byReviewStatus,
+                byEvidenceTier,
                 bySourceCategory
             };
         }
@@ -6358,6 +6465,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function renderSourceCandidateGroups(model) {
             return [
                 renderSourceCandidateGroup('Confidence Groups', model.byConfidence),
+                renderSourceCandidateGroup('Evidence Tiers', model.byEvidenceTier),
                 renderSourceCandidateGroup('Relationship Types', model.byType),
                 renderSourceCandidateGroup('SEC Preview Review', model.byReviewStatus),
                 renderSourceCandidateGroup('Source Host Categories', model.bySourceCategory)
@@ -6424,6 +6532,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <td class="px-3 py-2">
                         <div>${escapeHtml(formatCandidateCell(candidate.review_status))}</div>
                         <div class="mt-1 flex flex-wrap gap-1">
+                            <span class="evidence-tier-badge ${escapeHtml(record.evidenceTier?.key || 'needs_review')}">${escapeHtml(record.evidenceTier?.shortLabel || 'REVIEW')}</span>
+                            <span class="source-host-chip">${escapeHtml(record.reviewerDecisionState?.shortLabel || 'REVIEW')}</span>
                             <span class="source-host-chip">${escapeHtml(sourceCategory)}</span>
                             <span class="source-host-chip">${record.sourceCount} SOURCE${record.sourceCount === 1 ? '' : 'S'}</span>
                         </div>
@@ -6805,6 +6915,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                             <span class="review-action-chip">${escapeHtml(row.confidence_label || 'context_hint')}</span>
                         </div>
                         <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="evidence-tier-badge context_only">CONTEXT</span>
+                            <span class="source-host-chip">ENRICHMENT ONLY</span>
                             <span class="source-host-chip">${sourceCount} SOURCE${sourceCount === 1 ? '' : 'S'}</span>
                             <span class="source-host-chip">NO CLAIM</span>
                         </div>
@@ -6851,6 +6963,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const summary = report?.summary || {};
             return [
                 renderReviewArtifactMetric('UNSOURCED', summary.unsourced_edges ?? 0, 'source-coverage-refresh-card'),
+                renderReviewArtifactMetric('FAST-TRACK', summary.fast_track_visibility_count ?? summary.fast_track_source_target_count ?? 0, 'source-coverage-refresh-card'),
+                renderReviewArtifactMetric('NEEDS REVIEW', summary.needs_review_count ?? 0, 'source-coverage-refresh-card'),
                 renderReviewArtifactMetric('WEAK TYPES', summary.weak_relationship_category_count ?? 0, 'source-coverage-refresh-card'),
                 renderReviewArtifactMetric('ECOSYSTEM GAPS', summary.ecosystem_gap_count ?? 0, 'source-coverage-refresh-card'),
                 renderReviewArtifactMetric('PRIORITIES', summary.reviewer_priority_count ?? 0, 'source-coverage-refresh-card')
@@ -6873,19 +6987,79 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         </div>
                         <span class="review-action-chip">${escapeHtml(item.priority || 'review')}</span>
                     </div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="evidence-tier-badge ${escapeHtml(item.evidence_tier || (item.fast_track_visibility ? 'strong_inferred' : 'needs_review'))}">${escapeHtml(formatCandidateCell(item.evidence_tier || 'needs_review'))}</span>
+                        ${item.trusted_relationship_class ? `<span class="trusted-class-chip">${escapeHtml(item.trusted_relationship_class)}</span>` : ''}
+                        ${item.reviewer_decision_state ? `<span class="source-host-chip">${escapeHtml(item.reviewer_decision_state)}</span>` : ''}
+                    </div>
                 </div>
             `).join('');
+        }
+
+        function renderCoverageExpansionBatches(report) {
+            const batches = Array.isArray(report?.source_expansion_batches)
+                ? report.source_expansion_batches.slice(0, 6)
+                : [];
+            const targets = Array.isArray(report?.fast_track_source_targets)
+                ? report.fast_track_source_targets.slice(0, 6)
+                : [];
+            const hubs = Array.isArray(report?.hub_source_gaps)
+                ? report.hub_source_gaps.slice(0, 4)
+                : [];
+            if (!batches.length && !targets.length && !hubs.length) {
+                return '<div class="text-sm text-white/35">No fast-track source coverage batches are present in the current report.</div>';
+            }
+
+            return `
+                ${batches.map(batch => `
+                    <div class="source-coverage-refresh-item rounded-2xl p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-xs text-white/86 font-semibold">${escapeHtml(batch.label || batch.batch_key || 'Source batch')}</div>
+                                <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(batch.reason || 'Review-only enrichment batch.')}</div>
+                            </div>
+                            <span class="review-action-chip">${escapeHtml(batch.priority || 'source')}</span>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="evidence-tier-badge strong_inferred">${escapeHtml(formatCandidateCell(batch.fast_track_count ?? 0))} FAST</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(batch.edge_count ?? 0))} EDGES</span>
+                        </div>
+                    </div>
+                `).join('')}
+                ${targets.map(target => `
+                    <div class="source-coverage-refresh-item rounded-2xl p-3">
+                        <div class="text-xs text-white/86 font-semibold">${escapeHtml(formatCandidateCell(target.source_ticker))} -> ${escapeHtml(formatCandidateCell(target.target_ticker))}</div>
+                        <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(target.source_search_query || target.reason || 'Source target suggestion only.')}</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="evidence-tier-badge strong_inferred">STRONG</span>
+                            <span class="trusted-class-chip">${escapeHtml(target.trusted_relationship_class || 'trusted class')}</span>
+                        </div>
+                    </div>
+                `).join('')}
+                ${hubs.map(hub => `
+                    <div class="source-coverage-refresh-item rounded-2xl p-3">
+                        <div class="text-xs text-white/86 font-semibold">${escapeHtml(hub.ticker || 'Hub')} source gap</div>
+                        <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(hub.reason || 'Strong graph hub with unresolved source coverage gaps.')}</div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(hub.unsourced_edge_count ?? 0))} UNSOURCED</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(hub.fast_track_edge_count ?? 0))} FAST</span>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
         }
 
         function renderCoverageRefreshReport(report) {
             const empty = document.getElementById('source-coverage-refresh-empty');
             const summaryWrap = document.getElementById('source-coverage-refresh-summary');
             const queueWrap = document.getElementById('source-coverage-refresh-queue');
+            const batchWrap = document.getElementById('source-fast-track-batches');
             if (!empty || !summaryWrap || !queueWrap) return;
 
             if (!report) {
                 summaryWrap.classList.add('hidden');
                 queueWrap.classList.add('hidden');
+                batchWrap?.classList.add('hidden');
                 empty.classList.remove('hidden');
                 setWorkbenchArtifactStatus('source-coverage-refresh-status', 'COVERAGE UNAVAILABLE', 'warning');
                 return;
@@ -6895,6 +7069,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             summaryWrap.classList.remove('hidden');
             queueWrap.innerHTML = renderCoverageRefreshQueue(report);
             queueWrap.classList.remove('hidden');
+            if (batchWrap) {
+                batchWrap.innerHTML = renderCoverageExpansionBatches(report);
+                batchWrap.classList.remove('hidden');
+            }
             empty.classList.add('hidden');
             const priorities = Number(report.summary?.reviewer_priority_count || 0);
             setWorkbenchArtifactStatus('source-coverage-refresh-status', `${priorities} PRIORIT${priorities === 1 ? 'Y' : 'IES'}`);

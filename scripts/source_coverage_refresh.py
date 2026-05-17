@@ -28,6 +28,7 @@ from data_expansion_preflight import (  # type: ignore
     display_path,
     resolve_path,
 )
+from evidence_policy import source_search_query  # type: ignore
 
 
 sys.dont_write_bytecode = True
@@ -185,15 +186,24 @@ def build_reviewer_priority_queue(preflight: dict[str, Any]) -> list[dict[str, A
     for row in (preflight.get("high_value_unsourced_edges") or [])[:20]:
         if not isinstance(row, dict):
             continue
+        fast_track = bool(row.get("fast_track_visibility"))
         queue.append(
             {
                 "queue_id": f"source-gap-{row.get('connection_index')}",
-                "queue_type": "production_edge_missing_source_url",
-                "priority": row.get("priority") or "review",
+                "queue_type": "fast_track_source_coverage_target" if fast_track else "production_edge_missing_source_url",
+                "priority": "source" if fast_track else row.get("priority") or "review",
                 "source_ticker": row.get("source_ticker"),
                 "target_ticker": row.get("target_ticker"),
                 "relationship_type": row.get("relationship_type"),
-                "reason": "High-value production edge lacks source URLs.",
+                "reason": "Strong inferred relationship remains visibility-safe; enrich sources without manual-promotion pressure."
+                if fast_track
+                else "High-value production edge lacks source URLs.",
+                "evidence_tier": row.get("evidence_tier"),
+                "trusted_relationship_class": row.get("trusted_relationship_class"),
+                "reviewer_decision_state": row.get("reviewer_decision_state"),
+                "fast_track_visibility": fast_track,
+                "source_search_query": row.get("source_search_query"),
+                "manual_promotion_allowed": False,
                 "review_only": True,
             }
         )
@@ -219,6 +229,114 @@ def build_reviewer_priority_queue(preflight: dict[str, Any]) -> list[dict[str, A
     return queue
 
 
+def fast_track_source_targets(preflight: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = preflight.get("fast_track_source_targets")
+    if not isinstance(rows, list):
+        rows = [
+            row for row in (preflight.get("high_value_unsourced_edges") or [])
+            if isinstance(row, dict) and row.get("fast_track_visibility")
+        ]
+    targets: list[dict[str, Any]] = []
+    for row in rows[:18]:
+        if not isinstance(row, dict):
+            continue
+        targets.append(
+            {
+                "queue_id": f"fast-track-source-{row.get('connection_index')}",
+                "source_ticker": row.get("source_ticker"),
+                "target_ticker": row.get("target_ticker"),
+                "relationship_type": row.get("relationship_type"),
+                "evidence_tier": row.get("evidence_tier") or "strong_inferred",
+                "trusted_relationship_class": row.get("trusted_relationship_class"),
+                "trusted_relationship_class_label": row.get("trusted_relationship_class_label"),
+                "priority": "source",
+                "reason": "Fast-track source coverage target; graph visibility remains strong-inferred until source-backed.",
+                "source_search_query": row.get("source_search_query")
+                or source_search_query(row, {"trusted_relationship_class_label": row.get("trusted_relationship_class_label")}),
+                "manual_promotion_allowed": False,
+                "review_only": True,
+            }
+        )
+    return targets
+
+
+def source_expansion_batches(preflight: dict[str, Any], targets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for target in targets:
+        key = str(target.get("trusted_relationship_class") or "unclassified")
+        grouped.setdefault(key, []).append(target)
+
+    batches: list[dict[str, Any]] = []
+    for key, rows in sorted(grouped.items(), key=lambda item: (-len(item[1]), item[0])):
+        label = str(rows[0].get("trusted_relationship_class_label") or key.replace("_", " ").title())
+        batches.append(
+            {
+                "batch_key": key,
+                "label": label,
+                "priority": "source",
+                "edge_count": len(rows),
+                "fast_track_count": sum(1 for row in rows if row.get("evidence_tier") == "strong_inferred"),
+                "sample_edges": [
+                    {
+                        "source_ticker": row.get("source_ticker"),
+                        "target_ticker": row.get("target_ticker"),
+                        "source_search_query": row.get("source_search_query"),
+                    }
+                    for row in rows[:5]
+                ],
+                "reason": "Clustered review-only source enrichment batch. No URLs are fabricated and no production writes are authorized.",
+                "manual_promotion_allowed": False,
+                "review_only": True,
+            }
+        )
+    return batches
+
+
+def hub_source_gaps(preflight: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = [
+        row for row in (preflight.get("high_value_unsourced_edges") or [])
+        if isinstance(row, dict)
+    ]
+    hub_map: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        for ticker in (row.get("source_ticker"), row.get("target_ticker")):
+            if not ticker:
+                continue
+            entry = hub_map.setdefault(
+                str(ticker),
+                {
+                    "ticker": ticker,
+                    "unsourced_edge_count": 0,
+                    "fast_track_edge_count": 0,
+                    "sample_edges": [],
+                    "review_only": True,
+                },
+            )
+            entry["unsourced_edge_count"] += 1
+            if row.get("fast_track_visibility"):
+                entry["fast_track_edge_count"] += 1
+            if len(entry["sample_edges"]) < 5:
+                entry["sample_edges"].append(
+                    {
+                        "source_ticker": row.get("source_ticker"),
+                        "target_ticker": row.get("target_ticker"),
+                        "evidence_tier": row.get("evidence_tier"),
+                    }
+                )
+    hubs = sorted(
+        hub_map.values(),
+        key=lambda row: (
+            int(row["unsourced_edge_count"]),
+            int(row["fast_track_edge_count"]),
+            str(row["ticker"]),
+        ),
+        reverse=True,
+    )
+    for row in hubs:
+        row["reason"] = "Strong graph hub with source coverage gaps; review-only source enrichment target."
+    return hubs[:10]
+
+
 def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
     companies_path = resolve_path(args.companies)
     connections_path = resolve_path(args.connections)
@@ -242,7 +360,11 @@ def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
     weak_categories = weak_relationship_categories(preflight)
     ecosystem_gaps = ecosystem_gap_rows(preflight)
     queue = build_reviewer_priority_queue(preflight)
+    fast_track_targets = fast_track_source_targets(preflight)
+    expansion_batches = source_expansion_batches(preflight, fast_track_targets)
+    hub_gaps = hub_source_gaps(preflight)
     coverage = preflight.get("production_edge_source_coverage") or {}
+    policy_summary = preflight.get("tiered_evidence_policy_summary") or {}
 
     report = {
         "metadata": {
@@ -269,6 +391,10 @@ def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
             "weak_relationship_category_count": len(weak_categories),
             "ecosystem_gap_count": len(ecosystem_gaps),
             "reviewer_priority_count": len(queue),
+            "fast_track_visibility_count": policy_summary.get("fast_track_visibility_count", 0),
+            "fast_track_source_target_count": len(fast_track_targets),
+            "needs_review_count": policy_summary.get("needs_review_count", 0),
+            "context_only_count": policy_summary.get("context_only_count", 0),
             "missing_production_ticker_count": len(
                 preflight.get("candidate_tickers_missing_from_production_universe") or []
             ),
@@ -283,6 +409,10 @@ def build_refresh_report(args: argparse.Namespace) -> dict[str, Any]:
         },
         "weak_relationship_categories": weak_categories,
         "ecosystem_gaps": ecosystem_gaps,
+        "tiered_evidence_policy_summary": policy_summary,
+        "fast_track_source_targets": fast_track_targets,
+        "source_expansion_batches": expansion_batches,
+        "hub_source_gaps": hub_gaps,
         "missing_production_tickers": preflight.get("candidate_tickers_missing_from_production_universe") or [],
         "reviewer_priority_queue": queue,
         "safety": {

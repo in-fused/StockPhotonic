@@ -37,6 +37,55 @@
             color: rgba(221, 214, 254, 0.84);
         }
 
+.evidence-tier-badge,
+        .trusted-class-chip {
+            display: inline-flex;
+            align-items: center;
+            max-width: 100%;
+            min-height: 1.35rem;
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(224, 242, 254, 0.76);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            line-height: 1;
+            padding: 0.3rem 0.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.evidence-tier-badge.verified {
+            border-color: rgba(124, 255, 200, 0.34);
+            background: rgba(0, 255, 159, 0.10);
+            color: rgba(187, 247, 208, 0.94);
+        }
+
+.evidence-tier-badge.strong_inferred {
+            border-color: rgba(125, 211, 252, 0.34);
+            background: rgba(14, 165, 233, 0.11);
+            color: rgba(186, 230, 253, 0.94);
+        }
+
+.evidence-tier-badge.context_only {
+            border-color: rgba(196, 181, 253, 0.32);
+            background: rgba(124, 58, 237, 0.11);
+            color: rgba(221, 214, 254, 0.94);
+        }
+
+.evidence-tier-badge.needs_review {
+            border-color: rgba(251, 146, 60, 0.34);
+            background: rgba(251, 146, 60, 0.10);
+            color: rgba(254, 215, 170, 0.94);
+        }
+
+.trusted-class-chip {
+            border-color: rgba(255, 255, 255, 0.13);
+            background: rgba(255, 255, 255, 0.055);
+            color: rgba(226, 232, 240, 0.76);
+        }
+
 .review-queue-chip {
             border-color: rgba(251, 191, 36, 0.24);
             background: rgba(251, 191, 36, 0.09);
@@ -325,6 +374,45 @@
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 0.65rem;
+        }
+
+.trust-tier-summary,
+        .evidence-policy-card,
+        .trust-tier-mini {
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(0, 0, 0, 0.20);
+        }
+
+.trust-tier-mini {
+            border-radius: 0.75rem;
+        }
+
+.evidence-policy-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.65rem;
+        }
+
+.evidence-policy-card {
+            background:
+                linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+                rgba(3, 7, 18, 0.40);
+        }
+
+.evidence-policy-card.verified {
+            border-color: rgba(124, 255, 200, 0.18);
+        }
+
+.evidence-policy-card.strong_inferred {
+            border-color: rgba(125, 211, 252, 0.20);
+        }
+
+.evidence-policy-card.context_only {
+            border-color: rgba(196, 181, 253, 0.19);
+        }
+
+.evidence-policy-card.needs_review {
+            border-color: rgba(251, 146, 60, 0.20);
         }
 
 .source-triage-grid {

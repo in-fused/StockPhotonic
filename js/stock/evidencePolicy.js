@@ -53,6 +53,24 @@
             shortLabel: 'REVIEW',
             description: 'Review queue item; no automatic promotion.'
         },
+        pending_preview: {
+            key: 'pending_preview',
+            label: 'Pending preview',
+            shortLabel: 'PENDING',
+            description: 'Reviewer has not approved preview progression yet.'
+        },
+        approved_for_preview: {
+            key: 'approved_for_preview',
+            label: 'Approved for preview',
+            shortLabel: 'PREVIEW',
+            description: 'Reviewer approved preview visibility only; no production write is authorized.'
+        },
+        approved_for_promotion_review: {
+            key: 'approved_for_promotion_review',
+            label: 'Approved for promotion review',
+            shortLabel: 'PROMO REVIEW',
+            description: 'Reviewer approved deeper manual promotion review; promotion remains explicit and validated.'
+        },
         blocked: {
             key: 'blocked',
             label: 'Blocked',
@@ -76,6 +94,18 @@
             label: 'Ready for promotion review',
             shortLabel: 'PROMO REVIEW',
             description: 'Candidate has stronger inputs but still requires manual preview, promotion, and validation.'
+        },
+        production_candidate: {
+            key: 'production_candidate',
+            label: 'Production candidate',
+            shortLabel: 'PROD CAND',
+            description: 'Reviewer marked the record for manual promotion tooling and validation; no automatic write is authorized.'
+        },
+        deferred: {
+            key: 'deferred',
+            label: 'Deferred',
+            shortLabel: 'DEFER',
+            description: 'Reviewer postponed the record without promotion authority.'
         }
     };
 

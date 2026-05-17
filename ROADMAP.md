@@ -4,7 +4,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 - Graph Intelligence (2D): Current main work surface for exploring curated companies and edges with filters, search, relationship taxonomy, source/confidence/review filters, Focus Mode, signal thresholds, portfolio exposure, SEC-backed edge indicators, hub/nexus layouts, cluster intelligence, shared exposure, hidden relationship hints, industry correlations, ecosystem overlays, source coverage lens, route tracing, guided discovery, active graph legend, and graph-adjacent intelligence cards.
 - 3D Network capabilities: Three.js production-network view with orbiting camera, search, labels, filters, SEC emphasis, neighborhood depth, selected details, and fullscreen exploration.
-- Source Workbench pipeline: Static, read-only guide and candidate preview surface for the local SEC workflow, candidate-company expansion batches, source coverage refresh, source registry governance, universe expansion readiness, corridor maintenance, and OpenAlex safety summaries.
+- Source Workbench pipeline: Static, read-only guide and candidate preview surface for the local SEC workflow, candidate-company expansion batches, promotion planning, source coverage refresh, source registry governance, universe expansion readiness, corridor maintenance, graph-growth simulation, and OpenAlex safety summaries.
 - SEC ingestion + candidate system: Local scripts support SEC fetch/cache, filing inspection, signal extraction, candidate preview, candidate writing, job manifests, schedule previews, and policy gates.
 - Scheduled review orchestration: Local/GitHub Actions review pipelines refresh SEC, OpenAlex, source coverage, preflight, and pipeline summary artifacts without production writes.
 - OpenAlex intelligence layer: Cache-first enrichment for ecosystem, topic, institution, and cluster hints. It is review-only context, not relationship proof.
@@ -25,7 +25,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 - UI/UX polish for the 2D Graph Intelligence workflow, especially guided discovery, default graph onboarding, active state comprehension, and mobile graph usability.
 - Intelligence layer clarity: company investigation workspace, graph-adjacent storytelling cards, why-connected relationship cards, source/confidence labels, hubs, bridges, corridors, clusters, shared exposure, hidden relationships, ecosystem overlays, active graph legend, route tracing, industry correlations, portfolio exposure, and SEC-backed edge visibility.
-- Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, candidate-company preview staging, expansion batch summaries, triage artifacts, candidate-vs-production overlap comparison, and data expansion preflight reporting.
+- Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, candidate-company preview staging, promotion readiness tables, reviewer decision states, graph-impact simulations, expansion batch summaries, triage artifacts, candidate-vs-production overlap comparison, and data expansion preflight reporting.
 - Trust layer clarity: trusted relationship classes, evidence tier filters, strong-inferred fast-track visibility, reviewer decision states, and OpenAlex context-only boundaries.
 - CSS maintainability: keep the D139 split across `base.css`, `shell.css`, `graph.css`, `stock.css`, `crypto.css`, `review.css`, and `mobile.css`; do not return to a single shared catch-all stylesheet.
 - 3D immersion and usability while staying tied to the production static dataset.
@@ -59,7 +59,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 - Precompute guided discovery indexes for larger datasets: top hubs, bridges, source-backed edges, evidence gaps, and ecosystem memberships.
 - Add route target selection after guided discovery proves useful with reviewers.
-- Expand Source Workbench preflight into reviewer-owned checklists without automatic promotion.
+- Expand Source Workbench promotion planning into reviewer-owned decision persistence and diff exports without automatic promotion.
 - Add source-backed expansion batches only after preflight, candidate preview, manual review, promotion preview, and validation all pass.
 
 ## D143 FOLLOW-ON
@@ -81,6 +81,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 ## D145 FOLLOW-ON
 
 - Completed in D146: reviewer-owned source registry, corridor maintenance queues, source-aging visibility, universe readiness reports, large-graph scaling summaries, and OpenAlex entity-resolution safety.
+- Completed in D148: review-only promotion planner, reviewer decision workflow display, production-readiness scoring, batch promotion planning, graph-impact simulation, source-readiness summaries, staged hub scoring, and mobile-aware large-graph safety forecasts.
 
 ## D146 FOLLOW-ON
 

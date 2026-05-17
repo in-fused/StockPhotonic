@@ -34,6 +34,7 @@ UNIVERSE_EXPANSION_SCRIPT = ROOT / "scripts" / "universe_expansion_batches.py"
 PREFLIGHT_SCRIPT = ROOT / "scripts" / "data_expansion_preflight.py"
 SOURCE_COVERAGE_SCRIPT = ROOT / "scripts" / "source_coverage_refresh.py"
 SOURCE_GOVERNANCE_SCRIPT = ROOT / "scripts" / "source_registry_governance.py"
+PROMOTION_PLANNER_SCRIPT = ROOT / "scripts" / "promotion_planner_report.py"
 OPENALEX_SCRIPT = ROOT / "scripts" / "openalex_enrichment.py"
 VALIDATE_SCRIPT = ROOT / "scripts" / "validate_data.py"
 
@@ -67,6 +68,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--skip-preflight", action="store_true")
     parser.add_argument("--skip-source-coverage", action="store_true")
     parser.add_argument("--skip-source-governance", action="store_true")
+    parser.add_argument("--skip-promotion-planner", action="store_true")
     parser.add_argument("--skip-openalex", action="store_true")
     parser.add_argument(
         "--allow-openalex-network",
@@ -259,6 +261,13 @@ def planned_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ),
             )
         )
+    if not args.skip_promotion_planner:
+        steps.append(
+            (
+                "promotion_planner_report",
+                step_command(PROMOTION_PLANNER_SCRIPT, write=args.write, force=args.force),
+            )
+        )
     if not args.skip_openalex:
         extra = [
             "--max-requests",
@@ -320,6 +329,7 @@ def build_summary(args: argparse.Namespace, results: list[StepResult], started_a
             "data_expansion_preflight": "data/candidates/data_expansion_preflight_report.json",
             "source_coverage_refresh": "data/candidates/source_coverage_refresh_report.json",
             "source_governance_report": "data/source_registry/source_governance_report.json",
+            "promotion_planner_report": "data/candidates/promotion_planner_report.json",
             "official_company_sources": "data/source_registry/official_company_sources.json",
             "trusted_source_hosts": "data/source_registry/trusted_source_hosts.json",
             "corridor_source_registry": "data/source_registry/corridor_source_registry.json",

@@ -216,8 +216,58 @@
         return 36;
     }
 
+    function buildGrowthForecast(options = {}) {
+        const currentNodeCount = Number(options.currentNodeCount || 0);
+        const currentEdgeCount = Number(options.currentEdgeCount || 0);
+        const stagedNodeCount = Number(options.stagedNodeCount || 0);
+        const previewAnchorEdgeCount = Number(options.previewAnchorEdgeCount || 0);
+        const projectedNodeCount = currentNodeCount + stagedNodeCount;
+        const previewEdgeCount = currentEdgeCount + previewAnchorEdgeCount;
+        const density = getDensityBucket(projectedNodeCount, previewEdgeCount);
+        const recommendedLabelLimit = getTickerLabelLimit(density);
+        return {
+            density,
+            currentNodeCount,
+            currentEdgeCount,
+            stagedNodeCount,
+            projectedNodeCount,
+            previewAnchorEdgeCount,
+            previewEdgeCount,
+            recommendedLabelLimit,
+            recommendedFullLabelLimit: getFullLabelLimit(density),
+            recommendedCandidateLabelLimit: getCandidatePreviewLabelLimit(density),
+            labelPressure: getLabelPressure(projectedNodeCount, recommendedLabelLimit),
+            mobileSafety: getMobileSafety(projectedNodeCount, previewEdgeCount, density),
+            routeComplexity: getRouteComplexity(density),
+            simulationOnly: true,
+            productionMutation: false
+        };
+    }
+
+    function getLabelPressure(nodeCount, labelLimit) {
+        const ratio = nodeCount / Math.max(1, labelLimit);
+        if (ratio > 7) return 'very high';
+        if (ratio > 4.5) return 'high';
+        if (ratio > 2.8) return 'moderate';
+        return 'low';
+    }
+
+    function getMobileSafety(nodeCount, edgeCount, density) {
+        if (density.key === 'very_dense' || nodeCount > 150 || edgeCount > 330) return 'tight';
+        if (density.key === 'dense' || nodeCount > 105 || edgeCount > 220) return 'watch';
+        return 'safe';
+    }
+
+    function getRouteComplexity(density) {
+        if (density.key === 'very_dense') return 'very high';
+        if (density.key === 'dense') return 'high';
+        if (density.key === 'growth') return 'moderate';
+        return 'normal';
+    }
+
     window.StockPhotonicStock.graphScaling = {
         buildScalingModel,
-        getDensityBucket
+        getDensityBucket,
+        buildGrowthForecast
     };
 })();

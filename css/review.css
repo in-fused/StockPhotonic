@@ -433,6 +433,7 @@
 
 .source-triage-section,
         .source-candidate-company-section,
+        .source-promotion-planner-section,
         .source-expansion-section,
         .source-review-pipeline-section,
         .source-openalex-section,
@@ -455,6 +456,10 @@
             min-width: 1080px;
         }
 
+.source-promotion-planner-table {
+            min-width: 1220px;
+        }
+
 .source-overlap-table,
         .source-preflight-table {
             min-width: 980px;
@@ -462,6 +467,7 @@
 
 .source-candidate-table th,
         .source-candidate-company-table th,
+        .source-promotion-planner-table th,
         .source-overlap-table th,
         .source-preflight-table th {
             color: rgba(165, 243, 252, 0.82);
@@ -475,6 +481,7 @@
 
 .source-candidate-table td,
         .source-candidate-company-table td,
+        .source-promotion-planner-table td,
         .source-overlap-table td,
         .source-preflight-table td {
             border-top: 1px solid rgba(255, 255, 255, 0.07);
@@ -494,6 +501,8 @@
         .source-openalex-grid,
         .source-coverage-refresh-grid,
         .source-candidate-company-grid,
+        .source-promotion-planner-grid,
+        .source-promotion-simulation-grid,
         .source-governance-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -509,6 +518,7 @@
         .source-openalex-hints,
         .source-coverage-refresh-queue,
         .source-candidate-company-batches,
+        .source-promotion-batch-grid,
         .source-governance-list {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -524,6 +534,9 @@
         .source-coverage-refresh-item,
         .source-candidate-company-card,
         .source-candidate-company-item,
+        .source-promotion-planner-card,
+        .source-promotion-simulation-card,
+        .source-promotion-batch-card,
         .source-governance-card,
         .source-governance-item {
             border: 1px solid rgba(125, 211, 252, 0.14);
@@ -539,6 +552,11 @@
             background:
                 linear-gradient(135deg, rgba(163, 230, 53, 0.075), rgba(251, 240, 138, 0.035)),
                 rgba(3, 7, 18, 0.38);
+        }
+
+.promotion-planner-mini-metric {
+            border: 1px solid rgba(190, 242, 100, 0.13);
+            background: rgba(0, 0, 0, 0.22);
         }
 
 .candidate-company-anchor-row {
@@ -572,4 +590,47 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+
+.promotion-decision-chip {
+            display: inline-flex;
+            max-width: 100%;
+            border: 1px solid rgba(125, 211, 252, 0.22);
+            border-radius: 999px;
+            background: rgba(125, 211, 252, 0.08);
+            color: rgba(224, 242, 254, 0.9);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            line-height: 1;
+            padding: 0.3rem 0.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.promotion-decision-chip.pending_preview {
+            border-color: rgba(251, 191, 36, 0.24);
+            background: rgba(251, 191, 36, 0.08);
+            color: rgba(254, 240, 138, 0.9);
+        }
+
+.promotion-decision-chip.approved_for_preview,
+        .promotion-decision-chip.approved_for_promotion_review,
+        .promotion-decision-chip.production_candidate {
+            border-color: rgba(124, 255, 200, 0.24);
+            background: rgba(124, 255, 200, 0.08);
+            color: rgba(209, 250, 229, 0.92);
+        }
+
+.promotion-decision-chip.blocked {
+            border-color: rgba(251, 146, 60, 0.28);
+            background: rgba(251, 146, 60, 0.10);
+            color: rgba(254, 215, 170, 0.92);
+        }
+
+.promotion-decision-chip.enrichment_only,
+        .promotion-decision-chip.deferred {
+            border-color: rgba(196, 181, 253, 0.24);
+            background: rgba(196, 181, 253, 0.08);
+            color: rgba(237, 233, 254, 0.9);
         }

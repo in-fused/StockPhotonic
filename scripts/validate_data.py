@@ -31,6 +31,7 @@ CANDIDATE_OVERLAP_PATH = ROOT / "data" / "candidates" / "candidate_overlap_repor
 DATA_EXPANSION_PREFLIGHT_PATH = ROOT / "data" / "candidates" / "data_expansion_preflight_report.json"
 SOURCE_COVERAGE_REFRESH_PATH = ROOT / "data" / "candidates" / "source_coverage_refresh_report.json"
 REVIEW_PIPELINE_SUMMARY_PATH = ROOT / "data" / "candidates" / "review_pipeline_summary.json"
+PROMOTION_PLANNER_REPORT_PATH = ROOT / "data" / "candidates" / "promotion_planner_report.json"
 SOURCE_REGISTRY_DIR = ROOT / "data" / "source_registry"
 OFFICIAL_COMPANY_SOURCES_PATH = SOURCE_REGISTRY_DIR / "official_company_sources.json"
 TRUSTED_SOURCE_HOSTS_PATH = SOURCE_REGISTRY_DIR / "trusted_source_hosts.json"
@@ -501,6 +502,57 @@ def validate_review_pipeline_summary_file(
         errors.append(f"{artifact_name} steps must be a list.")
 
 
+def validate_promotion_planner_report_file(
+    path: Path,
+    errors: list[str],
+    warnings: list[str],
+) -> None:
+    artifact_name = "promotion_planner_report"
+    if not path.exists():
+        warnings.append(f"{artifact_name} artifact is absent; skipped.")
+        return
+
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} must contain an object.")
+        return
+    validate_review_only_metadata(payload, artifact_name, errors)
+    validate_safety_zero_writes(payload, artifact_name, errors)
+    records = payload.get("records")
+    if not isinstance(records, list):
+        errors.append(f"{artifact_name} records must be a list.")
+        return
+    allowed_states = {
+        "pending_preview",
+        "approved_for_preview",
+        "approved_for_promotion_review",
+        "blocked",
+        "enrichment_only",
+        "production_candidate",
+        "deferred",
+    }
+    for index, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            errors.append(f"{artifact_name} record {index}: must be an object.")
+            continue
+        if record.get("review_only") is not True:
+            errors.append(f"{artifact_name} record {index}: review_only must be true.")
+        if record.get("production_write_allowed") is not False:
+            errors.append(f"{artifact_name} record {index}: production_write_allowed must be false.")
+        if record.get("relationship_authority") is not False:
+            errors.append(f"{artifact_name} record {index}: relationship_authority must be false.")
+        if clean_string(record.get("ticker")) is None:
+            errors.append(f"{artifact_name} record {index}: ticker is required.")
+        state = record.get("reviewer_decision_state")
+        if state not in allowed_states:
+            errors.append(f"{artifact_name} record {index}: unsupported reviewer_decision_state {state!r}.")
+        readiness = record.get("readiness")
+        if not isinstance(readiness, dict):
+            errors.append(f"{artifact_name} record {index}: readiness must be an object.")
+        elif readiness.get("automatic_promotion_allowed") is not False:
+            errors.append(f"{artifact_name} record {index}: readiness.automatic_promotion_allowed must be false.")
+
+
 def validate_review_owned_registry_file(
     path: Path,
     artifact_name: str,
@@ -858,6 +910,11 @@ def validate(strict_confidence: bool = False) -> int:
     )
     validate_review_pipeline_summary_file(
         REVIEW_PIPELINE_SUMMARY_PATH,
+        errors,
+        warnings,
+    )
+    validate_promotion_planner_report_file(
+        PROMOTION_PLANNER_REPORT_PATH,
         errors,
         warnings,
     )

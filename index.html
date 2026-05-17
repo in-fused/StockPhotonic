@@ -543,6 +543,7 @@
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_review_summary.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_overlap_report.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/review_pipeline_summary.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/promotion_planner_report.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/source_coverage_refresh_report.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/source_registry/*.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/openalex_*.json</div>
@@ -573,6 +574,8 @@
                         <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Bulk Candidate Generation</span>
                         <span class="pipeline-arrow">-&gt;</span>
                         <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Review Artifact Refresh</span>
+                        <span class="pipeline-arrow">-&gt;</span>
+                        <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Promotion Planner</span>
                         <span class="pipeline-arrow">-&gt;</span>
                         <span class="pipeline-step primary-workflow-step rounded-full px-3 py-1.5 text-xs">Promotion Preview</span>
                         <span class="pipeline-arrow">-&gt;</span>
@@ -650,6 +653,17 @@
                             <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-source-governance">python scripts/source_registry_governance.py --write --force --sync-registry</code></pre>
                             <p class="mt-2 text-xs text-white/54">
                                 Refreshes reviewer-owned registry, universe readiness, corridor maintenance, graph scaling, and OpenAlex safety summaries. It performs zero production writes.
+                            </p>
+                        </div>
+
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3E.</span> Promotion Planner Report</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-promotion-planner', this)" aria-label="Copy promotion planner report command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-promotion-planner">python scripts/promotion_planner_report.py --write --force</code></pre>
+                            <p class="mt-2 text-xs text-white/54">
+                                Builds the review-only planner artifact with readiness scoring, reviewer-state summaries, batch comparisons, and graph-impact simulation. It performs zero production writes and cannot approve promotion.
                             </p>
                         </div>
 
@@ -795,6 +809,39 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                                         </tr>
                                     </thead>
                                     <tbody id="source-candidate-company-rows"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="source-promotion-planner-section mt-4 pt-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="source-workbench-label mb-2">Promotion Planner Console</div>
+                                    <p class="text-sm text-white/56">
+                                        Review-only promotion staging, readiness scoring, batch comparison, and graph-impact simulation. Planner rows never write production companies, edges, or ecosystem memberships.
+                                    </p>
+                                </div>
+                                <div id="source-promotion-planner-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING PLANNER</div>
+                            </div>
+                            <div id="source-promotion-planner-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                                Promotion planner inputs are not present yet. Generate candidate-company artifacts or run the promotion planner report locally.
+                            </div>
+                            <div id="source-promotion-planner-summary" class="hidden source-promotion-planner-grid mb-3"></div>
+                            <div id="source-promotion-simulation" class="hidden source-promotion-simulation-grid mb-3"></div>
+                            <div id="source-promotion-batches" class="hidden source-promotion-batch-grid mb-3"></div>
+                            <div id="source-promotion-planner-table-wrap" class="hidden overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+                                <table class="source-promotion-planner-table w-full border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-3 py-2">Ticker</th>
+                                            <th class="px-3 py-2">Reviewer State</th>
+                                            <th class="px-3 py-2">Readiness</th>
+                                            <th class="px-3 py-2">Sources</th>
+                                            <th class="px-3 py-2">Graph Impact</th>
+                                            <th class="px-3 py-2">Batch</th>
+                                            <th class="px-3 py-2">Blockers / Gates</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="source-promotion-planner-rows"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -1091,6 +1138,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/stock/sourceRegistry.js?v=d146-source-governance"></script>
     <script src="js/stock/sourceReview.js?v=d146-source-governance"></script>
     <script src="js/stock/universeExpansion.js?v=d147-candidate-company-preview"></script>
+    <script src="js/stock/promotionPlanner.js?v=d148-promotion-planner"></script>
     <script src="js/stock/evidencePolicy.js?v=d144-tiered-evidence"></script>
     <script src="js/stock/relationships.js?v=d144-tiered-evidence"></script>
     <script src="js/stock/graphScaling.js?v=d146-source-governance"></script>
@@ -1175,7 +1223,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic controls module failed to load');
         }
 
-        if (!window.StockPhotonicStock?.sourceRegistry || !window.StockPhotonicStock?.sourceReview || !window.StockPhotonicStock?.universeExpansion || !window.StockPhotonicStock?.evidencePolicy || !window.StockPhotonicStock?.relationships) {
+        if (!window.StockPhotonicStock?.sourceRegistry || !window.StockPhotonicStock?.sourceReview || !window.StockPhotonicStock?.universeExpansion || !window.StockPhotonicStock?.promotionPlanner || !window.StockPhotonicStock?.evidencePolicy || !window.StockPhotonicStock?.relationships) {
             throw new Error('StockPhotonic relationship intelligence module failed to load');
         }
 
@@ -1231,6 +1279,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         const sourceReviewTools = window.StockPhotonicStock.sourceReview;
         const sourceRegistryTools = window.StockPhotonicStock.sourceRegistry;
         const universeExpansionTools = window.StockPhotonicStock.universeExpansion;
+        const promotionPlannerTools = window.StockPhotonicStock.promotionPlanner;
         const evidencePolicyTools = window.StockPhotonicStock.evidencePolicy;
         const relationshipTools = window.StockPhotonicStock.relationships;
         const stockGraphScaling = window.StockPhotonicStock.graphScaling;
@@ -3623,8 +3672,22 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             ctx.arc(point.x, point.y, radius * 2.05 * pulse, 0, Math.PI * 2);
             ctx.stroke();
 
-            drawCandidateCompanyPreviewNodeLabel(ctx, node, point, radius, isSelected || isHovered || hubCandidate);
+            const emphasizeLabel = isSelected || isHovered || hubCandidate;
+            if (shouldDrawCandidateCompanyPreviewNodeLabel(node, emphasizeLabel)) {
+                drawCandidateCompanyPreviewNodeLabel(ctx, node, point, radius, emphasizeLabel);
+            }
             ctx.restore();
+        }
+
+        function shouldDrawCandidateCompanyPreviewNodeLabel(node, emphasized) {
+            if (emphasized) return true;
+            const limit = Number(graphScalingModel?.renderHeuristics?.candidatePreviewLabelLimit || 24);
+            const visibleCount = visibleCandidateCompanyPreviewNodes.length;
+            if (visibleCount <= limit) return scale > 0.48;
+            const index = visibleCandidateCompanyPreviewNodes.findIndex(item => item.id === node.id);
+            if (index < 0 || index >= limit) return false;
+            if (visibleCount > limit * 1.6) return scale > 0.68;
+            return scale > 0.56;
         }
 
         function drawCandidateCompanyPreviewNodeLabel(ctx, node, point, radius, emphasized) {
@@ -3898,6 +3961,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const sourceSummary = record.source_readiness_summary || {};
             const hub = record.strategic_hub_preview || {};
             const blockers = Array.isArray(record.blockers) ? record.blockers : [];
+            const promotionPlan = promotionPlannerTools.buildCandidatePlanRecord(record, {
+                companies,
+                connections,
+                graphScalingTools: stockGraphScaling
+            });
 
             sidebar.innerHTML = `
                 ${renderActiveContextStrip(getSidebarRenderContext())}
@@ -3950,6 +4018,29 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     </div>
                     <div class="mt-3 flex flex-wrap gap-1.5">
                         ${blockers.length ? blockers.map(blocker => `<span class="review-action-chip">${escapeHtml(blocker)}</span>`).join('') : '<span class="source-host-chip">NO BLOCKERS</span>'}
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Promotion Planner</div>
+                    <div class="candidate-company-sidebar-card rounded-2xl p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <div class="text-[10px] text-white/38 font-mono">REVIEWER STATE</div>
+                                <div class="mt-1 text-sm text-white/82">${escapeHtml(promotionPlan.decisionState.label)}</div>
+                            </div>
+                            <span class="promotion-decision-chip ${escapeHtml(promotionPlan.decisionState.key)}">${escapeHtml(promotionPlan.decisionState.shortLabel)}</span>
+                        </div>
+                        <div class="mt-3 grid grid-cols-2 gap-2">
+                            ${renderPromotionMiniMetric('Readiness', promotionPlan.readiness.score)}
+                            ${renderPromotionMiniMetric('Next Gate', promotionPlan.nextDecision.shortLabel)}
+                            ${renderPromotionMiniMetric('Input Ready', promotionPlan.readiness.inputReady ? 'YES' : 'NO')}
+                            ${renderPromotionMiniMetric('Manual Review', promotionPlan.readiness.productionCandidateReady ? 'APPROVED' : 'PENDING')}
+                        </div>
+                        <div class="mt-3 text-xs text-white/56 leading-relaxed">${escapeHtml(promotionPlan.readiness.label)}. The planner is simulation-only and cannot write production data.</div>
+                        <div class="mt-3 flex flex-wrap gap-1.5">
+                            ${(promotionPlan.blockers.length ? promotionPlan.blockers : promotionPlan.reviewGates).slice(0, 6).map(item => `<span class="${promotionPlan.blockers.length ? 'review-action-chip' : 'source-host-chip'}">${escapeHtml(item)}</span>`).join('')}
+                        </div>
                     </div>
                 </div>
 
@@ -4065,6 +4156,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 <div class="candidate-company-sidebar-card rounded-2xl p-3">
                     <div class="text-[10px] text-white/40 font-mono">${escapeHtml(label)}</div>
                     <div class="font-display text-lg text-white">${escapeHtml(formatCandidateCell(value))}</div>
+                </div>
+            `;
+        }
+
+        function renderPromotionMiniMetric(label, value) {
+            return `
+                <div class="promotion-planner-mini-metric rounded-xl p-2">
+                    <div class="text-[10px] text-white/40 font-mono">${escapeHtml(label)}</div>
+                    <div class="font-display text-base text-white">${escapeHtml(formatCandidateCell(value))}</div>
                 </div>
             `;
         }
@@ -7739,6 +7839,224 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderCandidateCompanyWorkbench(companyPayload, batchPayload);
         }
 
+        function setPromotionPlannerStatus(label, tone = 'info') {
+            setWorkbenchArtifactStatus('source-promotion-planner-status', label, tone);
+        }
+
+        function renderPromotionPlannerMetric(label, value) {
+            return renderReviewArtifactMetric(label, value, 'source-promotion-planner-card');
+        }
+
+        function renderPromotionPlannerSummary(model) {
+            const summary = model.summary || {};
+            return [
+                renderPromotionPlannerMetric('CANDIDATES', summary.candidateCount || 0),
+                renderPromotionPlannerMetric('INPUT READY', summary.inputReadyCount || 0),
+                renderPromotionPlannerMetric('PROMO APPROVED', summary.productionCandidateCount || 0),
+                renderPromotionPlannerMetric('BLOCKED', summary.blockedCount || 0),
+                renderPromotionPlannerMetric('AVG SCORE', summary.averageReadinessScore || 0),
+                renderPromotionPlannerMetric('BATCHES', summary.batchCount || 0),
+                renderPromotionPlannerMetric('WEAK SOURCES', model.sourceSummary?.weakSourceCount || 0),
+                renderPromotionPlannerMetric('REVIEW GATES', model.blockerSummary?.reviewGateCounts?.length || 0)
+            ].join('');
+        }
+
+        function renderPromotionSimulationCards(model) {
+            const simulation = model.simulation || {};
+            const density = simulation.density?.density || simulation.density || {};
+            const approvedSimulation = model.approvedSimulation || {};
+            return [
+                renderPromotionSimulationCard('Projected Nodes', simulation.projectedNodeCount || 0, `${simulation.stagedNodeCount || 0} staged input-ready`),
+                renderPromotionSimulationCard('Edge Density', simulation.projectedEdgeDensity || 0, 'production edges unchanged'),
+                renderPromotionSimulationCard('Preview Anchors', simulation.previewAnchorEdgeCount || 0, 'corridor planning only'),
+                renderPromotionSimulationCard('Density Forecast', density.label || density.key || 'Core graph', `${simulation.routeComplexity || 'normal'} route complexity`),
+                renderPromotionSimulationCard('Label Pressure', simulation.labelPressure || 'low', `${simulation.mobileSafety || 'safe'} mobile safety`),
+                renderPromotionSimulationCard('Hub Inflation', simulation.hubInflationRisk || 'none', `${simulation.strategicHubCount || 0} staged hubs`),
+                renderPromotionSimulationCard('Approved Projection', approvedSimulation.stagedNodeCount || 0, 'requires reviewer state'),
+                renderPromotionSimulationCard('Overlay Impact', simulation.overlayReadability || 'safe', `${simulation.topEcosystemImpacts?.length || 0} ecosystems`)
+            ].join('');
+        }
+
+        function renderPromotionSimulationCard(label, value, detail) {
+            return `
+                <div class="source-promotion-simulation-card rounded-2xl p-3">
+                    <div class="text-[10px] text-white/42 font-mono">${escapeHtml(label)}</div>
+                    <div class="font-display text-xl text-white">${escapeHtml(formatCandidateCell(value))}</div>
+                    <div class="mt-1 text-[11px] text-white/48 leading-snug">${escapeHtml(formatCandidateCell(detail))}</div>
+                </div>
+            `;
+        }
+
+        function renderPromotionBatchCards(model) {
+            if (!model.batches?.length) return '<div class="text-sm text-white/35">No promotion batches are available.</div>';
+            const sourceSummary = model.sourceSummary || {};
+            const lifecycle = model.lifecycleSummary || {};
+            const strongest = (sourceSummary.strongestOfficialSourceCandidates || []).map(row => row.ticker).filter(Boolean).slice(0, 6).join(', ');
+            const weak = (sourceSummary.weakSourceWarnings || []).map(row => row.ticker).filter(Boolean).slice(0, 6).join(', ');
+            const lifecycleLabels = (lifecycle.decisionCounts || []).slice(0, 4).map(([key, count]) => `${key} ${count}`).join(', ');
+            const introCards = `
+                <div class="source-promotion-batch-card rounded-2xl p-3">
+                    <div class="text-xs text-white/86 font-semibold">Strongest official-source candidates</div>
+                    <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(strongest || 'No official-source rows available.')}</div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(sourceSummary.officialSourceCount || 0))} OFFICIAL</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(sourceSummary.secIdentityCount || 0))} SEC ID</span>
+                    </div>
+                </div>
+                <div class="source-promotion-batch-card rounded-2xl p-3">
+                    <div class="text-xs text-white/86 font-semibold">Source and lifecycle warnings</div>
+                    <div class="mt-1 text-xs text-white/52 leading-relaxed">Weak: ${escapeHtml(weak || 'none')} / Stale: ${escapeHtml(formatCandidateCell(sourceSummary.staleSourceWarningCount || 0))}</div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(sourceSummary.weakSourceCount || 0))} WEAK SOURCES</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(sourceSummary.duplicateRootWarnings?.length || 0))} DUP ROOTS</span>
+                    </div>
+                </div>
+                <div class="source-promotion-batch-card rounded-2xl p-3">
+                    <div class="text-xs text-white/86 font-semibold">Reviewer lifecycle summary</div>
+                    <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(lifecycleLabels || 'No reviewer lifecycle rows.')}</div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(lifecycle.inputReadyAwaitingReview || 0))} AWAIT REVIEW</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(lifecycle.productionCandidateReady || 0))} PROD CAND</span>
+                    </div>
+                </div>
+            `;
+            return introCards + model.batches.slice(0, 8).map(batch => {
+                const blockerLabel = batch.topBlockers?.[0]
+                    ? `${batch.topBlockers[0][0]} · ${batch.topBlockers[0][1]}`
+                    : 'no safety blockers';
+                const strongest = (batch.strongestCandidates || []).map(item => item.ticker).filter(Boolean).slice(0, 3).join(', ');
+                const weakest = (batch.weakestCandidates || []).map(item => item.ticker).filter(Boolean).slice(0, 2).join(', ');
+                return `
+                    <div class="source-promotion-batch-card rounded-2xl p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <div class="text-xs text-white/86 font-semibold">${escapeHtml(batch.label || batch.batchId || 'Promotion batch')}</div>
+                                <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml((batch.ecosystemKeys || []).map(promotionPlannerTools.formatKeyLabel).slice(0, 3).join(', ') || 'Reviewer-owned staging batch.')}</div>
+                                <div class="mt-1 text-xs text-white/42 leading-relaxed">Strongest: ${escapeHtml(strongest || 'pending')} / Weakest: ${escapeHtml(weakest || 'pending')}</div>
+                            </div>
+                            <span class="review-action-chip">AVG ${escapeHtml(formatCandidateCell(batch.averageReadinessScore || 0))}</span>
+                        </div>
+                        <div class="mt-2 flex flex-wrap gap-1.5">
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(batch.inputReadyCount || 0))} INPUT READY</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(batch.approvalNeededCount || 0))} NEED APPROVAL</span>
+                            <span class="source-host-chip">${escapeHtml(formatCandidateCell(batch.secIdentityCount || 0))} SEC ID</span>
+                            <span class="source-host-chip">${escapeHtml(blockerLabel)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPromotionPlannerRows(model) {
+            return model.records
+                .slice()
+                .sort((a, b) => b.readiness.score - a.readiness.score || b.strategicHub.score - a.strategicHub.score || a.ticker.localeCompare(b.ticker))
+                .slice(0, 96)
+                .map(row => {
+                    const blockerText = row.blockers.length
+                        ? row.blockers.slice(0, 3)
+                        : row.reviewGates.slice(0, 3);
+                    return `
+                        <tr>
+                            <td class="px-3 py-2 font-mono">
+                                <div>${escapeHtml(row.ticker || '-')}</div>
+                                <div class="text-white/42 mt-1">${escapeHtml(formatCandidateCell(row.name))}</div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="flex flex-wrap gap-1.5">
+                                    <span class="promotion-decision-chip ${escapeHtml(row.decisionState.key)}">${escapeHtml(row.decisionState.shortLabel || row.decisionState.label)}</span>
+                                    <span class="source-host-chip">NEXT ${escapeHtml(row.nextDecision.shortLabel || row.nextDecision.label)}</span>
+                                </div>
+                                <div class="mt-1 text-white/45">${escapeHtml(row.decisionState.description || 'Reviewer-owned state.')}</div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="font-mono text-white/86">${escapeHtml(formatCandidateCell(row.readiness.score))}</div>
+                                <div class="mt-1 text-white/48">${escapeHtml(row.readiness.label)}</div>
+                                <div class="mt-1 flex flex-wrap gap-1">${renderReadinessFactorChips(row)}</div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="source-host-chip">${row.source.hasOfficialSource ? 'OFFICIAL' : 'OFFICIAL REVIEW'}</span>
+                                    <span class="source-host-chip">${row.source.hasSecIdentity ? 'SEC ID' : 'SEC REVIEW'}</span>
+                                    <span class="source-host-chip">${escapeHtml(formatCandidateCell(row.source.hostCount))} HOSTS</span>
+                                </div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="source-host-chip">${escapeHtml(formatCandidateCell(row.previewAnchorCount))} ANCHORS</span>
+                                    <span class="source-host-chip">HUB ${escapeHtml(formatCandidateCell(row.strategicHub.score))}</span>
+                                    <span class="source-host-chip">${escapeHtml(formatCandidateCell(row.corridorKeys.length))} CORRIDORS</span>
+                                </div>
+                            </td>
+                            <td class="px-3 py-2">${escapeHtml(promotionPlannerTools.formatKeyLabel(row.primaryBatchId || 'review'))}</td>
+                            <td class="px-3 py-2">
+                                <div class="flex flex-wrap gap-1">
+                                    ${blockerText.map(item => `<span class="${row.blockers.length ? 'review-action-chip' : 'source-host-chip'}">${escapeHtml(item)}</span>`).join('') || '<span class="source-host-chip">CLEAR INPUTS</span>'}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+        }
+
+        function renderReadinessFactorChips(row) {
+            return (row.readiness.factors || [])
+                .filter(factor => factor.max && factor.points < factor.max)
+                .slice(0, 3)
+                .map(factor => `<span class="source-host-chip">${escapeHtml(factor.label)} ${escapeHtml(formatCandidateCell(factor.points))}/${escapeHtml(formatCandidateCell(factor.max))}</span>`)
+                .join('') || '<span class="source-host-chip">INPUTS CLEAR</span>';
+        }
+
+        function renderPromotionPlannerWorkbench(companyPayload, batchPayload, reportPayload, productionCompanies, productionConnections) {
+            const empty = document.getElementById('source-promotion-planner-empty');
+            const summary = document.getElementById('source-promotion-planner-summary');
+            const simulation = document.getElementById('source-promotion-simulation');
+            const batches = document.getElementById('source-promotion-batches');
+            const tableWrap = document.getElementById('source-promotion-planner-table-wrap');
+            const rows = document.getElementById('source-promotion-planner-rows');
+            if (!empty || !summary || !simulation || !batches || !tableWrap || !rows) return;
+
+            const model = promotionPlannerTools.buildPlannerModel({
+                companyPayload,
+                batchPayload,
+                reportPayload,
+                companies: productionCompanies,
+                connections: productionConnections,
+                graphScalingTools: stockGraphScaling
+            });
+
+            if (!model.records.length) {
+                [summary, simulation, batches, tableWrap].forEach(element => element.classList.add('hidden'));
+                empty.classList.remove('hidden');
+                setPromotionPlannerStatus('0 PLANNER ROWS', 'warning');
+                return;
+            }
+
+            summary.innerHTML = renderPromotionPlannerSummary(model);
+            simulation.innerHTML = renderPromotionSimulationCards(model);
+            batches.innerHTML = renderPromotionBatchCards(model);
+            rows.innerHTML = renderPromotionPlannerRows(model);
+            [summary, simulation, batches, tableWrap].forEach(element => element.classList.remove('hidden'));
+            empty.classList.add('hidden');
+            const artifactLabel = reportPayload ? 'REPORT + LIVE MODEL' : 'LIVE MODEL';
+            setPromotionPlannerStatus(`${model.summary.inputReadyCount || 0} INPUT READY / ${artifactLabel}`);
+        }
+
+        async function loadPromotionPlannerWorkbench() {
+            const [companyPayload, batchPayload, reportPayload, productionCompanies, productionConnections] = await Promise.all([
+                fetchOptionalWorkbenchJson('data/candidates/candidate_companies.json'),
+                fetchOptionalWorkbenchJson('data/candidates/universe_expansion_batches.json'),
+                fetchOptionalWorkbenchJson('data/candidates/promotion_planner_report.json'),
+                fetchOptionalWorkbenchJson('data/companies.json'),
+                fetchOptionalWorkbenchJson('data/connections.json')
+            ]);
+            if (!companyPayload) {
+                renderPromotionPlannerWorkbench(null, batchPayload, reportPayload, productionCompanies || [], productionConnections || []);
+                return;
+            }
+            renderPromotionPlannerWorkbench(companyPayload, batchPayload, reportPayload, productionCompanies || [], productionConnections || []);
+        }
+
         function setSourceTriageStatus(label, tone = 'info') {
             const status = document.getElementById('source-triage-status');
             if (!status) return;
@@ -8543,6 +8861,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         setupOrbMap();
         loadSourceCandidatePreview();
         loadCandidateCompanyWorkbench();
+        loadPromotionPlannerWorkbench();
         loadSourceTriageArtifacts();
         loadDataExpansionPreflightReport();
         loadReviewPipelineSummary();

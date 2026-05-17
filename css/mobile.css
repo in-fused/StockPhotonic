@@ -710,11 +710,14 @@
             .source-openalex-grid,
             .source-coverage-refresh-grid,
             .source-candidate-company-grid,
+            .source-promotion-planner-grid,
+            .source-promotion-simulation-grid,
             .source-governance-grid,
             .source-preflight-priorities,
             .source-openalex-hints,
             .source-coverage-refresh-queue,
             .source-candidate-company-batches,
+            .source-promotion-batch-grid,
             .source-governance-list,
             .evidence-policy-grid,
             .candidate-company-hub-grid,
@@ -738,6 +741,7 @@
             .source-age-chip,
             .source-host-chip,
             .review-action-chip,
+            .promotion-decision-chip,
             .review-queue-chip {
                 white-space: nowrap;
                 max-width: 100%;
@@ -761,11 +765,15 @@
             .source-coverage-refresh-item,
             .source-candidate-company-card,
             .source-candidate-company-item,
+            .source-promotion-planner-card,
+            .source-promotion-simulation-card,
+            .source-promotion-batch-card,
             .source-governance-card,
             .source-governance-item,
             .candidate-company-preview-warning,
             .candidate-company-sidebar-card,
             .candidate-company-anchor-row,
+            .promotion-planner-mini-metric,
             .source-checklist-panel,
             .source-candidate-group {
                 min-width: 0;

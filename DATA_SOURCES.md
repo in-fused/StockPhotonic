@@ -45,8 +45,11 @@ D147 adds review-only company expansion artifacts:
 
 - `data/candidates/candidate_companies.json`
 - `data/candidates/universe_expansion_batches.json`
+- `data/candidates/promotion_planner_report.json`
 
-These files can be loaded by the static browser UI only as preview nodes, preview tables, and expansion batch summaries. Candidate-company preview edges are corridor-planning anchors with `corridor_assignment_not_relationship` semantics. They do not prove a relationship, do not assign ecosystem membership authoritatively, do not create production edges, and do not write production companies.
+These files can be loaded by the static browser UI only as preview nodes, preview tables, promotion-planner rows, graph-impact simulations, and expansion batch summaries. Candidate-company preview edges are corridor-planning anchors with `corridor_assignment_not_relationship` semantics. They do not prove a relationship, do not assign ecosystem membership authoritatively, do not create production edges, and do not write production companies.
+
+D148 promotion planning is review-only. Readiness scores are deterministic planning scores based on official source availability, SEC identity support, duplicate status, corridor/ecosystem usefulness, staged hub value, source diversity, and review completeness. They are not confidence scores and do not authorize promotion.
 
 Generate them locally with:
 
@@ -73,6 +76,12 @@ Primary SEC path:
 SEC lookup/cache -> filing plan/fetch -> filing inspect/report -> candidate preview/write -> promotion preview -> manual promotion -> validation
 ```
 
+Candidate-company universe growth uses:
+
+```text
+candidate company staging -> Source Workbench preview -> promotion planner report -> reviewer state decision -> manual promotion review -> validation
+```
+
 Key scripts:
 
 - `scripts/sec_bulk_pipeline_run.py`: bulk SEC candidate workflow for approved ticker/CIK mappings.
@@ -80,6 +89,7 @@ Key scripts:
 - `scripts/sec_signal_report.py`: aggregates filing signals for review.
 - `scripts/sec_signal_candidates_preview.py`: prints candidate-shaped records without writing.
 - `scripts/sec_signal_candidates_write.py`: writes review-only SEC candidates when explicitly requested.
+- `scripts/promotion_planner_report.py`: writes only the review-only promotion planner artifact with readiness scoring, reviewer lifecycle summaries, batch comparison, and graph-impact simulation.
 - `scripts/sec_candidate_triage.py`: writes review-only queue, summary, overlap, and checklist artifacts for manual review.
 - `scripts/sec_candidate_promotion_preview.py`: validates candidate promotion shape without production writes.
 - `scripts/sec_candidate_promote.py`: explicit production writer; default mode is dry-run.

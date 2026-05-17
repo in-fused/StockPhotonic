@@ -168,6 +168,29 @@
                 padding: 0.68rem;
             }
 
+            .graph-active-legend {
+                top: auto;
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(0.65rem, env(safe-area-inset-right));
+                bottom: calc(23rem + env(safe-area-inset-bottom));
+                width: auto;
+                max-height: 9.5rem;
+                overflow-y: auto;
+                padding: 0.58rem;
+            }
+
+            .graph-active-legend-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 0.28rem;
+            }
+
+            .graph-active-legend-swatches {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 0.08rem;
+                scrollbar-width: thin;
+            }
+
             .graph-card-title {
                 font-size: 0.95rem;
             }
@@ -508,6 +531,19 @@
                 min-height: 2.55rem;
             }
 
+            .graph-active-legend {
+                bottom: calc(22.25rem + env(safe-area-inset-bottom));
+                max-height: 8.6rem;
+            }
+
+            .graph-active-legend-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .graph-active-legend-item strong {
+                font-size: 0.62rem;
+            }
+
             #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-controls .focus-button {
                 flex: 1 1 calc(50% - 0.35rem);
             }
@@ -669,6 +705,8 @@
             .relationship-evidence-grid,
             .source-candidate-review-grid,
             .source-triage-grid,
+            .source-preflight-grid,
+            .source-preflight-priorities,
             .source-candidate-groups {
                 grid-template-columns: 1fr !important;
             }
@@ -701,6 +739,8 @@
             .review-queue-item,
             .relationship-evidence-card,
             .source-triage-card,
+            .source-preflight-card,
+            .source-preflight-priority,
             .source-checklist-panel,
             .source-candidate-group {
                 min-width: 0;

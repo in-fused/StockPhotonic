@@ -621,6 +621,17 @@ body.graph-fullscreen-active > header {
             box-shadow: 0 0 18px rgba(0, 249, 255, 0.14), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
         }
 
+.graph-guide-group {
+            border-color: rgba(251, 191, 36, 0.20);
+            background: rgba(14, 11, 4, 0.74);
+        }
+
+.graph-guide-action.is-active {
+            border-color: rgba(251, 191, 36, 0.58);
+            background: rgba(251, 191, 36, 0.15);
+            box-shadow: 0 0 18px rgba(251, 191, 36, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.055);
+        }
+
 .graph-intelligence-card {
             position: absolute;
             top: 5.25rem;
@@ -638,6 +649,115 @@ body.graph-fullscreen-active > header {
             border-radius: 8px;
             padding: 0.8rem;
             pointer-events: auto;
+        }
+
+.graph-active-legend {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 7;
+            width: min(23rem, calc(100% - 2rem));
+            border: 1px solid rgba(125, 211, 252, 0.16);
+            background:
+                linear-gradient(145deg, rgba(0, 249, 255, 0.075), rgba(255, 255, 255, 0.032)),
+                rgba(3, 7, 18, 0.74);
+            box-shadow: 0 18px 46px rgba(0, 0, 0, 0.32), 0 0 20px rgba(0, 249, 255, 0.07);
+            backdrop-filter: blur(18px) saturate(116%);
+            border-radius: 8px;
+            padding: 0.68rem;
+            pointer-events: auto;
+        }
+
+.graph-active-legend-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            color: rgba(207, 250, 254, 0.82);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.66rem;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+
+.graph-active-legend-header button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.85rem;
+            height: 1.85rem;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.055);
+            color: rgba(236, 254, 255, 0.8);
+        }
+
+.graph-active-legend-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.38rem;
+            margin-top: 0.52rem;
+        }
+
+.graph-active-legend-item {
+            min-width: 0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 0.42rem 0.5rem;
+        }
+
+.graph-active-legend-item span,
+.graph-active-legend-item strong {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-active-legend-item span {
+            color: rgba(255, 255, 255, 0.38);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.56rem;
+            letter-spacing: 0.9px;
+            text-transform: uppercase;
+        }
+
+.graph-active-legend-item strong {
+            margin-top: 0.16rem;
+            color: rgba(255, 255, 255, 0.82);
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+
+.graph-active-legend-swatches {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem 0.55rem;
+            margin-top: 0.55rem;
+            color: rgba(226, 232, 240, 0.62);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.58rem;
+        }
+
+.graph-active-legend-swatches span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            white-space: nowrap;
+        }
+
+.graph-active-legend-swatches i {
+            width: 0.56rem;
+            height: 0.56rem;
+            border-radius: 999px;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+.graph-route-swatch {
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            background: transparent !important;
         }
 
 .graph-card-header {
@@ -830,6 +950,12 @@ body.graph-fullscreen-active > header {
             max-height: min(52dvh, 34rem);
         }
 
+#graph-intelligence-view.is-graph-fullscreen .graph-active-legend {
+            top: min(24vh, 13.5rem);
+            right: 1rem;
+            width: min(23rem, calc(100vw - 2rem));
+        }
+
 #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-explorer-dock {
             top: 1rem;
             max-width: min(44rem, calc(100vw - 2rem));
@@ -837,6 +963,10 @@ body.graph-fullscreen-active > header {
 
 #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-intelligence-card {
             top: 5.25rem;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-active-legend {
+            top: 1rem;
         }
 
 .graph-stat-pill {

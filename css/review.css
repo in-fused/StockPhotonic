@@ -343,7 +343,8 @@
                 rgba(3, 7, 18, 0.36);
         }
 
-.source-triage-section {
+.source-triage-section,
+        .source-expansion-section {
             border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
@@ -357,12 +358,14 @@
             min-width: 860px;
         }
 
-.source-overlap-table {
+.source-overlap-table,
+        .source-preflight-table {
             min-width: 980px;
         }
 
 .source-candidate-table th,
-        .source-overlap-table th {
+        .source-overlap-table th,
+        .source-preflight-table th {
             color: rgba(165, 243, 252, 0.82);
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
             font-size: 0.64rem;
@@ -373,12 +376,33 @@
         }
 
 .source-candidate-table td,
-        .source-overlap-table td {
+        .source-overlap-table td,
+        .source-preflight-table td {
             border-top: 1px solid rgba(255, 255, 255, 0.07);
             color: rgba(255, 255, 255, 0.72);
             font-size: 0.72rem;
             line-height: 1.45;
             vertical-align: top;
+        }
+
+.source-preflight-grid {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 0.65rem;
+        }
+
+.source-preflight-priorities {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.65rem;
+        }
+
+.source-preflight-card,
+        .source-preflight-priority {
+            border: 1px solid rgba(125, 211, 252, 0.14);
+            background:
+                linear-gradient(135deg, rgba(0, 249, 255, 0.055), rgba(255, 255, 255, 0.028)),
+                rgba(3, 7, 18, 0.36);
         }
 
 .review-action-chip {

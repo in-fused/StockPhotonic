@@ -4,7 +4,7 @@ Document: StockPhotonic Data Sources. Production graph data is static JSON: `dat
 
 - Graph Intelligence (2D): Reads production companies/connections only, then derives filters, dashboards, relationship taxonomy, confidence tiers, source visibility, clusters, shared exposure, hidden relationships, portfolio exposure, and industry correlations in the browser.
 - 3D Network capabilities: Renders the same production dataset with Three.js; it does not create, promote, or alter data.
-- Source Workbench pipeline: Read-only browser surface for local source commands and candidate review. It can display candidate file contents served statically, but cannot run ingestion or write production data.
+- Source Workbench pipeline: Read-only browser surface for local source commands, candidate review, triage artifacts, and data expansion preflight. It can display static artifact contents served from the repo, but cannot run ingestion or write production data.
 - SEC ingestion + candidate system: SEC cache, filing inspection, signal extraction, candidate preview/write, job, schedule, and policy scripts operate locally and keep staged records under `data/candidates/`.
 - Promotion + validation flow: SEC-backed candidates can become production edges only after preview, manual review, explicit promotion, and validation.
 
@@ -117,6 +117,33 @@ Source aging is derived only from `verified_date`, candidate `filing_date`, or e
 The evidence review queue surfaces low-confidence, missing-source, stale-review, candidate-preview, and SEC-preview items. It is graph-aware and labels whether items are currently visible or filtered. Queue entries are prompts for human review; they do not create new production claims.
 
 The Source Workbench can also display the generated candidate triage queue, summary, overlap comparison, and checklist status when those static files are present. Missing artifacts are handled as an unavailable review state.
+
+## DATA EXPANSION PREFLIGHT
+
+D142 adds a review-only preflight report helper:
+
+```text
+python scripts/data_expansion_preflight.py --write --force
+```
+
+The script reads production companies/connections plus optional SEC candidate and triage artifacts. It performs no network calls and writes only:
+
+```text
+data/candidates/data_expansion_preflight_report.json
+```
+
+The report includes:
+
+- production edge source coverage and sourced ratio
+- SEC-backed production edge count
+- stale review count
+- high-value production edges missing source URLs
+- relationship types with source coverage gaps
+- candidate promotion blockers
+- candidate tickers missing from the production universe
+- data expansion priorities for reviewers
+
+The Source Workbench displays this artifact when present and falls back to a missing-report state when it is absent. The browser never executes the script, ingests sources, promotes candidates, or writes production data.
 
 ## SOURCE HOST CATEGORIES
 

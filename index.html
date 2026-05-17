@@ -352,6 +352,7 @@
                         </div>
                         <div id="graph-explorer-dock" class="graph-explorer-dock" aria-label="Graph exploration tools"></div>
                         <div id="graph-intelligence-card" class="graph-intelligence-card hidden" aria-live="polite"></div>
+                        <div id="graph-active-legend" class="graph-active-legend" aria-live="polite"></div>
                         <div id="graph-overlay-stats" class="graph-overlay-stats" aria-live="polite"></div>
                     </div>
                 </div>
@@ -685,6 +686,38 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                                         </tr>
                                     </thead>
                                     <tbody id="source-overlap-comparison-rows"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="source-expansion-section mt-4 pt-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="source-workbench-label mb-2">Data Expansion Preflight</div>
+                                    <p class="text-sm text-white/56">
+                                        Static read-only report from <span class="font-mono text-cyan-50/78">scripts/data_expansion_preflight.py</span>. It ranks source coverage gaps and candidate blockers without writing production data.
+                                    </p>
+                                </div>
+                                <div id="source-preflight-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING PREFLIGHT</div>
+                            </div>
+                            <div id="source-preflight-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                                Preflight report is not present yet. Run the local preflight command to generate a review-only artifact.
+                            </div>
+                            <div id="source-preflight-summary" class="hidden source-preflight-grid mb-3"></div>
+                            <div id="source-preflight-priorities" class="hidden source-preflight-priorities mb-3"></div>
+                            <div id="source-preflight-gap-wrap" class="hidden overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+                                <table class="source-preflight-table w-full border-collapse">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-3 py-2">Source</th>
+                                            <th class="px-3 py-2">Target</th>
+                                            <th class="px-3 py-2">Type</th>
+                                            <th class="px-3 py-2">Strength</th>
+                                            <th class="px-3 py-2">Confidence</th>
+                                            <th class="px-3 py-2">Priority</th>
+                                            <th class="px-3 py-2">Label</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="source-preflight-gap-rows"></tbody>
                                 </table>
                             </div>
                         </div>
@@ -1114,12 +1147,16 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let activeEcosystemOverlayKey = '';
         let sourceCoverageLensEnabled = false;
         let activeRelationshipRoute = null;
+        let activeGuidedDiscoveryKey = '';
         let graphStoryMode = '';
         let graphIntelligenceModel = {
             overlay: null,
             selectedStory: null,
             relationshipExplanation: null,
-            sourceCoverage: null
+            sourceCoverage: null,
+            guidedDiscovery: null,
+            evidenceGaps: null,
+            defaultDiscovery: null
         };
         let graphNodeIntelligenceVisualCache = new Map();
         let graphLinkIntelligenceVisualCache = new Map();
@@ -2189,6 +2226,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 getRelationshipTypeLabel,
                 getRelationshipTypeColor,
                 getRelationshipGroupKey,
+                getRelationshipTypeMeaning: stockGraphIntelligence.getRelationshipTypeMeaning,
                 getRelationshipConfidenceTier,
                 getRelationshipSourceStatus,
                 getRelationshipEvidenceCount,
@@ -2300,6 +2338,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 activeEcosystemOverlayKey,
                 sourceCoverageLensEnabled,
                 activeRelationshipRoute,
+                activeGuidedDiscoveryKey,
                 graphStoryMode,
                 graphIntelligenceModel,
                 activeClusterNodeIds,
@@ -2307,6 +2346,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 nodeById,
                 portfolioEdgeKeys,
                 matchedPortfolioNodes,
+                secPreviewCandidateCount: secPreviewCandidates.length,
+                secPreviewLinkCount: secPreviewLinks.length,
+                visibleSecPreviewLinkCount: visibleSecPreviewLinks.length,
                 getRelationshipTypeKey,
                 getRelationshipTypeLabel,
                 getRelationshipTypeColor,
@@ -3432,6 +3474,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (options.render !== false) {
                 renderGraphExplorerDock();
                 renderGraphNativeIntelligenceCard();
+                renderActiveGraphLegend();
                 updateGraphOverlayStats();
             }
         }
@@ -3465,8 +3508,21 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     </button>
                 `;
             }).join('');
+            const guidedButtons = stockGraphIntelligence.getGuidedDiscoveryFlows().map(flow => {
+                const active = activeGuidedDiscoveryKey === flow.key;
+                return `
+                    <button type="button" onclick="startGuidedDiscovery('${escapeInlineJsString(flow.key)}')" class="graph-explorer-action graph-guide-action ${active ? 'is-active' : ''}" aria-pressed="${active ? 'true' : 'false'}" title="${escapeHtml(flow.intent || flow.label)}">
+                        <i class="fa-solid ${escapeHtml(flow.icon || 'fa-compass')}"></i>
+                        <span>${escapeHtml(flow.shortLabel)}</span>
+                    </button>
+                `;
+            }).join('');
 
             dock.innerHTML = `
+                <div class="graph-explorer-group graph-guide-group">
+                    <span class="graph-explorer-label">Guides</span>
+                    ${guidedButtons}
+                </div>
                 <div class="graph-explorer-group">
                     <span class="graph-explorer-label">Overlays</span>
                     ${ecosystemButtons}
@@ -3509,10 +3565,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 html = renderSelectedGraphStoryCard(graphIntelligenceModel.selectedStory);
             } else if (activeRelationshipRoute) {
                 html = renderRouteTraceCard(activeRelationshipRoute);
+            } else if (graphIntelligenceModel.guidedDiscovery) {
+                html = renderGuidedDiscoveryCard(graphIntelligenceModel.guidedDiscovery);
             } else if (graphIntelligenceModel.overlay) {
                 html = renderEcosystemOverlayCard(graphIntelligenceModel.overlay);
             } else if (sourceCoverageLensEnabled) {
                 html = renderSourceCoverageCard(graphIntelligenceModel.sourceCoverage);
+            } else {
+                html = renderDefaultGuidedGraphCard();
             }
 
             if (!html) {
@@ -3599,11 +3659,91 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             `;
         }
 
+        function renderDefaultGuidedGraphCard() {
+            const summary = graphIntelligenceModel.defaultDiscovery || {};
+            const evidence = graphIntelligenceModel.evidenceGaps || {};
+            const topHub = summary.topHubs?.[0]?.node;
+            const bridge = summary.bridgeNodes?.[0]?.node;
+            const sourceRatio = Math.round((evidence.sourcedRatio || 0) * 100);
+            return `
+                <div class="graph-card-header">
+                    <div>
+                        <div class="graph-card-eyebrow">Guided Discovery</div>
+                        <div class="graph-card-title">Start With the Graph</div>
+                    </div>
+                    <button type="button" onclick="fitGraph()" class="graph-card-close" aria-label="Fit graph"><i class="fa-solid fa-compress"></i></button>
+                </div>
+                <div class="graph-card-body">Use a guide, click a company, or select an edge. Nodes open company context; edges explain why the loaded graph connects two companies.</div>
+                <div class="graph-card-metrics">
+                    <div><span>${visibleNodes.length}</span><small>nodes</small></div>
+                    <div><span>${visibleLinks.length}</span><small>edges</small></div>
+                    <div><span>${sourceRatio}%</span><small>sourced</small></div>
+                    <div><span>${evidence.secBacked || 0}</span><small>SEC</small></div>
+                </div>
+                <div class="graph-card-chips">
+                    ${topHub ? `<span>Hub ${escapeHtml(topHub.ticker || topHub.name || '')}</span>` : '<span>Hub pending</span>'}
+                    ${bridge ? `<span>Bridge ${escapeHtml(bridge.ticker || bridge.name || '')}</span>` : '<span>Bridge scan ready</span>'}
+                    <span>${evidence.missingCount || 0} evidence gaps</span>
+                </div>
+                <div class="graph-card-actions">
+                    ${stockGraphIntelligence.getGuidedDiscoveryFlows().map(flow => `
+                        <button type="button" onclick="startGuidedDiscovery('${escapeInlineJsString(flow.key)}')" class="graph-card-action" title="${escapeHtml(flow.intent || flow.label)}">
+                            <i class="fa-solid ${escapeHtml(flow.icon || 'fa-compass')}"></i><span>${escapeHtml(flow.shortLabel)}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderGuidedDiscoveryCard(model) {
+            const routeAction = model.routeMode
+                ? `<button type="button" onclick="followGuidedDiscoveryRoute()" class="graph-card-action"><i class="fa-solid fa-route"></i><span>Follow Route</span></button>`
+                : '';
+            const firstHub = model.topHubs?.[0]?.node || model.nodes?.[0] || null;
+            const firstHubAction = firstHub
+                ? `<button type="button" onclick="selectNodeById(${Number(firstHub.id)})" class="graph-card-action"><i class="fa-solid fa-bullseye"></i><span>Open ${escapeHtml(firstHub.ticker || 'Node')}</span></button>`
+                : '';
+            const gapAction = model.key === 'evidence_gaps'
+                ? `<button type="button" onclick="showEvidenceGapFilter()" class="graph-card-action"><i class="fa-solid fa-filter"></i><span>Show Gaps</span></button>`
+                : '';
+            return `
+                <div class="graph-card-header">
+                    <div>
+                        <div class="graph-card-eyebrow">Guided Discovery</div>
+                        <div class="graph-card-title">${escapeHtml(model.label)}</div>
+                    </div>
+                    <button type="button" onclick="clearGuidedDiscovery()" class="graph-card-close" aria-label="Exit guided discovery"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="graph-card-body">${escapeHtml(model.summary || model.intent || '')}</div>
+                ${model.emptyReason ? `<div class="graph-card-body text-orange-100/78">${escapeHtml(model.emptyReason)}</div>` : ''}
+                <div class="graph-card-metrics">
+                    <div><span>${model.nodes.length}</span><small>nodes</small></div>
+                    <div><span>${model.links.length}</span><small>edges</small></div>
+                    <div><span>${model.evidence?.secBacked || 0}</span><small>SEC</small></div>
+                    <div><span>${Math.round((model.evidence?.sourcedRatio || 0) * 100)}%</span><small>sourced</small></div>
+                </div>
+                <div class="graph-card-chips">
+                    <span style="border-color:${model.color}; color:${model.color};">${escapeHtml(model.shortLabel)}</span>
+                    ${model.topHubs?.slice(0, 3).map(item => `<span>Hub ${escapeHtml(item.node.ticker || item.node.name || '')} ${item.visibleDegree || item.degree}</span>`).join('') || '<span>No visible guide hubs</span>'}
+                    ${model.relationshipTypes?.slice(0, 2).map(item => `<span>${escapeHtml(item[0])} ${item[1]}</span>`).join('') || ''}
+                </div>
+                <div class="graph-card-actions">
+                    ${firstHubAction}
+                    ${routeAction}
+                    ${model.key === 'portfolio_exposure' ? '<button type="button" onclick="document.getElementById(\'portfolio-input\')?.focus()" class="graph-card-action"><i class="fa-solid fa-briefcase"></i><span>Portfolio Input</span></button>' : ''}
+                    ${gapAction}
+                    <button type="button" onclick="toggleSourceCoverageLens(true)" class="graph-card-action"><i class="fa-solid fa-shield-halved"></i><span>Source Lens</span></button>
+                    <button type="button" onclick="clearGuidedDiscovery()" class="graph-card-action"><i class="fa-solid fa-xmark"></i><span>Exit</span></button>
+                </div>
+            `;
+        }
+
         function renderRelationshipExplanationCard(explanation) {
             const link = explanation.link;
             const sourceState = explanation.sourceStatus?.shortLabel || 'PENDING';
             const sourceAge = explanation.sourceAge?.shortLabel || 'NO DATE';
             const sourceHost = explanation.diversity?.primaryCategory?.shortLabel || 'NO URL';
+            const activeContext = [explanation.overlayContext, explanation.routeContext].filter(Boolean).join(' ');
             return `
                 <div class="graph-card-header">
                     <div>
@@ -3614,7 +3754,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
                 <div class="graph-card-body">${escapeHtml(explanation.pathExplanation)}</div>
                 <div class="graph-card-quote">${escapeHtml(explanation.summary)}</div>
-                <div class="graph-card-body">${escapeHtml(explanation.ecosystemExplanation)}</div>
+                <div class="graph-card-body">${escapeHtml(explanation.typeMeaning)}</div>
+                <div class="graph-card-body">${escapeHtml(explanation.sourceExplanation || explanation.trustExplanation)}</div>
+                <div class="graph-card-body">${escapeHtml(activeContext || explanation.ecosystemExplanation)}</div>
                 <div class="graph-card-chips">
                     <span>${escapeHtml(explanation.typeLabel)}</span>
                     <span>${escapeHtml(explanation.confidence.shortLabel || explanation.confidence.label || 'PENDING')}</span>
@@ -3622,6 +3764,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <span>${escapeHtml(sourceAge)}</span>
                     <span>${escapeHtml(sourceHost)}</span>
                     ${isSecBackedConnection(link) ? '<span>SEC-backed</span>' : ''}
+                </div>
+                <div class="graph-card-actions">
+                    <button type="button" onclick="selectNodeById(${Number(link.source?.id) || 0})" class="graph-card-action"><i class="fa-solid fa-circle-dot"></i><span>${escapeHtml(link.source?.ticker || 'Source')}</span></button>
+                    <button type="button" onclick="selectNodeById(${Number(link.target?.id) || 0})" class="graph-card-action"><i class="fa-regular fa-circle-dot"></i><span>${escapeHtml(link.target?.ticker || 'Target')}</span></button>
+                    <button type="button" onclick="traceRelationshipRoute('strongest')" class="graph-card-action"><i class="fa-solid fa-route"></i><span>Strongest Route</span></button>
+                    <button type="button" onclick="toggleSourceCoverageLens(true)" class="graph-card-action"><i class="fa-solid fa-shield-halved"></i><span>Source Lens</span></button>
                 </div>
             `;
         }
@@ -3631,6 +3779,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const strongestLabel = strongest
                 ? `${strongest.source?.ticker || '?'} to ${strongest.target?.ticker || '?'}`
                 : 'No visible matching edge';
+            const topHubChips = overlay.topHubs?.slice(0, 3).map(item =>
+                `<span>Hub ${escapeHtml(item.node.ticker || item.node.name || '')} ${item.visibleDegree || item.degree}</span>`
+            ).join('') || '';
             return `
                 <div class="graph-card-header">
                     <div>
@@ -3639,6 +3790,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     </div>
                     <button type="button" onclick="toggleEcosystemOverlay('${escapeInlineJsString(overlay.key)}')" class="graph-card-close" aria-label="Clear ecosystem overlay"><i class="fa-solid fa-xmark"></i></button>
                 </div>
+                <div class="graph-card-body">${escapeHtml(overlay.description || 'Overlay derived from existing relationship metadata only.')}</div>
                 <div class="graph-card-body">${escapeHtml(overlay.reason)}</div>
                 <div class="graph-card-metrics">
                     <div><span>${overlay.nodes.length}</span><small>nodes</small></div>
@@ -3650,6 +3802,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <span style="border-color:${overlay.color}; color:${overlay.color};">${escapeHtml(overlay.shortLabel)}</span>
                     <span>${escapeHtml(strongestLabel)}</span>
                     ${overlay.relationshipTypes.slice(0, 2).map(([label, count]) => `<span>${escapeHtml(label)} ${count}</span>`).join('')}
+                    ${topHubChips}
+                </div>
+                <div class="graph-card-actions">
+                    <button type="button" onclick="traceRelationshipRoute('ecosystem')" class="graph-card-action"><i class="fa-solid fa-route"></i><span>Follow Ecosystem</span></button>
+                    <button type="button" onclick="startGuidedDiscovery('${escapeInlineJsString(getGuideKeyForEcosystem(overlay.key))}')" class="graph-card-action"><i class="fa-solid fa-compass"></i><span>Guide</span></button>
+                    <button type="button" onclick="toggleSourceCoverageLens(true)" class="graph-card-action"><i class="fa-solid fa-shield-halved"></i><span>Source Lens</span></button>
                 </div>
             `;
         }
@@ -3657,6 +3815,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function renderSourceCoverageCard(sourceCoverage) {
             const states = sourceCoverage?.states || {};
             const counts = new Map(sourceCoverage?.counts || []);
+            const gaps = graphIntelligenceModel.evidenceGaps || {};
             return `
                 <div class="graph-card-header">
                     <div>
@@ -3675,7 +3834,150 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         </div>
                     `).join('')}
                 </div>
+                <div class="graph-card-metrics">
+                    <div><span>${gaps.secBacked || 0}</span><small>SEC</small></div>
+                    <div><span>${Math.round((gaps.sourcedRatio || 0) * 100)}%</span><small>sourced</small></div>
+                    <div><span>${gaps.staleReview || 0}</span><small>stale</small></div>
+                    <div><span>${gaps.candidatePreviewCount || 0}</span><small>preview</small></div>
+                </div>
+                <div class="graph-card-chips">
+                    ${(gaps.visibleHighValueUnsourced || []).slice(0, 3).map(link => `<span>${escapeHtml(link.source?.ticker || '?')} to ${escapeHtml(link.target?.ticker || '?')}</span>`).join('') || '<span>No visible high-value gaps</span>'}
+                </div>
+                <div class="graph-card-actions">
+                    <button type="button" onclick="startGuidedDiscovery('evidence_gaps')" class="graph-card-action"><i class="fa-solid fa-link-slash"></i><span>Review Gaps</span></button>
+                    <button type="button" onclick="setAppView('source')" class="graph-card-action"><i class="fa-solid fa-clipboard-list"></i><span>Workbench</span></button>
+                </div>
             `;
+        }
+
+        function renderActiveGraphLegend() {
+            const legend = document.getElementById('graph-active-legend');
+            if (!legend) return;
+
+            const overlay = graphIntelligenceModel.overlay;
+            const route = activeRelationshipRoute;
+            const selectedCompany = selectedNode
+                ? selectedNode.ticker || selectedNode.name || 'Selected company'
+                : selectedSecPreviewNode
+                    ? `${selectedSecPreviewNode.ticker || 'Preview'} preview`
+                    : 'None';
+            const selectedRelationship = selectedRelationshipLink
+                ? `${selectedRelationshipLink.source?.ticker || '?'} to ${selectedRelationshipLink.target?.ticker || '?'}`
+                : selectedSecPreviewLink
+                    ? `${selectedSecPreviewLink.sourceTicker || '?'} to ${selectedSecPreviewLink.targetTicker || '?'} preview`
+                    : 'None';
+            const filterCount = getActiveGraphFilterCount();
+            const guide = graphIntelligenceModel.guidedDiscovery;
+            const sourceStates = graphIntelligenceModel.sourceCoverage?.states || {};
+
+            legend.innerHTML = `
+                <div class="graph-active-legend-header">
+                    <span><i class="fa-solid fa-circle-info"></i> Active Graph</span>
+                    <button type="button" onclick="clearGraphIntelligenceOverlays()" title="Clear active graph overlays and routes" aria-label="Clear active graph overlays and routes"><i class="fa-solid fa-eraser"></i></button>
+                </div>
+                <div class="graph-active-legend-grid">
+                    ${renderLegendItem('Guide', guide ? guide.shortLabel : 'Off', guide?.color || '')}
+                    ${renderLegendItem('Overlay', overlay ? overlay.shortLabel : 'Off', overlay?.color || '')}
+                    ${renderLegendItem('Route', route ? `${route.label || 'Route'} (${route.linkKeys?.size || 0})` : 'Off', route ? '#ffffff' : '')}
+                    ${renderLegendItem('Sources', sourceCoverageLensEnabled ? 'Lens on' : 'Lens off', sourceCoverageLensEnabled ? '#22d3ee' : '')}
+                    ${renderLegendItem('Company', selectedCompany, selectedNode ? '#ffffff' : '')}
+                    ${renderLegendItem('Edge', selectedRelationship, selectedRelationshipLink ? '#ffffff' : '')}
+                    ${renderLegendItem('Filters', `${filterCount} active`, filterCount ? '#fbbf24' : '')}
+                </div>
+                <div class="graph-active-legend-swatches">
+                    <span><i style="background:${sourceStates.sec_backed?.color || '#fbbf24'}"></i>SEC</span>
+                    <span><i style="background:${sourceStates.source_attached?.color || '#22d3ee'}"></i>Sourced</span>
+                    <span><i style="background:${sourceStates.missing_source?.color || '#f97316'}"></i>Pending</span>
+                    <span><i class="graph-route-swatch"></i>Route/selected</span>
+                </div>
+            `;
+        }
+
+        function renderLegendItem(label, value, color = '') {
+            return `
+                <div class="graph-active-legend-item">
+                    <span>${escapeHtml(label)}</span>
+                    <strong ${color ? `style="color:${escapeHtml(color)}"` : ''}>${escapeHtml(value)}</strong>
+                </div>
+            `;
+        }
+
+        function getActiveGraphFilterCount() {
+            return [
+                currentSector,
+                currentIndustryGroup,
+                currentRelationshipType,
+                currentConfidenceTier,
+                sourceHostCategoryFilter,
+                sourcedOnlyFilter,
+                secBackedOnlyFilter,
+                staleReviewFilter,
+                candidatePreviewOnlyFilter,
+                missingEvidenceFilter,
+                portfolioConnectedOnlyFilter,
+                crossSectorOnlyFilter,
+                currentSearch,
+                signalStrengthThreshold > 0,
+                isFocusModeActive(),
+                isPortfolioAnalysisActive()
+            ].filter(Boolean).length;
+        }
+
+        function getGuideKeyForEcosystem(key) {
+            if (key === 'ai_infrastructure') return 'ai_infrastructure';
+            if (key === 'semiconductor_supply_chain') return 'semiconductor_chain';
+            return 'strongest_hubs';
+        }
+
+        function startGuidedDiscovery(key) {
+            const flow = stockGraphIntelligence.getGuidedDiscoveryFlow(key);
+            if (!flow) return;
+
+            stopOrbitForInteraction();
+            activeGuidedDiscoveryKey = activeGuidedDiscoveryKey === key ? '' : key;
+            if (!activeGuidedDiscoveryKey) {
+                clearGuidedDiscovery();
+                return;
+            }
+
+            if (flow.ecosystemKey) {
+                activeEcosystemOverlayKey = flow.ecosystemKey;
+            }
+            if (flow.enablesSourceLens) {
+                sourceCoverageLensEnabled = true;
+            }
+            graphStoryMode = 'guided';
+            refreshGraphIntelligenceModel();
+            const guide = graphIntelligenceModel.guidedDiscovery;
+            if (guide?.nodes?.length) fitGraphToNodes(guide.nodes, true, 140);
+            triggerPulse(650);
+            requestDraw();
+        }
+
+        function clearGuidedDiscovery() {
+            activeGuidedDiscoveryKey = '';
+            if (graphStoryMode === 'guided') graphStoryMode = selectedNode ? 'overview' : '';
+            refreshGraphIntelligenceModel();
+            requestDraw();
+        }
+
+        function followGuidedDiscoveryRoute() {
+            const guide = graphIntelligenceModel.guidedDiscovery;
+            if (!guide) return;
+            const startNode = selectedNode || guide.topHubs?.[0]?.node || guide.nodes?.[0] || null;
+            if (startNode && (!selectedNode || selectedNode.id !== startNode.id)) {
+                selectNode(startNode, { preserveFilters: true });
+            }
+            traceRelationshipRoute(guide.routeMode || 'strongest');
+        }
+
+        function showEvidenceGapFilter() {
+            missingEvidenceFilter = true;
+            updateRelationshipFilterControls();
+            refreshVisibleGraph();
+            syncSelectionAfterVisibilityChange();
+            triggerPulse(420);
+            requestDraw();
         }
 
         function toggleEcosystemOverlay(key) {
@@ -3706,6 +4008,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             activeEcosystemOverlayKey = '';
             sourceCoverageLensEnabled = false;
             activeRelationshipRoute = null;
+            activeGuidedDiscoveryKey = '';
             selectedRelationshipLink = null;
             graphStoryMode = '';
             focusNeighborIds = selectedNode ? focusNeighborIds : new Set();
@@ -3725,6 +4028,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function clearSelectedRelationship() {
             selectedRelationshipLink = null;
             activeRelationshipRoute = null;
+            activeGuidedDiscoveryKey = '';
             graphStoryMode = '';
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
@@ -4557,6 +4861,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             activeEcosystemOverlayKey = '';
             sourceCoverageLensEnabled = false;
             activeRelationshipRoute = null;
+            activeGuidedDiscoveryKey = '';
             graphStoryMode = '';
             setOrbMapEnabled(false);
             resetPortfolioState();
@@ -5050,6 +5355,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             updateGraphOverlayStats();
             renderGraphExplorerDock();
             renderGraphNativeIntelligenceCard();
+            renderActiveGraphLegend();
             updateVisibleGraphStatus();
             updateOrbMapData();
             if (!selectedNode && !selectedSecPreviewNode && !selectedSecPreviewLink && !selectedRelationshipLink) renderDefaultDashboard();
@@ -5221,6 +5527,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 overlay.insertAdjacentHTML('beforeend', `
                     <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] font-mono tracking-[1.1px]" style="border-color:${graphIntelligenceModel.overlay.color}; color:${graphIntelligenceModel.overlay.color}; background:rgba(3,7,18,0.74);">
                         ${escapeHtml(graphIntelligenceModel.overlay.shortLabel)} ${graphIntelligenceModel.overlay.links.length} edges
+                    </span>
+                `);
+            }
+
+            if (graphIntelligenceModel.guidedDiscovery) {
+                overlay.insertAdjacentHTML('beforeend', `
+                    <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] font-mono tracking-[1.1px]" style="border-color:${graphIntelligenceModel.guidedDiscovery.color}; color:${graphIntelligenceModel.guidedDiscovery.color}; background:rgba(3,7,18,0.74);">
+                        Guide ${escapeHtml(graphIntelligenceModel.guidedDiscovery.shortLabel)} ${graphIntelligenceModel.guidedDiscovery.links.length} edges
                     </span>
                 `);
             }
@@ -6231,6 +6545,108 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderSourceTriageArtifacts({ summary, queue, overlap, checklist });
         }
 
+        function setSourcePreflightStatus(label, tone = 'info') {
+            const status = document.getElementById('source-preflight-status');
+            if (!status) return;
+
+            status.innerText = label;
+            status.classList.toggle('text-yellow-100/70', tone === 'warning');
+            status.classList.toggle('border-yellow-300/20', tone === 'warning');
+            status.classList.toggle('bg-yellow-300/10', tone === 'warning');
+            status.classList.toggle('text-cyan-100/70', tone !== 'warning');
+            status.classList.toggle('border-cyan-300/20', tone !== 'warning');
+            status.classList.toggle('bg-cyan-300/10', tone !== 'warning');
+        }
+
+        function renderPreflightMetric(label, value) {
+            return `
+                <div class="source-preflight-card rounded-2xl p-3">
+                    <div class="text-[10px] text-white/42 font-mono">${escapeHtml(label)}</div>
+                    <div class="font-display text-xl text-white">${escapeHtml(formatCandidateCell(value))}</div>
+                </div>
+            `;
+        }
+
+        function renderPreflightPriorities(report) {
+            const priorities = Array.isArray(report?.data_expansion_priorities)
+                ? report.data_expansion_priorities.slice(0, 6)
+                : [];
+            if (!priorities.length) return '<div class="text-sm text-white/35">No priority rows in the preflight report.</div>';
+
+            return priorities.map(priority => `
+                <div class="source-preflight-priority rounded-2xl p-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-xs text-white/86 font-semibold">${escapeHtml(priority.title || priority.area || 'Expansion priority')}</div>
+                            <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(priority.reason || priority.next_step || 'Review static data before expansion.')}</div>
+                        </div>
+                        <span class="review-action-chip">${escapeHtml(priority.priority || 'review')}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPreflightGapRows(report) {
+            const rows = Array.isArray(report?.high_value_unsourced_edges)
+                ? report.high_value_unsourced_edges.slice(0, 18)
+                : [];
+            return rows.map(row => `
+                <tr>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(row.source_ticker))}</td>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(row.target_ticker))}</td>
+                    <td class="px-3 py-2">${escapeHtml(formatCandidateCell(row.relationship_type))}</td>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(row.strength))}</td>
+                    <td class="px-3 py-2 font-mono">${escapeHtml(formatCandidateCell(row.confidence))}</td>
+                    <td class="px-3 py-2"><span class="review-action-chip">${escapeHtml(formatCandidateCell(row.priority))}</span></td>
+                    <td class="px-3 py-2">${escapeHtml(formatCandidateCell(row.label))}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderDataExpansionPreflight(report) {
+            const empty = document.getElementById('source-preflight-empty');
+            const summary = document.getElementById('source-preflight-summary');
+            const priorities = document.getElementById('source-preflight-priorities');
+            const gapWrap = document.getElementById('source-preflight-gap-wrap');
+            const gapRows = document.getElementById('source-preflight-gap-rows');
+            if (!empty || !summary || !priorities || !gapWrap || !gapRows) return;
+
+            if (!report) {
+                summary.classList.add('hidden');
+                priorities.classList.add('hidden');
+                gapWrap.classList.add('hidden');
+                empty.classList.remove('hidden');
+                setSourcePreflightStatus('PREFLIGHT UNAVAILABLE', 'warning');
+                return;
+            }
+
+            const coverage = report.production_edge_source_coverage || {};
+            const blockers = report.candidate_promotion_blockers || {};
+            summary.innerHTML = [
+                renderPreflightMetric('SOURCED RATIO', `${Math.round((Number(coverage.sourced_ratio) || 0) * 100)}%`),
+                renderPreflightMetric('UNSOURCED EDGES', coverage.unsourced_edges ?? 0),
+                renderPreflightMetric('SEC BACKED', coverage.sec_backed_edges ?? 0),
+                renderPreflightMetric('STALE REVIEW', coverage.stale_review_edges ?? 0),
+                renderPreflightMetric('CANDIDATES', report.candidate_preview_count ?? 0),
+                renderPreflightMetric('BLOCKERS', blockers.total_blocker_count ?? 0)
+            ].join('');
+            summary.classList.remove('hidden');
+
+            priorities.innerHTML = renderPreflightPriorities(report);
+            priorities.classList.remove('hidden');
+
+            const rows = renderPreflightGapRows(report);
+            gapRows.innerHTML = rows;
+            gapWrap.classList.toggle('hidden', !rows);
+            empty.classList.add('hidden');
+            setSourcePreflightStatus(`${coverage.unsourced_edges ?? 0} SOURCE GAP${Number(coverage.unsourced_edges || 0) === 1 ? '' : 'S'}`);
+        }
+
+        async function loadDataExpansionPreflightReport() {
+            const report = await fetchOptionalWorkbenchJson('data/candidates/data_expansion_preflight_report.json');
+            renderDataExpansionPreflight(report);
+        }
+
         function roundedRect(ctx, x, y, width, height, radius) {
             graphRender.roundedRect(ctx, x, y, width, height, radius);
         }
@@ -6244,6 +6660,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         setupOrbMap();
         loadSourceCandidatePreview();
         loadSourceTriageArtifacts();
+        loadDataExpansionPreflightReport();
         loadData();
     </script>
 </body>

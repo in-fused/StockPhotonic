@@ -572,6 +572,7 @@
             escapeHtml,
             getRelationshipTypeLabel,
             getRelationshipTypeColor,
+            getRelationshipTypeMeaning,
             getRelationshipConfidenceTier,
             getRelationshipSourceStatus,
             getRelationshipEvidenceCount,
@@ -600,6 +601,12 @@
         const strengthPercent = Math.round((getConnectionStrength?.(link) || Number(link.strength) || 0) * 100);
         const confidenceScore = link.confidence_score || link.confidence || link.confidence_hint || link.candidate?.confidence_hint || '-';
         const explanation = link.relationship_summary || link.label || 'Evidence pending. Relationship type from curated dataset.';
+        const typeMeaning = getRelationshipTypeMeaning?.(link, context) || 'Relationship category derived from existing edge metadata.';
+        const sourceExplanation = sourceStatus.key === 'missing_source'
+            ? 'No source URL is attached yet; treat this as an evidence gap until reviewed.'
+            : sourceStatus.key === 'candidate_preview'
+                ? 'Candidate preview evidence is review-only and not production graph data.'
+                : `${sourceStatus.label}; ${sourceAge.label || sourceAge.shortLabel || 'date state unavailable'}.`;
         const tags = (Array.isArray(link.evidence_tags) ? link.evidence_tags : [])
             .slice(0, 5);
         const secBadge = sourceStatus.key === 'candidate_preview'
@@ -632,7 +639,13 @@
                         </div>
                     </div>
                     <div class="mt-3 text-xs text-white/78 leading-relaxed">
-                        <span class="text-cyan-100/80 font-mono">Why:</span> ${escapeHtml(explanation)}
+                        <span class="text-cyan-100/80 font-mono">Summary:</span> ${escapeHtml(explanation)}
+                    </div>
+                    <div class="mt-2 text-[11px] text-white/52 leading-relaxed">
+                        <span class="text-white/38 font-mono">Type:</span> ${escapeHtml(typeMeaning)}
+                    </div>
+                    <div class="mt-2 text-[11px] text-white/52 leading-relaxed">
+                        <span class="text-white/38 font-mono">Source/confidence:</span> ${escapeHtml(sourceExplanation)}
                     </div>
                     <div class="mt-3 flex flex-wrap items-center gap-2">
                         <span class="confidence-badge ${escapeHtml(confidence.key)} px-2 py-0.5 rounded-full text-[10px] font-mono">CONF ${escapeHtml(String(confidenceScore))} · ${escapeHtml(confidence.shortLabel)}</span>

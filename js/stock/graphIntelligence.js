@@ -7,6 +7,7 @@
             label: 'AI Infrastructure',
             shortLabel: 'AI Infra',
             color: '#ffd166',
+            description: 'Edges whose existing relationship metadata, labels, or endpoint groups fit AI accelerators, cloud AI, memory, foundry, equipment, EDA, data-center, or power context.',
             relationshipTypes: ['ai_infrastructure', 'hyperscaler_cloud_customer', 'semiconductor_supply_chain', 'data_center_power'],
             rawTypes: ['ecosystem', 'partnership', 'supply'],
             industryGroups: ['AI Accelerators', 'Cloud Infrastructure', 'Memory / HBM', 'Foundry / Manufacturing', 'Semiconductor Equipment', 'EDA / Design Software'],
@@ -18,6 +19,7 @@
             label: 'Semiconductor Chain',
             shortLabel: 'Semi Chain',
             color: '#34d399',
+            description: 'Edges already tagged or labeled around chip design, foundry, memory, equipment, HBM, lithography, wafer, and advanced-node manufacturing context.',
             relationshipTypes: ['semiconductor_supply_chain', 'supplier_customer', 'ai_infrastructure'],
             rawTypes: ['supply', 'ecosystem'],
             industryGroups: ['AI Accelerators', 'Memory / HBM', 'Foundry / Manufacturing', 'Semiconductor Equipment', 'EDA / Design Software'],
@@ -29,6 +31,7 @@
             label: 'Cloud / Hyperscaler',
             shortLabel: 'Cloud',
             color: '#7dd3fc',
+            description: 'Edges whose existing metadata points to cloud, hyperscaler, enterprise platform, and cloud AI infrastructure context.',
             relationshipTypes: ['hyperscaler_cloud_customer', 'ai_infrastructure'],
             rawTypes: ['ecosystem', 'partnership', 'competitor'],
             industryGroups: ['Cloud Infrastructure', 'AI Accelerators'],
@@ -40,6 +43,7 @@
             label: 'Financial / Payments',
             shortLabel: 'Payments',
             color: '#c084fc',
+            description: 'Edges already grouped around payments, banks, exchanges, asset managers, insurance, and ownership or capital-market overlap context.',
             relationshipTypes: ['ownership_etf_overlap', 'curated_manual_relationship'],
             rawTypes: ['ecosystem', 'competitor', 'investment'],
             industryGroups: ['Payments Networks', 'Banks', 'Asset Managers', 'Exchanges / Market Infrastructure', 'Insurance'],
@@ -51,6 +55,7 @@
             label: 'Energy Infrastructure',
             shortLabel: 'Energy',
             color: '#facc15',
+            description: 'Edges whose existing labels, types, or endpoint groups fit power, grid, data-center energy, oil and gas, industrial, aerospace, or defense infrastructure context.',
             relationshipTypes: ['data_center_power', 'supplier_customer', 'curated_manual_relationship'],
             rawTypes: ['supply', 'ecosystem', 'competitor'],
             industryGroups: ['Energy Producers', 'Oilfield Services', 'Industrial Suppliers', 'Aerospace OEMs', 'Defense Contractors'],
@@ -62,6 +67,7 @@
             label: 'Healthcare / Biotech',
             shortLabel: 'Health',
             color: '#fb7185',
+            description: 'Edges already grouped around PBM, managed care, medtech, life-sciences tools, pharma, biotech, and reimbursement context.',
             relationshipTypes: ['supplier_customer', 'strategic_partnership', 'curated_manual_relationship'],
             rawTypes: ['supply', 'ecosystem', 'partnership'],
             industryGroups: ['PBM / Pharmacy Benefits', 'Insurance / Managed Care', 'MedTech', 'Life Sciences Tools', 'Pharmaceuticals'],
@@ -73,12 +79,95 @@
             label: 'Enterprise SaaS / Workflow',
             shortLabel: 'SaaS',
             color: '#60a5fa',
+            description: 'Edges whose existing metadata fits enterprise software, workflow, data platform, CRM, productivity, marketplace, security, or cloud platform context.',
             relationshipTypes: ['hyperscaler_cloud_customer', 'strategic_partnership', 'curated_manual_relationship'],
             rawTypes: ['ecosystem', 'partnership', 'competitor'],
             industryGroups: ['Cloud Infrastructure', 'E-Commerce'],
             sectors: ['Cloud / Big Tech'],
             keywords: ['enterprise', 'saas', 'workflow', 'crm', 'productivity', 'data platform', 'enterprise software', 'marketplace', 'security']
         }
+    };
+
+    const GUIDED_DISCOVERY_FLOWS = {
+        ai_infrastructure: {
+            key: 'ai_infrastructure',
+            label: 'Start with AI Infrastructure',
+            shortLabel: 'AI Infra',
+            icon: 'fa-brain',
+            color: ECOSYSTEMS.ai_infrastructure.color,
+            ecosystemKey: 'ai_infrastructure',
+            routeMode: 'ecosystem',
+            intent: 'Shows visible edges already matching AI infrastructure metadata.'
+        },
+        semiconductor_chain: {
+            key: 'semiconductor_chain',
+            label: 'Explore Semiconductor Chain',
+            shortLabel: 'Semi Chain',
+            icon: 'fa-microchip',
+            color: ECOSYSTEMS.semiconductor_supply_chain.color,
+            ecosystemKey: 'semiconductor_supply_chain',
+            routeMode: 'supply',
+            intent: 'Starts with chip, foundry, memory, equipment, EDA, and supply-chain context already present in the graph.'
+        },
+        strongest_hubs: {
+            key: 'strongest_hubs',
+            label: 'Find Strongest Hubs',
+            shortLabel: 'Hubs',
+            icon: 'fa-circle-nodes',
+            color: '#22d3ee',
+            routeMode: 'strongest',
+            intent: 'Highlights visible companies with the most visible relationships.'
+        },
+        source_backed: {
+            key: 'source_backed',
+            label: 'Follow Source-Backed Relationships',
+            shortLabel: 'Sources',
+            icon: 'fa-shield-halved',
+            color: '#22d3ee',
+            routeMode: 'sec',
+            enablesSourceLens: true,
+            intent: 'Highlights visible relationships with existing source evidence, with SEC-backed edges ranked first.'
+        },
+        evidence_gaps: {
+            key: 'evidence_gaps',
+            label: 'Review Evidence Gaps',
+            shortLabel: 'Gaps',
+            icon: 'fa-link-slash',
+            color: '#f97316',
+            enablesSourceLens: true,
+            intent: 'Highlights high-value visible relationships that still lack source URLs or direct evidence.'
+        },
+        portfolio_exposure: {
+            key: 'portfolio_exposure',
+            label: 'Explore Portfolio Exposure',
+            shortLabel: 'Portfolio',
+            icon: 'fa-briefcase',
+            color: '#fde68a',
+            routeMode: 'portfolio',
+            intent: 'Highlights visible edges touching an analyzed portfolio when portfolio tickers are present.'
+        }
+    };
+
+    const GUIDED_DISCOVERY_SEQUENCE = [
+        'ai_infrastructure',
+        'semiconductor_chain',
+        'strongest_hubs',
+        'source_backed',
+        'evidence_gaps',
+        'portfolio_exposure'
+    ];
+
+    const RELATIONSHIP_TYPE_MEANINGS = {
+        supplier_customer: 'Supply/customer category: the edge is categorized from existing relationship metadata as a supply-side or customer-context relationship.',
+        strategic_partnership: 'Partnership category: the edge is categorized from existing metadata as collaboration, alliance, or partnership context.',
+        competitor: 'Peer category: the edge is categorized as competitive or market-peer context.',
+        hyperscaler_cloud_customer: 'Cloud ecosystem category: the edge is categorized from existing metadata as hyperscaler, cloud platform, or cloud-customer context.',
+        semiconductor_supply_chain: 'Semiconductor chain category: the edge is categorized from existing metadata around chip design, foundry, memory, equipment, or manufacturing context.',
+        ai_infrastructure: 'AI infrastructure category: the edge is categorized from existing metadata around accelerators, cloud AI, data-center, memory, or AI platform context.',
+        data_center_power: 'Data-center/power category: the edge is categorized from existing metadata around data-center energy, power, grid, or utility context.',
+        ownership_etf_overlap: 'Capital overlap category: the edge is categorized from existing metadata around ownership, investment, holder, index, or ETF overlap context.',
+        sec_backed_preview: 'SEC preview category: the edge is review-only candidate context from the SEC preview layer, not production graph data.',
+        curated_manual_relationship: 'Curated category: the edge remains a manually curated relationship in the static dataset and should be read with its source/confidence labels.'
     };
 
     const ECOSYSTEM_SEQUENCE = [
@@ -145,6 +234,21 @@
         return ECOSYSTEMS[key] || null;
     }
 
+    function getGuidedDiscoveryFlows() {
+        return GUIDED_DISCOVERY_SEQUENCE.map(key => GUIDED_DISCOVERY_FLOWS[key]);
+    }
+
+    function getGuidedDiscoveryFlow(key) {
+        return GUIDED_DISCOVERY_FLOWS[key] || null;
+    }
+
+    function getRelationshipTypeMeaning(connectionOrType, context = {}) {
+        const key = typeof connectionOrType === 'string'
+            ? connectionOrType
+            : context.getRelationshipTypeKey?.(connectionOrType) || connectionOrType?.relationship_type || connectionOrType?.type;
+        return RELATIONSHIP_TYPE_MEANINGS[key] || 'Relationship category: this is a display taxonomy derived from the existing static edge metadata.';
+    }
+
     function buildGraphIntelligenceModel(context) {
         const overlay = context.activeEcosystemOverlayKey
             ? buildEcosystemOverlay(context.activeEcosystemOverlayKey, context)
@@ -153,15 +257,27 @@
             ? buildSelectedNodeStory(context.selectedNode, context)
             : null;
         const relationshipExplanation = context.selectedRelationshipLink
-            ? buildRelationshipExplanation(context.selectedRelationshipLink, context)
+            ? buildRelationshipExplanation(context.selectedRelationshipLink, {
+                ...context,
+                graphIntelligenceModel: { ...(context.graphIntelligenceModel || {}), overlay }
+            })
             : null;
         const sourceCoverage = buildSourceCoverageSummary(context);
+        const guidedDiscovery = buildGuidedDiscoveryModel(context.activeGuidedDiscoveryKey, {
+            ...context,
+            overlay
+        });
+        const evidenceGaps = buildEvidenceGapDiscovery(context);
+        const defaultDiscovery = buildDefaultDiscoveryModel(context);
 
         return {
             overlay,
             selectedStory,
             relationshipExplanation,
-            sourceCoverage
+            sourceCoverage,
+            guidedDiscovery,
+            evidenceGaps,
+            defaultDiscovery
         };
     }
 
@@ -191,6 +307,7 @@
         );
         const strongest = linkMatches[0]?.link || null;
         const evidence = summarizeLinksEvidence(linkMatches.map(item => item.link), context);
+        const topHubs = getTopNodesForLinks(nodes, linkMatches.map(item => item.link), context, 4);
 
         return {
             ...ecosystem,
@@ -202,6 +319,7 @@
             relationshipTypes,
             strongest,
             evidence,
+            topHubs,
             reason: getOverlayReason(linkMatches, ecosystem)
         };
     }
@@ -210,6 +328,272 @@
         if (!linkMatches.length) return 'No visible edge metadata currently matches this overlay.';
         const topReasons = countBy(linkMatches, item => item.match.reason).slice(0, 2);
         return topReasons.map(([reason, count]) => `${count} via ${reason}`).join(', ');
+    }
+
+    function buildGuidedDiscoveryModel(key, context) {
+        const flow = getGuidedDiscoveryFlow(key);
+        if (!flow) return null;
+
+        if (flow.ecosystemKey) {
+            const overlay = context.overlay?.key === flow.ecosystemKey
+                ? context.overlay
+                : buildEcosystemOverlay(flow.ecosystemKey, context);
+            return buildGuidedDiscoveryResult(flow, overlay.nodes, overlay.links, {
+                summary: overlay.links.length
+                    ? `${overlay.label} uses ${overlay.links.length} visible edge${overlay.links.length === 1 ? '' : 's'} derived from existing edge metadata.`
+                    : `No visible edge currently matches ${overlay.label} under the active filters.`,
+                evidence: overlay.evidence,
+                relationshipTypes: overlay.relationshipTypes,
+                topHubs: overlay.topHubs,
+                emptyReason: overlay.links.length ? '' : 'Try clearing filters or lowering the signal threshold.'
+            });
+        }
+
+        if (flow.key === 'strongest_hubs') {
+            const topHubs = getTopNodesForLinks(context.visibleNodes || [], context.visibleLinks || [], context, 6);
+            const nodeIds = new Set(topHubs.map(item => item.node.id));
+            const links = (context.visibleLinks || [])
+                .filter(link => nodeIds.has(link.source?.id) || nodeIds.has(link.target?.id))
+                .sort((a, b) => getStrength(b) - getStrength(a))
+                .slice(0, 14);
+            return buildGuidedDiscoveryResult(flow, topHubs.map(item => item.node), links, {
+                summary: topHubs.length
+                    ? `The top visible hubs are ranked by visible relationship count, then graph degree and company rank.`
+                    : 'No visible hubs are available under the active filters.',
+                topHubs,
+                evidence: summarizeLinksEvidence(links, context),
+                emptyReason: topHubs.length ? '' : 'Clear filters to restore the broader hub view.'
+            });
+        }
+
+        if (flow.key === 'source_backed') {
+            const links = (context.visibleLinks || [])
+                .filter(link => context.relationshipHasSourceEvidence?.(link) || context.isSecBackedConnection?.(link))
+                .sort((a, b) =>
+                    Number(Boolean(context.isSecBackedConnection?.(b))) - Number(Boolean(context.isSecBackedConnection?.(a))) ||
+                    getStrength(b) - getStrength(a)
+                )
+                .slice(0, 18);
+            const nodes = uniqueNodes(links.flatMap(link => [link.source, link.target]));
+            return buildGuidedDiscoveryResult(flow, nodes, links, {
+                summary: links.length
+                    ? `Source-backed discovery highlights visible edges with attached evidence; SEC-backed production edges are ranked first.`
+                    : 'No sourced visible relationships are available under the active filters.',
+                topHubs: getTopNodesForLinks(nodes, links, context, 4),
+                evidence: summarizeLinksEvidence(links, context),
+                emptyReason: links.length ? '' : 'Turn off restrictive filters or use the source coverage lens to inspect pending evidence.'
+            });
+        }
+
+        if (flow.key === 'evidence_gaps') {
+            const links = getHighValueUnsourcedLinks(context.visibleLinks || [], context, 18);
+            const nodes = uniqueNodes(links.flatMap(link => [link.source, link.target]));
+            return buildGuidedDiscoveryResult(flow, nodes, links, {
+                summary: links.length
+                    ? `Evidence-gap discovery ranks visible unsourced edges by strength, confidence, and endpoint graph degree.`
+                    : 'No visible unsourced production relationships are available under the active filters.',
+                topHubs: getTopNodesForLinks(nodes, links, context, 4),
+                evidence: summarizeLinksEvidence(links, context),
+                relationshipTypes: countBy(links, link => context.getRelationshipTypeLabel?.(link) || link.type || 'Relationship'),
+                emptyReason: links.length ? '' : 'Use the full Source Workbench preflight report for production-wide gaps.'
+            });
+        }
+
+        if (flow.key === 'portfolio_exposure') {
+            const portfolioEdgeKeys = context.portfolioEdgeKeys || new Set();
+            const links = (context.visibleLinks || [])
+                .filter(link => portfolioEdgeKeys.has(link.key))
+                .sort((a, b) => getStrength(b) - getStrength(a));
+            const nodes = uniqueNodes([
+                ...(context.matchedPortfolioNodes || []),
+                ...links.flatMap(link => [link.source, link.target])
+            ]);
+            return buildGuidedDiscoveryResult(flow, nodes, links, {
+                summary: links.length
+                    ? `Portfolio discovery highlights visible relationships touching the analyzed portfolio.`
+                    : 'Analyze portfolio tickers first, then this guide can highlight the matching exposure edges.',
+                topHubs: getTopNodesForLinks(nodes, links, context, 4),
+                evidence: summarizeLinksEvidence(links, context),
+                emptyReason: links.length ? '' : 'Add tickers in Portfolio Exposure and click Analyze Portfolio.'
+            });
+        }
+
+        return null;
+    }
+
+    function buildGuidedDiscoveryResult(flow, nodes, links, options = {}) {
+        const safeNodes = uniqueNodes(nodes || []);
+        const safeLinks = Array.isArray(links) ? links.filter(Boolean) : [];
+        return {
+            flow,
+            key: flow.key,
+            label: flow.label,
+            shortLabel: flow.shortLabel,
+            color: flow.color,
+            routeMode: flow.routeMode || '',
+            nodes: safeNodes,
+            links: safeLinks,
+            nodeIds: new Set(safeNodes.map(node => node.id)),
+            linkKeys: new Set(safeLinks.map(link => link.key)),
+            summary: options.summary || flow.intent || '',
+            emptyReason: options.emptyReason || '',
+            topHubs: options.topHubs || [],
+            evidence: options.evidence || { total: safeLinks.length, sourced: 0, sourcedRatio: 0, secBacked: 0, missing: safeLinks.length, stale: 0 },
+            relationshipTypes: options.relationshipTypes || [],
+            intent: flow.intent || ''
+        };
+    }
+
+    function buildDefaultDiscoveryModel(context) {
+        const visibleNodes = context.visibleNodes || [];
+        const visibleLinks = context.visibleLinks || [];
+        const topHubs = getTopNodesForLinks(visibleNodes, visibleLinks, context, 4);
+        const bridgeNodes = getBridgeNodes(visibleNodes, visibleLinks, context, 3);
+        const clusterAnchors = getClusterAnchorNodes(visibleNodes, context, 3);
+        const highlightedNodes = uniqueNodes([
+            ...topHubs.map(item => item.node),
+            ...bridgeNodes.map(item => item.node),
+            ...clusterAnchors.map(item => item.node)
+        ]).slice(0, 8);
+        return {
+            topHubs,
+            bridgeNodes,
+            clusterAnchors,
+            nodeIds: new Set(highlightedNodes.map(node => node.id)),
+            evidence: buildSourceCoverageSummary(context),
+            highlightedNodes
+        };
+    }
+
+    function buildEvidenceGapDiscovery(context) {
+        const productionLinks = context.links || [];
+        const visibleLinks = context.visibleLinks || [];
+        const candidatePreviewCount = Number(context.secPreviewCandidateCount ?? context.secPreviewLinkCount ?? 0) || 0;
+        const sourced = productionLinks.filter(link => context.relationshipHasSourceEvidence?.(link)).length;
+        const secBacked = productionLinks.filter(link => context.isSecBackedConnection?.(link)).length;
+        const staleReview = productionLinks.filter(link => context.getRelationshipSourceAgeInfo?.(link)?.key === 'stale_review_recommended').length;
+        const missing = productionLinks.filter(link => !context.relationshipHasSourceEvidence?.(link));
+        const highValueUnsourced = getHighValueUnsourcedLinks(productionLinks, context, 10);
+        const visibleHighValueUnsourced = getHighValueUnsourcedLinks(visibleLinks, context, 8);
+        const relationshipTypeGaps = countBy(missing, link => context.getRelationshipTypeLabel?.(link) || link.type || 'Relationship')
+            .map(([label, count]) => {
+                const totalForType = productionLinks.filter(link => (context.getRelationshipTypeLabel?.(link) || link.type || 'Relationship') === label).length;
+                return {
+                    label,
+                    count,
+                    total: totalForType,
+                    sourcedRatio: totalForType ? (totalForType - count) / totalForType : 0
+                };
+            });
+
+        return {
+            total: productionLinks.length,
+            sourced,
+            sourcedRatio: productionLinks.length ? sourced / productionLinks.length : 0,
+            secBacked,
+            staleReview,
+            candidatePreviewCount,
+            missingCount: missing.length,
+            highValueUnsourced,
+            visibleHighValueUnsourced,
+            relationshipTypeGaps
+        };
+    }
+
+    function getHighValueUnsourcedLinks(sourceLinks, context, limit = 8) {
+        return [...(sourceLinks || [])]
+            .filter(link => !context.relationshipHasSourceEvidence?.(link))
+            .map(link => ({
+                link,
+                score: getStrength(link) * 4 +
+                    ((Number(link.confidence_score ?? link.confidence) || 0) / 5) +
+                    (((link.source?.degree || 0) + (link.target?.degree || 0)) * 0.025)
+            }))
+            .sort((a, b) => b.score - a.score || getStrength(b.link) - getStrength(a.link))
+            .slice(0, limit)
+            .map(item => item.link);
+    }
+
+    function getTopNodesForLinks(sourceNodes, sourceLinks, context, limit = 4) {
+        const visibleDegree = new Map();
+        (sourceLinks || []).forEach(link => {
+            if (link?.source) visibleDegree.set(link.source.id, (visibleDegree.get(link.source.id) || 0) + 1);
+            if (link?.target) visibleDegree.set(link.target.id, (visibleDegree.get(link.target.id) || 0) + 1);
+        });
+
+        return [...(sourceNodes || [])]
+            .filter(Boolean)
+            .map(node => ({
+                node,
+                visibleDegree: visibleDegree.get(node.id) || 0,
+                degree: node.degree || context.adjacencyById?.get(node.id)?.length || 0,
+                role: getNodeRole(node, context)
+            }))
+            .filter(item => item.visibleDegree > 0 || item.degree > 0)
+            .sort((a, b) =>
+                b.visibleDegree - a.visibleDegree ||
+                b.degree - a.degree ||
+                ((a.node.rank || 9999) - (b.node.rank || 9999)) ||
+                String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
+            )
+            .slice(0, limit);
+    }
+
+    function getBridgeNodes(sourceNodes, sourceLinks, context, limit = 3) {
+        const nodeIds = new Set((sourceNodes || []).map(node => node.id));
+        const bridgeMap = new Map((sourceNodes || []).map(node => [node.id, { node, sectors: new Set(), groups: new Set(), degree: 0 }]));
+
+        (sourceLinks || []).forEach(link => {
+            [
+                [link.source, link.target],
+                [link.target, link.source]
+            ].forEach(([node, other]) => {
+                if (!node || !other || !nodeIds.has(node.id)) return;
+                const entry = bridgeMap.get(node.id);
+                if (!entry) return;
+                entry.degree += 1;
+                if (other.sector && other.sector !== node.sector) entry.sectors.add(other.sector);
+                const otherGroup = context.getCompanyIndustryGroup?.(other);
+                const nodeGroup = context.getCompanyIndustryGroup?.(node);
+                if (otherGroup && otherGroup !== nodeGroup) entry.groups.add(otherGroup);
+            });
+        });
+
+        return [...bridgeMap.values()]
+            .filter(item => item.degree > 0 && (item.sectors.size > 0 || item.groups.size > 1))
+            .sort((a, b) =>
+                b.sectors.size - a.sectors.size ||
+                b.groups.size - a.groups.size ||
+                b.degree - a.degree ||
+                String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
+            )
+            .slice(0, limit);
+    }
+
+    function getClusterAnchorNodes(sourceNodes, context, limit = 3) {
+        return [...(sourceNodes || [])]
+            .sort((a, b) =>
+                (b.degree || context.adjacencyById?.get(b.id)?.length || 0) -
+                (a.degree || context.adjacencyById?.get(a.id)?.length || 0)
+            )
+            .slice(0, Math.max(12, limit * 8))
+            .map(node => {
+                const cluster = typeof context.getNodeCluster === 'function'
+                    ? context.getNodeCluster(node.id)
+                    : { clusterNodes: [], clusterStrength: 0 };
+                return {
+                    node,
+                    memberCount: cluster?.clusterNodes?.length || 0,
+                    clusterStrength: cluster?.clusterStrength || 0
+                };
+            })
+            .filter(item => item.memberCount > 1)
+            .sort((a, b) =>
+                b.memberCount - a.memberCount ||
+                b.clusterStrength - a.clusterStrength ||
+                String(a.node.ticker || '').localeCompare(String(b.node.ticker || ''))
+            )
+            .slice(0, limit);
     }
 
     function getDominantEcosystemsForNode(node, context) {
@@ -424,6 +808,24 @@
         const trustExplanation = context.isSecBackedConnection?.(link)
             ? 'Evidence state: SEC-backed production edge.'
             : `${sourceStatus.label}; ${confidence.label}; ${evidenceCount} evidence item${evidenceCount === 1 ? '' : 's'}.`;
+        const typeMeaning = getRelationshipTypeMeaning(link, context);
+        const sourceExplanation = buildSourceExplanation({
+            sourceStatus,
+            sourceAge,
+            diversity,
+            evidenceCount,
+            secBacked: Boolean(context.isSecBackedConnection?.(link))
+        });
+        const routeContext = context.activeRelationshipRoute?.linkKeys?.has(link.key)
+            ? `This edge is currently part of the active ${context.activeRelationshipRoute.label || 'relationship route'}.`
+            : context.activeRelationshipRoute
+                ? `The active ${context.activeRelationshipRoute.label || 'relationship route'} is visible, but this edge is outside that route.`
+                : '';
+        const overlayContext = context.graphIntelligenceModel?.overlay?.linkKeys?.has(link.key)
+            ? `This edge is highlighted by the active ${context.graphIntelligenceModel.overlay.label} overlay.`
+            : ecosystems.length
+                ? `This edge can appear in ${ecosystems.map(item => item.label).join(', ')} discovery based on loaded metadata.`
+                : '';
 
         return {
             link,
@@ -433,6 +835,10 @@
             pathExplanation,
             ecosystemExplanation,
             trustExplanation,
+            typeMeaning,
+            sourceExplanation,
+            routeContext,
+            overlayContext,
             confidence,
             sourceStatus,
             sourceAge,
@@ -440,6 +846,22 @@
             evidenceCount,
             ecosystems
         };
+    }
+
+    function buildSourceExplanation(details) {
+        if (details.secBacked) {
+            return `Source-confidence: SEC-backed production edge with ${details.evidenceCount} evidence item${details.evidenceCount === 1 ? '' : 's'}.`;
+        }
+        if (details.sourceStatus?.key === 'candidate_preview') {
+            return 'Source-confidence: candidate or preview evidence only; it is not production graph data until manually promoted.';
+        }
+        if (details.sourceStatus?.key === 'missing_source') {
+            return 'Source-confidence: no source URL is attached yet, so the graph keeps this relationship in evidence-pending review state.';
+        }
+        const hostText = details.diversity?.hostCount
+            ? `${details.diversity.hostCount} source host${details.diversity.hostCount === 1 ? '' : 's'}`
+            : 'source URL attached';
+        return `Source-confidence: ${details.sourceStatus?.label || 'Source attached'} with ${hostText}; ${details.sourceAge?.label || 'date state unavailable'}.`;
     }
 
     function buildRoute(mode, context) {
@@ -616,6 +1038,14 @@
     function getNodeVisualMeta(node, context) {
         const route = context.activeRelationshipRoute?.nodeIds?.has(node.id);
         const overlay = context.graphIntelligenceModel?.overlay?.nodeIds?.has(node.id);
+        const guided = context.graphIntelligenceModel?.guidedDiscovery?.nodeIds?.has(node.id);
+        const defaultDiscovery = !context.selectedNode &&
+            !context.selectedRelationshipLink &&
+            !context.activeRelationshipRoute &&
+            !context.activeEcosystemOverlayKey &&
+            !context.sourceCoverageLensEnabled &&
+            !context.activeGuidedDiscoveryKey &&
+            context.graphIntelligenceModel?.defaultDiscovery?.nodeIds?.has(node.id);
         const selectedEdgeEndpoint = context.selectedRelationshipLink &&
             (context.selectedRelationshipLink.source?.id === node.id || context.selectedRelationshipLink.target?.id === node.id);
         const cluster = context.graphStoryMode === 'cluster' && context.activeClusterNodeIds?.has(node.id);
@@ -629,22 +1059,29 @@
         let badgeLabel = '';
         if (route) badgeLabel = 'ROUTE';
         else if (selectedEdgeEndpoint) badgeLabel = 'EDGE';
+        else if (guided) {
+            badgeLabel = context.graphIntelligenceModel?.guidedDiscovery?.shortLabel || 'GUIDE';
+            color = context.graphIntelligenceModel?.guidedDiscovery?.color || color;
+        }
         else if (sourceCoverage) {
             badgeLabel = sourceCoverage.shortLabel;
             color = sourceCoverage.color;
         } else if (overlay && primaryEcosystem) badgeLabel = primaryEcosystem.shortLabel;
         else if (cluster && role.key !== 'normal') badgeLabel = role.shortLabel;
+        else if (defaultDiscovery && role.key !== 'normal') badgeLabel = role.shortLabel;
 
         return {
             route,
             overlay,
+            guided,
+            defaultDiscovery,
             selectedEdgeEndpoint,
             cluster,
             role,
             sourceCoverage,
             color,
             badgeLabel,
-            emphasized: Boolean(route || selectedEdgeEndpoint || cluster || overlay || sourceCoverage)
+            emphasized: Boolean(route || selectedEdgeEndpoint || cluster || overlay || guided || sourceCoverage || defaultDiscovery)
         };
     }
 
@@ -652,10 +1089,12 @@
         const route = context.activeRelationshipRoute?.linkKeys?.has(link.key);
         const selected = context.selectedRelationshipLink?.key === link.key;
         const overlay = context.graphIntelligenceModel?.overlay?.linkKeys?.has(link.key);
+        const guided = context.graphIntelligenceModel?.guidedDiscovery?.linkKeys?.has(link.key);
         const sourceCoverage = context.sourceCoverageLensEnabled
             ? getLinkSourceCoverageState(link, context)
             : null;
         const overlayColor = context.graphIntelligenceModel?.overlay?.color;
+        const guidedColor = context.graphIntelligenceModel?.guidedDiscovery?.color;
         const routeColor = getRouteColor(context.activeRelationshipRoute, context);
         const sourceColor = sourceCoverage?.color;
 
@@ -663,12 +1102,13 @@
             route,
             selected,
             overlay,
+            guided,
             sourceCoverage,
-            forceDraw: Boolean(route || selected || overlay),
-            dimmed: Boolean((context.activeEcosystemOverlayKey || context.sourceCoverageLensEnabled) && !route && !selected && !overlay),
-            color: route ? routeColor : selected ? '#ffffff' : sourceColor || overlayColor || '',
-            widthBoost: route ? 2.25 : selected ? 2.4 : overlay ? 1.1 : sourceCoverage ? 0.35 : 0,
-            alphaBoost: route ? 0.45 : selected ? 0.52 : overlay ? 0.28 : sourceCoverage ? 0.18 : 0,
+            forceDraw: Boolean(route || selected || overlay || guided),
+            dimmed: Boolean((context.activeEcosystemOverlayKey || context.sourceCoverageLensEnabled || context.activeGuidedDiscoveryKey) && !route && !selected && !overlay && !guided),
+            color: route ? routeColor : selected ? '#ffffff' : sourceColor || guidedColor || overlayColor || '',
+            widthBoost: route ? 2.25 : selected ? 2.4 : guided ? 1.35 : overlay ? 1.1 : sourceCoverage ? 0.35 : 0,
+            alphaBoost: route ? 0.45 : selected ? 0.52 : guided ? 0.34 : overlay ? 0.28 : sourceCoverage ? 0.18 : 0,
             dashPattern: sourceCoverage?.key === 'missing_source' ? [3, 7] : sourceCoverage?.key === 'candidate_preview' ? [8, 6] : null
         };
     }
@@ -795,8 +1235,14 @@
         SOURCE_STATE_META,
         getEcosystemDefinitions,
         getEcosystemDefinition,
+        getGuidedDiscoveryFlows,
+        getGuidedDiscoveryFlow,
+        getRelationshipTypeMeaning,
         buildGraphIntelligenceModel,
         buildEcosystemOverlay,
+        buildGuidedDiscoveryModel,
+        buildDefaultDiscoveryModel,
+        buildEvidenceGapDiscovery,
         getDominantEcosystemsForNode,
         getLinkEcosystemKeys,
         getLinkEcosystemMatch,

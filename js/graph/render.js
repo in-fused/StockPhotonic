@@ -245,7 +245,7 @@
             width = Math.max(width + (intelligenceVisual.widthBoost || 0), 0.8 + strength * 0.75);
         }
 
-        if (intelligenceVisual.overlay && !intelligenceVisual.route && !intelligenceVisual.selected) {
+        if ((intelligenceVisual.overlay || intelligenceVisual.guided) && !intelligenceVisual.route && !intelligenceVisual.selected) {
             alpha = Math.max(alpha, 0.48 + strength * 0.24 + (intelligenceVisual.alphaBoost || 0));
             width = Math.max(width + (intelligenceVisual.widthBoost || 0), 1.15 + strength * 1.6);
         }
@@ -265,7 +265,7 @@
         ctx.lineWidth = width;
         ctx.shadowBlur = intelligenceVisual.route || intelligenceVisual.selected
             ? 34
-            : isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : intelligenceVisual.overlay ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
+            : isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : intelligenceVisual.guided ? 24 : intelligenceVisual.overlay ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
         ctx.shadowColor = isPortfolioLink ? '#ffd700' : color;
         ctx.setLineDash(Array.isArray(intelligenceVisual.dashPattern)
             ? intelligenceVisual.dashPattern
@@ -327,7 +327,7 @@
 
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.shadowBlur = isSelected ? 34 : isPortfolioHolding ? 38 : isSearchHighlighted ? 42 : intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint ? 36 : isHovered ? 22 : isPortfolioTopNexus ? 32 : intelligenceVisual.overlay ? 24 : isPortfolioRepeatedExposure ? 24 : isPortfolioAdjacent ? 18 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
+        ctx.shadowBlur = isSelected ? 34 : isPortfolioHolding ? 38 : isSearchHighlighted ? 42 : intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint ? 36 : intelligenceVisual.guided ? 28 : isHovered ? 22 : isPortfolioTopNexus ? 32 : intelligenceVisual.overlay ? 24 : intelligenceVisual.defaultDiscovery ? 18 : isPortfolioRepeatedExposure ? 24 : isPortfolioAdjacent ? 18 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12;
         ctx.shadowColor = isSelected ? '#ffffff' : portfolioHaloColor;
 
         const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
@@ -531,6 +531,8 @@
         if (context.selectedNode && context.selectedNode.id === node.id) return true;
         if (context.hoveredNode && context.hoveredNode.id === node.id) return true;
         if (intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint) return true;
+        if (intelligenceVisual.guided && context.scale > 0.5) return true;
+        if (intelligenceVisual.defaultDiscovery && context.scale > 0.56 && intelligenceVisual.role?.key !== 'normal') return true;
         if (intelligenceVisual.overlay && context.scale > 0.56 && intelligenceVisual.role?.key !== 'normal') return true;
         if (context.isPortfolioAnalysisActive() && context.isPortfolioHighlightedNode(node)) return true;
         if (context.selectedNode && context.focusNeighborIds.has(node.id)) return true;
@@ -545,8 +547,10 @@
         if (intelligenceVisual.route) return 1100 + (node.degree || 0);
         if (intelligenceVisual.selectedEdgeEndpoint) return 1060 + (node.degree || 0);
         if (context.selectedNode && context.selectedNode.id === node.id) return 1000;
+        if (intelligenceVisual.guided) return 940 + (node.degree || 0);
         if (context.hoveredNode && context.hoveredNode.id === node.id) return 900;
         if (intelligenceVisual.overlay && intelligenceVisual.role?.key !== 'normal') return 830 + (node.degree || 0);
+        if (intelligenceVisual.defaultDiscovery && intelligenceVisual.role?.key !== 'normal') return 800 + (node.degree || 0);
         if (context.isPortfolioNode(node)) return 780 + node.degree;
         if (context.isPortfolioTopNexusNode(node)) return 720 + node.degree;
         if (context.isPortfolioRepeatedExposureNode(node)) return 670 + node.degree;
@@ -679,9 +683,13 @@
                 ? 0.82
                 : visual.sourceCoverage
                     ? 0.58
+                    : visual.guided
+                        ? 0.52
                     : visual.overlay
                         ? 0.46
-                        : visual.cluster ? 0.38 : 0.28;
+                        : visual.defaultDiscovery
+                            ? 0.34
+                            : visual.cluster ? 0.38 : 0.28;
         if (alpha <= 0) return;
 
         ctx.save();
@@ -700,7 +708,7 @@
         ctx.arc(point.x, point.y, radius * (visual.route || visual.selectedEdgeEndpoint ? 2.75 : 2.32), 0, Math.PI * 2);
         ctx.stroke();
 
-        if (visual.route || visual.selectedEdgeEndpoint || (visual.sourceCoverage && context.scale > 0.68) || (visual.overlay && context.scale > 0.56 && visual.role?.key !== 'normal')) {
+        if (visual.route || visual.selectedEdgeEndpoint || visual.guided || (visual.sourceCoverage && context.scale > 0.68) || (visual.overlay && context.scale > 0.56 && visual.role?.key !== 'normal') || (visual.defaultDiscovery && context.scale > 0.62 && visual.role?.key !== 'normal')) {
             drawNodeIntelligenceBadge(ctx, point, radius, visual.badgeLabel || visual.role?.shortLabel || '', color);
         }
 

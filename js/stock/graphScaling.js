@@ -16,11 +16,12 @@
         const cached = hasCandidatePreview ? null : getCachedModel(nodes, links);
         if (cached) return cached;
 
+        const navigation = normalizeNavigationModel(context.largeGraphNavigationModel);
         const density = getDensityBucket(nodes.length + candidateNodes.length, links.length + candidateLinks.length);
         const hubSummaries = buildHubSummaries(nodes, links, context);
         const corridorBuckets = buildCorridorBuckets(links, context);
         const labelPriorityIds = hubSummaries
-            .slice(0, getLabelSeedLimit(density))
+            .slice(0, getLabelSeedLimit(density, navigation))
             .map(item => item.nodeId)
             .filter(id => id !== null && id !== undefined);
         const routeSummary = buildRouteSummary(links, context, corridorBuckets);
@@ -32,14 +33,18 @@
             routeSummary,
             labelPriorityIds,
             renderHeuristics: {
-                labelLimitTicker: getTickerLabelLimit(density),
-                labelLimitFull: getFullLabelLimit(density),
+                labelLimitTicker: getTickerLabelLimit(density, navigation),
+                labelLimitFull: getFullLabelLimit(density, navigation),
                 weakEdgeThresholdLift: density.key === 'dense' || density.key === 'very_dense',
                 preserveRouteLabels: true,
                 preserveSelectedLabels: true,
                 preserveOverlayLabels: true,
-                candidatePreviewLabelLimit: getCandidatePreviewLabelLimit(density)
+                candidatePreviewLabelLimit: getCandidatePreviewLabelLimit(density, navigation),
+                progressiveDisclosureActive: navigation.active,
+                navigationMode: navigation.mode,
+                navigationFocusKind: navigation.focusKind
             },
+            navigation,
             candidatePreviewScaling: {
                 visibleCandidateNodeCount: candidateNodes.length,
                 visibleCandidateEdgeCount: candidateLinks.length,
@@ -50,6 +55,38 @@
         };
         if (!hasCandidatePreview) cacheModel(nodes, links, model);
         return model;
+    }
+
+    function normalizeNavigationModel(rawModel) {
+        if (!rawModel || typeof rawModel !== 'object') {
+            return {
+                active: false,
+                mode: 'overview',
+                modeLabel: 'Overview',
+                focusKind: 'all',
+                focusLabel: '',
+                visibleNodeCount: 0,
+                visibleEdgeCount: 0,
+                suppressedEdgeCount: 0,
+                disclosureRatio: 1
+            };
+        }
+        const disclosure = rawModel.progressiveDisclosure || {};
+        return {
+            active: Boolean(rawModel.isActive),
+            mode: rawModel.mode || 'overview',
+            modeLabel: rawModel.modeLabel || 'Overview',
+            focusKind: rawModel.focusKind || 'all',
+            focusLabel: rawModel.focusLabel || '',
+            visibleNodeCount: Number(disclosure.visibleNodeCount || rawModel.nodeIds?.size || 0),
+            visibleEdgeCount: Number(disclosure.visibleEdgeCount || rawModel.linkKeys?.size || 0),
+            suppressedEdgeCount: Number(disclosure.suppressedEdgeCount || 0),
+            disclosureRatio: Number.isFinite(Number(disclosure.disclosureRatio))
+                ? Number(disclosure.disclosureRatio)
+                : 1,
+            sourceBackedVisibleEdges: Number(disclosure.sourceBackedVisibleEdges || 0),
+            secBackedVisibleEdges: Number(disclosure.secBackedVisibleEdges || 0)
+        };
     }
 
     function getCachedModel(nodes, links) {
@@ -188,28 +225,47 @@
         return String(key || 'corridor').replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
     }
 
-    function getLabelSeedLimit(density) {
+    function getLabelSeedLimit(density, navigation = {}) {
+        if (navigation.active && navigation.mode !== 'production_only') {
+            if (density.key === 'very_dense') return 14;
+            if (density.key === 'dense') return 18;
+            return 22;
+        }
         if (density.key === 'very_dense') return 18;
         if (density.key === 'dense') return 24;
         if (density.key === 'growth') return 30;
         return 34;
     }
 
-    function getTickerLabelLimit(density) {
+    function getTickerLabelLimit(density, navigation = {}) {
+        if (navigation.active && navigation.mode !== 'production_only') {
+            if (density.key === 'very_dense') return 14;
+            if (density.key === 'dense') return 20;
+            if (density.key === 'growth') return 28;
+            return 34;
+        }
         if (density.key === 'very_dense') return 20;
         if (density.key === 'dense') return 28;
         if (density.key === 'growth') return 36;
         return 52;
     }
 
-    function getFullLabelLimit(density) {
+    function getFullLabelLimit(density, navigation = {}) {
+        if (navigation.active && navigation.mode !== 'production_only') {
+            if (density.key === 'very_dense') return 20;
+            if (density.key === 'dense') return 28;
+            if (density.key === 'growth') return 36;
+            return 44;
+        }
         if (density.key === 'very_dense') return 28;
         if (density.key === 'dense') return 38;
         if (density.key === 'growth') return 46;
         return 60;
     }
 
-    function getCandidatePreviewLabelLimit(density) {
+    function getCandidatePreviewLabelLimit(density, navigation = {}) {
+        if (navigation.mode === 'preview_only') return 20;
+        if (navigation.active && density.key === 'very_dense') return 10;
         if (density.key === 'very_dense') return 14;
         if (density.key === 'dense') return 20;
         if (density.key === 'growth') return 28;

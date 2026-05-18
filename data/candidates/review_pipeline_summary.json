@@ -11,6 +11,7 @@
     "openalex_ecosystem_candidates": "data/candidates/openalex_ecosystem_candidates.json",
     "openalex_institution_overlap": "data/candidates/openalex_institution_overlap.json",
     "openalex_topic_overlap": "data/candidates/openalex_topic_overlap.json",
+    "promotion_planner_report": "data/candidates/promotion_planner_report.json",
     "source_coverage_refresh": "data/candidates/source_coverage_refresh_report.json",
     "source_governance_report": "data/source_registry/source_governance_report.json",
     "trusted_source_hosts": "data/source_registry/trusted_source_hosts.json",
@@ -18,11 +19,11 @@
   },
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-17T13:11:51+00:00",
+    "generated_at_utc": "2026-05-18T00:07:59+00:00",
     "generated_by": "scripts/review_artifact_refresh.py",
     "network_calls": 0,
     "output_path": "data/candidates/review_pipeline_summary.json",
-    "pipeline_started_at_utc": "2026-05-17T13:11:50+00:00",
+    "pipeline_started_at_utc": "2026-05-18T00:07:57+00:00",
     "production_write_allowed": false
   },
   "safety": {
@@ -64,11 +65,11 @@
       "stdout_tail": [
         "Candidate company expansion batches",
         "===================================",
-        "Candidate companies: 78",
+        "Candidate companies: 25",
         "Expansion batches: 8",
-        "Ready for preview: 78",
+        "Ready for preview: 25",
         "Needs source review: 0",
-        "Skipped production duplicates: 0",
+        "Skipped production duplicates: 53",
         "Production writes: 0",
         "Candidate path: data/candidates/candidate_companies.json",
         "Batch path: data/candidates/universe_expansion_batches.json"
@@ -81,14 +82,14 @@
       "status": "passed",
       "stderr_tail": [],
       "stdout_tail": [
-        "Production companies: 60",
-        "Production edges: 134",
+        "Production companies: 113",
+        "Production edges: 162",
         "Sourced ratio: 100%",
         "Unsourced edges: 0",
-        "SEC-backed edges: 104",
+        "SEC-backed edges: 132",
         "Stale review edges: 0",
         "Candidate previews: 10",
-        "Candidate companies: 78",
+        "Candidate companies: 25",
         "Expansion batches: 8",
         "Candidate blocker flags: 19",
         "Production writes: 0",
@@ -122,9 +123,9 @@
       "stdout_tail": [
         "Source registry governance",
         "==========================",
-        "Official company records: 60",
-        "Registered SEC roots: 56",
-        "Trusted source hosts: 34",
+        "Official company records: 113",
+        "Registered SEC roots: 109",
+        "Trusted source hosts: 36",
         "Stale source queue: 0",
         "Universe candidates: 293",
         "Ready for review: 215",
@@ -134,13 +135,51 @@
       ]
     },
     {
+      "command": "python scripts/promotion_planner_report.py --write --force",
+      "name": "promotion_planner_report",
+      "return_code": 0,
+      "status": "passed",
+      "stderr_tail": [],
+      "stdout_tail": [
+        "Promotion planner report",
+        "========================",
+        "Mode: write",
+        "Output: data/candidates/promotion_planner_report.json",
+        "Candidates: 25",
+        "Input-ready: 0",
+        "Production-candidate ready: 0",
+        "Projected nodes: 113",
+        "Density forecast: dense",
+        "Production writes: 0"
+      ]
+    },
+    {
+      "command": "python scripts/openalex_enrichment.py --write --force --max-requests 24 --max-entities 20",
+      "name": "openalex_enrichment",
+      "return_code": 0,
+      "status": "passed",
+      "stderr_tail": [],
+      "stdout_tail": [
+        "OpenAlex review-only enrichment",
+        "===============================",
+        "Mode: cache-only/dry-run",
+        "Companies processed: 20",
+        "Network requests used: 0 / 24",
+        "Budget skips: 0",
+        "Ecosystem hints: 31",
+        "Topic candidates: 0",
+        "Institution overlaps: 0",
+        "Cluster hints: 8",
+        "Production writes: 0"
+      ]
+    },
+    {
       "command": "python scripts/validate_data.py",
       "name": "validation",
       "return_code": 0,
       "status": "passed",
       "stderr_tail": [],
       "stdout_tail": [
-        "- Connection 8: Confidence mismatch: expected 5, found 4.",
         "- Connection 11: Confidence mismatch: expected 5, found 4.",
         "- Connection 13: Confidence mismatch: expected 5, found 4.",
         "- Connection 14: Confidence mismatch: expected 5, found 4.",
@@ -151,17 +190,18 @@
         "- Connection 26: Confidence mismatch: expected 5, found 4.",
         "- Connection 27: Confidence mismatch: expected 5, found 4.",
         "- Connection 49: Confidence mismatch: expected 4, found 5.",
-        "- Connection 50: Confidence mismatch: expected 5, found 4."
+        "- Connection 50: Confidence mismatch: expected 5, found 4.",
+        "- 16 companies have no connections: 64, 65, 66, 67, 68, 81, 82, 83, 84, 90..."
       ]
     }
   ],
   "summary": {
     "failed_step_count": 0,
-    "latest_review_pipeline_timestamp": "2026-05-17T13:11:51+00:00",
+    "latest_review_pipeline_timestamp": "2026-05-18T00:07:59+00:00",
     "openalex_network_enabled": false,
     "review_only": true,
     "status": "passed",
-    "step_count": 6,
+    "step_count": 8,
     "write_enabled": true
   }
 }

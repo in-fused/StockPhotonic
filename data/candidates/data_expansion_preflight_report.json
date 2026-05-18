@@ -1,12 +1,12 @@
 {
-  "candidate_company_preview_count": 78,
+  "candidate_company_preview_count": 25,
   "candidate_company_preview_governance": {
     "auto_promotion_allowed": false,
     "blocker_counts": {},
-    "candidate_company_count": 78,
+    "candidate_company_count": 25,
     "duplicate_ticker_warning_count": 0,
     "manual_promotion_allowed": false,
-    "ready_for_preview_count": 78,
+    "ready_for_preview_count": 25,
     "relationship_authority": false,
     "review_only": true
   },
@@ -165,16 +165,16 @@
   "fast_track_source_targets": [],
   "high_value_unsourced_edges": [],
   "large_universe_growth_metrics": {
-    "candidate_company_preview_count": 78,
+    "candidate_company_preview_count": 25,
     "density_controls_required": true,
     "expansion_batch_count": 8,
     "preview_company_total": 138,
-    "production_company_count": 60,
+    "production_company_count": 113,
     "review_only": true
   },
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-17T13:11:50+00:00",
+    "generated_at_utc": "2026-05-18T00:07:58+00:00",
     "generated_by": "scripts/data_expansion_preflight.py",
     "network_calls": 0,
     "optional_files_read": {
@@ -190,28 +190,28 @@
     },
     "production_write_allowed": false
   },
-  "production_company_count": 60,
+  "production_company_count": 113,
   "production_edge_source_coverage": {
-    "sec_backed_edges": 104,
-    "sourced_edges": 134,
+    "sec_backed_edges": 132,
+    "sourced_edges": 162,
     "sourced_ratio": 1.0,
     "stale_review_edges": 0,
-    "total_edges": 134,
+    "total_edges": 162,
     "unsourced_edges": 0
   },
   "relationship_type_source_gaps": [
     {
       "relationship_type": "competitor",
-      "sourced_edges": 49,
+      "sourced_edges": 73,
       "sourced_ratio": 1.0,
-      "total_edges": 49,
+      "total_edges": 73,
       "unsourced_edges": 0
     },
     {
       "relationship_type": "ecosystem",
-      "sourced_edges": 42,
+      "sourced_edges": 43,
       "sourced_ratio": 1.0,
-      "total_edges": 42,
+      "total_edges": 43,
       "unsourced_edges": 0
     },
     {
@@ -223,9 +223,9 @@
     },
     {
       "relationship_type": "partnership",
-      "sourced_edges": 11,
+      "sourced_edges": 14,
       "sourced_ratio": 1.0,
-      "total_edges": 11,
+      "total_edges": 14,
       "unsourced_edges": 0
     },
     {
@@ -255,16 +255,16 @@
     "review_only": true,
     "strong_inferred_count": 0,
     "tier_counts": {
-      "verified": 134
+      "verified": 162
     },
     "trusted_relationship_class_counts": {
-      "cloud_hyperscaler_exposure": 22,
-      "competitor": 64,
+      "cloud_hyperscaler_exposure": 26,
+      "competitor": 88,
       "ecosystem_overlap": 3,
       "financial_infrastructure_overlap": 12,
       "semiconductor_supply_chain": 23,
       "supplier_ecosystem": 10
     },
-    "verified_count": 134
+    "verified_count": 162
   }
 }

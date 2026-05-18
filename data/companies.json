@@ -1,602 +1,1821 @@
 [
   {
+    "color": "#00f9ff",
     "id": 1,
-    "ticker": "NVDA",
-    "name": "NVIDIA Corporation",
-    "sector": "AI / Semiconductors",
     "industry": "Graphics Processing Units and AI Accelerators",
     "market_cap": 4.5,
+    "name": "NVIDIA Corporation",
     "rank": 1,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "NVDA"
   },
   {
+    "color": "#00f9ff",
     "id": 2,
-    "ticker": "AMD",
-    "name": "Advanced Micro Devices, Inc.",
-    "sector": "AI / Semiconductors",
     "industry": "CPUs, GPUs, and Data Center Accelerators",
     "market_cap": 0.3,
+    "name": "Advanced Micro Devices, Inc.",
     "rank": 18,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "AMD"
   },
   {
+    "color": "#00f9ff",
     "id": 3,
-    "ticker": "INTC",
-    "name": "Intel Corporation",
-    "sector": "AI / Semiconductors",
     "industry": "Integrated Device Manufacturing and Foundry",
     "market_cap": 0.15,
+    "name": "Intel Corporation",
     "rank": 34,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "INTC"
   },
   {
+    "color": "#00f9ff",
     "id": 4,
-    "ticker": "AVGO",
-    "name": "Broadcom Inc.",
-    "sector": "AI / Semiconductors",
     "industry": "Custom Silicon, Networking, and Infrastructure Software",
     "market_cap": 1.2,
+    "name": "Broadcom Inc.",
     "rank": 8,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "AVGO"
   },
   {
+    "color": "#00f9ff",
     "id": 5,
-    "ticker": "QCOM",
-    "name": "QUALCOMM Incorporated",
-    "sector": "AI / Semiconductors",
     "industry": "Mobile and Edge Semiconductors",
     "market_cap": 0.2,
+    "name": "QUALCOMM Incorporated",
     "rank": 27,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "QCOM"
   },
   {
+    "color": "#00f9ff",
     "id": 6,
-    "ticker": "MU",
-    "name": "Micron Technology, Inc.",
-    "sector": "AI / Semiconductors",
     "industry": "Memory and High-Bandwidth Memory",
     "market_cap": 0.17,
+    "name": "Micron Technology, Inc.",
     "rank": 31,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "MU"
   },
   {
+    "color": "#00f9ff",
     "id": 7,
-    "ticker": "TSM",
-    "name": "Taiwan Semiconductor Manufacturing Company Limited",
-    "sector": "AI / Semiconductors",
     "industry": "Semiconductor Foundry",
     "market_cap": 1.25,
+    "name": "Taiwan Semiconductor Manufacturing Company Limited",
     "rank": 7,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "TSM"
   },
   {
+    "color": "#00f9ff",
     "id": 8,
-    "ticker": "ASML",
-    "name": "ASML Holding N.V.",
-    "sector": "AI / Semiconductors",
     "industry": "Semiconductor Lithography Equipment",
     "market_cap": 0.35,
+    "name": "ASML Holding N.V.",
     "rank": 17,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "ASML"
   },
   {
+    "color": "#00f9ff",
     "id": 9,
-    "ticker": "ARM",
-    "name": "Arm Holdings plc",
-    "sector": "AI / Semiconductors",
     "industry": "Semiconductor IP and CPU Architecture",
     "market_cap": 0.14,
+    "name": "Arm Holdings plc",
     "rank": 37,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "ARM"
   },
   {
+    "color": "#00f9ff",
     "id": 10,
-    "ticker": "AMAT",
-    "name": "Applied Materials, Inc.",
-    "sector": "AI / Semiconductors",
     "industry": "Semiconductor Manufacturing Equipment",
     "market_cap": 0.17,
+    "name": "Applied Materials, Inc.",
     "rank": 32,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "AMAT"
   },
   {
+    "color": "#00f9ff",
     "id": 11,
-    "ticker": "LRCX",
-    "name": "Lam Research Corporation",
-    "sector": "AI / Semiconductors",
     "industry": "Wafer Fabrication Equipment",
     "market_cap": 0.13,
+    "name": "Lam Research Corporation",
     "rank": 39,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "LRCX"
   },
   {
+    "color": "#00f9ff",
     "id": 12,
-    "ticker": "KLAC",
-    "name": "KLA Corporation",
-    "sector": "AI / Semiconductors",
     "industry": "Process Control and Yield Management",
     "market_cap": 0.12,
+    "name": "KLA Corporation",
     "rank": 41,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "KLAC"
   },
   {
+    "color": "#00f9ff",
     "id": 13,
-    "ticker": "MRVL",
-    "name": "Marvell Technology, Inc.",
-    "sector": "AI / Semiconductors",
     "industry": "Data Infrastructure Semiconductors",
     "market_cap": 0.08,
+    "name": "Marvell Technology, Inc.",
     "rank": 51,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "MRVL"
   },
   {
+    "color": "#00f9ff",
     "id": 14,
-    "ticker": "MPWR",
-    "name": "Monolithic Power Systems, Inc.",
-    "sector": "AI / Semiconductors",
     "industry": "Power Management Semiconductors",
     "market_cap": 0.04,
+    "name": "Monolithic Power Systems, Inc.",
     "rank": 60,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "MPWR"
   },
   {
+    "color": "#00f9ff",
     "id": 15,
-    "ticker": "CDNS",
-    "name": "Cadence Design Systems, Inc.",
-    "sector": "AI / Semiconductors",
     "industry": "Electronic Design Automation",
     "market_cap": 0.09,
+    "name": "Cadence Design Systems, Inc.",
     "rank": 48,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "CDNS"
   },
   {
+    "color": "#00f9ff",
     "id": 16,
-    "ticker": "SNPS",
-    "name": "Synopsys, Inc.",
-    "sector": "AI / Semiconductors",
     "industry": "Electronic Design Automation and IP",
     "market_cap": 0.09,
+    "name": "Synopsys, Inc.",
     "rank": 49,
-    "color": "#00f9ff"
+    "sector": "AI / Semiconductors",
+    "ticker": "SNPS"
   },
   {
+    "color": "#c026d3",
     "id": 17,
-    "ticker": "MSFT",
-    "name": "Microsoft Corporation",
-    "sector": "Cloud / Big Tech",
     "industry": "Cloud Platforms and Productivity Software",
     "market_cap": 3.6,
+    "name": "Microsoft Corporation",
     "rank": 2,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "MSFT"
   },
   {
+    "color": "#c026d3",
     "id": 18,
-    "ticker": "GOOGL",
-    "name": "Alphabet Inc.",
-    "sector": "Cloud / Big Tech",
     "industry": "Search, Advertising, Cloud, and AI",
     "market_cap": 2.3,
+    "name": "Alphabet Inc.",
     "rank": 5,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "GOOGL"
   },
   {
+    "color": "#c026d3",
     "id": 19,
-    "ticker": "AMZN",
-    "name": "Amazon.com, Inc.",
-    "sector": "Cloud / Big Tech",
     "industry": "E-Commerce, Cloud, and Digital Infrastructure",
     "market_cap": 2.2,
+    "name": "Amazon.com, Inc.",
     "rank": 6,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "AMZN"
   },
   {
+    "color": "#c026d3",
     "id": 20,
-    "ticker": "META",
-    "name": "Meta Platforms, Inc.",
-    "sector": "Cloud / Big Tech",
     "industry": "Social Platforms, Advertising, and AI Infrastructure",
     "market_cap": 1.7,
+    "name": "Meta Platforms, Inc.",
     "rank": 9,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "META"
   },
   {
+    "color": "#c026d3",
     "id": 21,
-    "ticker": "AAPL",
-    "name": "Apple Inc.",
-    "sector": "Cloud / Big Tech",
     "industry": "Consumer Devices, Services, and Silicon",
     "market_cap": 3.1,
+    "name": "Apple Inc.",
     "rank": 3,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "AAPL"
   },
   {
+    "color": "#c026d3",
     "id": 22,
-    "ticker": "ORCL",
-    "name": "Oracle Corporation",
-    "sector": "Cloud / Big Tech",
     "industry": "Enterprise Software and Cloud Infrastructure",
     "market_cap": 0.6,
+    "name": "Oracle Corporation",
     "rank": 13,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "ORCL"
   },
   {
+    "color": "#c026d3",
     "id": 23,
-    "ticker": "CRM",
-    "name": "Salesforce, Inc.",
-    "sector": "Cloud / Big Tech",
     "industry": "Enterprise SaaS and Customer Relationship Management",
     "market_cap": 0.25,
+    "name": "Salesforce, Inc.",
     "rank": 22,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "CRM"
   },
   {
+    "color": "#c026d3",
     "id": 24,
-    "ticker": "SNOW",
-    "name": "Snowflake Inc.",
-    "sector": "Cloud / Big Tech",
     "industry": "Cloud Data Platforms",
     "market_cap": 0.06,
+    "name": "Snowflake Inc.",
     "rank": 56,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "SNOW"
   },
   {
+    "color": "#c026d3",
     "id": 25,
-    "ticker": "NOW",
-    "name": "ServiceNow, Inc.",
-    "sector": "Cloud / Big Tech",
     "industry": "Enterprise Workflow Software",
     "market_cap": 0.2,
+    "name": "ServiceNow, Inc.",
     "rank": 28,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "NOW"
   },
   {
+    "color": "#c026d3",
     "id": 26,
-    "ticker": "PANW",
-    "name": "Palo Alto Networks, Inc.",
-    "sector": "Cloud / Big Tech",
     "industry": "Cloud and Network Security",
     "market_cap": 0.13,
+    "name": "Palo Alto Networks, Inc.",
     "rank": 40,
-    "color": "#c026d3"
+    "sector": "Cloud / Big Tech",
+    "ticker": "PANW"
   },
   {
+    "color": "#ffd700",
     "id": 27,
-    "ticker": "V",
-    "name": "Visa Inc.",
-    "sector": "Payments / Financial Infrastructure",
     "industry": "Card Payment Networks",
     "market_cap": 0.75,
+    "name": "Visa Inc.",
     "rank": 11,
-    "color": "#ffd700"
+    "sector": "Payments / Financial Infrastructure",
+    "ticker": "V"
   },
   {
+    "color": "#ffd700",
     "id": 28,
-    "ticker": "MA",
-    "name": "Mastercard Incorporated",
-    "sector": "Payments / Financial Infrastructure",
     "industry": "Card Payment Networks",
     "market_cap": 0.55,
+    "name": "Mastercard Incorporated",
     "rank": 15,
-    "color": "#ffd700"
+    "sector": "Payments / Financial Infrastructure",
+    "ticker": "MA"
   },
   {
+    "color": "#ffd700",
     "id": 29,
-    "ticker": "PYPL",
-    "name": "PayPal Holdings, Inc.",
-    "sector": "Payments / Financial Infrastructure",
     "industry": "Digital Payments",
     "market_cap": 0.07,
+    "name": "PayPal Holdings, Inc.",
     "rank": 54,
-    "color": "#ffd700"
+    "sector": "Payments / Financial Infrastructure",
+    "ticker": "PYPL"
   },
   {
+    "color": "#ffd700",
     "id": 30,
-    "ticker": "AXP",
-    "name": "American Express Company",
-    "sector": "Payments / Financial Infrastructure",
     "industry": "Card Issuing and Payments Network",
     "market_cap": 0.25,
+    "name": "American Express Company",
     "rank": 23,
-    "color": "#ffd700"
+    "sector": "Payments / Financial Infrastructure",
+    "ticker": "AXP"
   },
   {
+    "color": "#ffd700",
     "id": 31,
-    "ticker": "JPM",
-    "name": "JPMorgan Chase & Co.",
-    "sector": "Payments / Financial Infrastructure",
     "industry": "Money Center Banking and Payments",
     "market_cap": 0.8,
+    "name": "JPMorgan Chase & Co.",
     "rank": 10,
-    "color": "#ffd700"
+    "sector": "Payments / Financial Infrastructure",
+    "ticker": "JPM"
   },
   {
+    "color": "#ffd700",
     "id": 32,
-    "ticker": "BAC",
-    "name": "Bank of America Corporation",
-    "sector": "Payments / Financial Infrastructure",
     "industry": "Consumer and Commercial Banking",
     "market_cap": 0.35,
+    "name": "Bank of America Corporation",
     "rank": 16,
-    "color": "#ffd700"
+    "sector": "Payments / Financial Infrastructure",
+    "ticker": "BAC"
   },
   {
+    "color": "#ffd700",
     "id": 33,
-    "ticker": "BRK-B",
-    "name": "Berkshire Hathaway Inc.",
-    "sector": "Payments / Financial Infrastructure",
     "industry": "Diversified Holding Company and Insurance",
     "market_cap": 1.0,
+    "name": "Berkshire Hathaway Inc.",
     "rank": 12,
-    "color": "#ffd700"
+    "sector": "Payments / Financial Infrastructure",
+    "ticker": "BRK-B"
   },
   {
+    "color": "#ffd700",
     "id": 34,
-    "ticker": "COF",
-    "name": "Capital One Financial Corporation",
-    "sector": "Payments / Financial Infrastructure",
     "industry": "Consumer Credit and Card Issuing",
     "market_cap": 0.08,
+    "name": "Capital One Financial Corporation",
     "rank": 52,
-    "color": "#ffd700"
+    "sector": "Payments / Financial Infrastructure",
+    "ticker": "COF"
   },
   {
+    "color": "#ff6b00",
     "id": 35,
-    "ticker": "LLY",
-    "name": "Eli Lilly and Company",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Pharmaceuticals",
     "market_cap": 0.75,
+    "name": "Eli Lilly and Company",
     "rank": 14,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "LLY"
   },
   {
+    "color": "#ff6b00",
     "id": 36,
-    "ticker": "UNH",
-    "name": "UnitedHealth Group Incorporated",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Managed Care and PBM",
     "market_cap": 0.4,
+    "name": "UnitedHealth Group Incorporated",
     "rank": 24,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "UNH"
   },
   {
+    "color": "#ff6b00",
     "id": 37,
-    "ticker": "CVS",
-    "name": "CVS Health Corporation",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Retail Pharmacy, PBM, and Managed Care",
     "market_cap": 0.08,
+    "name": "CVS Health Corporation",
     "rank": 53,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "CVS"
   },
   {
+    "color": "#ff6b00",
     "id": 38,
-    "ticker": "CI",
-    "name": "The Cigna Group",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Managed Care and PBM",
     "market_cap": 0.09,
+    "name": "The Cigna Group",
     "rank": 50,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "CI"
   },
   {
+    "color": "#ff6b00",
     "id": 39,
-    "ticker": "JNJ",
-    "name": "Johnson & Johnson",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Pharmaceuticals and MedTech",
     "market_cap": 0.4,
+    "name": "Johnson & Johnson",
     "rank": 25,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "JNJ"
   },
   {
+    "color": "#ff6b00",
     "id": 40,
-    "ticker": "MRK",
-    "name": "Merck & Co., Inc.",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Pharmaceuticals",
     "market_cap": 0.25,
+    "name": "Merck & Co., Inc.",
     "rank": 21,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "MRK"
   },
   {
+    "color": "#ff6b00",
     "id": 41,
-    "ticker": "ABBV",
-    "name": "AbbVie Inc.",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Pharmaceuticals",
     "market_cap": 0.35,
+    "name": "AbbVie Inc.",
     "rank": 19,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "ABBV"
   },
   {
+    "color": "#ff6b00",
     "id": 42,
-    "ticker": "PFE",
-    "name": "Pfizer Inc.",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Pharmaceuticals",
     "market_cap": 0.14,
+    "name": "Pfizer Inc.",
     "rank": 38,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "PFE"
   },
   {
+    "color": "#ff6b00",
     "id": 43,
-    "ticker": "ISRG",
-    "name": "Intuitive Surgical, Inc.",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Robotic Surgery Systems",
     "market_cap": 0.18,
+    "name": "Intuitive Surgical, Inc.",
     "rank": 30,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "ISRG"
   },
   {
+    "color": "#ff6b00",
     "id": 44,
-    "ticker": "TMO",
-    "name": "Thermo Fisher Scientific Inc.",
-    "sector": "Healthcare / Pharma / PBM",
     "industry": "Life Sciences Tools and Diagnostics",
     "market_cap": 0.22,
+    "name": "Thermo Fisher Scientific Inc.",
     "rank": 26,
-    "color": "#ff6b00"
+    "sector": "Healthcare / Pharma / PBM",
+    "ticker": "TMO"
   },
   {
+    "color": "#00b4d8",
     "id": 45,
-    "ticker": "XOM",
-    "name": "Exxon Mobil Corporation",
-    "sector": "Energy / Industrials",
     "industry": "Integrated Oil and Gas",
     "market_cap": 0.5,
+    "name": "Exxon Mobil Corporation",
     "rank": 20,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "XOM"
   },
   {
+    "color": "#00b4d8",
     "id": 46,
-    "ticker": "CVX",
-    "name": "Chevron Corporation",
-    "sector": "Energy / Industrials",
     "industry": "Integrated Oil and Gas",
     "market_cap": 0.3,
+    "name": "Chevron Corporation",
     "rank": 29,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "CVX"
   },
   {
+    "color": "#00b4d8",
     "id": 47,
-    "ticker": "COP",
-    "name": "ConocoPhillips",
-    "sector": "Energy / Industrials",
     "industry": "Oil and Gas Exploration and Production",
     "market_cap": 0.15,
+    "name": "ConocoPhillips",
     "rank": 35,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "COP"
   },
   {
+    "color": "#00b4d8",
     "id": 48,
-    "ticker": "SLB",
-    "name": "Schlumberger Limited",
-    "sector": "Energy / Industrials",
     "industry": "Oilfield Services and Technology",
     "market_cap": 0.07,
+    "name": "Schlumberger Limited",
     "rank": 55,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "SLB"
   },
   {
+    "color": "#00b4d8",
     "id": 49,
-    "ticker": "CAT",
-    "name": "Caterpillar Inc.",
-    "sector": "Energy / Industrials",
     "industry": "Heavy Machinery and Industrial Equipment",
     "market_cap": 0.18,
+    "name": "Caterpillar Inc.",
     "rank": 33,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "CAT"
   },
   {
+    "color": "#00b4d8",
     "id": 50,
-    "ticker": "DE",
-    "name": "Deere & Company",
-    "sector": "Energy / Industrials",
     "industry": "Agricultural and Construction Machinery",
     "market_cap": 0.13,
+    "name": "Deere & Company",
     "rank": 42,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "DE"
   },
   {
+    "color": "#00b4d8",
     "id": 51,
-    "ticker": "GE",
-    "name": "GE Aerospace",
-    "sector": "Energy / Industrials",
     "industry": "Commercial and Defense Aerospace",
     "market_cap": 0.25,
+    "name": "GE Aerospace",
     "rank": 36,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "GE"
   },
   {
+    "color": "#00b4d8",
     "id": 52,
-    "ticker": "HON",
-    "name": "Honeywell International Inc.",
-    "sector": "Energy / Industrials",
     "industry": "Industrial Automation and Aerospace Systems",
     "market_cap": 0.15,
+    "name": "Honeywell International Inc.",
     "rank": 43,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "HON"
   },
   {
+    "color": "#00b4d8",
     "id": 53,
-    "ticker": "RTX",
-    "name": "RTX Corporation",
-    "sector": "Energy / Industrials",
     "industry": "Aerospace and Defense Systems",
     "market_cap": 0.18,
+    "name": "RTX Corporation",
     "rank": 44,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "RTX"
   },
   {
+    "color": "#00b4d8",
     "id": 54,
-    "ticker": "BA",
-    "name": "The Boeing Company",
-    "sector": "Energy / Industrials",
     "industry": "Commercial Aerospace and Defense",
     "market_cap": 0.15,
+    "name": "The Boeing Company",
     "rank": 45,
-    "color": "#00b4d8"
+    "sector": "Energy / Industrials",
+    "ticker": "BA"
   },
   {
+    "color": "#00ff9f",
     "id": 55,
-    "ticker": "TSLA",
-    "name": "Tesla, Inc.",
-    "sector": "Consumer Mega-Caps",
     "industry": "Electric Vehicles and Energy Storage",
     "market_cap": 1.0,
+    "name": "Tesla, Inc.",
     "rank": 46,
-    "color": "#00ff9f"
+    "sector": "Consumer Mega-Caps",
+    "ticker": "TSLA"
   },
   {
+    "color": "#00ff9f",
     "id": 56,
-    "ticker": "WMT",
-    "name": "Walmart Inc.",
-    "sector": "Consumer Mega-Caps",
     "industry": "Mass-Market Retail",
     "market_cap": 0.8,
+    "name": "Walmart Inc.",
     "rank": 47,
-    "color": "#00ff9f"
+    "sector": "Consumer Mega-Caps",
+    "ticker": "WMT"
   },
   {
+    "color": "#00ff9f",
     "id": 57,
-    "ticker": "COST",
-    "name": "Costco Wholesale Corporation",
-    "sector": "Consumer Mega-Caps",
     "industry": "Warehouse Club Retail",
     "market_cap": 0.45,
+    "name": "Costco Wholesale Corporation",
     "rank": 57,
-    "color": "#00ff9f"
+    "sector": "Consumer Mega-Caps",
+    "ticker": "COST"
   },
   {
+    "color": "#00ff9f",
     "id": 58,
-    "ticker": "HD",
-    "name": "The Home Depot, Inc.",
-    "sector": "Consumer Mega-Caps",
     "industry": "Home Improvement Retail",
     "market_cap": 0.38,
+    "name": "The Home Depot, Inc.",
     "rank": 58,
-    "color": "#00ff9f"
+    "sector": "Consumer Mega-Caps",
+    "ticker": "HD"
   },
   {
+    "color": "#00ff9f",
     "id": 59,
-    "ticker": "MCD",
-    "name": "McDonald's Corporation",
-    "sector": "Consumer Mega-Caps",
     "industry": "Quick-Service Restaurants",
     "market_cap": 0.22,
+    "name": "McDonald's Corporation",
     "rank": 59,
-    "color": "#00ff9f"
+    "sector": "Consumer Mega-Caps",
+    "ticker": "MCD"
   },
   {
+    "color": "#00ff9f",
     "id": 60,
-    "ticker": "KO",
-    "name": "The Coca-Cola Company",
-    "sector": "Consumer Mega-Caps",
     "industry": "Non-Alcoholic Beverages",
     "market_cap": 0.3,
+    "name": "The Coca-Cola Company",
     "rank": 4,
-    "color": "#00ff9f"
+    "sector": "Consumer Mega-Caps",
+    "ticker": "KO"
+  },
+  {
+    "cik": "0001571996",
+    "color": "#38bdf8",
+    "id": 61,
+    "industry": "Data Center Systems and Enterprise Infrastructure",
+    "name": "Dell Technologies Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "ai_infrastructure_expansion",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001571996.json",
+    "sector": "AI Infrastructure / Data Center Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001571996.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "DELL"
+  },
+  {
+    "cik": "0001645590",
+    "color": "#38bdf8",
+    "id": 62,
+    "industry": "Enterprise Servers and Networking",
+    "name": "Hewlett Packard Enterprise Co",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "ai_infrastructure_expansion",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001645590.json",
+    "sector": "AI Infrastructure / Data Center Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001645590.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "HPE"
+  },
+  {
+    "cik": "0001375365",
+    "color": "#38bdf8",
+    "id": 63,
+    "industry": "AI Server Systems",
+    "name": "Super Micro Computer, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "ai_infrastructure_expansion",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001375365.json",
+    "sector": "AI Infrastructure / Data Center Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001375365.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "SMCI"
+  },
+  {
+    "cik": "0001551182",
+    "color": "#38bdf8",
+    "id": 64,
+    "industry": "Electrical Power Management",
+    "name": "Eaton Corp plc",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "ai_infrastructure_expansion",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001551182.json",
+    "sector": "AI Infrastructure / Data Center Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001551182.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "ETN"
+  },
+  {
+    "cik": "0001466258",
+    "color": "#38bdf8",
+    "id": 65,
+    "industry": "HVAC and Thermal Management",
+    "name": "Trane Technologies plc",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "ai_infrastructure_expansion",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001466258.json",
+    "sector": "AI Infrastructure / Data Center Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001466258.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "TT"
+  },
+  {
+    "cik": "0000820313",
+    "color": "#38bdf8",
+    "id": 66,
+    "industry": "Electronic Interconnects",
+    "name": "AMPHENOL CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "ai_infrastructure_expansion",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000820313.json",
+    "sector": "AI Infrastructure / Data Center Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000820313.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "APH"
+  },
+  {
+    "cik": "0000024741",
+    "color": "#38bdf8",
+    "id": 67,
+    "industry": "Optical and Specialty Materials",
+    "name": "CORNING INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "ai_infrastructure_expansion",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000024741.json",
+    "sector": "AI Infrastructure / Data Center Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000024741.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "GLW"
+  },
+  {
+    "cik": "0000833444",
+    "color": "#38bdf8",
+    "id": 68,
+    "industry": "Building Systems and Cooling Controls",
+    "name": "Johnson Controls International plc",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "ai_infrastructure_expansion",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000833444.json",
+    "sector": "AI Infrastructure / Data Center Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000833444.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "JCI"
+  },
+  {
+    "cik": "0001097864",
+    "color": "#34d399",
+    "id": 69,
+    "industry": "Power and Sensor Semiconductors",
+    "name": "ON SEMICONDUCTOR CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001097864.json",
+    "sector": "Semiconductor Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001097864.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "ON"
+  },
+  {
+    "cik": "0000006281",
+    "color": "#34d399",
+    "id": 70,
+    "industry": "Analog and Mixed-Signal Semiconductors",
+    "name": "ANALOG DEVICES INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000006281.json",
+    "sector": "Semiconductor Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000006281.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "ADI"
+  },
+  {
+    "cik": "0000827054",
+    "color": "#34d399",
+    "id": 71,
+    "industry": "Embedded Control Semiconductors",
+    "name": "MICROCHIP TECHNOLOGY INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000827054.json",
+    "sector": "Semiconductor Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000827054.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "MCHP"
+  },
+  {
+    "cik": "0000097476",
+    "color": "#34d399",
+    "id": 72,
+    "industry": "Analog and Embedded Semiconductors",
+    "name": "TEXAS INSTRUMENTS INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000097476.json",
+    "sector": "Semiconductor Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000097476.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "TXN"
+  },
+  {
+    "cik": "0000097210",
+    "color": "#34d399",
+    "id": 73,
+    "industry": "Semiconductor Test Equipment",
+    "name": "TERADYNE, INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000097210.json",
+    "sector": "Semiconductor Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000097210.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "TER"
+  },
+  {
+    "cik": "0001413447",
+    "color": "#34d399",
+    "id": 74,
+    "industry": "Automotive and Edge Semiconductors",
+    "name": "NXP Semiconductors N.V.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001413447.json",
+    "sector": "Semiconductor Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001413447.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "NXPI"
+  },
+  {
+    "cik": "0000004127",
+    "color": "#34d399",
+    "id": 75,
+    "industry": "RF and Connectivity Semiconductors",
+    "name": "SKYWORKS SOLUTIONS, INC.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000004127.json",
+    "sector": "Semiconductor Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000004127.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "SWKS"
+  },
+  {
+    "cik": "0001604778",
+    "color": "#34d399",
+    "id": 76,
+    "industry": "RF Semiconductors",
+    "name": "Qorvo, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001604778.json",
+    "sector": "Semiconductor Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001604778.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "QRVO"
+  },
+  {
+    "cik": "0001601046",
+    "color": "#34d399",
+    "id": 77,
+    "industry": "Electronic Test and Measurement",
+    "name": "Keysight Technologies, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "semiconductor_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001601046.json",
+    "sector": "Semiconductor Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001601046.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "KEYS"
+  },
+  {
+    "cik": "0000936468",
+    "color": "#f59e0b",
+    "id": 78,
+    "industry": "Defense Prime Contractor",
+    "name": "LOCKHEED MARTIN CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "aerospace_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000936468.json",
+    "sector": "Defense / Aerospace Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000936468.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "LMT"
+  },
+  {
+    "cik": "0001133421",
+    "color": "#f59e0b",
+    "id": 79,
+    "industry": "Defense Prime Contractor",
+    "name": "NORTHROP GRUMMAN CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "aerospace_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001133421.json",
+    "sector": "Defense / Aerospace Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001133421.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "NOC"
+  },
+  {
+    "cik": "0000040533",
+    "color": "#f59e0b",
+    "id": 80,
+    "industry": "Defense Platforms and Mission Systems",
+    "name": "GENERAL DYNAMICS CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "aerospace_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000040533.json",
+    "sector": "Defense / Aerospace Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000040533.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "GD"
+  },
+  {
+    "cik": "0000217346",
+    "color": "#f59e0b",
+    "id": 81,
+    "industry": "Aerospace and Defense Platforms",
+    "name": "TEXTRON INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "aerospace_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000217346.json",
+    "sector": "Defense / Aerospace Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000217346.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "TXT"
+  },
+  {
+    "cik": "0001260221",
+    "color": "#f59e0b",
+    "id": 82,
+    "industry": "Aerospace Components",
+    "name": "TransDigm Group INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "aerospace_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001260221.json",
+    "sector": "Defense / Aerospace Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001260221.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "TDG"
+  },
+  {
+    "cik": "0000004281",
+    "color": "#f59e0b",
+    "id": 83,
+    "industry": "Aerospace Components",
+    "name": "Howmet Aerospace Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "aerospace_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000004281.json",
+    "sector": "Defense / Aerospace Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000004281.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "HWM"
+  },
+  {
+    "cik": "0001501585",
+    "color": "#f59e0b",
+    "id": 84,
+    "industry": "Defense Shipbuilding",
+    "name": "HUNTINGTON INGALLS INDUSTRIES, INC.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "aerospace_supplier_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001501585.json",
+    "sector": "Defense / Aerospace Suppliers",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001501585.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "HII"
+  },
+  {
+    "cik": "0001571949",
+    "color": "#c084fc",
+    "id": 85,
+    "industry": "Exchange and Data Infrastructure",
+    "name": "Intercontinental Exchange, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001571949.json",
+    "sector": "Financial Market Infrastructure",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001571949.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "ICE"
+  },
+  {
+    "cik": "0001156375",
+    "color": "#c084fc",
+    "id": 86,
+    "industry": "Derivatives Exchange Infrastructure",
+    "name": "CME GROUP INC.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001156375.json",
+    "sector": "Financial Market Infrastructure",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001156375.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "CME"
+  },
+  {
+    "cik": "0001120193",
+    "color": "#c084fc",
+    "id": 87,
+    "industry": "Exchange and Market Technology",
+    "name": "NASDAQ, INC.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001120193.json",
+    "sector": "Financial Market Infrastructure",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001120193.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "NDAQ"
+  },
+  {
+    "cik": "0000064040",
+    "color": "#c084fc",
+    "id": 88,
+    "industry": "Market Data, Index, and Ratings Infrastructure",
+    "name": "S&P Global Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000064040.json",
+    "sector": "Financial Market Infrastructure",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000064040.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "SPGI"
+  },
+  {
+    "cik": "0001059556",
+    "color": "#c084fc",
+    "id": 89,
+    "industry": "Credit Ratings and Analytics",
+    "name": "MOODYS CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001059556.json",
+    "sector": "Financial Market Infrastructure",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001059556.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "MCO"
+  },
+  {
+    "cik": "0001364742",
+    "color": "#c084fc",
+    "id": 90,
+    "industry": "Asset Management and Market Infrastructure",
+    "name": "BlackRock, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001364742.json",
+    "sector": "Financial Market Infrastructure",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001364742.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "BLK"
+  },
+  {
+    "cik": "0000886982",
+    "color": "#c084fc",
+    "id": 91,
+    "industry": "Investment Banking and Markets",
+    "name": "GOLDMAN SACHS GROUP INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000886982.json",
+    "sector": "Financial Market Infrastructure",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000886982.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "GS"
+  },
+  {
+    "cik": "0000895421",
+    "color": "#c084fc",
+    "id": 92,
+    "industry": "Investment Banking and Wealth Management",
+    "name": "MORGAN STANLEY",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000895421.json",
+    "sector": "Financial Market Infrastructure",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000895421.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "MS"
+  },
+  {
+    "cik": "0001374310",
+    "color": "#c084fc",
+    "id": 93,
+    "industry": "Options Exchange and Market Infrastructure",
+    "name": "Cboe Global Markets, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "financial_infrastructure_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001374310.json",
+    "sector": "Financial Market Infrastructure",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001374310.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "CBOE"
+  },
+  {
+    "cik": "0001090727",
+    "color": "#fb7185",
+    "id": 94,
+    "industry": "Parcel Logistics",
+    "name": "UNITED PARCEL SERVICE INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001090727.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001090727.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "UPS"
+  },
+  {
+    "cik": "0001048911",
+    "color": "#fb7185",
+    "id": 95,
+    "industry": "Parcel and Freight Logistics",
+    "name": "FEDEX CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001048911.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001048911.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "FDX"
+  },
+  {
+    "cik": "0000100885",
+    "color": "#fb7185",
+    "id": 96,
+    "industry": "Rail Freight",
+    "name": "UNION PACIFIC CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000100885.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000100885.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "UNP"
+  },
+  {
+    "cik": "0000277948",
+    "color": "#fb7185",
+    "id": 97,
+    "industry": "Rail Freight",
+    "name": "CSX CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000277948.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000277948.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "CSX"
+  },
+  {
+    "cik": "0000878927",
+    "color": "#fb7185",
+    "id": 98,
+    "industry": "Less-than-Truckload Freight",
+    "name": "OLD DOMINION FREIGHT LINE, INC.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000878927.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000878927.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "ODFL"
+  },
+  {
+    "cik": "0001067701",
+    "color": "#fb7185",
+    "id": 99,
+    "industry": "Industrial Equipment Rental and Distribution",
+    "name": "UNITED RENTALS, INC.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001067701.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001067701.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "URI"
+  },
+  {
+    "cik": "0000060667",
+    "color": "#fb7185",
+    "id": 100,
+    "industry": "Home Improvement Retail",
+    "name": "LOWES COMPANIES INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000060667.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000060667.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "LOW"
+  },
+  {
+    "cik": "0000027419",
+    "color": "#fb7185",
+    "id": 101,
+    "industry": "General Merchandise Retail",
+    "name": "TARGET CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000027419.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000027419.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "TGT"
+  },
+  {
+    "cik": "0000829224",
+    "color": "#fb7185",
+    "id": 102,
+    "industry": "Restaurants and Consumer Retail",
+    "name": "STARBUCKS CORP",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000829224.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000829224.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "SBUX"
+  },
+  {
+    "cik": "0001058090",
+    "color": "#fb7185",
+    "id": 103,
+    "industry": "Restaurants and Consumer Food Service",
+    "name": "CHIPOTLE MEXICAN GRILL INC",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001058090.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001058090.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "CMG"
+  },
+  {
+    "cik": "0001792789",
+    "color": "#fb7185",
+    "id": 104,
+    "industry": "Local Commerce and Delivery Platform",
+    "name": "DoorDash, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001792789.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001792789.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "DASH"
+  },
+  {
+    "cik": "0001543151",
+    "color": "#fb7185",
+    "id": 105,
+    "industry": "Mobility, Delivery, and Logistics Platform",
+    "name": "Uber Technologies, Inc",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "retail_logistics_distribution_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001543151.json",
+    "sector": "Retail Logistics / Distribution",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001543151.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "UBER"
+  },
+  {
+    "cik": "0001262039",
+    "color": "#60a5fa",
+    "id": 106,
+    "industry": "Network Security",
+    "name": "Fortinet, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "cloud_security_workflow_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001262039.json",
+    "sector": "Enterprise Software / Cloud Security",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001262039.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "FTNT"
+  },
+  {
+    "cik": "0001535527",
+    "color": "#60a5fa",
+    "id": 107,
+    "industry": "Cloud Security",
+    "name": "CrowdStrike Holdings, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "cloud_security_workflow_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001535527.json",
+    "sector": "Enterprise Software / Cloud Security",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001535527.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "CRWD"
+  },
+  {
+    "cik": "0001561550",
+    "color": "#60a5fa",
+    "id": 108,
+    "industry": "Cloud Observability and Monitoring",
+    "name": "Datadog, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "cloud_security_workflow_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001561550.json",
+    "sector": "Enterprise Software / Cloud Security",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001561550.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "DDOG"
+  },
+  {
+    "cik": "0001441816",
+    "color": "#60a5fa",
+    "id": 109,
+    "industry": "Cloud Database Software",
+    "name": "MongoDB, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "cloud_security_workflow_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001441816.json",
+    "sector": "Enterprise Software / Cloud Security",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001441816.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "MDB"
+  },
+  {
+    "cik": "0001477333",
+    "color": "#60a5fa",
+    "id": 110,
+    "industry": "Edge Cloud and Security",
+    "name": "Cloudflare, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "cloud_security_workflow_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001477333.json",
+    "sector": "Enterprise Software / Cloud Security",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001477333.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "NET"
+  },
+  {
+    "cik": "0001713683",
+    "color": "#60a5fa",
+    "id": 111,
+    "industry": "Cloud Security",
+    "name": "Zscaler, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "cloud_security_workflow_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001713683.json",
+    "sector": "Enterprise Software / Cloud Security",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001713683.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "ZS"
+  },
+  {
+    "cik": "0001650372",
+    "color": "#60a5fa",
+    "id": 112,
+    "industry": "Collaboration and Developer Workflow Software",
+    "name": "Atlassian Corp",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "cloud_security_workflow_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0001650372.json",
+    "sector": "Enterprise Software / Cloud Security",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001650372.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "TEAM"
+  },
+  {
+    "cik": "0000769397",
+    "color": "#60a5fa",
+    "id": 113,
+    "industry": "Design and Engineering Software",
+    "name": "Autodesk, Inc.",
+    "official_listing_source_url": "https://www.sec.gov/files/company_tickers_exchange.json",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "batch_id": "cloud_security_workflow_batch",
+      "relationship_authority": false,
+      "source_identity_approved": true
+    },
+    "sec_submission_source_url": "https://data.sec.gov/submissions/CIK0000769397.json",
+    "sector": "Enterprise Software / Cloud Security",
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000769397.json",
+      "https://www.sec.gov/files/company_tickers_exchange.json"
+    ],
+    "ticker": "ADSK"
   }
 ]

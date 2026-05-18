@@ -176,6 +176,23 @@
                     <option value="nexus">Company Nexus View</option>
                 </select>
 
+                <select id="large-graph-mode" aria-label="Large Graph Navigation Mode" title="Use progressive disclosure modes for large graph navigation." onchange="setLargeGraphMode(this.value)" class="large-graph-navigation-select bg-black/40 border border-sky-300/24 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="overview">Large Graph: Overview</option>
+                </select>
+
+                <select id="large-graph-ecosystem" aria-label="Large Graph Ecosystem Focus" title="Choose an ecosystem for large-graph ecosystem focus mode." onchange="setLargeGraphEcosystemFocus(this.value)" class="large-graph-navigation-select bg-black/40 border border-sky-300/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="">Auto Ecosystem</option>
+                </select>
+
+                <select id="large-graph-corridor" aria-label="Large Graph Corridor Focus" title="Choose a corridor for large-graph corridor focus mode." onchange="setLargeGraphCorridorFocus(this.value)" class="large-graph-navigation-select bg-black/40 border border-sky-300/20 text-white text-sm rounded-3xl px-4 py-3 outline-none">
+                    <option value="">Auto Corridor</option>
+                </select>
+
+                <button id="large-graph-neighborhood-depth" type="button" onclick="cycleLargeGraphNeighborhoodDepth()" aria-pressed="false" title="Cycle local neighborhood depth for large-graph isolation." class="large-graph-navigation-action focus-button px-4 py-3 text-xs rounded-3xl border border-sky-300/22 flex items-center gap-x-2">
+                    <i class="fa-solid fa-location-crosshairs"></i>
+                    <span>Local Depth 1</span>
+                </button>
+
                 <div class="stock-control-break"></div>
                 <div class="control-section-title">Graph View Controls</div>
                 <div class="control-help basis-full">Use these controls to change how the same stock graph is viewed. They do not alter the underlying dataset.</div>
@@ -422,7 +439,7 @@
                     <div class="flex flex-wrap gap-2 xl:justify-end">
                         <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">READ ONLY</span>
                         <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">LOCAL TERMINAL COMMANDS</span>
-                        <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NOT GRAPH DATA</span>
+                        <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">CANDIDATES NOT GRAPH DATA</span>
                         <span class="source-workbench-pill rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">EVIDENCE LABELS</span>
                         <span class="source-workbench-warning rounded-full px-3 py-1.5 text-[10px] font-mono tracking-[1.1px]">NO BROWSER SCRIPT RUNNER</span>
                     </div>
@@ -544,6 +561,8 @@
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_overlap_report.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/review_pipeline_summary.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/promotion_planner_report.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/production_expansion_approvals.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/production_expansion_report.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/source_coverage_refresh_report.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/source_registry/*.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/openalex_*.json</div>
@@ -669,6 +688,19 @@
 
                         <div class="source-command rounded-2xl p-3">
                             <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3F.</span> Reviewed Production Expansion</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-production-expansion', this)" aria-label="Copy reviewed production expansion command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-production-expansion">python scripts/production_company_expansion.py --dry-run
+python scripts/production_company_expansion.py --write
+python scripts/validate_data.py</code></pre>
+                            <p class="mt-2 text-xs text-white/54">
+                                Uses an explicit reviewer-approved production expansion manifest. It promotes identity-backed companies and only manifest-listed source-backed edges; it does not generate relationships.
+                            </p>
+                        </div>
+
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
                                 <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">4.</span> Manual Promotion</span>
                                 <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-4', this)" aria-label="Copy SEC candidate manual promotion command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
                             </div>
@@ -745,6 +777,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                             <li class="flex gap-2"><i class="fa-solid fa-database text-fuchsia-200/70 mt-0.5"></i><span>Candidate files are review-only and not production graph data.</span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-list-check text-cyan-200/70 mt-0.5"></i><span>Broader coverage comes from approved mappings and reviewed jobs.</span></li>
                             <li class="flex gap-2"><i class="fa-solid fa-shield-halved text-emerald-200/70 mt-0.5"></i><span>Production promotion stays manual, previewed, policy-gated, and validated.</span></li>
+                            <li class="flex gap-2"><i class="fa-solid fa-building-shield text-sky-200/70 mt-0.5"></i><span>Reviewed production expansion is allowed only from an explicit approval manifest.</span></li>
                         </ul>
                     </div>
 
@@ -844,6 +877,23 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                                     <tbody id="source-promotion-planner-rows"></tbody>
                                 </table>
                             </div>
+                        </div>
+                        <div class="source-production-expansion-section mt-4 pt-4">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="source-workbench-label mb-2">Production Expansion Console</div>
+                                    <p class="text-sm text-white/56">
+                                        Reviewer-approved production expansion report from <span class="font-mono text-cyan-50/78">data/candidates/production_expansion_report.json</span>. It summarizes completed writes, source-backed company identity, and graph-scaling readiness.
+                                    </p>
+                                </div>
+                                <div id="source-production-expansion-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING EXPANSION</div>
+                            </div>
+                            <div id="source-production-expansion-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                                Production expansion report is not present yet. Use the reviewed approval manifest and run the explicit production expansion command locally.
+                            </div>
+                            <div id="source-production-expansion-summary" class="hidden source-production-expansion-grid mb-3"></div>
+                            <div id="source-production-expansion-batches" class="hidden source-production-expansion-list mb-3"></div>
+                            <div id="source-production-expansion-connections" class="hidden source-production-expansion-list mb-3"></div>
                         </div>
                         <div class="source-triage-section mt-4 pt-4">
                             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
@@ -1142,6 +1192,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/stock/evidencePolicy.js?v=d144-tiered-evidence"></script>
     <script src="js/stock/relationships.js?v=d144-tiered-evidence"></script>
     <script src="js/stock/graphScaling.js?v=d146-source-governance"></script>
+    <script src="js/stock/largeGraphNavigation.js?v=d149-large-graph-navigation"></script>
     <script src="js/stock/graphIntelligence.js?v=d146-source-governance"></script>
     <script src="js/core/data.js"></script>
     <script src="js/graph/viewport.js"></script>
@@ -1227,7 +1278,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic relationship intelligence module failed to load');
         }
 
-        if (!window.StockPhotonicStock?.graphScaling || !window.StockPhotonicStock?.graphIntelligence) {
+        if (!window.StockPhotonicStock?.graphScaling || !window.StockPhotonicStock?.largeGraphNavigation || !window.StockPhotonicStock?.graphIntelligence) {
             throw new Error('StockPhotonic graph intelligence module failed to load');
         }
 
@@ -1283,6 +1334,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         const evidencePolicyTools = window.StockPhotonicStock.evidencePolicy;
         const relationshipTools = window.StockPhotonicStock.relationships;
         const stockGraphScaling = window.StockPhotonicStock.graphScaling;
+        const stockLargeGraphNavigation = window.StockPhotonicStock.largeGraphNavigation;
         const stockGraphIntelligence = window.StockPhotonicStock.graphIntelligence;
         const {
             getRelationshipTypeKey,
@@ -1431,6 +1483,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let sourceCoverageLensEnabled = false;
         let activeRelationshipRoute = null;
         let activeGuidedDiscoveryKey = '';
+        let largeGraphMode = 'overview';
+        let largeGraphEcosystemFocus = '';
+        let largeGraphCorridorFocus = '';
+        let largeGraphNeighborhoodDepth = 1;
+        let largeGraphNavigationModel = null;
         let graphStoryMode = '';
         let graphIntelligenceModel = {
             overlay: null,
@@ -1440,6 +1497,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             guidedDiscovery: null,
             evidenceGaps: null,
             defaultDiscovery: null,
+            largeGraphNavigation: null,
             largeGraphScaling: null
         };
         let graphScalingModel = null;
@@ -1576,6 +1634,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             get activeEcosystemOverlayKey() { return activeEcosystemOverlayKey; },
             get graphIntelligenceModel() { return graphIntelligenceModel; },
             get graphScalingModel() { return graphScalingModel; },
+            get largeGraphNavigationModel() { return largeGraphNavigationModel; },
             get sourceCoverageLensEnabled() { return sourceCoverageLensEnabled; },
             get graphStoryMode() { return graphStoryMode; },
             get signalStrengthThreshold() { return signalStrengthThreshold; },
@@ -2104,8 +2163,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 buildIndustryGroupFilter();
                 buildRelationshipTypeFilter();
                 buildSourceHostFilter();
+                buildLargeGraphFocusFilters();
                 updateFocusModeControl();
                 updateRelationshipFilterControls();
+                updateLargeGraphNavigationControls();
                 updateSignalThresholdControl();
                 updatePerspectiveModeControl();
                 updatePortfolioPanel();
@@ -2491,6 +2552,122 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 .join('');
         }
 
+        function buildLargeGraphFocusFilters() {
+            const modeSelect = document.getElementById('large-graph-mode');
+            const ecosystemSelect = document.getElementById('large-graph-ecosystem');
+            const corridorSelect = document.getElementById('large-graph-corridor');
+
+            if (modeSelect) {
+                modeSelect.innerHTML = stockLargeGraphNavigation.getModes()
+                    .map(option => `<option value="${escapeHtml(option.key)}">Large Graph: ${escapeHtml(option.shortLabel || option.label)}</option>`)
+                    .join('');
+                modeSelect.value = getExistingSelectValue('large-graph-mode', largeGraphMode) || 'overview';
+                largeGraphMode = modeSelect.value;
+            }
+
+            if (ecosystemSelect) {
+                ecosystemSelect.innerHTML = '<option value="">Auto Ecosystem</option>' + stockGraphIntelligence.getEcosystemDefinitions()
+                    .map(option => `<option value="${escapeHtml(option.key)}">${escapeHtml(option.label)}</option>`)
+                    .join('');
+                ecosystemSelect.value = getExistingSelectValue('large-graph-ecosystem', largeGraphEcosystemFocus);
+                largeGraphEcosystemFocus = ecosystemSelect.value;
+            }
+
+            if (corridorSelect) {
+                corridorSelect.innerHTML = '<option value="">Auto Corridor</option>' + stockLargeGraphNavigation.getCorridorDefinitions()
+                    .map(option => `<option value="${escapeHtml(option.key)}">${escapeHtml(option.label)}</option>`)
+                    .join('');
+                corridorSelect.value = getExistingSelectValue('large-graph-corridor', largeGraphCorridorFocus);
+                largeGraphCorridorFocus = corridorSelect.value;
+            }
+        }
+
+        function setLargeGraphMode(mode) {
+            stopOrbitForInteraction();
+            largeGraphMode = stockLargeGraphNavigation.getModes().some(option => option.key === mode) ? mode : 'overview';
+            if (largeGraphMode === 'preview_only') {
+                secPreviewEnabled = true;
+                candidateCompanyPreviewEnabled = true;
+                candidatePreviewOnlyFilter = true;
+                candidateCompanyPreviewOnlyFilter = true;
+            } else if (candidatePreviewOnlyFilter && candidateCompanyPreviewOnlyFilter && largeGraphMode !== 'preview_only') {
+                candidatePreviewOnlyFilter = false;
+                candidateCompanyPreviewOnlyFilter = false;
+            }
+            applyLargeGraphNavigationChange({ fit: largeGraphMode !== 'overview' });
+        }
+
+        function setLargeGraphEcosystemFocus(value) {
+            largeGraphEcosystemFocus = String(value || '');
+            if (largeGraphEcosystemFocus && largeGraphMode === 'overview') largeGraphMode = 'ecosystem_focus';
+            applyLargeGraphNavigationChange({ fit: true });
+        }
+
+        function setLargeGraphCorridorFocus(value) {
+            largeGraphCorridorFocus = String(value || '');
+            if (largeGraphCorridorFocus && largeGraphMode === 'overview') largeGraphMode = 'corridor_focus';
+            applyLargeGraphNavigationChange({ fit: true });
+        }
+
+        function cycleLargeGraphNeighborhoodDepth() {
+            largeGraphNeighborhoodDepth = largeGraphNeighborhoodDepth >= 3 ? 1 : largeGraphNeighborhoodDepth + 1;
+            if (largeGraphMode === 'overview') largeGraphMode = 'neighborhood';
+            applyLargeGraphNavigationChange({ fit: true });
+        }
+
+        function applyLargeGraphNavigationChange(options = {}) {
+            updateLargeGraphNavigationControls();
+            updateRelationshipFilterControls();
+            refreshVisibleGraph();
+            updateSearchMatches();
+            renderSearchPanel();
+            const selectionCleared = syncSelectionAfterVisibilityChange();
+            if (!selectionCleared && selectedNode) showNodeDetails(selectedNode);
+            if (options.fit && visibleNodes.length) fitGraph();
+            triggerPulse(440);
+            requestDraw();
+        }
+
+        function updateLargeGraphNavigationControls() {
+            const modeSelect = document.getElementById('large-graph-mode');
+            const ecosystemSelect = document.getElementById('large-graph-ecosystem');
+            const corridorSelect = document.getElementById('large-graph-corridor');
+            const depthButton = document.getElementById('large-graph-neighborhood-depth');
+            const active = isLargeGraphNavigationActive();
+
+            if (modeSelect) {
+                modeSelect.value = getExistingSelectValue('large-graph-mode', largeGraphMode) || 'overview';
+                modeSelect.classList.toggle('is-active', active);
+            }
+            if (ecosystemSelect) {
+                ecosystemSelect.value = getExistingSelectValue('large-graph-ecosystem', largeGraphEcosystemFocus);
+                ecosystemSelect.disabled = !['overview', 'ecosystem_focus'].includes(largeGraphMode);
+                ecosystemSelect.classList.toggle('is-active', largeGraphMode === 'ecosystem_focus');
+            }
+            if (corridorSelect) {
+                corridorSelect.value = getExistingSelectValue('large-graph-corridor', largeGraphCorridorFocus);
+                corridorSelect.disabled = !['overview', 'corridor_focus'].includes(largeGraphMode);
+                corridorSelect.classList.toggle('is-active', largeGraphMode === 'corridor_focus');
+            }
+            if (depthButton) {
+                depthButton.setAttribute('aria-pressed', largeGraphMode === 'neighborhood' ? 'true' : 'false');
+                depthButton.classList.toggle('is-active', largeGraphMode === 'neighborhood');
+                const label = depthButton.querySelector('span');
+                if (label) label.innerText = `Local Depth ${largeGraphNeighborhoodDepth}`;
+                depthButton.title = `Neighborhood isolation depth ${largeGraphNeighborhoodDepth}. Select a company, then cycle depth to expand locally.`;
+            }
+        }
+
+        function getLargeGraphNavigationLabels() {
+            if (!isLargeGraphNavigationActive()) return [];
+            const model = largeGraphNavigationModel;
+            return [model ? stockLargeGraphNavigation.formatNavigationLabel(model) : stockLargeGraphNavigation.getModeLabel(largeGraphMode)];
+        }
+
+        function isLargeGraphNavigationActive() {
+            return largeGraphMode !== 'overview';
+        }
+
         function toggleSourcedOnlyFilter() {
             sourcedOnlyFilter = !sourcedOnlyFilter;
             applyRelationshipFilterChange();
@@ -2548,6 +2725,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             updateRelationshipToggle('stale-review-toggle', staleReviewFilter);
             updateRelationshipToggle('candidate-preview-only-toggle', candidatePreviewOnlyFilter);
             updateCandidateCompanyPreviewControls();
+            updateLargeGraphNavigationControls();
             updateRelationshipToggle('missing-evidence-toggle', missingEvidenceFilter);
             updateRelationshipToggle('portfolio-connected-only-toggle', portfolioConnectedOnlyFilter);
             updateRelationshipToggle('cross-sector-only-toggle', crossSectorOnlyFilter);
@@ -2574,6 +2752,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (candidateCompanyStrategicHubOnlyFilter) labels.push('Candidate hubs');
             if (candidateCompanyEcosystemFocus) labels.push(`${universeExpansionTools.formatKeyLabel(candidateCompanyEcosystemFocus)} preview`);
             if (candidateCompanyCorridorFocus) labels.push(`${universeExpansionTools.formatKeyLabel(candidateCompanyCorridorFocus)} corridor`);
+            labels.push(...getLargeGraphNavigationLabels());
             if (missingEvidenceFilter) labels.push('Missing evidence');
             if (portfolioConnectedOnlyFilter) labels.push('Portfolio links');
             if (crossSectorOnlyFilter) labels.push('Cross-sector');
@@ -2608,6 +2787,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 candidateCompanyStrategicHubOnlyFilter ||
                 candidateCompanyEcosystemFocus ||
                 candidateCompanyCorridorFocus ||
+                isLargeGraphNavigationActive() ||
                 missingEvidenceFilter ||
                 portfolioConnectedOnlyFilter ||
                 crossSectorOnlyFilter
@@ -2634,6 +2814,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 candidateCompanyStrategicHubOnlyFilter,
                 candidateCompanyEcosystemFocus,
                 candidateCompanyCorridorFocus,
+                largeGraphMode,
+                largeGraphEcosystemFocus,
+                largeGraphCorridorFocus,
+                largeGraphNavigationModel,
                 missingEvidenceFilter,
                 portfolioConnectedOnlyFilter,
                 crossSectorOnlyFilter,
@@ -2732,6 +2916,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 candidateCompanyStrategicHubOnlyFilter,
                 candidateCompanyEcosystemFocus,
                 candidateCompanyCorridorFocus,
+                largeGraphMode,
+                largeGraphEcosystemFocus,
+                largeGraphCorridorFocus,
+                largeGraphNavigationModel,
                 missingEvidenceFilter,
                 portfolioConnectedOnlyFilter,
                 crossSectorOnlyFilter,
@@ -2825,6 +3013,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 sourceCoverageLensEnabled,
                 activeRelationshipRoute,
                 activeGuidedDiscoveryKey,
+                largeGraphMode,
+                largeGraphEcosystemFocus,
+                largeGraphCorridorFocus,
+                largeGraphNeighborhoodDepth,
+                largeGraphNavigationModel,
                 graphStoryMode,
                 graphIntelligenceModel,
                 graphScalingModel,
@@ -2879,6 +3072,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             adjacencyById = graphIndex.adjacencyById;
             graphIntelligenceCache = new Map();
             graphScalingModel = null;
+            largeGraphNavigationModel = null;
             activeClusterNodeIds = new Set();
 
             const sectors = [...new Set(companies.map(company => company.sector || 'Other'))].sort();
@@ -4246,6 +4440,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             uiDashboard.renderDefaultDashboard(getDashboardRenderContext({ empty }));
             enhanceDashboardTrustSummary(empty);
             injectRecentSecPromotionsPanel(empty);
+            injectLargeGraphNavigationPanel(empty);
         }
 
         function renderLayoutHelperSection() {
@@ -4477,7 +4672,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function refreshGraphIntelligenceModel(options = {}) {
             if (!graphScalingModel) refreshGraphScalingModel();
-            graphIntelligenceModel = stockGraphIntelligence.buildGraphIntelligenceModel(getGraphIntelligenceContext());
+            graphIntelligenceModel = {
+                ...stockGraphIntelligence.buildGraphIntelligenceModel(getGraphIntelligenceContext()),
+                largeGraphNavigation: largeGraphNavigationModel
+            };
             graphNodeIntelligenceVisualCache = new Map();
             graphLinkIntelligenceVisualCache = new Map();
 
@@ -4905,6 +5103,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 <div class="graph-active-legend-grid">
                     ${renderLegendItem('Guide', guide ? guide.shortLabel : 'Off', guide?.color || '')}
                     ${renderLegendItem('Overlay', overlay ? overlay.shortLabel : 'Off', overlay?.color || '')}
+                    ${renderLegendItem('Navigate', largeGraphNavigationModel?.isActive ? stockLargeGraphNavigation.formatNavigationLabel(largeGraphNavigationModel) : 'Overview', largeGraphNavigationModel?.isActive ? '#a5f3fc' : '')}
                     ${renderLegendItem('Route', route ? `${route.label || 'Route'} (${route.linkKeys?.size || 0})` : 'Off', route ? '#ffffff' : '')}
                     ${renderLegendItem('Sources', sourceCoverageLensEnabled ? 'Lens on' : 'Lens off', sourceCoverageLensEnabled ? '#22d3ee' : '')}
                     ${renderLegendItem('Company', selectedCompany, selectedNode ? '#ffffff' : selectedCandidateCompanyPreviewNode ? '#a3e635' : '')}
@@ -4948,6 +5147,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 candidateCompanyEcosystemFocus,
                 candidateCompanyCorridorFocus,
                 candidateCompanyDensityMode !== 'balanced',
+                isLargeGraphNavigationActive(),
                 missingEvidenceFilter,
                 portfolioConnectedOnlyFilter,
                 crossSectorOnlyFilter,
@@ -5056,7 +5256,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function clearRelationshipRoute() {
             activeRelationshipRoute = null;
             graphStoryMode = selectedNode ? 'overview' : graphStoryMode === 'route' ? '' : graphStoryMode;
-            refreshGraphIntelligenceModel();
+            if (largeGraphMode === 'route_isolation') refreshVisibleGraph();
+            else refreshGraphIntelligenceModel();
             requestDraw();
         }
 
@@ -5079,7 +5280,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (activeRelationshipRoute.ecosystemKey && !activeEcosystemOverlayKey) {
                 activeEcosystemOverlayKey = activeRelationshipRoute.ecosystemKey;
             }
-            refreshGraphIntelligenceModel();
+            if (largeGraphMode === 'route_isolation') refreshVisibleGraph();
+            else refreshGraphIntelligenceModel();
             if (activeRelationshipRoute.nodes?.length > 1) {
                 fitGraphToNodes(activeRelationshipRoute.nodes, true, 150);
             }
@@ -5759,6 +5961,34 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }
         }
 
+        function injectLargeGraphNavigationPanel(container) {
+            if (!container || container.querySelector('[data-large-graph-panel="true"]')) return;
+            const scaling = graphScalingModel || stockGraphScaling.buildScalingModel(getGraphIntelligenceContext());
+            const density = scaling?.density || {};
+            const navigation = largeGraphNavigationModel;
+            const panel = `
+                <div class="sidebar-section" data-large-graph-panel="true">
+                    <div class="sidebar-section-title">Large-Graph Navigation</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="promotion-planner-mini-metric rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">DENSITY</div>
+                            <div class="font-display text-xl text-white">${escapeHtml(density.label || 'Core graph')}</div>
+                        </div>
+                        <div class="promotion-planner-mini-metric rounded-2xl p-3">
+                            <div class="text-[10px] text-white/40 font-mono">NAV MODE</div>
+                            <div class="font-display text-xl text-white">${escapeHtml(navigation?.modeShortLabel || 'Overview')}</div>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <button type="button" onclick="setLargeGraphMode('strategic_hubs')" class="graph-card-action"><i class="fa-solid fa-circle-nodes"></i><span>Hubs</span></button>
+                        <button type="button" onclick="setLargeGraphMode('neighborhood')" class="graph-card-action"><i class="fa-solid fa-location-crosshairs"></i><span>Local</span></button>
+                        <button type="button" onclick="setLargeGraphMode('production_only')" class="graph-card-action"><i class="fa-solid fa-shield-halved"></i><span>Production</span></button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', panel);
+        }
+
         function enhanceDashboardTrustSummary(container) {
             if (!container) return;
             const trustPanels = [...container.querySelectorAll('.trust-panel')];
@@ -5929,6 +6159,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             sourceCoverageLensEnabled = false;
             activeRelationshipRoute = null;
             activeGuidedDiscoveryKey = '';
+            largeGraphMode = 'overview';
+            largeGraphEcosystemFocus = '';
+            largeGraphCorridorFocus = '';
+            largeGraphNeighborhoodDepth = 1;
+            largeGraphNavigationModel = null;
             graphStoryMode = '';
             setOrbMapEnabled(false);
             resetPortfolioState();
@@ -5938,16 +6173,23 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const confidenceTierFilter = document.getElementById('confidence-tier-filter');
             const evidenceTierFilter = document.getElementById('evidence-tier-filter');
             const sourceHostFilter = document.getElementById('source-host-filter');
+            const largeGraphModeSelect = document.getElementById('large-graph-mode');
+            const largeGraphEcosystemSelect = document.getElementById('large-graph-ecosystem');
+            const largeGraphCorridorSelect = document.getElementById('large-graph-corridor');
             if (relationshipTypeFilter) relationshipTypeFilter.value = '';
             if (confidenceTierFilter) confidenceTierFilter.value = '';
             if (evidenceTierFilter) evidenceTierFilter.value = '';
             if (sourceHostFilter) sourceHostFilter.value = '';
+            if (largeGraphModeSelect) largeGraphModeSelect.value = 'overview';
+            if (largeGraphEcosystemSelect) largeGraphEcosystemSelect.value = '';
+            if (largeGraphCorridorSelect) largeGraphCorridorSelect.value = '';
             document.getElementById('search-input').value = '';
             document.getElementById('layout-mode').value = LAYOUT_MODE_SECTOR;
             const portfolioInput = document.getElementById('portfolio-input');
             if (portfolioInput) portfolioInput.value = '';
             updateFocusModeControl();
             updateRelationshipFilterControls();
+            updateLargeGraphNavigationControls();
             updateSignalThresholdControl();
             updateSecPreviewControl();
             updatePortfolioPanel();
@@ -6434,6 +6676,17 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 if (focusActive) return focusLinkKeys.has(link.key);
                 return baseVisibleNodeIds.has(link.source.id) && baseVisibleNodeIds.has(link.target.id);
             });
+            largeGraphNavigationModel = stockLargeGraphNavigation.buildNavigationModel(getGraphIntelligenceContext({
+                visibleNodes: nodes.filter(node => baseVisibleNodeIds.has(node.id)),
+                visibleLinks: candidateLinks,
+                mode: largeGraphMode,
+                ecosystemKey: largeGraphEcosystemFocus,
+                corridorKey: largeGraphCorridorFocus,
+                neighborhoodDepth: largeGraphNeighborhoodDepth,
+                activeEcosystemOverlayKey,
+                stockGraphIntelligence
+            }));
+            candidateLinks = candidateLinks.filter(link => stockLargeGraphNavigation.linkPassesMode(link, largeGraphNavigationModel));
 
             visibleLinks = candidateLinks.filter(linkPassesVisibleGraphFilters);
             visibleLinkKeys = new Set(visibleLinks.map(link => link.key));
@@ -6454,6 +6707,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (isPortfolioAnalysisActive()) {
                 matchedPortfolioNodes.forEach(node => {
                     if (nodePassesBaseFilters(node)) connectedNodeIds.add(node.id);
+                });
+            }
+            if (largeGraphNavigationModel?.isActive && !largeGraphNavigationModel.previewOnly) {
+                largeGraphNavigationModel.nodeIds?.forEach(id => {
+                    if (baseVisibleNodeIds.has(id)) connectedNodeIds.add(id);
                 });
             }
 
@@ -6513,12 +6771,19 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (connectionCount) connectionCount.innerText = previewEdgeCount
                 ? `${visibleLinks.length} PROD + ${previewEdgeCount} PREVIEW EDGES`
                 : `${visibleLinks.length} VISIBLE EDGES`;
-            if (status) status.innerText = hasRelationshipFiltersActive() || currentSector || currentIndustryGroup || currentSearch || signalStrengthThreshold > 0
+            if (status) status.innerText = isLargeGraphNavigationActive()
+                ? 'NAVIGATION'
+                : hasRelationshipFiltersActive() || currentSector || currentIndustryGroup || currentSearch || signalStrengthThreshold > 0
                 ? 'FILTERED'
                 : 'READY';
         }
 
         function refreshSecPreviewVisibility() {
+            if (largeGraphMode === 'production_only') {
+                visibleSecPreviewNodes = [];
+                visibleSecPreviewLinks = [];
+                return;
+            }
             if (!secPreviewEnabled || !secPreviewLinks.length) {
                 visibleSecPreviewNodes = [];
                 visibleSecPreviewLinks = [];
@@ -6538,7 +6803,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function mergeSecPreviewProductionEndpointsIntoVisibleNodes() {
-            if (!candidatePreviewOnlyFilter || !visibleSecPreviewLinks.length) return;
+            if (!(candidatePreviewOnlyFilter || largeGraphMode === 'preview_only') || !visibleSecPreviewLinks.length) return;
             const endpointIds = new Set(visibleNodeIds);
             visibleSecPreviewLinks.forEach(link => {
                 if (link.source && !isSecPreviewNode(link.source)) endpointIds.add(link.source.id);
@@ -6550,6 +6815,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function refreshCandidateCompanyPreviewVisibility() {
+            if (largeGraphMode === 'production_only') {
+                visibleCandidateCompanyPreviewNodes = [];
+                visibleCandidateCompanyPreviewLinks = [];
+                return;
+            }
             if (!candidateCompanyPreviewEnabled || !candidateCompanyPreviewLinks.length) {
                 visibleCandidateCompanyPreviewNodes = [];
                 visibleCandidateCompanyPreviewLinks = [];
@@ -6637,6 +6907,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (candidateCompanyPreviewOnlyFilter || candidateCompanyEcosystemFocus || candidateCompanyCorridorFocus || candidateCompanyStrategicHubOnlyFilter) {
                 return true;
             }
+            if (largeGraphMode === 'preview_only') return true;
             if (currentSearch) {
                 return nodePassesBaseFilters(anchor) || visibleNodeIds.has(anchor.id);
             }
@@ -6660,6 +6931,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function secPreviewEndpointPassesBaseFilters(node) {
             if (isSecPreviewNode(node)) return secPreviewNodePassesBaseFilters(node);
+            if (largeGraphMode === 'preview_only') return nodePassesBaseFilters(node);
             if (candidatePreviewOnlyFilter) return nodePassesBaseFilters(node);
             return visibleNodeIds.has(node.id);
         }
@@ -6717,6 +6989,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function appendSecPreviewOverlayStats() {
             const overlay = document.getElementById('graph-overlay-stats');
+            if (largeGraphMode === 'production_only') return;
             if (!overlay || !secPreviewEnabled) return;
 
             const total = secPreviewLinks.length;
@@ -6731,6 +7004,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function appendCandidateCompanyOverlayStats() {
             const overlay = document.getElementById('graph-overlay-stats');
+            if (largeGraphMode === 'production_only') return;
             if (!overlay || !candidateCompanyPreviewEnabled) return;
 
             const total = candidateCompanyPreviewNodes.length;
@@ -6788,6 +7062,18 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 `);
             }
 
+            if (largeGraphNavigationModel?.isActive) {
+                const disclosure = largeGraphNavigationModel.progressiveDisclosure || {};
+                overlay.insertAdjacentHTML('beforeend', `
+                    <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-sky-100/84 font-mono tracking-[1.1px] border border-sky-300/24 bg-sky-300/10">
+                        ${escapeHtml(stockLargeGraphNavigation.formatNavigationLabel(largeGraphNavigationModel))}
+                    </span>
+                    <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-white/72 font-mono tracking-[1.1px] border border-white/14 bg-white/6">
+                        ${escapeHtml(String(disclosure.visibleEdgeCount || 0))}/${escapeHtml(String(disclosure.inputEdgeCount || visibleLinks.length))} edges
+                    </span>
+                `);
+            }
+
             if (sourceCoverageLensEnabled) {
                 overlay.insertAdjacentHTML('beforeend', `
                     <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-cyan-100/80 font-mono tracking-[1.1px] border border-cyan-300/22 bg-cyan-300/10">
@@ -6830,7 +7116,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function shouldPruneZeroEdgeNodes() {
-            return signalStrengthThreshold > 0 || isAutoDeclutterActive() || hasRelationshipFiltersActive();
+            return signalStrengthThreshold > 0 || isAutoDeclutterActive() || hasRelationshipFiltersActive() || isLargeGraphNavigationActive();
         }
 
         function isAutoDeclutterActive() {
@@ -6862,8 +7148,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (sourcedOnlyFilter && !relationshipHasSourceEvidence(link)) return false;
             if (secBackedOnlyFilter && !isSecBackedConnection(link)) return false;
             if (staleReviewFilter && !relationshipIsStaleForReview(link)) return false;
-            if (candidatePreviewOnlyFilter && !relationshipIsCandidatePreview(link)) return false;
-            if (candidateCompanyPreviewOnlyFilter && !options.isCandidateCompanyPreview) return false;
+            if (candidatePreviewOnlyFilter && !relationshipIsCandidatePreview(link) && !(largeGraphMode === 'preview_only' && options.isPreview)) return false;
+            if (candidateCompanyPreviewOnlyFilter && !options.isCandidateCompanyPreview && !(largeGraphMode === 'preview_only' && options.isPreview)) return false;
             if (missingEvidenceFilter && !relationshipIsMissingEvidence(link)) return false;
             if (portfolioConnectedOnlyFilter && !options.isPreview && !portfolioEdgeKeys.has(link.key)) return false;
             if (portfolioConnectedOnlyFilter && options.isPreview) return false;
@@ -8057,6 +8343,102 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderPromotionPlannerWorkbench(companyPayload, batchPayload, reportPayload, productionCompanies || [], productionConnections || []);
         }
 
+        function setProductionExpansionStatus(label, tone = 'info') {
+            setWorkbenchArtifactStatus('source-production-expansion-status', label, tone);
+        }
+
+        function renderProductionExpansionMetric(label, value) {
+            return renderReviewArtifactMetric(label, value, 'source-production-expansion-card');
+        }
+
+        function renderProductionExpansionBatches(report) {
+            const rows = Array.isArray(report?.batch_results) ? report.batch_results.slice(0, 8) : [];
+            if (!rows.length) return '<div class="text-sm text-white/35">No batch result rows in the production expansion report.</div>';
+            return rows.map(row => `
+                <div class="source-production-expansion-item rounded-2xl p-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-xs text-white/86 font-semibold">${escapeHtml(promotionPlannerTools.formatKeyLabel(row.batch_id || 'production batch'))}</div>
+                            <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml((row.tickers || []).slice(0, 12).join(', ') || 'Reviewer-approved production company identities.')}</div>
+                        </div>
+                        <span class="review-action-chip">${escapeHtml(formatCandidateCell(row.companies_added ?? 0))} ADDED</span>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="evidence-tier-badge verified">REVIEWER APPROVED</span>
+                        <span class="source-host-chip">NO AUTO PROMOTION</span>
+                        <span class="source-host-chip">IDENTITY BACKED</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderProductionExpansionConnections(report, productionCompanies = companies) {
+            const rows = Array.isArray(report?.connection_additions) ? report.connection_additions.slice(0, 10) : [];
+            if (!rows.length) return '<div class="text-sm text-white/35">No connection additions in the production expansion report.</div>';
+            const tickerById = new Map((productionCompanies || []).map(company => [company.id, company.ticker || company.name || String(company.id)]));
+            return rows.map(row => `
+                <div class="source-production-expansion-item rounded-2xl p-3">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <div class="text-xs text-white/86 font-semibold">${escapeHtml(tickerById.get(row.source) || row.source)} -> ${escapeHtml(tickerById.get(row.target) || row.target)}</div>
+                            <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(row.label || 'Manifest-listed production edge')}</div>
+                        </div>
+                        <span class="review-action-chip">${escapeHtml(formatCandidateCell(row.type))}</span>
+                    </div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        <span class="source-host-chip">CONF ${escapeHtml(formatCandidateCell(row.confidence))}</span>
+                        <span class="source-host-chip">${escapeHtml(formatCandidateCell(row.source_url_count ?? 0))} URLS</span>
+                        <span class="source-host-chip">MANIFEST ONLY</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderProductionExpansionReport(report, productionCompanies = companies) {
+            const empty = document.getElementById('source-production-expansion-empty');
+            const summaryWrap = document.getElementById('source-production-expansion-summary');
+            const batchWrap = document.getElementById('source-production-expansion-batches');
+            const connectionWrap = document.getElementById('source-production-expansion-connections');
+            if (!empty || !summaryWrap || !batchWrap || !connectionWrap) return;
+
+            if (!report) {
+                [summaryWrap, batchWrap, connectionWrap].forEach(element => element.classList.add('hidden'));
+                empty.classList.remove('hidden');
+                setProductionExpansionStatus('EXPANSION UNAVAILABLE', 'warning');
+                return;
+            }
+
+            const summary = report.summary || {};
+            const safety = report.safety || {};
+            const density = stockGraphScaling.getDensityBucket(
+                Number(summary.after_company_count ?? productionCompanies?.length ?? companies.length),
+                Number(summary.after_connection_count ?? connections.length)
+            );
+            summaryWrap.innerHTML = [
+                renderProductionExpansionMetric('COMPANIES ADDED', summary.companies_added ?? 0),
+                renderProductionExpansionMetric('COMPANIES TOTAL', summary.after_company_count ?? companies.length),
+                renderProductionExpansionMetric('EDGES ADDED', summary.connections_added ?? 0),
+                renderProductionExpansionMetric('EDGES TOTAL', summary.after_connection_count ?? connections.length),
+                renderProductionExpansionMetric('BATCHES', summary.batch_count ?? 0),
+                renderProductionExpansionMetric('DENSITY', density?.label || 'Core graph'),
+                renderProductionExpansionMetric('REL MODE', safety.relationship_generation || 'manifest_only'),
+                renderProductionExpansionMetric('AUTO PROMO', safety.automatic_promotion_executed === true ? 'unsafe' : 'false')
+            ].join('');
+            batchWrap.innerHTML = renderProductionExpansionBatches(report);
+            connectionWrap.innerHTML = renderProductionExpansionConnections(report, productionCompanies);
+            [summaryWrap, batchWrap, connectionWrap].forEach(element => element.classList.remove('hidden'));
+            empty.classList.add('hidden');
+            setProductionExpansionStatus(`${summary.companies_added ?? 0} COMPANIES / ${summary.connections_added ?? 0} EDGES`);
+        }
+
+        async function loadProductionExpansionReport() {
+            const [report, productionCompanies] = await Promise.all([
+                fetchOptionalWorkbenchJson('data/candidates/production_expansion_report.json'),
+                fetchOptionalWorkbenchJson('data/companies.json')
+            ]);
+            renderProductionExpansionReport(report, productionCompanies || companies);
+        }
+
         function setSourceTriageStatus(label, tone = 'info') {
             const status = document.getElementById('source-triage-status');
             if (!status) return;
@@ -8862,6 +9244,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         loadSourceCandidatePreview();
         loadCandidateCompanyWorkbench();
         loadPromotionPlannerWorkbench();
+        loadProductionExpansionReport();
         loadSourceTriageArtifacts();
         loadDataExpansionPreflightReport();
         loadReviewPipelineSummary();

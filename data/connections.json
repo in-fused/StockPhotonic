@@ -1,1855 +1,2419 @@
 [
   {
-    "source": 1,
-    "target": 6,
-    "type": "supply",
-    "strength": 0.9,
-    "label": "HBM memory exposure for AI accelerators",
     "confidence": 5,
+    "label": "HBM memory exposure for AI accelerators",
     "provenance": "Company disclosures and public investor materials",
+    "source": 1,
     "source_urls": [
       "https://investors.micron.com/news-releases/news-release-details/micron-high-volume-production-hbm4-designed-nvidia-vera-rubin"
     ],
+    "strength": 0.9,
+    "target": 6,
+    "type": "supply",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 1,
-    "target": 7,
-    "type": "supply",
-    "strength": 0.95,
-    "label": "Advanced-node foundry manufacturing dependency",
     "confidence": 5,
+    "label": "Advanced-node foundry manufacturing dependency",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source": 1,
     "source_urls": [
       "https://nvidianews.nvidia.com/news/nvidia-blackwell-platform-arrives-to-power-a-new-era-of-computing"
     ],
+    "strength": 0.95,
+    "target": 7,
+    "type": "supply",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 1,
-    "target": 2,
-    "type": "competitor",
-    "strength": 0.9,
-    "label": "Data center GPU and AI accelerator competition",
     "confidence": 4,
+    "label": "Data center GPU and AI accelerator competition",
     "provenance": "Market structure / direct peer relationship",
+    "source": 1,
     "source_urls": [
       "https://ir.amd.com/financial-information/sec-filings/content/0000002488-24-000012/amd-20231230.htm"
     ],
+    "strength": 0.9,
+    "target": 2,
+    "type": "competitor",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 1,
-    "target": 17,
-    "type": "ecosystem",
-    "strength": 0.88,
-    "label": "Azure AI infrastructure accelerator ecosystem",
     "confidence": 5,
+    "label": "Azure AI infrastructure accelerator ecosystem",
     "provenance": "Public filings and company partnership announcements",
+    "source": 1,
     "source_urls": [
       "https://nvidianews.nvidia.com/news/microsoft-nvidia-generative-ai-enterprises"
     ],
+    "strength": 0.88,
+    "target": 17,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 1,
-    "target": 18,
-    "type": "ecosystem",
-    "strength": 0.76,
-    "label": "Cloud AI infrastructure demand exposure",
     "confidence": 4,
+    "label": "Cloud AI infrastructure demand exposure",
     "provenance": "Company disclosures and public investor materials",
+    "source": 1,
     "source_urls": [
       "https://cloud.google.com/blog/products/compute/introducing-a3-supercomputers-with-nvidia-h100-gpus?e=48754805"
     ],
+    "strength": 0.76,
+    "target": 18,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 1,
-    "target": 19,
-    "type": "ecosystem",
-    "strength": 0.82,
-    "label": "AWS AI infrastructure accelerator ecosystem",
     "confidence": 4,
+    "label": "AWS AI infrastructure accelerator ecosystem",
     "provenance": "Company disclosures and public investor materials",
+    "source": 1,
     "source_urls": [
       "https://aws.amazon.com/nvidia/project-ceiba/"
     ],
+    "strength": 0.82,
+    "target": 19,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 1,
-    "target": 20,
-    "type": "ecosystem",
-    "strength": 0.84,
-    "label": "AI training cluster infrastructure exposure",
     "confidence": 4,
+    "label": "AI training cluster infrastructure exposure",
     "provenance": "Company disclosures and public investor materials",
+    "source": 1,
     "source_urls": [
       "https://nvidianews.nvidia.com/news/meta-builds-ai-infrastructure-with-nvidia"
     ],
+    "strength": 0.84,
+    "target": 20,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 1,
-    "target": 22,
-    "type": "partnership",
-    "strength": 0.78,
-    "label": "OCI GPU cloud infrastructure partnership",
     "confidence": 4,
+    "label": "OCI GPU cloud infrastructure partnership",
     "provenance": "Public filings and company partnership announcements",
+    "source": 1,
     "source_urls": [
       "https://nvidianews.nvidia.com/news/oracle-nvidia-speed-ai-adoption"
     ],
+    "strength": 0.78,
+    "target": 22,
+    "type": "partnership",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 2,
-    "target": 6,
-    "type": "supply",
-    "strength": 0.84,
-    "label": "HBM memory exposure for accelerator platforms",
     "confidence": 4,
+    "label": "HBM memory exposure for accelerator platforms",
     "provenance": "Company disclosures and public investor materials",
+    "source": 2,
     "source_urls": [
       "https://investors.micron.com/news-releases/news-release-details/micron-hbm-designed-leading-amd-ai-platform"
     ],
+    "strength": 0.84,
+    "target": 6,
+    "type": "supply",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 2,
-    "target": 7,
-    "type": "supply",
-    "strength": 0.9,
-    "label": "Advanced-node foundry manufacturing dependency",
     "confidence": 5,
+    "label": "Advanced-node foundry manufacturing dependency",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source": 2,
     "source_urls": [
       "https://www.amd.com/en/newsroom/press-releases/2025-4-14-amd-achieves-first-tsmc-n2-product-silicon-milesto.html"
     ],
+    "strength": 0.9,
+    "target": 7,
+    "type": "supply",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 2,
-    "target": 3,
-    "type": "competitor",
-    "strength": 0.76,
-    "label": "Server and PC processor competition",
     "confidence": 4,
+    "label": "Server and PC processor competition",
     "provenance": "Market structure / direct peer relationship",
+    "source": 2,
     "source_urls": [
       "https://ir.amd.com/financial-information/sec-filings/content/0000002488-24-000012/amd-20231230.htm"
     ],
+    "strength": 0.76,
+    "target": 3,
+    "type": "competitor",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 2,
-    "target": 17,
-    "type": "partnership",
-    "strength": 0.7,
-    "label": "Cloud AI accelerator deployment partnership",
     "confidence": 4,
+    "label": "Cloud AI accelerator deployment partnership",
     "provenance": "Public filings and company partnership announcements",
+    "source": 2,
     "source_urls": [
       "https://www.amd.com/en/newsroom/press-releases/2024-5-21-amd-instinct-mi300x-accelerators-power-microsoft-a.html"
     ],
+    "strength": 0.7,
+    "target": 17,
+    "type": "partnership",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 3,
-    "target": 8,
-    "type": "supply",
-    "strength": 0.86,
-    "label": "Advanced lithography equipment dependency",
     "confidence": 5,
+    "label": "Advanced lithography equipment dependency",
     "provenance": "Company disclosures and public investor materials",
+    "source": 3,
     "source_urls": [
       "https://newsroom.intel.com/press-kit/intel-high-na-euv"
     ],
+    "strength": 0.86,
+    "target": 8,
+    "type": "supply",
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 4,
+    "label": "Wafer fabrication equipment dependency",
+    "provenance": "Company disclosures and public investor materials",
     "source": 3,
+    "source_urls": [
+      "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
+    ],
+    "strength": 0.75,
     "target": 10,
     "type": "supply",
-    "strength": 0.75,
-    "label": "Wafer fabrication equipment dependency",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "source_urls": [
-      "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 4,
+    "label": "Etch and deposition equipment dependency",
+    "provenance": "Company disclosures and public investor materials",
     "source": 3,
+    "source_urls": [
+      "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
+    ],
+    "strength": 0.72,
     "target": 11,
     "type": "supply",
-    "strength": 0.72,
-    "label": "Etch and deposition equipment dependency",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "source_urls": [
-      "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 4,
+    "label": "Semiconductor process-control equipment dependency",
+    "provenance": "Company disclosures and public investor materials",
     "source": 3,
+    "source_urls": [
+      "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
+    ],
+    "strength": 0.72,
     "target": 12,
     "type": "supply",
-    "strength": 0.72,
-    "label": "Semiconductor process-control equipment dependency",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "source_urls": [
-      "https://newsroom.intel.com/corporate/intel-announces-2026-epic-supplier-award-recipients"
-    ],
     "verified_date": "2026-04-29"
   },
   {
-    "source": 4,
-    "target": 7,
-    "type": "supply",
-    "strength": 0.84,
-    "label": "Custom silicon foundry manufacturing dependency",
     "confidence": 4,
+    "label": "Custom silicon foundry manufacturing dependency",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source": 4,
     "source_urls": [
       "https://investors.broadcom.com/news-releases/news-release-details/broadcom-delivers-industrys-first-35d-f2f-technology-ai-xpus"
     ],
+    "strength": 0.84,
+    "target": 7,
+    "type": "supply",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 4,
-    "target": 13,
-    "type": "competitor",
-    "strength": 0.68,
-    "label": "Data infrastructure semiconductor competition",
     "confidence": 4,
+    "label": "Data infrastructure semiconductor competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 4,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/avgo-20251102.htm",
       "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm"
-    ]
+    ],
+    "strength": 0.68,
+    "target": 13,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 4,
-    "target": 18,
-    "type": "ecosystem",
-    "strength": 0.74,
-    "label": "Custom AI accelerator and networking silicon ecosystem",
     "confidence": 4,
+    "label": "Custom AI accelerator and networking silicon ecosystem",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 4,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1730168/000173016825000121/avgo-20251102.htm",
       "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm"
-    ]
+    ],
+    "strength": 0.74,
+    "target": 18,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 4,
-    "target": 20,
-    "type": "ecosystem",
-    "strength": 0.76,
-    "label": "AI data center networking silicon ecosystem",
     "confidence": 4,
+    "label": "AI data center networking silicon ecosystem",
     "provenance": "Company disclosures and public investor materials",
+    "source": 4,
     "source_urls": [
       "https://investors.broadcom.com/news-releases/news-release-details/broadcom-announces-extended-partnership-meta-deploy-technology"
     ],
+    "strength": 0.76,
+    "target": 20,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 5,
-    "target": 9,
-    "type": "ecosystem",
-    "strength": 0.72,
-    "label": "Arm-based mobile and edge silicon ecosystem",
     "confidence": 5,
+    "label": "Arm-based mobile and edge silicon ecosystem",
     "provenance": "Company disclosures and public investor materials",
+    "source": 5,
     "source_urls": [
       "https://www.qualcomm.com/news/onq/2014/08/how-arm-architecture-and-snapdragon-processors-are-supporting-64-bit-future"
     ],
+    "strength": 0.72,
+    "target": 9,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 5,
-    "target": 21,
-    "type": "competitor",
-    "strength": 0.62,
-    "label": "Premium device silicon platform competition",
     "confidence": 4,
+    "label": "Premium device silicon platform competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 5,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/804328/000080432825000085/qcom-20250928.htm",
       "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
-    ]
+    ],
+    "strength": 0.62,
+    "target": 21,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 5,
-    "target": 7,
-    "type": "supply",
-    "strength": 0.86,
-    "label": "Mobile processor foundry manufacturing dependency",
     "confidence": 5,
+    "label": "Mobile processor foundry manufacturing dependency",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source": 5,
     "source_urls": [
       "https://pr.tsmc.com/japanese/news/1597"
     ],
+    "strength": 0.86,
+    "target": 7,
+    "type": "supply",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 6,
-    "target": 3,
-    "type": "competitor",
-    "strength": 0.54,
-    "label": "Memory and semiconductor manufacturing peer exposure",
     "confidence": 4,
+    "label": "Memory and semiconductor manufacturing peer exposure",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 6,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/723125/000072312525000028/mu-20250828.htm",
       "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm"
-    ]
+    ],
+    "strength": 0.54,
+    "target": 3,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 7,
-    "target": 8,
-    "type": "supply",
-    "strength": 0.96,
-    "label": "EUV lithography dependency for leading-edge foundry nodes",
     "confidence": 5,
+    "label": "EUV lithography dependency for leading-edge foundry nodes",
     "provenance": "Company disclosures and public investor materials",
+    "source": 7,
     "source_urls": [
       "https://pr.tsmc.com/english/news/1734"
     ],
+    "strength": 0.96,
+    "target": 8,
+    "type": "supply",
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 4,
+    "label": "Wafer fabrication equipment dependency",
+    "provenance": "Company disclosures and public investor materials",
     "source": 7,
+    "source_urls": [
+      "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
+    ],
+    "strength": 0.82,
     "target": 10,
     "type": "supply",
-    "strength": 0.82,
-    "label": "Wafer fabrication equipment dependency",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "source_urls": [
-      "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 4,
+    "label": "Etch and deposition equipment dependency",
+    "provenance": "Company disclosures and public investor materials",
     "source": 7,
+    "source_urls": [
+      "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
+    ],
+    "strength": 0.78,
     "target": 11,
     "type": "supply",
-    "strength": 0.78,
-    "label": "Etch and deposition equipment dependency",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "source_urls": [
-      "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 4,
+    "label": "Yield-management and process-control dependency",
+    "provenance": "Company disclosures and public investor materials",
     "source": 7,
+    "source_urls": [
+      "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
+    ],
+    "strength": 0.78,
     "target": 12,
     "type": "supply",
-    "strength": 0.78,
-    "label": "Yield-management and process-control dependency",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials",
-    "source_urls": [
-      "https://pr.tsmc.com/system/files/newspdf/attachment/06b112f0de0bc6877a36ba33a542130cd25b43a5/TSMC%202023%20Supply%20Chain%20Management%20Forum%20Presents%20Awards%20to%20Outstanding%20Suppliers_wmn.pdf"
-    ],
     "verified_date": "2026-04-29"
   },
   {
-    "source": 7,
-    "target": 21,
-    "type": "supply",
-    "strength": 0.88,
-    "label": "Apple silicon foundry manufacturing dependency",
     "confidence": 5,
+    "label": "Apple silicon foundry manufacturing dependency",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship",
+    "source": 7,
     "source_urls": [
       "https://www.apple.com/newsroom/2023/11/apple-announces-expanded-partnership-with-amkor-for-silicon-packaging/"
     ],
+    "strength": 0.88,
+    "target": 21,
+    "type": "supply",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 8,
-    "target": 10,
-    "type": "ecosystem",
-    "strength": 0.62,
-    "label": "Semiconductor capital equipment ecosystem",
     "confidence": 4,
+    "label": "Semiconductor capital equipment ecosystem",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 8,
     "source_urls": [
       "https://www.asml.com/en/investors/annual-report",
       "https://www.sec.gov/Archives/edgar/data/6951/000162828025056742/amat-20251026.htm"
-    ]
+    ],
+    "strength": 0.62,
+    "target": 10,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 8,
-    "target": 11,
-    "type": "ecosystem",
-    "strength": 0.58,
-    "label": "Wafer equipment purchasing-cycle ecosystem",
     "confidence": 4,
+    "label": "Wafer equipment purchasing-cycle ecosystem",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 8,
     "source_urls": [
       "https://www.asml.com/en/investors/annual-report",
       "https://www.sec.gov/Archives/edgar/data/707549/000070754925000075/lrcx-20250629.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 11,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 10,
-    "target": 11,
-    "type": "competitor",
-    "strength": 0.7,
-    "label": "Wafer fabrication equipment competition",
     "confidence": 4,
+    "label": "Wafer fabrication equipment competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 10,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/6951/000162828025056742/amat-20251026.htm",
       "https://www.sec.gov/Archives/edgar/data/707549/000070754925000075/lrcx-20250629.htm"
-    ]
+    ],
+    "strength": 0.7,
+    "target": 11,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 10,
-    "target": 12,
-    "type": "ecosystem",
-    "strength": 0.62,
-    "label": "Semiconductor manufacturing equipment cycle exposure",
     "confidence": 4,
+    "label": "Semiconductor manufacturing equipment cycle exposure",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 10,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/6951/000162828025056742/amat-20251026.htm",
       "https://www.sec.gov/Archives/edgar/data/319201/000031920125000024/klac-20250630.htm"
-    ]
+    ],
+    "strength": 0.62,
+    "target": 12,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 15,
-    "target": 16,
-    "type": "competitor",
-    "strength": 0.86,
-    "label": "Electronic design automation platform competition",
     "confidence": 4,
+    "label": "Electronic design automation platform competition",
     "provenance": "Market structure / direct peer relationship",
+    "source": 15,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/813672/000081367225000024/cdns-20241231.htm"
     ],
+    "strength": 0.86,
+    "target": 16,
+    "type": "competitor",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 15,
-    "target": 1,
-    "type": "ecosystem",
-    "strength": 0.62,
-    "label": "Advanced chip design software ecosystem",
     "confidence": 4,
+    "label": "Advanced chip design software ecosystem",
     "provenance": "Company disclosures and public investor materials",
+    "source": 15,
     "source_urls": [
       "https://www.cadence.com/en_US/home/company/newsroom/press-releases/pr/2026/cadence-and-nvidia-unveil-accelerated-engineering-solutions.html"
     ],
+    "strength": 0.62,
+    "target": 1,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 16,
-    "target": 9,
-    "type": "ecosystem",
-    "strength": 0.7,
-    "label": "Semiconductor IP and EDA design ecosystem",
     "confidence": 4,
+    "label": "Semiconductor IP and EDA design ecosystem",
     "provenance": "Company disclosures and public investor materials",
+    "source": 16,
     "source_urls": [
       "https://www.synopsys.com/partners/arm.html"
     ],
+    "strength": 0.7,
+    "target": 9,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 13,
-    "target": 19,
-    "type": "ecosystem",
-    "strength": 0.66,
-    "label": "Cloud data infrastructure silicon exposure",
     "confidence": 4,
+    "label": "Cloud data infrastructure silicon exposure",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 13,
     "source_urls": [
       "https://www.marvell.com/company/newsroom/marvell-expands-strategic-collaboration-aws-enable-accelerated-infrastructure-ai-cloud.html",
       "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm",
       "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
-    ]
+    ],
+    "strength": 0.66,
+    "target": 19,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 14,
-    "target": 1,
-    "type": "ecosystem",
-    "strength": 0.58,
-    "label": "AI server power management ecosystem",
     "confidence": 4,
+    "label": "AI server power management ecosystem",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 14,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1280452/000143774926006113/mpwr20251231_10k.htm",
       "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 1,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
+    "confidence": 4,
+    "label": "Cloud platform and AI services competition",
+    "provenance": "Market structure / direct peer relationship",
     "source": 17,
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
+    ],
+    "strength": 0.86,
     "target": 18,
     "type": "competitor",
-    "strength": 0.86,
-    "label": "Cloud platform and AI services competition",
-    "confidence": 4,
-    "provenance": "Market structure / direct peer relationship",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 4,
+    "label": "Hyperscale cloud infrastructure competition",
+    "provenance": "Market structure / direct peer relationship",
     "source": 17,
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
+    ],
+    "strength": 0.9,
     "target": 19,
     "type": "competitor",
-    "strength": 0.9,
-    "label": "Hyperscale cloud infrastructure competition",
-    "confidence": 4,
-    "provenance": "Market structure / direct peer relationship",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 4,
+    "label": "Enterprise cloud infrastructure competition",
+    "provenance": "Market structure / direct peer relationship",
     "source": 17,
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
+    ],
+    "strength": 0.76,
     "target": 22,
     "type": "competitor",
-    "strength": 0.76,
-    "label": "Enterprise cloud infrastructure competition",
-    "confidence": 4,
-    "provenance": "Market structure / direct peer relationship",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 4,
+    "label": "Enterprise application software competition",
+    "provenance": "Market structure / direct peer relationship",
     "source": 17,
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
+    ],
+    "strength": 0.62,
     "target": 23,
     "type": "competitor",
-    "strength": 0.62,
-    "label": "Enterprise application software competition",
-    "confidence": 4,
-    "provenance": "Market structure / direct peer relationship",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/789019/000095017024087843/msft-20240630.htm"
-    ],
     "verified_date": "2026-04-29"
   },
   {
-    "source": 17,
-    "target": 25,
-    "type": "ecosystem",
-    "strength": 0.56,
-    "label": "Enterprise workflow and productivity software overlap",
     "confidence": 4,
+    "label": "Enterprise workflow and productivity software overlap",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 17,
     "source_urls": [
       "https://www.servicenow.com/company/media/press-room/microsoft-and-servicenow-announce-strategic-partnership.html",
       "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
       "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
-    ]
+    ],
+    "strength": 0.56,
+    "target": 25,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 18,
-    "target": 19,
-    "type": "competitor",
-    "strength": 0.84,
-    "label": "Cloud platform and advertising-adjacent AI competition",
     "confidence": 4,
+    "label": "Cloud platform and advertising-adjacent AI competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 18,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
-    ]
+    ],
+    "strength": 0.84,
+    "target": 19,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 18,
-    "target": 20,
-    "type": "competitor",
-    "strength": 0.82,
-    "label": "Digital advertising and AI platform competition",
     "confidence": 4,
+    "label": "Digital advertising and AI platform competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 18,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/meta-20251231.htm"
-    ]
+    ],
+    "strength": 0.82,
+    "target": 20,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 18,
-    "target": 21,
-    "type": "competitor",
-    "strength": 0.6,
-    "label": "Mobile ecosystem and AI assistant competition",
     "confidence": 4,
+    "label": "Mobile ecosystem and AI assistant competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 18,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
-    ]
+    ],
+    "strength": 0.6,
+    "target": 21,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 19,
-    "target": 22,
-    "type": "competitor",
-    "strength": 0.72,
-    "label": "Enterprise cloud infrastructure competition",
     "confidence": 4,
+    "label": "Enterprise cloud infrastructure competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 19,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1341439/000095017025087926/orcl-20250531.htm"
-    ]
+    ],
+    "strength": 0.72,
+    "target": 22,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 19,
-    "target": 24,
-    "type": "ecosystem",
-    "strength": 0.62,
-    "label": "Cloud data platform deployment ecosystem",
     "confidence": 4,
+    "label": "Cloud data platform deployment ecosystem",
     "provenance": "Public filings and company partnership announcements",
+    "source": 19,
     "source_urls": [
       "https://www.snowflake.com/en/news/press-releases/snowflake-and-aws-significantly-deepen-commitment-to-driving-customer-focused-innovation/"
     ],
+    "strength": 0.62,
+    "target": 24,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 20,
-    "target": 21,
-    "type": "competitor",
-    "strength": 0.52,
-    "label": "Consumer device platform and app ecosystem tension",
     "confidence": 4,
+    "label": "Consumer device platform and app ecosystem tension",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 20,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/meta-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
-    ]
+    ],
+    "strength": 0.52,
+    "target": 21,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 21,
-    "target": 9,
-    "type": "ecosystem",
-    "strength": 0.78,
-    "label": "Arm architecture exposure in consumer devices",
     "confidence": 5,
+    "label": "Arm architecture exposure in consumer devices",
     "provenance": "Company disclosures and public investor materials",
+    "source": 21,
     "source_urls": [
       "https://developer.apple.com/documentation/apple-silicon"
     ],
+    "strength": 0.78,
+    "target": 9,
+    "type": "ecosystem",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 22,
-    "target": 24,
-    "type": "partnership",
-    "strength": 0.62,
-    "label": "Enterprise data cloud deployment partnership",
     "confidence": 4,
+    "label": "Enterprise data cloud deployment partnership",
     "provenance": "Public filings and company partnership announcements",
+    "source": 22,
     "source_urls": [
       "https://www.snowflake.com/en/blog/openflow-connector-oracle/"
     ],
+    "strength": 0.62,
+    "target": 24,
+    "type": "partnership",
     "verified_date": "2026-04-29"
   },
   {
-    "source": 23,
-    "target": 24,
-    "type": "ecosystem",
-    "strength": 0.58,
-    "label": "Enterprise customer data platform ecosystem",
     "confidence": 4,
+    "label": "Enterprise customer data platform ecosystem",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 23,
     "source_urls": [
       "https://www.salesforce.com/partners/snowflake/",
       "https://www.salesforce.com/news/stories/salesforce-cdp-snowflake-partnership/",
       "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/crm-20260131.htm",
       "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000008/snow-20260131.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 24,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 23,
-    "target": 25,
-    "type": "competitor",
-    "strength": 0.66,
-    "label": "Enterprise workflow and CRM software competition",
     "confidence": 4,
+    "label": "Enterprise workflow and CRM software competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 23,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/crm-20260131.htm",
       "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
-    ]
+    ],
+    "strength": 0.66,
+    "target": 25,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 24,
-    "target": 25,
-    "type": "ecosystem",
-    "strength": 0.54,
-    "label": "Enterprise SaaS data and workflow ecosystem",
     "confidence": 4,
+    "label": "Enterprise SaaS data and workflow ecosystem",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 24,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000008/snow-20260131.htm",
       "https://www.sec.gov/Archives/edgar/data/1373715/000137371526000007/now-20251231.htm"
-    ]
+    ],
+    "strength": 0.54,
+    "target": 25,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 26,
-    "target": 17,
-    "type": "partnership",
-    "strength": 0.58,
-    "label": "Cloud security marketplace and platform integration",
     "confidence": 5,
+    "label": "Cloud security marketplace and platform integration",
     "provenance": "Public filings and company partnership announcements; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 26,
     "source_urls": [
       "https://www.paloaltonetworks.com/partners/nextwave-for-csp/microsoft-azure-and-palo-alto-networks",
       "https://www.sec.gov/Archives/edgar/data/1327567/000132756725000027/panw-20250731.htm",
       "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 17,
+    "type": "partnership",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 26,
-    "target": 19,
-    "type": "partnership",
-    "strength": 0.58,
-    "label": "AWS cloud security marketplace ecosystem",
     "confidence": 5,
+    "label": "AWS cloud security marketplace ecosystem",
     "provenance": "Public filings and company partnership announcements; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 26,
     "source_urls": [
       "https://www.paloaltonetworks.com/partners/nextwave-for-csp/aws-and-palo-alto-networks",
       "https://www.sec.gov/Archives/edgar/data/1327567/000132756725000027/panw-20250731.htm",
       "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 19,
+    "type": "partnership",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 27,
-    "target": 28,
-    "type": "competitor",
-    "strength": 0.92,
-    "label": "Global card payment network competition",
     "confidence": 4,
+    "label": "Global card payment network competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 27,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
       "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm"
-    ]
+    ],
+    "strength": 0.92,
+    "target": 28,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
+    "confidence": 4,
+    "label": "Digital wallet acceptance network exposure",
+    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
     "source": 27,
-    "target": 29,
-    "type": "ecosystem",
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
+      "https://www.sec.gov/Archives/edgar/data/1633917/000163391726000024/pypl-20251231.htm"
+    ],
     "strength": 0.74,
-    "label": "Digital wallet acceptance network exposure",
-    "confidence": 4,
-    "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
-      "https://www.sec.gov/Archives/edgar/data/1633917/000163391726000024/pypl-20251231.htm"
-    ]
-  },
-  {
-    "source": 28,
     "target": 29,
     "type": "ecosystem",
-    "strength": 0.72,
-    "label": "Digital wallet acceptance network exposure",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "Digital wallet acceptance network exposure",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 28,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1633917/000163391726000024/pypl-20251231.htm"
-    ]
+    ],
+    "strength": 0.72,
+    "target": 29,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 27,
-    "target": 30,
-    "type": "competitor",
-    "strength": 0.66,
-    "label": "Card network and premium card spend competition",
     "confidence": 4,
+    "label": "Card network and premium card spend competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 27,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
       "https://www.sec.gov/Archives/edgar/data/4962/000000496226000080/axp-20251231.htm"
-    ]
-  },
-  {
-    "source": 28,
+    ],
+    "strength": 0.66,
     "target": 30,
     "type": "competitor",
-    "strength": 0.66,
-    "label": "Card network and premium card spend competition",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "Card network and premium card spend competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 28,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/4962/000000496226000080/axp-20251231.htm"
-    ]
+    ],
+    "strength": 0.66,
+    "target": 30,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 27,
-    "target": 31,
-    "type": "ecosystem",
-    "strength": 0.78,
-    "label": "Issuer and card network payments ecosystem",
     "confidence": 4,
+    "label": "Issuer and card network payments ecosystem",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 27,
     "source_urls": [
       "https://partners.jpmorgan.com/visa.html",
       "https://www.jpmorgan.com/solutions/commercial-card",
       "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
       "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm"
-    ]
-  },
-  {
-    "source": 28,
+    ],
+    "strength": 0.78,
     "target": 31,
     "type": "ecosystem",
-    "strength": 0.78,
-    "label": "Issuer and card network payments ecosystem",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "Issuer and card network payments ecosystem",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 28,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm"
-    ]
+    ],
+    "strength": 0.78,
+    "target": 31,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 27,
-    "target": 32,
-    "type": "ecosystem",
-    "strength": 0.72,
-    "label": "Consumer card issuing and network ecosystem",
     "confidence": 4,
+    "label": "Consumer card issuing and network ecosystem",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 27,
     "source_urls": [
       "https://usa.visa.com/about-visa/newsroom/press-releases.releaseId.9416.html",
       "https://newsroom.bankofamerica.com/content/newsroom/press-releases/2025/12/bofa-offers-exclusive-fifa-world-cup-2026--custom-card-design-an.html",
       "https://www.sec.gov/Archives/edgar/data/1403161/000140316125000089/v-20250930.htm",
       "https://www.sec.gov/Archives/edgar/data/70858/000007085826000157/bac-20251231.htm"
-    ]
-  },
-  {
-    "source": 28,
+    ],
+    "strength": 0.72,
     "target": 32,
     "type": "ecosystem",
-    "strength": 0.72,
-    "label": "Consumer card issuing and network ecosystem",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "Consumer card issuing and network ecosystem",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 28,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/70858/000007085826000157/bac-20251231.htm"
-    ]
+    ],
+    "strength": 0.72,
+    "target": 32,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 31,
-    "target": 32,
-    "type": "competitor",
-    "strength": 0.82,
-    "label": "Large bank deposit and credit competition",
     "confidence": 4,
+    "label": "Large bank deposit and credit competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 31,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/70858/000007085826000157/bac-20251231.htm"
-    ]
+    ],
+    "strength": 0.82,
+    "target": 32,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 30,
-    "target": 34,
-    "type": "competitor",
-    "strength": 0.64,
-    "label": "Consumer card lending competition",
     "confidence": 4,
+    "label": "Consumer card lending competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 30,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/4962/000000496226000080/axp-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/927628/000092762826000024/cof-20251231.htm"
-    ]
-  },
-  {
-    "source": 31,
+    ],
+    "strength": 0.64,
     "target": 34,
     "type": "competitor",
-    "strength": 0.62,
-    "label": "Consumer credit card issuing competition",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "Consumer credit card issuing competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 31,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/927628/000092762826000024/cof-20251231.htm"
-    ]
+    ],
+    "strength": 0.62,
+    "target": 34,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
+    "confidence": 5,
+    "label": "Berkshire public equity stake exposure",
+    "provenance": "Public filings and company investor materials",
     "source": 33,
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
+    "strength": 0.88,
     "target": 21,
     "type": "investment",
-    "strength": 0.88,
-    "label": "Berkshire public equity stake exposure",
-    "confidence": 5,
-    "provenance": "Public filings and company investor materials",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 5,
+    "label": "Berkshire public equity stake exposure",
+    "provenance": "Public filings and company investor materials",
     "source": 33,
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
+    "strength": 0.86,
     "target": 60,
     "type": "investment",
-    "strength": 0.86,
-    "label": "Berkshire public equity stake exposure",
-    "confidence": 5,
-    "provenance": "Public filings and company investor materials",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 5,
+    "label": "Berkshire public equity stake exposure",
+    "provenance": "Public filings and company investor materials",
     "source": 33,
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
+    "strength": 0.84,
     "target": 30,
     "type": "investment",
-    "strength": 0.84,
-    "label": "Berkshire public equity stake exposure",
-    "confidence": 5,
-    "provenance": "Public filings and company investor materials",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 5,
+    "label": "Berkshire public equity stake exposure",
+    "provenance": "Public filings and company investor materials",
     "source": 33,
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
+    "strength": 0.84,
     "target": 32,
     "type": "investment",
-    "strength": 0.84,
-    "label": "Berkshire public equity stake exposure",
-    "confidence": 5,
-    "provenance": "Public filings and company investor materials",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
-    ],
     "verified_date": "2026-04-29"
   },
   {
+    "confidence": 5,
+    "label": "Berkshire public equity stake exposure",
+    "provenance": "Public filings and company investor materials",
     "source": 33,
+    "source_urls": [
+      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
+    ],
+    "strength": 0.7,
     "target": 46,
     "type": "investment",
-    "strength": 0.7,
-    "label": "Berkshire public equity stake exposure",
-    "confidence": 5,
-    "provenance": "Public filings and company investor materials",
-    "source_urls": [
-      "https://www.sec.gov/Archives/edgar/data/1067983/000119312526054580/xslForm13F_X02/50240.xml"
-    ],
     "verified_date": "2026-04-29"
   },
   {
-    "source": 35,
-    "target": 40,
-    "type": "competitor",
-    "strength": 0.62,
-    "label": "Large-cap pharmaceutical portfolio competition",
     "confidence": 4,
+    "label": "Large-cap pharmaceutical portfolio competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 35,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm"
-    ]
+    ],
+    "strength": 0.62,
+    "target": 40,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 35,
-    "target": 41,
-    "type": "competitor",
-    "strength": 0.62,
-    "label": "Large-cap pharmaceutical portfolio competition",
     "confidence": 4,
+    "label": "Large-cap pharmaceutical portfolio competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 35,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000008/abbv-20251231.htm"
-    ]
+    ],
+    "strength": 0.62,
+    "target": 41,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 35,
-    "target": 42,
-    "type": "competitor",
-    "strength": 0.56,
-    "label": "Large-cap pharmaceutical portfolio competition",
     "confidence": 4,
+    "label": "Large-cap pharmaceutical portfolio competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 35,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
-    ]
+    ],
+    "strength": 0.56,
+    "target": 42,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 36,
-    "target": 37,
-    "type": "competitor",
-    "strength": 0.78,
-    "label": "Managed care and PBM competition",
     "confidence": 4,
+    "label": "Managed care and PBM competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 36,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/731766/000073176626000062/unh-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/64803/000006480326000010/cvs-20251231.htm"
-    ]
+    ],
+    "strength": 0.78,
+    "target": 37,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 36,
-    "target": 38,
-    "type": "competitor",
-    "strength": 0.82,
+    "confidence": 4,
     "label": "Managed care and PBM competition",
-    "confidence": 4,
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 36,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/731766/000073176626000062/unh-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1739940/000173994026000006/ci-20251231.htm"
-    ]
-  },
-  {
-    "source": 37,
+    ],
+    "strength": 0.82,
     "target": 38,
     "type": "competitor",
-    "strength": 0.82,
-    "label": "PBM and pharmacy benefit competition",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "PBM and pharmacy benefit competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 37,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/64803/000006480326000010/cvs-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1739940/000173994026000006/ci-20251231.htm"
-    ]
+    ],
+    "strength": 0.82,
+    "target": 38,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 36,
-    "target": 35,
-    "type": "ecosystem",
-    "strength": 0.58,
-    "label": "Insurer and pharmaceutical reimbursement ecosystem",
     "confidence": 4,
+    "label": "Insurer and pharmaceutical reimbursement ecosystem",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 36,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/731766/000073176626000062/unh-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm"
-    ]
-  },
-  {
-    "source": 37,
+    ],
+    "strength": 0.58,
     "target": 35,
     "type": "ecosystem",
-    "strength": 0.6,
-    "label": "PBM formulary and pharmaceutical distribution exposure",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "PBM formulary and pharmaceutical distribution exposure",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 37,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/64803/000006480326000010/cvs-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm"
-    ]
-  },
-  {
-    "source": 38,
+    ],
+    "strength": 0.6,
     "target": 35,
     "type": "ecosystem",
-    "strength": 0.58,
-    "label": "PBM formulary and pharmaceutical reimbursement exposure",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "PBM formulary and pharmaceutical reimbursement exposure",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 38,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1739940/000173994026000006/ci-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 35,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 39,
-    "target": 40,
-    "type": "competitor",
-    "strength": 0.58,
-    "label": "Large-cap pharmaceutical portfolio competition",
     "confidence": 4,
+    "label": "Large-cap pharmaceutical portfolio competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 39,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm",
       "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 40,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 39,
-    "target": 41,
-    "type": "competitor",
-    "strength": 0.58,
-    "label": "Immunology and pharmaceutical portfolio competition",
     "confidence": 4,
+    "label": "Immunology and pharmaceutical portfolio competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 39,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm",
       "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000008/abbv-20251231.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 41,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 40,
-    "target": 42,
-    "type": "competitor",
-    "strength": 0.58,
-    "label": "Large-cap pharmaceutical portfolio competition",
     "confidence": 4,
+    "label": "Large-cap pharmaceutical portfolio competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 40,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
-    ]
-  },
-  {
-    "source": 41,
+    ],
+    "strength": 0.58,
     "target": 42,
     "type": "competitor",
-    "strength": 0.54,
-    "label": "Large-cap pharmaceutical portfolio competition",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "Large-cap pharmaceutical portfolio competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 41,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000008/abbv-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
-    ]
+    ],
+    "strength": 0.54,
+    "target": 42,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 43,
-    "target": 39,
-    "type": "competitor",
-    "strength": 0.46,
-    "label": "MedTech and surgical device market overlap",
     "confidence": 4,
+    "label": "MedTech and surgical device market overlap",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 43,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1035267/000103526726000010/isrg-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm"
-    ]
+    ],
+    "strength": 0.46,
+    "target": 39,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 44,
-    "target": 40,
-    "type": "supply",
-    "strength": 0.5,
-    "label": "Life sciences tools and biopharma research exposure",
     "confidence": 5,
+    "label": "Life sciences tools and biopharma research exposure",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 44,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/97745/000009774526000018/tmo-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm"
-    ]
+    ],
+    "strength": 0.5,
+    "target": 40,
+    "type": "supply",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 44,
-    "target": 42,
-    "type": "supply",
-    "strength": 0.5,
-    "label": "Life sciences tools and biopharma research exposure",
     "confidence": 5,
+    "label": "Life sciences tools and biopharma research exposure",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 44,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/97745/000009774526000018/tmo-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
-    ]
+    ],
+    "strength": 0.5,
+    "target": 42,
+    "type": "supply",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 44,
-    "target": 35,
-    "type": "supply",
-    "strength": 0.48,
-    "label": "Life sciences tools and drug development ecosystem",
     "confidence": 5,
+    "label": "Life sciences tools and drug development ecosystem",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 44,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/97745/000009774526000018/tmo-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm"
-    ]
+    ],
+    "strength": 0.48,
+    "target": 35,
+    "type": "supply",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 45,
-    "target": 46,
-    "type": "competitor",
-    "strength": 0.9,
-    "label": "Integrated oil major competition",
     "confidence": 4,
+    "label": "Integrated oil major competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 45,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/34088/000003408826000045/xom-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/93410/000009341026000078/cvx-20251231.htm"
-    ]
+    ],
+    "strength": 0.9,
+    "target": 46,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 45,
-    "target": 47,
-    "type": "competitor",
-    "strength": 0.78,
-    "label": "Upstream oil and gas production competition",
     "confidence": 4,
+    "label": "Upstream oil and gas production competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 45,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/34088/000003408826000045/xom-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1163165/000116316526000009/cop-20251231.htm"
-    ]
-  },
-  {
-    "source": 46,
+    ],
+    "strength": 0.78,
     "target": 47,
     "type": "competitor",
-    "strength": 0.78,
-    "label": "Upstream oil and gas production competition",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "Upstream oil and gas production competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 46,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/93410/000009341026000078/cvx-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1163165/000116316526000009/cop-20251231.htm"
-    ]
+    ],
+    "strength": 0.78,
+    "target": 47,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 48,
-    "target": 45,
-    "type": "supply",
-    "strength": 0.68,
-    "label": "Oilfield services exposure to upstream producers",
     "confidence": 5,
+    "label": "Oilfield services exposure to upstream producers",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 48,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/87347/000119312526021017/slb-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/34088/000003408826000045/xom-20251231.htm"
-    ]
+    ],
+    "strength": 0.68,
+    "target": 45,
+    "type": "supply",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 48,
-    "target": 46,
-    "type": "supply",
-    "strength": 0.66,
-    "label": "Oilfield services exposure to upstream producers",
     "confidence": 5,
+    "label": "Oilfield services exposure to upstream producers",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 48,
     "source_urls": [
       "https://www.slb.com/news-and-insights/newsroom/press-release/2019/pr-2019-0917-slb-sis-microsoft-chevron",
       "https://www.sec.gov/Archives/edgar/data/87347/000119312526021017/slb-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/93410/000009341026000078/cvx-20251231.htm"
-    ]
+    ],
+    "strength": 0.66,
+    "target": 46,
+    "type": "supply",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 48,
-    "target": 47,
-    "type": "supply",
-    "strength": 0.66,
-    "label": "Oilfield services exposure to upstream producers",
     "confidence": 5,
+    "label": "Oilfield services exposure to upstream producers",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 48,
     "source_urls": [
       "https://www.slb.com/newsroom/press-release/2022/pr-2022-03-07-conocophillips-delfi",
       "https://www.sec.gov/Archives/edgar/data/87347/000119312526021017/slb-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1163165/000116316526000009/cop-20251231.htm"
-    ]
+    ],
+    "strength": 0.66,
+    "target": 47,
+    "type": "supply",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 49,
-    "target": 50,
-    "type": "competitor",
-    "strength": 0.64,
-    "label": "Heavy machinery and construction equipment competition",
     "confidence": 4,
+    "label": "Heavy machinery and construction equipment competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 49,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/18230/000001823026000008/cat-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/315189/000110465925122321/de-20251102x10k.htm"
-    ]
+    ],
+    "strength": 0.64,
+    "target": 50,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 49,
-    "target": 45,
-    "type": "ecosystem",
-    "strength": 0.48,
-    "label": "Energy and mining capital equipment demand exposure",
     "confidence": 4,
+    "label": "Energy and mining capital equipment demand exposure",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 49,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/18230/000001823026000008/cat-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/34088/000003408826000045/xom-20251231.htm"
-    ]
+    ],
+    "strength": 0.48,
+    "target": 45,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 50,
-    "target": 49,
-    "type": "ecosystem",
-    "strength": 0.44,
-    "label": "Industrial equipment cycle overlap",
     "confidence": 4,
+    "label": "Industrial equipment cycle overlap",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 50,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/315189/000110465925122321/de-20251102x10k.htm",
       "https://www.sec.gov/Archives/edgar/data/18230/000001823026000008/cat-20251231.htm"
-    ]
+    ],
+    "strength": 0.44,
+    "target": 49,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 51,
-    "target": 54,
-    "type": "supply",
-    "strength": 0.82,
-    "label": "Commercial aircraft engine supplier exposure",
     "confidence": 5,
+    "label": "Commercial aircraft engine supplier exposure",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 51,
     "source_urls": [
       "https://www.geaerospace.com/GE9X",
       "https://www.sec.gov/Archives/edgar/data/40545/000004054526000008/ge-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/12927/000162828026004357/ba-20251231.htm"
-    ]
-  },
-  {
-    "source": 53,
+    ],
+    "strength": 0.82,
     "target": 54,
     "type": "supply",
-    "strength": 0.72,
-    "label": "Commercial aerospace systems supplier exposure",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 5,
+    "label": "Commercial aerospace systems supplier exposure",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 53,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/101829/000010182926000006/rtx-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/12927/000162828026004357/ba-20251231.htm"
-    ]
-  },
-  {
-    "source": 52,
+    ],
+    "strength": 0.72,
     "target": 54,
     "type": "supply",
-    "strength": 0.58,
-    "label": "Aerospace avionics and systems supplier exposure",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 5,
+    "label": "Aerospace avionics and systems supplier exposure",
     "provenance": "Publicly disclosed supplier/customer ecosystem relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 52,
     "source_urls": [
       "https://aerospace.honeywell.com/us/en/products-and-services/aircraft/boeing",
       "https://www.sec.gov/Archives/edgar/data/773840/000077384026000013/hon-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/12927/000162828026004357/ba-20251231.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 54,
+    "type": "supply",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 51,
-    "target": 53,
-    "type": "competitor",
-    "strength": 0.52,
-    "label": "Aerospace propulsion and defense systems overlap",
     "confidence": 4,
+    "label": "Aerospace propulsion and defense systems overlap",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 51,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/40545/000004054526000008/ge-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/101829/000010182926000006/rtx-20251231.htm"
-    ]
-  },
-  {
-    "source": 52,
+    ],
+    "strength": 0.52,
     "target": 53,
     "type": "competitor",
-    "strength": 0.58,
-    "label": "Aerospace and defense systems competition",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "Aerospace and defense systems competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 52,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/773840/000077384026000013/hon-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/101829/000010182926000006/rtx-20251231.htm"
-    ]
+    ],
+    "strength": 0.58,
+    "target": 53,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 52,
-    "target": 51,
-    "type": "ecosystem",
-    "strength": 0.5,
-    "label": "Industrial automation and aerospace cycle exposure",
     "confidence": 4,
+    "label": "Industrial automation and aerospace cycle exposure",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 52,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/773840/000077384026000013/hon-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/40545/000004054526000008/ge-20251231.htm"
-    ]
+    ],
+    "strength": 0.5,
+    "target": 51,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 55,
-    "target": 1,
-    "type": "ecosystem",
-    "strength": 0.52,
-    "label": "AI compute demand and autonomous systems ecosystem",
     "confidence": 4,
+    "label": "AI compute demand and autonomous systems ecosystem",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 55,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1318605/000162828026003952/tsla-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
-    ]
+    ],
+    "strength": 0.52,
+    "target": 1,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 55,
-    "target": 5,
-    "type": "ecosystem",
-    "strength": 0.46,
-    "label": "Automotive compute and edge AI semiconductor ecosystem",
     "confidence": 4,
+    "label": "Automotive compute and edge AI semiconductor ecosystem",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 55,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1318605/000162828026003952/tsla-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/804328/000080432825000085/qcom-20250928.htm"
-    ]
+    ],
+    "strength": 0.46,
+    "target": 5,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 55,
-    "target": 21,
-    "type": "ecosystem",
-    "strength": 0.4,
-    "label": "Consumer hardware and services ecosystem overlap",
     "confidence": 4,
+    "label": "Consumer hardware and services ecosystem overlap",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 55,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1318605/000162828026003952/tsla-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
-    ]
+    ],
+    "strength": 0.4,
+    "target": 21,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 56,
-    "target": 57,
-    "type": "competitor",
-    "strength": 0.72,
-    "label": "Large-format retail and grocery competition",
     "confidence": 4,
+    "label": "Large-format retail and grocery competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 56,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm",
       "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm"
-    ]
+    ],
+    "strength": 0.72,
+    "target": 57,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 56,
-    "target": 19,
-    "type": "competitor",
-    "strength": 0.68,
-    "label": "Retail marketplace and fulfillment competition",
     "confidence": 4,
+    "label": "Retail marketplace and fulfillment competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 56,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm",
       "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
-    ]
-  },
-  {
-    "source": 57,
+    ],
+    "strength": 0.68,
     "target": 19,
     "type": "competitor",
-    "strength": 0.54,
-    "label": "Retail membership and e-commerce competition",
+    "verified_date": "2026-05-17"
+  },
+  {
     "confidence": 4,
+    "label": "Retail membership and e-commerce competition",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 57,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm",
       "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm"
-    ]
+    ],
+    "strength": 0.54,
+    "target": 19,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 58,
-    "target": 56,
-    "type": "ecosystem",
-    "strength": 0.42,
-    "label": "Consumer retail spending cycle exposure",
     "confidence": 4,
+    "label": "Consumer retail spending cycle exposure",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 58,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm",
       "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm"
-    ]
+    ],
+    "strength": 0.42,
+    "target": 56,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 58,
-    "target": 57,
-    "type": "ecosystem",
-    "strength": 0.4,
-    "label": "Household retail spending cycle exposure",
     "confidence": 4,
+    "label": "Household retail spending cycle exposure",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 58,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/354950/000162828026019436/hd-20260201.htm",
       "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm"
-    ]
+    ],
+    "strength": 0.4,
+    "target": 57,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 59,
-    "target": 60,
-    "type": "supply",
-    "strength": 0.68,
-    "label": "Restaurant beverage supplier ecosystem",
     "confidence": 5,
+    "label": "Restaurant beverage supplier ecosystem",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 59,
     "source_urls": [
       "https://www.mcdonalds.com/us/en-us/product/coca-cola-small.html",
       "https://www.sec.gov/Archives/edgar/data/63908/000006390826000035/mcd-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm"
-    ]
+    ],
+    "strength": 0.68,
+    "target": 60,
+    "type": "supply",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 60,
-    "target": 56,
-    "type": "ecosystem",
-    "strength": 0.52,
-    "label": "Beverage distribution through mass retail channels",
     "confidence": 4,
+    "label": "Beverage distribution through mass retail channels",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 60,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm"
-    ]
+    ],
+    "strength": 0.52,
+    "target": 56,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 60,
-    "target": 57,
-    "type": "ecosystem",
-    "strength": 0.48,
-    "label": "Beverage distribution through warehouse retail channels",
     "confidence": 4,
+    "label": "Beverage distribution through warehouse retail channels",
     "provenance": "Company disclosures and public investor materials; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 60,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/21344/000162828026010047/ko-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/909832/000090983225000101/cost-20250831.htm"
-    ]
+    ],
+    "strength": 0.48,
+    "target": 57,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 59,
-    "target": 56,
-    "type": "ecosystem",
-    "strength": 0.38,
-    "label": "Consumer spending and food retail demand exposure",
     "confidence": 4,
+    "label": "Consumer spending and food retail demand exposure",
     "provenance": "Market structure / direct peer relationship; source coverage refreshed in D145",
-    "verified_date": "2026-05-17",
+    "source": 59,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/63908/000006390826000035/mcd-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/104169/000010416926000055/wmt-20260131.htm"
-    ]
+    ],
+    "strength": 0.38,
+    "target": 56,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
   },
   {
-    "source": 21,
-    "target": 18,
-    "type": "partnership",
-    "strength": 0.86,
-    "label": "SEC filing relationship: licensing/search distribution",
     "confidence": 5,
+    "label": "SEC filing relationship: licensing/search distribution",
     "provenance": "SEC filing; source coverage refreshed in D145",
+    "source": 21,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
       "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm"
     ],
+    "strength": 0.86,
+    "target": 18,
+    "type": "partnership",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 3,
-    "target": 1,
-    "type": "partnership",
-    "strength": 0.94,
-    "label": "SEC filing relationship: licensing/search distribution",
     "confidence": 5,
+    "label": "SEC filing relationship: licensing/search distribution",
     "provenance": "SEC filing",
+    "source": 3,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm"
     ],
+    "strength": 0.94,
+    "target": 1,
+    "type": "partnership",
     "verified_date": "2026-01-23"
   },
   {
-    "source": 1,
-    "target": 17,
-    "type": "partnership",
-    "strength": 0.93,
-    "label": "SEC filing relationship: licensing/search distribution",
     "confidence": 5,
+    "label": "SEC filing relationship: licensing/search distribution",
     "provenance": "SEC filing",
+    "source": 1,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
     ],
+    "strength": 0.93,
+    "target": 17,
+    "type": "partnership",
     "verified_date": "2026-02-25"
   },
   {
-    "source": 3,
-    "target": 1,
-    "type": "investment",
-    "strength": 0.93,
-    "label": "SEC filing relationship: share issuance/ownership",
     "confidence": 5,
+    "label": "SEC filing relationship: share issuance/ownership",
     "provenance": "SEC filing",
+    "source": 3,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/50863/000005086326000011/intc-20251227.htm"
     ],
+    "strength": 0.93,
+    "target": 1,
+    "type": "investment",
     "verified_date": "2026-01-23"
   },
   {
-    "source": 13,
-    "target": 7,
-    "type": "supply",
-    "strength": 0.74,
-    "label": "Advanced-node data infrastructure silicon manufacturing ecosystem",
     "confidence": 5,
+    "label": "Advanced-node data infrastructure silicon manufacturing ecosystem",
     "provenance": "Company announcements, TSMC annual report, and SEC/company disclosures",
+    "source": 13,
     "source_urls": [
       "https://investor.marvell.com/news-events/press-releases/detail/263/marvell-extends-data-infrastructure-leadership-with-tsmc-3nm-platform",
       "https://investor.tsmc.com/static/annualReports/2025/english/index.html",
       "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm"
     ],
+    "strength": 0.74,
+    "target": 7,
+    "type": "supply",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 13,
-    "target": 1,
-    "type": "partnership",
-    "strength": 0.7,
-    "label": "NVLink Fusion custom silicon and AI networking ecosystem",
     "confidence": 5,
+    "label": "NVLink Fusion custom silicon and AI networking ecosystem",
     "provenance": "Company announcements and AI infrastructure ecosystem disclosures",
+    "source": 13,
     "source_urls": [
       "https://www.marvell.com/company/newsroom/nvidia-ai-ecosystem-expands-marvell-joins-forces-through-nvlink-fusion.html",
       "https://www.nvidia.com/en-us/data-center/nvlink-fusion/",
       "https://www.sec.gov/Archives/edgar/data/1835632/000183563226000011/mrvl-20260131.htm",
       "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
     ],
+    "strength": 0.7,
+    "target": 1,
+    "type": "partnership",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 16,
-    "target": 1,
-    "type": "partnership",
-    "strength": 0.72,
-    "label": "AI-accelerated EDA and engineering design collaboration",
     "confidence": 5,
+    "label": "AI-accelerated EDA and engineering design collaboration",
     "provenance": "Company-announced strategic partnership",
+    "source": 16,
     "source_urls": [
       "https://investor.synopsys.com/news/news-details/2025/NVIDIA-and-Synopsys-Announce-Strategic-Partnership-to-Revolutionize-Engineering-and-Design/default.aspx",
       "https://www.sec.gov/Archives/edgar/data/883241/000088324125000028/snps-20251031.htm",
       "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000021/nvda-20260125.htm"
     ],
+    "strength": 0.72,
+    "target": 1,
+    "type": "partnership",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 17,
-    "target": 24,
-    "type": "partnership",
-    "strength": 0.66,
-    "label": "Azure AI and Snowflake Data Cloud partnership",
     "confidence": 5,
+    "label": "Azure AI and Snowflake Data Cloud partnership",
     "provenance": "Company-announced cloud and AI partnership",
+    "source": 17,
     "source_urls": [
       "https://www.snowflake.com/en/news/press-releases/snowflake-expands-partnership-with-microsoft-to-bring-large-scale-generative-ai-models-and-increased-machine-learning-capabilities-to-the-data-cloud-2/",
       "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
       "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000008/snow-20260131.htm"
     ],
+    "strength": 0.66,
+    "target": 24,
+    "type": "partnership",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 17,
-    "target": 23,
-    "type": "ecosystem",
-    "strength": 0.62,
-    "label": "Enterprise customer data and productivity workflow ecosystem",
     "confidence": 4,
+    "label": "Enterprise customer data and productivity workflow ecosystem",
     "provenance": "SEC filings and enterprise software ecosystem disclosures",
+    "source": 17,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
       "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000060/crm-20260131.htm"
     ],
+    "strength": 0.62,
+    "target": 23,
+    "type": "ecosystem",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 19,
-    "target": 20,
-    "type": "competitor",
-    "strength": 0.7,
-    "label": "Digital advertising, AI infrastructure, and platform competition",
     "confidence": 4,
+    "label": "Digital advertising, AI infrastructure, and platform competition",
     "provenance": "SEC annual reports and market structure disclosures",
+    "source": 19,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1018724/000101872426000004/amzn-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1326801/000162828026003942/meta-20251231.htm"
     ],
+    "strength": 0.7,
+    "target": 20,
+    "type": "competitor",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 18,
-    "target": 22,
-    "type": "competitor",
-    "strength": 0.66,
-    "label": "Enterprise cloud infrastructure competition",
     "confidence": 4,
+    "label": "Enterprise cloud infrastructure competition",
     "provenance": "SEC annual reports and cloud infrastructure competition disclosures",
+    "source": 18,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1652044/000165204426000018/goog-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1341439/000095017025087926/orcl-20250531.htm"
     ],
+    "strength": 0.66,
+    "target": 22,
+    "type": "competitor",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 17,
-    "target": 21,
-    "type": "competitor",
-    "strength": 0.64,
-    "label": "Operating system, productivity, device, and services competition",
     "confidence": 4,
+    "label": "Operating system, productivity, device, and services competition",
     "provenance": "SEC annual reports and platform competition disclosures",
+    "source": 17,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/789019/000095017025100235/msft-20250630.htm",
       "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
     ],
+    "strength": 0.64,
+    "target": 21,
+    "type": "competitor",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 35,
-    "target": 39,
-    "type": "competitor",
-    "strength": 0.54,
-    "label": "Large-cap pharmaceutical and medtech portfolio competition",
     "confidence": 4,
+    "label": "Large-cap pharmaceutical and medtech portfolio competition",
     "provenance": "SEC annual reports and healthcare market competition disclosures",
+    "source": 35,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/59478/000005947826000013/lly-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm"
     ],
+    "strength": 0.54,
+    "target": 39,
+    "type": "competitor",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 40,
-    "target": 41,
-    "type": "competitor",
-    "strength": 0.56,
-    "label": "Large-cap pharmaceutical portfolio and immunology competition",
     "confidence": 4,
+    "label": "Large-cap pharmaceutical portfolio and immunology competition",
     "provenance": "SEC annual reports and pharmaceutical portfolio competition disclosures",
+    "source": 40,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/310158/000031015826000063/mrk-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/1551152/000155115226000008/abbv-20251231.htm"
     ],
+    "strength": 0.56,
+    "target": 41,
+    "type": "competitor",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 39,
-    "target": 42,
-    "type": "competitor",
-    "strength": 0.54,
-    "label": "Large-cap pharmaceutical and healthcare portfolio competition",
     "confidence": 4,
+    "label": "Large-cap pharmaceutical and healthcare portfolio competition",
     "provenance": "SEC annual reports and healthcare market competition disclosures",
+    "source": 39,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/200406/000020040626000016/jnj-20251228.htm",
       "https://www.sec.gov/Archives/edgar/data/78003/000007800326000026/pfe-20251231.htm"
     ],
+    "strength": 0.54,
+    "target": 42,
+    "type": "competitor",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 30,
-    "target": 31,
-    "type": "ecosystem",
-    "strength": 0.6,
-    "label": "Issuer, card spend, and commercial payments ecosystem",
     "confidence": 4,
+    "label": "Issuer, card spend, and commercial payments ecosystem",
     "provenance": "SEC annual reports and payments infrastructure disclosures",
+    "source": 30,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/4962/000000496226000080/axp-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/19617/000162828026008131/jpm-20251231.htm"
     ],
+    "strength": 0.6,
+    "target": 31,
+    "type": "ecosystem",
     "verified_date": "2026-05-17"
   },
   {
-    "source": 28,
-    "target": 34,
-    "type": "ecosystem",
-    "strength": 0.62,
-    "label": "Card issuing and global payment network ecosystem",
     "confidence": 4,
+    "label": "Card issuing and global payment network ecosystem",
     "provenance": "SEC annual reports and payments infrastructure disclosures",
+    "source": 28,
     "source_urls": [
       "https://www.sec.gov/Archives/edgar/data/1141391/000114139126000013/ma-20251231.htm",
       "https://www.sec.gov/Archives/edgar/data/927628/000092762826000024/cof-20251231.htm"
     ],
+    "strength": 0.62,
+    "target": 34,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 5,
+    "label": "Project Helix on-premises generative AI infrastructure collaboration",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official company source",
+    "source": 1,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001045810.json",
+      "https://data.sec.gov/submissions/CIK0001571996.json",
+      "https://nvidianews.nvidia.com/news/dell-technologies-and-nvidia-introduce-project-helix-for-secure-on-premises-generative-ai"
+    ],
+    "strength": 0.82,
+    "target": 61,
+    "type": "partnership",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 5,
+    "label": "NVIDIA AI Computing by HPE co-developed AI infrastructure portfolio",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official company source",
+    "source": 1,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001045810.json",
+      "https://data.sec.gov/submissions/CIK0001645590.json",
+      "https://nvidianews.nvidia.com/news/hpe-nvidia-ai-computing-generative-ai"
+    ],
+    "strength": 0.84,
+    "target": 62,
+    "type": "partnership",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "NVIDIA Blackwell system integration and AI factory infrastructure exposure",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official company source",
+    "source": 1,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001045810.json",
+      "https://data.sec.gov/submissions/CIK0001375365.json",
+      "https://ir.supermicro.com/news/news-details/2025/Supermicro-Begins-Volume-Shipments-of-NVIDIA-Blackwell-Ultra-Systems-and-Rack-Plug-and-Play-Data-Center-Scale-Solutions/default.aspx"
+    ],
+    "strength": 0.78,
+    "target": 63,
+    "type": "ecosystem",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 5,
+    "label": "Expanded strategic cybersecurity platform partnership",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official company source",
+    "source": 107,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001477333.json",
+      "https://data.sec.gov/submissions/CIK0001535527.json",
+      "https://www.cloudflare.com/en-gb/press/press-releases/2024/crowdstrike-and-cloudflare-announce-expanded-strategic-partnership-to-secure/"
+    ],
+    "strength": 0.78,
+    "target": 110,
+    "type": "partnership",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Enterprise server and infrastructure platform competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 61,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001571996.json",
+      "https://data.sec.gov/submissions/CIK0001645590.json"
+    ],
+    "strength": 0.76,
+    "target": 62,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Analog and mixed-signal semiconductor peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 72,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000006281.json",
+      "https://data.sec.gov/submissions/CIK0000097476.json"
+    ],
+    "strength": 0.78,
+    "target": 70,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Embedded and analog semiconductor peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 72,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000097476.json",
+      "https://data.sec.gov/submissions/CIK0000827054.json"
+    ],
+    "strength": 0.72,
+    "target": 71,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Power and analog semiconductor peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 72,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000097476.json",
+      "https://data.sec.gov/submissions/CIK0001097864.json"
+    ],
+    "strength": 0.7,
+    "target": 69,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Automotive and embedded semiconductor peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 74,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000827054.json",
+      "https://data.sec.gov/submissions/CIK0001413447.json"
+    ],
+    "strength": 0.7,
+    "target": 71,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "RF semiconductor peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 75,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000004127.json",
+      "https://data.sec.gov/submissions/CIK0001604778.json"
+    ],
+    "strength": 0.77,
+    "target": 76,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Electronic test and measurement equipment peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 73,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000097210.json",
+      "https://data.sec.gov/submissions/CIK0001601046.json"
+    ],
+    "strength": 0.66,
+    "target": 77,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Defense prime contractor peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 78,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000936468.json",
+      "https://data.sec.gov/submissions/CIK0001133421.json"
+    ],
+    "strength": 0.82,
+    "target": 79,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Defense platforms and mission systems peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 78,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000040533.json",
+      "https://data.sec.gov/submissions/CIK0000936468.json"
+    ],
+    "strength": 0.78,
+    "target": 80,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Defense systems contractor peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 79,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000040533.json",
+      "https://data.sec.gov/submissions/CIK0001133421.json"
+    ],
+    "strength": 0.74,
+    "target": 80,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Exchange and market technology infrastructure competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 85,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001120193.json",
+      "https://data.sec.gov/submissions/CIK0001571949.json"
+    ],
+    "strength": 0.78,
+    "target": 87,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Derivatives and options exchange infrastructure competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 86,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001156375.json",
+      "https://data.sec.gov/submissions/CIK0001374310.json"
+    ],
+    "strength": 0.74,
+    "target": 93,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Credit ratings and analytics peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 88,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000064040.json",
+      "https://data.sec.gov/submissions/CIK0001059556.json"
+    ],
+    "strength": 0.86,
+    "target": 89,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Investment banking and wealth management peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 91,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000886982.json",
+      "https://data.sec.gov/submissions/CIK0000895421.json"
+    ],
+    "strength": 0.84,
+    "target": 92,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Parcel logistics and freight delivery peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 94,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001048911.json",
+      "https://data.sec.gov/submissions/CIK0001090727.json"
+    ],
+    "strength": 0.86,
+    "target": 95,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "North American rail freight peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 96,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000100885.json",
+      "https://data.sec.gov/submissions/CIK0000277948.json"
+    ],
+    "strength": 0.76,
+    "target": 97,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Mass-market general merchandise retail competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 56,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000027419.json",
+      "https://data.sec.gov/submissions/CIK0000104169.json"
+    ],
+    "strength": 0.75,
+    "target": 101,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Home improvement retail peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 58,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000060667.json",
+      "https://data.sec.gov/submissions/CIK0000354950.json"
+    ],
+    "strength": 0.86,
+    "target": 100,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Local commerce delivery platform competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 105,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001543151.json",
+      "https://data.sec.gov/submissions/CIK0001792789.json"
+    ],
+    "strength": 0.72,
+    "target": 104,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Restaurant and consumer food-service peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 59,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0000063908.json",
+      "https://data.sec.gov/submissions/CIK0001058090.json"
+    ],
+    "strength": 0.62,
+    "target": 103,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Network security platform peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 26,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001262039.json",
+      "https://data.sec.gov/submissions/CIK0001327567.json"
+    ],
+    "strength": 0.82,
+    "target": 106,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Enterprise cybersecurity platform peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 26,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001327567.json",
+      "https://data.sec.gov/submissions/CIK0001535527.json"
+    ],
+    "strength": 0.74,
+    "target": 107,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Cloud security platform peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 107,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001535527.json",
+      "https://data.sec.gov/submissions/CIK0001713683.json"
+    ],
+    "strength": 0.68,
+    "target": 111,
+    "type": "competitor",
+    "verified_date": "2026-05-17"
+  },
+  {
+    "confidence": 4,
+    "label": "Cloud data platform and database workload peer competition",
+    "production_approval": {
+      "approval_date": "2026-05-17",
+      "approval_status": "reviewer_approved",
+      "automatic_promotion_allowed": false,
+      "source_backed": true
+    },
+    "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+    "source": 24,
+    "source_urls": [
+      "https://data.sec.gov/submissions/CIK0001441816.json",
+      "https://data.sec.gov/submissions/CIK0001640147.json"
+    ],
+    "strength": 0.64,
+    "target": 109,
+    "type": "competitor",
     "verified_date": "2026-05-17"
   }
 ]

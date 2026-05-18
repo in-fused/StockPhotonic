@@ -1,0 +1,297 @@
+{
+  "metadata": {
+    "approval_status": "reviewer_approved_production_expansion",
+    "approved_at_utc": "2026-05-17T00:00:00+00:00",
+    "approved_by": "D149 reviewer gate",
+    "automatic_promotion_allowed": false,
+    "browser_ingestion": false,
+    "production_write_allowed": true,
+    "relationship_generation_allowed": false,
+    "schema_version": 1,
+    "source_policy": "Official listing and SEC identity sources are required for every company. Relationship edges must be explicitly listed below and source-backed; corridor assignments do not become relationships."
+  },
+  "approved_company_batches": [
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "tickers": ["DELL", "HPE", "SMCI", "ETN", "TT", "APH", "GLW", "JCI"]
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "tickers": ["ON", "ADI", "MCHP", "TXN", "TER", "NXPI", "SWKS", "QRVO", "KEYS"]
+    },
+    {
+      "batch_id": "aerospace_supplier_batch",
+      "tickers": ["LMT", "NOC", "GD", "TXT", "TDG", "HWM", "HII"]
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "tickers": ["ICE", "CME", "NDAQ", "SPGI", "MCO", "BLK", "GS", "MS", "CBOE"]
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "tickers": ["UPS", "FDX", "UNP", "CSX", "ODFL", "URI", "LOW", "TGT", "SBUX", "CMG", "DASH", "UBER"]
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "tickers": ["FTNT", "CRWD", "DDOG", "MDB", "NET", "ZS", "TEAM", "ADSK"]
+    }
+  ],
+  "approved_relationships": [
+    {
+      "source_ticker": "NVDA",
+      "target_ticker": "DELL",
+      "type": "partnership",
+      "strength": 0.82,
+      "label": "Project Helix on-premises generative AI infrastructure collaboration",
+      "provenance": "Reviewer-approved D149 production expansion using official company source",
+      "source_urls": ["https://nvidianews.nvidia.com/news/dell-technologies-and-nvidia-introduce-project-helix-for-secure-on-premises-generative-ai"],
+      "source_url_strategy": "append_endpoint_sec_sources"
+    },
+    {
+      "source_ticker": "NVDA",
+      "target_ticker": "HPE",
+      "type": "partnership",
+      "strength": 0.84,
+      "label": "NVIDIA AI Computing by HPE co-developed AI infrastructure portfolio",
+      "provenance": "Reviewer-approved D149 production expansion using official company source",
+      "source_urls": ["https://nvidianews.nvidia.com/news/hpe-nvidia-ai-computing-generative-ai"],
+      "source_url_strategy": "append_endpoint_sec_sources"
+    },
+    {
+      "source_ticker": "NVDA",
+      "target_ticker": "SMCI",
+      "type": "ecosystem",
+      "strength": 0.78,
+      "label": "NVIDIA Blackwell system integration and AI factory infrastructure exposure",
+      "provenance": "Reviewer-approved D149 production expansion using official company source",
+      "source_urls": ["https://ir.supermicro.com/news/news-details/2025/Supermicro-Begins-Volume-Shipments-of-NVIDIA-Blackwell-Ultra-Systems-and-Rack-Plug-and-Play-Data-Center-Scale-Solutions/default.aspx"],
+      "source_url_strategy": "append_endpoint_sec_sources"
+    },
+    {
+      "source_ticker": "CRWD",
+      "target_ticker": "NET",
+      "type": "partnership",
+      "strength": 0.78,
+      "label": "Expanded strategic cybersecurity platform partnership",
+      "provenance": "Reviewer-approved D149 production expansion using official company source",
+      "source_urls": ["https://www.cloudflare.com/en-gb/press/press-releases/2024/crowdstrike-and-cloudflare-announce-expanded-strategic-partnership-to-secure/"],
+      "source_url_strategy": "append_endpoint_sec_sources"
+    },
+    {
+      "source_ticker": "DELL",
+      "target_ticker": "HPE",
+      "type": "competitor",
+      "strength": 0.76,
+      "label": "Enterprise server and infrastructure platform competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "TXN",
+      "target_ticker": "ADI",
+      "type": "competitor",
+      "strength": 0.78,
+      "label": "Analog and mixed-signal semiconductor peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "TXN",
+      "target_ticker": "MCHP",
+      "type": "competitor",
+      "strength": 0.72,
+      "label": "Embedded and analog semiconductor peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "TXN",
+      "target_ticker": "ON",
+      "type": "competitor",
+      "strength": 0.7,
+      "label": "Power and analog semiconductor peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "NXPI",
+      "target_ticker": "MCHP",
+      "type": "competitor",
+      "strength": 0.7,
+      "label": "Automotive and embedded semiconductor peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "SWKS",
+      "target_ticker": "QRVO",
+      "type": "competitor",
+      "strength": 0.77,
+      "label": "RF semiconductor peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "TER",
+      "target_ticker": "KEYS",
+      "type": "competitor",
+      "strength": 0.66,
+      "label": "Electronic test and measurement equipment peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "LMT",
+      "target_ticker": "NOC",
+      "type": "competitor",
+      "strength": 0.82,
+      "label": "Defense prime contractor peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "LMT",
+      "target_ticker": "GD",
+      "type": "competitor",
+      "strength": 0.78,
+      "label": "Defense platforms and mission systems peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "NOC",
+      "target_ticker": "GD",
+      "type": "competitor",
+      "strength": 0.74,
+      "label": "Defense systems contractor peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "ICE",
+      "target_ticker": "NDAQ",
+      "type": "competitor",
+      "strength": 0.78,
+      "label": "Exchange and market technology infrastructure competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "CME",
+      "target_ticker": "CBOE",
+      "type": "competitor",
+      "strength": 0.74,
+      "label": "Derivatives and options exchange infrastructure competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "SPGI",
+      "target_ticker": "MCO",
+      "type": "competitor",
+      "strength": 0.86,
+      "label": "Credit ratings and analytics peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "GS",
+      "target_ticker": "MS",
+      "type": "competitor",
+      "strength": 0.84,
+      "label": "Investment banking and wealth management peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "UPS",
+      "target_ticker": "FDX",
+      "type": "competitor",
+      "strength": 0.86,
+      "label": "Parcel logistics and freight delivery peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "UNP",
+      "target_ticker": "CSX",
+      "type": "competitor",
+      "strength": 0.76,
+      "label": "North American rail freight peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "WMT",
+      "target_ticker": "TGT",
+      "type": "competitor",
+      "strength": 0.75,
+      "label": "Mass-market general merchandise retail competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "HD",
+      "target_ticker": "LOW",
+      "type": "competitor",
+      "strength": 0.86,
+      "label": "Home improvement retail peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "UBER",
+      "target_ticker": "DASH",
+      "type": "competitor",
+      "strength": 0.72,
+      "label": "Local commerce delivery platform competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "MCD",
+      "target_ticker": "CMG",
+      "type": "competitor",
+      "strength": 0.62,
+      "label": "Restaurant and consumer food-service peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "PANW",
+      "target_ticker": "FTNT",
+      "type": "competitor",
+      "strength": 0.82,
+      "label": "Network security platform peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "PANW",
+      "target_ticker": "CRWD",
+      "type": "competitor",
+      "strength": 0.74,
+      "label": "Enterprise cybersecurity platform peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "CRWD",
+      "target_ticker": "ZS",
+      "type": "competitor",
+      "strength": 0.68,
+      "label": "Cloud security platform peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    },
+    {
+      "source_ticker": "SNOW",
+      "target_ticker": "MDB",
+      "type": "competitor",
+      "strength": 0.64,
+      "label": "Cloud data platform and database workload peer competition",
+      "provenance": "Reviewer-approved D149 production expansion using official SEC identity sources",
+      "source_url_strategy": "sec_submissions_for_endpoints"
+    }
+  ]
+}

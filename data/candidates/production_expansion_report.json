@@ -1,0 +1,889 @@
+{
+  "batch_results": [
+    {
+      "batch_id": "aerospace_supplier_batch",
+      "companies_added": 7,
+      "tickers": [
+        "GD",
+        "HII",
+        "HWM",
+        "LMT",
+        "NOC",
+        "TDG",
+        "TXT"
+      ]
+    },
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "companies_added": 8,
+      "tickers": [
+        "APH",
+        "DELL",
+        "ETN",
+        "GLW",
+        "HPE",
+        "JCI",
+        "SMCI",
+        "TT"
+      ]
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "companies_added": 8,
+      "tickers": [
+        "ADSK",
+        "CRWD",
+        "DDOG",
+        "FTNT",
+        "MDB",
+        "NET",
+        "TEAM",
+        "ZS"
+      ]
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "companies_added": 9,
+      "tickers": [
+        "BLK",
+        "CBOE",
+        "CME",
+        "GS",
+        "ICE",
+        "MCO",
+        "MS",
+        "NDAQ",
+        "SPGI"
+      ]
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "companies_added": 12,
+      "tickers": [
+        "CMG",
+        "CSX",
+        "DASH",
+        "FDX",
+        "LOW",
+        "ODFL",
+        "SBUX",
+        "TGT",
+        "UBER",
+        "UNP",
+        "UPS",
+        "URI"
+      ]
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "companies_added": 9,
+      "tickers": [
+        "ADI",
+        "KEYS",
+        "MCHP",
+        "NXPI",
+        "ON",
+        "QRVO",
+        "SWKS",
+        "TER",
+        "TXN"
+      ]
+    }
+  ],
+  "company_additions": [
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "cik": "0001571996",
+      "id": 61,
+      "industry": "Data Center Systems and Enterprise Infrastructure",
+      "name": "Dell Technologies Inc.",
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_url_count": 2,
+      "ticker": "DELL"
+    },
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "cik": "0001645590",
+      "id": 62,
+      "industry": "Enterprise Servers and Networking",
+      "name": "Hewlett Packard Enterprise Co",
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_url_count": 2,
+      "ticker": "HPE"
+    },
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "cik": "0001375365",
+      "id": 63,
+      "industry": "AI Server Systems",
+      "name": "Super Micro Computer, Inc.",
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_url_count": 2,
+      "ticker": "SMCI"
+    },
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "cik": "0001551182",
+      "id": 64,
+      "industry": "Electrical Power Management",
+      "name": "Eaton Corp plc",
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_url_count": 2,
+      "ticker": "ETN"
+    },
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "cik": "0001466258",
+      "id": 65,
+      "industry": "HVAC and Thermal Management",
+      "name": "Trane Technologies plc",
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_url_count": 2,
+      "ticker": "TT"
+    },
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "cik": "0000820313",
+      "id": 66,
+      "industry": "Electronic Interconnects",
+      "name": "AMPHENOL CORP",
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_url_count": 2,
+      "ticker": "APH"
+    },
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "cik": "0000024741",
+      "id": 67,
+      "industry": "Optical and Specialty Materials",
+      "name": "CORNING INC",
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_url_count": 2,
+      "ticker": "GLW"
+    },
+    {
+      "batch_id": "ai_infrastructure_expansion",
+      "cik": "0000833444",
+      "id": 68,
+      "industry": "Building Systems and Cooling Controls",
+      "name": "Johnson Controls International plc",
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_url_count": 2,
+      "ticker": "JCI"
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "cik": "0001097864",
+      "id": 69,
+      "industry": "Power and Sensor Semiconductors",
+      "name": "ON SEMICONDUCTOR CORP",
+      "sector": "Semiconductor Suppliers",
+      "source_url_count": 2,
+      "ticker": "ON"
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "cik": "0000006281",
+      "id": 70,
+      "industry": "Analog and Mixed-Signal Semiconductors",
+      "name": "ANALOG DEVICES INC",
+      "sector": "Semiconductor Suppliers",
+      "source_url_count": 2,
+      "ticker": "ADI"
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "cik": "0000827054",
+      "id": 71,
+      "industry": "Embedded Control Semiconductors",
+      "name": "MICROCHIP TECHNOLOGY INC",
+      "sector": "Semiconductor Suppliers",
+      "source_url_count": 2,
+      "ticker": "MCHP"
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "cik": "0000097476",
+      "id": 72,
+      "industry": "Analog and Embedded Semiconductors",
+      "name": "TEXAS INSTRUMENTS INC",
+      "sector": "Semiconductor Suppliers",
+      "source_url_count": 2,
+      "ticker": "TXN"
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "cik": "0000097210",
+      "id": 73,
+      "industry": "Semiconductor Test Equipment",
+      "name": "TERADYNE, INC",
+      "sector": "Semiconductor Suppliers",
+      "source_url_count": 2,
+      "ticker": "TER"
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "cik": "0001413447",
+      "id": 74,
+      "industry": "Automotive and Edge Semiconductors",
+      "name": "NXP Semiconductors N.V.",
+      "sector": "Semiconductor Suppliers",
+      "source_url_count": 2,
+      "ticker": "NXPI"
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "cik": "0000004127",
+      "id": 75,
+      "industry": "RF and Connectivity Semiconductors",
+      "name": "SKYWORKS SOLUTIONS, INC.",
+      "sector": "Semiconductor Suppliers",
+      "source_url_count": 2,
+      "ticker": "SWKS"
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "cik": "0001604778",
+      "id": 76,
+      "industry": "RF Semiconductors",
+      "name": "Qorvo, Inc.",
+      "sector": "Semiconductor Suppliers",
+      "source_url_count": 2,
+      "ticker": "QRVO"
+    },
+    {
+      "batch_id": "semiconductor_supplier_batch",
+      "cik": "0001601046",
+      "id": 77,
+      "industry": "Electronic Test and Measurement",
+      "name": "Keysight Technologies, Inc.",
+      "sector": "Semiconductor Suppliers",
+      "source_url_count": 2,
+      "ticker": "KEYS"
+    },
+    {
+      "batch_id": "aerospace_supplier_batch",
+      "cik": "0000936468",
+      "id": 78,
+      "industry": "Defense Prime Contractor",
+      "name": "LOCKHEED MARTIN CORP",
+      "sector": "Defense / Aerospace Suppliers",
+      "source_url_count": 2,
+      "ticker": "LMT"
+    },
+    {
+      "batch_id": "aerospace_supplier_batch",
+      "cik": "0001133421",
+      "id": 79,
+      "industry": "Defense Prime Contractor",
+      "name": "NORTHROP GRUMMAN CORP",
+      "sector": "Defense / Aerospace Suppliers",
+      "source_url_count": 2,
+      "ticker": "NOC"
+    },
+    {
+      "batch_id": "aerospace_supplier_batch",
+      "cik": "0000040533",
+      "id": 80,
+      "industry": "Defense Platforms and Mission Systems",
+      "name": "GENERAL DYNAMICS CORP",
+      "sector": "Defense / Aerospace Suppliers",
+      "source_url_count": 2,
+      "ticker": "GD"
+    },
+    {
+      "batch_id": "aerospace_supplier_batch",
+      "cik": "0000217346",
+      "id": 81,
+      "industry": "Aerospace and Defense Platforms",
+      "name": "TEXTRON INC",
+      "sector": "Defense / Aerospace Suppliers",
+      "source_url_count": 2,
+      "ticker": "TXT"
+    },
+    {
+      "batch_id": "aerospace_supplier_batch",
+      "cik": "0001260221",
+      "id": 82,
+      "industry": "Aerospace Components",
+      "name": "TransDigm Group INC",
+      "sector": "Defense / Aerospace Suppliers",
+      "source_url_count": 2,
+      "ticker": "TDG"
+    },
+    {
+      "batch_id": "aerospace_supplier_batch",
+      "cik": "0000004281",
+      "id": 83,
+      "industry": "Aerospace Components",
+      "name": "Howmet Aerospace Inc.",
+      "sector": "Defense / Aerospace Suppliers",
+      "source_url_count": 2,
+      "ticker": "HWM"
+    },
+    {
+      "batch_id": "aerospace_supplier_batch",
+      "cik": "0001501585",
+      "id": 84,
+      "industry": "Defense Shipbuilding",
+      "name": "HUNTINGTON INGALLS INDUSTRIES, INC.",
+      "sector": "Defense / Aerospace Suppliers",
+      "source_url_count": 2,
+      "ticker": "HII"
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "cik": "0001571949",
+      "id": 85,
+      "industry": "Exchange and Data Infrastructure",
+      "name": "Intercontinental Exchange, Inc.",
+      "sector": "Financial Market Infrastructure",
+      "source_url_count": 2,
+      "ticker": "ICE"
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "cik": "0001156375",
+      "id": 86,
+      "industry": "Derivatives Exchange Infrastructure",
+      "name": "CME GROUP INC.",
+      "sector": "Financial Market Infrastructure",
+      "source_url_count": 2,
+      "ticker": "CME"
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "cik": "0001120193",
+      "id": 87,
+      "industry": "Exchange and Market Technology",
+      "name": "NASDAQ, INC.",
+      "sector": "Financial Market Infrastructure",
+      "source_url_count": 2,
+      "ticker": "NDAQ"
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "cik": "0000064040",
+      "id": 88,
+      "industry": "Market Data, Index, and Ratings Infrastructure",
+      "name": "S&P Global Inc.",
+      "sector": "Financial Market Infrastructure",
+      "source_url_count": 2,
+      "ticker": "SPGI"
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "cik": "0001059556",
+      "id": 89,
+      "industry": "Credit Ratings and Analytics",
+      "name": "MOODYS CORP",
+      "sector": "Financial Market Infrastructure",
+      "source_url_count": 2,
+      "ticker": "MCO"
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "cik": "0001364742",
+      "id": 90,
+      "industry": "Asset Management and Market Infrastructure",
+      "name": "BlackRock, Inc.",
+      "sector": "Financial Market Infrastructure",
+      "source_url_count": 2,
+      "ticker": "BLK"
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "cik": "0000886982",
+      "id": 91,
+      "industry": "Investment Banking and Markets",
+      "name": "GOLDMAN SACHS GROUP INC",
+      "sector": "Financial Market Infrastructure",
+      "source_url_count": 2,
+      "ticker": "GS"
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "cik": "0000895421",
+      "id": 92,
+      "industry": "Investment Banking and Wealth Management",
+      "name": "MORGAN STANLEY",
+      "sector": "Financial Market Infrastructure",
+      "source_url_count": 2,
+      "ticker": "MS"
+    },
+    {
+      "batch_id": "financial_infrastructure_batch",
+      "cik": "0001374310",
+      "id": 93,
+      "industry": "Options Exchange and Market Infrastructure",
+      "name": "Cboe Global Markets, Inc.",
+      "sector": "Financial Market Infrastructure",
+      "source_url_count": 2,
+      "ticker": "CBOE"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0001090727",
+      "id": 94,
+      "industry": "Parcel Logistics",
+      "name": "UNITED PARCEL SERVICE INC",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "UPS"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0001048911",
+      "id": 95,
+      "industry": "Parcel and Freight Logistics",
+      "name": "FEDEX CORP",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "FDX"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0000100885",
+      "id": 96,
+      "industry": "Rail Freight",
+      "name": "UNION PACIFIC CORP",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "UNP"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0000277948",
+      "id": 97,
+      "industry": "Rail Freight",
+      "name": "CSX CORP",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "CSX"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0000878927",
+      "id": 98,
+      "industry": "Less-than-Truckload Freight",
+      "name": "OLD DOMINION FREIGHT LINE, INC.",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "ODFL"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0001067701",
+      "id": 99,
+      "industry": "Industrial Equipment Rental and Distribution",
+      "name": "UNITED RENTALS, INC.",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "URI"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0000060667",
+      "id": 100,
+      "industry": "Home Improvement Retail",
+      "name": "LOWES COMPANIES INC",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "LOW"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0000027419",
+      "id": 101,
+      "industry": "General Merchandise Retail",
+      "name": "TARGET CORP",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "TGT"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0000829224",
+      "id": 102,
+      "industry": "Restaurants and Consumer Retail",
+      "name": "STARBUCKS CORP",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "SBUX"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0001058090",
+      "id": 103,
+      "industry": "Restaurants and Consumer Food Service",
+      "name": "CHIPOTLE MEXICAN GRILL INC",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "CMG"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0001792789",
+      "id": 104,
+      "industry": "Local Commerce and Delivery Platform",
+      "name": "DoorDash, Inc.",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "DASH"
+    },
+    {
+      "batch_id": "retail_logistics_distribution_batch",
+      "cik": "0001543151",
+      "id": 105,
+      "industry": "Mobility, Delivery, and Logistics Platform",
+      "name": "Uber Technologies, Inc",
+      "sector": "Retail Logistics / Distribution",
+      "source_url_count": 2,
+      "ticker": "UBER"
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "cik": "0001262039",
+      "id": 106,
+      "industry": "Network Security",
+      "name": "Fortinet, Inc.",
+      "sector": "Enterprise Software / Cloud Security",
+      "source_url_count": 2,
+      "ticker": "FTNT"
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "cik": "0001535527",
+      "id": 107,
+      "industry": "Cloud Security",
+      "name": "CrowdStrike Holdings, Inc.",
+      "sector": "Enterprise Software / Cloud Security",
+      "source_url_count": 2,
+      "ticker": "CRWD"
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "cik": "0001561550",
+      "id": 108,
+      "industry": "Cloud Observability and Monitoring",
+      "name": "Datadog, Inc.",
+      "sector": "Enterprise Software / Cloud Security",
+      "source_url_count": 2,
+      "ticker": "DDOG"
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "cik": "0001441816",
+      "id": 109,
+      "industry": "Cloud Database Software",
+      "name": "MongoDB, Inc.",
+      "sector": "Enterprise Software / Cloud Security",
+      "source_url_count": 2,
+      "ticker": "MDB"
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "cik": "0001477333",
+      "id": 110,
+      "industry": "Edge Cloud and Security",
+      "name": "Cloudflare, Inc.",
+      "sector": "Enterprise Software / Cloud Security",
+      "source_url_count": 2,
+      "ticker": "NET"
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "cik": "0001713683",
+      "id": 111,
+      "industry": "Cloud Security",
+      "name": "Zscaler, Inc.",
+      "sector": "Enterprise Software / Cloud Security",
+      "source_url_count": 2,
+      "ticker": "ZS"
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "cik": "0001650372",
+      "id": 112,
+      "industry": "Collaboration and Developer Workflow Software",
+      "name": "Atlassian Corp",
+      "sector": "Enterprise Software / Cloud Security",
+      "source_url_count": 2,
+      "ticker": "TEAM"
+    },
+    {
+      "batch_id": "cloud_security_workflow_batch",
+      "cik": "0000769397",
+      "id": 113,
+      "industry": "Design and Engineering Software",
+      "name": "Autodesk, Inc.",
+      "sector": "Enterprise Software / Cloud Security",
+      "source_url_count": 2,
+      "ticker": "ADSK"
+    }
+  ],
+  "connection_additions": [
+    {
+      "confidence": 5,
+      "label": "Project Helix on-premises generative AI infrastructure collaboration",
+      "source": 1,
+      "source_url_count": 3,
+      "target": 61,
+      "type": "partnership"
+    },
+    {
+      "confidence": 5,
+      "label": "NVIDIA AI Computing by HPE co-developed AI infrastructure portfolio",
+      "source": 1,
+      "source_url_count": 3,
+      "target": 62,
+      "type": "partnership"
+    },
+    {
+      "confidence": 4,
+      "label": "NVIDIA Blackwell system integration and AI factory infrastructure exposure",
+      "source": 1,
+      "source_url_count": 3,
+      "target": 63,
+      "type": "ecosystem"
+    },
+    {
+      "confidence": 5,
+      "label": "Expanded strategic cybersecurity platform partnership",
+      "source": 107,
+      "source_url_count": 3,
+      "target": 110,
+      "type": "partnership"
+    },
+    {
+      "confidence": 4,
+      "label": "Enterprise server and infrastructure platform competition",
+      "source": 61,
+      "source_url_count": 2,
+      "target": 62,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Analog and mixed-signal semiconductor peer competition",
+      "source": 72,
+      "source_url_count": 2,
+      "target": 70,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Embedded and analog semiconductor peer competition",
+      "source": 72,
+      "source_url_count": 2,
+      "target": 71,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Power and analog semiconductor peer competition",
+      "source": 72,
+      "source_url_count": 2,
+      "target": 69,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Automotive and embedded semiconductor peer competition",
+      "source": 74,
+      "source_url_count": 2,
+      "target": 71,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "RF semiconductor peer competition",
+      "source": 75,
+      "source_url_count": 2,
+      "target": 76,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Electronic test and measurement equipment peer competition",
+      "source": 73,
+      "source_url_count": 2,
+      "target": 77,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Defense prime contractor peer competition",
+      "source": 78,
+      "source_url_count": 2,
+      "target": 79,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Defense platforms and mission systems peer competition",
+      "source": 78,
+      "source_url_count": 2,
+      "target": 80,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Defense systems contractor peer competition",
+      "source": 79,
+      "source_url_count": 2,
+      "target": 80,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Exchange and market technology infrastructure competition",
+      "source": 85,
+      "source_url_count": 2,
+      "target": 87,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Derivatives and options exchange infrastructure competition",
+      "source": 86,
+      "source_url_count": 2,
+      "target": 93,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Credit ratings and analytics peer competition",
+      "source": 88,
+      "source_url_count": 2,
+      "target": 89,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Investment banking and wealth management peer competition",
+      "source": 91,
+      "source_url_count": 2,
+      "target": 92,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Parcel logistics and freight delivery peer competition",
+      "source": 94,
+      "source_url_count": 2,
+      "target": 95,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "North American rail freight peer competition",
+      "source": 96,
+      "source_url_count": 2,
+      "target": 97,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Mass-market general merchandise retail competition",
+      "source": 56,
+      "source_url_count": 2,
+      "target": 101,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Home improvement retail peer competition",
+      "source": 58,
+      "source_url_count": 2,
+      "target": 100,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Local commerce delivery platform competition",
+      "source": 105,
+      "source_url_count": 2,
+      "target": 104,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Restaurant and consumer food-service peer competition",
+      "source": 59,
+      "source_url_count": 2,
+      "target": 103,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Network security platform peer competition",
+      "source": 26,
+      "source_url_count": 2,
+      "target": 106,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Enterprise cybersecurity platform peer competition",
+      "source": 26,
+      "source_url_count": 2,
+      "target": 107,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Cloud security platform peer competition",
+      "source": 107,
+      "source_url_count": 2,
+      "target": 111,
+      "type": "competitor"
+    },
+    {
+      "confidence": 4,
+      "label": "Cloud data platform and database workload peer competition",
+      "source": 24,
+      "source_url_count": 2,
+      "target": 109,
+      "type": "competitor"
+    }
+  ],
+  "metadata": {
+    "approval_date": "2026-05-17",
+    "approval_manifest": "data/candidates/production_expansion_approvals.json",
+    "artifact_status": "production_expansion_report",
+    "automatic_promotion_allowed": false,
+    "browser_ingestion": false,
+    "companies_path": "data/companies.json",
+    "connections_path": "data/connections.json",
+    "generated_at_utc": "2026-05-18T00:07:52+00:00",
+    "generated_by": "scripts/production_company_expansion.py",
+    "relationship_generation_allowed": false
+  },
+  "safety": {
+    "alias_check": "passed",
+    "automatic_promotion_executed": false,
+    "browser_ingestion": false,
+    "duplicate_edge_check": "passed",
+    "duplicate_ticker_check": "passed",
+    "production_validation_required": true,
+    "relationship_generation": "manifest_only",
+    "reviewer_approved_manifest_required": true,
+    "source_identity_required": true
+  },
+  "summary": {
+    "after_company_count": 113,
+    "after_connection_count": 162,
+    "batch_count": 6,
+    "before_company_count": 60,
+    "before_connection_count": 134,
+    "companies_added": 53,
+    "connections_added": 28,
+    "production_write_allowed_by_manifest": true,
+    "relationship_type_counts": {
+      "competitor": 24,
+      "ecosystem": 1,
+      "partnership": 3
+    }
+  }
+}

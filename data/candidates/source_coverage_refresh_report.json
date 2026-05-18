@@ -2,7 +2,7 @@
   "corridor_source_lanes": [
     {
       "coverage_ratio": 1.0,
-      "edge_count": 28,
+      "edge_count": 31,
       "fast_track_count": 0,
       "label": "AI compute -> foundry -> cloud",
       "lane_key": "ai_compute_foundry_cloud",
@@ -42,7 +42,95 @@
           "target_ticker": "GOOGL"
         }
       ],
-      "source_backed_count": 28
+      "source_backed_count": 31
+    },
+    {
+      "coverage_ratio": 1.0,
+      "edge_count": 29,
+      "fast_track_count": 0,
+      "label": "Payment network -> banks",
+      "lane_key": "payment_network_bank",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "reason": "Source-backed production corridor lane; use for maintenance sourcing and adjacent ecosystem planning without auto-promotion.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "relationship_type": "supply",
+          "source_backed": true,
+          "source_ticker": "AVGO",
+          "target_ticker": "TSM"
+        },
+        {
+          "relationship_type": "competitor",
+          "source_backed": true,
+          "source_ticker": "AVGO",
+          "target_ticker": "MRVL"
+        },
+        {
+          "relationship_type": "ecosystem",
+          "source_backed": true,
+          "source_ticker": "AVGO",
+          "target_ticker": "GOOGL"
+        },
+        {
+          "relationship_type": "ecosystem",
+          "source_backed": true,
+          "source_ticker": "AVGO",
+          "target_ticker": "META"
+        },
+        {
+          "relationship_type": "partnership",
+          "source_backed": true,
+          "source_ticker": "PANW",
+          "target_ticker": "MSFT"
+        }
+      ],
+      "source_backed_count": 29
+    },
+    {
+      "coverage_ratio": 1.0,
+      "edge_count": 24,
+      "fast_track_count": 0,
+      "label": "Retail -> consumer distribution",
+      "lane_key": "consumer_retail_distribution",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "reason": "Source-backed production corridor lane; use for maintenance sourcing and adjacent ecosystem planning without auto-promotion.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "relationship_type": "ecosystem",
+          "source_backed": true,
+          "source_ticker": "NVDA",
+          "target_ticker": "AMZN"
+        },
+        {
+          "relationship_type": "competitor",
+          "source_backed": true,
+          "source_ticker": "QCOM",
+          "target_ticker": "AAPL"
+        },
+        {
+          "relationship_type": "supply",
+          "source_backed": true,
+          "source_ticker": "TSM",
+          "target_ticker": "AAPL"
+        },
+        {
+          "relationship_type": "ecosystem",
+          "source_backed": true,
+          "source_ticker": "MRVL",
+          "target_ticker": "AMZN"
+        },
+        {
+          "relationship_type": "competitor",
+          "source_backed": true,
+          "source_ticker": "MSFT",
+          "target_ticker": "AMZN"
+        }
+      ],
+      "source_backed_count": 24
     },
     {
       "coverage_ratio": 1.0,
@@ -90,95 +178,7 @@
     },
     {
       "coverage_ratio": 1.0,
-      "edge_count": 23,
-      "fast_track_count": 0,
-      "label": "Payment network -> banks",
-      "lane_key": "payment_network_bank",
-      "manual_promotion_allowed": false,
-      "priority": "source",
-      "reason": "Source-backed production corridor lane; use for maintenance sourcing and adjacent ecosystem planning without auto-promotion.",
-      "review_only": true,
-      "sample_edges": [
-        {
-          "relationship_type": "supply",
-          "source_backed": true,
-          "source_ticker": "AVGO",
-          "target_ticker": "TSM"
-        },
-        {
-          "relationship_type": "competitor",
-          "source_backed": true,
-          "source_ticker": "AVGO",
-          "target_ticker": "MRVL"
-        },
-        {
-          "relationship_type": "ecosystem",
-          "source_backed": true,
-          "source_ticker": "AVGO",
-          "target_ticker": "GOOGL"
-        },
-        {
-          "relationship_type": "ecosystem",
-          "source_backed": true,
-          "source_ticker": "AVGO",
-          "target_ticker": "META"
-        },
-        {
-          "relationship_type": "partnership",
-          "source_backed": true,
-          "source_ticker": "PANW",
-          "target_ticker": "MSFT"
-        }
-      ],
-      "source_backed_count": 23
-    },
-    {
-      "coverage_ratio": 1.0,
-      "edge_count": 21,
-      "fast_track_count": 0,
-      "label": "Retail -> consumer distribution",
-      "lane_key": "consumer_retail_distribution",
-      "manual_promotion_allowed": false,
-      "priority": "source",
-      "reason": "Source-backed production corridor lane; use for maintenance sourcing and adjacent ecosystem planning without auto-promotion.",
-      "review_only": true,
-      "sample_edges": [
-        {
-          "relationship_type": "ecosystem",
-          "source_backed": true,
-          "source_ticker": "NVDA",
-          "target_ticker": "AMZN"
-        },
-        {
-          "relationship_type": "competitor",
-          "source_backed": true,
-          "source_ticker": "QCOM",
-          "target_ticker": "AAPL"
-        },
-        {
-          "relationship_type": "supply",
-          "source_backed": true,
-          "source_ticker": "TSM",
-          "target_ticker": "AAPL"
-        },
-        {
-          "relationship_type": "ecosystem",
-          "source_backed": true,
-          "source_ticker": "MRVL",
-          "target_ticker": "AMZN"
-        },
-        {
-          "relationship_type": "competitor",
-          "source_backed": true,
-          "source_ticker": "MSFT",
-          "target_ticker": "AMZN"
-        }
-      ],
-      "source_backed_count": 21
-    },
-    {
-      "coverage_ratio": 1.0,
-      "edge_count": 13,
+      "edge_count": 16,
       "fast_track_count": 0,
       "label": "Enterprise SaaS -> cloud platforms",
       "lane_key": "enterprise_saas_cloud",
@@ -218,7 +218,51 @@
           "target_ticker": "ORCL"
         }
       ],
-      "source_backed_count": 13
+      "source_backed_count": 16
+    },
+    {
+      "coverage_ratio": 1.0,
+      "edge_count": 10,
+      "fast_track_count": 0,
+      "label": "Aerospace suppliers -> OEMs",
+      "lane_key": "aerospace_supplier_oem",
+      "manual_promotion_allowed": false,
+      "priority": "source",
+      "reason": "Source-backed production corridor lane; use for maintenance sourcing and adjacent ecosystem planning without auto-promotion.",
+      "review_only": true,
+      "sample_edges": [
+        {
+          "relationship_type": "supply",
+          "source_backed": true,
+          "source_ticker": "GE",
+          "target_ticker": "BA"
+        },
+        {
+          "relationship_type": "supply",
+          "source_backed": true,
+          "source_ticker": "RTX",
+          "target_ticker": "BA"
+        },
+        {
+          "relationship_type": "supply",
+          "source_backed": true,
+          "source_ticker": "HON",
+          "target_ticker": "BA"
+        },
+        {
+          "relationship_type": "competitor",
+          "source_backed": true,
+          "source_ticker": "GE",
+          "target_ticker": "RTX"
+        },
+        {
+          "relationship_type": "competitor",
+          "source_backed": true,
+          "source_ticker": "HON",
+          "target_ticker": "RTX"
+        }
+      ],
+      "source_backed_count": 10
     },
     {
       "coverage_ratio": 1.0,
@@ -263,50 +307,6 @@
         }
       ],
       "source_backed_count": 10
-    },
-    {
-      "coverage_ratio": 1.0,
-      "edge_count": 7,
-      "fast_track_count": 0,
-      "label": "Aerospace suppliers -> OEMs",
-      "lane_key": "aerospace_supplier_oem",
-      "manual_promotion_allowed": false,
-      "priority": "source",
-      "reason": "Source-backed production corridor lane; use for maintenance sourcing and adjacent ecosystem planning without auto-promotion.",
-      "review_only": true,
-      "sample_edges": [
-        {
-          "relationship_type": "supply",
-          "source_backed": true,
-          "source_ticker": "GE",
-          "target_ticker": "BA"
-        },
-        {
-          "relationship_type": "supply",
-          "source_backed": true,
-          "source_ticker": "RTX",
-          "target_ticker": "BA"
-        },
-        {
-          "relationship_type": "supply",
-          "source_backed": true,
-          "source_ticker": "HON",
-          "target_ticker": "BA"
-        },
-        {
-          "relationship_type": "competitor",
-          "source_backed": true,
-          "source_ticker": "GE",
-          "target_ticker": "RTX"
-        },
-        {
-          "relationship_type": "competitor",
-          "source_backed": true,
-          "source_ticker": "HON",
-          "target_ticker": "RTX"
-        }
-      ],
-      "source_backed_count": 7
     }
   ],
   "ecosystem_expansion_opportunities": [
@@ -350,7 +350,7 @@
           "target_ticker": "GOOGL"
         }
       ],
-      "source_backed_edge_count": 28,
+      "source_backed_edge_count": 31,
       "unresolved_edge_count": 0
     },
     {
@@ -393,7 +393,7 @@
           "target_ticker": "RTX"
         }
       ],
-      "source_backed_edge_count": 7,
+      "source_backed_edge_count": 10,
       "unresolved_edge_count": 0
     },
     {
@@ -436,7 +436,7 @@
           "target_ticker": "ORCL"
         }
       ],
-      "source_backed_edge_count": 13,
+      "source_backed_edge_count": 16,
       "unresolved_edge_count": 0
     },
     {
@@ -565,7 +565,7 @@
           "target_ticker": "MSFT"
         }
       ],
-      "source_backed_edge_count": 23,
+      "source_backed_edge_count": 29,
       "unresolved_edge_count": 0
     },
     {
@@ -608,7 +608,7 @@
           "target_ticker": "AMZN"
         }
       ],
-      "source_backed_edge_count": 21,
+      "source_backed_edge_count": 24,
       "unresolved_edge_count": 0
     }
   ],
@@ -620,17 +620,17 @@
     "fast_track_source_target_count": 0,
     "manual_promotion_allowed": false,
     "review_only": true,
-    "sec_backed_edges": 104,
-    "sourced_edges": 134,
+    "sec_backed_edges": 132,
+    "sourced_edges": 162,
     "sourced_ratio": 1.0,
-    "total_edges": 134,
+    "total_edges": 162,
     "trusted_relationship_class_count": 6,
     "unsourced_edges": 0
   },
   "hub_source_gaps": [],
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-17T13:11:50+00:00",
+    "generated_at_utc": "2026-05-18T00:07:58+00:00",
     "generated_by": "scripts/source_coverage_refresh.py",
     "network_calls": 0,
     "optional_files_read": {
@@ -768,10 +768,10 @@
     "hub_backlog": [],
     "reason": "Source backlog is grouped by relationship type and hub so source work can scale without flooding manual promotion queues.",
     "review_only": true,
-    "sourced_edges": 134,
+    "sourced_edges": 162,
     "sourced_ratio": 1.0,
     "status": "clear",
-    "total_edges": 134,
+    "total_edges": 162,
     "type_backlog": [
       {
         "relationship_type": "competitor",
@@ -807,7 +807,7 @@
     "unsourced_edges": 0
   },
   "source_coverage_refresh_state": {
-    "latest_refresh_at_utc": "2026-05-17T13:11:50+00:00",
+    "latest_refresh_at_utc": "2026-05-18T00:07:58+00:00",
     "preflight_present": true,
     "production_writes": 0,
     "review_only": true,
@@ -827,7 +827,7 @@
     "reviewer_priority_count": 10,
     "source_expansion_batch_count": 0,
     "stale_review_edges": 0,
-    "total_edges": 134,
+    "total_edges": 162,
     "unsourced_edges": 0,
     "weak_relationship_category_count": 0
   },
@@ -838,17 +838,17 @@
     "review_only": true,
     "strong_inferred_count": 0,
     "tier_counts": {
-      "verified": 134
+      "verified": 162
     },
     "trusted_relationship_class_counts": {
-      "cloud_hyperscaler_exposure": 22,
-      "competitor": 64,
+      "cloud_hyperscaler_exposure": 26,
+      "competitor": 88,
       "ecosystem_overlap": 3,
       "financial_infrastructure_overlap": 12,
       "semiconductor_supply_chain": 23,
       "supplier_ecosystem": 10
     },
-    "verified_count": 134
+    "verified_count": 162
   },
   "weak_relationship_categories": []
 }

@@ -2,21 +2,22 @@
 
 Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph application using `data/companies.json` and `data/connections.json` as production source of truth.
 
-- Graph Intelligence (2D): Current main work surface for exploring curated companies and edges with filters, search, relationship taxonomy, source/confidence/review filters, Focus Mode, signal thresholds, portfolio exposure, SEC-backed edge indicators, hub/nexus layouts, cluster intelligence, shared exposure, hidden relationship hints, industry correlations, ecosystem overlays, source coverage lens, route tracing, guided discovery, active graph legend, and graph-adjacent intelligence cards.
+- Graph Intelligence (2D): Current main work surface for exploring curated companies and edges with filters, search, relationship taxonomy, source/confidence/review filters, Focus Mode, signal thresholds, portfolio exposure, SEC-backed edge indicators, hub/nexus layouts, cluster intelligence, shared exposure, hidden relationship hints, industry correlations, ecosystem overlays, source coverage lens, route tracing, guided discovery, active graph legend, large-graph navigation modes, and graph-adjacent intelligence cards.
 - 3D Network capabilities: Three.js production-network view with orbiting camera, search, labels, filters, SEC emphasis, neighborhood depth, selected details, and fullscreen exploration.
-- Source Workbench pipeline: Static, read-only guide and candidate preview surface for the local SEC workflow, candidate-company expansion batches, promotion planning, source coverage refresh, source registry governance, universe expansion readiness, corridor maintenance, graph-growth simulation, and OpenAlex safety summaries.
+- Source Workbench pipeline: Static, read-only guide and candidate preview surface for the local SEC workflow, candidate-company expansion batches, reviewed production expansion summaries, promotion planning, source coverage refresh, source registry governance, universe expansion readiness, corridor maintenance, graph-growth simulation, and OpenAlex safety summaries.
 - SEC ingestion + candidate system: Local scripts support SEC fetch/cache, filing inspection, signal extraction, candidate preview, candidate writing, job manifests, schedule previews, and policy gates.
 - Scheduled review orchestration: Local/GitHub Actions review pipelines refresh SEC, OpenAlex, source coverage, preflight, and pipeline summary artifacts without production writes.
 - OpenAlex intelligence layer: Cache-first enrichment for ecosystem, topic, institution, and cluster hints. It is review-only context, not relationship proof.
 - Source registry governance: Reviewer-owned source registry artifacts track official SEC roots, trusted hosts, source aging, duplicate source reduction, universe blockers, corridor maintenance, graph scaling, and OpenAlex entity-resolution visibility.
 - Tiered evidence policy: Graph and Source Workbench distinguish verified, strong-inferred, context-only, and needs-review relationships while keeping promotion manual.
-- Promotion + validation flow: Source-backed candidates must pass preview, manual review, explicit promotion, and `scripts/validate_data.py` before production use.
+- Promotion + validation flow: Source-backed candidates must pass preview, manual review, explicit promotion, and `scripts/validate_data.py` before production use. Reviewed production expansion manifests may add source-backed companies and explicitly listed source-backed edges.
 
 ## CORE RULES
 
 - No fake data.
 - No automatic production writes.
-- Candidate -> preview -> manual promotion only.
+- Reviewed production expansion is allowed only from explicit approval manifests and validation gates.
+- Candidate -> preview -> reviewer approval -> explicit writer -> validation only.
 - No backend in the current app.
 - Static production dataset is the source of truth.
 - `data/source_registry/` is governance only and cannot create production companies or relationships.
@@ -35,7 +36,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 ## NEXT MAJOR AREAS
 
-- Data expansion through SEC-backed candidates, not direct production writes.
+- Data expansion through SEC-backed candidates and reviewed production expansion manifests, never automatic production writes.
 - Broader source coverage from SEC filings, company disclosures, official pages, and reputable secondary sources when needed.
 - Better review ergonomics for candidate evaluation, clustering, overlap reports, checklist exports, data expansion preflight, and promotion previews.
 - Source coverage fast-track batches that target strong-inferred public relationships for enrichment without adding manual-promotion pressure.
@@ -45,7 +46,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Future open-data review workflow: source registry rules that pre-classify URL host categories, expose review aging thresholds, export reviewer checklists, and preserve candidate -> preview -> manual promotion.
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
 - Optional backend/auth layer only after the static app and source workflow remain stable.
-- Larger graph rendering/performance work as source-backed data grows, using density-aware labels, route indexes, source-backed corridor lanes, and strategic hub summaries.
+- Larger graph rendering/performance work as source-backed data grows, using density-aware labels, route indexes, source-backed corridor lanes, strategic hub summaries, and D149 progressive-disclosure navigation modes.
 - Controlled universe expansion engine that stages real public-company metadata, detects ticker/name conflicts, scores source readiness, and requires reviewer-owned ecosystem/corridor assignment before any future writer exists.
 
 ## D141 FOLLOW-ON
@@ -82,6 +83,15 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 - Completed in D146: reviewer-owned source registry, corridor maintenance queues, source-aging visibility, universe readiness reports, large-graph scaling summaries, and OpenAlex entity-resolution safety.
 - Completed in D148: review-only promotion planner, reviewer decision workflow display, production-readiness scoring, batch promotion planning, graph-impact simulation, source-readiness summaries, staged hub scoring, and mobile-aware large-graph safety forecasts.
+- Completed in D149: first reviewer-approved production company expansion, reviewed production expansion report, production expansion console, and large-graph navigation modes for ecosystem focus, corridor focus, neighborhood isolation, strategic hubs, route isolation, production-only, and preview-only.
+
+## D149 FOLLOW-ON
+
+- Add persistent reviewer decision artifacts for company-level production approval state.
+- Add stricter source-registry joins for reviewer-approved official company roots before the next expansion.
+- Add viewport-aware large-graph label budgets and an optional minimap once graph size approaches several hundred companies.
+- Add route-target selection for corridor traversal after current route isolation is validated with reviewers.
+- Keep future 1000+ company growth behind source-backed identity, duplicate/alias checks, explicit approval manifests, and validation.
 
 ## D146 FOLLOW-ON
 

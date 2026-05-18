@@ -434,6 +434,7 @@
 .source-triage-section,
         .source-candidate-company-section,
         .source-promotion-planner-section,
+        .source-production-expansion-section,
         .source-expansion-section,
         .source-review-pipeline-section,
         .source-openalex-section,
@@ -503,6 +504,7 @@
         .source-candidate-company-grid,
         .source-promotion-planner-grid,
         .source-promotion-simulation-grid,
+        .source-production-expansion-grid,
         .source-governance-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -519,6 +521,7 @@
         .source-coverage-refresh-queue,
         .source-candidate-company-batches,
         .source-promotion-batch-grid,
+        .source-production-expansion-list,
         .source-governance-list {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -537,6 +540,8 @@
         .source-promotion-planner-card,
         .source-promotion-simulation-card,
         .source-promotion-batch-card,
+        .source-production-expansion-card,
+        .source-production-expansion-item,
         .source-governance-card,
         .source-governance-item {
             border: 1px solid rgba(125, 211, 252, 0.14);

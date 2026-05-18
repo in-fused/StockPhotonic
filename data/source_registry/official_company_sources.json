@@ -3,7 +3,7 @@
     "artifact_status": "review_owned_registry",
     "auto_promotion_allowed": false,
     "auto_trust_escalation_allowed": false,
-    "generated_at_utc": "2026-05-17T13:11:51+00:00",
+    "generated_at_utc": "2026-05-18T00:07:58+00:00",
     "generated_by": "scripts/source_registry_governance.py",
     "notes": [
       "Only observed SEC CIK mapping source URLs are registered automatically.",
@@ -74,6 +74,68 @@
         }
       ],
       "ticker": "ABBV",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Analog and Mixed-Signal Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "ANALOG DEVICES INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Semiconductor Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000006281",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000006281.json"
+        }
+      ],
+      "ticker": "ADI",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Design and Engineering Software",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Autodesk, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Enterprise Software / Cloud Security",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000769397",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000769397.json"
+        }
+      ],
+      "ticker": "ADSK",
       "trusted_partner_customer_roots": []
     },
     {
@@ -167,6 +229,37 @@
         }
       ],
       "ticker": "AMZN",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Electronic Interconnects",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "AMPHENOL CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000820313",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000820313.json"
+        }
+      ],
+      "ticker": "APH",
       "trusted_partner_customer_roots": []
     },
     {
@@ -337,6 +430,37 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Asset Management and Market Infrastructure",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "BlackRock, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Financial Market Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001364742",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001364742.json"
+        }
+      ],
+      "ticker": "BLK",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Diversified Holding Company and Insurance",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -385,6 +509,37 @@
         }
       ],
       "ticker": "CAT",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Options Exchange and Market Infrastructure",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Cboe Global Markets, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Financial Market Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001374310",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001374310.json"
+        }
+      ],
+      "ticker": "CBOE",
       "trusted_partner_customer_roots": []
     },
     {
@@ -447,6 +602,68 @@
         }
       ],
       "ticker": "CI",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Derivatives Exchange Infrastructure",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "CME GROUP INC.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Financial Market Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001156375",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001156375.json"
+        }
+      ],
+      "ticker": "CME",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Restaurants and Consumer Food Service",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "CHIPOTLE MEXICAN GRILL INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001058090",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001058090.json"
+        }
+      ],
+      "ticker": "CMG",
       "trusted_partner_customer_roots": []
     },
     {
@@ -575,6 +792,68 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Cloud Security",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "CrowdStrike Holdings, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Enterprise Software / Cloud Security",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001535527",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001535527.json"
+        }
+      ],
+      "ticker": "CRWD",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Rail Freight",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "CSX CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000277948",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000277948.json"
+        }
+      ],
+      "ticker": "CSX",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Retail Pharmacy, PBM, and Managed Care",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -637,6 +916,68 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Local Commerce and Delivery Platform",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "DoorDash, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001792789",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001792789.json"
+        }
+      ],
+      "ticker": "DASH",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Cloud Observability and Monitoring",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Datadog, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Enterprise Software / Cloud Security",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001561550",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001561550.json"
+        }
+      ],
+      "ticker": "DDOG",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Agricultural and Construction Machinery",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -664,6 +1005,161 @@
         }
       ],
       "ticker": "DE",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Data Center Systems and Enterprise Infrastructure",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Dell Technologies Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001571996",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001571996.json"
+        }
+      ],
+      "ticker": "DELL",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Electrical Power Management",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Eaton Corp plc",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001551182",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001551182.json"
+        }
+      ],
+      "ticker": "ETN",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Parcel and Freight Logistics",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "FEDEX CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001048911",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001048911.json"
+        }
+      ],
+      "ticker": "FDX",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Network Security",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Fortinet, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Enterprise Software / Cloud Security",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001262039",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001262039.json"
+        }
+      ],
+      "ticker": "FTNT",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Defense Platforms and Mission Systems",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "GENERAL DYNAMICS CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Defense / Aerospace Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000040533",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000040533.json"
+        }
+      ],
+      "ticker": "GD",
       "trusted_partner_customer_roots": []
     },
     {
@@ -699,6 +1195,37 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Optical and Specialty Materials",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "CORNING INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000024741",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000024741.json"
+        }
+      ],
+      "ticker": "GLW",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Search, Advertising, Cloud, and AI",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -726,6 +1253,37 @@
         }
       ],
       "ticker": "GOOGL",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Investment Banking and Markets",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "GOLDMAN SACHS GROUP INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Financial Market Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000886982",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000886982.json"
+        }
+      ],
+      "ticker": "GS",
       "trusted_partner_customer_roots": []
     },
     {
@@ -761,6 +1319,37 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Defense Shipbuilding",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "HUNTINGTON INGALLS INDUSTRIES, INC.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Defense / Aerospace Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001501585",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001501585.json"
+        }
+      ],
+      "ticker": "HII",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Industrial Automation and Aerospace Systems",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -788,6 +1377,99 @@
         }
       ],
       "ticker": "HON",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Enterprise Servers and Networking",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Hewlett Packard Enterprise Co",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001645590",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001645590.json"
+        }
+      ],
+      "ticker": "HPE",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Aerospace Components",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Howmet Aerospace Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Defense / Aerospace Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000004281",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000004281.json"
+        }
+      ],
+      "ticker": "HWM",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Exchange and Data Infrastructure",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Intercontinental Exchange, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Financial Market Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001571949",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001571949.json"
+        }
+      ],
+      "ticker": "ICE",
       "trusted_partner_customer_roots": []
     },
     {
@@ -854,6 +1536,37 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Building Systems and Cooling Controls",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Johnson Controls International plc",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000833444",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000833444.json"
+        }
+      ],
+      "ticker": "JCI",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Pharmaceuticals and MedTech",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -912,6 +1625,37 @@
         }
       ],
       "ticker": "JPM",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Electronic Test and Measurement",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Keysight Technologies, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Semiconductor Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001601046",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001601046.json"
+        }
+      ],
+      "ticker": "KEYS",
       "trusted_partner_customer_roots": []
     },
     {
@@ -1009,6 +1753,68 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Defense Prime Contractor",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "LOCKHEED MARTIN CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Defense / Aerospace Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000936468",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000936468.json"
+        }
+      ],
+      "ticker": "LMT",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Home Improvement Retail",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "LOWES COMPANIES INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000060667",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000060667.json"
+        }
+      ],
+      "ticker": "LOW",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Wafer Fabrication Equipment",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -1098,6 +1904,99 @@
         }
       ],
       "ticker": "MCD",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Embedded Control Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "MICROCHIP TECHNOLOGY INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Semiconductor Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000827054",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000827054.json"
+        }
+      ],
+      "ticker": "MCHP",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Credit Ratings and Analytics",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "MOODYS CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Financial Market Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001059556",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001059556.json"
+        }
+      ],
+      "ticker": "MCO",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Cloud Database Software",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "MongoDB, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Enterprise Software / Cloud Security",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001441816",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001441816.json"
+        }
+      ],
+      "ticker": "MDB",
       "trusted_partner_customer_roots": []
     },
     {
@@ -1226,6 +2125,37 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Investment Banking and Wealth Management",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "MORGAN STANLEY",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Financial Market Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000895421",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000895421.json"
+        }
+      ],
+      "ticker": "MS",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Cloud Platforms and Productivity Software",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -1288,6 +2218,99 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Exchange and Market Technology",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "NASDAQ, INC.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Financial Market Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001120193",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001120193.json"
+        }
+      ],
+      "ticker": "NDAQ",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Edge Cloud and Security",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Cloudflare, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Enterprise Software / Cloud Security",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001477333",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001477333.json"
+        }
+      ],
+      "ticker": "NET",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Defense Prime Contractor",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "NORTHROP GRUMMAN CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Defense / Aerospace Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001133421",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001133421.json"
+        }
+      ],
+      "ticker": "NOC",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Enterprise Workflow Software",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -1346,6 +2369,99 @@
         }
       ],
       "ticker": "NVDA",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Automotive and Edge Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "NXP Semiconductors N.V.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Semiconductor Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001413447",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001413447.json"
+        }
+      ],
+      "ticker": "NXPI",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Less-than-Truckload Freight",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "OLD DOMINION FREIGHT LINE, INC.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000878927",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000878927.json"
+        }
+      ],
+      "ticker": "ODFL",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Power and Sensor Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "ON SEMICONDUCTOR CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Semiconductor Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001097864",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001097864.json"
+        }
+      ],
+      "ticker": "ON",
       "trusted_partner_customer_roots": []
     },
     {
@@ -1505,6 +2621,37 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "RF Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Qorvo, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Semiconductor Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001604778",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001604778.json"
+        }
+      ],
+      "ticker": "QRVO",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Aerospace and Defense Systems",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -1536,6 +2683,37 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "Restaurants and Consumer Retail",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "STARBUCKS CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000829224",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000829224.json"
+        }
+      ],
+      "ticker": "SBUX",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Oilfield Services and Technology",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -1563,6 +2741,37 @@
         }
       ],
       "ticker": "SLB",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "AI Server Systems",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Super Micro Computer, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001375365",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001375365.json"
+        }
+      ],
+      "ticker": "SMCI",
       "trusted_partner_customer_roots": []
     },
     {
@@ -1625,6 +2834,192 @@
         }
       ],
       "ticker": "SNPS",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Market Data, Index, and Ratings Infrastructure",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "S&P Global Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Financial Market Infrastructure",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000064040",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000064040.json"
+        }
+      ],
+      "ticker": "SPGI",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "RF and Connectivity Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "SKYWORKS SOLUTIONS, INC.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Semiconductor Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000004127",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000004127.json"
+        }
+      ],
+      "ticker": "SWKS",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Aerospace Components",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "TransDigm Group INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Defense / Aerospace Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001260221",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001260221.json"
+        }
+      ],
+      "ticker": "TDG",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Collaboration and Developer Workflow Software",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Atlassian Corp",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Enterprise Software / Cloud Security",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001650372",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001650372.json"
+        }
+      ],
+      "ticker": "TEAM",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Semiconductor Test Equipment",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "TERADYNE, INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Semiconductor Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000097210",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000097210.json"
+        }
+      ],
+      "ticker": "TER",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "General Merchandise Retail",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "TARGET CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000027419",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000027419.json"
+        }
+      ],
+      "ticker": "TGT",
       "trusted_partner_customer_roots": []
     },
     {
@@ -1712,6 +3107,130 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "industry": "HVAC and Thermal Management",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Trane Technologies plc",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "AI Infrastructure / Data Center Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001466258",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001466258.json"
+        }
+      ],
+      "ticker": "TT",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Analog and Embedded Semiconductors",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "TEXAS INSTRUMENTS INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Semiconductor Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000097476",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000097476.json"
+        }
+      ],
+      "ticker": "TXN",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Aerospace and Defense Platforms",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "TEXTRON INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Defense / Aerospace Suppliers",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000217346",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000217346.json"
+        }
+      ],
+      "ticker": "TXT",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Mobility, Delivery, and Logistics Platform",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Uber Technologies, Inc",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001543151",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001543151.json"
+        }
+      ],
+      "ticker": "UBER",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "industry": "Managed Care and PBM",
       "manual_review_required": true,
       "missing_registry_fields": [
@@ -1739,6 +3258,99 @@
         }
       ],
       "ticker": "UNH",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Rail Freight",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "UNION PACIFIC CORP",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0000100885",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0000100885.json"
+        }
+      ],
+      "ticker": "UNP",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Parcel Logistics",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "UNITED PARCEL SERVICE INC",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001090727",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001090727.json"
+        }
+      ],
+      "ticker": "UPS",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Industrial Equipment Rental and Distribution",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "UNITED RENTALS, INC.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Retail Logistics / Distribution",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001067701",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001067701.json"
+        }
+      ],
+      "ticker": "URI",
       "trusted_partner_customer_roots": []
     },
     {
@@ -1832,6 +3444,37 @@
         }
       ],
       "ticker": "XOM",
+      "trusted_partner_customer_roots": []
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "industry": "Cloud Security",
+      "manual_review_required": true,
+      "missing_registry_fields": [
+        "official_company_ir_url",
+        "official_newsroom_root",
+        "trusted_partner_customer_root"
+      ],
+      "name": "Zscaler, Inc.",
+      "official_company_ir_urls": [],
+      "official_newsroom_roots": [],
+      "production_write_allowed": false,
+      "registry_status": "registered_sec_root",
+      "review_only": true,
+      "sector": "Enterprise Software / Cloud Security",
+      "source_roots": [
+        {
+          "category": "official_sec_filing",
+          "cik": "0001713683",
+          "promotion_authority": false,
+          "relationship_authority": false,
+          "review_status": "approved_for_fetch",
+          "source_tier": 1,
+          "source_type": "sec_filing",
+          "url": "https://data.sec.gov/submissions/CIK0001713683.json"
+        }
+      ],
+      "ticker": "ZS",
       "trusted_partner_customer_roots": []
     }
   ]

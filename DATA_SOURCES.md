@@ -1,6 +1,6 @@
 # CURRENT SYSTEM STATE
 
-Document: StockPhotonic Data Sources. Production graph data is static JSON: `data/companies.json` and `data/connections.json`. The current production dataset is 60 real public companies and 134 curated connections.
+Document: StockPhotonic Data Sources. Production graph data is static JSON: `data/companies.json` and `data/connections.json`. The current production dataset is 113 real public companies and 162 curated connections.
 
 - Graph Intelligence (2D): Reads production companies/connections only, then derives filters, dashboards, relationship taxonomy, confidence tiers, source visibility, clusters, shared exposure, hidden relationships, portfolio exposure, and industry correlations in the browser.
 - 3D Network capabilities: Renders the same production dataset with Three.js; it does not create, promote, or alter data.
@@ -10,13 +10,14 @@ Document: StockPhotonic Data Sources. Production graph data is static JSON: `dat
 - OpenAlex intelligence layer: Local/script-side enrichment for ecosystem, topic, institution, and clustering hints. OpenAlex is context, not relationship proof or promotion authority.
 - Tiered evidence policy: Browser helpers and review-only scripts classify relationship display state as `VERIFIED`, `STRONG_INFERRED`, `CONTEXT_ONLY`, or `NEEDS_REVIEW`. These labels improve graph clarity and reviewer priority, but never authorize automatic promotion.
 - Source registry governance: Reviewer-owned source registry artifacts under `data/source_registry/` track official source roots, trusted host visibility, corridor maintenance, universe expansion readiness, graph scaling state, and OpenAlex safety. These artifacts are not production graph data.
-- Promotion + validation flow: SEC-backed candidates can become production edges only after preview, manual review, explicit promotion, and validation.
+- Promotion + validation flow: SEC-backed candidates can become production edges only after preview, manual review, explicit promotion, and validation. Reviewer-approved production expansion manifests can also add source-backed company identities and explicitly listed source-backed edges.
 
 ## CORE RULES
 
 - No fake data, guessed URLs, placeholder records, or unsupported claims.
 - No automatic production writes.
-- Candidate -> preview -> manual promotion only.
+- Reviewed production expansion is allowed only from explicit approval manifests and validation gates.
+- Candidate -> preview -> reviewer approval -> explicit writer -> validation only.
 - No backend in the current app.
 - `data/companies.json` and `data/connections.json` are the production source of truth.
 - `data/source_registry/` is review governance only and cannot create relationships.
@@ -28,7 +29,7 @@ Document: StockPhotonic Data Sources. Production graph data is static JSON: `dat
 3. Extracted relationship signals become candidate previews.
 4. Candidate files live under `data/candidates/` and are not production data.
 5. Promotion preview identifies which candidates are safe to consider.
-6. Manual promotion can append validated edges to `data/connections.json`.
+6. Manual promotion can append validated edges to `data/connections.json`; reviewed production expansion can append approved companies and manifest-listed edges.
 7. `python scripts/validate_data.py` must pass after production changes.
 
 ## SOURCE REGISTRY GOVERNANCE
@@ -50,6 +51,14 @@ D147 adds review-only company expansion artifacts:
 These files can be loaded by the static browser UI only as preview nodes, preview tables, promotion-planner rows, graph-impact simulations, and expansion batch summaries. Candidate-company preview edges are corridor-planning anchors with `corridor_assignment_not_relationship` semantics. They do not prove a relationship, do not assign ecosystem membership authoritatively, do not create production edges, and do not write production companies.
 
 D148 promotion planning is review-only. Readiness scores are deterministic planning scores based on official source availability, SEC identity support, duplicate status, corridor/ecosystem usefulness, staged hub value, source diversity, and review completeness. They are not confidence scores and do not authorize promotion.
+
+D149 introduces reviewed production company expansion through:
+
+- `data/candidates/production_expansion_approvals.json`
+- `scripts/production_company_expansion.py`
+- `data/candidates/production_expansion_report.json`
+
+The approval manifest can promote companies only when source-backed identity, official listing URLs, SEC submissions URLs when available, duplicate checks, alias checks, and reviewer approval are present. Relationship additions must be explicitly listed in the manifest and source-backed by SEC endpoint URLs or official company pages. The writer does not infer relationships, does not fabricate URLs, and does not assign ecosystem memberships.
 
 Generate them locally with:
 
@@ -313,6 +322,10 @@ StockPhotonic currently maps relationship records into this open-data-ready taxo
 - Curated / Manual Relationship
 
 The taxonomy is a display and filtering layer. Production truth remains `data/connections.json`.
+
+## LARGE-GRAPH NAVIGATION DATA CONTRACT
+
+D149 large-graph navigation is a browser-side view/index layer over already-loaded static JSON. It may filter visible edges into ecosystem focus, corridor focus, local neighborhood, strategic hub, route isolation, production-only, and preview-only modes. It may compute hub, corridor, route, and progressive-disclosure summaries. It must not write data, fetch sources, generate relationships, or promote preview records.
 
 ## FUTURE OPEN SOURCE EXPANSION
 

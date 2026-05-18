@@ -730,7 +730,7 @@
         ctx.arc(point.x, point.y, radius * (visual.route || visual.selectedEdgeEndpoint ? 2.75 : 2.32), 0, Math.PI * 2);
         ctx.stroke();
 
-        if (visual.route || visual.selectedEdgeEndpoint || visual.guided || (visual.sourceCoverage && context.scale > 0.68) || (visual.overlay && context.scale > 0.56 && visual.role?.key !== 'normal') || (visual.defaultDiscovery && context.scale > 0.62 && visual.role?.key !== 'normal')) {
+        if (visual.route || visual.selectedEdgeEndpoint || visual.guided || visual.navigation || (visual.sourceCoverage && context.scale > 0.68) || (visual.overlay && context.scale > 0.56 && visual.role?.key !== 'normal') || (visual.defaultDiscovery && context.scale > 0.62 && visual.role?.key !== 'normal')) {
             drawNodeIntelligenceBadge(ctx, point, radius, visual.badgeLabel || visual.role?.shortLabel || '', color);
         }
 

@@ -3,7 +3,7 @@
     "artifact_status": "review_owned_registry",
     "auto_promotion_allowed": false,
     "auto_trust_escalation_allowed": false,
-    "generated_at_utc": "2026-05-17T13:11:51+00:00",
+    "generated_at_utc": "2026-05-18T00:07:58+00:00",
     "generated_by": "scripts/source_registry_governance.py",
     "notes": [
       "Hosts are inventory and classification aids.",
@@ -93,24 +93,44 @@
     },
     {
       "auto_trust_escalation_allowed": false,
-      "category": "official_sec_filing",
-      "category_label": "Official SEC filing root",
-      "host": "data.sec.gov",
+      "category": "official_company_newsroom",
+      "category_label": "Official company newsroom",
+      "host": "cloudflare.com",
       "observed_sources": {
-        "candidate_company_preview": 78,
-        "cik_mapping": 349
+        "production_connection": 1
       },
-      "observed_url_count": 427,
+      "observed_url_count": 1,
       "promotion_authority": false,
       "relationship_authority": false,
       "review_only": true,
       "review_status": "registered_observed_host",
       "sample_urls": [
-        "https://data.sec.gov/submissions/CIK0000040533.json",
-        "https://data.sec.gov/submissions/CIK0001501585.json",
-        "https://data.sec.gov/submissions/CIK0000004281.json",
-        "https://data.sec.gov/submissions/CIK0000936468.json",
-        "https://data.sec.gov/submissions/CIK0001133421.json"
+        "https://www.cloudflare.com/en-gb/press/press-releases/2024/crowdstrike-and-cloudflare-announce-expanded-strategic-partnership-to-secure/"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
+      "category": "official_sec_filing",
+      "category_label": "Official SEC filing root",
+      "host": "data.sec.gov",
+      "observed_sources": {
+        "candidate_company_preview": 25,
+        "cik_mapping": 349,
+        "production_connection": 56
+      },
+      "observed_url_count": 430,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://data.sec.gov/submissions/CIK0001045810.json",
+        "https://data.sec.gov/submissions/CIK0001571996.json",
+        "https://data.sec.gov/submissions/CIK0001645590.json",
+        "https://data.sec.gov/submissions/CIK0001375365.json",
+        "https://data.sec.gov/submissions/CIK0001477333.json"
       ],
       "source_tier": 1,
       "trust_effect": "classification_only"
@@ -233,6 +253,25 @@
     },
     {
       "auto_trust_escalation_allowed": false,
+      "category": "official_company_ir",
+      "category_label": "Official company IR source",
+      "host": "ir.supermicro.com",
+      "observed_sources": {
+        "production_connection": 1
+      },
+      "observed_url_count": 1,
+      "promotion_authority": false,
+      "relationship_authority": false,
+      "review_only": true,
+      "review_status": "registered_observed_host",
+      "sample_urls": [
+        "https://ir.supermicro.com/news/news-details/2025/Supermicro-Begins-Volume-Shipments-of-NVIDIA-Blackwell-Ultra-Systems-and-Rack-Plug-and-Play-Data-Center-Scale-Solutions/default.aspx"
+      ],
+      "source_tier": 1,
+      "trust_effect": "review_priority_only"
+    },
+    {
+      "auto_trust_escalation_allowed": false,
       "category": "official_company_newsroom",
       "category_label": "Official company newsroom",
       "host": "marvell.com",
@@ -296,9 +335,9 @@
       "category_label": "Official company newsroom",
       "host": "nvidianews.nvidia.com",
       "observed_sources": {
-        "production_connection": 4
+        "production_connection": 6
       },
-      "observed_url_count": 4,
+      "observed_url_count": 6,
       "promotion_authority": false,
       "relationship_authority": false,
       "review_only": true,
@@ -307,7 +346,8 @@
         "https://nvidianews.nvidia.com/news/nvidia-blackwell-platform-arrives-to-power-a-new-era-of-computing",
         "https://nvidianews.nvidia.com/news/microsoft-nvidia-generative-ai-enterprises",
         "https://nvidianews.nvidia.com/news/meta-builds-ai-infrastructure-with-nvidia",
-        "https://nvidianews.nvidia.com/news/oracle-nvidia-speed-ai-adoption"
+        "https://nvidianews.nvidia.com/news/oracle-nvidia-speed-ai-adoption",
+        "https://nvidianews.nvidia.com/news/dell-technologies-and-nvidia-introduce-project-helix-for-secure-on-premises-generative-ai"
       ],
       "source_tier": 1,
       "trust_effect": "review_priority_only"
@@ -378,12 +418,12 @@
       "category_label": "Official SEC filing root",
       "host": "sec.gov",
       "observed_sources": {
-        "candidate_company_preview": 78,
+        "candidate_company_preview": 25,
         "candidate_relationship": 10,
         "candidate_universe": 293,
         "production_connection": 192
       },
-      "observed_url_count": 573,
+      "observed_url_count": 520,
       "promotion_authority": false,
       "relationship_authority": false,
       "review_only": true,

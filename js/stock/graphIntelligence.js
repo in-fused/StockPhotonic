@@ -1326,6 +1326,10 @@
         const selectedEdgeEndpoint = context.selectedRelationshipLink &&
             (context.selectedRelationshipLink.source?.id === node.id || context.selectedRelationshipLink.target?.id === node.id);
         const cluster = context.graphStoryMode === 'cluster' && context.activeClusterNodeIds?.has(node.id);
+        const navigation = context.largeGraphNavigationModel?.isActive &&
+            context.largeGraphNavigationModel?.mode !== 'production_only' &&
+            context.largeGraphNavigationModel?.mode !== 'preview_only' &&
+            context.largeGraphNavigationModel?.nodeIds?.has(node.id);
         const sourceCoverage = context.sourceCoverageLensEnabled
             ? getNodeTrustTierState(node, context)
             : null;
@@ -1343,6 +1347,15 @@
         else if (sourceCoverage) {
             badgeLabel = sourceCoverage.shortLabel;
             color = sourceCoverage.color;
+        } else if (navigation && context.largeGraphNavigationModel?.focusKind === 'hubs') {
+            badgeLabel = 'HUB';
+            color = '#22d3ee';
+        } else if (navigation && context.largeGraphNavigationModel?.focusKind === 'route') {
+            badgeLabel = 'ROUTE';
+            color = '#ffffff';
+        } else if (navigation && context.largeGraphNavigationModel?.focusKind === 'neighborhood') {
+            badgeLabel = 'LOCAL';
+            color = '#a5f3fc';
         } else if (overlay && primaryEcosystem) badgeLabel = primaryEcosystem.shortLabel;
         else if (cluster && role.key !== 'normal') badgeLabel = role.shortLabel;
         else if (defaultDiscovery && role.key !== 'normal') badgeLabel = role.shortLabel;
@@ -1351,6 +1364,7 @@
             route,
             overlay,
             guided,
+            navigation,
             defaultDiscovery,
             selectedEdgeEndpoint,
             cluster,
@@ -1358,7 +1372,7 @@
             sourceCoverage,
             color,
             badgeLabel,
-            emphasized: Boolean(route || selectedEdgeEndpoint || cluster || overlay || guided || sourceCoverage || defaultDiscovery)
+            emphasized: Boolean(route || selectedEdgeEndpoint || cluster || overlay || guided || navigation || sourceCoverage || defaultDiscovery)
         };
     }
 
@@ -1367,6 +1381,10 @@
         const selected = context.selectedRelationshipLink?.key === link.key;
         const overlay = context.graphIntelligenceModel?.overlay?.linkKeys?.has(link.key);
         const guided = context.graphIntelligenceModel?.guidedDiscovery?.linkKeys?.has(link.key);
+        const navigation = context.largeGraphNavigationModel?.isActive &&
+            context.largeGraphNavigationModel?.mode !== 'production_only' &&
+            context.largeGraphNavigationModel?.mode !== 'preview_only' &&
+            context.largeGraphNavigationModel?.linkKeys?.has(link.key);
         const sourceCoverage = context.sourceCoverageLensEnabled
             ? getLinkTrustTierState(link, context)
             : null;
@@ -1380,12 +1398,13 @@
             selected,
             overlay,
             guided,
+            navigation,
             sourceCoverage,
-            forceDraw: Boolean(route || selected || overlay || guided),
+            forceDraw: Boolean(route || selected || overlay || guided || navigation),
             dimmed: Boolean((context.activeEcosystemOverlayKey || context.sourceCoverageLensEnabled || context.activeGuidedDiscoveryKey) && !route && !selected && !overlay && !guided),
-            color: route ? routeColor : selected ? '#ffffff' : sourceColor || guidedColor || overlayColor || '',
-            widthBoost: route ? 2.25 : selected ? 2.4 : guided ? 1.35 : overlay ? 1.1 : sourceCoverage ? 0.35 : 0,
-            alphaBoost: route ? 0.45 : selected ? 0.52 : guided ? 0.34 : overlay ? 0.28 : sourceCoverage ? 0.18 : 0,
+            color: route ? routeColor : selected ? '#ffffff' : sourceColor || guidedColor || overlayColor || (navigation ? '#a5f3fc' : ''),
+            widthBoost: route ? 2.25 : selected ? 2.4 : guided ? 1.35 : overlay ? 1.1 : navigation ? 0.45 : sourceCoverage ? 0.35 : 0,
+            alphaBoost: route ? 0.45 : selected ? 0.52 : guided ? 0.34 : overlay ? 0.28 : navigation ? 0.18 : sourceCoverage ? 0.18 : 0,
             dashPattern: sourceCoverage?.key === 'needs_review' ? [3, 7] : sourceCoverage?.key === 'context_only' ? [2, 6] : null
         };
     }

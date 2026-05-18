@@ -170,7 +170,7 @@
   "metadata": {
     "artifact_status": "review_owned_registry",
     "auto_promotion_allowed": false,
-    "generated_at_utc": "2026-05-17T13:11:51+00:00",
+    "generated_at_utc": "2026-05-18T00:07:58+00:00",
     "generated_by": "scripts/source_registry_governance.py",
     "notes": [
       "Corridor definitions organize source maintenance only.",

@@ -327,7 +327,7 @@
     "batch_output_path": "data/candidates/universe_expansion_batches.json",
     "browser_ingestion": false,
     "candidate_output_path": "data/candidates/candidate_companies.json",
-    "generated_at_utc": "2026-05-18T00:07:57+00:00",
+    "generated_at_utc": "2026-05-18T05:23:27+00:00",
     "generated_by": "scripts/universe_expansion_batches.py",
     "manual_promotion_required": true,
     "network_calls": 0,

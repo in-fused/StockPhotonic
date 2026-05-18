@@ -1504,7 +1504,7 @@
       "official_universe": "data/candidates/official_ticker_universe.json",
       "reviewer_source_roots": "data/source_registry/reviewer_source_roots.json"
     },
-    "generated_at_utc": "2026-05-18T00:07:58+00:00",
+    "generated_at_utc": "2026-05-18T05:23:28+00:00",
     "generated_by": "scripts/source_registry_governance.py",
     "network_calls": 0,
     "output_path": "data/source_registry/source_governance_report.json",

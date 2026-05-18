@@ -45,6 +45,16 @@ OPENALEX_ARTIFACT_PATHS = (
     (ROOT / "data" / "candidates" / "openalex_institution_overlap.json", "openalex_institution_overlap"),
     (ROOT / "data" / "candidates" / "openalex_cluster_hints.json", "openalex_cluster_hints"),
 )
+REFRESH_DIR = ROOT / "data" / "refresh"
+LATEST_REFRESH_SUMMARY_PATH = REFRESH_DIR / "latest_refresh_summary.json"
+REFRESH_CHANGELOG_PATH = REFRESH_DIR / "refresh_changelog.json"
+OPENALEX_REFRESH_STATUS_PATH = REFRESH_DIR / "openalex_refresh_status.json"
+SEC_REFRESH_STATUS_PATH = REFRESH_DIR / "sec_refresh_status.json"
+RATE_LIMIT_STATUS_PATH = REFRESH_DIR / "rate_limit_status.json"
+CACHE_STATUS_PATH = REFRESH_DIR / "cache_status.json"
+SOURCE_AGING_STATUS_PATH = REFRESH_DIR / "source_aging_status.json"
+CANDIDATE_REFRESH_STATUS_PATH = REFRESH_DIR / "candidate_refresh_status.json"
+LARGE_GRAPH_REFRESH_FORECAST_PATH = REFRESH_DIR / "large_graph_refresh_forecast.json"
 
 ALLOWED_TYPES = {
     "supply",
@@ -73,6 +83,8 @@ ALLOWED_REVIEW_ACTIONS = {
 
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 URL_PATTERN = re.compile(r"^https?://\S+$", re.IGNORECASE)
+SECRET_FIELD_PATTERN = re.compile(r"(api[_-]?key|authorization|bearer|token|password|secret)", re.IGNORECASE)
+SECRET_VALUE_PATTERN = re.compile(r"(sk-[A-Za-z0-9]{12,}|ghp_[A-Za-z0-9]{12,}|xox[baprs]-|Bearer\s+\S+)", re.IGNORECASE)
 PLACEHOLDER_NAME_PATTERN = re.compile(r"\bCompany\s+\d+\b", re.IGNORECASE)
 SYNTHETIC_TICKER_PATTERN = re.compile(r"\d{2,}$")
 GENERIC_LABELS = {
@@ -97,6 +109,15 @@ def load_json(path: Path) -> Any:
 
 def is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def safe_int(value: Any, default: int = 0) -> int:
+    if isinstance(value, bool):
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def clean_string(value: Any) -> str | None:
@@ -397,6 +418,166 @@ def validate_safety_zero_writes(
         errors.append(f"{artifact_name} safety.connections_written must be 0.")
     if safety.get("browser_ingestion") is True:
         errors.append(f"{artifact_name} safety.browser_ingestion must not be true.")
+
+
+def validate_no_secret_leak(
+    payload: Any,
+    artifact_name: str,
+    errors: list[str],
+    *,
+    path: str = "",
+) -> None:
+    if isinstance(payload, dict):
+        for key, value in payload.items():
+            key_path = f"{path}.{key}" if path else str(key)
+            if SECRET_FIELD_PATTERN.search(str(key)):
+                errors.append(f"{artifact_name} must not expose secret-bearing field {key_path}.")
+            validate_no_secret_leak(value, artifact_name, errors, path=key_path)
+        return
+    if isinstance(payload, list):
+        for index, item in enumerate(payload):
+            validate_no_secret_leak(item, artifact_name, errors, path=f"{path}[{index}]")
+        return
+    if isinstance(payload, str) and SECRET_VALUE_PATTERN.search(payload):
+        errors.append(f"{artifact_name} appears to contain a secret-like value at {path or '<root>'}.")
+
+
+def validate_refresh_artifact_core(
+    path: Path,
+    artifact_name: str,
+    errors: list[str],
+) -> dict[str, Any] | None:
+    if not path.exists():
+        errors.append(f"{artifact_name} refresh artifact is missing.")
+        return None
+    payload = load_json(path)
+    if not isinstance(payload, dict):
+        errors.append(f"{artifact_name} refresh artifact must contain an object.")
+        return None
+    validate_review_only_metadata(payload, artifact_name, errors)
+    validate_safety_zero_writes(payload, artifact_name, errors)
+    validate_no_secret_leak(payload, artifact_name, errors)
+    return payload
+
+
+def validate_latest_refresh_summary_file(path: Path, errors: list[str]) -> None:
+    artifact_name = "latest_refresh_summary"
+    payload = validate_refresh_artifact_core(path, artifact_name, errors)
+    if payload is None:
+        return
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        errors.append(f"{artifact_name} summary must be an object.")
+        return
+    if summary.get("production_writes") != 0:
+        errors.append(f"{artifact_name} summary.production_writes must be 0.")
+    if safe_int(summary.get("requests_used")) > safe_int(summary.get("request_cap")):
+        errors.append(f"{artifact_name} requests_used cannot exceed request_cap.")
+    for key in ("openalex", "sec", "source_aging", "candidate_refresh", "cache", "rate_limits", "graph_planning"):
+        if not isinstance(payload.get(key), dict):
+            errors.append(f"{artifact_name} {key} must be an object.")
+
+
+def validate_openalex_refresh_status_file(path: Path, errors: list[str]) -> None:
+    artifact_name = "openalex_refresh_status"
+    payload = validate_refresh_artifact_core(path, artifact_name, errors)
+    if payload is None:
+        return
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        errors.append(f"{artifact_name} summary must be an object.")
+        return
+    if not isinstance(summary.get("configured"), bool):
+        errors.append(f"{artifact_name} summary.configured must be a boolean.")
+    if safe_int(summary.get("requests_used")) > safe_int(summary.get("request_cap")):
+        errors.append(f"{artifact_name} requests_used cannot exceed request_cap.")
+    if summary.get("relationship_authority") is not False:
+        errors.append(f"{artifact_name} relationship_authority must be false.")
+    if summary.get("promotion_authority") is not False:
+        errors.append(f"{artifact_name} promotion_authority must be false.")
+    for key in ("unresolved_entity_report", "alias_conflict_report"):
+        if not isinstance(payload.get(key), list):
+            errors.append(f"{artifact_name} {key} must be a list.")
+
+
+def validate_sec_refresh_status_file(path: Path, errors: list[str]) -> None:
+    artifact_name = "sec_refresh_status"
+    payload = validate_refresh_artifact_core(path, artifact_name, errors)
+    if payload is None:
+        return
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        errors.append(f"{artifact_name} summary must be an object.")
+        return
+    if not isinstance(summary.get("configured"), bool):
+        errors.append(f"{artifact_name} summary.configured must be a boolean.")
+    if safe_int(summary.get("requests_used")) > safe_int(summary.get("request_cap")):
+        errors.append(f"{artifact_name} requests_used cannot exceed request_cap.")
+    records = payload.get("records")
+    if not isinstance(records, list):
+        errors.append(f"{artifact_name} records must be a list.")
+        return
+    for index, record in enumerate(records, start=1):
+        if not isinstance(record, dict):
+            errors.append(f"{artifact_name} record {index}: must be an object.")
+            continue
+        if record.get("review_only") is not True:
+            errors.append(f"{artifact_name} record {index}: review_only must be true.")
+        source_url = record.get("source_url")
+        if source_url is not None and not valid_url(source_url):
+            errors.append(f"{artifact_name} record {index}: source_url must be http(s).")
+        if record.get("relationship_authority") is not False:
+            errors.append(f"{artifact_name} record {index}: relationship_authority must be false.")
+
+
+def validate_rate_limit_status_file(path: Path, errors: list[str]) -> None:
+    artifact_name = "rate_limit_status"
+    payload = validate_refresh_artifact_core(path, artifact_name, errors)
+    if payload is None:
+        return
+    summary = payload.get("summary")
+    providers = payload.get("providers")
+    if not isinstance(summary, dict):
+        errors.append(f"{artifact_name} summary must be an object.")
+    elif safe_int(summary.get("requests_used")) > safe_int(summary.get("request_cap")):
+        errors.append(f"{artifact_name} requests_used cannot exceed request_cap.")
+    if not isinstance(providers, dict):
+        errors.append(f"{artifact_name} providers must be an object.")
+        return
+    for provider, row in providers.items():
+        if not isinstance(row, dict):
+            errors.append(f"{artifact_name} provider {provider}: must be an object.")
+            continue
+        cap = row.get("request_cap", row.get("per_run_cap"))
+        if safe_int(row.get("requests_used")) > safe_int(cap):
+            errors.append(f"{artifact_name} provider {provider}: requests_used exceeds cap.")
+
+
+def validate_refresh_changelog_file(path: Path, errors: list[str]) -> None:
+    artifact_name = "refresh_changelog"
+    payload = validate_refresh_artifact_core(path, artifact_name, errors)
+    if payload is None:
+        return
+    entries = payload.get("entries")
+    if not isinstance(entries, list):
+        errors.append(f"{artifact_name} entries must be a list.")
+        return
+    for index, entry in enumerate(entries, start=1):
+        if not isinstance(entry, dict):
+            errors.append(f"{artifact_name} entry {index}: must be an object.")
+            continue
+        if entry.get("production_writes") != 0:
+            errors.append(f"{artifact_name} entry {index}: production_writes must be 0.")
+        if entry.get("review_only") is not True:
+            errors.append(f"{artifact_name} entry {index}: review_only must be true.")
+
+
+def validate_generic_refresh_status_file(path: Path, artifact_name: str, errors: list[str]) -> None:
+    payload = validate_refresh_artifact_core(path, artifact_name, errors)
+    if payload is None:
+        return
+    if not isinstance(payload.get("summary"), dict):
+        errors.append(f"{artifact_name} summary must be an object.")
 
 
 def validate_openalex_artifact_file(
@@ -959,6 +1140,46 @@ def validate(strict_confidence: bool = False) -> int:
         OPENALEX_CACHE_PATH,
         errors,
         warnings,
+    )
+    validate_latest_refresh_summary_file(
+        LATEST_REFRESH_SUMMARY_PATH,
+        errors,
+    )
+    validate_refresh_changelog_file(
+        REFRESH_CHANGELOG_PATH,
+        errors,
+    )
+    validate_openalex_refresh_status_file(
+        OPENALEX_REFRESH_STATUS_PATH,
+        errors,
+    )
+    validate_sec_refresh_status_file(
+        SEC_REFRESH_STATUS_PATH,
+        errors,
+    )
+    validate_rate_limit_status_file(
+        RATE_LIMIT_STATUS_PATH,
+        errors,
+    )
+    validate_generic_refresh_status_file(
+        CACHE_STATUS_PATH,
+        "cache_status",
+        errors,
+    )
+    validate_generic_refresh_status_file(
+        SOURCE_AGING_STATUS_PATH,
+        "source_aging_status",
+        errors,
+    )
+    validate_generic_refresh_status_file(
+        CANDIDATE_REFRESH_STATUS_PATH,
+        "candidate_refresh_status",
+        errors,
+    )
+    validate_generic_refresh_status_file(
+        LARGE_GRAPH_REFRESH_FORECAST_PATH,
+        "large_graph_refresh_forecast",
+        errors,
     )
 
     print("StockPhotonic data validation")

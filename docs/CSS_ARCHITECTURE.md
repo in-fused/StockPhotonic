@@ -26,6 +26,8 @@ Keep this order deterministic. `mobile.css` is intentionally last because it con
 - `review.css`: source/evidence review queue, source chips, confidence/trust badges, relationship evidence cards, Source Workbench, candidate review UI.
 - `mobile.css`: shared and product-specific responsive rules, fullscreen mobile overrides, touch/pointer-specific protections.
 
+D150 live-refresh Source Workbench selectors, including `.source-live-refresh-*`, belong to `review.css`; their responsive grid overrides belong to `mobile.css`.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

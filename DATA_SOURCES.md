@@ -327,6 +327,22 @@ The taxonomy is a display and filtering layer. Production truth remains `data/co
 
 D149 large-graph navigation is a browser-side view/index layer over already-loaded static JSON. It may filter visible edges into ecosystem focus, corridor focus, local neighborhood, strategic hub, route isolation, production-only, and preview-only modes. It may compute hub, corridor, route, and progressive-disclosure summaries. It must not write data, fetch sources, generate relationships, or promote preview records.
 
+## BOUNDED LIVE REFRESH ARTIFACTS
+
+D150 adds `scripts/live_refresh_orchestrator.py` for scheduled/local review-only intelligence refresh. The orchestrator defaults to dry-run mode, uses cache-first provider checks, enforces OpenAlex, SEC, and global request caps, and writes consolidated status only under `data/refresh/` when explicitly run with `--write`.
+
+Refresh artifacts include:
+
+- `data/refresh/latest_refresh_summary.json`
+- `data/refresh/refresh_changelog.json`
+- `data/refresh/openalex_refresh_status.json`
+- `data/refresh/sec_refresh_status.json`
+- `data/refresh/rate_limit_status.json`
+- `data/refresh/cache_status.json`
+- `data/refresh/source_aging_status.json`
+
+These files are review-only. They may summarize source aging, SEC cache state, OpenAlex configuration state, request usage, candidate refresh counts, and graph-growth forecasts, but they do not mutate production graph data or authorize promotion.
+
 ## FUTURE OPEN SOURCE EXPANSION
 
 Recommended open or source-friendly inputs:

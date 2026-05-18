@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "app_load_allowed": true,
+    "artifact_name": "source_aging_status",
+    "artifact_status": "review_only",
+    "generated_at_utc": "2026-05-18T05:23:25+00:00",
+    "generated_by": "scripts/live_refresh_orchestrator.py",
+    "production_write_allowed": false,
+    "refresh_mode": "write",
+    "schema_version": 1
+  },
+  "registry_field_gaps": [],
+  "reviewer_queue": [],
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "review_only": true
+  },
+  "summary": {
+    "aging_source_count": 0,
+    "aging_source_window_days": 180,
+    "invalid_source_url_count": 0,
+    "missing_registry_field_count": 0,
+    "missing_verified_date_count": 0,
+    "review_only": true,
+    "stale_source_count": 0,
+    "stale_source_window_days": 365
+  }
+}

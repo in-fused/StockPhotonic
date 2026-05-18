@@ -436,6 +436,7 @@
         .source-promotion-planner-section,
         .source-production-expansion-section,
         .source-expansion-section,
+        .source-live-refresh-section,
         .source-review-pipeline-section,
         .source-openalex-section,
         .source-coverage-refresh-section,
@@ -499,6 +500,7 @@
         }
 
         .source-review-pipeline-grid,
+        .source-live-refresh-grid,
         .source-openalex-grid,
         .source-coverage-refresh-grid,
         .source-candidate-company-grid,
@@ -518,6 +520,7 @@
         }
 
         .source-openalex-hints,
+        .source-live-refresh-details,
         .source-coverage-refresh-queue,
         .source-candidate-company-batches,
         .source-promotion-batch-grid,
@@ -531,6 +534,8 @@
 .source-preflight-card,
         .source-preflight-priority,
         .source-review-pipeline-card,
+        .source-live-refresh-card,
+        .source-live-refresh-item,
         .source-openalex-card,
         .source-openalex-hint,
         .source-coverage-refresh-card,

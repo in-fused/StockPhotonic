@@ -523,6 +523,23 @@
                     </div>
                 </div>
 
+                <div class="source-workbench-panel source-live-refresh-section rounded-2xl p-5 mt-6">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+                        <div>
+                            <div class="source-workbench-label mb-2">Bounded Live Refresh</div>
+                            <p class="text-sm text-white/56">
+                                Static status from <span class="font-mono text-cyan-50/78">data/refresh/latest_refresh_summary.json</span>. Scheduled runs upload review artifacts only.
+                            </p>
+                        </div>
+                        <div id="source-live-refresh-status" class="text-[10px] font-mono text-cyan-100/70 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5">LOADING REFRESH</div>
+                    </div>
+                    <div id="source-live-refresh-empty" class="hidden rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/55">
+                        Live refresh artifacts are not present yet. Run the bounded refresh orchestrator locally or download the scheduled workflow artifact.
+                    </div>
+                    <div id="source-live-refresh-summary" class="hidden source-live-refresh-grid mb-3"></div>
+                    <div id="source-live-refresh-details" class="hidden source-live-refresh-details"></div>
+                </div>
+
                 <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 mt-5">
                     <div class="xl:col-span-7 source-workbench-panel rounded-2xl p-5">
                         <div class="source-workbench-label mb-3">Pipeline Overview</div>
@@ -560,6 +577,7 @@
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_review_summary.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/candidate_overlap_report.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/review_pipeline_summary.json</div>
+                            <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/refresh/*.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/promotion_planner_report.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/production_expansion_approvals.json</div>
                             <div class="rounded-xl bg-black/25 border border-white/10 px-3 py-2">data/candidates/production_expansion_report.json</div>
@@ -650,6 +668,17 @@
                             <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-review-refresh">python scripts/review_artifact_refresh.py --write --force</code></pre>
                             <p class="mt-2 text-xs text-white/54">
                                 Refreshes triage, preflight, source coverage, source governance, OpenAlex cache-only enrichment, validation, and a review pipeline summary. It does not run promotion.
+                            </p>
+                        </div>
+
+                        <div class="source-command rounded-2xl p-3">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-white/58"><span class="font-mono text-cyan-100/80">3B-LIVE.</span> Bounded Live Refresh</span>
+                                <button type="button" class="source-command-copy rounded-full px-3 py-1 text-[10px] font-mono" onclick="copyWorkbenchCommand('workbench-command-live-refresh', this)" aria-label="Copy bounded live refresh command"><i class="fa-regular fa-copy mr-1"></i>COPY</button>
+                            </div>
+                            <pre class="overflow-x-auto text-[11px] leading-5 text-cyan-50/82"><code id="workbench-command-live-refresh">python scripts/live_refresh_orchestrator.py --write --force --max-requests 32</code></pre>
+                            <p class="mt-2 text-xs text-white/54">
+                                Writes refresh status under <span class="font-mono text-cyan-50/78">data/refresh/</span>, refreshes review artifacts, and keeps provider network access disabled unless explicit network flags and local configuration are present.
                             </p>
                         </div>
 
@@ -9230,6 +9259,128 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderSourceGovernanceReport(report);
         }
 
+        function renderLiveRefreshSummaryCards(artifacts) {
+            const summary = artifacts.summary?.summary || {};
+            const openalex = artifacts.openalex?.summary || artifacts.summary?.openalex || {};
+            const sec = artifacts.sec?.summary || artifacts.summary?.sec || {};
+            const rate = artifacts.rate?.summary || artifacts.summary?.rate_limits || {};
+            const sourceAging = artifacts.sourceAging?.summary || artifacts.summary?.source_aging || {};
+            const cache = artifacts.cache?.summary || artifacts.summary?.cache || {};
+            return [
+                renderReviewArtifactMetric('LATEST UTC', summary.latest_refresh_timestamp || artifacts.summary?.metadata?.generated_at_utc || 'pending', 'source-live-refresh-card'),
+                renderReviewArtifactMetric('OPENALEX', openalex.configured ? 'configured' : 'not configured', 'source-live-refresh-card'),
+                renderReviewArtifactMetric('SEC AGENT', sec.configured ? 'configured' : 'not configured', 'source-live-refresh-card'),
+                renderReviewArtifactMetric('NETWORK', summary.network_enabled ? 'enabled' : 'disabled', 'source-live-refresh-card'),
+                renderReviewArtifactMetric('REQUESTS', `${rate.requests_used ?? summary.requests_used ?? 0}/${rate.request_cap ?? summary.request_cap ?? 0}`, 'source-live-refresh-card'),
+                renderReviewArtifactMetric('CACHE', `${summary.cache_hits ?? 0}/${summary.cache_misses ?? 0}`, 'source-live-refresh-card'),
+                renderReviewArtifactMetric('CANDIDATES', summary.new_candidates_found ?? 0, 'source-live-refresh-card'),
+                renderReviewArtifactMetric('STALE SOURCES', sourceAging.stale_source_count ?? summary.stale_sources_found ?? 0, 'source-live-refresh-card'),
+                renderReviewArtifactMetric('PROD WRITES', summary.production_writes ?? 0, 'source-live-refresh-card'),
+                renderReviewArtifactMetric('SEC CACHE', cache.sec_cache_files ?? 0, 'source-live-refresh-card'),
+                renderReviewArtifactMetric('OA CACHE', cache.openalex_cache_entries ?? 0, 'source-live-refresh-card'),
+                renderReviewArtifactMetric('STATUS', summary.status || 'review', 'source-live-refresh-card')
+            ].join('');
+        }
+
+        function renderLiveRefreshDetails(artifacts) {
+            const summary = artifacts.summary?.summary || {};
+            const openalex = artifacts.openalex?.summary || {};
+            const sec = artifacts.sec?.summary || {};
+            const rate = artifacts.rate?.providers || {};
+            const sourceAging = artifacts.sourceAging?.summary || {};
+            const cache = artifacts.cache?.summary || {};
+            const nextAction = summary.next_recommended_action || 'Inspect review artifacts before any future promotion phase.';
+            const providerRows = [
+                {
+                    title: 'OpenAlex bounded mode',
+                    body: openalex.network_enabled
+                        ? `Network used ${openalex.requests_used || 0} request${Number(openalex.requests_used || 0) === 1 ? '' : 's'} with cache TTL ${openalex.cache_ttl_days || 0} days.`
+                        : `Network disabled: ${openalex.network_disabled_reason || 'network_not_requested'}.`,
+                    chips: [
+                        openalex.configured ? 'CONFIGURED' : 'NOT CONFIGURED',
+                        `${openalex.requests_used || 0}/${openalex.request_cap || 0} REQUESTS`,
+                        `${openalex.cache_hits || 0} CACHE HITS`,
+                        `${openalex.alias_conflict_count || 0} ALIAS`
+                    ]
+                },
+                {
+                    title: 'SEC metadata cadence',
+                    body: sec.network_enabled
+                        ? `Metadata refresh touched approved CIK roots only and used ${sec.requests_used || 0} request${Number(sec.requests_used || 0) === 1 ? '' : 's'}.`
+                        : `Network disabled: ${sec.network_disabled_reason || 'network_not_requested'}.`,
+                    chips: [
+                        sec.configured ? 'CONFIGURED' : 'NOT CONFIGURED',
+                        `${sec.requests_used || 0}/${sec.request_cap || 0} REQUESTS`,
+                        `${sec.cache_hits || 0} CACHE HITS`,
+                        `${sec.stale_filing_count || 0} STALE FILINGS`
+                    ]
+                },
+                {
+                    title: 'Cache governance',
+                    body: 'Cache files are reported for review; the refresh loop does not prune or delete cache data automatically.',
+                    chips: [
+                        `${cache.total_cache_size_bytes || 0} BYTES`,
+                        `${cache.openalex_stale_entries || 0} OA STALE`,
+                        `${cache.sec_stale_cache_files || 0} SEC STALE`
+                    ]
+                },
+                {
+                    title: 'Safety state',
+                    body: nextAction,
+                    chips: [
+                        'PROD WRITES 0',
+                        'NO AUTO PROMOTION',
+                        `${sourceAging.missing_registry_field_count || 0} REGISTRY GAPS`,
+                        rate.global?.cap_exceeded ? 'CAP EXCEEDED' : 'CAP OK'
+                    ]
+                }
+            ];
+            return providerRows.map(row => `
+                <div class="source-live-refresh-item rounded-2xl p-3">
+                    <div class="text-xs text-white/86 font-semibold">${escapeHtml(row.title)}</div>
+                    <div class="mt-1 text-xs text-white/52 leading-relaxed">${escapeHtml(row.body)}</div>
+                    <div class="mt-2 flex flex-wrap gap-1.5">
+                        ${row.chips.map(chip => `<span class="source-host-chip">${escapeHtml(formatCandidateCell(chip))}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderLiveRefreshStatus(artifacts) {
+            const empty = document.getElementById('source-live-refresh-empty');
+            const summaryWrap = document.getElementById('source-live-refresh-summary');
+            const detailsWrap = document.getElementById('source-live-refresh-details');
+            if (!empty || !summaryWrap || !detailsWrap) return;
+
+            if (!artifacts.summary) {
+                summaryWrap.classList.add('hidden');
+                detailsWrap.classList.add('hidden');
+                empty.classList.remove('hidden');
+                setWorkbenchArtifactStatus('source-live-refresh-status', 'REFRESH UNAVAILABLE', 'warning');
+                return;
+            }
+
+            summaryWrap.innerHTML = renderLiveRefreshSummaryCards(artifacts);
+            detailsWrap.innerHTML = renderLiveRefreshDetails(artifacts);
+            summaryWrap.classList.remove('hidden');
+            detailsWrap.classList.remove('hidden');
+            empty.classList.add('hidden');
+            const status = String(artifacts.summary?.summary?.status || 'refresh').toUpperCase();
+            setWorkbenchArtifactStatus('source-live-refresh-status', status);
+        }
+
+        async function loadLiveRefreshStatus() {
+            const [summary, openalex, sec, rate, cache, sourceAging] = await Promise.all([
+                fetchOptionalWorkbenchJson('data/refresh/latest_refresh_summary.json'),
+                fetchOptionalWorkbenchJson('data/refresh/openalex_refresh_status.json'),
+                fetchOptionalWorkbenchJson('data/refresh/sec_refresh_status.json'),
+                fetchOptionalWorkbenchJson('data/refresh/rate_limit_status.json'),
+                fetchOptionalWorkbenchJson('data/refresh/cache_status.json'),
+                fetchOptionalWorkbenchJson('data/refresh/source_aging_status.json')
+            ]);
+            renderLiveRefreshStatus({ summary, openalex, sec, rate, cache, sourceAging });
+        }
+
         function roundedRect(ctx, x, y, width, height, radius) {
             graphRender.roundedRect(ctx, x, y, width, height, radius);
         }
@@ -9247,6 +9398,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         loadProductionExpansionReport();
         loadSourceTriageArtifacts();
         loadDataExpansionPreflightReport();
+        loadLiveRefreshStatus();
         loadReviewPipelineSummary();
         loadOpenAlexArtifacts();
         loadCoverageRefreshReport();

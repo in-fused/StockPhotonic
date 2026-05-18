@@ -1,0 +1,144 @@
+name: Bounded Live Refresh
+
+on:
+  schedule:
+    - cron: "11 12 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Plan only; do not write review artifacts"
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      allow_network:
+        description: "Allow explicitly enabled bounded provider requests"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      allow_openalex_network:
+        description: "Allow OpenAlex requests when configured"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      allow_sec_network:
+        description: "Allow SEC metadata requests when configured"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      max_requests:
+        description: "Global refresh request cap"
+        required: true
+        default: "32"
+      openalex_max_requests:
+        description: "OpenAlex per-run request cap"
+        required: true
+        default: "16"
+      sec_max_requests:
+        description: "SEC per-run request cap"
+        required: true
+        default: "6"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bounded-live-refresh
+  cancel-in-progress: false
+
+jobs:
+  live-refresh:
+    name: Refresh Review-Only Intelligence
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore refresh caches
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/cache/openalex
+            data/cache/sec
+            data/refresh/rate_limit_ledger.json
+          key: live-refresh-cache-${{ runner.os }}-${{ hashFiles('data/companies.json', 'data/connections.json', 'data/candidates/cik_mappings.json') }}
+          restore-keys: |
+            live-refresh-cache-${{ runner.os }}-
+
+      - name: Compile Python scripts
+        run: python -m py_compile scripts/*.py
+
+      - name: Run bounded live refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          DRY_RUN="${{ inputs.dry_run || 'false' }}"
+          ALLOW_NETWORK="${{ inputs.allow_network || 'true' }}"
+          ALLOW_OPENALEX_NETWORK="${{ inputs.allow_openalex_network || 'true' }}"
+          ALLOW_SEC_NETWORK="${{ inputs.allow_sec_network || 'true' }}"
+          MAX_REQUESTS="${{ inputs.max_requests || '32' }}"
+          OPENALEX_MAX_REQUESTS="${{ inputs.openalex_max_requests || '16' }}"
+          SEC_MAX_REQUESTS="${{ inputs.sec_max_requests || '6' }}"
+          COMMAND=(python scripts/live_refresh_orchestrator.py --json)
+
+          if [ "$DRY_RUN" = "false" ]; then
+            COMMAND+=(--write --force)
+          fi
+
+          if [ "$ALLOW_NETWORK" = "true" ]; then
+            COMMAND+=(--allow-network)
+          fi
+
+          if [ "$ALLOW_OPENALEX_NETWORK" = "true" ]; then
+            COMMAND+=(--allow-openalex-network)
+          fi
+
+          if [ "$ALLOW_SEC_NETWORK" = "true" ]; then
+            COMMAND+=(--allow-sec-network)
+          fi
+
+          COMMAND+=(--max-requests "$MAX_REQUESTS")
+          COMMAND+=(--openalex-max-requests "$OPENALEX_MAX_REQUESTS")
+          COMMAND+=(--sec-max-requests "$SEC_MAX_REQUESTS")
+          "${COMMAND[@]}"
+
+      - name: Validate static data and refresh artifacts
+        run: python scripts/validate_data.py
+
+      - name: Upload live refresh artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: bounded-live-refresh-artifacts
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            data/refresh/*.json
+            data/candidates/*.json
+            data/source_registry/*.json
+            data/cache/openalex/*.json
+            data/cache/sec/submissions_CIK*.json
+            docs/candidate_reviewer_checklist.md

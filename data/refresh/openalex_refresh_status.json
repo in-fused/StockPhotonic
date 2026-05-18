@@ -1,0 +1,323 @@
+{
+  "alias_conflict_report": [],
+  "artifact_summaries": {
+    "cluster": {
+      "cluster_hint_count": 8,
+      "review_only": true
+    },
+    "ecosystem": {
+      "ecosystem_count": 8,
+      "ecosystem_hint_count": 31,
+      "openalex_institution_candidate_count": 0,
+      "openalex_topic_candidate_count": 0,
+      "review_only": true
+    },
+    "institution": {
+      "institution_overlap_count": 0,
+      "review_only": true,
+      "tickers_with_openalex_topic_context": 0
+    },
+    "topic": {
+      "ecosystems_with_topics": 0,
+      "review_only": true,
+      "topic_candidate_count": 0
+    }
+  },
+  "cache_lifecycle": {
+    "cache_available": true,
+    "cache_entry_count": 0,
+    "cache_path": "data/cache/openalex/entity_resolution_cache.json",
+    "cache_size_bytes": 250,
+    "cache_ttl_days": 45,
+    "deletion_performed": false,
+    "error_cache_entry_count": 0,
+    "pruning_guidance": "Review stale/error entries before pruning; the orchestrator does not delete cache files.",
+    "review_only": true,
+    "stale_cache_entry_count": 0
+  },
+  "metadata": {
+    "app_load_allowed": true,
+    "artifact_name": "openalex_refresh_status",
+    "artifact_status": "review_only",
+    "generated_at_utc": "2026-05-18T05:23:25+00:00",
+    "generated_by": "scripts/live_refresh_orchestrator.py",
+    "production_write_allowed": false,
+    "refresh_mode": "write",
+    "schema_version": 1
+  },
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "review_only": true
+  },
+  "subprocess": {
+    "command": "python scripts/openalex_enrichment.py --max-requests 16 --max-entities 20 --cache-ttl-days 45 --rate-limit-seconds 0.35 --json --write --force",
+    "name": "openalex_enrichment",
+    "return_code": 0,
+    "status": "passed",
+    "stderr_tail": [],
+    "stdout_tail": [
+      "  \"safety\": {",
+      "    \"auto_promotion_executed\": false,",
+      "    \"browser_ingestion\": false,",
+      "    \"companies_written\": 0,",
+      "    \"connections_written\": 0,",
+      "    \"network_requests_used\": 0,",
+      "    \"production_writes\": 0,",
+      "    \"relationship_claims_created\": 0,",
+      "    \"review_only\": true",
+      "  },",
+      "  \"topic_summary\": {",
+      "    \"ecosystems_with_topics\": 0,",
+      "    \"review_only\": true,",
+      "    \"topic_candidate_count\": 0",
+      "  }",
+      "}"
+    ]
+  },
+  "summary": {
+    "alias_conflict_count": 0,
+    "cache_hits": 0,
+    "cache_misses": 47,
+    "cache_ttl_days": 45,
+    "configured": false,
+    "configured_request_cap": 16,
+    "daily_cap": 80,
+    "daily_remaining_before_run": 80,
+    "network_disabled_reason": "network_not_requested",
+    "network_enabled": false,
+    "network_errors": 0,
+    "network_fetches": 0,
+    "network_requested": false,
+    "promotion_authority": false,
+    "relationship_authority": false,
+    "request_cap": 16,
+    "requests_used": 0,
+    "review_only": true,
+    "status": "passed",
+    "unresolved_entity_count": 31
+  },
+  "unresolved_entity_report": [
+    {
+      "company_name": "NVIDIA Corporation",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "NVDA"
+    },
+    {
+      "company_name": "NVIDIA Corporation",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "NVDA"
+    },
+    {
+      "company_name": "Microsoft Corporation",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "MSFT"
+    },
+    {
+      "company_name": "Microsoft Corporation",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "MSFT"
+    },
+    {
+      "company_name": "Apple Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "AAPL"
+    },
+    {
+      "company_name": "Alphabet Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "GOOGL"
+    },
+    {
+      "company_name": "Alphabet Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "GOOGL"
+    },
+    {
+      "company_name": "Amazon.com, Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "AMZN"
+    },
+    {
+      "company_name": "Amazon.com, Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "AMZN"
+    },
+    {
+      "company_name": "Meta Platforms, Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "META"
+    },
+    {
+      "company_name": "Meta Platforms, Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "META"
+    },
+    {
+      "company_name": "Taiwan Semiconductor Manufacturing Company Limited",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "TSM"
+    },
+    {
+      "company_name": "Taiwan Semiconductor Manufacturing Company Limited",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "TSM"
+    },
+    {
+      "company_name": "Broadcom Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "AVGO"
+    },
+    {
+      "company_name": "Broadcom Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "AVGO"
+    },
+    {
+      "company_name": "Broadcom Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "AVGO"
+    },
+    {
+      "company_name": "Berkshire Hathaway Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "BRK-B"
+    },
+    {
+      "company_name": "Tesla, Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "TSLA"
+    },
+    {
+      "company_name": "JPMorgan Chase & Co.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "JPM"
+    },
+    {
+      "company_name": "Walmart Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "WMT"
+    },
+    {
+      "company_name": "Walmart Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "WMT"
+    },
+    {
+      "company_name": "Eli Lilly and Company",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "LLY"
+    },
+    {
+      "company_name": "Visa Inc.",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "V"
+    },
+    {
+      "company_name": "Oracle Corporation",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "ORCL"
+    },
+    {
+      "company_name": "Oracle Corporation",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "ORCL"
+    },
+    {
+      "company_name": "Mastercard Incorporated",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "MA"
+    },
+    {
+      "company_name": "Exxon Mobil Corporation",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "XOM"
+    },
+    {
+      "company_name": "Costco Wholesale Corporation",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "COST"
+    },
+    {
+      "company_name": "Costco Wholesale Corporation",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "COST"
+    },
+    {
+      "company_name": "Johnson & Johnson",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "JNJ"
+    },
+    {
+      "company_name": "UnitedHealth Group Incorporated",
+      "query_status": "cache_miss_dry_run",
+      "relationship_authority": false,
+      "review_only": true,
+      "ticker": "UNH"
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "entries": [
+    {
+      "changes": {
+        "cache_hit_delta": 11,
+        "candidate_count_delta": 10,
+        "requests_used_delta": 0,
+        "review_only": true,
+        "stale_source_count_delta": 0
+      },
+      "generated_at_utc": "2026-05-18T05:23:25+00:00",
+      "production_writes": 0,
+      "request_cap": 32,
+      "requests_used": 0,
+      "review_only": true,
+      "run_id": "live-refresh-20260518T052325Z",
+      "status": "passed"
+    }
+  ],
+  "metadata": {
+    "app_load_allowed": true,
+    "artifact_name": "refresh_changelog",
+    "artifact_status": "review_only",
+    "generated_at_utc": "2026-05-18T05:23:25+00:00",
+    "generated_by": "scripts/live_refresh_orchestrator.py",
+    "production_write_allowed": false,
+    "refresh_mode": "write",
+    "schema_version": 1
+  },
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "review_only": true
+  },
+  "summary": {
+    "entry_count": 1,
+    "latest_refresh_timestamp": "2026-05-18T05:23:25+00:00",
+    "latest_status": "passed",
+    "review_only": true
+  }
+}

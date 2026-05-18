@@ -19,11 +19,11 @@
   },
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-18T00:07:59+00:00",
+    "generated_at_utc": "2026-05-18T05:23:28+00:00",
     "generated_by": "scripts/review_artifact_refresh.py",
     "network_calls": 0,
     "output_path": "data/candidates/review_pipeline_summary.json",
-    "pipeline_started_at_utc": "2026-05-18T00:07:57+00:00",
+    "pipeline_started_at_utc": "2026-05-18T05:23:27+00:00",
     "production_write_allowed": false
   },
   "safety": {
@@ -152,56 +152,15 @@
         "Density forecast: dense",
         "Production writes: 0"
       ]
-    },
-    {
-      "command": "python scripts/openalex_enrichment.py --write --force --max-requests 24 --max-entities 20",
-      "name": "openalex_enrichment",
-      "return_code": 0,
-      "status": "passed",
-      "stderr_tail": [],
-      "stdout_tail": [
-        "OpenAlex review-only enrichment",
-        "===============================",
-        "Mode: cache-only/dry-run",
-        "Companies processed: 20",
-        "Network requests used: 0 / 24",
-        "Budget skips: 0",
-        "Ecosystem hints: 31",
-        "Topic candidates: 0",
-        "Institution overlaps: 0",
-        "Cluster hints: 8",
-        "Production writes: 0"
-      ]
-    },
-    {
-      "command": "python scripts/validate_data.py",
-      "name": "validation",
-      "return_code": 0,
-      "status": "passed",
-      "stderr_tail": [],
-      "stdout_tail": [
-        "- Connection 11: Confidence mismatch: expected 5, found 4.",
-        "- Connection 13: Confidence mismatch: expected 5, found 4.",
-        "- Connection 14: Confidence mismatch: expected 5, found 4.",
-        "- Connection 15: Confidence mismatch: expected 5, found 4.",
-        "- Connection 16: Confidence mismatch: expected 5, found 4.",
-        "- Connection 20: Confidence mismatch: expected 4, found 5.",
-        "- Connection 25: Confidence mismatch: expected 5, found 4.",
-        "- Connection 26: Confidence mismatch: expected 5, found 4.",
-        "- Connection 27: Confidence mismatch: expected 5, found 4.",
-        "- Connection 49: Confidence mismatch: expected 4, found 5.",
-        "- Connection 50: Confidence mismatch: expected 5, found 4.",
-        "- 16 companies have no connections: 64, 65, 66, 67, 68, 81, 82, 83, 84, 90..."
-      ]
     }
   ],
   "summary": {
     "failed_step_count": 0,
-    "latest_review_pipeline_timestamp": "2026-05-18T00:07:59+00:00",
+    "latest_review_pipeline_timestamp": "2026-05-18T05:23:28+00:00",
     "openalex_network_enabled": false,
     "review_only": true,
     "status": "passed",
-    "step_count": 8,
+    "step_count": 6,
     "write_enabled": true
   }
 }

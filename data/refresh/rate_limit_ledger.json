@@ -1,0 +1,26 @@
+{
+  "daily": {
+    "2026-05-18": {
+      "global": 0,
+      "openalex": 0,
+      "sec": 0
+    }
+  },
+  "metadata": {
+    "app_load_allowed": false,
+    "artifact_status": "review_only",
+    "generated_at_utc": "2026-05-18T05:23:25+00:00",
+    "generated_by": "scripts/live_refresh_orchestrator.py",
+    "production_write_allowed": false,
+    "schema_version": 1
+  },
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "review_only": true
+  }
+}

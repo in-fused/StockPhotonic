@@ -232,6 +232,7 @@ class RequestBudget:
         self.max_requests = max_requests
         self.used = 0
         self.skipped_for_budget = 0
+        self.status_counts: Counter[str] = Counter()
 
     def reserve(self) -> bool:
         if self.used >= self.max_requests:
@@ -239,6 +240,9 @@ class RequestBudget:
             return False
         self.used += 1
         return True
+
+    def record_status(self, status: str) -> None:
+        self.status_counts[status] += 1
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -299,6 +303,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         parser.error("--force can only be used with --write.")
     args.per_page = min(MAX_PER_PAGE, args.per_page)
     args.max_entities = min(MAX_ENTITY_LIMIT, args.max_entities)
+    args.openalex_configured = bool(clean_string(os.environ.get("OPENALEX_API_KEY")))
+    args.network_requested = bool(args.allow_network)
+    args.network_disabled_reason = None
+    if args.allow_network and not args.openalex_configured:
+        args.allow_network = False
+        args.network_disabled_reason = "missing_openalex_configuration"
     return args
 
 
@@ -504,11 +514,14 @@ def fetch_openalex(
     if isinstance(entry, dict) and cache_entry_is_fresh(entry, cache_ttl_days):
         cached_results = entry.get("results")
         if isinstance(cached_results, list):
+            budget.record_status("cache_hit")
             return [item for item in cached_results if isinstance(item, dict)], "cache_hit"
 
     if not allow_network:
+        budget.record_status("cache_miss_dry_run")
         return [], "cache_miss_dry_run"
     if not budget.reserve():
+        budget.record_status("budget_exhausted")
         return [], "budget_exhausted"
 
     if rate_limit_seconds:
@@ -530,6 +543,7 @@ def fetch_openalex(
             "error": str(exc),
             "results": [],
         }
+        budget.record_status("network_error")
         return [], "network_error"
 
     raw_results = payload.get("results") if isinstance(payload, dict) else []
@@ -542,6 +556,7 @@ def fetch_openalex(
         "result_count": len(results),
         "results": results,
     }
+    budget.record_status("network_fetch")
     return results, "network_fetch"
 
 
@@ -1277,6 +1292,7 @@ def build_artifacts(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str,
         for resolution in institution_resolutions.values()
         if isinstance(resolution.get("entity_resolution"), dict)
     ]
+    lookup_status_counts = dict(sorted(budget.status_counts.items()))
     metadata = {
         "artifact_status": "review_only",
         "generated_by": "scripts/openalex_enrichment.py",
@@ -1292,7 +1308,10 @@ def build_artifacts(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str,
         "input_company_count": len(companies),
         "processed_company_count": len(selected_companies),
         "candidate_count": len(candidates),
+        "configured": bool(args.openalex_configured),
+        "network_requested": bool(args.network_requested),
         "network_enabled": bool(args.allow_network),
+        "network_disabled_reason": args.network_disabled_reason,
         "dry_run": not bool(args.allow_network),
         "network_requests_used": budget.used,
         "network_requests_skipped_for_budget": budget.skipped_for_budget,
@@ -1300,6 +1319,12 @@ def build_artifacts(args: argparse.Namespace) -> tuple[dict[str, Any], dict[str,
         "max_entities": args.max_entities,
         "per_page": args.per_page,
         "cache_ttl_days": args.cache_ttl_days,
+        "lookup_status_counts": lookup_status_counts,
+        "cache_hit_count": lookup_status_counts.get("cache_hit", 0),
+        "cache_miss_count": lookup_status_counts.get("cache_miss_dry_run", 0),
+        "network_fetch_count": lookup_status_counts.get("network_fetch", 0),
+        "network_error_count": lookup_status_counts.get("network_error", 0),
+        "budget_exhausted_count": lookup_status_counts.get("budget_exhausted", 0),
         "entity_resolution_tracked_count": len(entity_resolution_states),
         "entity_resolution_alias_conflict_count": sum(
             int(state.get("alias_conflict_count") or 0)

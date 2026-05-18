@@ -1,0 +1,49 @@
+{
+  "artifact_inputs": {
+    "review_only": true,
+    "review_pipeline_summary": "data/candidates/review_pipeline_summary.json",
+    "source_coverage_refresh": "data/candidates/source_coverage_refresh_report.json",
+    "source_governance_report": "data/source_registry/source_governance_report.json"
+  },
+  "metadata": {
+    "app_load_allowed": true,
+    "artifact_name": "candidate_refresh_status",
+    "artifact_status": "review_only",
+    "generated_at_utc": "2026-05-18T05:23:25+00:00",
+    "generated_by": "scripts/live_refresh_orchestrator.py",
+    "production_write_allowed": false,
+    "refresh_mode": "write",
+    "schema_version": 1
+  },
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "review_only": true
+  },
+  "sec_candidate_updates": {
+    "candidate_evidence_count": 10,
+    "candidate_source_url_count": 10,
+    "candidate_ticker_count": 9,
+    "latest_candidate_filing_date": "2026-05-05",
+    "relationship_type_counts": {
+      "investment": 1,
+      "partnership": 7,
+      "supplier_customer": 2
+    },
+    "review_only": true
+  },
+  "summary": {
+    "candidate_company_preview_count": 25,
+    "candidate_evidence_count": 10,
+    "corridor_source_lane_count": 7,
+    "expansion_batch_count": 8,
+    "review_only": true,
+    "review_pipeline_status": "passed",
+    "review_pipeline_step_count": 6,
+    "reviewer_priority_count": 10
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "metadata": {
+    "app_load_allowed": true,
+    "artifact_name": "cache_status",
+    "artifact_status": "review_only",
+    "generated_at_utc": "2026-05-18T05:23:25+00:00",
+    "generated_by": "scripts/live_refresh_orchestrator.py",
+    "production_write_allowed": false,
+    "refresh_mode": "write",
+    "schema_version": 1
+  },
+  "openalex": {
+    "cache_available": true,
+    "cache_entry_count": 0,
+    "cache_path": "data/cache/openalex/entity_resolution_cache.json",
+    "cache_size_bytes": 250,
+    "cache_ttl_days": 45,
+    "deletion_performed": false,
+    "error_cache_entry_count": 0,
+    "pruning_guidance": "Review stale/error entries before pruning; the orchestrator does not delete cache files.",
+    "review_only": true,
+    "stale_cache_entry_count": 0
+  },
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "review_only": true
+  },
+  "sec": {
+    "cache_dir": "data/cache/sec",
+    "cache_file_count": 349,
+    "cache_size_bytes": 67537145,
+    "cache_ttl_days": 14,
+    "deletion_performed": false,
+    "pruning_guidance": "Review stale SEC cache files before pruning; the orchestrator does not delete cache files.",
+    "review_only": true,
+    "sample_stale_cache_files": [
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000002488.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000018230.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000019617.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000034088.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000040545.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000050863.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000059478.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000093410.json",
+        "review_only": true
+      },
+      {
+        "age_days": 16,
+        "path": "data/cache/sec/submissions_CIK0000320193.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000731766.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000789019.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0000886982.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0001018724.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0001045810.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0001326801.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0001364742.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0001652044.json",
+        "review_only": true
+      },
+      {
+        "age_days": 15,
+        "path": "data/cache/sec/submissions_CIK0001730168.json",
+        "review_only": true
+      }
+    ],
+    "stale_cache_file_count": 18
+  },
+  "summary": {
+    "deletion_performed": false,
+    "openalex_cache_entries": 0,
+    "openalex_stale_entries": 0,
+    "review_only": true,
+    "sec_cache_files": 349,
+    "sec_stale_cache_files": 18,
+    "total_cache_size_bytes": 67537395
+  }
+}

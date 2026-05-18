@@ -630,7 +630,7 @@
   "hub_source_gaps": [],
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-18T00:07:58+00:00",
+    "generated_at_utc": "2026-05-18T05:23:27+00:00",
     "generated_by": "scripts/source_coverage_refresh.py",
     "network_calls": 0,
     "optional_files_read": {
@@ -807,7 +807,7 @@
     "unsourced_edges": 0
   },
   "source_coverage_refresh_state": {
-    "latest_refresh_at_utc": "2026-05-18T00:07:58+00:00",
+    "latest_refresh_at_utc": "2026-05-18T05:23:27+00:00",
     "preflight_present": true,
     "production_writes": 0,
     "review_only": true,

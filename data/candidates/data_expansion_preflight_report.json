@@ -174,7 +174,7 @@
   },
   "metadata": {
     "artifact_status": "review_only",
-    "generated_at_utc": "2026-05-18T00:07:58+00:00",
+    "generated_at_utc": "2026-05-18T05:23:27+00:00",
     "generated_by": "scripts/data_expansion_preflight.py",
     "network_calls": 0,
     "optional_files_read": {

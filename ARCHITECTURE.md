@@ -38,6 +38,7 @@ StockPhotonic/
     connections.json          # Production connections
     candidates/               # Review-only staging data
     source_registry/          # Reviewer-owned source governance artifacts
+    refresh/                  # Review-only live-refresh summaries, budgets, and changelogs
     cache/sec/                # Local SEC cache artifacts
     cache/openalex/           # Local OpenAlex entity/topic cache, ignored by git
   js/
@@ -71,7 +72,7 @@ D146 adds `js/stock/sourceRegistry.js` and `js/stock/graphScaling.js`. D147 adds
 - Graph controls: sector, industry group, relationship type, confidence tier, evidence tier, source-host category, sourced-only, SEC-backed-only, stale-review, candidate-preview, candidate-company preview, candidate density, candidate ecosystem/corridor focus, large-graph navigation mode, ecosystem/corridor navigation focus, local neighborhood depth, missing-evidence, portfolio-connected, cross-sector, layout, search, focus, threshold, orbit, portfolio input, SEC preview visibility, guided discovery dock, ecosystem overlay dock, active graph legend, evidence/source coverage lens, guided traversal, and route tracing.
 - Sidebar/dashboard: selected company investigation workspace, relationship evidence cards, evidence review queue, relationship timeline context, connection rows, SEC evidence cues, source/confidence/freshness/host-diversity summaries, nexus view, shared exposure, hidden relationships, cluster context, portfolio exposure, trust summary.
 - Source Workbench: command reference, evidence-state contract, source aging/host-category rules, pipeline overview, candidate file list, recommended local workflow, grouped SEC candidate review snapshot, candidate-company preview center, promotion planner console, production expansion console, expansion batch cards, triage metric cards, checklist status, candidate-vs-production overlap comparison, optional data expansion preflight report display, graph-growth simulation cards, and source governance console.
-- Scheduled review artifacts: Source Workbench can also display review pipeline timestamps, OpenAlex enrichment summaries, source coverage refresh queues, and missing-artifact fallback states.
+- Scheduled review artifacts: Source Workbench can also display bounded live-refresh status, review pipeline timestamps, OpenAlex enrichment summaries, source coverage refresh queues, and missing-artifact fallback states.
 
 CSS ownership is split by layer. Shared shell styles live in `css/shell.css`, graph/fullscreen styles in `css/graph.css`, StockPhotonic styles in `css/stock.css`, CryptoPhotonic styles in `css/crypto.css`, review/source styles in `css/review.css`, and responsive overrides in `css/mobile.css`. Do not use `css/crypto.css` as a shared catch-all.
 
@@ -98,6 +99,8 @@ D149 adds `scripts/production_company_expansion.py`, which is the first reviewed
 
 D143 adds `scripts/source_coverage_refresh.py`, `scripts/openalex_enrichment.py`, and `scripts/review_artifact_refresh.py`. D144 extends source coverage refresh with `fast_track_source_targets`, `source_expansion_batches`, `hub_source_gaps`, and per-row evidence tier/reviewer state metadata. D145 expands this into source-backed corridor planning with `corridor_source_lanes`, `ecosystem_expansion_opportunities`, `source_backlog_visibility`, and `graph_growth_metrics`. D146 adds `scripts/source_registry_governance.py`, which writes reviewer-owned source registry and governance artifacts under `data/source_registry/` when explicitly run with `--write --sync-registry`. D148 extends the refresh plan with `scripts/promotion_planner_report.py`. These scripts generate review-only artifacts for reviewer queues, OpenAlex ecosystem/topic/institution/cluster hints, source coverage enrichment, source governance, universe expansion readiness, promotion planning, corridor maintenance, graph scaling, and pipeline refresh status. OpenAlex networking is disabled unless explicitly requested and is bounded by request/entity caps plus cache reuse. The app only reads generated JSON files; it does not call OpenAlex or SEC from the browser.
 
+D150 adds `scripts/live_refresh_orchestrator.py`, which coordinates SEC metadata cache refresh, OpenAlex enrichment, review artifact refresh, source aging checks, rate-limit accounting, cache lifecycle summaries, candidate refresh status, and large-graph refresh forecasts. It writes review-only summaries under `data/refresh/`, never writes production companies or connections, and skips provider network calls unless `--write`, `--allow-network`, provider-specific flags, configuration, and budget all allow them.
+
 D145 also adds `scripts/d145_source_expand_graph.py` as a one-phase audit helper for the controlled production graph expansion. It enriches source URLs and appends duplicate-checked, source-backed production relationships, but it is not a browser ingestion path and does not consume OpenAlex or candidate rows as promotion authority.
 
 ## PIPELINE COMPONENTS
@@ -108,10 +111,11 @@ D145 also adds `scripts/d145_source_expand_graph.py` as a one-phase audit helper
 - Triage scripts generate queue, summary, overlap, and checklist artifacts without production writes.
 - OpenAlex scripts generate source-labeled context hints without production writes, relationship proof, or promotion authority.
 - Source registry governance scripts generate official-source visibility, trusted-host inventories, universe expansion blockers, corridor queues, stale-source queues, and scaling reports without production writes.
+- Live refresh orchestration generates `data/refresh/*.json` status artifacts, budget reports, cache lifecycle reports, and changelogs without production writes.
 - Scheduled workflow scripts refresh review artifacts and validate outputs, then upload artifacts only.
 - Promotion preview classifies candidates before production writes.
 - Manual promotion can write reviewed edges to `data/connections.json`.
-- `scripts/validate_data.py` enforces production dataset integrity and validates candidate, triage, preflight, source coverage, source registry, OpenAlex, cache, and pipeline artifact shape when those review files exist.
+- `scripts/validate_data.py` enforces production dataset integrity and validates candidate, triage, preflight, source coverage, source registry, OpenAlex, cache, pipeline, and live-refresh artifact shape.
 
 ## SEC CANDIDATE INTELLIGENCE
 

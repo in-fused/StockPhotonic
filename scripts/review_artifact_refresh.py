@@ -70,6 +70,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--skip-source-governance", action="store_true")
     parser.add_argument("--skip-promotion-planner", action="store_true")
     parser.add_argument("--skip-openalex", action="store_true")
+    parser.add_argument("--skip-validation", action="store_true")
     parser.add_argument(
         "--allow-openalex-network",
         action="store_true",
@@ -283,7 +284,8 @@ def planned_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 step_command(OPENALEX_SCRIPT, write=args.write, force=args.force, extra=extra),
             )
         )
-    steps.append(("validation", [sys.executable, str(VALIDATE_SCRIPT)]))
+    if not args.skip_validation:
+        steps.append(("validation", [sys.executable, str(VALIDATE_SCRIPT)]))
     return steps
 
 

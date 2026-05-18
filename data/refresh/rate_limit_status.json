@@ -1,0 +1,63 @@
+{
+  "governance": {
+    "global_refresh_cap": 32,
+    "openalex_per_run_cap": 16,
+    "production_write_policy": "Refresh artifacts are review-only and production writes remain zero.",
+    "review_only": true,
+    "safe_failure_policy": "Provider requests are skipped when per-run, daily, or global caps are exhausted.",
+    "sec_per_run_cap": 6
+  },
+  "metadata": {
+    "app_load_allowed": true,
+    "artifact_name": "rate_limit_status",
+    "artifact_status": "review_only",
+    "generated_at_utc": "2026-05-18T05:23:25+00:00",
+    "generated_by": "scripts/live_refresh_orchestrator.py",
+    "production_write_allowed": false,
+    "refresh_mode": "write",
+    "schema_version": 1
+  },
+  "providers": {
+    "global": {
+      "cap_exceeded": false,
+      "request_cap": 32,
+      "requests_remaining": 32,
+      "requests_used": 0
+    },
+    "openalex": {
+      "cap_exceeded": false,
+      "daily_cap": 80,
+      "daily_used_after_run": 0,
+      "per_run_cap": 16,
+      "requests_remaining": 16,
+      "requests_used": 0
+    },
+    "sec": {
+      "cap_exceeded": false,
+      "daily_cap": 30,
+      "daily_used_after_run": 0,
+      "per_run_cap": 6,
+      "requests_remaining": 6,
+      "requests_used": 0
+    }
+  },
+  "safety": {
+    "auto_promotion_executed": false,
+    "browser_ingestion": false,
+    "companies_written": 0,
+    "connections_written": 0,
+    "network_requests_used": 0,
+    "production_writes": 0,
+    "review_only": true
+  },
+  "summary": {
+    "cap_exceeded": false,
+    "daily_budget_date": "2026-05-18",
+    "manual_override_required": true,
+    "network_disabled_default": true,
+    "network_enabled_this_run": false,
+    "request_cap": 32,
+    "requests_used": 0,
+    "review_only": true
+  }
+}

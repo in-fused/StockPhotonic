@@ -42,6 +42,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Source coverage fast-track batches that target strong-inferred public relationships for enrichment without adding manual-promotion pressure.
 - Scheduled review artifact refreshes that reduce manual triage burden while keeping artifacts review-only.
 - OpenAlex enrichment cache quality, entity resolution accuracy, and reviewer-visible topic/institution context.
+- Bounded live-refresh governance that keeps scheduled source intelligence review-only, cache-first, and rate-limited.
 - Relationship evidence depth: short source snippets, filing references, source aging review queues, source-host diversity, and relationship-specific confidence explanations.
 - Future open-data review workflow: source registry rules that pre-classify URL host categories, expose review aging thresholds, export reviewer checklists, and preserve candidate -> preview -> manual promotion.
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
@@ -92,6 +93,13 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Add viewport-aware large-graph label budgets and an optional minimap once graph size approaches several hundred companies.
 - Add route-target selection for corridor traversal after current route isolation is validated with reviewers.
 - Keep future 1000+ company growth behind source-backed identity, duplicate/alias checks, explicit approval manifests, and validation.
+
+## D150 FOLLOW-ON
+
+- Add reviewer-authored decisions to live-refresh candidate queues without creating promotion authority.
+- Add optional persistent GitHub artifact retrieval docs for teams that want to compare scheduled refresh runs without committing generated data.
+- Add stricter cache-retention review tooling after enough OpenAlex/SEC cache history exists.
+- Keep continuous intelligence separate from production mutation; future promotion remains reviewed, explicit, and validated.
 
 ## D146 FOLLOW-ON
 

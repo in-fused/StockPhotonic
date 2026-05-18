@@ -50,9 +50,12 @@
         const frameNodes = context.visibleNodes
             .filter(node => isNodeInFrame(context, node))
             .sort(sortByPerspectiveDepth);
-        const frameLinks = context.visibleLinks
-            .filter(link => shouldDrawLink(context, link))
-            .sort(sortLinkByPerspectiveDepth);
+        const density = getDensityProfile(context);
+        const frameLinks = prioritizeFrameLinks(
+            context,
+            context.visibleLinks.filter(link => shouldDrawLink(context, link)),
+            density
+        ).sort(sortLinkByPerspectiveDepth);
 
         ctx.save();
         frameLinks.forEach(link => drawLink(context, ctx, link));
@@ -534,11 +537,13 @@
         const tickerLimit = Number(heuristics.labelLimitTicker);
         if (labelMode === 'full') {
             if (Number.isFinite(fullLimit) && !context.selectedNode) return fullLimit;
+            if (density.mega && !context.selectedNode) return 18;
             if (density.veryDense && !context.selectedNode) return 32;
             if (density.dense && !context.selectedNode) return 42;
             return context.selectedNode ? 68 : 54;
         }
         if (Number.isFinite(tickerLimit) && !context.selectedNode) return tickerLimit;
+        if (density.mega && !context.selectedNode) return 12;
         if (density.veryDense && !context.selectedNode) return 22;
         if (density.dense && !context.selectedNode) return 28;
         return context.selectedNode ? 52 : 36;
@@ -557,6 +562,7 @@
         if (context.isPortfolioAnalysisActive() && context.isPortfolioHighlightedNode(node)) return true;
         if (context.selectedNode && context.focusNeighborIds.has(node.id)) return true;
         if (context.selectedNode && context.activeClusterNodeIds.has(node.id) && !context.isFocusModeActive()) return true;
+        if (density.mega && !context.selectedNode) return context.scale > 0.92 && (context.topLabelIds.has(node.id) || node.degree >= 12);
         if (density.veryDense && !context.selectedNode) return context.scale > 0.82 && (context.topLabelIds.has(node.id) || node.degree >= 8);
         if (density.dense && !context.selectedNode) return context.scale > 0.74 && (context.topLabelIds.has(node.id) || node.degree >= 6);
         if (labelMode === 'full') return true;
@@ -695,6 +701,43 @@
         return maxX >= 0 && minX <= context.canvasWidth && maxY >= 0 && minY <= context.canvasHeight;
     }
 
+    function prioritizeFrameLinks(context, links, density = getDensityProfile(context)) {
+        const limit = getFrameLinkLimit(context, density);
+        if (!limit || links.length <= limit) return links;
+        return links
+            .slice()
+            .sort((a, b) => getLinkRenderPriority(context, b) - getLinkRenderPriority(context, a))
+            .slice(0, limit);
+    }
+
+    function getFrameLinkLimit(context, density) {
+        if (context.selectedNode || context.activeRelationshipRoute || context.selectedRelationshipLink) return 0;
+        const navigation = context.graphScalingModel?.navigation || {};
+        if (navigation.active && navigation.mode !== 'production_only') return 0;
+        if (context.scale < 0.34 && density.mega) return 240;
+        if (context.scale < 0.34 && density.veryDense) return 320;
+        if (context.scale < 0.42 && density.dense) return 420;
+        if (context.scale < 0.58 && density.mega) return 360;
+        if (context.scale < 0.58 && density.veryDense) return 520;
+        if (context.scale < 0.62 && density.dense) return 680;
+        return 0;
+    }
+
+    function getLinkRenderPriority(context, link) {
+        const visual = context.getGraphLinkIntelligenceVisual?.(link) || {};
+        const strength = Number(link?.strength) || 0;
+        let score = strength * 100;
+        if (visual.forceDraw || visual.route || visual.selected || visual.guided || visual.overlay || visual.sourceCoverage) score += 1000;
+        if (context.portfolioEdgeKeys?.has(link.key)) score += 850;
+        if (context.focusLinkKeys?.has(link.key)) score += 800;
+        if (context.isPortfolioAnalysisActive?.() && context.portfolioEdgeKeys?.has(link.key)) score += 360;
+        if (context.relationshipHasSourceEvidence?.(link)) score += 120;
+        if (context.isSecBackedConnection?.(link)) score += 140;
+        const sourceDegree = Number(link?.source?.degree) || 0;
+        const targetDegree = Number(link?.target?.degree) || 0;
+        return score + Math.min(120, sourceDegree + targetDegree);
+    }
+
     function drawNodeIntelligenceCue(context, ctx, point, radius, visual, state) {
         if (!visual?.emphasized) return;
 
@@ -762,10 +805,11 @@
 
     function getWeakEdgeThreshold(context) {
         const density = getDensityProfile(context);
-        const densityLift = density.veryDense ? 0.12 : density.dense ? 0.07 : density.large ? 0.04 : 0;
+        const densityLift = density.mega ? 0.18 : density.veryDense ? 0.12 : density.dense ? 0.07 : density.large ? 0.04 : 0;
         if (context.scale < 0.3) return Math.min(0.58, 0.42 + densityLift);
         if (context.scale < 0.46) return Math.min(0.5, 0.32 + densityLift);
         if (context.scale < 0.62) return Math.min(0.38, 0.2 + densityLift);
+        if (density.mega && context.scale < 0.92) return 0.2;
         if (density.veryDense && context.scale < 0.82) return 0.14;
         if (density.dense && context.scale < 0.76) return 0.08;
         return 0;
@@ -779,6 +823,7 @@
             nodeCount,
             edgeCount,
             density,
+            mega: nodeCount > 520 || edgeCount > 1100 || density > 4.2,
             large: nodeCount > 70 || edgeCount > 115,
             dense: density > 2.15 || edgeCount > 125,
             veryDense: density > 2.75 || edgeCount > 165

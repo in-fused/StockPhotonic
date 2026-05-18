@@ -644,3 +644,68 @@
             background: rgba(196, 181, 253, 0.08);
             color: rgba(237, 233, 254, 0.9);
         }
+
+/* D151 Source Workbench progressive disclosure: grouped workflows without persistent overload. */
+.source-workbench-panel {
+            border-radius: 8px !important;
+            overflow: hidden;
+        }
+
+.source-workbench-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.85rem;
+            width: 100%;
+            min-height: 2.55rem;
+            margin: -0.35rem -0.35rem 0.85rem;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.46);
+            color: rgba(226, 232, 240, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0;
+            line-height: 1.2;
+            padding: 0.68rem 0.8rem;
+            text-align: left;
+            transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+        }
+
+.source-workbench-toggle span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.source-workbench-toggle i {
+            flex: 0 0 auto;
+            color: rgba(165, 243, 252, 0.72);
+        }
+
+.source-workbench-toggle:hover,
+.source-workbench-toggle:focus-visible {
+            border-color: rgba(103, 232, 249, 0.32);
+            background: rgba(14, 165, 233, 0.12);
+            color: #ffffff;
+            outline: none;
+        }
+
+.source-workbench-panel-body {
+            display: grid;
+            gap: 0;
+            min-width: 0;
+        }
+
+.source-workbench-panel.is-collapsed {
+            padding-bottom: 0.8rem !important;
+        }
+
+.source-workbench-panel.is-collapsed .source-workbench-toggle {
+            margin-bottom: 0;
+        }
+
+.source-workbench-panel.is-collapsed .source-workbench-panel-body {
+            display: none;
+        }

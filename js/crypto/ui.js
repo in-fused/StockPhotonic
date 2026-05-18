@@ -7225,8 +7225,9 @@
             updateFlowReplay(performance.now());
             state.flowMotion.now = performance.now();
             const visibleFlowEdges = getVisibleFlowEdges();
-            const visibleEdges = getVisibleEdges(visibleFlowEdges);
+            const rawVisibleEdges = getVisibleEdges(visibleFlowEdges);
             const interaction = getInteractionState(visibleFlowEdges);
+            const visibleEdges = getRenderableEdges(rawVisibleEdges, interaction);
             interaction.visibleFlowEdges = visibleFlowEdges;
             interaction.visibleFlowCount = visibleFlowEdges.length;
             interaction.labelLayout = createLabelLayout(width, height);
@@ -7265,6 +7266,27 @@
             state.renderPerf.pending = false;
             scheduleRender();
         }
+    }
+
+    function getRenderableEdges(edges, interaction) {
+        const list = Array.isArray(edges) ? edges : [];
+        if (interaction?.hasFocus || list.length <= 520) return list;
+        const limit = list.length > 1200 ? 620 : list.length > 820 ? 720 : 840;
+        if (list.length <= limit) return list;
+        return list
+            .slice()
+            .sort((a, b) => getCryptoEdgePriority(b) - getCryptoEdgePriority(a))
+            .slice(0, limit);
+    }
+
+    function getCryptoEdgePriority(edge = {}) {
+        let score = Number(edge.usd_value || 0) > 0 ? Math.log10(Number(edge.usd_value || 0) + 1) * 18 : 0;
+        if (edge.type === core.EDGE_TYPES.FLOW) score += 120;
+        if (edge.is_large_value) score += 160;
+        if (edge.flow_role === 'swap_route') score += 70;
+        if (edge.type === core.EDGE_TYPES.EXPOSURE) score += 34;
+        if (edge.type === core.EDGE_TYPES.LABEL) score += 20 + Math.min(80, Number(edge.transaction_count || 0) * 8);
+        return score;
     }
 
     function getVisibleEdges(visibleFlowEdges = getVisibleFlowEdges()) {

@@ -6,15 +6,15 @@
     <title>PHOTONIC NEXUS - Real Core Dataset - Phase 2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/base.css?v=d139-css-split">
-    <link rel="stylesheet" href="css/shell.css?v=d139-css-split">
-    <link rel="stylesheet" href="css/graph.css?v=d139-css-split">
-    <link rel="stylesheet" href="css/stock.css?v=d139-css-split">
-    <link rel="stylesheet" href="css/crypto.css?v=d139-css-split">
-    <link rel="stylesheet" href="css/review.css?v=d139-css-split">
-    <link rel="stylesheet" href="css/mobile.css?v=d139-css-split">
+    <link rel="stylesheet" href="css/base.css?v=d151-graph-os">
+    <link rel="stylesheet" href="css/shell.css?v=d151-graph-os">
+    <link rel="stylesheet" href="css/graph.css?v=d151-graph-os">
+    <link rel="stylesheet" href="css/stock.css?v=d151-graph-os">
+    <link rel="stylesheet" href="css/crypto.css?v=d151-graph-os">
+    <link rel="stylesheet" href="css/review.css?v=d151-graph-os">
+    <link rel="stylesheet" href="css/mobile.css?v=d151-graph-os">
 </head>
-<body class="photonic-bg">
+<body class="photonic-bg graph-first-os" data-stock-ux-mode="explore" data-crypto-ux-mode="flow" data-control-layer="primary">
     <header class="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
         <div class="max-w-screen-2xl mx-auto px-8 py-5 flex items-center justify-between page-shell">
             <div class="flex items-center gap-x-4">
@@ -124,8 +124,34 @@
             </div>
         </nav>
 
-        <section id="graph-intelligence-view" role="tabpanel" aria-labelledby="graph-intelligence-tab">
-            <div class="graph-intelligence-controls glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10">
+        <section id="graph-intelligence-view" class="graph-operating-surface is-inspector-dormant" role="tabpanel" aria-labelledby="graph-intelligence-tab">
+            <div class="graph-os-bar" aria-label="StockPhotonic operating modes">
+                <div class="graph-mode-switcher" role="group" aria-label="UX operating modes">
+                    <button type="button" class="graph-mode-button is-active" data-stock-ux-mode="explore" aria-pressed="true"><i class="fa-solid fa-compass"></i><span>Explore</span></button>
+                    <button type="button" class="graph-mode-button" data-stock-ux-mode="analyst" aria-pressed="false"><i class="fa-solid fa-chart-simple"></i><span>Analyst</span></button>
+                    <button type="button" class="graph-mode-button" data-stock-ux-mode="review" aria-pressed="false"><i class="fa-solid fa-shield-halved"></i><span>Review</span></button>
+                    <button type="button" class="graph-mode-button" data-stock-ux-mode="replay" aria-pressed="false"><i class="fa-solid fa-route"></i><span>Replay</span></button>
+                </div>
+                <div class="graph-os-actions" role="group" aria-label="Graph quick actions">
+                    <button type="button" class="graph-os-action" onclick="openPhotonicCommandPalette()" title="Open command palette" aria-label="Open command palette"><i class="fa-solid fa-terminal"></i><span>Command</span></button>
+                    <button type="button" class="graph-os-action" data-toggle-graph-controls onclick="toggleGraphControlDrawer()" aria-pressed="false" title="Open progressive graph controls" aria-label="Open progressive graph controls"><i class="fa-solid fa-sliders"></i><span>Controls</span></button>
+                    <button type="button" class="graph-os-action" data-toggle-stock-inspector onclick="toggleStockInspector()" aria-pressed="false" title="Open contextual inspector" aria-label="Open contextual inspector"><i class="fa-solid fa-sidebar"></i><span>Inspector</span></button>
+                </div>
+            </div>
+
+            <div id="graph-control-drawer" class="graph-intelligence-controls graph-control-drawer is-collapsed glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10" aria-label="Progressive graph controls">
+                <div class="graph-control-drawer-header">
+                    <div>
+                        <div class="graph-control-drawer-title">Graph Controls</div>
+                        <div class="graph-control-drawer-subtitle">Progressive controls for the active operating mode</div>
+                    </div>
+                    <div class="graph-control-layer-switch" role="group" aria-label="Control complexity">
+                        <button type="button" data-control-layer="primary" class="is-active" aria-pressed="true">Primary</button>
+                        <button type="button" data-control-layer="secondary" aria-pressed="false">Secondary</button>
+                        <button type="button" data-control-layer="advanced" aria-pressed="false">Advanced</button>
+                    </div>
+                    <button type="button" onclick="toggleGraphControlDrawer(false)" class="graph-control-close" aria-label="Close graph controls"><i class="fa-solid fa-xmark"></i></button>
+                </div>
                 <div class="control-section-title">Data / Filters</div>
                 <div class="control-help basis-full">Find companies, narrow the market universe, and choose the graph layout before using advanced view controls.</div>
                 <div class="flex-1 min-w-[220px] relative">
@@ -384,6 +410,16 @@
                     <div class="glass rounded-3xl p-3 graph-container relative overflow-hidden" style="height: 680px;">
                         <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
                         <canvas id="orb-map-canvas" class="orb-map-canvas hidden cursor-grab" aria-label="Orb Map graph view"></canvas>
+                        <canvas id="graph-minimap-canvas" class="graph-minimap-canvas" aria-label="Visible graph minimap"></canvas>
+                        <div class="graph-floating-toolbar" aria-label="Floating graph controls">
+                            <button type="button" onclick="fitGraph()" title="Fit visible graph" aria-label="Fit visible graph"><i class="fa-solid fa-compress-arrows-alt"></i></button>
+                            <button type="button" onclick="toggleFocusMode()" title="Toggle Focus Mode" aria-label="Toggle Focus Mode"><i class="fa-solid fa-bullseye"></i></button>
+                            <button type="button" onclick="openPhotonicCommandPalette()" title="Open command palette" aria-label="Open command palette"><i class="fa-solid fa-terminal"></i></button>
+                            <button type="button" data-toggle-graph-controls onclick="toggleGraphControlDrawer()" aria-pressed="false" title="Open graph controls" aria-label="Open graph controls"><i class="fa-solid fa-sliders"></i></button>
+                            <button type="button" data-toggle-stock-inspector onclick="toggleStockInspector()" aria-pressed="false" title="Open contextual inspector" aria-label="Open contextual inspector"><i class="fa-solid fa-sidebar"></i></button>
+                        </div>
+                        <div id="graph-mode-hud" class="graph-mode-hud" aria-live="polite">Explore Mode</div>
+                        <div id="graph-spatial-breadcrumbs" class="graph-spatial-breadcrumbs" aria-live="polite"></div>
                         <div class="mobile-graph-overlay stock-mobile-graph-overlay" aria-label="Mobile StockPhotonic graph controls">
                             <div class="mobile-graph-hint rounded-2xl px-3 py-2 text-[10px] font-mono">Pinch to zoom &bull; Drag to pan &bull; Tap nodes/flows</div>
                             <div class="mobile-graph-actions">
@@ -412,7 +448,16 @@
                     </div>
                 </div>
 
-                <div class="graph-sidebar-column lg:col-span-4">
+                <div id="stock-contextual-inspector" class="graph-sidebar-column contextual-inspector lg:col-span-4">
+                    <div class="contextual-inspector-header">
+                        <div>
+                            <div class="contextual-inspector-kicker">Contextual Inspector</div>
+                            <div class="contextual-inspector-title">Selection Detail</div>
+                        </div>
+                        <button type="button" onclick="toggleStockInspector(false)" class="contextual-inspector-close" aria-label="Close contextual inspector">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
                     <div id="sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full hidden"></div>
                     <div id="empty-sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full min-h-[320px] overflow-y-auto">
                         <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
@@ -1078,6 +1123,20 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         </div>
 
         <section class="crypto-panel rounded-3xl p-4 md:p-5">
+            <div class="crypto-os-bar" aria-label="CryptoPhotonic operating modes">
+                <div class="graph-mode-switcher" role="group" aria-label="Crypto UX operating modes">
+                    <button type="button" class="graph-mode-button is-active" data-crypto-ux-mode="flow" aria-pressed="true"><i class="fa-solid fa-wave-square"></i><span>Flow</span></button>
+                    <button type="button" class="graph-mode-button" data-crypto-ux-mode="analyst" aria-pressed="false"><i class="fa-solid fa-chart-simple"></i><span>Analyst</span></button>
+                    <button type="button" class="graph-mode-button" data-crypto-ux-mode="review" aria-pressed="false"><i class="fa-solid fa-shield-halved"></i><span>Review</span></button>
+                    <button type="button" class="graph-mode-button" data-crypto-ux-mode="replay" aria-pressed="false"><i class="fa-solid fa-clapperboard"></i><span>Replay</span></button>
+                </div>
+                <div class="graph-os-actions" role="group" aria-label="Crypto quick actions">
+                    <button type="button" class="graph-os-action" onclick="openPhotonicCommandPalette()" title="Open command palette" aria-label="Open command palette"><i class="fa-solid fa-terminal"></i><span>Command</span></button>
+                    <button type="button" class="graph-os-action" data-toggle-crypto-inspector onclick="toggleCryptoInspector()" aria-pressed="false" title="Open Crypto inspector" aria-label="Open Crypto inspector"><i class="fa-solid fa-sidebar"></i><span>Inspector</span></button>
+                    <div id="crypto-mode-hud" class="crypto-mode-hud" aria-live="polite">Flow Mode</div>
+                </div>
+            </div>
+
             <div class="crypto-workspace-toolbar flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div>
                     <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">LOCAL GRAPH WORKSPACE</div>
@@ -1148,6 +1207,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <div class="crypto-canvas-wrap rounded-3xl overflow-hidden">
                         <canvas id="crypto-flow-canvas" class="w-full h-full"></canvas>
                         <canvas id="crypto-history-workspace-canvas" class="crypto-history-workspace-canvas w-full h-full" aria-label="Preview-only replay workspace graph"></canvas>
+                        <div class="crypto-floating-toolbar" aria-label="Floating Crypto graph controls">
+                            <button type="button" onclick="window.CryptoPhotonic?.ui?.resetView?.()" title="Reset Crypto graph view" aria-label="Reset Crypto graph view"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button type="button" onclick="window.CryptoPhotonic?.ui?.centerTrackedWallet?.()" title="Center tracked wallet" aria-label="Center tracked wallet"><i class="fa-solid fa-crosshairs"></i></button>
+                            <button type="button" onclick="window.CryptoPhotonic?.ui?.cycleLabelDensity?.()" title="Cycle label density" aria-label="Cycle label density"><i class="fa-solid fa-tags"></i></button>
+                            <button type="button" onclick="openPhotonicCommandPalette()" title="Open command palette" aria-label="Open command palette"><i class="fa-solid fa-terminal"></i></button>
+                            <button type="button" data-toggle-crypto-inspector onclick="toggleCryptoInspector()" aria-pressed="false" title="Open Crypto inspector" aria-label="Open Crypto inspector"><i class="fa-solid fa-sidebar"></i></button>
+                        </div>
                         <div id="crypto-replay-workspace-overlay" class="crypto-replay-workspace-overlay" aria-live="polite"></div>
                         <div id="crypto-graph-hover-overlay" class="crypto-graph-hover-overlay" aria-hidden="true"></div>
                         <div class="mobile-graph-overlay crypto-mobile-graph-overlay" aria-label="Mobile CryptoPhotonic graph controls">
@@ -1179,7 +1245,16 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         <div id="crypto-mobile-investigation-drawer" class="crypto-mobile-investigation-drawer is-collapsed" data-state="collapsed" aria-live="polite"></div>
                     </div>
                 </div>
-                <aside class="crypto-side-column lg:col-span-4">
+                <aside class="crypto-side-column crypto-contextual-inspector lg:col-span-4">
+                    <div class="contextual-inspector-header crypto-inspector-header">
+                        <div>
+                            <div class="contextual-inspector-kicker">Crypto Inspector</div>
+                            <div class="contextual-inspector-title">Wallet / Flow Detail</div>
+                        </div>
+                        <button type="button" onclick="toggleCryptoInspector(false)" class="contextual-inspector-close" aria-label="Close Crypto inspector">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
                     <div class="crypto-sidebar-stack">
                         <div id="crypto-status-panel" class="crypto-status-panel"></div>
                         <div id="crypto-detail-panel" class="glass rounded-3xl p-6 border border-white/10 min-h-[320px] overflow-y-auto">
@@ -1210,6 +1285,23 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         </section>
     </div>
 
+    <div id="photonic-command-palette" class="photonic-command-palette" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="photonic-command-title">
+        <section class="photonic-command-panel">
+            <div class="photonic-command-topline">
+                <div>
+                    <div id="photonic-command-title" class="photonic-command-title">Command Palette</div>
+                    <div class="photonic-command-hint">Search modes, graph actions, route tools, review views, and Crypto actions.</div>
+                </div>
+                <button type="button" onclick="closePhotonicCommandPalette()" class="photonic-command-close" aria-label="Close command palette"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="photonic-command-input-wrap">
+                <i class="fa-solid fa-search"></i>
+                <input id="photonic-command-input" type="text" autocomplete="off" placeholder="Type an action..." aria-label="Search commands">
+            </div>
+            <div id="photonic-command-results" class="photonic-command-results"></div>
+        </section>
+    </div>
+
     <script src="js/core/config.js"></script>
     <script src="js/utils/math.js"></script>
     <script src="js/utils/formatting.js"></script>
@@ -1236,6 +1328,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/ui/sidebar.js?v=d144-tiered-evidence"></script>
     <script src="js/ui/search.js?v=d147-candidate-company-preview"></script>
     <script src="js/ui/controls.js"></script>
+    <script src="js/ui/operatingShell.js?v=d151-graph-os"></script>
     <script src="js/crypto/core.js"></script>
     <script src="js/crypto/graph.js"></script>
     <script src="js/crypto/layout.js"></script>
@@ -1580,6 +1673,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let pitch = DEFAULT_PERSPECTIVE_PITCH;
         let currentOrbitOffset = { x: 0, y: 0 };
         let graphWorkspaceBounds = { minX: -1800, maxX: 1800, minY: -1500, maxY: 1500 };
+        let graphNavigationTrail = [];
+        let graphNavigationTrailSuppressed = false;
 
         let offsetX = 0;
         let offsetY = 0;
@@ -1706,7 +1801,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             isNodeDimmedByIndustryGroup,
             nodeMatchesCurrentIndustryGroup,
             isFocusModeActive,
-            isIndustryCorrelationHintNode
+            isIndustryCorrelationHintNode,
+            relationshipHasSourceEvidence,
+            isSecBackedConnection
         };
 
         function setProductView(view) {
@@ -2614,6 +2711,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function setLargeGraphMode(mode) {
             stopOrbitForInteraction();
             largeGraphMode = stockLargeGraphNavigation.getModes().some(option => option.key === mode) ? mode : 'overview';
+            recordGraphNavigation('mode', largeGraphMode, stockLargeGraphNavigation.getModeLabel(largeGraphMode));
             if (largeGraphMode === 'preview_only') {
                 secPreviewEnabled = true;
                 candidateCompanyPreviewEnabled = true;
@@ -3106,12 +3204,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             const sectors = [...new Set(companies.map(company => company.sector || 'Other'))].sort();
             const sectorAnchors = new Map();
-            const anchorRadius = 980;
+            const universeScale = Math.max(1, Math.sqrt(Math.max(1, companies.length)) / 9);
+            const sectorSpread = clamp(940 + sectors.length * 44 + universeScale * 210, 980, 1680);
+            const anchorRadius = sectorSpread;
             sectors.forEach((sector, index) => {
                 const angle = (index / sectors.length) * Math.PI * 2 - Math.PI / 2;
                 sectorAnchors.set(sector, {
                     x: Math.cos(angle) * anchorRadius,
-                    y: Math.sin(angle) * anchorRadius * 0.72
+                    y: Math.sin(angle) * anchorRadius * 0.78
                 });
             });
 
@@ -3128,9 +3228,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 const anchor = sectorAnchors.get(sector) || { x: 0, y: 0 };
                 bucket.forEach((company, index) => {
                     const angle = index * 2.399963 + hashNumber(company.ticker || company.id) * 0.0008;
-                    const radius = 72 + Math.sqrt(index) * 62 + (index % 5) * 12;
+                    const bucketScale = Math.max(1, Math.sqrt(bucket.length) / 6.2);
+                    const corridorOffset = (index % 7) * (14 + bucketScale * 2);
+                    const radius = 88 + Math.sqrt(index) * (70 + bucketScale * 8) + corridorOffset;
                     const degree = degreeById.get(company.id) || 0;
-                    const hubPull = Math.max(0, 1 - Math.min(degree, 12) / 12) * 34;
+                    const hubPull = Math.max(0, 1 - Math.min(degree, 16) / 16) * 24;
                     const node = {
                         ...company,
                         degree,
@@ -3138,7 +3240,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         anchorX: anchor.x,
                         anchorY: anchor.y,
                         x: anchor.x + Math.cos(angle) * Math.max(35, radius - hubPull),
-                        y: anchor.y + Math.sin(angle) * Math.max(35, radius - hubPull) * 0.82,
+                        y: anchor.y + Math.sin(angle) * Math.max(46, radius - hubPull) * 0.86,
                         vx: 0,
                         vy: 0
                     };
@@ -3176,14 +3278,23 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function settleLayout() {
-            const iterations = 190;
+            const nodeCount = Math.max(1, nodes.length);
+            const edgeCount = Math.max(1, links.length);
+            const density = edgeCount / nodeCount;
+            const breathingRoom = nodeCount > 160 || edgeCount > 340
+                ? 1.34
+                : nodeCount > 100 || edgeCount > 210
+                    ? 1.2
+                    : 1.08;
+            const iterations = nodeCount > 160 ? 150 : 190;
             for (let step = 0; step < iterations; step++) {
                 links.forEach(link => {
                     const dx = link.target.x - link.source.x;
                     const dy = link.target.y - link.source.y;
                     const distance = Math.max(1, Math.hypot(dx, dy));
-                    const targetDistance = 230 - link.strength * 70 + (link.source.radius + link.target.radius) * 3.2;
-                    const force = (distance - targetDistance) * 0.006 * link.strength;
+                    const corridorGap = density > 2.2 ? 26 : density > 1.6 ? 14 : 0;
+                    const targetDistance = (250 + corridorGap - link.strength * 62 + (link.source.radius + link.target.radius) * 3.8) * breathingRoom;
+                    const force = (distance - targetDistance) * 0.0048 * link.strength;
                     const fx = (dx / distance) * force;
                     const fy = (dy / distance) * force;
                     link.source.x += fx;
@@ -3194,19 +3305,19 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
                 for (let i = 0; i < nodes.length; i++) {
                     const a = nodes[i];
-                    a.x += (a.anchorX - a.x) * 0.006;
-                    a.y += (a.anchorY - a.y) * 0.006;
-                    a.x *= 0.9992;
-                    a.y *= 0.9992;
+                    a.x += (a.anchorX - a.x) * 0.0048;
+                    a.y += (a.anchorY - a.y) * 0.0048;
+                    a.x *= 0.9995;
+                    a.y *= 0.9995;
 
                     for (let j = i + 1; j < nodes.length; j++) {
                         const b = nodes[j];
                         const dx = b.x - a.x;
                         const dy = b.y - a.y;
                         const distance = Math.max(0.1, Math.hypot(dx, dy));
-                        const minDistance = a.radius + b.radius + 46;
+                        const minDistance = a.radius + b.radius + 54 * breathingRoom;
                         if (distance < minDistance) {
-                            const push = (minDistance - distance) * 0.045;
+                            const push = (minDistance - distance) * 0.052;
                             const fx = (dx / distance) * push;
                             const fy = (dy / distance) * push;
                             a.x -= fx;
@@ -3556,6 +3667,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             drawSecProductionLayer(timestamp);
             drawSecPreviewLayer(timestamp);
             drawCandidateCompanyPreviewLayer(timestamp);
+            drawGraphMinimap();
         }
 
         function drawSecProductionLayer(timestamp = 0) {
@@ -3971,6 +4083,71 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return point;
         }
 
+        function drawGraphMinimap() {
+            const canvas = document.getElementById('graph-minimap-canvas');
+            if (!canvas || !visibleNodes.length || graphFullscreenActive && graphHudHidden) return;
+            const rect = canvas.getBoundingClientRect();
+            const width = Math.max(1, Math.floor(rect.width));
+            const height = Math.max(1, Math.floor(rect.height));
+            const ratio = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+            if (canvas.width !== Math.floor(width * ratio) || canvas.height !== Math.floor(height * ratio)) {
+                canvas.width = Math.floor(width * ratio);
+                canvas.height = Math.floor(height * ratio);
+            }
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(3, 7, 18, 0.72)';
+            ctx.fillRect(0, 0, width, height);
+
+            const bounds = graphViewport.getBoundsForNodes(getFitNodes(), getNodeLayoutPosition);
+            const pad = 34;
+            const worldWidth = Math.max(1, bounds.maxX - bounds.minX);
+            const worldHeight = Math.max(1, bounds.maxY - bounds.minY);
+            const mapScale = Math.min((width - pad) / worldWidth, (height - pad) / worldHeight);
+            const mapX = x => (x - bounds.minX) * mapScale + (width - worldWidth * mapScale) / 2;
+            const mapY = y => (y - bounds.minY) * mapScale + (height - worldHeight * mapScale) / 2;
+            const density = graphScalingModel?.density?.key || '';
+            const edgeLimit = density === 'very_dense' ? 220 : density === 'dense' ? 280 : 380;
+
+            ctx.save();
+            ctx.lineWidth = 0.7;
+            ctx.strokeStyle = 'rgba(125, 211, 252, 0.18)';
+            visibleLinks.slice(0, edgeLimit).forEach(link => {
+                const source = getNodeLayoutPosition(link.source);
+                const target = getNodeLayoutPosition(link.target);
+                ctx.beginPath();
+                ctx.moveTo(mapX(source.x), mapY(source.y));
+                ctx.lineTo(mapX(target.x), mapY(target.y));
+                ctx.stroke();
+            });
+
+            visibleNodes.forEach(node => {
+                const position = getNodeLayoutPosition(node);
+                const selected = selectedNode?.id === node.id || focusNeighborIds.has(node.id);
+                ctx.globalAlpha = selected ? 0.95 : 0.54;
+                ctx.fillStyle = selected ? '#ffffff' : node.color || '#67e8f9';
+                ctx.beginPath();
+                ctx.arc(mapX(position.x), mapY(position.y), selected ? 2.6 : 1.45, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            const topLeft = screenToWorld(0, 0);
+            const bottomRight = screenToWorld(canvasWidth, canvasHeight);
+            const vx = Math.min(mapX(topLeft.x), mapX(bottomRight.x));
+            const vy = Math.min(mapY(topLeft.y), mapY(bottomRight.y));
+            const vw = Math.abs(mapX(bottomRight.x) - mapX(topLeft.x));
+            const vh = Math.abs(mapY(bottomRight.y) - mapY(topLeft.y));
+            ctx.globalAlpha = 0.9;
+            ctx.strokeStyle = 'rgba(236, 254, 255, 0.78)';
+            ctx.lineWidth = 1.1;
+            roundedRect(ctx, vx, vy, Math.max(8, vw), Math.max(8, vh), 4);
+            ctx.stroke();
+            ctx.restore();
+        }
+
         function drawBackground(ctx) {
             graphRender.drawBackground(renderContext, ctx);
         }
@@ -4026,6 +4203,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             graphStoryMode = 'overview';
             if (!options.preserveFilters) ensureIndustryGroupFilterAllowsNode(node);
             selectedNode = node;
+            recordGraphNavigation('node', node.id, node.ticker || node.name || 'Company');
             focusNeighborIds = new Set();
             focusLinkKeys = new Set();
             const nodeCluster = getNodeCluster(node.id);
@@ -4065,6 +4243,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             activeRelationshipRoute = null;
             graphStoryMode = '';
             selectedSecPreviewNode = node;
+            recordGraphNavigation('sec-node', node.id, node.ticker || 'SEC preview');
             selectedSecPreviewLink = null;
             selectedCandidateCompanyPreviewNode = null;
             selectedCandidateCompanyPreviewLink = null;
@@ -4091,6 +4270,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             graphStoryMode = '';
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = link;
+            recordGraphNavigation('sec-edge', link.key, `${link.sourceTicker || link.source?.ticker || '?'} to ${link.targetTicker || link.target?.ticker || '?'}`);
             selectedCandidateCompanyPreviewNode = null;
             selectedCandidateCompanyPreviewLink = null;
             focusNeighborIds = new Set();
@@ -4112,6 +4292,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             selectedSecPreviewNode = null;
             selectedSecPreviewLink = null;
             selectedCandidateCompanyPreviewNode = node;
+            recordGraphNavigation('candidate-node', node.id, node.ticker || 'Candidate');
             selectedCandidateCompanyPreviewLink = null;
             focusNeighborIds = new Set();
             focusLinkKeys = new Set((node.previewLinks || []).map(link => link.key));
@@ -4139,6 +4320,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             selectedSecPreviewLink = null;
             selectedCandidateCompanyPreviewNode = null;
             selectedCandidateCompanyPreviewLink = link;
+            recordGraphNavigation('candidate-edge', link.key, `${link.source?.ticker || '?'} to ${link.target?.ticker || '?'}`);
             focusNeighborIds = new Set();
             focusLinkKeys = new Set([link.key]);
             activeClusterNodeIds = new Set();
@@ -4450,6 +4632,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             focusTransitionUntil = performance.now() + FOCUS_MODE_TRANSITION_MS;
             refreshVisibleGraph();
             showDefaultDashboard();
+            renderGraphBreadcrumbs();
             if (refit && (wasHubActive || wasNexusActive || wasFocusModeActive)) fitGraph();
             requestDraw();
         }
@@ -5251,6 +5434,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function setEcosystemOverlay(key, options = {}) {
             activeEcosystemOverlayKey = stockGraphIntelligence.getEcosystemDefinition(key) ? key : '';
+            if (activeEcosystemOverlayKey) {
+                const definition = stockGraphIntelligence.getEcosystemDefinition(activeEcosystemOverlayKey);
+                recordGraphNavigation('ecosystem', activeEcosystemOverlayKey, definition?.shortLabel || definition?.label || 'Ecosystem');
+            }
             graphStoryMode = activeEcosystemOverlayKey ? 'overlay' : '';
             refreshGraphIntelligenceModel();
             if (options.fit && graphIntelligenceModel.overlay?.nodes?.length) {
@@ -5305,6 +5492,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function traceRelationshipRoute(mode) {
             activeRelationshipRoute = stockGraphIntelligence.buildRoute(mode, getGraphIntelligenceContext());
+            recordGraphNavigation('route', mode, activeRelationshipRoute?.label || `${mode} route`);
             graphStoryMode = 'route';
             if (activeRelationshipRoute.ecosystemKey && !activeEcosystemOverlayKey) {
                 activeEcosystemOverlayKey = activeRelationshipRoute.ecosystemKey;
@@ -5350,6 +5538,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             selectedCandidateCompanyPreviewNode = null;
             selectedCandidateCompanyPreviewLink = null;
             selectedRelationshipLink = link;
+            recordGraphNavigation('relationship', link.key, `${link.source?.ticker || '?'} to ${link.target?.ticker || '?'}`);
             activeRelationshipRoute = null;
             graphStoryMode = 'relationship';
             focusNeighborIds = new Set([link.source?.id, link.target?.id].filter(Boolean));
@@ -6805,6 +6994,75 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 : hasRelationshipFiltersActive() || currentSector || currentIndustryGroup || currentSearch || signalStrengthThreshold > 0
                 ? 'FILTERED'
                 : 'READY';
+            renderGraphBreadcrumbs();
+        }
+
+        function recordGraphNavigation(type, value, label) {
+            if (graphNavigationTrailSuppressed || value === undefined || value === null || value === '') return;
+            const entry = {
+                type,
+                value: String(value),
+                label: String(label || value),
+                timestamp: Date.now()
+            };
+            const signature = `${entry.type}:${entry.value}`;
+            graphNavigationTrail = [
+                entry,
+                ...graphNavigationTrail.filter(item => `${item.type}:${item.value}` !== signature)
+            ].slice(0, 7);
+            renderGraphBreadcrumbs();
+        }
+
+        function renderGraphBreadcrumbs() {
+            const container = document.getElementById('graph-spatial-breadcrumbs');
+            if (!container) return;
+            const currentLabels = [
+                getLayoutModeLabel(),
+                ...(largeGraphNavigationModel?.isActive ? [stockLargeGraphNavigation.formatNavigationLabel(largeGraphNavigationModel)] : []),
+                ...(activeEcosystemOverlayKey ? [stockGraphIntelligence.getEcosystemDefinition(activeEcosystemOverlayKey)?.shortLabel || 'Ecosystem'] : []),
+                ...(activeRelationshipRoute ? [activeRelationshipRoute.label || 'Route'] : [])
+            ].filter(Boolean);
+            const current = currentLabels.length
+                ? `<span class="graph-breadcrumb-current">${currentLabels.map(escapeHtml).join(' / ')}</span>`
+                : '<span class="graph-breadcrumb-current">Overview</span>';
+            const trail = graphNavigationTrail.slice(0, 5).map((entry, index) => `
+                <button type="button" onclick="restoreGraphNavigationTrail(${index})" title="${escapeHtml(entry.label)}">
+                    ${escapeHtml(entry.label)}
+                </button>
+            `).join('');
+            container.innerHTML = `${current}${trail ? `<div class="graph-breadcrumb-history">${trail}</div>` : ''}`;
+        }
+
+        function restoreGraphNavigationTrail(index) {
+            const entry = graphNavigationTrail[index];
+            if (!entry) return;
+            graphNavigationTrailSuppressed = true;
+            try {
+                if (entry.type === 'node') {
+                    selectNodeById(Number.isNaN(Number(entry.value)) ? entry.value : Number(entry.value));
+                } else if (entry.type === 'candidate-node') {
+                    selectSearchNodeByIdFromDom(entry.value);
+                } else if (entry.type === 'sec-node') {
+                    const node = secPreviewNodes.find(item => item.id === entry.value);
+                    if (node) selectSecPreviewNode(node);
+                } else if (entry.type === 'sec-edge') {
+                    selectSecPreviewEdge(entry.value);
+                } else if (entry.type === 'candidate-edge') {
+                    selectCandidateCompanyPreviewEdge(entry.value);
+                } else if (entry.type === 'relationship') {
+                    const link = links.find(item => item.key === entry.value);
+                    if (link) selectProductionRelationship(link);
+                } else if (entry.type === 'mode') {
+                    setLargeGraphMode(entry.value);
+                } else if (entry.type === 'ecosystem') {
+                    setEcosystemOverlay(entry.value, { fit: true });
+                } else if (entry.type === 'route') {
+                    traceRelationshipRoute(entry.value);
+                }
+            } finally {
+                graphNavigationTrailSuppressed = false;
+                renderGraphBreadcrumbs();
+            }
         }
 
         function refreshSecPreviewVisibility() {
@@ -7205,6 +7463,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 hubLayoutPositions,
                 nexusLayoutPositions,
                 adjacencyById,
+                graphScalingModel,
                 hubCenter: HUB_CENTER,
                 hubRingGap: HUB_RING_GAP,
                 hubFirstRingRadius: HUB_FIRST_RING_RADIUS,

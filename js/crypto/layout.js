@@ -25,7 +25,8 @@
         const hubPositions = placeHubs(hubNodes, center, width, height, positions);
         const clusters = groupWallets(walletNodes, graph.labelEdges || [], graph.nodeById);
         const clusterEntries = [...clusters.entries()].sort(([a], [b]) => a.localeCompare(b));
-        const fallbackClusterRadius = Math.min(width, height) * 0.34;
+        const topologyScale = getTopologyScale(graph);
+        const fallbackClusterRadius = Math.min(width, height) * (0.38 + Math.min(0.08, clusterEntries.length * 0.012));
 
         clusterEntries.forEach(([clusterKey, wallets], clusterIndex) => {
             const hubAnchor = hubPositions.get(clusterKey);
@@ -37,7 +38,7 @@
                 y: center.y + Math.sin(clusterAngle) * fallbackClusterRadius * 0.72
             };
             const hubNode = graph.nodeById?.get(clusterKey);
-            const walletRadius = Math.max(104, Math.min(236, (hubNode?.radius || 26) + 82 + wallets.length * 20));
+            const walletRadius = Math.max(128, Math.min(330, ((hubNode?.radius || 26) + 98 + wallets.length * 24) * topologyScale));
 
             wallets
                 .sort((a, b) => (b.exposure_usd || 0) - (a.exposure_usd || 0) || sortByStableNodeKey(a, b))
@@ -79,7 +80,7 @@
                 y: center.y + Math.sin(tokenIndex) * Math.min(width, height) * 0.14
             });
             const offsetAngle = -Math.PI / 2 + tokenIndex * 1.08;
-            const tokenDistance = clamp(134 + relatedWalletPositions.length * 18, 146, 254);
+            const tokenDistance = clamp(174 + relatedWalletPositions.length * 24, 184, 330);
             positions.set(token.id, {
                 x: anchor.x + Math.cos(offsetAngle) * tokenDistance,
                 y: anchor.y + Math.sin(offsetAngle) * tokenDistance * 0.86,
@@ -128,8 +129,10 @@
             bounds: { width, height },
             workspace,
             layout: {
-                mode: 'deterministic_hub_flow_v2',
+                mode: 'liquidity_topology_v3',
                 supports_transaction_tree_expansion: true,
+                supports_cluster_breathing_room: true,
+                supports_flow_topology_grouping: true,
                 workspace_padding_x: workspace.paddingX,
                 workspace_padding_y: workspace.paddingY,
                 max_flow_value: maxFlowValue,
@@ -154,9 +157,18 @@
         };
     }
 
+    function getTopologyScale(graph) {
+        const nodeCount = graph?.nodes?.length || 0;
+        const flowCount = graph?.flowEdges?.length || 0;
+        if (nodeCount > 120 || flowCount > 260) return 1.22;
+        if (nodeCount > 70 || flowCount > 150) return 1.14;
+        if (nodeCount > 36 || flowCount > 80) return 1.08;
+        return 1;
+    }
+
     function placeHubs(hubNodes, center, width, height, positions) {
         const hubPositions = new Map();
-        const anchorRadius = Math.min(width, height) * (hubNodes.length <= 1 ? 0 : 0.32);
+        const anchorRadius = Math.min(width, height) * (hubNodes.length <= 1 ? 0 : Math.min(0.43, 0.32 + hubNodes.length * 0.012));
         hubNodes.forEach((hub, hubIndex) => {
             const angle = hubNodes.length === 1
                 ? -Math.PI / 2
@@ -196,9 +208,10 @@
 
     function resolveNodeOverlaps(nodes, width, height) {
         const laidOut = nodes.map(node => ({ ...node }));
-        const padding = 24;
+        const densityScale = laidOut.length > 120 ? 1.3 : laidOut.length > 70 ? 1.18 : 1.08;
+        const padding = 26 * densityScale;
 
-        for (let pass = 0; pass < 10; pass += 1) {
+        for (let pass = 0; pass < 14; pass += 1) {
             let moved = false;
             for (let i = 0; i < laidOut.length; i += 1) {
                 for (let j = i + 1; j < laidOut.length; j += 1) {
@@ -315,9 +328,9 @@
     }
 
     function getEdgeOpacity(edge, isLargeValue = false) {
-        if (edge.type === core.EDGE_TYPES.LABEL) return edge.usd_value ? 0.28 : 0.18;
-        if (edge.type === core.EDGE_TYPES.EXPOSURE) return 0.26;
-        return isLargeValue ? 0.92 : 0.48;
+        if (edge.type === core.EDGE_TYPES.LABEL) return edge.usd_value ? 0.22 : 0.13;
+        if (edge.type === core.EDGE_TYPES.EXPOSURE) return 0.2;
+        return isLargeValue ? 0.9 : 0.38;
     }
 
     function getEdgeColor(edge) {

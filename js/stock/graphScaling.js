@@ -105,6 +105,9 @@
 
     function getDensityBucket(nodeCount, edgeCount) {
         const ratio = edgeCount / Math.max(1, nodeCount);
+        if (nodeCount > 520 || edgeCount > 1100 || ratio > 4.2) {
+            return { key: 'mega', label: 'Mega graph', nodeCount, edgeCount, ratio };
+        }
         if (nodeCount > 160 || edgeCount > 360 || ratio > 3.15) {
             return { key: 'very_dense', label: 'Very dense', nodeCount, edgeCount, ratio };
         }
@@ -227,10 +230,12 @@
 
     function getLabelSeedLimit(density, navigation = {}) {
         if (navigation.active && navigation.mode !== 'production_only') {
+            if (density.key === 'mega') return 12;
             if (density.key === 'very_dense') return 14;
             if (density.key === 'dense') return 18;
             return 22;
         }
+        if (density.key === 'mega') return 14;
         if (density.key === 'very_dense') return 18;
         if (density.key === 'dense') return 24;
         if (density.key === 'growth') return 30;
@@ -239,11 +244,13 @@
 
     function getTickerLabelLimit(density, navigation = {}) {
         if (navigation.active && navigation.mode !== 'production_only') {
+            if (density.key === 'mega') return 10;
             if (density.key === 'very_dense') return 14;
             if (density.key === 'dense') return 20;
             if (density.key === 'growth') return 28;
             return 34;
         }
+        if (density.key === 'mega') return 14;
         if (density.key === 'very_dense') return 20;
         if (density.key === 'dense') return 28;
         if (density.key === 'growth') return 36;
@@ -252,11 +259,13 @@
 
     function getFullLabelLimit(density, navigation = {}) {
         if (navigation.active && navigation.mode !== 'production_only') {
+            if (density.key === 'mega') return 14;
             if (density.key === 'very_dense') return 20;
             if (density.key === 'dense') return 28;
             if (density.key === 'growth') return 36;
             return 44;
         }
+        if (density.key === 'mega') return 20;
         if (density.key === 'very_dense') return 28;
         if (density.key === 'dense') return 38;
         if (density.key === 'growth') return 46;
@@ -265,7 +274,9 @@
 
     function getCandidatePreviewLabelLimit(density, navigation = {}) {
         if (navigation.mode === 'preview_only') return 20;
+        if (navigation.active && density.key === 'mega') return 8;
         if (navigation.active && density.key === 'very_dense') return 10;
+        if (density.key === 'mega') return 10;
         if (density.key === 'very_dense') return 14;
         if (density.key === 'dense') return 20;
         if (density.key === 'growth') return 28;
@@ -309,12 +320,14 @@
     }
 
     function getMobileSafety(nodeCount, edgeCount, density) {
+        if (density.key === 'mega' || nodeCount > 360 || edgeCount > 760) return 'bottom-sheet-required';
         if (density.key === 'very_dense' || nodeCount > 150 || edgeCount > 330) return 'tight';
         if (density.key === 'dense' || nodeCount > 105 || edgeCount > 220) return 'watch';
         return 'safe';
     }
 
     function getRouteComplexity(density) {
+        if (density.key === 'mega') return 'extreme';
         if (density.key === 'very_dense') return 'very high';
         if (density.key === 'dense') return 'high';
         if (density.key === 'growth') return 'moderate';

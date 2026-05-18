@@ -102,8 +102,11 @@
             visibleNodeIds,
             hubCenter,
             hubRingGap,
-            hubFirstRingRadius
+            hubFirstRingRadius,
+            graphScalingModel
         } = options;
+        const density = graphScalingModel?.density?.key || '';
+        const spacingScale = density === 'very_dense' ? 1.26 : density === 'dense' ? 1.16 : density === 'growth' ? 1.08 : 1;
 
         const hubLayoutPositions = new Map();
         hubLayoutPositions.set(selectedNode.id, { ...hubCenter });
@@ -119,8 +122,8 @@
         let index = 0;
         let ring = 0;
         while (index < neighbors.length) {
-            const capacity = Math.min(neighbors.length - index, 10 + ring * 8);
-            const radius = hubFirstRingRadius + ring * hubRingGap;
+            const capacity = Math.min(neighbors.length - index, Math.max(8, Math.round((10 + ring * 8) / spacingScale)));
+            const radius = (hubFirstRingRadius + ring * hubRingGap) * spacingScale;
             const angleOffset = ring % 2 ? Math.PI / Math.max(1, capacity) : 0;
 
             for (let slot = 0; slot < capacity; slot++) {
@@ -159,13 +162,16 @@
     function placeNexusLinearGroup(nexusLayoutPositions, items, side, options) {
         const {
             nexusAxisDistance,
-            nexusAxisSpread
+            nexusAxisSpread,
+            graphScalingModel
         } = options;
+        const density = graphScalingModel?.density?.key || '';
+        const spacingScale = density === 'very_dense' ? 1.22 : density === 'dense' ? 1.14 : density === 'growth' ? 1.06 : 1;
 
         const count = items.length;
         if (!count) return;
 
-        const spread = Math.min(nexusAxisSpread, Math.max(0, (count - 1) * 94));
+        const spread = Math.min(nexusAxisSpread * spacingScale, Math.max(0, (count - 1) * 104 * spacingScale));
         items.forEach((item, index) => {
             const t = count === 1 ? 0 : (index / (count - 1)) - 0.5;
             const secondary = t * spread;
@@ -174,17 +180,17 @@
             let y = 0;
 
             if (side === 'left') {
-                x = -nexusAxisDistance + stagger;
+                x = -nexusAxisDistance * spacingScale + stagger;
                 y = secondary;
             } else if (side === 'right') {
-                x = nexusAxisDistance + stagger;
+                x = nexusAxisDistance * spacingScale + stagger;
                 y = secondary;
             } else if (side === 'top') {
                 x = secondary;
-                y = -nexusAxisDistance + stagger;
+                y = -nexusAxisDistance * spacingScale + stagger;
             } else {
                 x = secondary;
-                y = nexusAxisDistance + stagger;
+                y = nexusAxisDistance * spacingScale + stagger;
             }
 
             nexusLayoutPositions.set(item.node.id, { x, y });
@@ -193,8 +199,11 @@
 
     function placeNexusOuterRing(nexusLayoutPositions, items, options) {
         const {
-            nexusOuterRingRadius
+            nexusOuterRingRadius,
+            graphScalingModel
         } = options;
+        const density = graphScalingModel?.density?.key || '';
+        const spacingScale = density === 'very_dense' ? 1.22 : density === 'dense' ? 1.14 : density === 'growth' ? 1.06 : 1;
 
         const count = items.length;
         if (!count) return;
@@ -202,8 +211,8 @@
         items.forEach((item, index) => {
             const angle = (index / count) * Math.PI * 2 - Math.PI / 4;
             nexusLayoutPositions.set(item.node.id, {
-                x: Math.cos(angle) * nexusOuterRingRadius,
-                y: Math.sin(angle) * nexusOuterRingRadius * 0.82
+                x: Math.cos(angle) * nexusOuterRingRadius * spacingScale,
+                y: Math.sin(angle) * nexusOuterRingRadius * 0.86 * spacingScale
             });
         });
     }

@@ -24,7 +24,8 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 ## CURRENT FOCUS
 
-- UI/UX polish for the 2D Graph Intelligence workflow, especially guided discovery, default graph onboarding, active state comprehension, and mobile graph usability.
+- D151 graph-first operating system: keep the graph dominant, expose controls progressively, use contextual inspectors instead of persistent sidebars, and preserve all existing replay, route, ecosystem, evidence, source, portfolio, navigation, and refresh systems.
+- UI/UX polish for the 2D Graph Intelligence workflow, especially guided discovery, default graph onboarding, active state comprehension, command-palette access, transient overlays, and mobile graph usability.
 - Intelligence layer clarity: company investigation workspace, graph-adjacent storytelling cards, why-connected relationship cards, source/confidence labels, hubs, bridges, corridors, clusters, shared exposure, hidden relationships, ecosystem overlays, active graph legend, route tracing, industry correlations, portfolio exposure, and SEC-backed edge visibility.
 - Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, candidate-company preview staging, promotion readiness tables, reviewer decision states, graph-impact simulations, expansion batch summaries, triage artifacts, candidate-vs-production overlap comparison, and data expansion preflight reporting.
 - Trust layer clarity: trusted relationship classes, evidence tier filters, strong-inferred fast-track visibility, reviewer decision states, and OpenAlex context-only boundaries.
@@ -47,8 +48,16 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Future open-data review workflow: source registry rules that pre-classify URL host categories, expose review aging thresholds, export reviewer checklists, and preserve candidate -> preview -> manual promotion.
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
 - Optional backend/auth layer only after the static app and source workflow remain stable.
-- Larger graph rendering/performance work as source-backed data grows, using density-aware labels, route indexes, source-backed corridor lanes, strategic hub summaries, and D149 progressive-disclosure navigation modes.
+- Larger graph rendering/performance work as source-backed data grows, using D151 density-aware rendering, semantic zoom concepts, route indexes, source-backed corridor lanes, strategic hub summaries, and D149 progressive-disclosure navigation modes.
 - Controlled universe expansion engine that stages real public-company metadata, detects ticker/name conflicts, scores source readiness, and requires reviewer-owned ecosystem/corridor assignment before any future writer exists.
+
+## D151 FOLLOW-ON
+
+- Persist user-authored graph workspace state only after a storage/auth architecture is intentionally introduced.
+- Add deeper semantic zoom tiers for 1000+ node graphs, including server-free precomputed layout snapshots if the static bundle size remains acceptable.
+- Add richer minimap interaction, route-target selection, and keyboard traversal after the current command palette and breadcrumb model are validated.
+- Add reviewer-authored workspace annotations as review-only artifacts, not relationship proof or promotion authority.
+- Keep Crypto liquidity topology improvements tied to reviewed local/static data and never browser-side provider ingestion.
 
 ## D141 FOLLOW-ON
 

@@ -7438,6 +7438,22 @@
             labelDensity: state.labelDensity,
             mobile: isMobileViewport()
         }) || [];
+        if (state.historyPreview.workspaceMode) {
+            const event = getSelectedHistoryReplayEvent(getHistoryReplayStatus());
+            if (event?.step) {
+                parts.push({
+                    label: `Replay #${event.step}`,
+                    title: `${getHistoryReplayAmountTokenLabel(event)} / staged replay event`
+                });
+            }
+            const neighborhood = state.historyPreview.audit?.neighborhood || {};
+            if (neighborhood.mode && neighborhood.mode !== 'none') {
+                parts.push({
+                    label: `${String(neighborhood.mode).replaceAll('_', ' ')} neighborhood`,
+                    title: 'Active replay neighborhood focus'
+                });
+            }
+        }
         const signature = parts.map(part => part.label).join('|');
         if (signature === state.lastBreadcrumbKey) return;
         state.lastBreadcrumbKey = signature;
@@ -8786,6 +8802,34 @@
         });
         await runReplayAuditAction('center-transfer');
         return getSelectedHistoryReplayEvent(getHistoryReplayStatus());
+    }
+
+    async function stepReplayWorkspaceEvent(direction = 1) {
+        if (!state.historyPreview.workspaceMode) return false;
+        const status = await stepHistoryReplay(direction);
+        const currentStep = Number(status?.currentStep || state.historyPreview.audit?.selectedStep) || 0;
+        state.historyPreview.lastMessage = direction < 0
+            ? 'Replay stepped to the previous staged event. Active Wallet Lookup graph unchanged.'
+            : 'Replay stepped to the next staged event. Active Wallet Lookup graph unchanged.';
+        if (currentStep) {
+            await selectHistoryReplayEventByStep(currentStep, {
+                pause: true,
+                addBreadcrumb: true,
+                message: state.historyPreview.lastMessage
+            });
+        } else {
+            updateReplayWorkspaceShell();
+        }
+        renderCryptoSpatialBreadcrumbs();
+        return getSelectedHistoryReplayEvent(getHistoryReplayStatus()) || true;
+    }
+
+    function nextReplayEvent() {
+        return stepReplayWorkspaceEvent(1);
+    }
+
+    function previousReplayEvent() {
+        return stepReplayWorkspaceEvent(-1);
     }
 
     function updateReplayWorkspaceShell() {
@@ -12142,6 +12186,8 @@
         toggleReplayWorkspaceMode,
         openReplayNeighborhood,
         centerCurrentReplayTransfer,
+        nextReplayEvent,
+        previousReplayEvent,
         updateInteractionDock,
         getFlowQueue: () => state.flowQueue,
         setFlowAnimationEnabled,

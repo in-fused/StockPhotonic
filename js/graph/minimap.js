@@ -47,6 +47,7 @@
         const nodes = Array.isArray(options.nodes) ? options.nodes : [];
         const links = Array.isArray(options.links) ? options.links : [];
         const routeLinkKeys = options.routeLinkKeys || new Set();
+        const routeComparison = options.routeComparison || null;
         const selectedNodeIds = options.selectedNodeIds || new Set();
         const semantic = options.semanticZoom || {};
         const getNodeLayoutPosition = options.getNodeLayoutPosition || (node => node || { x: 0, y: 0 });
@@ -67,6 +68,7 @@
         drawMinimapEdges(ctx, model, links, {
             edgeLimit,
             routeLinkKeys,
+            routeComparison,
             getNodeLayoutPosition,
             semantic
         });
@@ -145,11 +147,17 @@
             ? 'rgba(125, 211, 252, 0.12)'
             : 'rgba(125, 211, 252, 0.18)';
         normalLinks.forEach(link => drawSimpleEdge(ctx, model, link, options.getNodeLayoutPosition));
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.78)';
         ctx.lineWidth = 1.15;
         ctx.shadowBlur = 8;
         ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-        routeLinks.forEach(link => drawSimpleEdge(ctx, model, link, options.getNodeLayoutPosition));
+        routeLinks.forEach(link => {
+            const membership = options.routeComparison?.linkMembership?.get(link.key);
+            ctx.strokeStyle = membership?.routes?.length > 1
+                ? 'rgba(255, 255, 255, 0.9)'
+                : membership?.routes?.[0]?.color || 'rgba(255, 255, 255, 0.78)';
+            ctx.lineWidth = membership?.routes?.length > 1 ? 1.55 : 1.15;
+            drawSimpleEdge(ctx, model, link, options.getNodeLayoutPosition);
+        });
         ctx.restore();
     }
 

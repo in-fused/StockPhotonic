@@ -1161,6 +1161,33 @@
                 display: none;
             }
 
+            .graph-route-workspace {
+                left: 0.72rem;
+                right: 0.72rem;
+                bottom: calc(9.2rem + env(safe-area-inset-bottom));
+                width: auto;
+                max-height: 9.5rem;
+                overflow: hidden;
+                padding: 0.58rem;
+            }
+
+            .graph-route-workspace-routes {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .graph-route-workspace-route em,
+            .graph-route-workspace-copy {
+                display: none;
+            }
+
+            .graph-route-workspace-metrics {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .graph-route-workspace-actions button span {
+                display: none;
+            }
+
             .crypto-spatial-breadcrumbs {
                 left: 0.72rem;
                 right: 0.72rem;

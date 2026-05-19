@@ -323,12 +323,101 @@
         const controlX = midX + (-dy / distance) * curve;
         const controlY = midY + (dx / distance) * curve;
 
+        if (intelligenceVisual.routeComparison?.active) {
+            drawRouteComparisonLink(context, ctx, {
+                source,
+                target,
+                controlX,
+                controlY,
+                dx,
+                dy,
+                distance,
+                alpha,
+                width,
+                perspectiveShade,
+                semanticEdge,
+                comparison: intelligenceVisual.routeComparison
+            });
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 1;
+            return;
+        }
+
         ctx.beginPath();
         ctx.moveTo(source.x, source.y);
         ctx.quadraticCurveTo(controlX, controlY, target.x, target.y);
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.globalAlpha = 1;
+    }
+
+    function drawRouteComparisonLink(context, ctx, state) {
+        const comparison = state.comparison || {};
+        const alpha = context.clamp((state.alpha || 0.8) + (comparison.shared ? 0.16 : 0.08), 0.48, 0.96) * (state.perspectiveShade || 1);
+        const width = Math.max(2.2, state.width || 2.5);
+        const normal = {
+            x: -state.dy / Math.max(1, state.distance),
+            y: state.dx / Math.max(1, state.distance)
+        };
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = comparison.shared ? comparison.sharedColor || '#ffffff' : comparison.color || '#22d3ee';
+
+        if (comparison.shared) {
+            ctx.globalAlpha = Math.min(0.34, alpha * 0.36);
+            ctx.strokeStyle = comparison.sharedColor || '#ffffff';
+            ctx.lineWidth = width + 5.2;
+            ctx.shadowBlur = 24 * (state.semanticEdge?.shadowMultiplier || 1);
+            drawQuadraticPath(ctx, state.source, state.target, state.controlX, state.controlY);
+
+            const colors = comparison.colors?.length ? comparison.colors : ['#22d3ee', '#f0abfc'];
+            colors.slice(0, 2).forEach((color, index) => {
+                const offset = (index === 0 ? -1 : 1) * Math.max(3.4, width * 0.72);
+                ctx.globalAlpha = alpha;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = Math.max(1.35, width * 0.48);
+                ctx.shadowBlur = 16;
+                drawQuadraticPath(
+                    ctx,
+                    state.source,
+                    state.target,
+                    state.controlX + normal.x * offset,
+                    state.controlY + normal.y * offset
+                );
+            });
+
+            ctx.globalAlpha = Math.min(0.58, alpha * 0.68);
+            ctx.strokeStyle = comparison.convergence ? '#d9f99d' : comparison.divergence ? '#fde68a' : '#ffffff';
+            ctx.lineWidth = Math.max(1, width * 0.28);
+            ctx.shadowBlur = comparison.divergence || comparison.convergence ? 18 : 8;
+            drawQuadraticPath(ctx, state.source, state.target, state.controlX, state.controlY);
+            ctx.restore();
+            return;
+        }
+
+        const color = comparison.color || '#22d3ee';
+        ctx.globalAlpha = Math.min(0.28, alpha * 0.34);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width + 3.4;
+        ctx.shadowBlur = 22 * (state.semanticEdge?.shadowMultiplier || 1);
+        drawQuadraticPath(ctx, state.source, state.target, state.controlX, state.controlY);
+
+        if (Array.isArray(comparison.dashPattern)) ctx.setLineDash(comparison.dashPattern);
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.shadowBlur = 20;
+        drawQuadraticPath(ctx, state.source, state.target, state.controlX, state.controlY);
+        ctx.restore();
+    }
+
+    function drawQuadraticPath(ctx, source, target, controlX, controlY) {
+        ctx.beginPath();
+        ctx.moveTo(source.x, source.y);
+        ctx.quadraticCurveTo(controlX, controlY, target.x, target.y);
+        ctx.stroke();
     }
 
     function drawNode(context, ctx, node, timestamp) {
@@ -877,7 +966,7 @@
     }
 
     function getFrameLinkLimit(context, density, semantic = getSemanticState(context, density)) {
-        if (context.selectedNode || context.activeRelationshipRoute || context.selectedRelationshipLink) return 0;
+        if (context.selectedNode || context.activeRelationshipRoute || context.activeRouteComparison || context.selectedRelationshipLink) return 0;
         const navigation = context.graphScalingModel?.navigation || {};
         if (navigation.active && navigation.mode !== 'production_only') return 0;
         if (semantic.tier === 'macro' && density.mega) return 180;
@@ -900,7 +989,7 @@
         const semanticEdge = getSemanticEdgeDisposition(context, link, semantic, visual);
         const strength = Number(link?.strength) || 0;
         let score = strength * 100 + (semanticEdge.priorityBoost || 0);
-        if (visual.forceDraw || visual.route || visual.selected || visual.guided || visual.overlay || visual.sourceCoverage) score += 1000;
+        if (visual.forceDraw || visual.route || visual.routeComparison?.active || visual.selected || visual.guided || visual.overlay || visual.sourceCoverage) score += 1000;
         if (context.portfolioEdgeKeys?.has(link.key)) score += 850;
         if (context.focusLinkKeys?.has(link.key)) score += 800;
         if (context.isPortfolioAnalysisActive?.() && context.portfolioEdgeKeys?.has(link.key)) score += 360;

@@ -1568,6 +1568,7 @@
         .crypto-replay-drilldown,
         .crypto-replay-related,
         .crypto-replay-neighborhood,
+        .crypto-replay-route-comparison,
         .crypto-replay-clusters,
         .crypto-replay-filtered-events {
             margin-top: 0.72rem;
@@ -1710,6 +1711,13 @@
         .crypto-replay-cluster-list button:disabled {
             cursor: not-allowed;
             opacity: 0.48;
+        }
+
+.crypto-replay-route-comparison {
+            border: 1px solid rgba(240, 171, 252, 0.14);
+            border-radius: 0.55rem;
+            background: rgba(76, 29, 149, 0.10);
+            padding: 0.62rem;
         }
 
 .crypto-replay-related-grid {

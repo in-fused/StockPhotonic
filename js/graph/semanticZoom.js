@@ -20,6 +20,7 @@
             context.selectedNode ||
             context.hoveredNode ||
             context.activeRelationshipRoute ||
+            context.activeRouteComparison ||
             context.selectedRelationshipLink
         );
         const overlayActive = Boolean(
@@ -141,6 +142,7 @@
         const protectedEdge = Boolean(
             visual.forceDraw ||
             visual.route ||
+            visual.routeComparison?.active ||
             visual.selected ||
             visual.guided ||
             visual.overlay ||
@@ -196,7 +198,12 @@
             });
         }
 
-        if (context.activeRelationshipRoute) {
+        if (context.activeRouteComparison) {
+            parts.push({
+                label: context.activeRouteComparison.label || 'Route comparison',
+                title: 'Active route comparison'
+            });
+        } else if (context.activeRelationshipRoute) {
             parts.push({
                 label: context.activeRelationshipRoute.label || 'Route',
                 title: 'Active relationship route'

@@ -126,7 +126,7 @@
         if (selected && Number.isFinite(selected._screenX) && Number.isFinite(selected._screenY)) {
             const selectedPoint = { x: selected._screenX, y: selected._screenY };
             const bubbleRadius = profile.bubbleRadius;
-            const routeNodeIds = context.activeRelationshipRoute?.nodeIds || new Set();
+            const routeNodeIds = context.activeRouteComparison?.nodeIds || context.activeRelationshipRoute?.nodeIds || new Set();
             const focusIds = context.focusNeighborIds || new Set();
             const clusterIds = context.activeClusterNodeIds || new Set();
             const affectedRadius = bubbleRadius * (semantic.tierRank >= 3 ? 1.52 : 1.36);
@@ -242,7 +242,7 @@
         const buckets = buildCorridorBuckets(context, links);
         if (!buckets.length) return;
 
-        const selectedRouteKeys = context.activeRelationshipRoute?.linkKeys || new Set();
+        const selectedRouteKeys = context.activeRouteComparison?.linkKeys || context.activeRelationshipRoute?.linkKeys || new Set();
         const focusedKeys = context.focusLinkKeys || new Set();
         const activeCorridorKey = context.largeGraphNavigationModel?.focusKind === 'corridor'
             ? context.largeGraphNavigationModel?.corridorKey
@@ -281,10 +281,10 @@
     }
 
     function shouldDrawStockCorridorLanes(context, semantic = {}, density = {}) {
-        if (!semantic.showCorridorHints && !context.activeRelationshipRoute && !context.selectedNode) return false;
+        if (!semantic.showCorridorHints && !context.activeRelationshipRoute && !context.activeRouteComparison && !context.selectedNode) return false;
         const navigation = context.largeGraphNavigationModel;
         if (navigation?.isActive && ['corridor', 'ecosystem', 'hubs', 'route', 'neighborhood'].includes(navigation.focusKind)) return true;
-        if (context.activeEcosystemOverlayKey || context.activeGuidedDiscoveryKey || context.activeRelationshipRoute) return true;
+        if (context.activeEcosystemOverlayKey || context.activeGuidedDiscoveryKey || context.activeRelationshipRoute || context.activeRouteComparison) return true;
         if (context.getStockUxMode?.() === 'analyst' || context.getStockUxMode?.() === 'replay') return true;
         if (context.selectedNode) return semantic.tierRank >= 2;
         return semantic.tierRank <= 1 && (density.dense || density.veryDense || density.mega);
@@ -305,7 +305,7 @@
             };
             bucket.links.push(link);
             bucket.score += getLinkWeight(link) + (getCorridorMeta(key).priority || 0);
-            if (context.focusLinkKeys?.has(link.key) || context.activeRelationshipRoute?.linkKeys?.has(link.key)) {
+            if (context.focusLinkKeys?.has(link.key) || context.activeRelationshipRoute?.linkKeys?.has(link.key) || context.activeRouteComparison?.linkKeys?.has(link.key)) {
                 bucket.selectedCount += 1;
                 bucket.score += 100;
             }
@@ -338,7 +338,7 @@
         const corridorIndex = corridorKey ? getCorridorIndex(corridorKey) : 0;
         const relationshipKey = `${link?.source?.id || ''}:${link?.target?.id || ''}:${link?.relationship_type || link?.type || ''}`;
         const parallelLane = (hashString(relationshipKey) % 7) - 3;
-        const routeBoost = context.activeRelationshipRoute?.linkKeys?.has(link?.key) ? 1.35 : 1;
+        const routeBoost = context.activeRouteComparison?.linkKeys?.has(link?.key) || context.activeRelationshipRoute?.linkKeys?.has(link?.key) ? 1.35 : 1;
         const focusBoost = context.focusLinkKeys?.has(link?.key) ? 1.15 : 1;
         const scale = Math.sqrt(Math.max(0.2, Number(context.scale) || 1));
         const semanticScale = Number.isFinite(semantic.tierRank)
@@ -369,7 +369,7 @@
     }
 
     function drawCorridorLaneLabels(context, ctx, buckets, semantic = {}, profile = {}) {
-        if (!buckets.length || semantic.tierRank > 1 && !context.largeGraphNavigationModel?.isActive && !context.activeRelationshipRoute) return;
+        if (!buckets.length || semantic.tierRank > 1 && !context.largeGraphNavigationModel?.isActive && !context.activeRelationshipRoute && !context.activeRouteComparison) return;
         const used = [];
         buckets.forEach((bucket, index) => {
             const centroid = getBucketCentroid(context, bucket.links);

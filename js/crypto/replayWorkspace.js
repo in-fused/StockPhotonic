@@ -81,6 +81,7 @@
             focus: context.neighborhoodFocus || context.audit?.neighborhood || context.neighborhood || null,
             clusters
         });
+        const routeComparison = deriveReplayRouteComparison(currentEvent, selectedEvent, events);
         const eventSummary = summarizeReplayEvent(selectedEvent || currentEvent, {
             status,
             totalSteps,
@@ -111,6 +112,7 @@
             continuityProfile,
             clusters,
             neighborhood,
+            routeComparison,
             checkpoint,
             eventSummary,
             bookmarks,
@@ -222,6 +224,7 @@
                 })}
                 ${renderReplayAuditActions(selectedEvent, relationships, scrubberDisabled, { checkpoint })}
                 ${renderReplayNeighborhoodPanel(neighborhood, clusters, scrubberDisabled)}
+                ${renderReplayRouteComparisonPanel(context.routeComparison)}
                 ${renderReplayClusterPanel(clusters, scrubberDisabled)}
                 ${renderRelatedTransferExploration(relationships)}
                 ${renderFilteredEventStrip(filteredEvents, selectedEvent, scrubberDisabled)}
@@ -644,6 +647,35 @@
                     <button type="button" data-crypto-replay-action="expand-route" data-crypto-replay-route="${escapeAttr(neighborhood.primaryRoute || '')}" ${disabled || !neighborhood.primaryRoute ? 'disabled' : ''}>Same Route</button>
                     <button type="button" data-crypto-replay-action="expand-token" data-crypto-replay-token="${escapeAttr(neighborhood.primaryToken || '')}" ${disabled || !neighborhood.primaryToken ? 'disabled' : ''}>Same Token</button>
                     <button type="button" data-crypto-replay-action="collapse-neighborhood" ${disabled || !active ? 'disabled' : ''}>Reset</button>
+                </div>
+            </section>
+        `;
+    }
+
+    function renderReplayRouteComparisonPanel(comparison = {}) {
+        if (!comparison?.active) return '';
+        return `
+            <section class="crypto-replay-route-comparison" aria-label="Replay route comparison">
+                <div class="crypto-replay-related-header">
+                    <span>Replay Route Comparison</span>
+                    <strong>${escapeHtml(comparison.sharedCount || 0)} shared</strong>
+                </div>
+                <div class="crypto-replay-neighborhood-copy">
+                    ${escapeHtml(comparison.detail || 'Current and selected staged event neighborhoods are compared without merging data into Wallet Lookup.')}
+                </div>
+                <div class="crypto-replay-neighborhood-stats">
+                    <span>Current ${escapeHtml(comparison.currentCount || 0)}</span>
+                    <span>Selected ${escapeHtml(comparison.selectedCount || 0)}</span>
+                    <span>Shared ${escapeHtml(comparison.sharedCount || 0)}</span>
+                    <span>${escapeHtml(comparison.primaryRoute || 'No route')}</span>
+                </div>
+                <div class="crypto-replay-neighborhood-strip">
+                    ${(comparison.sharedEvents || []).slice(0, 6).map(event => `
+                        <button type="button" data-crypto-replay-select-step="${escapeAttr(event.step || 0)}" data-crypto-replay-select-source="route-comparison" title="${escapeAttr(getEventTitle(event))}">
+                            <span>#${escapeHtml(event.step || '-')}</span>
+                            <strong>${escapeHtml(event.token || 'Token')}</strong>
+                        </button>
+                    `).join('') || '<div class="crypto-replay-empty-compact">No shared staged events between current and selected neighborhoods.</div>'}
                 </div>
             </section>
         `;
@@ -1183,6 +1215,66 @@
             clusterKey: String(focus.clusterKey || focus.cluster_key || ''),
             clusterKind: String(focus.clusterKind || focus.cluster_kind || '')
         };
+    }
+
+    function deriveReplayRouteComparison(currentEvent = null, selectedEvent = null, events = []) {
+        if (!currentEvent || !selectedEvent) {
+            return {
+                active: false,
+                detail: 'Select a replay event to compare its staged neighborhood with the current replay event.'
+            };
+        }
+        const currentStep = Number(currentEvent.step) || 0;
+        const selectedStep = Number(selectedEvent.step) || 0;
+        if (!currentStep || !selectedStep || currentStep === selectedStep) {
+            return {
+                active: false,
+                detail: 'Current and selected replay event are the same staged step.'
+            };
+        }
+
+        const currentRoute = getRouteKey(currentEvent);
+        const selectedRoute = getRouteKey(selectedEvent);
+        const currentToken = normalizeTokenFilter(currentEvent.token || currentEvent.symbol || currentEvent.token_mint);
+        const selectedToken = normalizeTokenFilter(selectedEvent.token || selectedEvent.symbol || selectedEvent.token_mint);
+        const currentWallets = getEventWalletSet(currentEvent);
+        const selectedWallets = getEventWalletSet(selectedEvent);
+        const currentNeighborhood = events.filter(event => eventTouchesContext(event, currentRoute, currentToken, currentWallets));
+        const selectedNeighborhood = events.filter(event => eventTouchesContext(event, selectedRoute, selectedToken, selectedWallets));
+        const selectedSteps = new Set(selectedNeighborhood.map(event => Number(event.step) || 0));
+        const sharedEvents = currentNeighborhood.filter(event => selectedSteps.has(Number(event.step) || 0));
+        const primaryRoute = currentRoute && currentRoute === selectedRoute
+            ? currentRoute
+            : currentRoute && selectedRoute ? 'divergent routes' : currentRoute || selectedRoute || '';
+        return {
+            active: true,
+            currentCount: currentNeighborhood.length,
+            selectedCount: selectedNeighborhood.length,
+            sharedCount: sharedEvents.length,
+            sharedEvents,
+            primaryRoute,
+            detail: sharedEvents.length
+                ? 'Shared staged events indicate overlap between the current replay context and the selected event neighborhood.'
+                : 'The current and selected event neighborhoods diverge under the staged replay rows currently loaded.'
+        };
+    }
+
+    function eventTouchesContext(event = {}, route = '', token = 'all', wallets = new Set()) {
+        const eventRoute = getRouteKey(event);
+        const eventToken = normalizeTokenFilter(event.token || event.symbol || event.token_mint);
+        if (route && eventRoute === route) return true;
+        if (token && token !== 'all' && eventToken === token) return true;
+        if (!wallets.size) return false;
+        const source = normalizeAddressFilter(event.sourceWallet || event.source_wallet);
+        const destination = normalizeAddressFilter(event.destinationWallet || event.destination_wallet);
+        return wallets.has(source) || wallets.has(destination);
+    }
+
+    function getEventWalletSet(event = {}) {
+        return new Set([
+            normalizeAddressFilter(event.sourceWallet || event.source_wallet),
+            normalizeAddressFilter(event.destinationWallet || event.destination_wallet)
+        ].filter(value => value && value !== 'all'));
     }
 
     function matchesClusterFocus(event = {}, focus = {}, clusters = {}, selectedEvent = null) {

@@ -2,7 +2,7 @@
 
 Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph application using `data/companies.json` and `data/connections.json` as production source of truth.
 
-- Graph Intelligence (2D): Current main work surface for exploring curated companies and edges with filters, search, relationship taxonomy, source/confidence/review filters, Focus Mode, signal thresholds, portfolio exposure, SEC-backed edge indicators, hub/nexus layouts, cluster intelligence, shared exposure, hidden relationship hints, industry correlations, ecosystem overlays, source coverage lens, route tracing, guided discovery, active graph legend, large-graph navigation modes, and graph-adjacent intelligence cards.
+- Graph Intelligence (2D): Current main work surface for exploring curated companies and edges with filters, search, relationship taxonomy, source/confidence/review filters, Focus Mode, signal thresholds, portfolio exposure, SEC-backed edge indicators, hub/nexus layouts, cluster intelligence, shared exposure, hidden relationship hints, industry correlations, ecosystem overlays, source coverage lens, route tracing, route comparison, keyboard spatial traversal, guided discovery, active graph legend, large-graph navigation modes, compact route workspace continuity, and graph-adjacent intelligence cards.
 - 3D Network capabilities: Three.js production-network view with orbiting camera, search, labels, filters, SEC emphasis, neighborhood depth, selected details, and fullscreen exploration.
 - Source Workbench pipeline: Static, read-only guide and candidate preview surface for the local SEC workflow, candidate-company expansion batches, reviewed production expansion summaries, promotion planning, source coverage refresh, source registry governance, universe expansion readiness, corridor maintenance, graph-growth simulation, and OpenAlex safety summaries.
 - SEC ingestion + candidate system: Local scripts support SEC fetch/cache, filing inspection, signal extraction, candidate preview, candidate writing, job manifests, schedule previews, and policy gates.
@@ -24,9 +24,9 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 ## CURRENT FOCUS
 
-- D153 cinematic spatial graph interaction: keep D151/D152 readability while adding smooth viewport motion, selected-node focus repulsion, corridor lanes, edge grouping, spatial storytelling cues, graph-native navigation commands, and Crypto replay/flow immersion without backend, provider, ingestion, or production-data changes.
+- D154 analyst spatial investigation: keep D151-D153 readability and cinematic motion while adding route comparison, shared-edge disambiguation, keyboard traversal, command-palette traversal commands, compact route workspace continuity, corridor-aware comparison rendering, and Crypto replay traversal polish without backend, provider, ingestion, storage, auth, or production-data changes.
 - UI/UX polish for the 2D Graph Intelligence workflow, especially guided discovery, default graph onboarding, active state comprehension, command-palette access, transient overlays, and mobile graph usability.
-- Intelligence layer clarity: company investigation workspace, graph-adjacent storytelling cards, why-connected relationship cards, source/confidence labels, hubs, bridges, corridors, clusters, shared exposure, hidden relationships, ecosystem overlays, active graph legend, route tracing, industry correlations, portfolio exposure, and SEC-backed edge visibility.
+- Intelligence layer clarity: company investigation workspace, graph-adjacent storytelling cards, why-connected relationship cards, source/confidence labels, hubs, bridges, corridors, clusters, shared exposure, hidden relationships, ecosystem overlays, active graph legend, route tracing, route comparison summaries, industry correlations, portfolio exposure, and SEC-backed edge visibility.
 - Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, candidate-company preview staging, promotion readiness tables, reviewer decision states, graph-impact simulations, expansion batch summaries, triage artifacts, candidate-vs-production overlap comparison, and data expansion preflight reporting.
 - Trust layer clarity: trusted relationship classes, evidence tier filters, strong-inferred fast-track visibility, reviewer decision states, and OpenAlex context-only boundaries.
 - CSS maintainability: keep the D139 split across `base.css`, `shell.css`, `graph.css`, `stock.css`, `crypto.css`, `review.css`, and `mobile.css`; do not return to a single shared catch-all stylesheet.
@@ -48,7 +48,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Future open-data review workflow: source registry rules that pre-classify URL host categories, expose review aging thresholds, export reviewer checklists, and preserve candidate -> preview -> manual promotion.
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
 - Optional backend/auth layer only after the static app and source workflow remain stable.
-- Larger graph rendering/performance work as source-backed data grows, using D152 semantic zoom tiers, D153 cinematic focus/corridor systems, viewport-aware label budgets, route indexes, source-backed corridor lanes, strategic hub summaries, Crypto topology prioritization, and D149 progressive-disclosure navigation modes.
+- Larger graph rendering/performance work as source-backed data grows, using D152 semantic zoom tiers, D153 cinematic focus/corridor systems, D154 route-comparison caches, viewport-aware label budgets, route indexes, source-backed corridor lanes, strategic hub summaries, Crypto topology prioritization, and D149 progressive-disclosure navigation modes.
 - Controlled universe expansion engine that stages real public-company metadata, detects ticker/name conflicts, scores source readiness, and requires reviewer-owned ecosystem/corridor assignment before any future writer exists.
 
 ## D151 FOLLOW-ON
@@ -56,7 +56,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Persist user-authored graph workspace state only after a storage/auth architecture is intentionally introduced.
 - Completed in D152: semantic zoom tiers for macro, cluster, relationship, and inspection detail; zoom-aware label and edge budgets; richer stock minimap interaction; spatial breadcrumbs; and mode-sensitive Stock/Crypto graph detail.
 - Add server-free precomputed layout snapshots for 1000+ node graphs if the static bundle size remains acceptable.
-- Add route-target selection and keyboard traversal after the semantic minimap and breadcrumb model are validated.
+- Completed in D154: keyboard traversal for hubs, bridges, corridors, selected neighborhoods, active route nodes, and replay events after the semantic minimap and breadcrumb model were validated.
 - Add reviewer-authored workspace annotations as review-only artifacts, not relationship proof or promotion authority.
 - Keep Crypto liquidity topology improvements tied to reviewed local/static data and never browser-side provider ingestion.
 
@@ -65,17 +65,25 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Completed in D153: cinematic viewport easing, selected-node focus bubble repulsion, reversible cluster breathing room, Stock corridor lane rendering, soft edge grouping, minimap corridor hints, compact spatial story cues, graph-native command navigation, Crypto flow corridors, and replay lane emphasis.
 - Add optional precomputed semantic/cinematic tiles for very large static graphs so macro and cluster tiers can render without scanning every low-priority edge.
 - Add reviewer-authored corridor notes as review-only overlays that never become relationship proof or promotion authority.
-- Add keyboard-driven spatial traversal for hubs, corridors, selected neighborhoods, and replay paths.
-- Add route comparison mode that can show two evidence-backed paths with shared edge bundling and clear visual separation.
+- Completed in D154: keyboard-driven spatial traversal for hubs, corridors, selected neighborhoods, and replay paths.
+- Completed in D154: route comparison mode that can show two or more evidence-backed paths with shared edge bundling, divergence/convergence notes, and clear visual separation.
 - Keep Crypto realtime or archive expansion behind Worker/server boundaries; the browser graph should continue to consume sanitized static or Worker-owned data only.
 
 ## D153 FOLLOW-ON
 
 - Add persisted, review-only investigation workspaces after a storage/auth design exists; do not persist analyst notes as relationship proof.
-- Add route comparison with two or more simultaneously visible bundled paths, including shared-edge disambiguation and corridor-aware lane separation.
-- Add keyboard and command-palette traversal sequences for next hub, next bridge, next corridor, route endpoint, and current replay neighborhood.
+- Completed in D154: route comparison with two or more simultaneously visible bundled paths, including shared-edge disambiguation and corridor-aware lane separation.
+- Completed in D154: keyboard and command-palette traversal sequences for next hub, next bridge, next corridor, route endpoint, and current replay neighborhood.
 - Add optional precomputed corridor lane indexes and label anchor snapshots once graph size makes per-frame lane grouping too expensive.
 - Keep cinematic motion bounded, semantic-tier aware, and reversible; avoid force-simulation chaos or browser-side ingestion.
+
+## D154 FOLLOW-ON
+
+- Add explicit user-selected route endpoints only after the current visible-route comparison model is validated with analysts.
+- Add optional static precomputed route and corridor lane indexes if production graph growth makes runtime comparison derivation expensive.
+- Add persisted investigation workspaces only after a storage/auth architecture exists; keep D154 state in-session only.
+- Add reviewer-authored corridor notes as review-only artifacts, not relationship proof or promotion authority.
+- Keep route expansion tied to existing relationship metadata contracts and visible graph edges.
 
 ## D141 FOLLOW-ON
 

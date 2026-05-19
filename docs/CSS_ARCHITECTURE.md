@@ -51,6 +51,14 @@ D153 cinematic graph interaction preserves the same split:
 - Mobile placement for Stock story cues, minimap ergonomics, bottom-sheet movement, and replay workspace compacting lives in `mobile.css`.
 - Motion physics, focus repulsion, edge grouping, and corridor lane decisions are JavaScript-owned. CSS may animate chrome and panels, but it should not encode graph semantics or relationship meaning.
 
+D154 route comparison and keyboard traversal preserve the same split:
+
+- Stock route-comparison cards, route workspace chrome, comparison chips, route rows, shared-edge summaries, and graph-adjacent comparison controls live in `graph.css`.
+- Command-palette disabled states and compact command reason text live in `shell.css`.
+- Crypto replay route-comparison panels and replay traversal summary chrome live in `crypto.css`.
+- Mobile route workspace placement, compact comparison controls, bottom-sheet comparison summaries, and touch-safe route actions live in `mobile.css`.
+- Route comparison, shared-edge disambiguation, traversal order, disabled-command logic, minimap comparison state, and corridor-aware route styling are JavaScript-owned. CSS should style stable surface classes only and should not encode relationship proof, route authority, or source/evidence semantics.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

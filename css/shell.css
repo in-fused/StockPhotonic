@@ -547,6 +547,17 @@ body.is-crypto-active [data-stock-only] {
             background: rgba(14, 165, 233, 0.14);
         }
 
+.photonic-command-row.is-disabled {
+            cursor: not-allowed;
+            opacity: 0.56;
+        }
+
+.photonic-command-row.is-disabled:hover,
+.photonic-command-row.is-disabled.is-active {
+            border-color: rgba(148, 163, 184, 0.12);
+            background: rgba(255, 255, 255, 0.035);
+        }
+
 .photonic-command-empty {
             justify-content: center;
             color: rgba(148, 163, 184, 0.72);

@@ -275,7 +275,24 @@
             command('large-route', 'Route isolation', 'Navigation', () => callGlobal('setLargeGraphMode', 'route_isolation')),
             command('large-production', 'Production-only graph', 'Navigation', () => callGlobal('setLargeGraphMode', 'production_only')),
             command('large-preview', 'Preview-only graph', 'Navigation', () => callGlobal('setLargeGraphMode', 'preview_only')),
+            command('compare-strongest-route', 'Compare strongest route', 'Route Comparison', () => callGlobal('compareStrongestRoute'), { disabledReason: () => stockDisabledReason('compare') }),
+            command('compare-source-route', 'Compare source-backed route', 'Route Comparison', () => callGlobal('compareSourceBackedRoute'), { disabledReason: () => stockDisabledReason('compare') }),
+            command('compare-ecosystem-route', 'Compare ecosystem route', 'Route Comparison', () => callGlobal('compareEcosystemRoute'), { disabledReason: () => stockDisabledReason('compare') }),
+            command('compare-bridge-route', 'Compare bridge-company route', 'Route Comparison', () => callGlobal('compareBridgeCompanyRoute'), { disabledReason: () => stockDisabledReason('compare') }),
+            command('fit-comparison', 'Fit comparison', 'Route Comparison', () => callGlobal('fitRouteComparison'), { disabledReason: () => stockDisabledReason('comparison') }),
+            command('clear-comparison', 'Clear comparison', 'Route Comparison', () => callGlobal('clearRouteComparison'), { disabledReason: () => stockDisabledReason('comparison') }),
+            command('route-workspace', 'Open current route workspace', 'Route Comparison', () => callGlobal('openCurrentRouteWorkspace'), { disabledReason: () => stockDisabledReason('comparison') }),
             command('jump-hub', 'Jump to strategic hub', 'Navigation', () => callGlobal('jumpToStrategicHub')),
+            command('next-hub', 'Next strategic hub', 'Traversal', () => callGlobal('nextStrategicHub'), { disabledReason: () => stockDisabledReason('hubs') }),
+            command('previous-hub', 'Previous strategic hub', 'Traversal', () => callGlobal('previousStrategicHub'), { disabledReason: () => stockDisabledReason('hubs') }),
+            command('next-bridge', 'Next bridge company', 'Traversal', () => callGlobal('nextBridgeCompany'), { disabledReason: () => stockDisabledReason('bridges') }),
+            command('previous-bridge', 'Previous bridge company', 'Traversal', () => callGlobal('previousBridgeCompany'), { disabledReason: () => stockDisabledReason('bridges') }),
+            command('next-corridor', 'Next corridor lane', 'Traversal', () => callGlobal('nextCorridorLane'), { disabledReason: () => stockDisabledReason('corridors') }),
+            command('previous-corridor', 'Previous corridor lane', 'Traversal', () => callGlobal('previousCorridorLane'), { disabledReason: () => stockDisabledReason('corridors') }),
+            command('route-forward', 'Step route forward', 'Traversal', () => callGlobal('stepRouteNode', 1), { disabledReason: () => stockDisabledReason('route-step') }),
+            command('route-backward', 'Step route backward', 'Traversal', () => callGlobal('stepRouteNode', -1), { disabledReason: () => stockDisabledReason('route-step') }),
+            command('center-selected-node', 'Center selected node', 'Traversal', () => callGlobal('centerSelectedNode'), { disabledReason: () => stockDisabledReason('selected-node') }),
+            command('fit-selected-neighborhood', 'Fit selected neighborhood', 'Traversal', () => callGlobal('fitSelectedNeighborhood'), { disabledReason: () => stockDisabledReason('selected-node') }),
             command('isolate-corridor', 'Isolate dominant corridor', 'Navigation', () => callGlobal('isolateDominantCorridor')),
             command('inspect-strongest-route', 'Inspect strongest route', 'Navigation', () => callGlobal('traceRelationshipRoute', 'strongest')),
             command('center-ecosystem', 'Center ecosystem', 'Navigation', () => callGlobal('centerActiveEcosystem')),
@@ -295,12 +312,14 @@
             command('crypto-center', 'Center tracked wallet', 'Crypto', () => window.CryptoPhotonic?.ui?.centerTrackedWallet?.()),
             command('crypto-replay', 'Toggle Crypto replay workspace', 'Crypto', () => window.CryptoPhotonic?.ui?.toggleReplayWorkspaceMode?.()),
             command('crypto-replay-neighborhood', 'Open Crypto replay neighborhood', 'Crypto', () => window.CryptoPhotonic?.ui?.openReplayNeighborhood?.()),
-            command('crypto-center-replay', 'Center current replay transfer', 'Crypto', () => window.CryptoPhotonic?.ui?.centerCurrentReplayTransfer?.())
+            command('crypto-replay-next-event', 'Next replay event', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.nextReplayEvent?.(), { disabledReason: () => cryptoDisabledReason('replay') }),
+            command('crypto-replay-previous-event', 'Previous replay event', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.previousReplayEvent?.(), { disabledReason: () => cryptoDisabledReason('replay') }),
+            command('crypto-center-replay', 'Center active replay neighborhood', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.centerCurrentReplayTransfer?.(), { disabledReason: () => cryptoDisabledReason('replay') })
         ];
     }
 
-    function command(id, label, group, action) {
-        return { id, label, group, action };
+    function command(id, label, group, action, options = {}) {
+        return { id, label, group, action, ...options };
     }
 
     function getFilteredCommands() {
@@ -316,9 +335,9 @@
         const commands = getFilteredCommands();
         results.innerHTML = commands.length
             ? commands.map((item, index) => `
-                <button type="button" class="photonic-command-row ${index === state.paletteIndex ? 'is-active' : ''}" data-command-id="${escapeHtml(item.id)}">
+                <button type="button" class="photonic-command-row ${index === state.paletteIndex ? 'is-active' : ''} ${getCommandDisabledReason(item) ? 'is-disabled' : ''}" data-command-id="${escapeHtml(item.id)}" ${getCommandDisabledReason(item) ? 'aria-disabled="true"' : ''}>
                     <span>${escapeHtml(item.label)}</span>
-                    <small>${escapeHtml(item.group)}</small>
+                    <small>${escapeHtml(getCommandDisabledReason(item) || item.group)}</small>
                 </button>
             `).join('')
             : '<div class="photonic-command-empty">No matching actions</div>';
@@ -327,6 +346,10 @@
     function runCommand(id) {
         const item = getCommands().find(commandItem => commandItem.id === id);
         if (!item) return;
+        if (getCommandDisabledReason(item)) {
+            renderCommandPalette();
+            return;
+        }
         closeCommandPalette();
         item.action();
     }
@@ -451,6 +474,27 @@
     function callGlobal(name, ...args) {
         const fn = window[name];
         if (typeof fn === 'function') fn(...args);
+    }
+
+    function stockDisabledReason(key) {
+        const state = typeof window.getStockCommandAvailability === 'function'
+            ? window.getStockCommandAvailability(key)
+            : null;
+        return state?.disabled ? state.reason || 'Context unavailable.' : '';
+    }
+
+    function cryptoDisabledReason(key) {
+        if (key !== 'replay') return '';
+        const state = window.CryptoPhotonic?.ui?.getState?.();
+        return state?.historyPreview?.workspaceMode
+            ? ''
+            : 'Open Crypto replay workspace first.';
+    }
+
+    function getCommandDisabledReason(item) {
+        if (!item) return '';
+        const reason = typeof item.disabledReason === 'function' ? item.disabledReason() : item.disabledReason;
+        return String(reason || '');
     }
 
     function normalize(value) {

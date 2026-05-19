@@ -101,6 +101,7 @@
         const corridorBuckets = buildCorridorBuckets(links, context);
         const selectedNode = context.selectedNode || null;
         const activeRoute = context.activeRelationshipRoute || null;
+        const activeRouteComparison = context.activeRouteComparison || null;
         const requestedEcosystemKey = String(context.ecosystemKey || '').trim();
         const requestedCorridorKey = String(context.corridorKey || '').trim();
         const effectiveEcosystemKey = requestedEcosystemKey ||
@@ -149,7 +150,7 @@
             focusLabel = `${hubIds.size} hubs`;
             focusKind = 'hubs';
         } else if (mode === 'route_isolation') {
-            route = buildRouteIsolation(activeRoute, selectedNode, context, allLinkKeys);
+            route = buildRouteIsolation(activeRoute, selectedNode, context, allLinkKeys, activeRouteComparison);
             linkKeys = route.linkKeys;
             nodeIds = route.nodeIds;
             focusLabel = route.label;
@@ -199,6 +200,8 @@
     function getCacheKey(context, mode, links) {
         const selectedId = context.selectedNode?.id ?? '';
         const routeSize = context.activeRelationshipRoute?.linkKeys?.size ?? 0;
+        const comparisonSize = context.activeRouteComparison?.linkKeys?.size ?? 0;
+        const comparisonId = context.activeRouteComparison?.id || '';
         return [
             mode,
             context.ecosystemKey || '',
@@ -207,6 +210,8 @@
             selectedId,
             getNeighborhoodDepth(context),
             routeSize,
+            comparisonSize,
+            comparisonId,
             links.length
         ].join('|');
     }
@@ -389,7 +394,26 @@
         };
     }
 
-    function buildRouteIsolation(activeRoute, selectedNode, context, allowedLinkKeys) {
+    function buildRouteIsolation(activeRoute, selectedNode, context, allowedLinkKeys, activeRouteComparison = null) {
+        if (activeRouteComparison?.linkKeys?.size) {
+            const linkKeys = new Set([...activeRouteComparison.linkKeys].filter(key => allowedLinkKeys.has(key)));
+            const nodeIds = new Set(activeRouteComparison.nodeIds || []);
+            if (!nodeIds.size && Array.isArray(activeRouteComparison.routes)) {
+                activeRouteComparison.routes.forEach(route => {
+                    (route.links || []).forEach(link => {
+                        if (!linkKeys.has(getLinkKey(link))) return;
+                        if (link.source) nodeIds.add(link.source.id);
+                        if (link.target) nodeIds.add(link.target.id);
+                    });
+                });
+            }
+            return {
+                label: activeRouteComparison.label || 'Route comparison',
+                linkKeys,
+                nodeIds
+            };
+        }
+
         if (activeRoute?.linkKeys?.size) {
             const linkKeys = new Set([...activeRoute.linkKeys].filter(key => allowedLinkKeys.has(key)));
             const nodeIds = new Set(activeRoute.nodeIds || []);

@@ -248,6 +248,9 @@
         const portfolio = portfolioActive
             ? `${context.matchedPortfolioNodes?.length || 0} matched`
             : 'Inactive';
+        const comparison = context.activeRouteComparisonSummary
+            ? `${context.activeRouteComparisonSummary.routeCount || 0} routes / ${context.activeRouteComparisonSummary.sharedEdgeCount || 0} shared`
+            : 'Off';
 
         return `
                 <div class="mb-4 rounded-2xl border border-cyan-300/15 bg-black/25 px-3 py-2">
@@ -257,6 +260,7 @@
                         <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">FOCUS ${focusOn ? 'ON' : 'OFF'}</span>
                         <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">SIGNAL ${threshold > 0 ? threshold.toFixed(2) : 'ALL'}</span>
                         <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">PORTFOLIO ${escapeHtml(portfolio)}</span>
+                        <span class="px-2 py-1 rounded-full border border-white/10 bg-white/5 text-white/58">COMPARISON ${escapeHtml(comparison)}</span>
                     </div>
                 </div>
             `;

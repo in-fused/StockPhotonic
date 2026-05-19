@@ -446,6 +446,7 @@
                             <div id="sec-production-legend-count" class="mt-1 text-white/42">0 EDGES</div>
                         </div>
                         <div id="graph-explorer-dock" class="graph-explorer-dock" aria-label="Graph exploration tools"></div>
+                        <div id="graph-route-workspace" class="graph-route-workspace hidden" aria-live="polite"></div>
                         <div id="graph-intelligence-card" class="graph-intelligence-card hidden" aria-live="polite"></div>
                         <div id="graph-active-legend" class="graph-active-legend" aria-live="polite"></div>
                         <div id="graph-overlay-stats" class="graph-overlay-stats" aria-live="polite"></div>
@@ -1320,6 +1321,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/stock/graphScaling.js?v=d146-source-governance"></script>
     <script src="js/stock/largeGraphNavigation.js?v=d152-semantic-zoom"></script>
     <script src="js/stock/graphIntelligence.js?v=d146-source-governance"></script>
+    <script src="js/stock/routeComparison.js?v=d154-route-comparison"></script>
+    <script src="js/stock/keyboardTraversal.js?v=d154-route-comparison"></script>
     <script src="js/core/data.js"></script>
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
@@ -1409,7 +1412,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic relationship intelligence module failed to load');
         }
 
-        if (!window.StockPhotonicStock?.graphScaling || !window.StockPhotonicStock?.largeGraphNavigation || !window.StockPhotonicStock?.graphIntelligence) {
+        if (!window.StockPhotonicStock?.graphScaling || !window.StockPhotonicStock?.largeGraphNavigation || !window.StockPhotonicStock?.graphIntelligence || !window.StockPhotonicStock?.routeComparison || !window.StockPhotonicStock?.keyboardTraversal) {
             throw new Error('StockPhotonic graph intelligence module failed to load');
         }
 
@@ -1470,6 +1473,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         const stockGraphScaling = window.StockPhotonicStock.graphScaling;
         const stockLargeGraphNavigation = window.StockPhotonicStock.largeGraphNavigation;
         const stockGraphIntelligence = window.StockPhotonicStock.graphIntelligence;
+        const stockRouteComparison = window.StockPhotonicStock.routeComparison;
+        const stockKeyboardTraversal = window.StockPhotonicStock.keyboardTraversal;
         const {
             getRelationshipTypeKey,
             getRelationshipTypeLabel,
@@ -1616,6 +1621,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let activeEcosystemOverlayKey = '';
         let sourceCoverageLensEnabled = false;
         let activeRelationshipRoute = null;
+        let activeRouteComparison = null;
+        let routeComparisonSequenceIndex = -1;
         let activeGuidedDiscoveryKey = '';
         let largeGraphMode = 'overview';
         let largeGraphEcosystemFocus = '';
@@ -1691,6 +1698,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let graphWorkspaceBounds = { minX: -1800, maxX: 1800, minY: -1500, maxY: 1500 };
         let graphNavigationTrail = [];
         let graphNavigationTrailSuppressed = false;
+        let stockKeyboardTraversalReady = false;
+        const stockTraversalCursor = {
+            hub: -1,
+            bridge: -1,
+            corridor: -1,
+            route: -1
+        };
 
         let offsetX = 0;
         let offsetY = 0;
@@ -1771,6 +1785,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             get topLabelIds() { return topLabelIds; },
             get portfolioEdgeKeys() { return portfolioEdgeKeys; },
             get activeRelationshipRoute() { return activeRelationshipRoute; },
+            get activeRouteComparison() { return activeRouteComparison; },
             get selectedRelationshipLink() { return selectedRelationshipLink; },
             get activeEcosystemOverlayKey() { return activeEcosystemOverlayKey; },
             get graphIntelligenceModel() { return graphIntelligenceModel; },
@@ -2012,6 +2027,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         body: 'Nodes are companies. Edges are curated relationship records, including supply, partnership, competitive, capital, and SEC-backed preview relationships when enabled. Edge strength and badges reflect dataset fields, not a live market price feed.'
                     },
                     {
+                        label: 'ROUTE COMPARISON AND KEYBOARD',
+                        body: '<strong>Compare strongest route</strong>, <strong>Compare source-backed route</strong>, and <strong>Compare ecosystem route</strong> are available from the command palette. Keyboard traversal: <strong>Alt+H</strong> next hub, <strong>Alt+B</strong> next bridge, <strong>Alt+C</strong> next corridor, <strong>Alt+R</strong> step route, <strong>Alt+F</strong> fit selected neighborhood, <strong>Alt+Enter</strong> center selected node, <strong>Alt+X</strong> clear comparison. Add Shift to reverse traversal.'
+                    },
+                    {
                         label: 'WHAT THIS DOES NOT CLAIM',
                         body: 'The graph is an intelligence map, not investment advice, not a complete market universe, and not a guarantee that every relationship is current beyond the visible source and validation metadata.'
                     }
@@ -2039,6 +2058,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     {
                         label: 'FILTERS, PLAYBACK, AND MOTION',
                         body: '<strong>Flow Filters</strong> hide visible transfer legs by type, token, or direction without reloading data. <strong>Switch to Live Feed</strong> changes to Worker events. <strong>Play Flow Queue</strong>, <strong>Step Flow</strong>, and <strong>Motion: On/Off</strong> replay or animate visible transfer legs without changing data.'
+                    },
+                    {
+                        label: 'REPLAY TRAVERSAL',
+                        body: 'When Replay Workspace Mode is active, the command palette can jump to the next replay event, previous replay event, or center the active replay neighborhood. These actions operate only on staged replay preview data and do not merge history into the Wallet Lookup graph.'
                     },
                     {
                         label: 'GRAPH MEANING',
@@ -2924,14 +2947,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function compareRoutePaths() {
-            const hadSelection = Boolean(selectedNode);
-            if (!hadSelection) {
-                const hub = getBestStrategicHub();
-                if (hub) selectNode(hub, { preserveFilters: true });
-            }
-            traceRelationshipRoute(activeEcosystemOverlayKey ? 'ecosystem' : 'strongest');
-            largeGraphMode = 'route_isolation';
-            applyLargeGraphNavigationChange({ fit: true });
+            return startRouteComparison(
+                activeEcosystemOverlayKey ? ['ecosystem', 'sec'] : ['strongest', 'sec'],
+                {
+                    label: activeEcosystemOverlayKey ? 'Ecosystem vs Source-backed Route' : 'Strongest vs Source-backed Route',
+                    routeLabels: activeEcosystemOverlayKey ? ['Ecosystem Route', 'Source-backed Route'] : ['Strongest Route', 'Source-backed Route'],
+                    shortLabels: activeEcosystemOverlayKey ? ['Ecosystem', 'Source-backed'] : ['Strongest', 'Source-backed'],
+                    isolate: true
+                }
+            );
         }
 
         function jumpToSelectedGraphNode() {
@@ -2945,6 +2969,121 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 return;
             }
             jumpToStrategicHub();
+        }
+
+        function getStockTraversalTargets(kind) {
+            return stockKeyboardTraversal.getTraversalTargets(kind, getGraphIntelligenceContext({
+                stockRouteComparison,
+                stockKeyboardTraversal,
+                stockLargeGraphNavigation,
+                stockGraphIntelligence
+            }));
+        }
+
+        function traverseStock(kind, direction = 1) {
+            const targets = getStockTraversalTargets(kind);
+            if (!targets.length) return null;
+            stockTraversalCursor[kind] = stockKeyboardTraversal.nextCursor(stockTraversalCursor[kind], targets.length, direction);
+            const target = targets[stockTraversalCursor[kind]];
+            if (!target) return null;
+            if (target.type === 'corridor') {
+                largeGraphCorridorFocus = target.key;
+                largeGraphMode = 'corridor_focus';
+                recordGraphNavigation('corridor', target.key, target.label);
+                applyLargeGraphNavigationChange({ fit: true });
+                return target;
+            }
+            if (target.node) {
+                if (kind === 'hub' || kind === 'bridge') {
+                    largeGraphMode = 'strategic_hubs';
+                    updateLargeGraphNavigationControls();
+                }
+                selectNode(target.node, { preserveFilters: true });
+                animateGraphFocusToNode(target.node, { minScale: kind === 'route' ? 0.86 : 0.78, centerBiasY: 0.48 });
+                return target;
+            }
+            return null;
+        }
+
+        function nextStrategicHub() {
+            return traverseStock('hub', 1);
+        }
+
+        function previousStrategicHub() {
+            return traverseStock('hub', -1);
+        }
+
+        function nextBridgeCompany() {
+            return traverseStock('bridge', 1);
+        }
+
+        function previousBridgeCompany() {
+            return traverseStock('bridge', -1);
+        }
+
+        function nextCorridorLane() {
+            return traverseStock('corridor', 1);
+        }
+
+        function previousCorridorLane() {
+            return traverseStock('corridor', -1);
+        }
+
+        function fitSelectedNeighborhood() {
+            if (!selectedNode) return null;
+            largeGraphMode = 'neighborhood';
+            largeGraphNeighborhoodDepth = Math.max(2, largeGraphNeighborhoodDepth);
+            applyLargeGraphNavigationChange({ fit: true });
+            showNodeDetails(selectedNode);
+            return selectedNode;
+        }
+
+        function centerSelectedNode() {
+            if (!selectedNode) return null;
+            animateGraphFocusToNode(selectedNode, { minScale: 0.9, centerBiasY: 0.48 });
+            showNodeDetails(selectedNode);
+            return selectedNode;
+        }
+
+        function openCurrentRouteWorkspace() {
+            if (!activeRouteComparison) return null;
+            renderRouteComparisonWorkspace();
+            fitRouteComparison();
+            return activeRouteComparison;
+        }
+
+        function getStockCommandAvailability(key) {
+            const visible = Boolean(visibleNodes.length && visibleLinks.length);
+            const hasSelection = Boolean(selectedNode || selectedRelationshipLink);
+            const hasComparison = Boolean(activeRouteComparison);
+            const hasRoute = hasComparison || Boolean(activeRelationshipRoute);
+            if (key === 'compare') {
+                return visible
+                    ? { disabled: false, reason: '' }
+                    : { disabled: true, reason: 'Stock graph is not ready yet.' };
+            }
+            if (key === 'hubs' || key === 'bridges' || key === 'corridors') {
+                const count = getStockTraversalTargets(key === 'hubs' ? 'hub' : key === 'bridges' ? 'bridge' : 'corridor').length;
+                return count
+                    ? { disabled: false, reason: '' }
+                    : { disabled: true, reason: stockKeyboardTraversal.describeTargets(key === 'hubs' ? 'hub' : key === 'bridges' ? 'bridge' : 'corridor', 0) };
+            }
+            if (key === 'route-step') {
+                return hasRoute
+                    ? { disabled: false, reason: '' }
+                    : { disabled: true, reason: 'Trace or compare a route first.' };
+            }
+            if (key === 'selected-node') {
+                return hasSelection
+                    ? { disabled: false, reason: '' }
+                    : { disabled: true, reason: 'Select a company or relationship first.' };
+            }
+            if (key === 'comparison') {
+                return hasComparison
+                    ? { disabled: false, reason: '' }
+                    : { disabled: true, reason: 'Create a route comparison first.' };
+            }
+            return { disabled: false, reason: '' };
         }
 
         function getBestStrategicHub() {
@@ -3108,6 +3247,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 largeGraphEcosystemFocus,
                 largeGraphCorridorFocus,
                 largeGraphNavigationModel,
+                activeRouteComparison,
+                activeRouteComparisonSummary: stockRouteComparison.getComparisonSummary(activeRouteComparison),
                 missingEvidenceFilter,
                 portfolioConnectedOnlyFilter,
                 crossSectorOnlyFilter,
@@ -3302,6 +3443,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 activeEcosystemOverlayKey,
                 sourceCoverageLensEnabled,
                 activeRelationshipRoute,
+                activeRouteComparison,
                 activeGuidedDiscoveryKey,
                 largeGraphMode,
                 largeGraphEcosystemFocus,
@@ -3312,6 +3454,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 graphIntelligenceModel,
                 graphScalingModel,
                 stockGraphIntelligence,
+                stockRouteComparison,
+                stockKeyboardTraversal,
+                stockLargeGraphNavigation,
                 activeClusterNodeIds,
                 adjacencyById,
                 nodeById,
@@ -4277,7 +4422,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             graphMinimap.drawStockMinimap(ctx, graphMinimapModel, {
                 nodes: visibleNodes,
                 links: visibleLinks,
-                routeLinkKeys: activeRelationshipRoute?.linkKeys || focusLinkKeys || new Set(),
+                routeLinkKeys: activeRouteComparison?.linkKeys || activeRelationshipRoute?.linkKeys || focusLinkKeys || new Set(),
+                routeComparison: activeRouteComparison,
                 selectedNodeIds,
                 semanticZoom: stockSemanticZoomState || getSemanticZoomState(),
                 getNodeLayoutPosition,
@@ -5101,6 +5247,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (options.render !== false) {
                 renderGraphExplorerDock();
                 renderGraphNativeIntelligenceCard();
+                renderRouteComparisonWorkspace();
                 renderActiveGraphLegend();
                 updateGraphOverlayStats();
             }
@@ -5109,7 +5256,17 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function getGraphNodeIntelligenceVisual(node) {
             if (!node) return {};
             if (graphNodeIntelligenceVisualCache.has(node.id)) return graphNodeIntelligenceVisualCache.get(node.id);
-            const visual = stockGraphIntelligence.getNodeVisualMeta(node, getGraphIntelligenceContext());
+            const baseVisual = stockGraphIntelligence.getNodeVisualMeta(node, getGraphIntelligenceContext());
+            const comparisonVisual = stockRouteComparison.getNodeComparisonVisual(node, activeRouteComparison);
+            const visual = comparisonVisual?.active
+                ? {
+                    ...baseVisual,
+                    routeComparison: comparisonVisual,
+                    color: comparisonVisual.color || baseVisual.color,
+                    badgeLabel: comparisonVisual.badgeLabel || baseVisual.badgeLabel,
+                    emphasized: true
+                }
+                : baseVisual;
             graphNodeIntelligenceVisualCache.set(node.id, visual);
             return visual;
         }
@@ -5119,12 +5276,18 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (graphLinkIntelligenceVisualCache.has(link.key)) return graphLinkIntelligenceVisualCache.get(link.key);
             const baseVisual = stockGraphIntelligence.getLinkVisualMeta(link, getGraphIntelligenceContext());
             const spatial = getGraphLinkSpatialMeta(link);
+            const comparisonVisual = stockRouteComparison.getLinkComparisonVisual(link, activeRouteComparison);
             const topCorridorKeys = new Set((graphScalingModel?.corridorBuckets || []).slice(0, 2).map(bucket => bucket.key));
             const corridor = Boolean(spatial.primaryCorridorKey && topCorridorKeys.has(spatial.primaryCorridorKey));
             const visual = {
                 ...baseVisual,
+                routeComparison: comparisonVisual,
                 spatial,
-                corridor
+                corridor,
+                forceDraw: Boolean(baseVisual.forceDraw || comparisonVisual?.active),
+                color: comparisonVisual?.active ? comparisonVisual.color : baseVisual.color,
+                widthBoost: baseVisual.widthBoost + (comparisonVisual?.active ? comparisonVisual.shared ? 1.8 : 1.35 : 0),
+                alphaBoost: baseVisual.alphaBoost + (comparisonVisual?.active ? 0.46 : 0)
             };
             graphLinkIntelligenceVisualCache.set(link.key, visual);
             return visual;
@@ -5198,6 +5361,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 html = renderRelationshipExplanationCard(graphIntelligenceModel.relationshipExplanation);
             } else if (graphIntelligenceModel.selectedStory) {
                 html = renderSelectedGraphStoryCard(graphIntelligenceModel.selectedStory);
+            } else if (activeRouteComparison) {
+                html = renderRouteComparisonCard(activeRouteComparison);
             } else if (activeRelationshipRoute) {
                 html = renderRouteTraceCard(activeRelationshipRoute);
             } else if (graphIntelligenceModel.guidedDiscovery) {
@@ -5226,7 +5391,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const cluster = story.cluster || {};
             const sourceSummary = story.sourceSummary || {};
             const hubProfile = story.strategicHubProfile || {};
-            const routeBanner = activeRelationshipRoute ? renderRouteTraceCard(activeRelationshipRoute, { embedded: true }) : '';
+            const routeBanner = activeRouteComparison
+                ? renderRouteComparisonCard(activeRouteComparison, { embedded: true })
+                : activeRelationshipRoute ? renderRouteTraceCard(activeRelationshipRoute, { embedded: true }) : '';
             const ecosystemButton = primary
                 ? `<button type="button" onclick="applyGuidedTraversal('ecosystem')" class="graph-card-action"><i class="fa-solid fa-compass"></i><span>Explore ${escapeHtml(primary.shortLabel)}</span></button>`
                 : '';
@@ -5259,6 +5426,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
                 <div class="graph-card-actions">
                     <button type="button" onclick="traceRelationshipRoute('strongest')" class="graph-card-action"><i class="fa-solid fa-route"></i><span>Strongest Route</span></button>
+                    <button type="button" onclick="compareStrongestRoute()" class="graph-card-action"><i class="fa-solid fa-code-compare"></i><span>Compare</span></button>
                     ${ecosystemButton}
                     <button type="button" onclick="applyGuidedTraversal('cluster')" class="graph-card-action"><i class="fa-solid fa-layer-group"></i><span>Cluster</span></button>
                     <button type="button" onclick="traceRelationshipRoute('shared')" class="graph-card-action"><i class="fa-solid fa-share-nodes"></i><span>Shared Exposure</span></button>
@@ -5293,6 +5461,107 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         <div class="graph-card-route-title">${escapeHtml(route.label || 'Route')}</div>
                         <div class="graph-card-body">${body}</div>
                     </div>
+                </div>
+            `;
+        }
+
+        function renderRouteComparisonCard(comparison, options = {}) {
+            const embedded = Boolean(options.embedded);
+            const summary = stockRouteComparison.getComparisonSummary(comparison);
+            if (!summary) return '';
+            const routeChips = (summary.routes || []).map(route => `
+                <span style="border-color:${escapeHtml(route.color)}; color:${escapeHtml(route.color)};">
+                    ${escapeHtml(route.slot || '')}: ${escapeHtml(route.shortLabel || route.label || 'Route')} ${route.linkKeys?.size || 0}
+                </span>
+            `).join('');
+            const divergence = summary.divergenceNotes?.[0] || 'No distinct divergence point is visible under the current filters.';
+            const convergence = summary.convergenceNotes?.[0] || 'No distinct convergence point is visible under the current filters.';
+
+            return `
+                <div class="${embedded ? 'graph-route-embedded' : ''}">
+                    ${embedded ? '' : `
+                        <div class="graph-card-header">
+                            <div>
+                                <div class="graph-card-eyebrow">Route Comparison</div>
+                                <div class="graph-card-title">${escapeHtml(summary.label)}</div>
+                            </div>
+                            <button type="button" onclick="clearRouteComparison()" class="graph-card-close" aria-label="Clear route comparison"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    `}
+                    <div class="graph-card-route graph-card-route-comparison">
+                        <div class="graph-card-route-title">Comparison Workspace</div>
+                        <div class="graph-card-body">${escapeHtml(summary.routeCount)} visible routes with ${escapeHtml(summary.sharedEdgeCount)} shared edge${summary.sharedEdgeCount === 1 ? '' : 's'}.</div>
+                        <div class="graph-card-chips">${routeChips}<span>DIV ${escapeHtml(divergence)}</span><span>CONV ${escapeHtml(convergence)}</span></div>
+                        ${embedded ? '' : `
+                            <div class="graph-card-actions">
+                                <button type="button" onclick="fitRouteComparison()" class="graph-card-action"><i class="fa-solid fa-compress-arrows-alt"></i><span>Fit</span></button>
+                                <button type="button" onclick="stepRouteNode(1)" class="graph-card-action"><i class="fa-solid fa-forward-step"></i><span>Step</span></button>
+                                <button type="button" onclick="isolateRouteComparison()" class="graph-card-action"><i class="fa-solid fa-location-crosshairs"></i><span>Isolate</span></button>
+                                <button type="button" onclick="clearRouteComparison()" class="graph-card-action"><i class="fa-solid fa-eraser"></i><span>Clear</span></button>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRouteComparisonWorkspace() {
+            const panel = document.getElementById('graph-route-workspace');
+            if (!panel) return;
+            const summary = stockRouteComparison.getComparisonSummary(activeRouteComparison);
+            if (!summary) {
+                panel.classList.add('hidden');
+                panel.innerHTML = '';
+                return;
+            }
+
+            const routeRows = summary.routes.slice(0, 3).map(route => renderRouteWorkspaceRouteRow(route)).join('');
+            const evidence = summary.evidence || {};
+            const divergence = summary.divergenceNotes?.[0] || 'Routes do not visibly split before filters end the paths.';
+            const convergence = summary.convergenceNotes?.[0] || 'No later convergence node is distinct in this route pair.';
+            panel.innerHTML = `
+                <div class="graph-route-workspace-header">
+                    <div>
+                        <div class="graph-route-workspace-kicker">Route Comparison</div>
+                        <div class="graph-route-workspace-title">${escapeHtml(summary.label)}</div>
+                    </div>
+                    <button type="button" onclick="clearRouteComparison()" aria-label="Clear route comparison"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="graph-route-workspace-routes">${routeRows}</div>
+                <div class="graph-route-workspace-metrics">
+                    <div><span>${summary.sharedEdgeCount}</span><small>shared</small></div>
+                    <div><span>${evidence.sourceBacked || 0}</span><small>sourced</small></div>
+                    <div><span>${evidence.secBacked || 0}</span><small>SEC</small></div>
+                </div>
+                <div class="graph-route-workspace-copy">
+                    <span>${escapeHtml(divergence)}</span>
+                    <span>${escapeHtml(convergence)}</span>
+                </div>
+                <div class="graph-route-workspace-actions">
+                    <button type="button" onclick="fitRouteComparison()" title="Fit compared routes"><i class="fa-solid fa-compress-arrows-alt"></i><span>Fit</span></button>
+                    <button type="button" onclick="stepRouteNode(-1)" title="Step route backward"><i class="fa-solid fa-backward-step"></i><span>Prev</span></button>
+                    <button type="button" onclick="stepRouteNode(1)" title="Step route forward"><i class="fa-solid fa-forward-step"></i><span>Next</span></button>
+                    <button type="button" onclick="isolateRouteComparison()" title="Isolate compared routes"><i class="fa-solid fa-location-crosshairs"></i><span>Isolate</span></button>
+                    <button type="button" onclick="clearRouteComparison()" title="Clear comparison"><i class="fa-solid fa-eraser"></i><span>Clear</span></button>
+                </div>
+            `;
+            panel.classList.remove('hidden');
+        }
+
+        function renderRouteWorkspaceRouteRow(route) {
+            const summary = route.summary || {};
+            const hubs = (summary.strongestNodes || [])
+                .slice(0, 3)
+                .map(node => node.ticker || node.name)
+                .filter(Boolean)
+                .join(' / ') || 'No hub';
+            const tier = summary.evidenceTiers?.[0]?.[0] || 'Evidence pending';
+            const confidence = summary.confidenceTiers?.[0]?.[0] || 'Confidence pending';
+            return `
+                <div class="graph-route-workspace-route" style="--route-color:${escapeHtml(route.color)}">
+                    <div><strong>${escapeHtml(route.slot || '')}</strong><span>${escapeHtml(route.shortLabel || route.label || 'Route')}</span></div>
+                    <small>${escapeHtml(summary.linkCount || 0)} edges / ${escapeHtml(summary.sourceBacked || 0)} sourced / ${escapeHtml(tier)} / ${escapeHtml(confidence)}</small>
+                    <em>${escapeHtml(hubs)}</em>
                 </div>
             `;
         }
@@ -5504,6 +5773,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             const overlay = graphIntelligenceModel.overlay;
             const route = activeRelationshipRoute;
+            const comparisonSummary = stockRouteComparison.getComparisonSummary(activeRouteComparison);
             const selectedCompany = selectedNode
                 ? selectedNode.ticker || selectedNode.name || 'Selected company'
                 : selectedSecPreviewNode
@@ -5531,7 +5801,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     ${renderLegendItem('Guide', guide ? guide.shortLabel : 'Off', guide?.color || '')}
                     ${renderLegendItem('Overlay', overlay ? overlay.shortLabel : 'Off', overlay?.color || '')}
                     ${renderLegendItem('Navigate', largeGraphNavigationModel?.isActive ? stockLargeGraphNavigation.formatNavigationLabel(largeGraphNavigationModel) : 'Overview', largeGraphNavigationModel?.isActive ? '#a5f3fc' : '')}
-                    ${renderLegendItem('Route', route ? `${route.label || 'Route'} (${route.linkKeys?.size || 0})` : 'Off', route ? '#ffffff' : '')}
+                    ${renderLegendItem('Route', comparisonSummary ? `${comparisonSummary.routeCount} compared / ${comparisonSummary.sharedEdgeCount} shared` : route ? `${route.label || 'Route'} (${route.linkKeys?.size || 0})` : 'Off', comparisonSummary ? '#f0abfc' : route ? '#ffffff' : '')}
                     ${renderLegendItem('Sources', sourceCoverageLensEnabled ? 'Lens on' : 'Lens off', sourceCoverageLensEnabled ? '#22d3ee' : '')}
                     ${renderLegendItem('Company', selectedCompany, selectedNode ? '#ffffff' : selectedCandidateCompanyPreviewNode ? '#a3e635' : '')}
                     ${renderLegendItem('Edge', selectedRelationship, selectedRelationshipLink ? '#ffffff' : selectedCandidateCompanyPreviewLink ? '#bef264' : '')}
@@ -5674,6 +5944,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             activeEcosystemOverlayKey = '';
             sourceCoverageLensEnabled = false;
             activeRelationshipRoute = null;
+            activeRouteComparison = null;
+            routeComparisonSequenceIndex = -1;
             activeGuidedDiscoveryKey = '';
             selectedRelationshipLink = null;
             graphStoryMode = '';
@@ -5692,6 +5964,17 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             requestDraw();
         }
 
+        function clearRouteComparison() {
+            activeRouteComparison = null;
+            routeComparisonSequenceIndex = -1;
+            graphStoryMode = selectedNode ? 'overview' : graphStoryMode === 'route-comparison' ? '' : graphStoryMode;
+            if (largeGraphMode === 'route_isolation') refreshVisibleGraph();
+            else refreshGraphIntelligenceModel();
+            renderRouteComparisonWorkspace();
+            renderGraphBreadcrumbs();
+            requestDraw();
+        }
+
         function clearSelectedRelationship() {
             selectedRelationshipLink = null;
             activeRelationshipRoute = null;
@@ -5706,6 +5989,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function traceRelationshipRoute(mode) {
+            activeRouteComparison = null;
+            routeComparisonSequenceIndex = -1;
             activeRelationshipRoute = stockGraphIntelligence.buildRoute(mode, getGraphIntelligenceContext());
             recordGraphNavigation('route', mode, activeRelationshipRoute?.label || `${mode} route`);
             graphStoryMode = 'route';
@@ -5719,6 +6004,138 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }
             triggerPulse(700);
             requestDraw();
+        }
+
+        function startRouteComparison(modes = ['strongest', 'sec'], options = {}) {
+            stopOrbitForInteraction();
+            const seed = ensureRouteComparisonSeed();
+            if (!seed) return null;
+            const routeModes = normalizeRouteComparisonModes(modes);
+            const routes = routeModes
+                .map((mode, index) => buildComparisonRoute(mode, seed, index, options))
+                .filter(Boolean);
+            const comparison = stockRouteComparison.buildRouteComparison(routes, getGraphIntelligenceContext(), {
+                label: options.label || routes.map(route => route.label || route.mode).join(' vs ')
+            });
+            if (!comparison) return null;
+
+            activeRouteComparison = comparison;
+            activeRelationshipRoute = routes[0] || activeRelationshipRoute;
+            routeComparisonSequenceIndex = -1;
+            graphStoryMode = 'route-comparison';
+            if (activeRelationshipRoute?.ecosystemKey && !activeEcosystemOverlayKey) activeEcosystemOverlayKey = activeRelationshipRoute.ecosystemKey;
+            recordGraphNavigation('route-comparison', comparison.id, comparison.label || 'Route comparison');
+            if (options.isolate) {
+                largeGraphMode = 'route_isolation';
+                applyLargeGraphNavigationChange({ fit: true });
+            } else {
+                refreshVisibleGraph();
+                if (options.fit !== false) fitRouteComparison();
+            }
+            triggerPulse(760);
+            requestDraw();
+            return comparison;
+        }
+
+        function normalizeRouteComparisonModes(modes) {
+            const list = Array.isArray(modes) ? modes : [modes];
+            const cleaned = list.map(mode => String(mode || '').trim()).filter(Boolean);
+            if (cleaned.length >= 2) return cleaned.slice(0, 4);
+            return ['strongest', 'sec'];
+        }
+
+        function buildComparisonRoute(mode, seedNode, index, options = {}) {
+            const context = getGraphIntelligenceContext({
+                selectedNode: options.startNodes?.[index] || seedNode
+            });
+            const route = stockGraphIntelligence.buildRoute(mode, context);
+            const start = options.startNodes?.[index] || seedNode;
+            const prefix = options.startNodes?.[index] && start
+                ? `${start.ticker || start.name || 'Company'} `
+                : '';
+            return {
+                ...route,
+                id: `${mode}-${start?.id ?? index}-${index}`,
+                label: options.routeLabels?.[index] || `${prefix}${route.label || stockGraphIntelligence.getRouteLabel(mode)}`.trim(),
+                shortLabel: options.shortLabels?.[index] || route.shortLabel || stockGraphIntelligence.getRouteLabel(mode).replace(/\bRoute\b/g, '').trim()
+            };
+        }
+
+        function ensureRouteComparisonSeed() {
+            if (selectedNode) return selectedNode;
+            const hub = getBestStrategicHub();
+            if (hub) {
+                selectNode(hub, { preserveFilters: true });
+                return hub;
+            }
+            return visibleNodes[0] || null;
+        }
+
+        function compareStrongestRoute() {
+            return startRouteComparison(['strongest', 'sec'], {
+                label: 'Strongest vs Source-backed Route',
+                routeLabels: ['Strongest Route', 'Source-backed Route'],
+                shortLabels: ['Strongest', 'Source-backed'],
+                isolate: false
+            });
+        }
+
+        function compareSourceBackedRoute() {
+            return startRouteComparison(['sec', activeEcosystemOverlayKey ? 'ecosystem' : 'strongest'], {
+                label: activeEcosystemOverlayKey ? 'Source-backed vs Ecosystem Route' : 'Source-backed vs Strongest Route',
+                routeLabels: activeEcosystemOverlayKey ? ['Source-backed Route', 'Ecosystem Route'] : ['Source-backed Route', 'Strongest Route'],
+                shortLabels: activeEcosystemOverlayKey ? ['Source-backed', 'Ecosystem'] : ['Source-backed', 'Strongest'],
+                isolate: false
+            });
+        }
+
+        function compareEcosystemRoute() {
+            return startRouteComparison(['ecosystem', 'sec'], {
+                label: 'Ecosystem vs Source-backed Route',
+                routeLabels: ['Ecosystem Route', 'Source-backed Route'],
+                shortLabels: ['Ecosystem', 'Source-backed'],
+                isolate: false
+            });
+        }
+
+        function compareBridgeCompanyRoute() {
+            const seed = ensureRouteComparisonSeed();
+            const bridge = getStockTraversalTargets('bridge')
+                .map(item => item.node)
+                .find(node => node && node.id !== seed?.id) || getBestStrategicHub();
+            if (!seed || !bridge) return null;
+            return startRouteComparison(['strongest', 'strongest'], {
+                label: `${seed.ticker || 'Selected'} vs ${bridge.ticker || 'Bridge'} Route`,
+                routeLabels: [`${seed.ticker || 'Selected'} Strategic Route`, `${bridge.ticker || 'Bridge'} Bridge Route`],
+                shortLabels: [seed.ticker || 'Selected', bridge.ticker || 'Bridge'],
+                startNodes: [seed, bridge],
+                isolate: false
+            });
+        }
+
+        function fitRouteComparison() {
+            const nodesToFit = activeRouteComparison?.nodeIds?.size
+                ? [...activeRouteComparison.nodeIds].map(id => nodeById.get(id)).filter(Boolean)
+                : activeRelationshipRoute?.nodes || [];
+            if (nodesToFit.length) fitGraphToNodes(nodesToFit, true, 150);
+        }
+
+        function isolateRouteComparison() {
+            if (!activeRouteComparison) return compareStrongestRoute();
+            largeGraphMode = 'route_isolation';
+            applyLargeGraphNavigationChange({ fit: true });
+        }
+
+        function stepRouteNode(direction = 1) {
+            const routeNodes = stockRouteComparison.getTraversalNodes(activeRouteComparison, activeRelationshipRoute);
+            if (!routeNodes.length) return null;
+            routeComparisonSequenceIndex = stockKeyboardTraversal.nextCursor(routeComparisonSequenceIndex, routeNodes.length, direction);
+            const node = routeNodes[routeComparisonSequenceIndex];
+            if (!node) return null;
+            selectNode(node, { preserveFilters: true });
+            animateGraphFocusToNode(node, { minScale: 0.86, centerBiasY: 0.48 });
+            recordGraphNavigation('node', node.id, `${node.ticker || node.name || 'Route node'} route step`);
+            return node;
         }
 
         function applyGuidedTraversal(mode) {
@@ -6591,6 +7008,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             activeEcosystemOverlayKey = '';
             sourceCoverageLensEnabled = false;
             activeRelationshipRoute = null;
+            activeRouteComparison = null;
+            routeComparisonSequenceIndex = -1;
             activeGuidedDiscoveryKey = '';
             largeGraphMode = 'overview';
             largeGraphEcosystemFocus = '';
@@ -7135,7 +7554,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const baseVisibleNodeIds = new Set(nodes.filter(nodePassesBaseFilters).map(node => node.id));
 
             let candidateLinks = links.filter(link => {
-                if (focusActive) return focusLinkKeys.has(link.key);
+                if (focusActive) {
+                    return focusLinkKeys.has(link.key) ||
+                        activeRelationshipRoute?.linkKeys?.has(link.key) ||
+                        activeRouteComparison?.linkKeys?.has(link.key);
+                }
                 return baseVisibleNodeIds.has(link.source.id) && baseVisibleNodeIds.has(link.target.id);
             });
             largeGraphNavigationModel = stockLargeGraphNavigation.buildNavigationModel(getGraphIntelligenceContext({
@@ -7176,6 +7599,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     if (baseVisibleNodeIds.has(id)) connectedNodeIds.add(id);
                 });
             }
+            if (activeRouteComparison?.nodeIds?.size) {
+                activeRouteComparison.nodeIds.forEach(id => {
+                    if (baseVisibleNodeIds.has(id)) connectedNodeIds.add(id);
+                });
+            }
 
             if (focusActive || shouldPruneZeroEdgeNodes()) {
                 visibleNodes = nodes.filter(node => connectedNodeIds.has(node.id));
@@ -7193,10 +7621,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             positionCandidateCompanyPreviewNodes();
             refreshGraphWorkspaceBounds();
             syncRouteAfterVisibilityChange();
+            syncRouteComparisonAfterVisibilityChange();
             refreshGraphIntelligenceModel({ render: false });
             updateGraphOverlayStats();
             renderGraphExplorerDock();
             renderGraphNativeIntelligenceCard();
+            renderRouteComparisonWorkspace();
             renderActiveGraphLegend();
             updateVisibleGraphStatus();
             updateOrbMapData();
@@ -7219,6 +7649,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 linkKeys: new Set(visibleRouteLinks.map(link => link.key)),
                 nodeIds: new Set(routeNodes.map(node => node.id))
             };
+        }
+
+        function syncRouteComparisonAfterVisibilityChange() {
+            if (!activeRouteComparison?.linkKeys?.size) return;
+            activeRouteComparison = stockRouteComparison.syncComparisonAfterVisibilityChange(
+                activeRouteComparison,
+                visibleLinkKeys,
+                getGraphIntelligenceContext()
+            );
         }
 
         function updateVisibleGraphStatus() {
@@ -7303,6 +7742,20 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (currentProductView !== 'stock' || currentAppView !== 'graph') return null;
             const semantic = stockSemanticZoomState || getSemanticZoomState();
             const navigation = largeGraphNavigationModel;
+
+            if (activeRouteComparison) {
+                const summary = stockRouteComparison.getComparisonSummary(activeRouteComparison);
+                return {
+                    kicker: 'Route comparison',
+                    title: summary?.label || activeRouteComparison.label || 'Compared routes',
+                    body: `${summary?.routeCount || activeRouteComparison.routes?.length || 0} visible paths are being compared with ${summary?.sharedEdgeCount || 0} shared edge${(summary?.sharedEdgeCount || 0) === 1 ? '' : 's'} and compact divergence/convergence cues.`,
+                    chips: [
+                        `${summary?.sharedEdgeCount || 0} shared`,
+                        `${summary?.evidence?.sourceBacked || 0} sourced`,
+                        semantic.tierLabel || 'Graph detail'
+                    ]
+                };
+            }
 
             if (activeRelationshipRoute) {
                 const nodeCount = activeRelationshipRoute.nodeIds?.size || activeRelationshipRoute.nodes?.length || 0;
@@ -7703,6 +8156,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 overlay.insertAdjacentHTML('beforeend', `
                     <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-white/85 font-mono tracking-[1.1px] border border-white/30 bg-white/10">
                         Route ${activeRelationshipRoute.linkKeys.size} edges
+                    </span>
+                `);
+            }
+
+            if (activeRouteComparison?.linkKeys?.size) {
+                overlay.insertAdjacentHTML('beforeend', `
+                    <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-fuchsia-50/86 font-mono tracking-[1.1px] border border-fuchsia-200/28 bg-fuchsia-300/10">
+                        Compare ${activeRouteComparison.routeCount || activeRouteComparison.routes?.length || 0} routes / ${activeRouteComparison.sharedLinkKeys?.size || 0} shared
                     </span>
                 `);
             }
@@ -10009,9 +10470,69 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return graphRender.truncateLabel(ctx, text, maxWidth);
         }
 
+        function setupStockKeyboardTraversal() {
+            if (stockKeyboardTraversalReady) return;
+            stockKeyboardTraversalReady = true;
+            document.addEventListener('keydown', event => {
+                if (shouldIgnoreSpatialShortcut(event)) return;
+                const key = event.key.toLowerCase();
+                const alt = event.altKey && !event.ctrlKey && !event.metaKey;
+                if (!alt && !((event.ctrlKey || event.metaKey) && key === 'k')) return;
+
+                if ((event.ctrlKey || event.metaKey) && key === 'k') return;
+                if (currentProductView === 'crypto') {
+                    const cryptoState = window.CryptoPhotonic?.ui?.getState?.();
+                    if (!cryptoState?.historyPreview?.workspaceMode) return;
+                    let cryptoHandled = true;
+                    if (key === 'r') {
+                        if (event.shiftKey) window.CryptoPhotonic?.ui?.previousReplayEvent?.();
+                        else window.CryptoPhotonic?.ui?.nextReplayEvent?.();
+                    } else if (key === 'enter' || key === 'f') {
+                        window.CryptoPhotonic?.ui?.centerCurrentReplayTransfer?.();
+                    } else {
+                        cryptoHandled = false;
+                    }
+                    if (cryptoHandled) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    return;
+                }
+                if (currentProductView !== 'stock') return;
+                const direction = event.shiftKey ? -1 : 1;
+                let handled = true;
+                if (key === 'h') traverseStock('hub', direction);
+                else if (key === 'b') traverseStock('bridge', direction);
+                else if (key === 'c') traverseStock('corridor', direction);
+                else if (key === 'r') stepRouteNode(direction);
+                else if (key === 'enter') centerSelectedNode();
+                else if (key === 'f') fitSelectedNeighborhood();
+                else if (key === 'x') clearRouteComparison();
+                else if (key === 'k') window.openPhotonicCommandPalette?.();
+                else handled = false;
+                if (handled) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+            });
+        }
+
+        function shouldIgnoreSpatialShortcut(event) {
+            const target = event.target;
+            if (!target) return false;
+            if (target.closest?.('.photonic-command-palette.is-open')) return true;
+            const tag = String(target.tagName || '').toLowerCase();
+            return tag === 'input' ||
+                tag === 'textarea' ||
+                tag === 'select' ||
+                target.isContentEditable ||
+                Boolean(target.closest?.('[contenteditable="true"]'));
+        }
+
         setupFullscreenSafety();
         setupHelpGuide();
         setupOrbMap();
+        setupStockKeyboardTraversal();
         loadSourceCandidatePreview();
         loadCandidateCompanyWorkbench();
         loadPromotionPlannerWorkbench();

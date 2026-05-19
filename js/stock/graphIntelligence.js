@@ -928,11 +928,16 @@
             secBacked: Boolean(context.isSecBackedConnection?.(link)),
             evidencePolicy
         });
-        const routeContext = context.activeRelationshipRoute?.linkKeys?.has(link.key)
-            ? `This edge is currently part of the active ${context.activeRelationshipRoute.label || 'relationship route'}.`
-            : context.activeRelationshipRoute
-                ? `The active ${context.activeRelationshipRoute.label || 'relationship route'} is visible, but this edge is outside that route.`
-                : '';
+        const comparisonEntry = context.activeRouteComparison?.linkMembership?.get(link.key);
+        const routeContext = comparisonEntry
+            ? comparisonEntry.routes?.length > 1
+                ? `This edge is shared by ${comparisonEntry.routes.map(route => route.shortLabel || route.label).join(' and ')} in the active route comparison.`
+                : `This edge is part of ${comparisonEntry.routes?.[0]?.shortLabel || comparisonEntry.routes?.[0]?.label || 'one compared route'} in the active comparison.`
+            : context.activeRelationshipRoute?.linkKeys?.has(link.key)
+                ? `This edge is currently part of the active ${context.activeRelationshipRoute.label || 'relationship route'}.`
+                : context.activeRelationshipRoute
+                    ? `The active ${context.activeRelationshipRoute.label || 'relationship route'} is visible, but this edge is outside that route.`
+                    : '';
         const overlayContext = context.graphIntelligenceModel?.overlay?.linkKeys?.has(link.key)
             ? `This edge is highlighted by the active ${context.graphIntelligenceModel.overlay.label} overlay.`
             : ecosystems.length

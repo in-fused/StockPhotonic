@@ -653,6 +653,23 @@
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         if (options.dashed) ctx.setLineDash([5, 8]);
+        if ((options.active || options.selected || options.neighbor || options.trail) && edge.type === core.EDGE_TYPES.FLOW) {
+            ctx.save();
+            ctx.globalAlpha = Math.min(0.24, Math.max(0.06, options.alpha * (options.active || options.selected ? 0.26 : 0.16)));
+            ctx.strokeStyle = options.selected
+                ? 'rgba(250, 204, 21, 0.72)'
+                : options.active
+                    ? 'rgba(244, 114, 182, 0.66)'
+                    : 'rgba(103, 232, 249, 0.48)';
+            ctx.lineWidth += options.selected ? 13 : options.active ? 10 : 6;
+            ctx.shadowColor = ctx.strokeStyle;
+            ctx.shadowBlur = options.selected || options.active ? 24 : 12;
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            points.slice(1).forEach(point => ctx.lineTo(point.x, point.y));
+            ctx.stroke();
+            ctx.restore();
+        }
         if (options.active || options.selected) {
             ctx.globalAlpha = Math.min(1, options.alpha * 0.55);
             ctx.strokeStyle = options.selected ? 'rgba(254, 240, 138, 0.62)' : 'rgba(251, 207, 232, 0.56)';

@@ -53,6 +53,13 @@
         return 1 - inverse * inverse * inverse;
     }
 
+    function easeCinematic(t) {
+        const value = clampFinite(t, 0, 1);
+        const smooth = value * value * (3 - 2 * value);
+        const settle = 1 - Math.pow(1 - value, 4);
+        return smooth * 0.58 + settle * 0.42;
+    }
+
     function getPerspectiveInput(transform) {
         const perspective = transform?.perspective;
         const enabled = Boolean(perspective?.enabled);
@@ -313,7 +320,7 @@
 
             const step = frameNow => {
                 const t = clamp((frameNow - startedAt) / safeDuration, 0, 1);
-                const eased = 1 - Math.pow(1 - t, 3);
+                const eased = easeCinematic(t);
                 setScale(startScale + (nextScale - startScale) * eased);
                 setOffsetX(startOffsetX + (nextOffsetX - startOffsetX) * eased);
                 setOffsetY(startOffsetY + (nextOffsetY - startOffsetY) * eased);

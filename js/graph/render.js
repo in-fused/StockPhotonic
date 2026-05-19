@@ -44,15 +44,21 @@
         ctx.setTransform(context.dpr, 0, 0, context.dpr, 0, 0);
         ctx.clearRect(0, 0, context.canvasWidth, context.canvasHeight);
 
+        const density = getDensityProfile(context);
+        const semantic = getSemanticState(context, density);
+        context.onSemanticZoomState?.(semantic);
         drawBackground(context, ctx);
         updateScreenCache(context, orbitFrame);
+        const cinematicFrame = getCinematicSystem(context)?.prepareStockFrame?.(context, {
+            now,
+            timestamp,
+            density,
+            semantic
+        }) || { active: false };
         drawNexusQuadrantLabels(context, ctx);
         const frameNodes = context.visibleNodes
             .filter(node => isNodeInFrame(context, node))
             .sort(sortByPerspectiveDepth);
-        const density = getDensityProfile(context);
-        const semantic = getSemanticState(context, density);
-        context.onSemanticZoomState?.(semantic);
         const frameLinks = prioritizeFrameLinks(
             context,
             context.visibleLinks.filter(link => shouldDrawLink(context, link)),
@@ -61,13 +67,21 @@
         ).sort(sortLinkByPerspectiveDepth);
 
         ctx.save();
+        getCinematicSystem(context)?.drawStockCorridorLanes?.(context, ctx, frameLinks, {
+            now,
+            timestamp,
+            density,
+            semantic,
+            profile: cinematicFrame.profile
+        });
+        getCinematicSystem(context)?.drawStockFocusBubble?.(context, ctx, cinematicFrame, timestamp);
         frameLinks.forEach(link => drawLink(context, ctx, link));
         ctx.restore();
 
         frameNodes.forEach(node => drawNode(context, ctx, node, timestamp));
         drawLabels(context, ctx, frameNodes);
 
-        if (context.orbitEnabled || perspectiveMotionActive || now < context.pulseUntil || now < context.highlightedNodeUntil || now < context.focusTransitionUntil) {
+        if (context.orbitEnabled || perspectiveMotionActive || cinematicFrame.active || now < context.pulseUntil || now < context.highlightedNodeUntil || now < context.focusTransitionUntil) {
             requestDraw(context);
         }
     }
@@ -300,7 +314,12 @@
         const dx = target.x - source.x;
         const dy = target.y - source.y;
         const distance = Math.max(1, Math.hypot(dx, dy));
-        const curve = link.curveOffset * context.scale;
+        const bundle = getCinematicSystem(context)?.getStockEdgeBundle?.(context, link, {
+            semantic,
+            intelligenceVisual,
+            relationshipVisual
+        }) || {};
+        const curve = link.curveOffset * context.scale + (bundle.offset || 0);
         const controlX = midX + (-dy / distance) * curve;
         const controlY = midY + (dx / distance) * curve;
 
@@ -665,6 +684,10 @@
             shadowMultiplier: 1,
             priorityBoost: 0
         };
+    }
+
+    function getCinematicSystem(context) {
+        return context.graphCinematic || window.StockPhotonicGraph?.cinematic || null;
     }
 
     function getSemanticLabelMaxWidth(labelMode, semantic, disposition) {

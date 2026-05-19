@@ -1140,6 +1140,27 @@
                 max-width: 88vw;
             }
 
+            .graph-cinematic-story {
+                left: 0.72rem;
+                right: 0.72rem;
+                bottom: calc(3.3rem + env(safe-area-inset-bottom));
+                width: auto;
+                max-height: 6.2rem;
+                overflow: hidden;
+                padding: 0.58rem 0.65rem;
+            }
+
+            .graph-cinematic-copy {
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+            }
+
+            .graph-cinematic-chips {
+                display: none;
+            }
+
             .crypto-spatial-breadcrumbs {
                 left: 0.72rem;
                 right: 0.72rem;

@@ -886,6 +886,7 @@
                 linear-gradient(90deg, rgba(0, 249, 255, 0.035) 1px, transparent 1px),
                 rgba(2, 6, 23, 0.74);
             background-size: 46px 46px, 46px 46px, 100% 100%;
+            transition: height 260ms ease, min-height 260ms ease, border-color 220ms ease, box-shadow 220ms ease;
         }
 
 #crypto-flow-canvas {
@@ -927,6 +928,9 @@
             grid-template-rows: minmax(0, 1fr) auto;
             gap: 0.75rem;
             align-items: start;
+            opacity: 0;
+            transform: translate3d(0, 0.4rem, 0);
+            transition: opacity 220ms ease, transform 220ms ease;
         }
 
 .crypto-replay-workspace-panel {
@@ -945,6 +949,7 @@
             overflow-y: auto;
             overflow-x: hidden;
             overflow-wrap: anywhere;
+            transition: border-color 180ms ease, background 180ms ease, transform 180ms ease, opacity 180ms ease;
         }
 
 .crypto-replay-workspace-toolbar,
@@ -1913,6 +1918,8 @@
 
 #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-overlay {
             display: grid;
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
         }
 
 #crypto-photonic-view.is-replay-workspace .crypto-canvas-wrap {

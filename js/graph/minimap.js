@@ -57,6 +57,13 @@
         ctx.fillRect(0, 0, model.width, model.height);
 
         drawMinimapGrid(ctx, model);
+        drawMinimapCorridors(ctx, model, links, {
+            edgeLimit,
+            routeLinkKeys,
+            getNodeLayoutPosition,
+            getLinkSpatialMeta: options.getLinkSpatialMeta,
+            semantic
+        });
         drawMinimapEdges(ctx, model, links, {
             edgeLimit,
             routeLinkKeys,
@@ -90,6 +97,39 @@
             ctx.lineTo(model.width, y);
             ctx.stroke();
         }
+        ctx.restore();
+    }
+
+    function drawMinimapCorridors(ctx, model, links, options) {
+        if (!options.getLinkSpatialMeta || options.semantic?.tier === 'inspection') return;
+        const buckets = new Map();
+        links.forEach(link => {
+            if (options.routeLinkKeys.has(link.key)) return;
+            const spatial = options.getLinkSpatialMeta(link) || {};
+            const key = spatial.primaryCorridorKey || spatial.corridorKeys?.[0] || '';
+            if (!key) return;
+            const bucket = buckets.get(key) || { key, links: [], strength: 0 };
+            bucket.links.push(link);
+            bucket.strength += Number(link.strength) || 0;
+            buckets.set(key, bucket);
+        });
+        const top = [...buckets.values()]
+            .filter(bucket => bucket.links.length >= 2)
+            .sort((a, b) => b.links.length - a.links.length || b.strength - a.strength)
+            .slice(0, options.semantic?.tier === 'macro' ? 4 : 3);
+        if (!top.length) return;
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        top.forEach((bucket, index) => {
+            const meta = window.StockPhotonicGraph?.cinematic?.getCorridorMeta?.(bucket.key) || {};
+            ctx.globalAlpha = options.semantic?.tier === 'macro' ? 0.18 : 0.14;
+            ctx.strokeStyle = meta.color || 'rgba(103, 232, 249, 0.42)';
+            ctx.lineWidth = Math.max(1.2, 2.8 - index * 0.35);
+            bucket.links
+                .slice(0, Math.min(bucket.links.length, options.edgeLimit))
+                .forEach(link => drawSimpleEdge(ctx, model, link, options.getNodeLayoutPosition));
+        });
         ctx.restore();
     }
 

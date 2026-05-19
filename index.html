@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/base.css?v=d151-graph-os">
     <link rel="stylesheet" href="css/shell.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/graph.css?v=d152-semantic-zoom">
+    <link rel="stylesheet" href="css/graph.css?v=d153-cinematic-graph">
     <link rel="stylesheet" href="css/stock.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/crypto.css?v=d152-semantic-zoom">
+    <link rel="stylesheet" href="css/crypto.css?v=d153-cinematic-graph">
     <link rel="stylesheet" href="css/review.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/mobile.css?v=d152-semantic-zoom">
+    <link rel="stylesheet" href="css/mobile.css?v=d153-cinematic-graph">
 </head>
 <body class="photonic-bg graph-first-os" data-stock-ux-mode="explore" data-crypto-ux-mode="flow" data-control-layer="primary">
     <header class="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
@@ -423,6 +423,7 @@
                         </div>
                         <div id="graph-mode-hud" class="graph-mode-hud" aria-live="polite">Explore Mode</div>
                         <div id="graph-spatial-breadcrumbs" class="graph-spatial-breadcrumbs" aria-live="polite"></div>
+                        <div id="graph-cinematic-story" class="graph-cinematic-story" aria-live="polite"></div>
                         <div class="mobile-graph-overlay stock-mobile-graph-overlay" aria-label="Mobile StockPhotonic graph controls">
                             <div class="mobile-graph-hint rounded-2xl px-3 py-2 text-[10px] font-mono">Pinch to zoom &bull; Drag to pan &bull; Tap nodes/flows</div>
                             <div class="mobile-graph-actions">
@@ -1323,9 +1324,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
     <script src="js/graph/semanticZoom.js?v=d152-semantic-zoom"></script>
-    <script src="js/graph/minimap.js?v=d152-semantic-zoom"></script>
+    <script src="js/graph/minimap.js?v=d153-cinematic-graph"></script>
+    <script src="js/graph/cinematic.js?v=d153-cinematic-graph"></script>
     <script src="js/graph/layouts.js"></script>
-    <script src="js/graph/render.js?v=d152-semantic-zoom"></script>
+    <script src="js/graph/render.js?v=d153-cinematic-graph"></script>
     <script src="js/graph/orb3d.js"></script>
     <script src="js/intelligence/clusters.js"></script>
     <script src="js/intelligence/industryCorrelations.js"></script>
@@ -1363,7 +1365,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonicData failed to load');
         }
 
-        if (!window.StockPhotonicGraph?.viewport || !window.StockPhotonicGraph?.interactions || !window.StockPhotonicGraph?.semanticZoom || !window.StockPhotonicGraph?.minimap) {
+        if (!window.StockPhotonicGraph?.viewport || !window.StockPhotonicGraph?.interactions || !window.StockPhotonicGraph?.semanticZoom || !window.StockPhotonicGraph?.minimap || !window.StockPhotonicGraph?.cinematic) {
             throw new Error('StockPhotonic graph modules failed to load');
         }
 
@@ -1421,6 +1423,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             interactions: graphInteractions,
             semanticZoom: graphSemanticZoom,
             minimap: graphMinimap,
+            cinematic: graphCinematic,
             layouts: graphLayouts,
             render: graphRender,
             orb3d: graphOrb3d
@@ -1793,6 +1796,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             NEXUS_LABEL_DISTANCE,
             NEXUS_AXIS_SPREAD,
             graphViewport,
+            graphCinematic,
             clamp,
             hexToRgba,
             getOrbitOffset,
@@ -2850,6 +2854,108 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function isLargeGraphNavigationActive() {
             return largeGraphMode !== 'overview';
+        }
+
+        function jumpToStrategicHub() {
+            const hub = getBestStrategicHub();
+            if (!hub) return;
+            if (largeGraphMode !== 'strategic_hubs') {
+                largeGraphMode = 'strategic_hubs';
+                updateLargeGraphNavigationControls();
+                refreshVisibleGraph();
+            }
+            selectNode(hub, { preserveFilters: true });
+            recordGraphNavigation('node', hub.id, hub.ticker || hub.name || 'Strategic hub');
+        }
+
+        function isolateDominantCorridor() {
+            const corridorKey = largeGraphCorridorFocus ||
+                largeGraphNavigationModel?.corridorBuckets?.[0]?.key ||
+                stockLargeGraphNavigation.buildNavigationModel(getGraphIntelligenceContext({
+                    visibleNodes,
+                    visibleLinks,
+                    mode: 'overview',
+                    stockGraphIntelligence
+                }))?.corridorBuckets?.[0]?.key ||
+                '';
+            if (!corridorKey) return;
+            largeGraphCorridorFocus = corridorKey;
+            largeGraphMode = 'corridor_focus';
+            const meta = graphCinematic.getCorridorMeta(corridorKey);
+            recordGraphNavigation('corridor', corridorKey, meta.label || 'Corridor');
+            applyLargeGraphNavigationChange({ fit: true });
+        }
+
+        function centerActiveEcosystem() {
+            const context = getGraphIntelligenceContext({ stockGraphIntelligence });
+            const ecosystemKey = activeEcosystemOverlayKey ||
+                largeGraphEcosystemFocus ||
+                (selectedNode ? stockGraphIntelligence.getDominantEcosystemsForNode(selectedNode, context)?.[0]?.key : '') ||
+                graphIntelligenceModel.defaultDiscovery?.ecosystemBuckets?.[0]?.key ||
+                stockGraphIntelligence.getEcosystemDefinitions()[0]?.key ||
+                '';
+            if (!ecosystemKey) return;
+            largeGraphEcosystemFocus = ecosystemKey;
+            largeGraphMode = 'ecosystem_focus';
+            setEcosystemOverlay(ecosystemKey, { fit: false });
+            applyLargeGraphNavigationChange({ fit: true });
+        }
+
+        function openStockReplayNeighborhood() {
+            window.setStockUxMode?.('replay');
+            if (!selectedNode) {
+                const hub = getBestStrategicHub();
+                if (hub) selectNode(hub, { preserveFilters: true });
+            }
+            largeGraphMode = 'neighborhood';
+            largeGraphNeighborhoodDepth = Math.max(2, largeGraphNeighborhoodDepth);
+            applyLargeGraphNavigationChange({ fit: true });
+        }
+
+        function focusBridgeCompanies() {
+            const context = getGraphIntelligenceContext({ stockGraphIntelligence });
+            const bridge = stockGraphIntelligence.getStrategicHubProfiles(visibleNodes, context, 12)
+                .find(item => item.profile.roles?.includes('ecosystem_bridge') || item.profile.roles?.includes('corridor_company'));
+            const node = bridge?.node || getBestStrategicHub();
+            if (!node) return;
+            largeGraphMode = 'strategic_hubs';
+            applyLargeGraphNavigationChange({ fit: false });
+            selectNode(node, { preserveFilters: true });
+        }
+
+        function compareRoutePaths() {
+            const hadSelection = Boolean(selectedNode);
+            if (!hadSelection) {
+                const hub = getBestStrategicHub();
+                if (hub) selectNode(hub, { preserveFilters: true });
+            }
+            traceRelationshipRoute(activeEcosystemOverlayKey ? 'ecosystem' : 'strongest');
+            largeGraphMode = 'route_isolation';
+            applyLargeGraphNavigationChange({ fit: true });
+        }
+
+        function jumpToSelectedGraphNode() {
+            if (selectedNode) {
+                animateGraphFocusToNode(selectedNode, { minScale: 0.82, centerBiasY: 0.48 });
+                triggerPulse(420);
+                return;
+            }
+            if (selectedRelationshipLink?.source) {
+                selectNode(selectedRelationshipLink.source, { preserveFilters: true });
+                return;
+            }
+            jumpToStrategicHub();
+        }
+
+        function getBestStrategicHub() {
+            const context = getGraphIntelligenceContext({ stockGraphIntelligence });
+            return largeGraphNavigationModel?.hubSummaries?.[0]?.node ||
+                stockGraphIntelligence.getStrategicHubProfiles(visibleNodes, context, 1)?.[0]?.node ||
+                visibleNodes.slice().sort((a, b) =>
+                    (visibleEdgeCountByNodeId.get(b.id) || b.degree || 0) -
+                    (visibleEdgeCountByNodeId.get(a.id) || a.degree || 0)
+                )[0] ||
+                null;
         }
 
         function toggleSourcedOnlyFilter() {
@@ -4174,7 +4280,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 routeLinkKeys: activeRelationshipRoute?.linkKeys || focusLinkKeys || new Set(),
                 selectedNodeIds,
                 semanticZoom: stockSemanticZoomState || getSemanticZoomState(),
-                getNodeLayoutPosition
+                getNodeLayoutPosition,
+                getLinkSpatialMeta: getGraphLinkSpatialMeta
             });
         }
 
@@ -4242,8 +4349,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const nextScale = clamp(scale, MIN_SCALE, MAX_SCALE);
             const nextOffsetX = canvasWidth * 0.5 - world.x * nextScale;
             const nextOffsetY = canvasHeight * 0.5 - world.y * nextScale;
+            const currentCenter = screenToWorld(canvasWidth * 0.5, canvasHeight * 0.5);
+            const distance = Math.hypot(world.x - currentCenter.x, world.y - currentCenter.y) * Math.max(0.2, scale);
             stopOrbitForInteraction();
-            animateView(nextScale, nextOffsetX, nextOffsetY, Math.min(FIT_ANIMATION_MS, 420));
+            animateView(nextScale, nextOffsetX, nextOffsetY, graphCinematic.getCinematicViewDuration('minimap', renderContext, { distance }));
         }
 
         function drawBackground(ctx) {
@@ -5669,7 +5778,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 maxScale: MAX_SCALE,
                 clamp
             });
-            if (animate) animateView(nextView.scale, nextView.offsetX, nextView.offsetY, FIT_ANIMATION_MS);
+            if (animate) animateView(nextView.scale, nextView.offsetX, nextView.offsetY, graphCinematic.getCinematicViewDuration('fit', renderContext));
             else setView(nextView.scale, nextView.offsetX, nextView.offsetY);
         }
 
@@ -6989,7 +7098,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 return;
             }
 
-            animateView(nextView.scale, nextView.offsetX, nextView.offsetY, FIT_ANIMATION_MS);
+            const currentWorld = screenToWorld(canvasWidth * 0.5, canvasHeight * 0.5);
+            const nextWorld = {
+                x: (canvasWidth * 0.5 - nextView.offsetX) / Math.max(0.001, nextView.scale),
+                y: (canvasHeight * 0.5 - nextView.offsetY) / Math.max(0.001, nextView.scale)
+            };
+            const distance = Math.hypot(nextWorld.x - currentWorld.x, nextWorld.y - currentWorld.y) * Math.max(0.2, scale);
+            animateView(nextView.scale, nextView.offsetX, nextView.offsetY, graphCinematic.getCinematicViewDuration('fit', renderContext, { distance }));
         }
 
         function animateGraphFocusToNode(node, options = {}) {
@@ -7011,7 +7126,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const nextScale = clamp(Math.max(scale, options.minScale || 0.72), MIN_SCALE, MAX_SCALE);
             const nextOffsetX = canvasWidth * 0.5 - position.x * nextScale;
             const nextOffsetY = canvasHeight * (options.centerBiasY || 0.5) - position.y * nextScale;
-            animateView(nextScale, nextOffsetX, nextOffsetY, Math.min(FIT_ANIMATION_MS, 460));
+            const distance = Math.hypot(point.x - canvasWidth * 0.5, point.y - canvasHeight * (options.centerBiasY || 0.5));
+            animateView(nextScale, nextOffsetX, nextOffsetY, graphCinematic.getCinematicViewDuration('focus', renderContext, { distance }));
         }
 
         function refreshVisibleGraph() {
@@ -7163,6 +7279,112 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </button>
             `).join('');
             container.innerHTML = `${current}${trail ? `<div class="graph-breadcrumb-history">${trail}</div>` : ''}`;
+            renderSpatialStorytellingCue();
+        }
+
+        function renderSpatialStorytellingCue() {
+            const container = document.getElementById('graph-cinematic-story');
+            if (!container) return;
+            const cue = buildSpatialStorytellingCue();
+            container.classList.toggle('is-visible', Boolean(cue));
+            if (!cue) {
+                container.innerHTML = '';
+                return;
+            }
+            container.innerHTML = `
+                <div class="graph-cinematic-kicker">${escapeHtml(cue.kicker)}</div>
+                <div class="graph-cinematic-title">${escapeHtml(cue.title)}</div>
+                <div class="graph-cinematic-copy">${escapeHtml(cue.body)}</div>
+                ${cue.chips?.length ? `<div class="graph-cinematic-chips">${cue.chips.map(chip => `<span>${escapeHtml(chip)}</span>`).join('')}</div>` : ''}
+            `;
+        }
+
+        function buildSpatialStorytellingCue() {
+            if (currentProductView !== 'stock' || currentAppView !== 'graph') return null;
+            const semantic = stockSemanticZoomState || getSemanticZoomState();
+            const navigation = largeGraphNavigationModel;
+
+            if (activeRelationshipRoute) {
+                const nodeCount = activeRelationshipRoute.nodeIds?.size || activeRelationshipRoute.nodes?.length || 0;
+                const linkCount = activeRelationshipRoute.linkKeys?.size || 0;
+                return {
+                    kicker: 'Route narrative',
+                    title: activeRelationshipRoute.label || 'Relationship route',
+                    body: activeRelationshipRoute.explanation || `Route isolates ${linkCount} relationship${linkCount === 1 ? '' : 's'} across ${nodeCount || 'visible'} companies.`,
+                    chips: [
+                        `${linkCount} edges`,
+                        semantic.tierLabel || 'Graph detail',
+                        navigation?.focusKind === 'route' ? 'route isolation' : 'trace visible'
+                    ]
+                };
+            }
+
+            if (selectedNode) {
+                const profile = stockGraphIntelligence.getStrategicHubProfile?.(selectedNode, getGraphIntelligenceContext({
+                    stockGraphIntelligence
+                })) || {};
+                const dominant = stockGraphIntelligence.getDominantEcosystemsForNode?.(selectedNode, getGraphIntelligenceContext({
+                    stockGraphIntelligence
+                }))?.[0];
+                const role = profile.primaryRoleLabel || stockGraphIntelligence.getNodeRole?.(selectedNode, getGraphIntelligenceContext({
+                    stockGraphIntelligence
+                }))?.label || 'Investigation focus';
+                const degree = visibleEdgeCountByNodeId.get(selectedNode.id) || selectedNode.degree || 0;
+                return {
+                    kicker: 'Investigation focus',
+                    title: selectedNode.ticker || selectedNode.name || 'Selected company',
+                    body: `${role}. The focus bubble creates local reading room while preserving the surrounding ${dominant?.label || 'relationship'} corridor context.`,
+                    chips: [
+                        `${degree} visible edges`,
+                        dominant?.shortLabel || dominant?.label || 'corridor scan',
+                        semantic.tierLabel || 'detail'
+                    ]
+                };
+            }
+
+            if (navigation?.isActive && navigation.focusKind === 'corridor') {
+                const meta = graphCinematic.getCorridorMeta(navigation.corridorKey);
+                return {
+                    kicker: 'Corridor lane',
+                    title: meta.label || navigation.focusLabel || 'Corridor focus',
+                    body: `Lane rendering groups related edges so the ${navigation.focusLabel || meta.label || 'selected corridor'} can be read as a spatial path instead of scattered edges.`,
+                    chips: [
+                        `${navigation.progressiveDisclosure?.visibleEdgeCount || navigation.linkKeys?.size || 0} edges`,
+                        navigation.modeShortLabel || 'Corridor',
+                        semantic.tierLabel || 'detail'
+                    ]
+                };
+            }
+
+            if (navigation?.isActive) {
+                return {
+                    kicker: 'Navigation workspace',
+                    title: navigation.focusLabel || navigation.modeLabel || 'Graph navigation',
+                    body: `${navigation.modeLabel || 'Navigation'} is narrowing the graph while breadcrumbs keep the prior investigation path available.`,
+                    chips: [
+                        `${navigation.progressiveDisclosure?.visibleNodeCount || navigation.nodeIds?.size || visibleNodes.length} nodes`,
+                        `${navigation.progressiveDisclosure?.visibleEdgeCount || navigation.linkKeys?.size || visibleLinks.length} edges`,
+                        semantic.tierLabel || 'detail'
+                    ]
+                };
+            }
+
+            const corridor = navigation?.corridorBuckets?.[0] || graphScalingModel?.corridorBuckets?.[0];
+            if (corridor && semantic.tierRank <= 1) {
+                const meta = graphCinematic.getCorridorMeta(corridor.key);
+                return {
+                    kicker: 'Market structure',
+                    title: meta.label || corridor.label || 'Dominant corridor',
+                    body: `Subtle lanes expose the strongest visible relationship corridor without changing the production graph.`,
+                    chips: [
+                        `${corridor.edgeCount || corridor.count || corridor.links?.length || 0} edges`,
+                        semantic.tierLabel || 'macro',
+                        'semantic zoom'
+                    ]
+                };
+            }
+
+            return null;
         }
 
         function restoreGraphNavigationTrail(index) {
@@ -7188,6 +7410,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     setLargeGraphMode(entry.value);
                 } else if (entry.type === 'ecosystem') {
                     setEcosystemOverlay(entry.value, { fit: true });
+                } else if (entry.type === 'corridor') {
+                    largeGraphCorridorFocus = entry.value;
+                    largeGraphMode = 'corridor_focus';
+                    applyLargeGraphNavigationChange({ fit: true });
                 } else if (entry.type === 'route') {
                     traceRelationshipRoute(entry.value);
                 }
@@ -7951,6 +8177,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function findNodeAt(screenX, screenY) {
             const productionNode = graphInteractions.findNodeAt(screenX, screenY, {
                 visibleNodes,
+                canvasWidth,
                 getNodeLayoutPosition,
                 worldToScreen,
                 getScreenNodeRadius
@@ -7959,6 +8186,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             const secPreviewNode = graphInteractions.findNodeAt(screenX, screenY, {
                 visibleNodes: visibleSecPreviewNodes,
+                canvasWidth,
                 getNodeLayoutPosition,
                 worldToScreen,
                 getScreenNodeRadius
@@ -7967,6 +8195,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             return graphInteractions.findNodeAt(screenX, screenY, {
                 visibleNodes: visibleCandidateCompanyPreviewNodes,
+                canvasWidth,
                 getNodeLayoutPosition,
                 worldToScreen,
                 getScreenNodeRadius

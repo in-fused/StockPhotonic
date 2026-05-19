@@ -43,6 +43,14 @@ D152 semantic graph intelligence keeps the same ownership model:
 - Mobile-safe minimap placement, compact spatial breadcrumbs, reduced overlay behavior, and bottom-sheet semantic detail rules live in `mobile.css`.
 - Semantic zoom decisions are JavaScript-owned; CSS should only react to stable surface attributes such as `data-semantic-zoom-tier` or product-scoped class names.
 
+D153 cinematic graph interaction preserves the same split:
+
+- Stock cinematic graph surfaces such as `.graph-cinematic-story`, minimap corridor readability, graph breadcrumb transitions, and canvas-adjacent investigation motion affordances live in `graph.css`.
+- Shared command-palette entries remain JavaScript-owned by `js/ui/operatingShell.js`; shared command-palette styling stays in `shell.css`.
+- Crypto replay workspace transitions, replay canvas polish, flow corridor readability, and Crypto investigation workspace motion live in `crypto.css`.
+- Mobile placement for Stock story cues, minimap ergonomics, bottom-sheet movement, and replay workspace compacting lives in `mobile.css`.
+- Motion physics, focus repulsion, edge grouping, and corridor lane decisions are JavaScript-owned. CSS may animate chrome and panels, but it should not encode graph semantics or relationship meaning.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

@@ -1280,6 +1280,84 @@ body.graph-fullscreen-active > header {
             outline: none;
         }
 
+.graph-cinematic-story {
+            position: absolute;
+            left: 4.2rem;
+            bottom: 3.35rem;
+            z-index: 16;
+            width: min(30rem, calc(100% - 16rem));
+            border: 1px solid rgba(103, 232, 249, 0.14);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.58);
+            color: rgba(226, 232, 240, 0.72);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(14px);
+            padding: 0.68rem 0.78rem;
+            opacity: 0;
+            transform: translate3d(0, 0.45rem, 0);
+            pointer-events: none;
+            transition: opacity 220ms ease, transform 220ms ease, border-color 220ms ease;
+        }
+
+.graph-cinematic-story.is-visible {
+            opacity: 1;
+            transform: translate3d(0, 0, 0);
+            pointer-events: auto;
+        }
+
+.graph-cinematic-kicker {
+            color: rgba(103, 232, 249, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            letter-spacing: 1.1px;
+            text-transform: uppercase;
+        }
+
+.graph-cinematic-title {
+            margin-top: 0.16rem;
+            color: rgba(236, 254, 255, 0.92);
+            font-weight: 760;
+            line-height: 1.2;
+        }
+
+.graph-cinematic-copy {
+            margin-top: 0.24rem;
+            color: rgba(226, 232, 240, 0.62);
+            font-size: 0.72rem;
+            line-height: 1.42;
+        }
+
+.graph-cinematic-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.45rem;
+        }
+
+.graph-cinematic-chips span {
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(207, 250, 254, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            line-height: 1;
+            padding: 0.28rem 0.42rem;
+        }
+
+.graph-first-os .graph-intelligence-card,
+.graph-first-os .graph-active-legend,
+.graph-first-os .contextual-inspector,
+.graph-spatial-breadcrumbs button,
+.graph-spatial-breadcrumbs span {
+            transition:
+                opacity 180ms ease,
+                transform 180ms ease,
+                border-color 160ms ease,
+                background 160ms ease,
+                color 160ms ease;
+        }
+
 .graph-first-os .sec-production-legend {
             top: 3.95rem;
             right: 1rem;

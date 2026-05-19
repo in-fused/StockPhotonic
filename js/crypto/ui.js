@@ -189,6 +189,11 @@
             topFlowIds: new Set(),
             userInteractingUntil: 0
         },
+        cinematicMotion: {
+            offsets: new Map(),
+            lastFrameAt: 0,
+            active: false
+        },
         labelDensity: 'balanced',
         labelDensityUserSet: false,
         viewport: {
@@ -7236,6 +7241,8 @@
         }
 
         state.renderPerf.inRender = true;
+        let restoreCryptoMotion = null;
+        let cryptoMotionActive = false;
         try {
             const { width, height } = state.graph.bounds;
             const ctx = state.ctx;
@@ -7254,6 +7261,9 @@
             interaction.visibleFlowEdges = visibleFlowEdges;
             interaction.visibleFlowCount = visibleFlowEdges.length;
             interaction.labelLayout = createLabelLayout(width, height);
+            const cinematicFrame = applyCryptoCinematicMotion(interaction, visibleFlowEdges);
+            restoreCryptoMotion = cinematicFrame.restore;
+            cryptoMotionActive = cinematicFrame.active;
             ctx.clearRect(0, 0, width, height);
             drawBackdrop(ctx, width, height);
 
@@ -7262,6 +7272,7 @@
             ctx.scale(state.viewport.scale, state.viewport.scale);
 
             const nodeById = state.graph.nodeById;
+            drawCryptoFlowCorridors(ctx, visibleFlowEdges, nodeById, interaction);
             visibleEdges
                 .filter(edge => edge.type !== core.EDGE_TYPES.LABEL)
                 .sort((a, b) => edgeLayerOrder(a) - edgeLayerOrder(b) || (a.width || 0) - (b.width || 0))
@@ -7283,7 +7294,12 @@
 
             ctx.restore();
         } finally {
+            restoreCryptoMotion?.();
             state.renderPerf.inRender = false;
+        }
+        if (cryptoMotionActive && !state.renderPerf.pending) {
+            scheduleRender();
+            return;
         }
         if (state.renderPerf.pending) {
             state.renderPerf.pending = false;
@@ -7629,21 +7645,201 @@
         }
     }
 
+    function applyCryptoCinematicMotion(interaction = {}, visibleFlowEdges = []) {
+        const graph = state.graph;
+        const nodes = Array.isArray(graph?.nodes) ? graph.nodes : [];
+        if (!nodes.length) return { active: false, restore: null };
+
+        const now = performance.now();
+        const motion = state.cinematicMotion;
+        const dt = motion.lastFrameAt ? Math.min(0.06, Math.max(0.001, (now - motion.lastFrameAt) / 1000)) : 1 / 60;
+        motion.lastFrameAt = now;
+        const semanticRank = Number(interaction.semanticZoom?.tierRank ?? state.semanticZoom?.tierRank ?? 2);
+        const response = 1 - Math.exp(-(semanticRank >= 3 ? 13 : semanticRank === 2 ? 11 : 8) * dt);
+        const scale = Math.max(0.35, state.viewport.scale || 1);
+        const bubbleRadius = (semanticRank >= 3 ? 112 : semanticRank === 2 ? 94 : 72) / scale;
+        const maxPush = (semanticRank >= 3 ? 46 : semanticRank === 2 ? 36 : 24) / scale;
+        const nodeById = graph.nodeById || new Map(nodes.map(node => [node.id, node]));
+        const focusAnchors = getCryptoFocusAnchors(interaction, visibleFlowEdges, nodeById);
+        const targets = new Map();
+
+        if (focusAnchors.length) {
+            nodes.forEach(node => {
+                if (!node || focusAnchors.some(anchor => anchor.id === node.id)) return;
+                let target = { x: 0, y: 0 };
+                focusAnchors.forEach(anchor => {
+                    const dx = node.x - anchor.x;
+                    const dy = node.y - anchor.y;
+                    const distance = Math.max(1, Math.hypot(dx, dy));
+                    const connected = interaction.connectedNodeIds?.has(node.id) || interaction.tokenIsolationNodeIds?.has(node.id);
+                    const limit = bubbleRadius * (connected ? 1.72 : 1.08);
+                    if (distance > limit) return;
+                    const weight = Math.pow(1 - Math.min(1, distance / limit), connected ? 1.2 : 1.55);
+                    const push = weight * maxPush * (connected ? 1.18 : 0.78);
+                    target.x += (dx / distance) * push;
+                    target.y += (dy / distance) * push;
+                });
+                if (Math.hypot(target.x, target.y) > 0.08) targets.set(node.id, target);
+            });
+        }
+
+        const changedNodes = [];
+        const allIds = new Set([...motion.offsets.keys(), ...targets.keys()]);
+        let active = false;
+        allIds.forEach(id => {
+            const target = targets.get(id) || { x: 0, y: 0 };
+            const current = motion.offsets.get(id) || { x: 0, y: 0 };
+            current.x += (target.x - current.x) * response;
+            current.y += (target.y - current.y) * response;
+            const magnitude = Math.hypot(current.x, current.y);
+            if (magnitude < 0.08 && !targets.has(id)) {
+                motion.offsets.delete(id);
+                return;
+            }
+            motion.offsets.set(id, current);
+            const node = nodeById.get(id);
+            if (!node) return;
+            node.x += current.x;
+            node.y += current.y;
+            changedNodes.push({ node, x: current.x, y: current.y });
+            active = active || Math.hypot(target.x - current.x, target.y - current.y) * scale > 0.35 || (!targets.has(id) && magnitude * scale > 0.35);
+        });
+
+        motion.active = active;
+        return {
+            active,
+            restore: () => {
+                changedNodes.forEach(item => {
+                    item.node.x -= item.x;
+                    item.node.y -= item.y;
+                });
+            }
+        };
+    }
+
+    function getCryptoFocusAnchors(interaction = {}, visibleFlowEdges = [], nodeById = new Map()) {
+        const anchors = [];
+        const addNode = node => {
+            if (!node || anchors.some(anchor => anchor.id === node.id)) return;
+            anchors.push({ id: node.id, x: node.x, y: node.y });
+        };
+        addNode(nodeById.get(state.selectedId));
+        const selectedFlow = visibleFlowEdges.find(edge => edge.id === interaction.selectedFlowId || edge.id === interaction.replayActiveFlowId);
+        if (selectedFlow) {
+            addNode(nodeById.get(selectedFlow.source));
+            addNode(nodeById.get(selectedFlow.target));
+        }
+        if (!anchors.length && state.historyPreview.workspaceMode) {
+            const replayEdge = visibleFlowEdges.find(edge => edge.id === state.flowReplay.activeFlowId) || visibleFlowEdges[0];
+            if (replayEdge) {
+                addNode(nodeById.get(replayEdge.source));
+                addNode(nodeById.get(replayEdge.target));
+            }
+        }
+        return anchors.slice(0, 3);
+    }
+
+    function drawCryptoFlowCorridors(ctx, visibleFlowEdges = [], nodeById = new Map(), interaction = {}) {
+        if (!visibleFlowEdges.length) return;
+        const semantic = interaction.semanticZoom || state.semanticZoom || {};
+        if (semantic.tier === 'inspection' && !interaction.hasReplayFocus && !interaction.selectedFlowId) return;
+        const buckets = new Map();
+        visibleFlowEdges.forEach(edge => {
+            const key = getCryptoFlowCorridorKey(edge, interaction);
+            if (!key) return;
+            const bucket = buckets.get(key) || {
+                key,
+                label: getCryptoFlowCorridorLabel(edge, key),
+                color: getCryptoFlowCorridorColor(edge, key),
+                edges: [],
+                value: 0,
+                active: false
+            };
+            bucket.edges.push(edge);
+            bucket.value += Number(edge.usd_value) || 0;
+            bucket.active = bucket.active || edge.id === interaction.selectedFlowId || edge.id === interaction.replayActiveFlowId;
+            buckets.set(key, bucket);
+        });
+        const top = [...buckets.values()]
+            .filter(bucket => bucket.edges.length >= 2 || bucket.active)
+            .sort((a, b) => Number(b.active) - Number(a.active) || b.edges.length - a.edges.length || b.value - a.value)
+            .slice(0, interaction.hasReplayFocus ? 2 : semantic.tierRank <= 1 ? 4 : 3);
+        if (!top.length) return;
+
+        ctx.save();
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        top.forEach((bucket, index) => {
+            ctx.globalAlpha = bucket.active ? 0.16 : semantic.tierRank <= 1 ? 0.095 : 0.065;
+            ctx.strokeStyle = bucket.color;
+            ctx.lineWidth = (bucket.active ? 14 : 9 - index) / Math.max(0.7, Math.sqrt(state.viewport.scale || 1));
+            ctx.shadowBlur = bucket.active ? 18 : 8;
+            ctx.shadowColor = bucket.color;
+            if (bucket.active || interaction.hasReplayFocus) {
+                ctx.setLineDash([18, 22]);
+                ctx.lineDashOffset = -((state.flowMotion.now || performance.now()) / 80);
+            } else {
+                ctx.setLineDash([]);
+            }
+            bucket.edges.slice(0, bucket.active ? 84 : 56).forEach(edge => {
+                const source = nodeById.get(edge.source);
+                const target = nodeById.get(edge.target);
+                if (!source || !target) return;
+                const curve = getCryptoEdgeCurve(source, target, edge, getEdgeBend(edge) * 1.12);
+                ctx.beginPath();
+                ctx.moveTo(source.x, source.y);
+                ctx.quadraticCurveTo(curve.control.x, curve.control.y, target.x, target.y);
+                ctx.stroke();
+            });
+        });
+        ctx.restore();
+    }
+
+    function getCryptoFlowCorridorKey(edge = {}, interaction = {}) {
+        if (edge.id === interaction.replayActiveFlowId) return 'replay_path';
+        if (edge.flow_role === 'swap_route' || /swap|route|bridge|pool/i.test(edge.flow_role || edge.transaction_type_label || '')) return 'liquidity_corridor';
+        if (edge.symbol || edge.token_mint) return `token:${edge.symbol || edge.token_mint}`;
+        return `direction:${getEdgeDirection(edge)}`;
+    }
+
+    function getCryptoFlowCorridorLabel(edge = {}, key = '') {
+        if (key === 'replay_path') return 'Replay path';
+        if (key === 'liquidity_corridor') return 'Liquidity corridor';
+        if (key.startsWith('token:')) return `${edge.symbol || 'Token'} flow`;
+        return String(getEdgeDirection(edge) || 'Flow').replaceAll('_', ' ');
+    }
+
+    function getCryptoFlowCorridorColor(edge = {}, key = '') {
+        if (key === 'replay_path') return 'rgba(244, 114, 182, 0.9)';
+        if (key === 'liquidity_corridor') return 'rgba(34, 211, 238, 0.82)';
+        if (key.startsWith('token:')) return edge.color || 'rgba(250, 204, 21, 0.78)';
+        return getEdgeDirection(edge) === 'inbound' ? 'rgba(96, 165, 250, 0.76)' : 'rgba(52, 211, 153, 0.76)';
+    }
+
+    function getCryptoEdgeCurve(source, target, edge = {}, bend = 0) {
+        const dx = target.x - source.x;
+        const dy = target.y - source.y;
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        const normal = { x: -dy / distance, y: dx / distance };
+        return {
+            distance,
+            normal,
+            control: {
+                x: (source.x + target.x) / 2 + normal.x * bend,
+                y: (source.y + target.y) / 2 + normal.y * bend
+            }
+        };
+    }
+
     function drawEdge(ctx, edge, nodeById, interaction, options = {}) {
         const source = nodeById.get(edge.source);
         const target = nodeById.get(edge.target);
         if (!source || !target) return;
         const style = getEdgeInteractionStyle(edge, interaction);
 
-        const dx = target.x - source.x;
-        const dy = target.y - source.y;
-        const distance = Math.max(1, Math.hypot(dx, dy));
-        const normal = { x: -dy / distance, y: dx / distance };
-        const bend = getEdgeBend(edge);
-        const control = {
-            x: (source.x + target.x) / 2 + normal.x * bend,
-            y: (source.y + target.y) / 2 + normal.y * bend
-        };
+        const curve = getCryptoEdgeCurve(source, target, edge, getEdgeBend(edge));
+        const control = curve.control;
+        const distance = curve.distance;
 
         ctx.save();
         ctx.globalAlpha = style.opacity;
@@ -7708,15 +7904,7 @@
         const source = nodeById.get(edge.source);
         const target = nodeById.get(edge.target);
         if (!source || !target) return;
-        const dx = target.x - source.x;
-        const dy = target.y - source.y;
-        const distance = Math.max(1, Math.hypot(dx, dy));
-        const normal = { x: -dy / distance, y: dx / distance };
-        const bend = getEdgeBend(edge);
-        const control = {
-            x: (source.x + target.x) / 2 + normal.x * bend,
-            y: (source.y + target.y) / 2 + normal.y * bend
-        };
+        const { control } = getCryptoEdgeCurve(source, target, edge, getEdgeBend(edge));
         drawWalletLookupEdgeLabel(ctx, edge, source, target, control, interaction);
     }
 
@@ -8071,7 +8259,10 @@
         if (edge.type === core.EDGE_TYPES.EXPOSURE) return -18;
         if (edge.type !== core.EDGE_TYPES.FLOW) return 0;
         const lane = (hashString(edge.id || `${edge.source}:${edge.target}`) % 5) - 2;
-        return 25 + lane * 6;
+        const tokenLane = (hashString(`${edge.symbol || edge.token_mint || getEdgeDirection(edge)}:corridor`) % 5) - 2;
+        const replayBoost = edge.id === state.flowReplay.activeFlowId || edge.id === state.selectedFlowId ? 8 : 0;
+        const liquidityBoost = /swap|route|bridge|pool/i.test(edge.flow_role || edge.transaction_type_label || '') ? 5 : 0;
+        return 25 + lane * 6 + tokenLane * 3 + replayBoost + liquidityBoost;
     }
 
     function drawArrow(ctx, from, to, color, size = 8, emphasized = false) {
@@ -8560,6 +8751,41 @@
 
     function toggleReplayWorkspaceMode() {
         return setReplayWorkspaceMode(!state.historyPreview.workspaceMode);
+    }
+
+    async function openReplayNeighborhood() {
+        state.investigationTab = 'replay';
+        if (!state.historyPreview.workspaceMode) setReplayWorkspaceMode(true, { force: true });
+        if (!state.historyPreview.dataset) {
+            await buildHistoryPreviewDataset({ skipRenderStatus: true });
+        }
+        state.historyPreview.graphVisible = true;
+        const status = getHistoryReplayStatus();
+        const selected = getSelectedHistoryReplayEvent(status);
+        if (!selected) {
+            await seekHistoryReplayStep(Math.max(1, Number(status.currentStep) || 1), {
+                label: 'Replay neighborhood opened around the current staged transfer.',
+                quiet: true
+            });
+        }
+        await runReplayAuditAction('expand-transfer');
+        state.historyPreview.lastMessage = 'Replay neighborhood opened with staged transfer context only. Wallet Lookup graph remains unchanged.';
+        updateReplayWorkspaceShell();
+        return state.historyPreview.audit?.neighborhood || null;
+    }
+
+    async function centerCurrentReplayTransfer() {
+        state.investigationTab = 'replay';
+        if (!state.historyPreview.workspaceMode) setReplayWorkspaceMode(true, { force: true });
+        const status = getHistoryReplayStatus();
+        const selected = getSelectedHistoryReplayEvent(status);
+        const step = Number(selected?.step || status.currentStep) || 1;
+        await seekHistoryReplayStep(step, {
+            label: 'Replay camera centered on the current staged transfer.',
+            quiet: false
+        });
+        await runReplayAuditAction('center-transfer');
+        return getSelectedHistoryReplayEvent(getHistoryReplayStatus());
     }
 
     function updateReplayWorkspaceShell() {
@@ -11914,6 +12140,8 @@
         toggleHistoryReplayFromDock,
         setReplayWorkspaceMode,
         toggleReplayWorkspaceMode,
+        openReplayNeighborhood,
+        centerCurrentReplayTransfer,
         updateInteractionDock,
         getFlowQueue: () => state.flowQueue,
         setFlowAnimationEnabled,

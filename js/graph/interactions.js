@@ -66,7 +66,9 @@
                 y: Number.isFinite(node._screenY) ? node._screenY : fallback.y
             };
             const cachedRadius = Number.isFinite(node._screenRadius) ? node._screenRadius : options.getScreenNodeRadius(node);
-            const hitRadius = Math.max(16, cachedRadius + 10);
+            const compact = (options.canvasWidth || window.innerWidth || 0) < 680;
+            const focusBoost = Math.min(8, Number(node._focusDisplacement || 0) * 0.18);
+            const hitRadius = Math.max(compact ? 22 : 16, cachedRadius + (compact ? 15 : 10) + focusBoost);
             const distance = Math.hypot(point.x - screenX, point.y - screenY);
             if (distance <= hitRadius && distance < closestDistance) {
                 closest = node;

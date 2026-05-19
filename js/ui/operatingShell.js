@@ -275,6 +275,14 @@
             command('large-route', 'Route isolation', 'Navigation', () => callGlobal('setLargeGraphMode', 'route_isolation')),
             command('large-production', 'Production-only graph', 'Navigation', () => callGlobal('setLargeGraphMode', 'production_only')),
             command('large-preview', 'Preview-only graph', 'Navigation', () => callGlobal('setLargeGraphMode', 'preview_only')),
+            command('jump-hub', 'Jump to strategic hub', 'Navigation', () => callGlobal('jumpToStrategicHub')),
+            command('isolate-corridor', 'Isolate dominant corridor', 'Navigation', () => callGlobal('isolateDominantCorridor')),
+            command('inspect-strongest-route', 'Inspect strongest route', 'Navigation', () => callGlobal('traceRelationshipRoute', 'strongest')),
+            command('center-ecosystem', 'Center ecosystem', 'Navigation', () => callGlobal('centerActiveEcosystem')),
+            command('stock-replay-neighborhood', 'Open replay neighborhood', 'Navigation', () => callGlobal('openStockReplayNeighborhood')),
+            command('focus-bridges', 'Focus bridge companies', 'Navigation', () => callGlobal('focusBridgeCompanies')),
+            command('compare-routes', 'Compare route paths', 'Navigation', () => callGlobal('compareRoutePaths')),
+            command('jump-selected-node', 'Jump to selected node', 'Navigation', () => callGlobal('jumpToSelectedGraphNode')),
             command('source-lens', 'Toggle source coverage lens', 'Evidence', () => callGlobal('toggleSourceCoverageLens')),
             command('sec-preview', 'Toggle SEC preview', 'Evidence', () => callGlobal('toggleSecPreviewRelationships')),
             command('candidate-preview', 'Toggle candidate companies', 'Review', () => callGlobal('toggleCandidateCompanyPreview')),
@@ -285,7 +293,9 @@
             command('crypto-fullscreen', 'Toggle Crypto fullscreen', 'Crypto', () => window.CryptoPhotonic?.ui?.setFullscreen?.(!window.CryptoPhotonic?.ui?.getState?.().fullscreen)),
             command('crypto-labels', 'Cycle Crypto labels', 'Crypto', () => window.CryptoPhotonic?.ui?.cycleLabelDensity?.()),
             command('crypto-center', 'Center tracked wallet', 'Crypto', () => window.CryptoPhotonic?.ui?.centerTrackedWallet?.()),
-            command('crypto-replay', 'Toggle Crypto replay workspace', 'Crypto', () => window.CryptoPhotonic?.ui?.toggleReplayWorkspaceMode?.())
+            command('crypto-replay', 'Toggle Crypto replay workspace', 'Crypto', () => window.CryptoPhotonic?.ui?.toggleReplayWorkspaceMode?.()),
+            command('crypto-replay-neighborhood', 'Open Crypto replay neighborhood', 'Crypto', () => window.CryptoPhotonic?.ui?.openReplayNeighborhood?.()),
+            command('crypto-center-replay', 'Center current replay transfer', 'Crypto', () => window.CryptoPhotonic?.ui?.centerCurrentReplayTransfer?.())
         ];
     }
 

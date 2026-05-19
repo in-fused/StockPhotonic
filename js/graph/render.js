@@ -51,10 +51,13 @@
             .filter(node => isNodeInFrame(context, node))
             .sort(sortByPerspectiveDepth);
         const density = getDensityProfile(context);
+        const semantic = getSemanticState(context, density);
+        context.onSemanticZoomState?.(semantic);
         const frameLinks = prioritizeFrameLinks(
             context,
             context.visibleLinks.filter(link => shouldDrawLink(context, link)),
-            density
+            density,
+            semantic
         ).sort(sortLinkByPerspectiveDepth);
 
         ctx.save();
@@ -199,6 +202,10 @@
         };
         const relationshipVisual = context.getRelationshipVisualMeta?.(link) || {};
         const intelligenceVisual = context.getGraphLinkIntelligenceVisual?.(link) || {};
+        const density = getDensityProfile(context);
+        const semantic = getSemanticState(context, density);
+        const semanticEdge = getSemanticEdgeDisposition(context, link, semantic, intelligenceVisual);
+        if (!semanticEdge.draw) return;
         let color = intelligenceVisual.color || relationshipVisual.color || context.EDGE_COLORS[link.relationship_type] || context.EDGE_COLORS[link.type] || context.DEFAULT_EDGE_COLOR;
         const isFocused = context.selectedNode && context.focusLinkKeys.has(link.key);
         const isHoveredLink = context.hoveredNode && (context.hoveredNode.id === link.source.id || context.hoveredNode.id === link.target.id);
@@ -263,8 +270,15 @@
             width = Math.max(0.18, width + (relationshipVisual.widthBoost || 0));
         }
 
-        const density = getDensityProfile(context);
-        const densityProtected = Boolean(isFocused || isHoveredLink || isPortfolioLink || touchesIndustryGroup || intelligenceVisual.forceDraw);
+        const densityProtected = Boolean(isFocused || isHoveredLink || isPortfolioLink || touchesIndustryGroup || intelligenceVisual.forceDraw || semanticEdge.protectedEdge);
+        if (semanticEdge.corridor && !hasFocus && !isHoveredLink && !isPortfolioLink) {
+            alpha = Math.max(alpha, semantic.tierRank <= 1 ? 0.34 + strength * 0.2 : 0.28 + strength * 0.18);
+            width = Math.max(width, semantic.tierRank <= 1 ? 0.95 + strength * 0.95 : 0.8 + strength * 0.8);
+        }
+        if (!densityProtected && !semanticEdge.protectedEdge) {
+            alpha *= semanticEdge.alphaMultiplier;
+            width = Math.max(0.14, width * semanticEdge.widthMultiplier);
+        }
         if (density.dense && !densityProtected) {
             alpha *= density.veryDense ? 0.58 : 0.72;
             width = Math.max(0.16, width * (density.veryDense ? 0.74 : 0.86));
@@ -273,9 +287,9 @@
         ctx.globalAlpha = alpha * perspectiveShade;
         ctx.strokeStyle = color;
         ctx.lineWidth = width;
-        ctx.shadowBlur = intelligenceVisual.route || intelligenceVisual.selected
+        ctx.shadowBlur = (intelligenceVisual.route || intelligenceVisual.selected
             ? 34
-            : isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : intelligenceVisual.guided ? 24 : intelligenceVisual.overlay ? 22 : isStrongSignal ? 16 : 3 + strength * 5;
+            : isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : intelligenceVisual.guided ? 24 : intelligenceVisual.overlay ? 22 : isStrongSignal ? 16 : 3 + strength * 5) * semanticEdge.shadowMultiplier;
         ctx.shadowColor = isPortfolioLink ? '#ffd700' : color;
         ctx.setLineDash(Array.isArray(intelligenceVisual.dashPattern)
             ? intelligenceVisual.dashPattern
@@ -477,10 +491,15 @@
             labels.push(node);
         });
 
+        const semantic = getSemanticState(context);
+        const labelLayout = createStockLabelLayout(context);
+        const limit = getLabelLimit(context, labelMode);
+        let drawn = 0;
+
         labels
             .sort((a, b) => labelPriority(context, b) - labelPriority(context, a))
-            .slice(0, getLabelLimit(context, labelMode))
             .forEach(node => {
+                if (drawn >= limit) return;
                 const position = context.getNodeLayoutPosition(node);
                 const fallback = context.worldToScreen(position.x, position.y);
                 const point = { x: node._screenX ?? fallback.x, y: node._screenY ?? fallback.y };
@@ -496,30 +515,47 @@
                 const industryDimmed = context.isNodeDimmedByIndustryGroup(node);
                 const industryMatched = context.isIndustryGroupFilterActive() && context.nodeMatchesCurrentIndustryGroup(node);
                 const focusDimmed = !context.isFocusModeActive() && context.selectedNode && !isSelected && !isNeighbor && !isClusterNode && !isPortfolioHolding && !isPortfolioAdjacent && !industryMatched;
-                const alpha = industryDimmed ? 0.18 : focusDimmed ? 0.25 : isPortfolioHolding ? 0.94 : isPortfolioAdjacent ? 0.82 : isClusterNode ? 0.86 : isNeighbor ? 0.82 : 0.72;
+                const visual = context.getGraphNodeIntelligenceVisual?.(node) || {};
+                const disposition = getSemanticLabelDisposition(context, node, labelMode, semantic, visual);
+                const alpha = (industryDimmed ? 0.18 : focusDimmed ? 0.25 : isPortfolioHolding ? 0.94 : isPortfolioAdjacent ? 0.82 : isClusterNode ? 0.86 : isNeighbor ? 0.82 : 0.72) * (disposition.alpha || semantic.lowPriorityLabelAlpha || 1);
 
                 ctx.save();
                 const fontSize = labelMode === 'full' ? (isSelected ? 12 : 11) : (isSelected ? 12 : 10);
                 ctx.font = `${fontSize}px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`;
-                const label = truncateLabel(ctx, rawLabel, labelMode === 'full' ? 220 : 82);
+                const label = truncateLabel(ctx, rawLabel, getSemanticLabelMaxWidth(labelMode, semantic, disposition));
                 const width = ctx.measureText(label).width;
-                const x = point.x - width / 2;
-                const y = point.y + radius + 14;
+                const box = placeStockLabel(labelLayout, {
+                    x: point.x,
+                    y: point.y,
+                    radius,
+                    width: width + 10,
+                    height: 16,
+                    force: disposition.force || isSelected || isHovered
+                });
+                if (!box) {
+                    ctx.restore();
+                    return;
+                }
+                const x = box.x + 5;
+                const y = box.y + 11;
                 ctx.globalAlpha = alpha;
                 ctx.fillStyle = 'rgba(3, 7, 18, 0.76)';
                 ctx.strokeStyle = isPortfolioHolding ? 'rgba(255, 215, 0, 0.62)' : isSelected || isHovered || isClusterNode || isPortfolioAdjacent ? 'rgba(0, 249, 255, 0.58)' : 'rgba(255, 255, 255, 0.12)';
                 ctx.lineWidth = 1;
-                roundedRect(ctx, x - 5, y - 11, width + 10, 16, 6);
+                roundedRect(ctx, box.x, box.y, box.width, box.height, 6);
                 ctx.fill();
                 ctx.stroke();
                 ctx.fillStyle = isPortfolioHolding ? '#fff7ad' : isSelected ? '#ffffff' : node.color || '#dbeafe';
                 ctx.globalAlpha = isSelected || isHovered ? 1 : alpha;
                 ctx.fillText(label, x, y);
+                drawn += 1;
                 ctx.restore();
             });
     }
 
     function getLabelMode(context) {
+        const semantic = getSemanticState(context);
+        if (context.scale < context.LABEL_TICKER_SCALE && semantic.tier === 'macro' && (semantic.selectedOverride || semantic.overlayActive || semantic.showCorridorHints)) return 'ticker';
         if (context.scale < context.LABEL_TICKER_SCALE) return 'none';
         if (context.scale < context.LABEL_FULL_SCALE) return 'ticker';
         return 'full';
@@ -532,27 +568,36 @@
 
     function getLabelLimit(context, labelMode) {
         const density = getDensityProfile(context);
+        const semantic = getSemanticState(context, density);
         const heuristics = context.graphScalingModel?.renderHeuristics || {};
         const fullLimit = Number(heuristics.labelLimitFull);
         const tickerLimit = Number(heuristics.labelLimitTicker);
+        let baseLimit = 0;
         if (labelMode === 'full') {
-            if (Number.isFinite(fullLimit) && !context.selectedNode) return fullLimit;
-            if (density.mega && !context.selectedNode) return 18;
-            if (density.veryDense && !context.selectedNode) return 32;
-            if (density.dense && !context.selectedNode) return 42;
-            return context.selectedNode ? 68 : 54;
+            if (Number.isFinite(fullLimit) && !context.selectedNode) baseLimit = fullLimit;
+            else if (density.mega && !context.selectedNode) baseLimit = 18;
+            else if (density.veryDense && !context.selectedNode) baseLimit = 32;
+            else if (density.dense && !context.selectedNode) baseLimit = 42;
+            else baseLimit = context.selectedNode ? 68 : 54;
+            return Math.min(baseLimit, semantic.labelBudget || baseLimit);
         }
-        if (Number.isFinite(tickerLimit) && !context.selectedNode) return tickerLimit;
-        if (density.mega && !context.selectedNode) return 12;
-        if (density.veryDense && !context.selectedNode) return 22;
-        if (density.dense && !context.selectedNode) return 28;
-        return context.selectedNode ? 52 : 36;
+        if (Number.isFinite(tickerLimit) && !context.selectedNode) baseLimit = tickerLimit;
+        else if (density.mega && !context.selectedNode) baseLimit = 12;
+        else if (density.veryDense && !context.selectedNode) baseLimit = 22;
+        else if (density.dense && !context.selectedNode) baseLimit = 28;
+        else baseLimit = context.selectedNode ? 52 : 36;
+        return Math.min(baseLimit, semantic.labelBudget || baseLimit);
     }
 
     function shouldDrawLabel(context, node, labelMode) {
         if (labelMode === 'none') return false;
         const density = getDensityProfile(context);
+        const semantic = getSemanticState(context, density);
         const intelligenceVisual = context.getGraphNodeIntelligenceVisual?.(node) || {};
+        const disposition = getSemanticLabelDisposition(context, node, labelMode, semantic, intelligenceVisual);
+        if (disposition.force) return true;
+        if (!disposition.visible) return false;
+        if (semantic.tier === 'macro' || semantic.tier === 'cluster') return true;
         if (context.selectedNode && context.selectedNode.id === node.id) return true;
         if (context.hoveredNode && context.hoveredNode.id === node.id) return true;
         if (intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint) return true;
@@ -572,20 +617,115 @@
 
     function labelPriority(context, node) {
         const intelligenceVisual = context.getGraphNodeIntelligenceVisual?.(node) || {};
-        if (intelligenceVisual.route) return 1100 + (node.degree || 0);
-        if (intelligenceVisual.selectedEdgeEndpoint) return 1060 + (node.degree || 0);
-        if (context.selectedNode && context.selectedNode.id === node.id) return 1000;
-        if (intelligenceVisual.guided) return 940 + (node.degree || 0);
-        if (context.hoveredNode && context.hoveredNode.id === node.id) return 900;
-        if (intelligenceVisual.overlay && intelligenceVisual.role?.key !== 'normal') return 830 + (node.degree || 0);
-        if (intelligenceVisual.defaultDiscovery && intelligenceVisual.role?.key !== 'normal') return 800 + (node.degree || 0);
-        if (context.isPortfolioNode(node)) return 780 + node.degree;
-        if (context.isPortfolioTopNexusNode(node)) return 720 + node.degree;
-        if (context.isPortfolioRepeatedExposureNode(node)) return 670 + node.degree;
-        if (context.isPortfolioAdjacentNode(node)) return 620 + node.degree;
-        if (context.focusNeighborIds.has(node.id)) return 500 + node.degree;
-        if (context.selectedNode && context.activeClusterNodeIds.has(node.id) && !context.isFocusModeActive()) return 360 + node.degree;
-        return node.degree * 10 + Math.max(0, 320 - (node.rank || 320)) / 20;
+        const disposition = getSemanticLabelDisposition(context, node, getLabelMode(context), getSemanticState(context), intelligenceVisual);
+        const boost = disposition.priorityBoost || 0;
+        if (intelligenceVisual.route) return boost + 1100 + (node.degree || 0);
+        if (intelligenceVisual.selectedEdgeEndpoint) return boost + 1060 + (node.degree || 0);
+        if (context.selectedNode && context.selectedNode.id === node.id) return boost + 1000;
+        if (intelligenceVisual.guided) return boost + 940 + (node.degree || 0);
+        if (context.hoveredNode && context.hoveredNode.id === node.id) return boost + 900;
+        if (intelligenceVisual.overlay && intelligenceVisual.role?.key !== 'normal') return boost + 830 + (node.degree || 0);
+        if (intelligenceVisual.defaultDiscovery && intelligenceVisual.role?.key !== 'normal') return boost + 800 + (node.degree || 0);
+        if (context.isPortfolioNode(node)) return boost + 780 + node.degree;
+        if (context.isPortfolioTopNexusNode(node)) return boost + 720 + node.degree;
+        if (context.isPortfolioRepeatedExposureNode(node)) return boost + 670 + node.degree;
+        if (context.isPortfolioAdjacentNode(node)) return boost + 620 + node.degree;
+        if (context.focusNeighborIds.has(node.id)) return boost + 500 + node.degree;
+        if (context.selectedNode && context.activeClusterNodeIds.has(node.id) && !context.isFocusModeActive()) return boost + 360 + node.degree;
+        return boost + node.degree * 10 + Math.max(0, 320 - (node.rank || 320)) / 20;
+    }
+
+    function getSemanticState(context, density = null) {
+        if (context.getSemanticZoomState) return context.getSemanticZoomState(density || getDensityProfile(context));
+        return window.StockPhotonicGraph?.semanticZoom?.getStockSemanticState?.(context, density || getDensityProfile(context)) || {
+            tier: 'relationship',
+            tierRank: 2,
+            labelBudget: 42,
+            weakEdgeThreshold: 0,
+            lowPriorityLabelAlpha: 0.72
+        };
+    }
+
+    function getSemanticLabelDisposition(context, node, labelMode, semantic, visual) {
+        return window.StockPhotonicGraph?.semanticZoom?.getStockLabelDisposition?.(context, node, labelMode, semantic, visual) || {
+            visible: true,
+            force: false,
+            alpha: 1,
+            priorityBoost: 0
+        };
+    }
+
+    function getSemanticEdgeDisposition(context, link, semantic, visual) {
+        return window.StockPhotonicGraph?.semanticZoom?.getStockEdgeDisposition?.(context, link, semantic, visual) || {
+            draw: true,
+            protectedEdge: false,
+            corridor: false,
+            alphaMultiplier: 1,
+            widthMultiplier: 1,
+            shadowMultiplier: 1,
+            priorityBoost: 0
+        };
+    }
+
+    function getSemanticLabelMaxWidth(labelMode, semantic, disposition) {
+        if (disposition.force) return labelMode === 'full' ? 230 : 110;
+        if (semantic?.maxLabelWidth) return labelMode === 'full'
+            ? semantic.maxLabelWidth
+            : Math.min(semantic.maxLabelWidth, 96);
+        return labelMode === 'full' ? 220 : 82;
+    }
+
+    function createStockLabelLayout(context) {
+        const boxes = [];
+        const semantic = getSemanticState(context);
+        const padding = semantic.tierRank <= 1 ? 9 : 6;
+        const margin = 8;
+        return {
+            register(box, options = {}) {
+                const padded = {
+                    x: box.x - padding,
+                    y: box.y - padding,
+                    width: box.width + padding * 2,
+                    height: box.height + padding * 2
+                };
+                if (!options.force && boxes.some(existing => boxesOverlap(existing, padded))) return false;
+                boxes.push(padded);
+                return true;
+            },
+            clampBox(box) {
+                return {
+                    ...box,
+                    x: clampFinite(box.x, margin, Math.max(margin, context.canvasWidth - box.width - margin)),
+                    y: clampFinite(box.y, margin, Math.max(margin, context.canvasHeight - box.height - margin))
+                };
+            }
+        };
+    }
+
+    function placeStockLabel(layout, metrics) {
+        const gap = metrics.force ? 8 : 11;
+        const candidates = [
+            { x: metrics.x - metrics.width / 2, y: metrics.y + metrics.radius + gap },
+            { x: metrics.x - metrics.width / 2, y: metrics.y - metrics.radius - metrics.height - gap },
+            { x: metrics.x + metrics.radius + gap, y: metrics.y - metrics.height / 2 },
+            { x: metrics.x - metrics.radius - metrics.width - gap, y: metrics.y - metrics.height / 2 }
+        ];
+        let fallback = null;
+        for (const candidate of candidates) {
+            const box = layout.clampBox({ ...candidate, width: metrics.width, height: metrics.height });
+            fallback ||= box;
+            if (layout.register(box, { force: metrics.force })) return box;
+        }
+        if (!metrics.force || !fallback) return null;
+        layout.register(fallback, { force: true });
+        return fallback;
+    }
+
+    function boxesOverlap(a, b) {
+        return a.x < b.x + b.width &&
+            a.x + a.width > b.x &&
+            a.y < b.y + b.height &&
+            a.y + a.height > b.y;
     }
 
     function getPerspectiveShade(context, ...nodes) {
@@ -685,10 +825,13 @@
     function shouldDrawLink(context, link) {
         const isFocused = context.selectedNode && context.focusLinkKeys.has(link.key);
         const intelligenceVisual = context.getGraphLinkIntelligenceVisual?.(link) || {};
+        const semantic = getSemanticState(context);
+        const semanticEdge = getSemanticEdgeDisposition(context, link, semantic, intelligenceVisual);
+        if (!semanticEdge.draw) return false;
         const industryFilterActive = context.isIndustryGroupFilterActive();
         const touchesIndustryGroup = industryFilterActive && context.linkTouchesCurrentIndustryGroup(link);
         const isPortfolioLink = context.isPortfolioAnalysisActive() && context.portfolioEdgeKeys.has(link.key);
-        if (context.signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && !isPortfolioLink && !intelligenceVisual.forceDraw && link.strength < getWeakEdgeThreshold(context)) return false;
+        if (context.signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && !isPortfolioLink && !intelligenceVisual.forceDraw && !semanticEdge.protectedEdge && link.strength < getWeakEdgeThreshold(context)) return false;
 
         const sourceX = link.source._screenX;
         const sourceY = link.source._screenY;
@@ -701,8 +844,8 @@
         return maxX >= 0 && minX <= context.canvasWidth && maxY >= 0 && minY <= context.canvasHeight;
     }
 
-    function prioritizeFrameLinks(context, links, density = getDensityProfile(context)) {
-        const limit = getFrameLinkLimit(context, density);
+    function prioritizeFrameLinks(context, links, density = getDensityProfile(context), semantic = getSemanticState(context, density)) {
+        const limit = getFrameLinkLimit(context, density, semantic);
         if (!limit || links.length <= limit) return links;
         return links
             .slice()
@@ -710,10 +853,15 @@
             .slice(0, limit);
     }
 
-    function getFrameLinkLimit(context, density) {
+    function getFrameLinkLimit(context, density, semantic = getSemanticState(context, density)) {
         if (context.selectedNode || context.activeRelationshipRoute || context.selectedRelationshipLink) return 0;
         const navigation = context.graphScalingModel?.navigation || {};
         if (navigation.active && navigation.mode !== 'production_only') return 0;
+        if (semantic.tier === 'macro' && density.mega) return 180;
+        if (semantic.tier === 'macro' && density.veryDense) return 240;
+        if (semantic.tier === 'macro' && density.dense) return 300;
+        if (semantic.tier === 'cluster' && density.mega) return 280;
+        if (semantic.tier === 'cluster' && density.veryDense) return 380;
         if (context.scale < 0.34 && density.mega) return 240;
         if (context.scale < 0.34 && density.veryDense) return 320;
         if (context.scale < 0.42 && density.dense) return 420;
@@ -725,8 +873,10 @@
 
     function getLinkRenderPriority(context, link) {
         const visual = context.getGraphLinkIntelligenceVisual?.(link) || {};
+        const semantic = getSemanticState(context);
+        const semanticEdge = getSemanticEdgeDisposition(context, link, semantic, visual);
         const strength = Number(link?.strength) || 0;
-        let score = strength * 100;
+        let score = strength * 100 + (semanticEdge.priorityBoost || 0);
         if (visual.forceDraw || visual.route || visual.selected || visual.guided || visual.overlay || visual.sourceCoverage) score += 1000;
         if (context.portfolioEdgeKeys?.has(link.key)) score += 850;
         if (context.focusLinkKeys?.has(link.key)) score += 800;
@@ -740,6 +890,10 @@
 
     function drawNodeIntelligenceCue(context, ctx, point, radius, visual, state) {
         if (!visual?.emphasized) return;
+
+        const semantic = getSemanticState(context);
+        if (visual.sourceCoverage && !visual.route && !visual.selectedEdgeEndpoint && !semantic.showEvidenceMarkers) return;
+        if ((visual.overlay || visual.defaultDiscovery) && semantic.tier === 'macro' && visual.role?.key === 'normal') return;
 
         const color = visual.color || '#67e8f9';
         const alpha = state.industryDimmed
@@ -773,7 +927,7 @@
         ctx.arc(point.x, point.y, radius * (visual.route || visual.selectedEdgeEndpoint ? 2.75 : 2.32), 0, Math.PI * 2);
         ctx.stroke();
 
-        if (visual.route || visual.selectedEdgeEndpoint || visual.guided || visual.navigation || (visual.sourceCoverage && context.scale > 0.68) || (visual.overlay && context.scale > 0.56 && visual.role?.key !== 'normal') || (visual.defaultDiscovery && context.scale > 0.62 && visual.role?.key !== 'normal')) {
+        if (visual.route || visual.selectedEdgeEndpoint || visual.guided || visual.navigation || (visual.sourceCoverage && semantic.showSourceBadges) || (visual.overlay && semantic.showOverlayBadges && visual.role?.key !== 'normal') || (visual.defaultDiscovery && semantic.showOverlayBadges && visual.role?.key !== 'normal')) {
             drawNodeIntelligenceBadge(ctx, point, radius, visual.badgeLabel || visual.role?.shortLabel || '', color);
         }
 
@@ -805,7 +959,9 @@
 
     function getWeakEdgeThreshold(context) {
         const density = getDensityProfile(context);
+        const semantic = getSemanticState(context, density);
         const densityLift = density.mega ? 0.18 : density.veryDense ? 0.12 : density.dense ? 0.07 : density.large ? 0.04 : 0;
+        if (semantic?.weakEdgeThreshold > 0) return Math.max(semantic.weakEdgeThreshold, densityLift);
         if (context.scale < 0.3) return Math.min(0.58, 0.42 + densityLift);
         if (context.scale < 0.46) return Math.min(0.5, 0.32 + densityLift);
         if (context.scale < 0.62) return Math.min(0.38, 0.2 + densityLift);

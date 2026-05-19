@@ -422,7 +422,9 @@ body.graph-fullscreen-active > header {
         }
 
 #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-overlay-stats,
-        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .sec-production-legend {
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .sec-production-legend,
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-minimap-canvas,
+        #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-minimap-toggle {
             opacity: 0;
             pointer-events: none;
         }
@@ -1178,7 +1180,48 @@ body.graph-fullscreen-active > header {
             background: rgba(2, 6, 23, 0.72);
             box-shadow: 0 16px 42px rgba(0, 0, 0, 0.34);
             backdrop-filter: blur(14px);
+            pointer-events: auto;
+            cursor: crosshair;
+            transition: opacity 150ms ease, transform 150ms ease, visibility 150ms ease;
+        }
+
+.graph-minimap-toggle {
+            position: absolute;
+            right: 1rem;
+            bottom: calc(1rem + 118px);
+            z-index: 18;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.05rem;
+            height: 2.05rem;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.76);
+            color: rgba(226, 232, 240, 0.82);
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.32);
+            backdrop-filter: blur(14px);
+            transition: border-color 150ms ease, background 150ms ease, color 150ms ease, transform 150ms ease;
+        }
+
+.graph-minimap-toggle:hover,
+        .graph-minimap-toggle:focus-visible,
+        .graph-minimap-toggle[aria-pressed="true"] {
+            border-color: rgba(103, 232, 249, 0.4);
+            background: rgba(14, 165, 233, 0.18);
+            color: #ffffff;
+            outline: none;
+        }
+
+.graph-container.is-minimap-collapsed .graph-minimap-canvas {
+            opacity: 0;
+            transform: translate3d(0.35rem, 0.35rem, 0) scale(0.92);
             pointer-events: none;
+            visibility: hidden;
+        }
+
+.graph-container.is-minimap-collapsed .graph-minimap-toggle {
+            bottom: 1rem;
         }
 
 .graph-spatial-breadcrumbs {
@@ -1194,6 +1237,21 @@ body.graph-fullscreen-active > header {
             overflow-x: auto;
             scrollbar-width: none;
             pointer-events: auto;
+        }
+
+.graph-spatial-breadcrumbs .graph-breadcrumb-current {
+            max-width: min(52vw, 48rem);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border-color: rgba(103, 232, 249, 0.24);
+            color: rgba(236, 254, 255, 0.86);
+        }
+
+.graph-breadcrumb-history {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
         }
 
 .graph-spatial-breadcrumbs::-webkit-scrollbar {

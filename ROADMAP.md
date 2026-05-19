@@ -24,7 +24,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 ## CURRENT FOCUS
 
-- D151 graph-first operating system: keep the graph dominant, expose controls progressively, use contextual inspectors instead of persistent sidebars, and preserve all existing replay, route, ecosystem, evidence, source, portfolio, navigation, and refresh systems.
+- D152 semantic graph intelligence: keep the D151 graph-first operating shell dominant while adapting labels, overlays, routes, breadcrumbs, minimap detail, and Crypto topology emphasis to zoom tier, density, active mode, selected neighborhood, route state, and Stock/Crypto context.
 - UI/UX polish for the 2D Graph Intelligence workflow, especially guided discovery, default graph onboarding, active state comprehension, command-palette access, transient overlays, and mobile graph usability.
 - Intelligence layer clarity: company investigation workspace, graph-adjacent storytelling cards, why-connected relationship cards, source/confidence labels, hubs, bridges, corridors, clusters, shared exposure, hidden relationships, ecosystem overlays, active graph legend, route tracing, industry correlations, portfolio exposure, and SEC-backed edge visibility.
 - Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, candidate-company preview staging, promotion readiness tables, reviewer decision states, graph-impact simulations, expansion batch summaries, triage artifacts, candidate-vs-production overlap comparison, and data expansion preflight reporting.
@@ -48,16 +48,25 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Future open-data review workflow: source registry rules that pre-classify URL host categories, expose review aging thresholds, export reviewer checklists, and preserve candidate -> preview -> manual promotion.
 - Open-data ownership/ETF overlap model after schema, source registry, and validation support exist.
 - Optional backend/auth layer only after the static app and source workflow remain stable.
-- Larger graph rendering/performance work as source-backed data grows, using D151 density-aware rendering, semantic zoom concepts, route indexes, source-backed corridor lanes, strategic hub summaries, and D149 progressive-disclosure navigation modes.
+- Larger graph rendering/performance work as source-backed data grows, using D152 semantic zoom tiers, viewport-aware label budgets, route indexes, source-backed corridor lanes, strategic hub summaries, Crypto topology prioritization, and D149 progressive-disclosure navigation modes.
 - Controlled universe expansion engine that stages real public-company metadata, detects ticker/name conflicts, scores source readiness, and requires reviewer-owned ecosystem/corridor assignment before any future writer exists.
 
 ## D151 FOLLOW-ON
 
 - Persist user-authored graph workspace state only after a storage/auth architecture is intentionally introduced.
-- Add deeper semantic zoom tiers for 1000+ node graphs, including server-free precomputed layout snapshots if the static bundle size remains acceptable.
-- Add richer minimap interaction, route-target selection, and keyboard traversal after the current command palette and breadcrumb model are validated.
+- Completed in D152: semantic zoom tiers for macro, cluster, relationship, and inspection detail; zoom-aware label and edge budgets; richer stock minimap interaction; spatial breadcrumbs; and mode-sensitive Stock/Crypto graph detail.
+- Add server-free precomputed layout snapshots for 1000+ node graphs if the static bundle size remains acceptable.
+- Add route-target selection and keyboard traversal after the semantic minimap and breadcrumb model are validated.
 - Add reviewer-authored workspace annotations as review-only artifacts, not relationship proof or promotion authority.
 - Keep Crypto liquidity topology improvements tied to reviewed local/static data and never browser-side provider ingestion.
+
+## D152 FOLLOW-ON
+
+- Add optional precomputed semantic tiles for very large static graphs so macro and cluster tiers can render without scanning every low-priority edge.
+- Add reviewer-authored corridor notes as review-only overlays that never become relationship proof or promotion authority.
+- Add keyboard-driven spatial traversal for hubs, corridors, selected neighborhoods, and replay paths.
+- Add route comparison mode that can show two evidence-backed paths with shared edge bundling and clear visual separation.
+- Keep Crypto realtime or archive expansion behind Worker/server boundaries; the browser graph should continue to consume sanitized static or Worker-owned data only.
 
 ## D141 FOLLOW-ON
 

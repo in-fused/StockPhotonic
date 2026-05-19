@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/base.css?v=d151-graph-os">
     <link rel="stylesheet" href="css/shell.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/graph.css?v=d151-graph-os">
+    <link rel="stylesheet" href="css/graph.css?v=d152-semantic-zoom">
     <link rel="stylesheet" href="css/stock.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/crypto.css?v=d151-graph-os">
+    <link rel="stylesheet" href="css/crypto.css?v=d152-semantic-zoom">
     <link rel="stylesheet" href="css/review.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/mobile.css?v=d151-graph-os">
+    <link rel="stylesheet" href="css/mobile.css?v=d152-semantic-zoom">
 </head>
 <body class="photonic-bg graph-first-os" data-stock-ux-mode="explore" data-crypto-ux-mode="flow" data-control-layer="primary">
     <header class="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
@@ -411,6 +411,9 @@
                         <canvas id="graph-canvas" class="w-full h-full rounded-3xl cursor-grab"></canvas>
                         <canvas id="orb-map-canvas" class="orb-map-canvas hidden cursor-grab" aria-label="Orb Map graph view"></canvas>
                         <canvas id="graph-minimap-canvas" class="graph-minimap-canvas" aria-label="Visible graph minimap"></canvas>
+                        <button id="graph-minimap-toggle" type="button" class="graph-minimap-toggle" aria-pressed="false" title="Collapse graph minimap" aria-label="Collapse graph minimap">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </button>
                         <div class="graph-floating-toolbar" aria-label="Floating graph controls">
                             <button type="button" onclick="fitGraph()" title="Fit visible graph" aria-label="Fit visible graph"><i class="fa-solid fa-compress-arrows-alt"></i></button>
                             <button type="button" onclick="toggleFocusMode()" title="Toggle Focus Mode" aria-label="Toggle Focus Mode"><i class="fa-solid fa-bullseye"></i></button>
@@ -1216,6 +1219,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         </div>
                         <div id="crypto-replay-workspace-overlay" class="crypto-replay-workspace-overlay" aria-live="polite"></div>
                         <div id="crypto-graph-hover-overlay" class="crypto-graph-hover-overlay" aria-hidden="true"></div>
+                        <div id="crypto-spatial-breadcrumbs" class="crypto-spatial-breadcrumbs" aria-live="polite"></div>
                         <div class="mobile-graph-overlay crypto-mobile-graph-overlay" aria-label="Mobile CryptoPhotonic graph controls">
                             <div class="mobile-graph-hint rounded-2xl px-3 py-2 text-[10px] font-mono">Pinch to zoom &bull; Drag to pan &bull; Tap nodes/flows</div>
                             <div class="mobile-graph-actions">
@@ -1313,13 +1317,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/stock/evidencePolicy.js?v=d144-tiered-evidence"></script>
     <script src="js/stock/relationships.js?v=d144-tiered-evidence"></script>
     <script src="js/stock/graphScaling.js?v=d146-source-governance"></script>
-    <script src="js/stock/largeGraphNavigation.js?v=d149-large-graph-navigation"></script>
+    <script src="js/stock/largeGraphNavigation.js?v=d152-semantic-zoom"></script>
     <script src="js/stock/graphIntelligence.js?v=d146-source-governance"></script>
     <script src="js/core/data.js"></script>
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
+    <script src="js/graph/semanticZoom.js?v=d152-semantic-zoom"></script>
+    <script src="js/graph/minimap.js?v=d152-semantic-zoom"></script>
     <script src="js/graph/layouts.js"></script>
-    <script src="js/graph/render.js"></script>
+    <script src="js/graph/render.js?v=d152-semantic-zoom"></script>
     <script src="js/graph/orb3d.js"></script>
     <script src="js/intelligence/clusters.js"></script>
     <script src="js/intelligence/industryCorrelations.js"></script>
@@ -1332,6 +1338,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/crypto/core.js"></script>
     <script src="js/crypto/graph.js"></script>
     <script src="js/crypto/layout.js"></script>
+    <script src="js/crypto/topologyIntelligence.js?v=d152-semantic-zoom"></script>
     <script src="js/crypto/statusPanels.js?v=d132-mega"></script>
     <script src="js/crypto/historyWorkspace.js?v=d132-mega"></script>
     <script src="js/crypto/investigationWorkspace.js?v=d132-mega"></script>
@@ -1342,7 +1349,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         window.CryptoPhotonicWorkerWalletActivityEndpoint =
             "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/wallet-activity";
     </script>
-    <script src="js/crypto/ui.js?v=d135-replay-windows-checkpoints"></script>
+    <script src="js/crypto/ui.js?v=d152-semantic-zoom"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -1356,7 +1363,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonicData failed to load');
         }
 
-        if (!window.StockPhotonicGraph?.viewport || !window.StockPhotonicGraph?.interactions) {
+        if (!window.StockPhotonicGraph?.viewport || !window.StockPhotonicGraph?.interactions || !window.StockPhotonicGraph?.semanticZoom || !window.StockPhotonicGraph?.minimap) {
             throw new Error('StockPhotonic graph modules failed to load');
         }
 
@@ -1404,7 +1411,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonic graph intelligence module failed to load');
         }
 
-        if (!window.CryptoPhotonic?.core || !window.CryptoPhotonic?.graph || !window.CryptoPhotonic?.layout || !window.CryptoPhotonic?.ui) {
+        if (!window.CryptoPhotonic?.core || !window.CryptoPhotonic?.graph || !window.CryptoPhotonic?.layout || !window.CryptoPhotonic?.topologyIntelligence || !window.CryptoPhotonic?.ui) {
             throw new Error('CryptoPhotonic modules failed to load');
         }
 
@@ -1412,6 +1419,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         const {
             viewport: graphViewport,
             interactions: graphInteractions,
+            semanticZoom: graphSemanticZoom,
+            minimap: graphMinimap,
             layouts: graphLayouts,
             render: graphRender,
             orb3d: graphOrb3d
@@ -1625,6 +1634,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let graphScalingModel = null;
         let graphNodeIntelligenceVisualCache = new Map();
         let graphLinkIntelligenceVisualCache = new Map();
+        let stockSemanticZoomState = null;
+        let stockSemanticDomKey = '';
+        let graphMinimapCollapsed = false;
+        let graphMinimapModel = null;
 
         let selectedNode = null;
         let hoveredNode = null;
@@ -1744,6 +1757,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             get canvasWidth() { return canvasWidth; },
             get canvasHeight() { return canvasHeight; },
             get scale() { return scale; },
+            get semanticZoomState() { return stockSemanticZoomState; },
             get visibleNodes() { return visibleNodes; },
             get visibleLinks() { return visibleLinks; },
             get selectedNode() { return selectedNode; },
@@ -1803,8 +1817,50 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             isFocusModeActive,
             isIndustryCorrelationHintNode,
             relationshipHasSourceEvidence,
-            isSecBackedConnection
+            isSecBackedConnection,
+            getStockUxMode,
+            getSemanticZoomState,
+            onSemanticZoomState: value => { stockSemanticZoomState = value; },
+            getGraphLinkSpatialMeta
         };
+
+        function getStockUxMode() {
+            const mode = document.body?.dataset?.stockUxMode || 'explore';
+            return ['explore', 'analyst', 'review', 'replay'].includes(mode) ? mode : 'explore';
+        }
+
+        function getSemanticZoomState(density = {}) {
+            const nextState = graphSemanticZoom.getStockSemanticState(renderContext, density);
+            stockSemanticZoomState = nextState;
+            syncStockSemanticZoomDom(nextState);
+            return nextState;
+        }
+
+        function syncStockSemanticZoomDom(state) {
+            if (!state) return;
+            const key = `${state.tier}|${state.rawTier}|${state.mode}|${state.densityKey}`;
+            if (key === stockSemanticDomKey) return;
+            stockSemanticDomKey = key;
+            const view = document.getElementById('graph-intelligence-view');
+            const container = document.querySelector('#graph-intelligence-view .graph-container');
+            [view, container].forEach(element => {
+                if (!element) return;
+                element.dataset.semanticZoomTier = state.tier;
+                element.dataset.semanticZoomRawTier = state.rawTier;
+                element.dataset.semanticDensity = state.densityKey;
+            });
+            renderGraphBreadcrumbs();
+        }
+
+        function getGraphLinkSpatialMeta(link) {
+            const corridorKeys = stockLargeGraphNavigation.getLinkCorridorKeys?.(link, getGraphIntelligenceContext({
+                stockGraphIntelligence
+            })) || [];
+            return {
+                corridorKeys,
+                primaryCorridorKey: corridorKeys[0] || ''
+            };
+        }
 
         function setProductView(view) {
             const nextView = view === 'crypto' ? 'crypto' : 'stock';
@@ -2304,6 +2360,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 fitGraph(false, { keepOrbit: true });
                 showDefaultDashboard();
                 setupCanvasInteractions();
+                setupMinimapInteractions();
                 setupOrbMap();
                 updateOrbMapData();
                 setupSearchInteractions();
@@ -4085,7 +4142,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function drawGraphMinimap() {
             const canvas = document.getElementById('graph-minimap-canvas');
-            if (!canvas || !visibleNodes.length || graphFullscreenActive && graphHudHidden) return;
+            if (!canvas || !visibleNodes.length || graphMinimapCollapsed || graphFullscreenActive && graphHudHidden) return;
             const rect = canvas.getBoundingClientRect();
             const width = Math.max(1, Math.floor(rect.width));
             const height = Math.max(1, Math.floor(rect.height));
@@ -4098,54 +4155,95 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!ctx) return;
 
             ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-            ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = 'rgba(3, 7, 18, 0.72)';
-            ctx.fillRect(0, 0, width, height);
-
             const bounds = graphViewport.getBoundsForNodes(getFitNodes(), getNodeLayoutPosition);
-            const pad = 34;
-            const worldWidth = Math.max(1, bounds.maxX - bounds.minX);
-            const worldHeight = Math.max(1, bounds.maxY - bounds.minY);
-            const mapScale = Math.min((width - pad) / worldWidth, (height - pad) / worldHeight);
-            const mapX = x => (x - bounds.minX) * mapScale + (width - worldWidth * mapScale) / 2;
-            const mapY = y => (y - bounds.minY) * mapScale + (height - worldHeight * mapScale) / 2;
-            const density = graphScalingModel?.density?.key || '';
-            const edgeLimit = density === 'very_dense' ? 220 : density === 'dense' ? 280 : 380;
-
-            ctx.save();
-            ctx.lineWidth = 0.7;
-            ctx.strokeStyle = 'rgba(125, 211, 252, 0.18)';
-            visibleLinks.slice(0, edgeLimit).forEach(link => {
-                const source = getNodeLayoutPosition(link.source);
-                const target = getNodeLayoutPosition(link.target);
-                ctx.beginPath();
-                ctx.moveTo(mapX(source.x), mapY(source.y));
-                ctx.lineTo(mapX(target.x), mapY(target.y));
-                ctx.stroke();
+            graphMinimapModel = graphMinimap.buildStockMinimapModel({
+                width,
+                height,
+                bounds,
+                viewportWorldRect: getMinimapViewportWorldRect()
             });
-
-            visibleNodes.forEach(node => {
-                const position = getNodeLayoutPosition(node);
-                const selected = selectedNode?.id === node.id || focusNeighborIds.has(node.id);
-                ctx.globalAlpha = selected ? 0.95 : 0.54;
-                ctx.fillStyle = selected ? '#ffffff' : node.color || '#67e8f9';
-                ctx.beginPath();
-                ctx.arc(mapX(position.x), mapY(position.y), selected ? 2.6 : 1.45, 0, Math.PI * 2);
-                ctx.fill();
+            const selectedNodeIds = new Set([
+                selectedNode?.id,
+                selectedSecPreviewNode?.id,
+                selectedCandidateCompanyPreviewNode?.id,
+                ...focusNeighborIds
+            ].filter(id => id !== undefined && id !== null));
+            graphMinimap.drawStockMinimap(ctx, graphMinimapModel, {
+                nodes: visibleNodes,
+                links: visibleLinks,
+                routeLinkKeys: activeRelationshipRoute?.linkKeys || focusLinkKeys || new Set(),
+                selectedNodeIds,
+                semanticZoom: stockSemanticZoomState || getSemanticZoomState(),
+                getNodeLayoutPosition
             });
+        }
 
+        function getMinimapViewportWorldRect() {
             const topLeft = screenToWorld(0, 0);
+            const topRight = screenToWorld(canvasWidth, 0);
+            const bottomLeft = screenToWorld(0, canvasHeight);
             const bottomRight = screenToWorld(canvasWidth, canvasHeight);
-            const vx = Math.min(mapX(topLeft.x), mapX(bottomRight.x));
-            const vy = Math.min(mapY(topLeft.y), mapY(bottomRight.y));
-            const vw = Math.abs(mapX(bottomRight.x) - mapX(topLeft.x));
-            const vh = Math.abs(mapY(bottomRight.y) - mapY(topLeft.y));
-            ctx.globalAlpha = 0.9;
-            ctx.strokeStyle = 'rgba(236, 254, 255, 0.78)';
-            ctx.lineWidth = 1.1;
-            roundedRect(ctx, vx, vy, Math.max(8, vw), Math.max(8, vh), 4);
-            ctx.stroke();
-            ctx.restore();
+            const xs = [topLeft.x, topRight.x, bottomLeft.x, bottomRight.x];
+            const ys = [topLeft.y, topRight.y, bottomLeft.y, bottomRight.y];
+            return {
+                left: Math.min(...xs),
+                right: Math.max(...xs),
+                top: Math.min(...ys),
+                bottom: Math.max(...ys)
+            };
+        }
+
+        function setupMinimapInteractions() {
+            const canvas = document.getElementById('graph-minimap-canvas');
+            const toggle = document.getElementById('graph-minimap-toggle');
+            if (canvas && canvas.dataset.minimapReady !== 'true') {
+                canvas.addEventListener('pointerdown', event => {
+                    if (graphMinimapCollapsed || event.pointerType === 'mouse' && event.button !== 0) return;
+                    event.preventDefault();
+                    jumpGraphToMinimapPoint(event);
+                });
+                canvas.dataset.minimapReady = 'true';
+            }
+            if (toggle && toggle.dataset.minimapReady !== 'true') {
+                toggle.addEventListener('click', () => toggleGraphMinimap());
+                toggle.dataset.minimapReady = 'true';
+            }
+            syncGraphMinimapState();
+        }
+
+        function toggleGraphMinimap(force) {
+            graphMinimapCollapsed = typeof force === 'boolean' ? force : !graphMinimapCollapsed;
+            syncGraphMinimapState();
+            requestDraw();
+        }
+
+        function syncGraphMinimapState() {
+            const container = document.querySelector('#graph-intelligence-view .graph-container');
+            const toggle = document.getElementById('graph-minimap-toggle');
+            container?.classList.toggle('is-minimap-collapsed', graphMinimapCollapsed);
+            toggle?.setAttribute('aria-pressed', graphMinimapCollapsed ? 'true' : 'false');
+            if (toggle) {
+                toggle.title = graphMinimapCollapsed ? 'Show graph minimap' : 'Collapse graph minimap';
+                toggle.setAttribute('aria-label', graphMinimapCollapsed ? 'Show graph minimap' : 'Collapse graph minimap');
+            }
+        }
+
+        function jumpGraphToMinimapPoint(event) {
+            if (!graphMinimapModel || !canvasWidth || !canvasHeight) return;
+            const canvas = document.getElementById('graph-minimap-canvas');
+            const rect = canvas?.getBoundingClientRect();
+            if (!rect) return;
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const world = {
+                x: graphMinimapModel.worldX(x),
+                y: graphMinimapModel.worldY(y)
+            };
+            const nextScale = clamp(scale, MIN_SCALE, MAX_SCALE);
+            const nextOffsetX = canvasWidth * 0.5 - world.x * nextScale;
+            const nextOffsetY = canvasHeight * 0.5 - world.y * nextScale;
+            stopOrbitForInteraction();
+            animateView(nextScale, nextOffsetX, nextOffsetY, Math.min(FIT_ANIMATION_MS, 420));
         }
 
         function drawBackground(ctx) {
@@ -4220,7 +4318,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (isFocusModeActive() || isHubLayoutActive() || isNexusLayoutActive()) {
                 fitGraph();
             } else {
-                requestDraw();
+                animateGraphFocusToNode(node, { minScale: 0.72, centerBiasY: 0.48 });
             }
         }
 
@@ -4910,7 +5008,15 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function getGraphLinkIntelligenceVisual(link) {
             if (!link) return {};
             if (graphLinkIntelligenceVisualCache.has(link.key)) return graphLinkIntelligenceVisualCache.get(link.key);
-            const visual = stockGraphIntelligence.getLinkVisualMeta(link, getGraphIntelligenceContext());
+            const baseVisual = stockGraphIntelligence.getLinkVisualMeta(link, getGraphIntelligenceContext());
+            const spatial = getGraphLinkSpatialMeta(link);
+            const topCorridorKeys = new Set((graphScalingModel?.corridorBuckets || []).slice(0, 2).map(bucket => bucket.key));
+            const corridor = Boolean(spatial.primaryCorridorKey && topCorridorKeys.has(spatial.primaryCorridorKey));
+            const visual = {
+                ...baseVisual,
+                spatial,
+                corridor
+            };
             graphLinkIntelligenceVisualCache.set(link.key, visual);
             return visual;
         }
@@ -6886,6 +6992,28 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             animateView(nextView.scale, nextView.offsetX, nextView.offsetY, FIT_ANIMATION_MS);
         }
 
+        function animateGraphFocusToNode(node, options = {}) {
+            if (!node) {
+                requestDraw();
+                return;
+            }
+            const position = getNodeLayoutPosition(node);
+            const point = worldToScreen(position.x, position.y);
+            const withinComfortZone = point.x > canvasWidth * 0.22 &&
+                point.x < canvasWidth * 0.78 &&
+                point.y > canvasHeight * 0.18 &&
+                point.y < canvasHeight * 0.78 &&
+                scale >= (options.minScale || 0.65);
+            if (withinComfortZone) {
+                requestDraw();
+                return;
+            }
+            const nextScale = clamp(Math.max(scale, options.minScale || 0.72), MIN_SCALE, MAX_SCALE);
+            const nextOffsetX = canvasWidth * 0.5 - position.x * nextScale;
+            const nextOffsetY = canvasHeight * (options.centerBiasY || 0.5) - position.y * nextScale;
+            animateView(nextScale, nextOffsetX, nextOffsetY, Math.min(FIT_ANIMATION_MS, 460));
+        }
+
         function refreshVisibleGraph() {
             const focusActive = isFocusModeActive();
             const baseVisibleNodeIds = new Set(nodes.filter(nodePassesBaseFilters).map(node => node.id));
@@ -7016,14 +7144,18 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function renderGraphBreadcrumbs() {
             const container = document.getElementById('graph-spatial-breadcrumbs');
             if (!container) return;
-            const currentLabels = [
-                getLayoutModeLabel(),
-                ...(largeGraphNavigationModel?.isActive ? [stockLargeGraphNavigation.formatNavigationLabel(largeGraphNavigationModel)] : []),
-                ...(activeEcosystemOverlayKey ? [stockGraphIntelligence.getEcosystemDefinition(activeEcosystemOverlayKey)?.shortLabel || 'Ecosystem'] : []),
-                ...(activeRelationshipRoute ? [activeRelationshipRoute.label || 'Route'] : [])
-            ].filter(Boolean);
-            const current = currentLabels.length
-                ? `<span class="graph-breadcrumb-current">${currentLabels.map(escapeHtml).join(' / ')}</span>`
+            const parts = graphSemanticZoom.buildStockBreadcrumbParts({
+                ...getGraphIntelligenceContext(),
+                semanticZoom: stockSemanticZoomState,
+                density: graphScalingModel?.density,
+                scale,
+                layoutLabel: getLayoutModeLabel(),
+                getStockUxMode,
+                formatNavigationLabel: stockLargeGraphNavigation.formatNavigationLabel,
+                getEcosystemDefinition: stockGraphIntelligence.getEcosystemDefinition
+            });
+            const current = parts.length
+                ? `<span class="graph-breadcrumb-current" title="${escapeHtml(parts.map(part => part.title || part.label).join(' > '))}">${parts.map(part => escapeHtml(part.label)).join(' > ')}</span>`
                 : '<span class="graph-breadcrumb-current">Overview</span>';
             const trail = graphNavigationTrail.slice(0, 5).map((entry, index) => `
                 <button type="button" onclick="restoreGraphNavigationTrail(${index})" title="${escapeHtml(entry.label)}">

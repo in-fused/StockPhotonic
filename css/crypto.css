@@ -1902,6 +1902,7 @@
 
 #crypto-photonic-view.is-replay-workspace #crypto-flow-canvas,
         #crypto-photonic-view.is-replay-workspace #crypto-graph-hover-overlay,
+        #crypto-photonic-view.is-replay-workspace .crypto-spatial-breadcrumbs,
         #crypto-photonic-view.is-replay-workspace .crypto-mobile-graph-overlay {
             display: none;
         }
@@ -2105,6 +2106,48 @@ body.crypto-graph-fullscreen-active > header,
             background: rgba(20, 184, 166, 0.18);
             color: #ffffff;
             outline: none;
+        }
+
+.crypto-spatial-breadcrumbs {
+            position: absolute;
+            left: 4.2rem;
+            right: 1rem;
+            bottom: 1rem;
+            z-index: 22;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            min-height: 2rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            pointer-events: none;
+        }
+
+.crypto-spatial-breadcrumbs::-webkit-scrollbar {
+            display: none;
+        }
+
+.crypto-spatial-breadcrumbs span {
+            flex: 0 0 auto;
+            max-width: min(42vw, 18rem);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 999px;
+            background: rgba(2, 6, 23, 0.68);
+            color: rgba(226, 232, 240, 0.76);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            line-height: 1;
+            padding: 0.38rem 0.54rem;
+            backdrop-filter: blur(12px);
+        }
+
+.crypto-canvas-wrap[data-semantic-zoom-tier="macro"] .crypto-spatial-breadcrumbs span:last-child,
+        .crypto-canvas-wrap[data-semantic-zoom-tier="cluster"] .crypto-spatial-breadcrumbs span:last-child {
+            border-color: rgba(45, 212, 191, 0.28);
+            color: rgba(204, 251, 241, 0.88);
         }
 
 @media (min-width: 1024px) {

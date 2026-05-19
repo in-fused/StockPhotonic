@@ -3,7 +3,9 @@
     const core = namespace.core;
     const graphEngine = namespace.graph;
     const layoutEngine = namespace.layout;
+    const topologyTools = namespace.topologyIntelligence || {};
     const viewportUtils = window.StockPhotonicGraph?.viewport || {};
+    const semanticZoomTools = window.StockPhotonicGraph?.semanticZoom || {};
 
     if (!core || !graphEngine || !layoutEngine) {
         throw new Error('CryptoPhotonic core, graph, and layout modules must load before UI module');
@@ -36,6 +38,10 @@
         focusSelection: true,
         tokenIsolation: 'all',
         interactionIndex: null,
+        topologyModel: null,
+        semanticZoom: null,
+        lastSemanticUiKey: '',
+        lastBreadcrumbKey: '',
         canvas: null,
         ctx: null,
         hoverOverlay: null,
@@ -2169,7 +2175,7 @@
             title: `${flowCount} visible flow${flowCount === 1 ? '' : 's'}`,
             meta: 'Tap a node or transfer leg to pin its summary here.',
             emptyCopy: 'Summary, Details, and Flows stay one tap away while the graph remains the main touch target.',
-            stats: [],
+            stats: [getMobileSemanticStat()],
             copyActions: []
         };
     }
@@ -2184,6 +2190,7 @@
             title: `${getNormalizedFlowAmountDisplay(edge)} ${edge.symbol || ''}`.trim(),
             meta: `${compactNodeLabel(source)} -> ${compactNodeLabel(target)}`,
             stats: [
+                getMobileSemanticStat(),
                 { label: 'Direction', value: formatFlowDirectionRelativeToTracked(edge) },
                 { label: 'Value', value: edge.usd_value ? core.formatUsd(edge.usd_value) : '-' },
                 { label: 'Type', value: edge.transaction_type_label || edge.flow_role || 'Flow' },
@@ -2212,6 +2219,7 @@
             title: compactNodeLabel(node),
             meta: address ? shortLongValue(address) : describeWalletRelationship(node),
             stats: [
+                getMobileSemanticStat(),
                 { label: 'Role', value: describeWalletRelationship(node) },
                 { label: 'Flows', value: `${visibleFlowCount}` },
                 { label: 'Exposure', value: exposure },
@@ -2233,6 +2241,7 @@
             title: `Step ${event.step || '-'} / ${getHistoryReplayAmountTokenLabel(event)}`,
             meta: 'Preview dataset only. Active graph unchanged.',
             stats: [
+                getMobileSemanticStat(),
                 { label: 'Direction', value: getHistoryReplayDirectionLabel(event.direction) },
                 { label: 'Time', value: event.timestamp ? formatPreviewTimestamp(event.timestamp) : '-' },
                 { label: 'Source', value: sourceWallet ? shortLongValue(sourceWallet) : '-' },
@@ -2242,6 +2251,14 @@
                 { label: 'Copy Event', value: buildReplayEventSummary(event) },
                 signature ? { label: 'Copy Signature', value: signature } : null
             ].filter(Boolean)
+        };
+    }
+
+    function getMobileSemanticStat() {
+        const semantic = state.semanticZoom || getCryptoSemanticZoomState();
+        return {
+            label: 'Detail',
+            value: semantic.tierLabel || 'Graph'
         };
     }
 
@@ -7226,7 +7243,13 @@
             state.flowMotion.now = performance.now();
             const visibleFlowEdges = getVisibleFlowEdges();
             const rawVisibleEdges = getVisibleEdges(visibleFlowEdges);
+            state.topologyModel = buildCryptoTopologyModel(visibleFlowEdges);
+            state.semanticZoom = getCryptoSemanticZoomState(visibleFlowEdges, state.topologyModel);
+            syncCryptoSemanticUi();
+            renderCryptoSpatialBreadcrumbs();
             const interaction = getInteractionState(visibleFlowEdges);
+            interaction.semanticZoom = state.semanticZoom;
+            interaction.topologyModel = state.topologyModel;
             const visibleEdges = getRenderableEdges(rawVisibleEdges, interaction);
             interaction.visibleFlowEdges = visibleFlowEdges;
             interaction.visibleFlowCount = visibleFlowEdges.length;
@@ -7270,22 +7293,30 @@
 
     function getRenderableEdges(edges, interaction) {
         const list = Array.isArray(edges) ? edges : [];
-        if (interaction?.hasFocus || list.length <= 520) return list;
-        const limit = list.length > 1200 ? 620 : list.length > 820 ? 720 : 840;
+        if (interaction?.hasFocus || list.length <= 520 && interaction?.semanticZoom?.tierRank >= 2) return list;
+        const semantic = interaction?.semanticZoom || state.semanticZoom || {};
+        const semanticLimit = semantic.tier === 'macro'
+            ? 360
+            : semantic.tier === 'cluster' ? 520 : 0;
+        const limit = semanticLimit || (list.length > 1200 ? 620 : list.length > 820 ? 720 : 840);
         if (list.length <= limit) return list;
         return list
             .slice()
-            .sort((a, b) => getCryptoEdgePriority(b) - getCryptoEdgePriority(a))
+            .sort((a, b) => getCryptoEdgePriority(b, interaction) - getCryptoEdgePriority(a, interaction))
             .slice(0, limit);
     }
 
-    function getCryptoEdgePriority(edge = {}) {
+    function getCryptoEdgePriority(edge = {}, interaction = {}) {
         let score = Number(edge.usd_value || 0) > 0 ? Math.log10(Number(edge.usd_value || 0) + 1) * 18 : 0;
         if (edge.type === core.EDGE_TYPES.FLOW) score += 120;
         if (edge.is_large_value) score += 160;
         if (edge.flow_role === 'swap_route') score += 70;
         if (edge.type === core.EDGE_TYPES.EXPOSURE) score += 34;
         if (edge.type === core.EDGE_TYPES.LABEL) score += 20 + Math.min(80, Number(edge.transaction_count || 0) * 8);
+        if (interaction.topologyModel?.priorityFlowIds?.has(edge.id)) score += 220;
+        if (interaction.topologyModel?.exchangeFlowIds?.has(edge.id)) score += 90;
+        if (interaction.topologyModel?.funnelFlowIds?.has(edge.id)) score += 70;
+        if (interaction.topologyModel?.replayFlowIds?.has(edge.id)) score += 60;
         return score;
     }
 
@@ -7307,6 +7338,106 @@
 
     function getVisibleFlowEdges() {
         return (state.graph?.flowEdges || []).filter(edgeMatchesActiveFilters);
+    }
+
+    function buildCryptoTopologyModel(visibleFlowEdges = getVisibleFlowEdges()) {
+        if (!topologyTools.buildTopologyModel) return null;
+        return topologyTools.buildTopologyModel({
+            graph: state.graph,
+            visibleFlowEdges,
+            selectedId: state.selectedId,
+            selectedFlowId: state.selectedFlowId,
+            mode: document.body?.dataset?.cryptoUxMode || 'flow'
+        });
+    }
+
+    function getCryptoSemanticZoomState(visibleFlowEdges = getVisibleFlowEdges(), topologyModel = state.topologyModel) {
+        if (!semanticZoomTools.getCryptoSemanticState) {
+            return {
+                tier: 'relationship',
+                tierRank: 2,
+                tierLabel: 'Relationship',
+                showFlowLabels: true,
+                showAmounts: true,
+                weakFlowAlpha: 0.58,
+                weakFlowWidthMultiplier: 0.86,
+                flowLabelAlpha: 0.74,
+                maxNodeLabels: getMaxVisibleGraphLabels()
+            };
+        }
+        return semanticZoomTools.getCryptoSemanticState({
+            scale: state.viewport.scale || 1,
+            nodeCount: state.graph?.nodes?.length || 0,
+            edgeCount: state.graph?.edges?.length || visibleFlowEdges.length,
+            mode: document.body?.dataset?.cryptoUxMode || 'flow',
+            dataMode: state.dataMode,
+            labelDensity: state.labelDensity,
+            selectedId: state.selectedId,
+            selectedFlowId: state.selectedFlowId,
+            replayActiveFlowId: state.flowReplay.activeFlowId,
+            replayActive: state.flowReplay.playing || state.historyPreview.workspaceMode,
+            tokenIsolationActive: state.tokenIsolation !== 'all',
+            mobile: isMobileViewport(),
+            topologyModel
+        });
+    }
+
+    function syncCryptoSemanticUi() {
+        const semantic = state.semanticZoom;
+        if (!semantic) return;
+        const key = `${semantic.tier}|${semantic.mode}|${semantic.densityKey}`;
+        if (state.lastSemanticUiKey === key) return;
+        state.lastSemanticUiKey = key;
+        state.root?.dataset && (state.root.dataset.semanticZoomTier = semantic.tier);
+        state.root?.dataset && (state.root.dataset.semanticDensity = semantic.densityKey || '');
+        const wrap = state.canvas?.parentElement;
+        if (wrap?.dataset) {
+            wrap.dataset.semanticZoomTier = semantic.tier;
+            wrap.dataset.semanticDensity = semantic.densityKey || '';
+        }
+        renderCryptoSpatialBreadcrumbs();
+    }
+
+    function renderCryptoSpatialBreadcrumbs() {
+        const container = document.getElementById('crypto-spatial-breadcrumbs');
+        if (!container || !state.graph) return;
+        const selectedNode = state.selectedId ? state.graph.nodeById.get(state.selectedId) : null;
+        const selectedFlow = getSelectedFlowEdge();
+        const tokenIsolation = state.tokenIsolation !== 'all' ? getTokenIsolationLabel(state.tokenIsolation) : '';
+        const parts = semanticZoomTools.buildCryptoBreadcrumbParts?.({
+            semanticZoom: state.semanticZoom || getCryptoSemanticZoomState(),
+            scale: state.viewport.scale || 1,
+            mode: document.body?.dataset?.cryptoUxMode || 'flow',
+            dataModeLabel: getCurrentSourceLabel(),
+            selectedNodeLabel: selectedNode ? compactNodeLabel(selectedNode) : '',
+            selectedFlowLabel: selectedFlow ? getFlowBreadcrumbLabel(selectedFlow) : '',
+            replayActive: state.historyPreview.workspaceMode || state.flowReplay.playing,
+            tokenIsolationLabel: tokenIsolation,
+            selectedId: state.selectedId,
+            selectedFlowId: state.selectedFlowId,
+            replayActiveFlowId: state.flowReplay.activeFlowId,
+            tokenIsolationActive: state.tokenIsolation !== 'all',
+            nodeCount: state.graph?.nodes?.length || 0,
+            edgeCount: state.graph?.edges?.length || 0,
+            labelDensity: state.labelDensity,
+            mobile: isMobileViewport()
+        }) || [];
+        const signature = parts.map(part => part.label).join('|');
+        if (signature === state.lastBreadcrumbKey) return;
+        state.lastBreadcrumbKey = signature;
+        container.innerHTML = parts.map(part => `<span title="${escapeAttr(part.title || part.label)}">${escapeHtml(part.label)}</span>`).join('');
+    }
+
+    function getFlowBreadcrumbLabel(edge = {}) {
+        const type = edge.transaction_type_label || edge.flow_role || 'Flow';
+        const amount = getNormalizedFlowAmountDisplay(edge);
+        return `${type}${amount ? ` ${amount}` : ''}`.trim();
+    }
+
+    function getTokenIsolationLabel(value = '') {
+        if (!value || value === 'all') return '';
+        const [mint, symbol] = String(value).split('|');
+        return `${symbol || shortLongValue(mint) || 'Token'} exposure`;
     }
 
     function hasActiveFlowFilter() {
@@ -7644,21 +7775,41 @@
         const density = state.labelDensity;
         const major = isMajorFlowLabel(edge, interaction);
         const visible = interaction.visibleFlowEdges || getVisibleFlowEdges();
+        const semantic = interaction.semanticZoom || state.semanticZoom || getCryptoSemanticZoomState(visible);
+        const topologyPriority = Boolean(interaction.topologyModel?.priorityFlowIds?.has(edge.id));
 
         if (force) {
             return { visible: true, alpha: 1, showAmount: true, force: true };
         }
 
-        if (zoom < 0.58 && !major) {
+        if ((semantic.tier === 'macro' || zoom < 0.58) && !major && !topologyPriority) {
             return { visible: false, alpha: 0, showAmount: false, force: false };
+        }
+
+        if (semantic.tier === 'macro') {
+            return {
+                visible: major || topologyPriority,
+                alpha: semantic.flowLabelAlpha || 0.42,
+                showAmount: false,
+                force: false
+            };
+        }
+
+        if (semantic.tier === 'cluster') {
+            return {
+                visible: major || topologyPriority || visible.length <= 5,
+                alpha: semantic.flowLabelAlpha || 0.56,
+                showAmount: semantic.showAmounts && (major || topologyPriority),
+                force: false
+            };
         }
 
         if (density === 'minimal') {
             const visibleTop = visible.length <= 5 && major;
             return {
                 visible: visibleTop || (major && zoom >= 1.05),
-                alpha: zoom < 0.82 ? 0.48 : 0.72,
-                showAmount: major && zoom >= 0.84,
+                alpha: Math.min(0.86, (zoom < 0.82 ? 0.48 : 0.72) * (semantic.flowLabelAlpha || 1)),
+                showAmount: semantic.showAmounts && major && zoom >= 0.84,
                 force: false
             };
         }
@@ -7668,7 +7819,7 @@
             return {
                 visible: major || lowPriorityVisible,
                 alpha: major ? (zoom < 0.72 ? 0.5 : 0.86) : 0.44,
-                showAmount: major,
+                showAmount: semantic.showAmounts && major,
                 force: false
             };
         }
@@ -7677,7 +7828,7 @@
         return {
             visible: balancedVisible,
             alpha: major ? (zoom < 0.72 ? 0.52 : 0.78) : 0.42,
-            showAmount: major && zoom >= 0.72,
+            showAmount: semantic.showAmounts && major && zoom >= 0.72,
             force: false
         };
     }
@@ -7796,14 +7947,18 @@
     function getMaxVisibleGraphLabels() {
         const mobile = isMobileViewport();
         const density = state.labelDensity;
+        const semanticMax = Number(state.semanticZoom?.maxNodeLabels || 0);
+        let base = 0;
         if (state.dataMode === DATA_MODES.WALLET) {
-            if (density === 'minimal') return mobile ? 6 : 9;
-            if (density === 'detailed') return mobile ? 12 : 20;
-            return mobile ? 8 : 13;
+            if (density === 'minimal') base = mobile ? 6 : 9;
+            else if (density === 'detailed') base = mobile ? 12 : 20;
+            else base = mobile ? 8 : 13;
+            return semanticMax ? Math.min(base, semanticMax) : base;
         }
-        if (density === 'minimal') return mobile ? 8 : 12;
-        if (density === 'detailed') return mobile ? 18 : 30;
-        return mobile ? 12 : 22;
+        if (density === 'minimal') base = mobile ? 8 : 12;
+        else if (density === 'detailed') base = mobile ? 18 : 30;
+        else base = mobile ? 12 : 22;
+        return semanticMax ? Math.min(base, semanticMax) : base;
     }
 
     function boxesOverlap(a, b) {
@@ -10515,6 +10670,19 @@
         const isMajor = node.label_priority === 'major';
         const connected = Boolean(context.connected);
         const focused = Boolean(context.interaction.hasFocus);
+        const semantic = context.interaction.semanticZoom || state.semanticZoom || getCryptoSemanticZoomState();
+        const topology = context.interaction.topologyModel || state.topologyModel || {};
+        const topologyHub = Boolean(topology.hubNodeIds?.has(node.id));
+
+        if (semantic.tier === 'macro') {
+            return Boolean(isTrackedWalletNode(node) || topologyHub || (isHubNode(node) && connected) || (connected && isMajor));
+        }
+
+        if (semantic.tier === 'cluster') {
+            if (isHubNode(node) || topologyHub) return true;
+            if (node.type === core.NODE_TYPES.TOKEN) return isMajor || connected;
+            return connected && isMajor || (!focused && isMajor && zoom >= 0.78);
+        }
 
         if (state.dataMode === DATA_MODES.WALLET) {
             if (density === 'minimal') {
@@ -11033,8 +11201,10 @@
             .map(id => state.graph.nodeById.get(id))
             .filter(node => node?.type === core.NODE_TYPES.WALLET)
             .sort((a, b) => (valueByNeighbor.get(b.id) || 0) - (valueByNeighbor.get(a.id) || 0) || labelForNode(a).localeCompare(labelForNode(b)));
+        const flowCount = state.graph.flowEdges?.length || 0;
+        const graphScaleBoost = state.graph.nodes.length > 90 || flowCount > 160 ? 0.055 : state.graph.nodes.length > 48 || flowCount > 90 ? 0.032 : 0;
         const spreadBoost = directWallets.length > 12 ? 0.06 : directWallets.length > 7 ? 0.035 : 0;
-        const radius = clamp(Math.min(width, height) * (0.31 + spreadBoost), 150, 286);
+        const radius = clamp(Math.min(width, height) * (0.31 + spreadBoost + graphScaleBoost), 150, 318);
         directWallets.forEach((node, index) => {
             const angle = directWallets.length === 1
                 ? -Math.PI / 2
@@ -11045,7 +11215,7 @@
         });
 
         const tokenNodes = state.graph.tokenNodes || [];
-        const tokenRadius = radius + (tokenNodes.length > 6 ? 118 : 98);
+        const tokenRadius = radius + (tokenNodes.length > 10 ? 142 : tokenNodes.length > 6 ? 124 : 102);
         tokenNodes.forEach((node, index) => {
             const angle = -Math.PI / 2 + (Math.PI * 2 * index) / Math.max(1, tokenNodes.length);
             node.x = center.x + Math.cos(angle) * tokenRadius;
@@ -11324,6 +11494,9 @@
             && !hasReplayFocus
             && state.flowMotion.topFlowIds.has(edge.id)
             && (state.flowMotion.now || performance.now()) >= state.flowMotion.userInteractingUntil;
+        const semantic = interaction.semanticZoom || state.semanticZoom || {};
+        const topology = interaction.topologyModel || state.topologyModel || {};
+        const priorityFlow = Boolean(topology.priorityFlowIds?.has(edge.id) || topology.exchangeFlowIds?.has(edge.id) || topology.funnelFlowIds?.has(edge.id));
 
         if (tokenDimmed) {
             return {
@@ -11372,13 +11545,24 @@
         }
 
         if (!interaction.hasFocus) {
+            const semanticDim = semantic.tierRank <= 1 && isFlow && !priorityFlow && !isHoveredFlow && !ambientPulsed;
+            const topologyBoost = priorityFlow && isFlow && semantic.tierRank <= 1;
             return {
-                opacity: isHoveredFlow ? 1 : ambientPulsed ? Math.min(0.88, baseOpacity + 0.05) : isFlow ? Math.max(0.38, baseOpacity * 0.76) : Math.max(0.24, baseOpacity * 0.55),
-                width: isHoveredFlow ? baseWidth + 2.4 : ambientPulsed ? baseWidth + 0.55 : baseWidth,
-                shadowBlur: isHoveredFlow ? 16 : ambientPulsed ? 9 : edge.is_large_value ? 7 : 0,
+                opacity: isHoveredFlow
+                    ? 1
+                    : topologyBoost ? Math.max(0.72, baseOpacity)
+                        : ambientPulsed ? Math.min(0.88, baseOpacity + 0.05)
+                            : semanticDim ? Math.max(0.08, (semantic.weakFlowAlpha || 0.24) * baseOpacity)
+                                : isFlow ? Math.max(0.38, baseOpacity * 0.76) : Math.max(0.24, baseOpacity * 0.55),
+                width: isHoveredFlow
+                    ? baseWidth + 2.4
+                    : topologyBoost ? baseWidth + 1.1
+                        : ambientPulsed ? baseWidth + 0.55
+                            : semanticDim ? Math.max(0.5, baseWidth * (semantic.weakFlowWidthMultiplier || 0.6)) : baseWidth,
+                shadowBlur: isHoveredFlow ? 16 : topologyBoost ? 12 : ambientPulsed ? 9 : edge.is_large_value ? 7 : 0,
                 shadowColor: edge.color || '#22d3ee',
-                arrowSize: isHoveredFlow ? 11 : 8,
-                glowTrack: isHoveredFlow
+                arrowSize: isHoveredFlow || topologyBoost ? 11 : 8,
+                glowTrack: isHoveredFlow || topologyBoost
             };
         }
 

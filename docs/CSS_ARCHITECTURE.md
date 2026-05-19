@@ -36,6 +36,13 @@ D151 graph-first operating-system selectors follow the same ownership split:
 - `.source-workbench-toggle` and `.source-workbench-panel-body` live in `review.css`.
 - Mobile bottom-sheet inspector behavior, compact graph OS controls, mobile command-palette layout, and mobile graph viewport sizing live in `mobile.css`.
 
+D152 semantic graph intelligence keeps the same ownership model:
+
+- Stock semantic minimap states, minimap collapse controls, graph-tier breadcrumb treatment, and canvas-adjacent graph navigation affordances live in `graph.css`.
+- Crypto semantic breadcrumbs, Crypto mode/tier chips, and Crypto topology readability affordances live in `crypto.css`.
+- Mobile-safe minimap placement, compact spatial breadcrumbs, reduced overlay behavior, and bottom-sheet semantic detail rules live in `mobile.css`.
+- Semantic zoom decisions are JavaScript-owned; CSS should only react to stable surface attributes such as `data-semantic-zoom-tier` or product-scoped class names.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

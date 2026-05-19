@@ -508,6 +508,7 @@
         linkPassesMode,
         nodePassesMode,
         getModeLabel,
-        formatNavigationLabel
+        formatNavigationLabel,
+        getLinkCorridorKeys
     };
 })();

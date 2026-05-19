@@ -985,6 +985,12 @@ body.graph-fullscreen-active > header {
             max-width: min(44rem, calc(100vw - 28rem));
         }
 
+#graph-intelligence-view.is-graph-fullscreen .graph-adaptive-hud {
+            top: 1rem;
+            left: 4.05rem;
+            max-width: min(44rem, calc(100vw - 29rem));
+        }
+
 #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-card {
             top: min(33vh, 18rem);
             left: 1rem;
@@ -1000,6 +1006,13 @@ body.graph-fullscreen-active > header {
 #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-explorer-dock {
             top: 1rem;
             max-width: min(44rem, calc(100vw - 2rem));
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-adaptive-hud,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-workspace-memory {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
         }
 
 #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-intelligence-card {
@@ -1171,6 +1184,266 @@ body.graph-fullscreen-active > header {
             letter-spacing: 0;
             padding: 0.46rem 0.62rem;
             backdrop-filter: blur(14px);
+        }
+
+.graph-adaptive-hud {
+            position: absolute;
+            top: 1rem;
+            left: 4.05rem;
+            z-index: 20;
+            max-width: min(42rem, calc(100% - 18rem));
+            pointer-events: auto;
+        }
+
+.graph-adaptive-hud.is-empty {
+            display: none;
+        }
+
+.graph-adaptive-hud-strip {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.32rem;
+            padding: 0.32rem;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.66);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(14px);
+        }
+
+.graph-adaptive-hud-strip span,
+.graph-adaptive-hud-strip button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.32rem;
+            min-height: 1.92rem;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.48);
+            color: rgba(226, 232, 240, 0.76);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            line-height: 1;
+            padding: 0.38rem 0.48rem;
+            white-space: nowrap;
+        }
+
+.graph-adaptive-hud-strip button {
+            width: 1.92rem;
+            padding: 0;
+            color: rgba(207, 250, 254, 0.82);
+        }
+
+.graph-adaptive-hud-strip button:hover,
+.graph-adaptive-hud-strip button:focus-visible {
+            border-color: rgba(103, 232, 249, 0.36);
+            background: rgba(14, 165, 233, 0.16);
+            color: #ffffff;
+            outline: none;
+        }
+
+.graph-adaptive-hud-strip button:disabled {
+            cursor: not-allowed;
+            opacity: 0.38;
+        }
+
+.graph-workspace-memory {
+            position: absolute;
+            left: 4.05rem;
+            bottom: 3.35rem;
+            z-index: 19;
+            width: min(28rem, calc(100% - 18rem));
+            border: 1px solid rgba(148, 163, 184, 0.15);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.64);
+            box-shadow: 0 16px 42px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(14px);
+            padding: 0.42rem;
+            pointer-events: auto;
+        }
+
+.graph-workspace-memory.hidden {
+            display: none !important;
+        }
+
+.graph-workspace-memory-head {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto auto;
+            align-items: center;
+            gap: 0.42rem;
+            color: rgba(165, 243, 252, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+.graph-workspace-memory-head span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.34rem;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-workspace-memory-head strong,
+.graph-workspace-memory-head button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.65rem;
+            height: 1.65rem;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.44);
+            color: rgba(226, 232, 240, 0.76);
+        }
+
+.graph-workspace-memory-items {
+            display: flex;
+            gap: 0.32rem;
+            margin-top: 0.35rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+        }
+
+.graph-workspace-memory-items::-webkit-scrollbar {
+            display: none;
+        }
+
+.graph-workspace-memory-items button,
+.graph-workspace-memory-empty {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.34rem;
+            max-width: 9.5rem;
+            min-height: 1.85rem;
+            border: 1px solid rgba(148, 163, 184, 0.13);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(226, 232, 240, 0.74);
+            padding: 0.32rem 0.44rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            line-height: 1;
+        }
+
+.graph-workspace-memory-items button span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-workspace-memory-items button:hover,
+.graph-workspace-memory-items button:focus-visible {
+            border-color: rgba(103, 232, 249, 0.34);
+            background: rgba(14, 165, 233, 0.14);
+            color: #ffffff;
+            outline: none;
+        }
+
+.graph-annotation-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+.graph-annotation-layer.hidden {
+            display: none !important;
+        }
+
+.graph-annotation-chip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: min(14.5rem, calc(100% - 1.5rem));
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-left-color: rgba(103, 232, 249, 0.42);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.68);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
+            backdrop-filter: blur(12px);
+            padding: 0.46rem 0.55rem;
+            color: rgba(226, 232, 240, 0.72);
+            opacity: 0.86;
+            transform: translate3d(-999px, -999px, 0);
+            transition: opacity 140ms ease;
+        }
+
+.graph-annotation-chip.is-out-of-frame {
+            opacity: 0;
+        }
+
+.graph-annotation-chip.is-comparison,
+.graph-annotation-chip.is-shared {
+            border-left-color: rgba(240, 171, 252, 0.66);
+        }
+
+.graph-annotation-chip.is-corridor {
+            border-left-color: rgba(52, 211, 153, 0.58);
+        }
+
+.graph-annotation-chip.is-hub,
+.graph-annotation-chip.is-hub-subtle {
+            border-left-color: rgba(34, 211, 238, 0.58);
+        }
+
+.graph-annotation-chip.is-hub-subtle {
+            opacity: 0.72;
+        }
+
+.graph-annotation-title {
+            color: rgba(236, 254, 255, 0.92);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            font-weight: 800;
+            line-height: 1.15;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-annotation-body {
+            display: -webkit-box;
+            margin-top: 0.18rem;
+            color: rgba(226, 232, 240, 0.62);
+            font-size: 0.66rem;
+            line-height: 1.28;
+            overflow: hidden;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+        }
+
+.graph-annotation-tags {
+            display: flex;
+            gap: 0.24rem;
+            margin-top: 0.32rem;
+            overflow: hidden;
+        }
+
+.graph-annotation-tags span {
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: 6rem;
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(207, 250, 254, 0.66);
+            padding: 0.18rem 0.32rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.52rem;
+            line-height: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
 .graph-minimap-canvas {
@@ -1551,6 +1824,56 @@ body.graph-fullscreen-active > header {
             backdrop-filter: blur(14px);
         }
 
+.graph-first-os .graph-floating-toolbar [data-toggle-graph-controls],
+.graph-first-os .graph-floating-toolbar [data-toggle-stock-inspector] {
+            display: none;
+        }
+
+.graph-first-os .graph-intelligence-card {
+            top: 3.9rem;
+            width: min(21.5rem, calc(100% - 2rem));
+            max-height: min(24rem, calc(100% - 6rem));
+            padding: 0.66rem;
+        }
+
+.graph-first-os .graph-active-legend {
+            width: min(18.5rem, calc(100% - 2rem));
+            max-height: min(18rem, calc(100% - 5rem));
+            overflow-y: auto;
+        }
+
+.graph-first-os .graph-route-workspace {
+            width: min(20.5rem, calc(100% - 13rem));
+            bottom: 5.45rem;
+            padding: 0.56rem;
+        }
+
+.graph-first-os .graph-route-workspace-routes {
+            gap: 0.32rem;
+            margin-top: 0.46rem;
+        }
+
+.graph-first-os .graph-route-workspace-route {
+            padding: 0.36rem 0.46rem;
+        }
+
+.graph-first-os .graph-route-workspace-metrics,
+.graph-first-os .graph-route-workspace-copy {
+            margin-top: 0.44rem;
+        }
+
+.graph-first-os .graph-route-workspace-actions {
+            margin-top: 0.46rem;
+        }
+
+.graph-first-os .graph-route-workspace-copy span:nth-child(n+2) {
+            display: none;
+        }
+
+.graph-first-os .graph-card-body {
+            font-size: 0.72rem;
+        }
+
 @media (min-width: 1024px) {
             .graph-first-os .graph-intelligence-layout {
                 position: relative;
@@ -1564,8 +1887,8 @@ body.graph-fullscreen-active > header {
             }
 
             .graph-first-os .graph-container {
-                height: clamp(640px, calc(100dvh - 13.2rem), 900px) !important;
-                min-height: 640px;
+                height: clamp(680px, calc(100dvh - 11.4rem), 940px) !important;
+                min-height: 680px;
                 border-radius: 8px !important;
             }
 
@@ -1579,7 +1902,7 @@ body.graph-fullscreen-active > header {
                 top: 0;
                 right: 0.9rem;
                 z-index: 36;
-                width: min(27rem, 34vw);
+                width: min(23rem, 30vw);
                 max-width: calc(100% - 2rem);
                 opacity: 0;
                 transform: translate3d(0.9rem, 0, 0);

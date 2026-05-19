@@ -59,6 +59,14 @@ D154 route comparison and keyboard traversal preserve the same split:
 - Mobile route workspace placement, compact comparison controls, bottom-sheet comparison summaries, and touch-safe route actions live in `mobile.css`.
 - Route comparison, shared-edge disambiguation, traversal order, disabled-command logic, minimap comparison state, and corridor-aware route styling are JavaScript-owned. CSS should style stable surface classes only and should not encode relationship proof, route authority, or source/evidence semantics.
 
+D155-D160 workspace convergence and scalable intelligence foundations preserve the same split:
+
+- Stock adaptive HUD, in-session workspace memory rail, embedded graph annotation chips, graph-first fullscreen convergence, compact route workspace behavior, active legend compression, and graph-adjacent intelligence card reduction live in `graph.css`.
+- Shared command-palette entries for pinning routes, corridors, hubs, replay checkpoints, and clearing session workspace state remain JavaScript-owned by `js/ui/operatingShell.js`; shared command styling remains in `shell.css`.
+- Crypto replay workspace compression, replay event panel sizing, replay controls, and fullscreen replay compaction live in `crypto.css`.
+- Mobile graph OS rules for bottom-sheet minimization, adaptive HUD scrolling, annotation chip compression, route workspace compacting, graph-only immersion, and minimap touch ergonomics live in `mobile.css`.
+- Scalable graph caches, semantic tile prep, corridor lane indexes, label anchor caches, narrative summaries, and disabled overlay foundation definitions are JavaScript-owned. CSS should style stable classes only and must not imply fake overlay data, source authority, or persistence guarantees.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

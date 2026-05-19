@@ -933,6 +933,38 @@
             transition: opacity 220ms ease, transform 220ms ease;
         }
 
+#crypto-photonic-view.is-replay-workspace .crypto-sidebar-stack,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-sidebar-stack {
+            max-height: min(42dvh, 25rem);
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-overlay {
+            grid-template-columns: minmax(11rem, 13.25rem) minmax(0, 1fr);
+            gap: 0.58rem;
+            padding: 0.65rem;
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-event {
+            width: min(23.5rem, 100%);
+            max-height: min(66dvh, 34rem);
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-bottom {
+            max-height: min(18%, 8rem);
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-controls {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.32rem;
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-controls button,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-actions button {
+            min-height: 1.95rem;
+            padding: 0.34rem 0.45rem;
+            font-size: 0.6rem;
+        }
+
 .crypto-replay-workspace-panel {
             width: 100%;
             max-width: 100%;

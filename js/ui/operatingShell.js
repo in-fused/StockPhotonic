@@ -118,6 +118,7 @@
         if (nextMode === 'review') setControlLayer('advanced');
         else if (nextMode === 'analyst') setControlLayer(state.controlLayer === 'primary' ? 'secondary' : state.controlLayer);
         else if (!options.silent) setControlLayer('primary');
+        applyContextAwareCollapse(nextMode, options);
         refreshControlVisibility();
         updateModeHud();
     }
@@ -164,6 +165,10 @@
 
     function setGraphControlDrawer(open) {
         state.controlDrawerOpen = Boolean(open);
+        if (state.controlDrawerOpen) {
+            state.stockInspectorPinned = false;
+            state.stockInspectorSuppressed = true;
+        }
         const drawer = document.getElementById('graph-control-drawer');
         const view = document.getElementById('graph-intelligence-view');
         drawer?.classList.toggle('is-open', state.controlDrawerOpen);
@@ -174,6 +179,7 @@
             button.classList.toggle('is-active', state.controlDrawerOpen);
         });
         if (state.controlDrawerOpen) refreshControlVisibility();
+        syncStockInspector();
     }
 
     function toggleGraphControlDrawer(force) {
@@ -282,6 +288,11 @@
             command('fit-comparison', 'Fit comparison', 'Route Comparison', () => callGlobal('fitRouteComparison'), { disabledReason: () => stockDisabledReason('comparison') }),
             command('clear-comparison', 'Clear comparison', 'Route Comparison', () => callGlobal('clearRouteComparison'), { disabledReason: () => stockDisabledReason('comparison') }),
             command('route-workspace', 'Open current route workspace', 'Route Comparison', () => callGlobal('openCurrentRouteWorkspace'), { disabledReason: () => stockDisabledReason('comparison') }),
+            command('pin-current-route', 'Pin current route', 'Session Workspace', () => callGlobal('pinCurrentRoute'), { disabledReason: () => stockDisabledReason('route-step') }),
+            command('pin-current-corridor', 'Pin current corridor', 'Session Workspace', () => callGlobal('pinCurrentCorridor')),
+            command('pin-selected-hub', 'Pin selected hub', 'Session Workspace', () => callGlobal('pinSelectedHub'), { disabledReason: () => stockDisabledReason('selected-node') }),
+            command('stock-replay-checkpoint', 'Save stock checkpoint', 'Session Workspace', () => callGlobal('addStockReplayCheckpoint')),
+            command('clear-session-workspace', 'Clear session workspace', 'Session Workspace', () => callGlobal('clearInvestigationWorkspace')),
             command('jump-hub', 'Jump to strategic hub', 'Navigation', () => callGlobal('jumpToStrategicHub')),
             command('next-hub', 'Next strategic hub', 'Traversal', () => callGlobal('nextStrategicHub'), { disabledReason: () => stockDisabledReason('hubs') }),
             command('previous-hub', 'Previous strategic hub', 'Traversal', () => callGlobal('previousStrategicHub'), { disabledReason: () => stockDisabledReason('hubs') }),
@@ -384,7 +395,17 @@
         const next = typeof force === 'boolean' ? force : !active;
         state.stockInspectorPinned = next;
         state.stockInspectorSuppressed = !next;
+        if (next && state.controlDrawerOpen) setGraphControlDrawer(false);
         syncStockInspector();
+    }
+
+    function applyContextAwareCollapse(mode, options = {}) {
+        if (options.silent) return;
+        if (mode === 'explore' || mode === 'replay') {
+            setGraphControlDrawer(false);
+            if (!state.stockInspectorPinned) state.stockInspectorSuppressed = true;
+            syncStockInspector();
+        }
     }
 
     function syncStockInspector() {

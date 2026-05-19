@@ -818,6 +818,92 @@
             .mobile-graph-overlay {
                 bottom: calc(5.1rem + env(safe-area-inset-bottom)) !important;
             }
+
+            .graph-adaptive-hud {
+                top: 0.65rem;
+                left: 3.55rem;
+                right: 0.65rem;
+                max-width: none;
+            }
+
+            .graph-adaptive-hud-strip {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            .graph-adaptive-hud-strip::-webkit-scrollbar {
+                display: none;
+            }
+
+            .graph-adaptive-hud-strip span:nth-of-type(n+4) {
+                display: none;
+            }
+
+            .graph-adaptive-hud-strip span,
+            .graph-adaptive-hud-strip button {
+                min-height: 2rem;
+                flex: 0 0 auto;
+            }
+
+            .graph-workspace-memory {
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(0.65rem, env(safe-area-inset-right));
+                bottom: calc(7.95rem + env(safe-area-inset-bottom));
+                width: auto;
+                max-height: 5.8rem;
+                overflow: hidden;
+            }
+
+            .graph-workspace-memory-head {
+                grid-template-columns: minmax(0, 1fr) auto auto;
+            }
+
+            .graph-annotation-chip {
+                width: min(12rem, calc(100vw - 1.3rem));
+                padding: 0.4rem 0.48rem;
+                opacity: 0.78;
+            }
+
+            .graph-annotation-chip.is-hub-subtle {
+                display: none;
+            }
+
+            .graph-annotation-body {
+                -webkit-line-clamp: 1;
+                font-size: 0.62rem;
+            }
+
+            .graph-annotation-tags {
+                display: none;
+            }
+
+            .graph-first-os .graph-intelligence-card {
+                bottom: calc(8.6rem + env(safe-area-inset-bottom));
+                max-height: min(24dvh, 12rem);
+            }
+
+            .graph-first-os .graph-route-workspace {
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(0.65rem, env(safe-area-inset-right));
+                bottom: calc(8.15rem + env(safe-area-inset-bottom));
+                width: auto;
+                max-height: min(25dvh, 12rem);
+                overflow-y: auto;
+            }
+
+            .graph-first-os .graph-route-workspace-routes {
+                grid-template-columns: 1fr;
+            }
+
+            .graph-first-os .graph-route-workspace-metrics,
+            .graph-first-os .graph-route-workspace-copy {
+                display: none;
+            }
+
+            .graph-cinematic-story {
+                display: none;
+            }
         }
 
 @media (hover: none) and (pointer: coarse) {
@@ -906,6 +992,44 @@
 
             #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-investigation-drawer.is-expanded {
                 max-height: min(56%, 26rem);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-overlay {
+                padding: 0.5rem 0.5rem calc(4.6rem + env(safe-area-inset-bottom));
+                gap: 0.45rem;
+                grid-template-rows: minmax(0, 1fr) auto;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-toolbar {
+                grid-row: 2;
+                max-height: min(30dvh, 14rem);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-event {
+                grid-row: 1;
+                max-height: min(34dvh, 15.5rem);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-bottom,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-audit-filters,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-audit-breadcrumbs {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-controls {
+                display: flex;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scrollbar-width: none;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-controls::-webkit-scrollbar {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-controls button {
+                flex: 0 0 auto;
+                min-width: 4.8rem;
             }
 
             #crypto-photonic-view.is-crypto-fullscreen .crypto-interaction-dock {

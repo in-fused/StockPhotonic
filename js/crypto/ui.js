@@ -57,6 +57,7 @@
         datasetSourceKind: 'built_in',
         dataset: null,
         dataMode: 'generated_fixture',
+        activePresetKey: '',
         modeVersion: 0,
         generatedManifest: null,
         generatedFixtures: [],
@@ -371,6 +372,8 @@
         document.getElementById('crypto-mobile-focus-selection')?.addEventListener('click', toggleFocusSelection);
         document.getElementById('crypto-mobile-open-details')?.addEventListener('click', openMobileDetailsPanel);
         document.getElementById('crypto-mobile-replay-workspace')?.addEventListener('click', () => setReplayWorkspaceMode(!state.historyPreview.workspaceMode));
+        document.getElementById('crypto-mobile-replay-prev')?.addEventListener('click', () => previousReplayEvent());
+        document.getElementById('crypto-mobile-replay-next')?.addEventListener('click', () => nextReplayEvent());
         document.getElementById('crypto-replay-workspace-exit')?.addEventListener('click', () => setReplayWorkspaceMode(false));
         document.getElementById('crypto-replay-workspace-build')?.addEventListener('click', () => buildHistoryPreviewDataset());
         document.addEventListener('keydown', event => {
@@ -1473,6 +1476,8 @@
                 ${renderControlHelp('Choose the source before investigating. Generated Fixture is local sample data, Wallet Lookup replaces the graph with a secure Worker response, and Live Feed shows sanitized Worker events only.')}
                 ${selector}
                 ${sourceSnapshot}
+                ${renderCryptoSessionStatusStrip()}
+                ${renderCryptoWorkflowHandoff()}
                 <div class="mt-2 text-yellow-100/76">${escapeHtml(getSourceBoundaryCopy())}</div>
                 ${renderWalletLookupControls()}
             </div>
@@ -1508,6 +1513,177 @@
                 <div>Tx: ${escapeHtml(transactionCount ?? '-')}</div>
             </div>
         `;
+    }
+
+    function renderCryptoSessionStatusStrip() {
+        const status = getHistoryReplayStatus();
+        const totalSteps = getHistoryReplayTotalSteps(status);
+        const currentStep = Math.max(0, Math.min(totalSteps, Number(status.currentStep || state.historyPreview.audit?.selectedStep) || 0));
+        const mode = document.body?.dataset?.cryptoUxMode || 'flow';
+        const preset = getCryptoPresetLabel(state.activePresetKey);
+        const replayLabel = state.historyPreview.workspaceMode
+            ? totalSteps ? `Replay ${currentStep}/${totalSteps}` : 'Replay workspace'
+            : state.historyPreview.dataset ? 'Replay staged' : 'Replay closed';
+        const neighborhood = normalizeReplayNeighborhoodFocus(state.historyPreview.audit?.neighborhood);
+        const corridorLabel = neighborhood.mode && neighborhood.mode !== 'none'
+            ? formatCryptoFocusModeLabel(neighborhood)
+            : state.historyPreview.corridorOverlayVisible === false
+                ? 'Corridor overlay hidden'
+                : 'Corridor ready';
+        const rows = [
+            ['Mode', `${formatCryptoStatusLabel(mode)} Mode`, 'Current Crypto operating mode.'],
+            ['Preset', preset, 'Session-only Crypto analyst preset.'],
+            ['Replay', replayLabel, 'Preview replay state; never merged into the active graph.'],
+            ['Corridor', corridorLabel, 'Visible replay corridor or focus state from staged data only.']
+        ];
+        return `
+            <div class="crypto-session-status-strip" aria-label="CryptoPhotonic compact session status">
+                ${rows.map(([label, value, title]) => `
+                    <span title="${escapeAttr(title)}">
+                        <small>${escapeHtml(label)}</small>
+                        <strong>${escapeHtml(value)}</strong>
+                    </span>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function renderCryptoWorkflowHandoff() {
+        const actions = buildCryptoWorkflowHandoffActions();
+        if (!actions.length) return '';
+        return `
+            <div class="crypto-workflow-handoff" aria-label="CryptoPhotonic next workflow actions">
+                <div class="crypto-workflow-handoff-head">
+                    <span><i class="fa-solid fa-arrow-right"></i> Next Actions</span>
+                    <small>preview/session only</small>
+                </div>
+                <div class="crypto-workflow-handoff-actions">
+                    ${actions.map(renderCryptoWorkflowHandoffButton).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderCryptoWorkflowHandoffButton(action = {}) {
+        const attr = action.mode
+            ? `data-crypto-status-mode="${escapeAttr(action.mode)}"`
+            : action.statusAction
+                ? `data-crypto-status-action="${escapeAttr(action.statusAction)}"`
+                : '';
+        return `
+            <button type="button" ${attr} ${action.disabled ? 'disabled' : ''} title="${escapeAttr(action.title || action.detail || action.label)}">
+                <i class="fa-solid ${escapeAttr(action.icon || 'fa-arrow-right')}"></i>
+                <span>
+                    <strong>${escapeHtml(action.label || 'Open')}</strong>
+                    <small>${escapeHtml(action.detail || '')}</small>
+                </span>
+            </button>
+        `;
+    }
+
+    function buildCryptoWorkflowHandoffActions() {
+        const actions = [];
+        const walletMode = state.dataMode === DATA_MODES.WALLET;
+        const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
+        const hasLoadedWallet = Boolean(state.walletLookup.lastWallet && state.walletLookup.eventCount);
+        const hasHistoryRows = Boolean((state.history.loadedTransactions || []).length || state.history.totalLoadedTransactions);
+        const hasDataset = Boolean(state.historyPreview.dataset);
+        const replayStatus = getHistoryReplayStatus();
+        const totalSteps = getHistoryReplayTotalSteps(replayStatus);
+        const step = Math.max(0, Math.min(totalSteps, Number(replayStatus.currentStep || state.historyPreview.audit?.selectedStep) || 0));
+
+        if (!walletMode) {
+            actions.push({
+                label: 'Wallet Mode',
+                detail: 'Switch to Worker wallet lookup',
+                icon: 'fa-wallet',
+                mode: DATA_MODES.WALLET,
+                title: 'Switch to Wallet Lookup before staging history or replay.'
+            });
+            actions.push({
+                label: 'Commands',
+                detail: 'Replay, corridor, lineage actions',
+                icon: 'fa-terminal',
+                statusAction: 'open-command-palette',
+                title: 'Open the command palette.'
+            });
+            return actions;
+        }
+
+        actions.push({
+            label: hasLoadedWallet ? 'Open Flows' : 'Load Wallet',
+            detail: hasLoadedWallet
+                ? `${state.walletLookup.mergedEventCount || state.walletLookup.eventCount || 0} visible legs`
+                : hasWallet ? 'Use entered wallet address' : 'Enter wallet first',
+            icon: hasLoadedWallet ? 'fa-wave-square' : 'fa-download',
+            statusAction: hasLoadedWallet ? 'open-flows' : 'load-wallet',
+            disabled: !hasLoadedWallet && (!hasWallet || state.walletLookup.inFlight),
+            title: hasLoadedWallet ? 'Open the flow investigation tab.' : 'Load sanitized wallet activity through the Worker.'
+        });
+
+        actions.push({
+            label: hasHistoryRows ? 'Replay Dataset' : 'Stage History',
+            detail: hasHistoryRows
+                ? `${state.history.totalLoadedTransactions || state.history.loadedTransactions.length} staged rows`
+                : state.history.moreAvailable ? 'Load next Worker page' : 'History staging ready',
+            icon: hasHistoryRows ? 'fa-diagram-project' : 'fa-clock-rotate-left',
+            statusAction: hasHistoryRows ? 'build-dataset' : 'load-history',
+            disabled: hasHistoryRows ? state.history.inFlight : isWalletHistoryLoadMoreDisabled(),
+            title: hasHistoryRows ? 'Build a preview replay dataset from staged history.' : 'Stage the next wallet-history page through the Worker.'
+        });
+
+        actions.push({
+            label: state.historyPreview.workspaceMode ? 'Next Replay' : hasDataset ? 'Open Replay' : 'Replay Tab',
+            detail: state.historyPreview.workspaceMode
+                ? (totalSteps ? `Step ${step}/${totalSteps}` : 'Workspace open')
+                : hasDataset ? 'Preview dataset ready' : 'Build dataset first',
+            icon: state.historyPreview.workspaceMode ? 'fa-forward-step' : 'fa-clapperboard',
+            statusAction: state.historyPreview.workspaceMode ? 'next-replay' : hasDataset ? 'toggle-replay-workspace' : 'open-replay',
+            disabled: state.historyPreview.workspaceMode ? !totalSteps : false,
+            title: state.historyPreview.workspaceMode ? 'Step to the next staged replay event.' : 'Open replay tools without merging data into Wallet Lookup.'
+        });
+
+        if (state.historyPreview.workspaceMode && hasDataset) {
+            actions.push({
+                label: 'Corridor',
+                detail: state.historyPreview.audit?.neighborhood?.mode && state.historyPreview.audit.neighborhood.mode !== 'none'
+                    ? formatCryptoFocusModeLabel(state.historyPreview.audit.neighborhood)
+                    : 'Check next staged transition',
+                icon: 'fa-road',
+                statusAction: 'next-corridor',
+                disabled: !totalSteps,
+                title: 'Move to the next visible corridor transition when one exists in staged replay data.'
+            });
+        }
+
+        return actions.slice(0, 4);
+    }
+
+    function getCryptoPresetLabel(key = '') {
+        const labels = {
+            replay_investigation: 'Replay Investigation',
+            liquidity_flow: 'Liquidity Flow',
+            concentration_focus: 'Concentration Focus',
+            wallet_corridor_focus: 'Wallet Corridor Focus'
+        };
+        return labels[key] || 'None';
+    }
+
+    function formatCryptoStatusLabel(value = '') {
+        return String(value || 'flow')
+            .replace(/[_:|-]+/g, ' ')
+            .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    function formatCryptoFocusModeLabel(focus = {}) {
+        const normalized = normalizeReplayNeighborhoodFocus(focus);
+        if (normalized.mode === 'route') return 'Route focus';
+        if (normalized.mode === 'wallet') return 'Wallet focus';
+        if (normalized.mode === 'token') return 'Token focus';
+        if (normalized.mode === 'cluster') return 'Cluster focus';
+        if (normalized.mode === 'transfer') return 'Transfer focus';
+        if (normalized.mode === 'counterparties') return 'Counterparty focus';
+        return 'Corridor ready';
     }
 
     function renderDataModeSwitch() {
@@ -5363,10 +5539,69 @@
         ];
     }
 
+    function runCryptoStatusHandoffAction(action = '') {
+        const key = String(action || '');
+        if (key === 'open-command-palette') {
+            window.openPhotonicCommandPalette?.();
+            return true;
+        }
+        if (key === 'load-wallet') {
+            loadWalletActivity(state.walletLookup.walletInput || state.walletLookup.lastWallet || '');
+            return true;
+        }
+        if (key === 'open-flows') {
+            setInvestigationTab('flows');
+            return true;
+        }
+        if (key === 'open-replay') {
+            setInvestigationTab('replay');
+            return true;
+        }
+        if (key === 'load-history') {
+            loadMoreWalletHistory({ pages: 1 });
+            return true;
+        }
+        if (key === 'build-dataset') {
+            buildHistoryPreviewDataset();
+            return true;
+        }
+        if (key === 'toggle-replay-workspace') {
+            toggleReplayWorkspaceMode();
+            return true;
+        }
+        if (key === 'next-replay') {
+            nextReplayEvent();
+            return true;
+        }
+        if (key === 'previous-replay') {
+            previousReplayEvent();
+            return true;
+        }
+        if (key === 'next-corridor') {
+            stepReplayCorridor(1);
+            return true;
+        }
+        if (key === 'lineage') {
+            openReplayLineage();
+            return true;
+        }
+        return false;
+    }
+
     function bindStatusControls(status) {
         status.querySelectorAll('[data-crypto-mode]').forEach(button => {
             button.addEventListener('click', () => {
                 switchDataMode(button.dataset.cryptoMode);
+            });
+        });
+        status.querySelectorAll('[data-crypto-status-mode]').forEach(button => {
+            button.addEventListener('click', () => {
+                switchDataMode(button.dataset.cryptoStatusMode);
+            });
+        });
+        status.querySelectorAll('[data-crypto-status-action]').forEach(button => {
+            button.addEventListener('click', () => {
+                runCryptoStatusHandoffAction(button.dataset.cryptoStatusAction || '');
             });
         });
         status.querySelector('#crypto-generated-fixture-select')?.addEventListener('change', event => {
@@ -9193,6 +9428,7 @@
         const presetKey = String(key || '').trim();
         if (presetKey === 'replay_investigation') {
             window.setCryptoUxMode?.('replay');
+            state.activePresetKey = presetKey;
             state.focusSelection = true;
             state.historyPreview.narrativesVisible = true;
             setLabelDensity('balanced', { systemDefault: true });
@@ -9202,6 +9438,7 @@
             await openReplayLineage();
         } else if (presetKey === 'liquidity_flow') {
             window.setCryptoUxMode?.('analyst');
+            state.activePresetKey = presetKey;
             state.focusSelection = true;
             state.historyPreview.narrativesVisible = true;
             setTokenIsolation('all');
@@ -9209,12 +9446,14 @@
             if (state.historyPreview.dataset) await isolateReplayFlowCorridor({ persist: false });
         } else if (presetKey === 'concentration_focus') {
             window.setCryptoUxMode?.('replay');
+            state.activePresetKey = presetKey;
             state.focusSelection = true;
             state.historyPreview.narrativesVisible = true;
             setLabelDensity('minimal', { systemDefault: true });
             await focusReplayLiquidityConcentration({ persist: false });
         } else if (presetKey === 'wallet_corridor_focus') {
             window.setCryptoUxMode?.('replay');
+            state.activePresetKey = presetKey;
             state.focusSelection = true;
             state.historyPreview.narrativesVisible = true;
             setLabelDensity('balanced', { systemDefault: true });
@@ -12610,6 +12849,25 @@
                 icon.classList.toggle('fa-arrow-right-from-bracket', state.historyPreview.workspaceMode);
             }
         }
+
+        const replayStatus = getHistoryReplayStatus();
+        const replayTotalSteps = getHistoryReplayTotalSteps(replayStatus);
+        const replayCurrentStep = Math.max(0, Math.min(replayTotalSteps, Number(replayStatus.currentStep || state.historyPreview.audit?.selectedStep) || 0));
+        [
+            ['crypto-mobile-replay-prev', replayCurrentStep <= 0, 'Previous staged replay event'],
+            ['crypto-mobile-replay-next', replayTotalSteps <= 0 || replayCurrentStep >= replayTotalSteps, 'Next staged replay event']
+        ].forEach(([id, disabled, title]) => {
+            const button = document.getElementById(id);
+            if (!button) return;
+            const hidden = !state.historyPreview.workspaceMode || !state.historyPreview.dataset || !replayTotalSteps;
+            button.classList.toggle('is-hidden', hidden);
+            button.disabled = hidden || disabled;
+            button.classList.toggle('is-disabled', button.disabled);
+            button.setAttribute('aria-disabled', button.disabled ? 'true' : 'false');
+            button.title = button.disabled
+                ? 'Open replay workspace with staged replay steps first.'
+                : title;
+        });
 
         const replayButton = document.getElementById('crypto-dock-replay-toggle');
         if (replayButton) {

@@ -15,6 +15,148 @@
         'Snapshot / Investigation'
     ];
 
+    const GROUP_META = Object.freeze({
+        'Navigate': {
+            summary: 'Modes, fullscreen, focus, and product handoff',
+            keywords: 'mode fullscreen focus preset product graph controls'
+        },
+        'Topology': {
+            summary: 'Hub, corridor, and topology validation jumps',
+            keywords: 'hub central pressure validation topology'
+        },
+        'Workspace': {
+            summary: 'Session-only pins, stacks, and workspaces',
+            keywords: 'session workspace pin memory handoff'
+        },
+        'Route / Corridor': {
+            summary: 'Route comparison, route stepping, and corridor lanes',
+            keywords: 'compare route corridor lane trace path step'
+        },
+        'Overlay': {
+            summary: 'Evidence, bridge, corridor, and source layers',
+            keywords: 'overlay layer evidence source bridge corridor'
+        },
+        'Replay / Timeline': {
+            summary: 'Stock chronology and replay checkpoints',
+            keywords: 'replay timeline chronology checkpoint'
+        },
+        'Crypto Investigation': {
+            summary: 'Replay lineage, narratives, and active event focus',
+            keywords: 'crypto replay lineage narrative event center'
+        },
+        'Crypto Replay': {
+            summary: 'Preview-only replay stepping and focus cycling',
+            keywords: 'crypto replay next previous focus corridor continuity'
+        },
+        'Crypto Flow': {
+            summary: 'Replay corridor, bridge wallet, and token focus',
+            keywords: 'crypto flow corridor bridge wallet token concentration'
+        },
+        'Crypto Workspace': {
+            summary: 'Crypto replay workspace and session presets',
+            keywords: 'crypto workspace preset replay liquidity concentration'
+        },
+        'Snapshot / Investigation': {
+            summary: 'Snapshots, staged investigations, and labels',
+            keywords: 'snapshot stage queue labels investigation'
+        }
+    });
+
+    const COMMAND_COPY = Object.freeze({
+        'fit-graph': ['Fit current visible graph without changing filters.', 'fit zoom viewport'],
+        'reset-graph': ['Reset filters, layout, and graph workspace state.', 'reset clear'],
+        'fullscreen-stock': ['Toggle graph-first Stock workspace.', 'fullscreen expand compress stock'],
+        'focus-mode': ['Dim unrelated nodes around the current selection.', 'focus selected dim'],
+        'perspective-mode': ['Toggle depth cues on the same 2D graph.', 'depth perspective'],
+        'orb-map': ['Open or hide the spatial orb overview.', 'orb spatial map'],
+        'controls': ['Open progressive controls for the active mode.', 'drawer controls sliders'],
+        'mode-explore': ['Broad graph scanning mode.', 'explore ux mode'],
+        'mode-analyst': ['Route, topology, and workspace workflow mode.', 'analyst ux mode'],
+        'mode-review': ['Evidence and source-review workflow mode.', 'review ux mode'],
+        'mode-replay': ['Chronology and replay checkpoint workflow mode.', 'replay ux mode'],
+        'preset-exploration': ['Balanced overview preset.', 'preset exploration balanced'],
+        'preset-discovery-investigation': ['Guided hubs, overlays, and stack handoff.', 'preset discovery investigation'],
+        'preset-performance': ['Lean overlays for dense graph work.', 'preset performance safe'],
+        'center-selected-node': ['Center the selected company or relationship context.', 'selected node center'],
+        'fit-selected-neighborhood': ['Zoom to the selected company neighborhood.', 'selected neighborhood fit'],
+        'jump-selected-node': ['Return to the selected graph item.', 'selected node jump'],
+        'topology-summary': ['Open deterministic topology summary for the visible graph.', 'topology summary validation'],
+        'topology-centrality': ['Focus the highest central visible hub.', 'central hub topology'],
+        'topology-corridor-pressure': ['Jump to the highest-pressure corridor.', 'pressure corridor'],
+        'preset-topology': ['Show topology validation and strategic hubs.', 'preset topology'],
+        'workspace-new': ['Create a new session-only workspace.', 'workspace session create'],
+        'workspace-next': ['Move to the next session-only workspace.', 'workspace next'],
+        'workspace-prev': ['Move to the previous session-only workspace.', 'workspace previous'],
+        'pin-current-route': ['Pin the active route or comparison in session memory.', 'pin route comparison'],
+        'pin-current-corridor': ['Pin the active corridor lane in session memory.', 'pin corridor'],
+        'pin-selected-hub': ['Pin the selected company hub in session memory.', 'pin hub selected'],
+        'clear-session-workspace': ['Clear only session workspace memory.', 'clear session workspace'],
+        'compare-strongest-route': ['Compare the strongest visible relationship path.', 'compare strongest route'],
+        'compare-source-route': ['Compare source-backed route evidence.', 'compare source backed route'],
+        'compare-ecosystem-route': ['Compare route through active ecosystem context.', 'compare ecosystem route'],
+        'compare-bridge-route': ['Compare bridge-company route context.', 'compare bridge route'],
+        'preset-route': ['Start route mode or fit the active route.', 'preset route'],
+        'preset-corridor-investigation': ['Open corridor density and lane focus.', 'preset corridor investigation'],
+        'fit-comparison': ['Fit the active route comparison.', 'fit route comparison'],
+        'clear-comparison': ['Clear the active route comparison.', 'clear route comparison'],
+        'route-workspace': ['Open compact route workspace for the active comparison.', 'route workspace'],
+        'route-forward': ['Step to the next route node.', 'route step next'],
+        'route-backward': ['Step to the previous route node.', 'route step previous'],
+        'inspect-strongest-route': ['Trace strongest route from current context.', 'trace strongest route'],
+        'isolate-corridor': ['Focus the dominant visible corridor.', 'dominant corridor isolate'],
+        'next-corridor': ['Move to the next corridor lane.', 'next corridor lane'],
+        'previous-corridor': ['Move to the previous corridor lane.', 'previous corridor lane'],
+        'next-hub': ['Move to the next strategic hub.', 'next hub'],
+        'previous-hub': ['Move to the previous strategic hub.', 'previous hub'],
+        'next-bridge': ['Move to the next bridge company.', 'next bridge company'],
+        'previous-bridge': ['Move to the previous bridge company.', 'previous bridge company'],
+        'overlay-source-confidence': ['Show source-confidence readability layer.', 'source confidence overlay'],
+        'overlay-strategic-hubs': ['Show strategic hub layer.', 'strategic hubs overlay'],
+        'overlay-corridor-density': ['Show corridor density layer.', 'corridor density overlay'],
+        'overlay-bridge-company': ['Show bridge-company layer.', 'bridge company overlay'],
+        'source-lens': ['Toggle source coverage lens.', 'source lens evidence'],
+        'sec-preview': ['Toggle SEC-backed preview relationships.', 'SEC preview source'],
+        'candidate-preview': ['Toggle candidate-company preview nodes.', 'candidate preview'],
+        'clear-overlays': ['Clear graph intelligence overlays.', 'clear overlays'],
+        'preset-evidence': ['Review mode with source lens.', 'preset evidence'],
+        'preset-evidence-investigation': ['Evidence gaps, source layer, and review controls.', 'preset evidence investigation'],
+        'stock-replay-neighborhood': ['Open replay neighborhood from current Stock context.', 'stock replay neighborhood'],
+        'preset-replay-investigation': ['Replay mode with chronology checkpoints.', 'preset replay investigation'],
+        'stock-chronology-next': ['Move to the next graph chronology event.', 'chronology next'],
+        'stock-chronology-prev': ['Move to the previous graph chronology event.', 'chronology previous'],
+        'stock-replay-checkpoint': ['Save a session-only replay checkpoint.', 'replay checkpoint session'],
+        'crypto-replay': ['Toggle preview-only Crypto replay workspace.', 'crypto replay workspace'],
+        'crypto-preset-replay-investigation': ['Session-only replay stack, lineage, and narratives.', 'crypto preset replay investigation'],
+        'crypto-preset-liquidity-flow': ['Session-only visible corridor focus.', 'crypto preset liquidity flow'],
+        'crypto-preset-concentration-focus': ['Session-only staged token concentration focus.', 'crypto preset concentration'],
+        'crypto-preset-wallet-corridor': ['Session-only wallet corridor focus.', 'crypto preset wallet corridor'],
+        'crypto-replay-neighborhood': ['Open staged replay neighborhood details.', 'crypto replay neighborhood'],
+        'crypto-replay-lineage': ['Open session-only replay lineage.', 'crypto replay lineage'],
+        'crypto-replay-jump-back': ['Jump back through session replay lineage.', 'crypto replay jump back'],
+        'crypto-replay-toggle-narratives': ['Show or hide deterministic replay narratives.', 'crypto replay narratives'],
+        'crypto-center-replay': ['Center the selected staged replay transfer.', 'crypto replay center transfer'],
+        'crypto-replay-next-event': ['Step to the next staged replay event.', 'crypto replay next event'],
+        'crypto-replay-previous-event': ['Step to the previous staged replay event.', 'crypto replay previous event'],
+        'crypto-replay-cycle-focus': ['Cycle replay focus forward through staged events.', 'crypto replay focus next'],
+        'crypto-replay-cycle-focus-prev': ['Cycle replay focus backward through staged events.', 'crypto replay focus previous'],
+        'crypto-replay-next-corridor': ['Move to the next visible replay corridor transition.', 'crypto replay next corridor'],
+        'crypto-replay-previous-corridor': ['Move to the previous visible replay corridor transition.', 'crypto replay previous corridor'],
+        'crypto-replay-focus-cluster': ['Focus repeated staged replay pattern.', 'crypto replay cluster'],
+        'crypto-replay-toggle-corridor-overlay': ['Toggle session-only corridor overlay.', 'crypto replay corridor overlay'],
+        'crypto-replay-toggle-continuity-view': ['Toggle session-only continuity view.', 'crypto replay continuity'],
+        'crypto-flow-corridor-isolate': ['Isolate dominant visible replay corridor.', 'crypto flow corridor isolate'],
+        'crypto-replay-bridge-wallet': ['Focus address-level bridge wallet context.', 'crypto bridge wallet'],
+        'crypto-replay-concentration-zone': ['Focus token-row concentration zone.', 'crypto concentration token'],
+        'crypto-wallet-corridor-focus': ['Focus selected or bridge wallet corridor.', 'crypto wallet corridor'],
+        'snapshot-current': ['Capture a session-only graph snapshot.', 'snapshot session'],
+        'stage-current': ['Queue current context for session workflow.', 'stage queue investigation'],
+        'source-gap-filter': ['Open evidence gap filter.', 'source evidence gap'],
+        'clear-selected-relationship': ['Clear the selected relationship context.', 'clear relationship selection'],
+        'clear-route-trace': ['Clear relationship route trace.', 'clear route trace'],
+        'crypto-labels': ['Cycle Crypto label density.', 'crypto labels density'],
+        'crypto-center': ['Center the tracked wallet.', 'crypto center wallet']
+    });
+
     const CRYPTO_REPLAY_STATE_COMMAND_KEYS = new Set([
         'replay-narrative',
         'replay-dataset',
@@ -265,12 +407,14 @@
     }
 
     function command(id, label, group, action, options = {}) {
+        const copy = COMMAND_COPY[id] || [];
         return {
             id,
             label,
             group,
             action,
-            keywords: options.keywords || '',
+            subtitle: options.subtitle || copy[0] || '',
+            keywords: joinKeywords(options.keywords, copy[1], GROUP_META[group]?.keywords),
             disabledReason: options.disabledReason || ''
         };
     }
@@ -279,7 +423,7 @@
         const query = normalize(state.query);
         const commands = getCommands();
         if (!query) return commands;
-        return commands.filter(item => normalize(`${item.label} ${item.group} ${item.keywords}`).includes(query));
+        return commands.filter(item => normalize(`${item.label} ${item.group} ${item.subtitle} ${item.keywords} ${GROUP_META[item.group]?.summary || ''}`).includes(query));
     }
 
     function render() {
@@ -291,25 +435,40 @@
             results.innerHTML = '<div class="photonic-command-empty">No matching graph actions</div>';
             return;
         }
+        const grouped = new Map();
+        commands.forEach((item, index) => {
+            const entries = grouped.get(item.group) || [];
+            entries.push({ item, index });
+            grouped.set(item.group, entries);
+        });
         results.innerHTML = GROUPS.map(group => {
-            const groupCommands = commands.filter(item => item.group === group);
+            const groupCommands = grouped.get(group) || [];
             if (!groupCommands.length) return '';
+            const meta = GROUP_META[group] || {};
             return `
-                <div class="photonic-command-section-label">${escapeHtml(group)}</div>
-                ${groupCommands.map(item => renderRow(item, commands.indexOf(item))).join('')}
+                <div class="photonic-command-section-label">
+                    <span>${escapeHtml(group)}</span>
+                    <small>${escapeHtml(`${groupCommands.length} ${groupCommands.length === 1 ? 'action' : 'actions'}${meta.summary ? ` / ${meta.summary}` : ''}`)}</small>
+                </div>
+                ${groupCommands.map(entry => renderRow(entry.item, entry.index)).join('')}
             `;
         }).join('');
     }
 
     function renderRow(item, index) {
         const disabled = getCommandDisabledReason(item);
+        const status = getCommandRowStatus(item, disabled);
+        const subtitle = getCommandSubtitle(item, disabled);
         return `
             <button type="button"
-                class="photonic-command-row ${index === state.index ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''}"
+                class="photonic-command-row ${index === state.index ? 'is-active' : ''} ${disabled ? 'is-disabled' : ''} ${status.current ? 'is-current' : ''}"
                 data-command-id="${escapeHtml(item.id)}"
                 ${disabled ? 'aria-disabled="true"' : ''}>
-                <span>${escapeHtml(item.label)}</span>
-                <small>${escapeHtml(disabled || item.group)}</small>
+                <span class="photonic-command-row-main">
+                    <span class="photonic-command-row-title">${escapeHtml(item.label)}</span>
+                    <span class="photonic-command-row-subtitle">${escapeHtml(subtitle)}</span>
+                </span>
+                <small class="photonic-command-row-status ${disabled ? 'is-disabled' : status.current ? 'is-current' : ''}">${escapeHtml(disabled || status.label || item.group)}</small>
             </button>
         `;
     }
@@ -328,6 +487,61 @@
     function getCommandDisabledReason(item) {
         const reason = typeof item.disabledReason === 'function' ? item.disabledReason() : item.disabledReason;
         return String(reason || '');
+    }
+
+    function getCommandSubtitle(item, disabled = '') {
+        if (item.subtitle) return item.subtitle;
+        if (disabled) return GROUP_META[item.group]?.summary || item.group;
+        return GROUP_META[item.group]?.summary || item.group;
+    }
+
+    function getCommandRowStatus(item, disabled = '') {
+        if (disabled) return { label: 'Unavailable', current: false };
+        const stockSnapshot = item.id.startsWith('mode-') || item.id.startsWith('preset-') || item.id === 'fullscreen-stock'
+            ? getStockSnapshot()
+            : {};
+        const stockMode = document.body?.dataset?.stockUxMode || 'explore';
+        const cryptoMode = document.body?.dataset?.cryptoUxMode || 'flow';
+        const cryptoState = item.id.startsWith('crypto-') ? window.CryptoPhotonic?.ui?.getState?.() || {} : {};
+
+        const modeMap = {
+            'mode-explore': 'explore',
+            'mode-analyst': 'analyst',
+            'mode-review': 'review',
+            'mode-replay': 'replay'
+        };
+        if (modeMap[item.id] && modeMap[item.id] === stockMode) return { label: 'Current mode', current: true };
+        if (item.id === 'fullscreen-stock' && document.body?.classList?.contains('graph-fullscreen-active')) return { label: 'Open', current: true };
+        if (item.id === 'crypto-fullscreen' && cryptoState.fullscreen) return { label: 'Open', current: true };
+
+        const stockPresetMap = {
+            'preset-exploration': 'exploration',
+            'preset-discovery-investigation': 'discovery_investigation',
+            'preset-performance': 'performance',
+            'preset-topology': 'topology',
+            'preset-route': 'route',
+            'preset-corridor-investigation': 'corridor_investigation',
+            'preset-evidence': 'evidence',
+            'preset-evidence-investigation': 'evidence_investigation',
+            'preset-replay-investigation': 'replay_investigation'
+        };
+        if (stockPresetMap[item.id] && stockSnapshot.activePresetKey === stockPresetMap[item.id]) {
+            return { label: 'Active preset', current: true };
+        }
+
+        const cryptoPresetMap = {
+            'crypto-preset-replay-investigation': 'replay_investigation',
+            'crypto-preset-liquidity-flow': 'liquidity_flow',
+            'crypto-preset-concentration-focus': 'concentration_focus',
+            'crypto-preset-wallet-corridor': 'wallet_corridor_focus'
+        };
+        if (cryptoPresetMap[item.id] && cryptoState.activePresetKey === cryptoPresetMap[item.id]) {
+            return { label: 'Active preset', current: true };
+        }
+        if (item.id === 'crypto-replay' && cryptoState.historyPreview?.workspaceMode) return { label: 'Open', current: true };
+        if (item.id.startsWith('crypto-')) return { label: cryptoMode === 'replay' ? 'Replay mode' : 'Crypto' };
+        if (item.group === 'Workspace' || item.group === 'Snapshot / Investigation') return { label: 'Session-only' };
+        return { label: item.group };
     }
 
     function stockDisabledReason(key) {
@@ -386,7 +600,7 @@
     function updatePaletteCopy() {
         const hint = document.querySelector('#photonic-command-palette .photonic-command-hint');
         if (hint) {
-            hint.textContent = 'Graph-native commands grouped by navigation, topology, workspace, routes, overlays, replay, Crypto investigation, and cross-market workflow actions.';
+            hint.textContent = 'Search graph commands by task, mode, preset, route, corridor, replay state, or workflow handoff.';
         }
     }
 
@@ -404,6 +618,14 @@
 
     function normalize(value) {
         return String(value || '').trim().toLowerCase();
+    }
+
+    function joinKeywords(...parts) {
+        return parts
+            .flatMap(part => Array.isArray(part) ? part : [part])
+            .map(part => String(part || '').trim())
+            .filter(Boolean)
+            .join(' ');
     }
 
     function escapeHtml(value) {

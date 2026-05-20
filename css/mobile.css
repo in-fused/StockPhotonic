@@ -1596,6 +1596,25 @@
                 max-height: min(54dvh, 28rem);
             }
 
+            .photonic-command-section-label small {
+                max-width: 58vw;
+            }
+
+            .photonic-command-row {
+                align-items: flex-start;
+                gap: 0.55rem;
+            }
+
+            .photonic-command-row-subtitle {
+                font-size: 0.66rem;
+            }
+
+            .photonic-command-row-status {
+                max-width: 8rem;
+                white-space: normal;
+                line-height: 1.2;
+            }
+
             .graph-os-status-panel {
                 top: 3.85rem;
                 left: max(0.65rem, env(safe-area-inset-left));
@@ -1655,6 +1674,30 @@
             .graph-os-readability-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
                 gap: 0.24rem;
+            }
+
+            .graph-workflow-handoff-actions,
+            .crypto-workflow-handoff-actions,
+            .crypto-replay-handoff {
+                display: flex;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            .graph-workflow-handoff-actions::-webkit-scrollbar,
+            .crypto-workflow-handoff-actions::-webkit-scrollbar,
+            .crypto-replay-handoff::-webkit-scrollbar {
+                display: none;
+            }
+
+            .graph-workflow-handoff-actions button,
+            .crypto-workflow-handoff-actions button,
+            .crypto-replay-handoff button {
+                flex: 0 0 8.1rem;
+            }
+
+            .crypto-session-status-strip {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
             .graph-os-count-strip {

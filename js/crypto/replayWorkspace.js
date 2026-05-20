@@ -245,6 +245,7 @@
                     </div>
                     ${renderReplayGraphChronology(context.graphTimeline, scrubberDisabled)}
                     <div id="crypto-replay-workspace-current-summary" class="crypto-replay-current-summary">${escapeHtml(eventSummary.compact || 'No replay event selected yet.')}</div>
+                    ${renderReplayHandoffCues(context, scrubberDisabled)}
                 </div>
                 <div class="crypto-replay-workspace-controls">
                     <button id="crypto-replay-workspace-jump-start" type="button" ${scrubberDisabled || currentStep <= 0 ? 'disabled' : ''}>Start</button>
@@ -305,6 +306,71 @@
                     ${warnings.length ? `<div class="mt-2 grid gap-1.5">${warnings.map(warning => `<div class="rounded-md border border-yellow-200/14 bg-yellow-300/8 px-2 py-1.5 text-yellow-50/74">${escapeHtml(warning)}</div>`).join('')}</div>` : ''}
                 </div>
             </div>
+        `;
+    }
+
+    function renderReplayHandoffCues(context = {}, scrubberDisabled = false) {
+        const totalSteps = Math.max(0, Number(context.totalSteps) || 0);
+        const currentStep = Math.max(0, Number(context.currentStep) || 0);
+        const profile = context.replayIntelligence?.corridorProfile || {};
+        const lineage = context.investigationLineage || {};
+        const jumpBack = Array.isArray(lineage.jumpBackActions) ? lineage.jumpBackActions[0] : null;
+        const clusters = context.clusters || {};
+        const cues = [
+            {
+                label: 'Next Event',
+                detail: totalSteps ? `${Math.min(totalSteps, currentStep + 1)}/${totalSteps}` : 'Build dataset first',
+                icon: 'fa-forward-step',
+                selectStep: Math.min(totalSteps, currentStep + 1),
+                disabled: scrubberDisabled || !totalSteps || currentStep >= totalSteps,
+                title: 'Move to the next staged replay event.'
+            },
+            {
+                label: 'Next Corridor',
+                detail: profile.nextCorridorStep ? `Step ${profile.nextCorridorStep}` : 'No visible transition',
+                icon: 'fa-road',
+                action: 'next-corridor',
+                disabled: scrubberDisabled || !profile.nextCorridorStep,
+                title: 'Move to the next visible replay corridor transition. Chronology only.'
+            },
+            {
+                label: 'Lineage Back',
+                detail: jumpBack?.step ? `Step ${jumpBack.step}` : 'No prior focus',
+                icon: 'fa-rotate-left',
+                selectStep: jumpBack?.step || 0,
+                disabled: scrubberDisabled || !jumpBack?.step,
+                title: 'Jump back to the previous session-only replay focus.'
+            },
+            {
+                label: 'Cluster',
+                detail: clusters.total ? `${clusters.total} repeated cues` : 'No cluster',
+                icon: 'fa-object-group',
+                action: 'focus-cluster',
+                disabled: scrubberDisabled || !clusters.total,
+                title: 'Focus repeated staged replay patterns when available.'
+            }
+        ];
+        return `
+            <div class="crypto-replay-handoff" aria-label="Replay next actions">
+                ${cues.map(renderReplayHandoffButton).join('')}
+            </div>
+        `;
+    }
+
+    function renderReplayHandoffButton(cue = {}) {
+        const attrs = cue.selectStep
+            ? `data-crypto-replay-select-step="${escapeAttr(cue.selectStep)}" data-crypto-replay-select-source="handoff"`
+            : cue.action
+                ? `data-crypto-replay-action="${escapeAttr(cue.action)}"`
+                : '';
+        return `
+            <button type="button" ${attrs} ${cue.disabled ? 'disabled' : ''} title="${escapeAttr(cue.title || cue.detail || cue.label)}">
+                <i class="fa-solid ${escapeAttr(cue.icon || 'fa-arrow-right')}"></i>
+                <span>
+                    <strong>${escapeHtml(cue.label || 'Next')}</strong>
+                    <small>${escapeHtml(cue.detail || '')}</small>
+                </span>
+            </button>
         `;
     }
 

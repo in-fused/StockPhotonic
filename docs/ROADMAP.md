@@ -1,5 +1,13 @@
 # Roadmap Notes
 
+## D219-D228 Institutional Dual-Surface Workflow Refinement + Analyst Productivity Hardening
+
+- Refined the shared command palette with searchable command subtitles, grouped scan summaries, active mode/preset badges, and deterministic disabled-state reasons.
+- Added compact StockPhotonic handoff cues for selection, route, corridor, topology, and session workspace next actions without changing graph data or source semantics.
+- Added compact CryptoPhotonic mode/preset/replay/corridor status cues plus wallet/replay handoff actions for staged history, preview replay, corridor traversal, and lineage-aware replay work.
+- Tightened mobile/touch productivity with command access on both graph surfaces, route/replay previous/next affordances, compact status chips, and fullscreen graph-first obstruction controls.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, or browser-side provider-call changes are part of D219-D228.
+
 ## D209-D218 Institutional Replay Intelligence + Cross-Domain Flow Correlation
 
 - Added bounded Crypto replay corridor intelligence for dominant corridors, corridor transitions, congestion zones, repeated pathways, route divergence, overlap, and staged continuity confidence.

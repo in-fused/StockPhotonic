@@ -113,6 +113,14 @@ D209-D218 institutional replay corridor intelligence keeps the same ownership:
 - Replay corridor derivation, continuity reasoning, traversal state, focus cycling, cluster weighting, chronology intelligence, command availability, and shared Stock/Crypto flow-language interpretation remain JavaScript-owned and session-only.
 - CSS must not encode wallet identity, replay certainty, liquidity truth, provider/source authority, persistence assumptions, backend/provider/API behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
 
+D219-D228 dual-surface workflow refinement keeps the same ownership:
+
+- Shared command-palette scanability refinements and Stock graph handoff chrome, including `.photonic-command-row-*` and `.graph-workflow-handoff*`, live in `graph.css` because they extend graph OS behavior loaded after shared shell styles.
+- Crypto session status and workflow handoff selectors, including `.crypto-session-status-strip`, `.crypto-workflow-handoff*`, and `.crypto-replay-handoff`, live in `crypto.css`.
+- Responsive/touch compression for command subtitles, handoff strips, session status chips, and route/replay previous/next affordances lives in `mobile.css`.
+- Command subtitles, active preset labels, disabled-state reasons, workflow cue selection, replay corridor availability, and session-only boundaries remain JavaScript-owned.
+- CSS must not encode workflow intelligence, source authority, persistence guarantees, provider/API behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

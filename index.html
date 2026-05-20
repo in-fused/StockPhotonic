@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/base.css?v=d151-graph-os">
     <link rel="stylesheet" href="css/shell.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/graph.css?v=d209-replay-corridor">
+    <link rel="stylesheet" href="css/graph.css?v=d219-productivity">
     <link rel="stylesheet" href="css/stock.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/crypto.css?v=d209-replay-corridor">
+    <link rel="stylesheet" href="css/crypto.css?v=d219-productivity">
     <link rel="stylesheet" href="css/review.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/mobile.css?v=d209-replay-corridor">
+    <link rel="stylesheet" href="css/mobile.css?v=d219-productivity">
 </head>
 <body class="photonic-bg graph-first-os" data-stock-ux-mode="explore" data-crypto-ux-mode="flow" data-control-layer="primary">
     <header class="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
@@ -446,7 +446,10 @@
                                 <button type="button" onclick="openPhotonicCommandPalette()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Open graph commands" aria-label="Open graph commands">
                                     <i class="fa-solid fa-terminal"></i>
                                 </button>
-                                <button type="button" onclick="stepRouteNode(1)" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Step active route" aria-label="Step active route">
+                                <button id="stock-mobile-route-prev" type="button" onclick="stepRouteNode(-1)" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Previous active route node" aria-label="Previous active route node">
+                                    <i class="fa-solid fa-backward-step"></i>
+                                </button>
+                                <button id="stock-mobile-route-next" type="button" onclick="stepRouteNode(1)" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Next active route node" aria-label="Next active route node">
                                     <i class="fa-solid fa-forward-step"></i>
                                 </button>
                                 <button type="button" onclick="captureCurrentGraphSnapshot()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Save session graph snapshot" aria-label="Save session graph snapshot">
@@ -1253,11 +1256,20 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                                 <button id="crypto-mobile-focus-selection" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Toggle CryptoPhotonic Focus Selection" aria-label="Toggle CryptoPhotonic Focus Selection" aria-pressed="true">
                                     <i class="fa-solid fa-bullseye"></i>
                                 </button>
+                                <button type="button" onclick="openPhotonicCommandPalette()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Open Crypto commands" aria-label="Open Crypto commands">
+                                    <i class="fa-solid fa-terminal"></i>
+                                </button>
                                 <button id="crypto-mobile-open-details" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Open selected object details" aria-label="Open selected object details">
                                     <i class="fa-solid fa-circle-info"></i>
                                 </button>
                                 <button id="crypto-mobile-replay-workspace" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Open preview replay workspace" aria-label="Open preview replay workspace" aria-pressed="false">
                                     <i class="fa-solid fa-clapperboard"></i>
+                                </button>
+                                <button id="crypto-mobile-replay-prev" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Previous staged replay event" aria-label="Previous staged replay event">
+                                    <i class="fa-solid fa-backward-step"></i>
+                                </button>
+                                <button id="crypto-mobile-replay-next" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Next staged replay event" aria-label="Next staged replay event">
+                                    <i class="fa-solid fa-forward-step"></i>
                                 </button>
                                 <button id="crypto-mobile-fullscreen-toggle" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Toggle CryptoPhotonic fullscreen graph" aria-label="Toggle CryptoPhotonic fullscreen graph">
                                     <i class="fa-solid fa-expand"></i>
@@ -1364,7 +1376,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/ui/search.js?v=d147-candidate-company-preview"></script>
     <script src="js/ui/controls.js"></script>
     <script src="js/ui/operatingShell.js?v=d151-graph-os"></script>
-    <script src="js/stock/commandPalette.js?v=d209-replay-corridor"></script>
+    <script src="js/stock/commandPalette.js?v=d219-productivity"></script>
     <script src="js/crypto/core.js"></script>
     <script src="js/crypto/graph.js"></script>
     <script src="js/crypto/layout.js"></script>
@@ -1372,14 +1384,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/crypto/statusPanels.js?v=d132-mega"></script>
     <script src="js/crypto/historyWorkspace.js?v=d132-mega"></script>
     <script src="js/crypto/investigationWorkspace.js?v=d132-mega"></script>
-    <script src="js/crypto/replayWorkspace.js?v=d209-replay-corridor"></script>
+    <script src="js/crypto/replayWorkspace.js?v=d219-productivity"></script>
     <script>
         window.CryptoPhotonicWorkerFeedEndpoint =
             "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/events";
         window.CryptoPhotonicWorkerWalletActivityEndpoint =
             "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/wallet-activity";
     </script>
-    <script src="js/crypto/ui.js?v=d209-replay-corridor"></script>
+    <script src="js/crypto/ui.js?v=d219-productivity"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -2073,6 +2085,24 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     : orbMapEnabled
                         ? 'Orb Map on: drag to rotate, scroll to zoom, click a company to select it.'
                         : 'Orb Map off: normal 2D graph rendering.'
+            });
+            syncStockMobileRouteControls();
+        }
+
+        function syncStockMobileRouteControls() {
+            const availability = getStockCommandAvailability('route-step');
+            const disabled = Boolean(availability.disabled);
+            [
+                ['stock-mobile-route-prev', 'Previous active route node'],
+                ['stock-mobile-route-next', 'Next active route node']
+            ].forEach(([id, label]) => {
+                const button = document.getElementById(id);
+                if (!button) return;
+                button.classList.toggle('is-hidden', disabled);
+                button.classList.toggle('is-disabled', disabled);
+                button.disabled = disabled;
+                button.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+                button.title = disabled ? availability.reason || 'Trace or compare a route first.' : label;
             });
         }
 
@@ -5483,6 +5513,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const topologyFocus = getGraphTopologyFocusLabel(topologyValidation);
             const renderQualityMode = getGraphRenderQualityLabel(quality);
             const performanceBudgetTier = density.label || formatGraphOsLabel(density.key || budget.densityKey || 'core');
+            const activePresetLabel = getActiveGraphPresetLabel();
+            const modeLabel = `${formatGraphOsLabel(getStockUxMode())} Mode`;
+            const activeStateLabel = getGraphActiveStateLabel();
 
             return {
                 topologyModelStatus: topologyValidation.topologyStatus || 'Unavailable',
@@ -5494,6 +5527,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 commandContext,
                 renderQualityMode,
                 performanceBudgetTier,
+                activePresetLabel,
+                modeLabel,
+                activeStateLabel,
                 topologyValidation,
                 overlayReadability,
                 densityKey: density.key || budget.densityKey || 'core',
@@ -5539,6 +5575,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const validation = snapshot.topologyValidation || {};
             const overlay = snapshot.overlayReadability || {};
             const presetDefinitions = getAnalystModePresets();
+            const handoffCues = buildGraphWorkflowHandoffCues(snapshot, workspace, validation);
             const key = [
                 snapshot.commandSignature,
                 snapshot.topologyModelStatus,
@@ -5546,6 +5583,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 snapshot.topologyFocus,
                 snapshot.renderQualityMode,
                 snapshot.performanceBudgetTier,
+                snapshot.activePresetLabel,
+                snapshot.modeLabel,
+                snapshot.activeStateLabel,
                 snapshot.edgeBudget,
                 validation.densityZoneCount,
                 validation.concentrationZoneCount,
@@ -5558,7 +5598,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 overlay.suppressedLayerCount,
                 overlay.suppressedEdgeCount,
                 overlay.protectedEdgeCount,
-                activeAnalystPresetKey
+                activeAnalystPresetKey,
+                handoffCues.map(item => `${item.id}:${item.disabled ? 1 : 0}:${item.detail}`).join(',')
             ].join('|');
             if (key === graphOsStatusDomKey) return;
             graphOsStatusDomKey = key;
@@ -5584,6 +5625,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 <div class="graph-os-status-grid">
                     ${renderGraphOsMetric('Topology', snapshot.topologyModelStatus)}
                     ${renderGraphOsMetric('Overlay', snapshot.overlayPlanStatus)}
+                    ${renderGraphOsMetric('Mode', snapshot.modeLabel)}
+                    ${renderGraphOsMetric('Preset', snapshot.activePresetLabel)}
+                    ${renderGraphOsMetric('State', snapshot.activeStateLabel)}
                     ${renderGraphOsMetric('Workspace', snapshot.activeWorkspace)}
                     ${renderGraphOsMetric('Route', snapshot.routeState)}
                     ${renderGraphOsMetric('Focus', snapshot.topologyFocus)}
@@ -5591,6 +5635,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     ${renderGraphOsMetric('Quality', snapshot.renderQualityMode)}
                     ${renderGraphOsMetric('Budget', `${snapshot.edgeBudget}/${snapshot.visibleEdgeCount}`)}
                 </div>
+                ${renderGraphWorkflowHandoff(handoffCues)}
                 <div class="graph-os-summary-section">
                     <div class="graph-os-summary-title">Topology Validation <small>${escapeHtml(validation.semanticSummaryLabel || 'Fallback')}</small></div>
                     <div class="graph-os-count-strip">
@@ -5629,6 +5674,153 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function renderGraphOsMetric(label, value) {
             return `<span><small>${escapeHtml(label)}</small><strong>${escapeHtml(String(value || 'None'))}</strong></span>`;
+        }
+
+        function renderGraphWorkflowHandoff(cues = []) {
+            const items = cues.filter(Boolean).slice(0, 4);
+            if (!items.length) return '';
+            return `
+                <div class="graph-workflow-handoff" aria-label="StockPhotonic next workflow actions">
+                    <div class="graph-workflow-handoff-head">
+                        <span><i class="fa-solid fa-arrow-right"></i> Next Actions</span>
+                        <small>session-only cues</small>
+                    </div>
+                    <div class="graph-workflow-handoff-actions">
+                        ${items.map(renderGraphWorkflowHandoffButton).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderGraphWorkflowHandoffButton(item = {}) {
+            return `
+                <button type="button"
+                    ${item.disabled ? 'disabled' : `onclick="${escapeHtml(item.action || '')}"`}
+                    title="${escapeHtml(item.title || item.detail || item.label)}">
+                    <i class="fa-solid ${escapeHtml(item.icon || 'fa-arrow-right')}"></i>
+                    <span>
+                        <strong>${escapeHtml(item.label || 'Open')}</strong>
+                        <small>${escapeHtml(item.detail || '')}</small>
+                    </span>
+                </button>
+            `;
+        }
+
+        function buildGraphWorkflowHandoffCues(snapshot = {}, workspace = {}, validation = {}) {
+            const visible = Boolean(snapshot.visibleNodeCount && snapshot.visibleEdgeCount);
+            const hasRoute = Boolean(activeRouteComparison || activeRelationshipRoute);
+            const hasComparison = Boolean(activeRouteComparison);
+            const hasSelection = Boolean(selectedNode || selectedRelationshipLink);
+            const hasCorridor = Boolean(largeGraphNavigationModel?.focusKind === 'corridor' || getCurrentCorridorMemoryCandidate());
+            const cues = [];
+
+            if (hasSelection) {
+                cues.push({
+                    id: 'fit-selection',
+                    label: 'Fit Selection',
+                    detail: selectedNode ? `${selectedNode.ticker || selectedNode.name || 'Company'} neighborhood` : 'Relationship context',
+                    icon: 'fa-location-crosshairs',
+                    action: selectedNode ? 'fitSelectedNeighborhood()' : 'jumpToSelectedGraphNode()',
+                    title: 'Fit the selected company or relationship neighborhood.'
+                });
+                cues.push({
+                    id: 'compare-route',
+                    label: hasRoute ? 'Step Route' : 'Compare Route',
+                    detail: hasRoute ? snapshot.routeState : 'Build a visible route comparison',
+                    icon: 'fa-route',
+                    action: hasRoute ? 'stepRouteNode(1)' : 'compareStrongestRoute()',
+                    disabled: !visible,
+                    title: hasRoute ? 'Step to the next route node.' : 'Compare the strongest visible route.'
+                });
+                cues.push({
+                    id: 'queue-selection',
+                    label: 'Queue',
+                    detail: 'Add current context to session workflow',
+                    icon: 'fa-list-check',
+                    action: 'queueCurrentInvestigation()',
+                    title: 'Queue the current graph state in session-only workspace memory.'
+                });
+            } else if (hasRoute) {
+                cues.push({
+                    id: 'route-forward',
+                    label: 'Next Route',
+                    detail: snapshot.routeState,
+                    icon: 'fa-forward-step',
+                    action: 'stepRouteNode(1)',
+                    title: 'Step to the next node in the active route.'
+                });
+                cues.push({
+                    id: 'route-workspace',
+                    label: 'Route Workspace',
+                    detail: hasComparison ? 'Open compact comparison panel' : 'Step through current route',
+                    icon: 'fa-code-compare',
+                    action: hasComparison ? 'openCurrentRouteWorkspace()' : 'stepRouteNode(1)',
+                    title: hasComparison ? 'Open the active route comparison workspace.' : 'Step through the active route.'
+                });
+                cues.push({
+                    id: 'pin-route',
+                    label: 'Pin Route',
+                    detail: `${workspace.pinnedRouteCount || 0} session pins`,
+                    icon: 'fa-thumbtack',
+                    action: 'pinCurrentRoute()',
+                    title: 'Pin the active route or comparison for this session only.'
+                });
+            } else if (hasCorridor) {
+                cues.push({
+                    id: 'next-corridor',
+                    label: 'Next Corridor',
+                    detail: largeGraphNavigationModel?.focusLabel || validation.semanticHeadline || 'Visible corridor',
+                    icon: 'fa-road',
+                    action: 'nextCorridorLane()',
+                    disabled: Boolean(getStockCommandAvailability('corridors')?.disabled),
+                    title: 'Move to the next available corridor lane.'
+                });
+                cues.push({
+                    id: 'pin-corridor',
+                    label: 'Pin Corridor',
+                    detail: `${workspace.pinnedCorridorCount || 0} session pins`,
+                    icon: 'fa-thumbtack',
+                    action: 'pinCurrentCorridor()',
+                    title: 'Pin the active corridor for this session only.'
+                });
+                cues.push({
+                    id: 'topology-summary',
+                    label: 'Topology',
+                    detail: validation.semanticSummaryLabel || 'Visible graph validation',
+                    icon: 'fa-draw-polygon',
+                    action: 'showTopologySummary()',
+                    title: 'Open the current topology summary.'
+                });
+            } else {
+                cues.push({
+                    id: 'topology-summary',
+                    label: 'Topology',
+                    detail: validation.semanticSummaryLabel || 'Visible graph validation',
+                    icon: 'fa-draw-polygon',
+                    action: 'showTopologySummary()',
+                    disabled: !visible,
+                    title: 'Open deterministic topology validation for the visible graph.'
+                });
+                cues.push({
+                    id: 'compare-route',
+                    label: 'Compare Route',
+                    detail: visible ? 'Start strongest route comparison' : 'Graph not ready',
+                    icon: 'fa-route',
+                    action: 'compareStrongestRoute()',
+                    disabled: !visible,
+                    title: 'Start a route comparison from the visible graph.'
+                });
+                cues.push({
+                    id: 'commands',
+                    label: 'Commands',
+                    detail: 'Search modes, routes, overlays, replay',
+                    icon: 'fa-terminal',
+                    action: 'openPhotonicCommandPalette()',
+                    title: 'Open the command palette.'
+                });
+            }
+
+            return cues.slice(0, 3);
         }
 
         function renderInvestigationNarrativeLayer() {
@@ -6063,6 +6255,27 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return `${mode} ${Math.round(score * 100)}%`;
         }
 
+        function getActiveGraphPresetLabel(presets = getAnalystModePresets()) {
+            const preset = presets.find(item => item.key === activeAnalystPresetKey);
+            return preset?.label || 'None';
+        }
+
+        function getGraphActiveStateLabel() {
+            if (activeRouteComparison) return 'Route comparison';
+            if (activeRelationshipRoute) {
+                const total = stockRouteComparison.getTraversalNodes(activeRouteComparison, activeRelationshipRoute).length;
+                return total && routeComparisonSequenceIndex >= 0
+                    ? `Route ${routeComparisonSequenceIndex + 1}/${total}`
+                    : 'Route trace';
+            }
+            if (largeGraphNavigationModel?.focusKind === 'corridor') return 'Corridor focus';
+            if (selectedNode) return selectedNode.ticker || selectedNode.name || 'Selection';
+            if (selectedRelationshipLink) return 'Relationship';
+            if (activeAnalystOverlayKey) return 'Overlay active';
+            if (sourceCoverageLensEnabled) return 'Evidence lens';
+            return 'Overview';
+        }
+
         function formatGraphOsLabel(value) {
             return String(value || 'Graph')
                 .replace(/[_:|-]+/g, ' ')
@@ -6248,6 +6461,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
             `;
             hud.classList.toggle('is-empty', !visibleNodes.length);
+            syncStockMobileRouteControls();
             renderGraphOsStatusPanel();
         }
 

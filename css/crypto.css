@@ -2705,6 +2705,149 @@ body.crypto-graph-fullscreen-active > header,
             color: rgba(204, 251, 241, 0.88);
         }
 
+.crypto-session-status-strip {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.35rem;
+            margin-top: 0.55rem;
+        }
+
+.crypto-session-status-strip span {
+            min-width: 0;
+            border: 1px solid rgba(125, 211, 252, 0.14);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.42);
+            padding: 0.42rem 0.5rem;
+        }
+
+.crypto-session-status-strip small,
+.crypto-session-status-strip strong {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            line-height: 1;
+        }
+
+.crypto-session-status-strip small {
+            color: rgba(148, 163, 184, 0.76);
+            font-size: 0.56rem;
+            text-transform: uppercase;
+        }
+
+.crypto-session-status-strip strong {
+            margin-top: 0.22rem;
+            color: rgba(224, 242, 254, 0.88);
+            font-size: 0.62rem;
+        }
+
+.crypto-workflow-handoff {
+            margin-top: 0.55rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            padding-top: 0.52rem;
+        }
+
+.crypto-workflow-handoff-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            color: rgba(207, 250, 254, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            text-transform: uppercase;
+        }
+
+.crypto-workflow-handoff-head span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.32rem;
+            min-width: 0;
+        }
+
+.crypto-workflow-handoff-head small {
+            color: rgba(148, 163, 184, 0.68);
+            font-size: 0.5rem;
+        }
+
+.crypto-workflow-handoff-actions,
+.crypto-replay-handoff {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.36rem;
+            margin-top: 0.38rem;
+        }
+
+.crypto-workflow-handoff-actions button,
+.crypto-replay-handoff button {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            align-items: center;
+            gap: 0.38rem;
+            min-width: 0;
+            min-height: 2.55rem;
+            border: 1px solid rgba(125, 211, 252, 0.16);
+            border-radius: 8px;
+            background: rgba(14, 165, 233, 0.10);
+            color: rgba(224, 242, 254, 0.84);
+            padding: 0.38rem 0.48rem;
+            text-align: left;
+        }
+
+.crypto-replay-handoff button {
+            border-color: rgba(217, 70, 239, 0.18);
+            background: rgba(217, 70, 239, 0.10);
+            color: rgba(250, 232, 255, 0.84);
+        }
+
+.crypto-workflow-handoff-actions button:hover,
+.crypto-workflow-handoff-actions button:focus-visible,
+.crypto-replay-handoff button:hover,
+.crypto-replay-handoff button:focus-visible {
+            border-color: rgba(103, 232, 249, 0.38);
+            background: rgba(14, 165, 233, 0.18);
+            color: #ffffff;
+            outline: none;
+        }
+
+.crypto-workflow-handoff-actions button:disabled,
+.crypto-replay-handoff button:disabled {
+            cursor: not-allowed;
+            opacity: 0.46;
+        }
+
+.crypto-workflow-handoff-actions button span,
+.crypto-replay-handoff button span {
+            min-width: 0;
+        }
+
+.crypto-workflow-handoff-actions button strong,
+.crypto-workflow-handoff-actions button small,
+.crypto-replay-handoff button strong,
+.crypto-replay-handoff button small {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.crypto-workflow-handoff-actions button strong,
+.crypto-replay-handoff button strong {
+            font-size: 0.64rem;
+            line-height: 1;
+        }
+
+.crypto-workflow-handoff-actions button small,
+.crypto-replay-handoff button small {
+            margin-top: 0.18rem;
+            color: rgba(203, 213, 225, 0.58);
+            font-size: 0.54rem;
+            line-height: 1;
+        }
+
 @media (min-width: 1024px) {
             #crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-layout-grid {
                 position: relative;

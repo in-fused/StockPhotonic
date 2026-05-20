@@ -238,6 +238,12 @@
             display: none;
         }
 
+.mobile-graph-action.is-disabled,
+.mobile-graph-action:disabled {
+            cursor: not-allowed;
+            opacity: 0.42;
+        }
+
 .mobile-graph-action:active {
             transform: translateY(1px);
             background: rgba(8, 145, 178, 0.24);
@@ -2566,6 +2572,101 @@ body.graph-fullscreen-active > header {
             white-space: nowrap;
         }
 
+.graph-workflow-handoff {
+            margin-top: 0.48rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            padding-top: 0.48rem;
+        }
+
+.graph-workflow-handoff-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            color: rgba(207, 250, 254, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.56rem;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+.graph-workflow-handoff-head span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-workflow-handoff-head small {
+            flex: 0 0 auto;
+            color: rgba(148, 163, 184, 0.72);
+            font-size: 0.5rem;
+        }
+
+.graph-workflow-handoff-actions {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.3rem;
+            margin-top: 0.36rem;
+        }
+
+.graph-workflow-handoff-actions button {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            align-items: center;
+            gap: 0.34rem;
+            min-width: 0;
+            min-height: 2.42rem;
+            border: 1px solid rgba(125, 211, 252, 0.16);
+            border-radius: 6px;
+            background: rgba(14, 165, 233, 0.10);
+            color: rgba(224, 242, 254, 0.84);
+            padding: 0.34rem 0.42rem;
+            text-align: left;
+        }
+
+.graph-workflow-handoff-actions button:hover,
+.graph-workflow-handoff-actions button:focus-visible {
+            border-color: rgba(103, 232, 249, 0.38);
+            background: rgba(14, 165, 233, 0.18);
+            color: #ffffff;
+            outline: none;
+        }
+
+.graph-workflow-handoff-actions button:disabled {
+            cursor: not-allowed;
+            opacity: 0.46;
+        }
+
+.graph-workflow-handoff-actions button span {
+            min-width: 0;
+        }
+
+.graph-workflow-handoff-actions button strong,
+.graph-workflow-handoff-actions button small {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-workflow-handoff-actions button strong {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.54rem;
+            line-height: 1;
+        }
+
+.graph-workflow-handoff-actions button small {
+            margin-top: 0.16rem;
+            color: rgba(203, 213, 225, 0.58);
+            font-size: 0.5rem;
+            line-height: 1;
+        }
+
 .graph-os-summary-section {
             margin-top: 0.48rem;
             border-top: 1px solid rgba(148, 163, 184, 0.1);
@@ -2659,6 +2760,10 @@ body.graph-fullscreen-active > header {
             max-height: min(42dvh, 19rem);
         }
 
+#graph-intelligence-view.is-graph-fullscreen .graph-os-summary-section p {
+            display: none;
+        }
+
 #graph-intelligence-view.is-graph-fullscreen #graph-os-status-panel:not(.is-empty) ~ .graph-active-legend {
             top: min(62dvh, 33rem);
         }
@@ -2693,4 +2798,66 @@ body.graph-fullscreen-active > header {
             font-size: 0.58rem;
             letter-spacing: 0;
             text-transform: uppercase;
+        }
+
+.photonic-command-section-label {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 0.75rem;
+        }
+
+.photonic-command-section-label small {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: rgba(148, 163, 184, 0.64);
+            font-size: 0.52rem;
+            font-weight: 500;
+            text-transform: none;
+        }
+
+.photonic-command-row-main {
+            display: grid;
+            gap: 0.16rem;
+            min-width: 0;
+        }
+
+.photonic-command-row-title,
+.photonic-command-row-subtitle,
+.photonic-command-row-status {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.photonic-command-row-title {
+            font-weight: 650;
+        }
+
+.photonic-command-row-subtitle {
+            color: rgba(203, 213, 225, 0.58);
+            font-size: 0.72rem;
+            line-height: 1.2;
+        }
+
+.photonic-command-row-status {
+            flex: 0 0 auto;
+            max-width: 12rem;
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.48);
+            padding: 0.2rem 0.38rem;
+        }
+
+.photonic-command-row-status.is-current {
+            border-color: rgba(52, 211, 153, 0.24);
+            background: rgba(6, 78, 59, 0.2);
+            color: rgba(187, 247, 208, 0.86);
+        }
+
+.photonic-command-row-status.is-disabled {
+            color: rgba(248, 113, 113, 0.76);
         }

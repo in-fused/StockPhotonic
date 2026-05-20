@@ -422,6 +422,33 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
+            .crypto-replay-summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .crypto-replay-narrative-stack {
+                gap: 0.3rem;
+            }
+
+            .crypto-replay-narrative-row {
+                padding: 0.4rem 0.45rem;
+            }
+
+            .crypto-replay-narrative-row p {
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+                overflow: hidden;
+            }
+
+            .crypto-replay-lineage-panel {
+                padding: 0.48rem;
+            }
+
+            .crypto-replay-lineage-group:nth-of-type(n+4) {
+                display: none;
+            }
+
             .crypto-replay-window-header,
             .crypto-replay-window-facts {
                 align-items: flex-start;
@@ -1110,6 +1137,16 @@
             #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-bottom,
             #crypto-photonic-view.is-replay-workspace .crypto-replay-audit-filters,
             #crypto-photonic-view.is-replay-workspace .crypto-replay-audit-breadcrumbs {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-lineage-panel {
+                max-height: 8.5rem;
+                overflow-y: auto;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-summary-grid,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-narrative-row:nth-child(n+4) {
                 display: none;
             }
 

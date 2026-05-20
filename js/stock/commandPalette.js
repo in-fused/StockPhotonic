@@ -8,8 +8,23 @@
         'Route / Corridor',
         'Overlay',
         'Replay / Timeline',
+        'Crypto Investigation',
+        'Crypto Replay',
+        'Crypto Flow',
+        'Crypto Workspace',
         'Snapshot / Investigation'
     ];
+
+    const CRYPTO_REPLAY_STATE_COMMAND_KEYS = new Set([
+        'replay-narrative',
+        'replay-dataset',
+        'replay-event',
+        'replay-focus',
+        'replay-lineage',
+        'replay-corridor',
+        'replay-token-concentration',
+        'replay-wallet-corridor'
+    ]);
 
     const state = {
         initialized: false,
@@ -206,11 +221,26 @@
             command('stock-chronology-next', 'Next Graph Chronology Event', 'Replay / Timeline', () => callGlobal('stepGraphChronology', 1)),
             command('stock-chronology-prev', 'Previous Graph Chronology Event', 'Replay / Timeline', () => callGlobal('stepGraphChronology', -1)),
             command('stock-replay-checkpoint', 'Save Stock Replay Checkpoint', 'Replay / Timeline', () => callGlobal('addStockReplayCheckpoint')),
-            command('crypto-replay', 'Toggle Crypto Replay Workspace', 'Replay / Timeline', () => window.CryptoPhotonic?.ui?.toggleReplayWorkspaceMode?.()),
-            command('crypto-replay-neighborhood', 'Open Crypto Replay Neighborhood', 'Replay / Timeline', () => window.CryptoPhotonic?.ui?.openReplayNeighborhood?.()),
-            command('crypto-replay-next-event', 'Next Crypto Replay Event', 'Replay / Timeline', () => window.CryptoPhotonic?.ui?.nextReplayEvent?.(), { disabledReason: () => cryptoReplayDisabledReason() }),
-            command('crypto-replay-previous-event', 'Previous Crypto Replay Event', 'Replay / Timeline', () => window.CryptoPhotonic?.ui?.previousReplayEvent?.(), { disabledReason: () => cryptoReplayDisabledReason() }),
-            command('crypto-center-replay', 'Center Active Crypto Replay Transfer', 'Replay / Timeline', () => window.CryptoPhotonic?.ui?.centerCurrentReplayTransfer?.(), { disabledReason: () => cryptoReplayDisabledReason() }),
+            command('crypto-replay', 'Toggle Crypto Replay Workspace', 'Crypto Workspace', () => window.CryptoPhotonic?.ui?.toggleReplayWorkspaceMode?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-workspace') }),
+            command('crypto-preset-replay-investigation', 'Crypto Replay Investigation preset', 'Crypto Workspace', () => window.CryptoPhotonic?.ui?.applyCryptoAnalystPreset?.('replay_investigation'), { disabledReason: () => cryptoCommandDisabledReason('replay-workspace') }),
+            command('crypto-preset-liquidity-flow', 'Crypto Liquidity Flow preset', 'Crypto Workspace', () => window.CryptoPhotonic?.ui?.applyCryptoAnalystPreset?.('liquidity_flow'), { disabledReason: () => cryptoCommandDisabledReason('preset-liquidity-flow') }),
+            command('crypto-preset-concentration-focus', 'Crypto Concentration Focus preset', 'Crypto Workspace', () => window.CryptoPhotonic?.ui?.applyCryptoAnalystPreset?.('concentration_focus'), { disabledReason: () => cryptoCommandDisabledReason('replay-token-concentration') }),
+            command('crypto-preset-wallet-corridor', 'Crypto Wallet Corridor Focus preset', 'Crypto Workspace', () => window.CryptoPhotonic?.ui?.applyCryptoAnalystPreset?.('wallet_corridor_focus'), { disabledReason: () => cryptoCommandDisabledReason('replay-wallet-corridor') }),
+
+            command('crypto-replay-neighborhood', 'Open Crypto Replay Neighborhood', 'Crypto Investigation', () => window.CryptoPhotonic?.ui?.openReplayNeighborhood?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-event') }),
+            command('crypto-replay-lineage', 'Open Crypto Replay Lineage', 'Crypto Investigation', () => window.CryptoPhotonic?.ui?.openReplayLineage?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-dataset') }),
+            command('crypto-replay-jump-back', 'Jump Back Crypto Replay Lineage', 'Crypto Investigation', () => window.CryptoPhotonic?.ui?.jumpBackReplayLineage?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-lineage') }),
+            command('crypto-replay-toggle-narratives', 'Toggle Crypto Replay Narratives', 'Crypto Investigation', () => window.CryptoPhotonic?.ui?.toggleReplayNarratives?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-narrative') }),
+            command('crypto-center-replay', 'Center Active Crypto Replay Transfer', 'Crypto Investigation', () => window.CryptoPhotonic?.ui?.centerCurrentReplayTransfer?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-event') }),
+
+            command('crypto-replay-next-event', 'Next Crypto Replay Event', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.nextReplayEvent?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-event') }),
+            command('crypto-replay-previous-event', 'Previous Crypto Replay Event', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.previousReplayEvent?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-event') }),
+            command('crypto-replay-cycle-focus', 'Cycle Crypto Replay Focus', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.cycleReplayFocus?.(1), { disabledReason: () => cryptoCommandDisabledReason('replay-focus') }),
+            command('crypto-replay-cycle-focus-prev', 'Cycle Crypto Replay Focus Back', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.cycleReplayFocus?.(-1), { disabledReason: () => cryptoCommandDisabledReason('replay-focus') }),
+
+            command('crypto-flow-corridor-isolate', 'Isolate Crypto Flow Corridor', 'Crypto Flow', () => window.CryptoPhotonic?.ui?.isolateReplayFlowCorridor?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-corridor') }),
+            command('crypto-liquidity-concentration', 'Focus Crypto Liquidity Concentration', 'Crypto Flow', () => window.CryptoPhotonic?.ui?.focusReplayLiquidityConcentration?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-token-concentration') }),
+            command('crypto-wallet-corridor-focus', 'Focus Crypto Wallet Corridor', 'Crypto Flow', () => window.CryptoPhotonic?.ui?.focusReplayWalletCorridor?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-wallet-corridor') }),
 
             command('snapshot-current', 'Capture Graph Snapshot', 'Snapshot / Investigation', () => callGlobal('captureCurrentGraphSnapshot')),
             command('stage-current', 'Stage Current Investigation', 'Snapshot / Investigation', () => callGlobal('queueCurrentInvestigation')),
@@ -314,11 +344,19 @@
             : 'Stock graph is not ready yet.';
     }
 
-    function cryptoReplayDisabledReason() {
+    function cryptoCommandDisabledReason(key) {
+        const commandKey = String(key || '');
+        const availability = window.CryptoPhotonic?.ui?.getCommandAvailability?.(key);
+        if (availability?.disabled) return availability.reason || 'Crypto command unavailable in this graph state.';
+        if (!availability && CRYPTO_REPLAY_STATE_COMMAND_KEYS.has(commandKey) && !isCryptoInitialized()) {
+            return 'CryptoPhotonic is not initialized yet.';
+        }
+        return '';
+    }
+
+    function isCryptoInitialized() {
         const cryptoState = window.CryptoPhotonic?.ui?.getState?.();
-        return cryptoState?.historyPreview?.workspaceMode
-            ? ''
-            : 'Open Crypto replay workspace first.';
+        return Boolean(cryptoState?.initialized);
     }
 
     function callGlobal(name, ...args) {
@@ -336,7 +374,7 @@
     function updatePaletteCopy() {
         const hint = document.querySelector('#photonic-command-palette .photonic-command-hint');
         if (hint) {
-            hint.textContent = 'Graph-native commands grouped by navigation, topology, workspace, routes, overlays, replay, and investigation.';
+            hint.textContent = 'Graph-native commands grouped by navigation, topology, workspace, routes, overlays, replay, Crypto investigation, and cross-market workflow actions.';
         }
     }
 

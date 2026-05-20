@@ -97,6 +97,14 @@ D189-D198 investigation narrative intelligence keeps the same ownership:
 - Narrative derivation, reasoning heuristics, active investigation stack state, quick jump-back payloads, route/corridor/replay lineage, topology interpretation, overlay/readability explanations, and route significance wording remain JavaScript-owned and session-only.
 - CSS must not encode evidence truth, topology authority, relationship certainty, source authority, persistence semantics, backend/provider/API assumptions, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
 
+D199-D208 cross-market convergence keeps StockPhotonic and CryptoPhotonic on one graph OS philosophy while preserving product semantics:
+
+- Shared reasoning-chip and investigation-lineage chrome remains in `graph.css`; Crypto may reuse those shared classes only for graph OS consistency.
+- Crypto replay intelligence panels, compact replay narratives, liquidity topology summaries, replay lineage chrome, replay stack controls, and replay workspace investigation surfaces live in `crypto.css`.
+- Mobile replay narrative compression, touch-safe lineage strips, compact fullscreen replay behavior, and replay HUD readability live in `mobile.css`.
+- Replay narrative wording, liquidity/topology summaries, reasoning heuristics, replay lineage state, replay presets, and command availability remain JavaScript-owned and session-only.
+- CSS must not encode wallet identity, replay certainty, liquidity truth, provider semantics, persistence assumptions, backend behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

@@ -7,7 +7,7 @@
     const REPLAY_CONTINUITY_VERSION = 'd136_staged_continuity_confidence_v1';
     const REPLAY_CLUSTER_VERSION = 'd136_replay_cluster_v1';
     const REPLAY_NEIGHBORHOOD_VERSION = 'd136_replay_neighborhood_v1';
-    const REPLAY_INTELLIGENCE_VERSION = 'd174_replay_market_intelligence_convergence_v1';
+    const REPLAY_INTELLIGENCE_VERSION = 'd199_cross_market_crypto_investigation_v1';
     const DEFAULT_AUDIT_FILTERS = Object.freeze({
         token: 'all',
         direction: 'all',
@@ -23,8 +23,16 @@
         maxClusterMembers: 18,
         maxRouteClusters: 5,
         maxTokenClusters: 5,
-        maxCounterpartyClusters: 6
+        maxCounterpartyClusters: 6,
+        maxNarratives: 7,
+        maxReasoningChips: 7,
+        maxFlowSummaryItems: 4,
+        maxLineageItems: 8
     });
+    const replayIntelligenceCache = {
+        key: '',
+        value: null
+    };
 
     function escapeHtml(value) {
         return String(value ?? '')
@@ -83,6 +91,22 @@
             clusters
         });
         const routeComparison = deriveReplayRouteComparison(currentEvent, selectedEvent, events);
+        const investigationLineage = deriveReplayInvestigationLineage({
+            events,
+            currentEvent,
+            selectedEvent,
+            filteredEvents,
+            relationships,
+            breadcrumbs,
+            recentEvents,
+            neighborhood,
+            clusters,
+            routeComparison,
+            currentStep,
+            totalSteps,
+            investigationStack: context.investigationStack,
+            flowLineage: context.flowLineage
+        });
         const eventSummary = summarizeReplayEvent(selectedEvent || currentEvent, {
             status,
             totalSteps,
@@ -109,7 +133,13 @@
             routeComparison,
             graphTimeline,
             currentStep,
-            totalSteps
+            totalSteps,
+            auditFilters,
+            filteredEvents,
+            breadcrumbs,
+            recentEvents,
+            investigationLineage,
+            relationships
         });
 
         return {
@@ -133,6 +163,7 @@
             clusters,
             neighborhood,
             routeComparison,
+            investigationLineage,
             checkpoint,
             eventSummary,
             bookmarks,
@@ -228,12 +259,13 @@
                 </div>
                 ${renderReplayWindowOverview(windowStatus, checkpoint, warnings)}
                 ${renderReplayContinuityPanel(continuityProfile, gapMap)}
-                ${renderReplayIntelligencePanel(replayIntelligence)}
+                ${renderReplayIntelligencePanel(replayIntelligence, { visible: context.narrativesVisible !== false })}
                 <div class="crypto-replay-bookmark-strip" aria-label="Replay bookmarks">
                     ${bookmarks.map(bookmark => renderBookmark(bookmark, currentBookmarkStep, scrubberDisabled)).join('') || '<div class="crypto-replay-bookmark-empty">Build replay steps to derive bookmarks.</div>'}
                 </div>
                 ${renderAuditFilters(context.auditFilters, filterOptions, filteredEvents.length, totalSteps, scrubberDisabled)}
                 ${renderAuditBreadcrumbs(breadcrumbs, recentEvents)}
+                ${renderReplayInvestigationStack(context.investigationLineage, scrubberDisabled)}
             </div>
             <div class="crypto-replay-workspace-panel crypto-replay-workspace-event crypto-replay-audit-panel" id="crypto-replay-workspace-event-readout">
                 ${renderCurrentEventReadout(eventSummary)}
@@ -383,23 +415,104 @@
         `;
     }
 
-    function renderReplayIntelligencePanel(intelligence = {}) {
+    function renderReplayIntelligencePanel(intelligence = {}, options = {}) {
         if (!intelligence || !intelligence.version) return '';
+        const visible = options.visible !== false;
+        const narratives = Array.isArray(intelligence.narratives) ? intelligence.narratives.slice(0, REPLAY_EXPANSION_CAPS.maxNarratives) : [];
+        const summaryItems = Array.isArray(intelligence.summaryItems) ? intelligence.summaryItems.slice(0, REPLAY_EXPANSION_CAPS.maxFlowSummaryItems) : [];
+        const reasoningChips = (Array.isArray(intelligence.reasoningChips) && intelligence.reasoningChips.length
+            ? intelligence.reasoningChips
+            : intelligence.chips || []).slice(0, REPLAY_EXPANSION_CAPS.maxReasoningChips);
         return `
-            <section class="crypto-replay-intelligence-panel" aria-label="Replay market intelligence">
+            <section class="crypto-replay-intelligence-panel ${visible ? '' : 'is-collapsed'}" aria-label="Replay investigation intelligence">
                 <div class="crypto-replay-intelligence-head">
                     <span>Replay Intelligence</span>
                     <strong>${escapeHtml(intelligence.focusLabel || 'Staged replay')}</strong>
+                    <button type="button" data-crypto-replay-action="toggle-narratives" aria-pressed="${visible ? 'true' : 'false'}" title="${escapeAttr(visible ? 'Hide compact replay narratives' : 'Show compact replay narratives')}">${escapeHtml(visible ? 'Hide' : 'Show')}</button>
                 </div>
                 <div class="crypto-replay-intelligence-copy">${escapeHtml(intelligence.narrative || 'Replay intelligence is derived from staged transfer metadata only.')}</div>
+                ${visible ? `
+                    <div class="crypto-replay-narrative-stack" aria-label="Replay investigation narratives">
+                        ${narratives.map(item => `
+                            <article class="crypto-replay-narrative-row is-${escapeAttr(item.kind || 'note')}">
+                                <div>
+                                    <span>${escapeHtml(item.title || 'Replay note')}</span>
+                                    <p>${escapeHtml(item.body || '')}</p>
+                                </div>
+                                ${item.badge ? `<strong>${escapeHtml(item.badge)}</strong>` : ''}
+                            </article>
+                        `).join('')}
+                    </div>
+                    <div class="crypto-replay-summary-grid" aria-label="Replay liquidity topology summary">
+                        ${summaryItems.map(item => `
+                            <div>
+                                <span>${escapeHtml(item.label || '')}</span>
+                                <strong title="${escapeAttr(item.title || item.value || '')}">${escapeHtml(item.value || '-')}</strong>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : '<div class="crypto-replay-intelligence-copy is-muted">Narratives hidden. Reasoning chips and replay controls remain active.</div>'}
                 <div class="crypto-replay-intelligence-metrics">
-                    <span><strong>${escapeHtml(String(intelligence.routeEventCount || 0))}</strong><small>route</small></span>
-                    <span><strong>${escapeHtml(String(intelligence.sharedEventCount || 0))}</strong><small>shared</small></span>
-                    <span><strong>${escapeHtml(String(intelligence.gapCount || 0))}</strong><small>gaps</small></span>
+                    <span><strong>${escapeHtml(String(intelligence.corridorCount ?? intelligence.routeCount ?? 0))}</strong><small>corridors</small></span>
+                    <span><strong>${escapeHtml(String(intelligence.bridgeWalletCount || 0))}</strong><small>bridges</small></span>
+                    <span><strong>${escapeHtml(intelligence.concentrationLabel || '0%')}</strong><small>token zone</small></span>
                     <span><strong>${escapeHtml(intelligence.chronologyLabel || '0/0')}</strong><small>step</small></span>
                 </div>
-                <div class="crypto-replay-intelligence-chips">
-                    ${(intelligence.chips || []).slice(0, 5).map(chip => `<span>${escapeHtml(chip)}</span>`).join('')}
+                <div class="crypto-replay-intelligence-chips graph-reasoning-chips is-reasoning">
+                    ${reasoningChips.map(chip => `<span>${escapeHtml(chip)}</span>`).join('')}
+                </div>
+            </section>
+        `;
+    }
+
+    function renderReplayInvestigationStack(lineage = {}, disabled = false) {
+        const stack = Array.isArray(lineage.stack) ? lineage.stack.slice(0, REPLAY_EXPANSION_CAPS.maxLineageItems) : [];
+        const jumpBack = Array.isArray(lineage.jumpBackActions) ? lineage.jumpBackActions.slice(0, 6) : [];
+        const flowLineage = Array.isArray(lineage.flowLineage) ? lineage.flowLineage.slice(0, 6) : [];
+        if (!stack.length && !jumpBack.length && !flowLineage.length) {
+            return `
+                <section class="crypto-replay-lineage-panel is-empty" aria-label="Replay investigation stack">
+                    <div class="crypto-replay-related-header">
+                        <span>Replay Lineage</span>
+                        <strong>session-only</strong>
+                    </div>
+                    <div class="crypto-replay-empty-compact">Select replay transfers to build jump-back lineage for this session.</div>
+                </section>
+            `;
+        }
+        const renderLineageButton = (item, source) => `
+            <button type="button"
+                data-crypto-replay-select-step="${escapeAttr(item.step || 0)}"
+                data-crypto-replay-select-source="${escapeAttr(source)}"
+                ${disabled || !item.step ? 'disabled' : ''}
+                title="${escapeAttr(item.title || item.detail || item.label || '')}">
+                <span>${escapeHtml(item.label || `Step ${item.step || '-'}`)}</span>
+                <strong>${escapeHtml(item.detail || (item.step ? `#${item.step}` : 'session'))}</strong>
+            </button>
+        `;
+        return `
+            <section class="crypto-replay-lineage-panel" aria-label="Replay investigation stack">
+                <div class="crypto-replay-related-header">
+                    <span>Replay Lineage</span>
+                    <strong>${escapeHtml(lineage.neighborhoodContinuity || 'session-only')}</strong>
+                </div>
+                <div class="crypto-replay-lineage-group">
+                    <span>Stack</span>
+                    <div class="crypto-replay-lineage-strip graph-investigation-lineage">
+                        ${stack.map(item => renderLineageButton(item, 'investigation-stack')).join('') || '<div class="crypto-replay-empty-compact">No replay stack entries yet.</div>'}
+                    </div>
+                </div>
+                <div class="crypto-replay-lineage-group">
+                    <span>Jump Back</span>
+                    <div class="crypto-replay-lineage-strip graph-investigation-lineage">
+                        ${jumpBack.map(item => renderLineageButton(item, 'jump-back')).join('') || '<div class="crypto-replay-empty-compact">No previous replay focus in this session.</div>'}
+                    </div>
+                </div>
+                <div class="crypto-replay-lineage-group">
+                    <span>Flow Lineage</span>
+                    <div class="crypto-replay-lineage-strip graph-investigation-lineage">
+                        ${flowLineage.map(item => renderLineageButton(item, 'flow-lineage')).join('') || '<div class="crypto-replay-empty-compact">No flow lineage selected yet.</div>'}
+                    </div>
                 </div>
             </section>
         `;
@@ -1337,6 +1450,10 @@
         const currentEvent = context.currentEvent || null;
         const selectedEvent = context.selectedEvent || currentEvent;
         const focusEvent = selectedEvent || currentEvent || events[0] || null;
+        const cacheKey = getReplayIntelligenceCacheKey(context, events, focusEvent);
+        if (replayIntelligenceCache.key === cacheKey && replayIntelligenceCache.value) {
+            return replayIntelligenceCache.value;
+        }
         const focusRoute = getRouteKey(focusEvent || {});
         const focusToken = normalizeTokenFilter(focusEvent?.token || focusEvent?.symbol || focusEvent?.token_mint);
         const routeEvents = focusRoute ? events.filter(event => getRouteKey(event) === focusRoute) : [];
@@ -1357,6 +1474,42 @@
         const routeComparison = context.routeComparison || {};
         const continuity = context.continuityProfile || {};
         const chronologyLabel = `${Number(context.currentStep) || 0}/${Number(context.totalSteps) || events.length || 0}`;
+        const flowSummary = deriveReplayFlowSummary(events, {
+            ...context,
+            focusEvent,
+            focusRoute,
+            focusToken,
+            gaps,
+            highGap,
+            routeComparison,
+            continuity
+        });
+        const narratives = deriveReplayNarratives(flowSummary, {
+            ...context,
+            focusEvent,
+            focusRoute,
+            focusToken,
+            routeEvents,
+            routeSet,
+            tokenEvents,
+            gaps,
+            highGap,
+            continuity,
+            routeComparison
+        });
+        const reasoningChips = deriveReplayReasoningChips(flowSummary, {
+            ...context,
+            focusEvent,
+            focusRoute,
+            focusToken,
+            routeEvents,
+            routeSet,
+            tokenEvents,
+            gaps,
+            highGap,
+            continuity,
+            routeComparison
+        });
         const routeNarrative = routeComparison.active
             ? routeComparison.detail
             : focusRoute
@@ -1372,18 +1525,26 @@
         const focusLabel = focusToken !== 'all'
             ? `${focusToken} / ${focusRoute ? formatRoute(focusEvent) : 'route scan'}`
             : focusRoute ? formatRoute(focusEvent) : 'Chronology scan';
-        return {
+        const result = {
             version: REPLAY_INTELLIGENCE_VERSION,
             focusLabel,
             narrative: `${routeNarrative} ${anomaly}`,
             routeEventCount: routeEvents.length,
             tokenEventCount: tokenEvents.length,
             routeCount: routeSet.size,
+            corridorCount: flowSummary.dominantFlowCorridors.length || routeSet.size,
+            bridgeWalletCount: flowSummary.bridgeWalletCount,
+            concentrationLabel: flowSummary.tokenConcentrationLabel,
             sharedEventCount: Number(routeComparison.sharedCount) || 0,
             gapCount: gaps.length,
             chronologyLabel,
             continuityLevel: continuity.level || 'partial',
             topClusterLabel: topCluster?.label || '',
+            flowSummary,
+            narratives,
+            summaryItems: flowSummary.summaryItems,
+            reasoningChips,
+            investigationLineage: context.investigationLineage || {},
             chips: [
                 continuity.label || formatHistoryLikeFlag(continuity.level || 'partial'),
                 focusToken !== 'all' ? `${focusToken} ${tokenEvents.length}` : '',
@@ -1396,6 +1557,441 @@
             previewOnly: true,
             stagedHistoryOnly: true
         };
+        replayIntelligenceCache.key = cacheKey;
+        replayIntelligenceCache.value = result;
+        return result;
+    }
+
+    function getReplayIntelligenceCacheKey(context = {}, events = [], focusEvent = null) {
+        const filters = normalizeAuditFilters(context.auditFilters || context.filters || {});
+        const gapMap = context.gapMap || {};
+        const gaps = Array.isArray(gapMap.gaps) ? gapMap.gaps : [];
+        const first = events[0] || {};
+        const last = events[events.length - 1] || {};
+        const lineage = context.investigationLineage || {};
+        return [
+            REPLAY_INTELLIGENCE_VERSION,
+            events.length,
+            Number(context.currentStep) || 0,
+            Number(context.totalSteps) || 0,
+            focusEvent?.step || 0,
+            focusEvent?.signature || '',
+            first.signature || first.timestamp || '',
+            last.signature || last.timestamp || '',
+            filters.token,
+            filters.direction,
+            filters.counterparty,
+            filters.majorOnly ? 'major' : 'all',
+            gaps.map(gap => `${gap.code || gap.label}:${gap.severity || ''}`).join(','),
+            context.routeComparison?.active ? `${context.routeComparison.sharedCount || 0}:${context.routeComparison.primaryRoute || ''}` : '',
+            Array.isArray(lineage.stack) ? lineage.stack.map(item => item.step).join(',') : ''
+        ].join('|');
+    }
+
+    function deriveReplayFlowSummary(events = [], context = {}) {
+        const routeMap = new Map();
+        const tokenMap = new Map();
+        const walletMap = new Map();
+        const totalEvents = events.length;
+        let totalAmountWeight = 0;
+
+        events.forEach(event => {
+            const amount = Math.max(0, Number(event.amountValue ?? getAmountValue(event)) || 0);
+            totalAmountWeight += amount;
+            const route = getRouteKey(event);
+            const token = normalizeTokenFilter(event.token || event.symbol || event.token_mint);
+            const source = normalizeAddressFilter(event.sourceWallet || event.source_wallet);
+            const destination = normalizeAddressFilter(event.destinationWallet || event.destination_wallet);
+            if (route) {
+                const routeRecord = routeMap.get(route) || {
+                    key: route,
+                    label: formatRoute(event),
+                    count: 0,
+                    amountWeight: 0,
+                    firstStep: Number(event.step) || 0,
+                    lastStep: Number(event.step) || 0,
+                    tokenSet: new Set(),
+                    source,
+                    destination
+                };
+                routeRecord.count += 1;
+                routeRecord.amountWeight += amount;
+                routeRecord.firstStep = Math.min(routeRecord.firstStep || Number(event.step) || 0, Number(event.step) || 0);
+                routeRecord.lastStep = Math.max(routeRecord.lastStep || 0, Number(event.step) || 0);
+                if (token !== 'all') routeRecord.tokenSet.add(token);
+                routeMap.set(route, routeRecord);
+            }
+            if (token !== 'all') {
+                const tokenRecord = tokenMap.get(token) || {
+                    token,
+                    label: token,
+                    count: 0,
+                    amountWeight: 0,
+                    routeSet: new Set(),
+                    firstStep: Number(event.step) || 0,
+                    lastStep: Number(event.step) || 0
+                };
+                tokenRecord.count += 1;
+                tokenRecord.amountWeight += amount;
+                if (route) tokenRecord.routeSet.add(route);
+                tokenRecord.firstStep = Math.min(tokenRecord.firstStep || Number(event.step) || 0, Number(event.step) || 0);
+                tokenRecord.lastStep = Math.max(tokenRecord.lastStep || 0, Number(event.step) || 0);
+                tokenMap.set(token, tokenRecord);
+            }
+            [
+                { wallet: source, role: 'source' },
+                { wallet: destination, role: 'destination' }
+            ].forEach(item => {
+                if (!item.wallet || item.wallet === 'all') return;
+                const walletRecord = walletMap.get(item.wallet) || {
+                    wallet: item.wallet,
+                    label: shortValue(item.wallet),
+                    count: 0,
+                    amountWeight: 0,
+                    inbound: 0,
+                    outbound: 0,
+                    firstStep: Number(event.step) || 0,
+                    lastStep: Number(event.step) || 0,
+                    routeSet: new Set(),
+                    tokenSet: new Set()
+                };
+                walletRecord.count += 1;
+                walletRecord.amountWeight += amount;
+                walletRecord.firstStep = Math.min(walletRecord.firstStep || Number(event.step) || 0, Number(event.step) || 0);
+                walletRecord.lastStep = Math.max(walletRecord.lastStep || 0, Number(event.step) || 0);
+                if (item.role === 'source') walletRecord.outbound += 1;
+                if (item.role === 'destination') walletRecord.inbound += 1;
+                if (route) walletRecord.routeSet.add(route);
+                if (token !== 'all') walletRecord.tokenSet.add(token);
+                walletMap.set(item.wallet, walletRecord);
+            });
+        });
+
+        const dominantFlowCorridors = [...routeMap.values()]
+            .sort((a, b) => b.count - a.count || b.amountWeight - a.amountWeight || a.firstStep - b.firstStep || a.key.localeCompare(b.key))
+            .slice(0, REPLAY_EXPANSION_CAPS.maxFlowSummaryItems)
+            .map(record => ({
+                ...record,
+                tokenCount: record.tokenSet.size,
+                sharePct: totalEvents ? Math.round((record.count / totalEvents) * 100) : 0
+            }));
+        const topTokenZones = [...tokenMap.values()]
+            .sort((a, b) => b.count - a.count || b.amountWeight - a.amountWeight || a.token.localeCompare(b.token))
+            .slice(0, REPLAY_EXPANSION_CAPS.maxFlowSummaryItems)
+            .map(record => ({
+                ...record,
+                routeCount: record.routeSet.size,
+                sharePct: totalEvents ? Math.round((record.count / totalEvents) * 100) : 0
+            }));
+        const bridgeWallets = [...walletMap.values()]
+            .filter(record => record.routeSet.size > 1 || record.count >= 3)
+            .sort((a, b) => b.routeSet.size - a.routeSet.size || b.count - a.count || b.amountWeight - a.amountWeight || a.wallet.localeCompare(b.wallet))
+            .slice(0, REPLAY_EXPANSION_CAPS.maxFlowSummaryItems)
+            .map(record => ({
+                ...record,
+                routeCount: record.routeSet.size,
+                tokenCount: record.tokenSet.size,
+                sharePct: totalEvents ? Math.round((record.count / totalEvents) * 100) : 0
+            }));
+        const convergenceZones = [...walletMap.values()]
+            .filter(record => record.inbound > 1)
+            .sort((a, b) => b.inbound - a.inbound || b.count - a.count || a.wallet.localeCompare(b.wallet))
+            .slice(0, REPLAY_EXPANSION_CAPS.maxFlowSummaryItems)
+            .map(record => ({
+                ...record,
+                intensity: record.inbound,
+                sharePct: totalEvents ? Math.round((record.inbound / totalEvents) * 100) : 0
+            }));
+        const divergenceZones = [...walletMap.values()]
+            .filter(record => record.outbound > 1)
+            .sort((a, b) => b.outbound - a.outbound || b.count - a.count || a.wallet.localeCompare(b.wallet))
+            .slice(0, REPLAY_EXPANSION_CAPS.maxFlowSummaryItems)
+            .map(record => ({
+                ...record,
+                intensity: record.outbound,
+                sharePct: totalEvents ? Math.round((record.outbound / totalEvents) * 100) : 0
+            }));
+
+        const focusRouteRecord = context.focusRoute ? routeMap.get(context.focusRoute) || null : null;
+        const topToken = topTokenZones[0] || null;
+        const topCorridor = dominantFlowCorridors[0] || null;
+        const topBridgeWallet = bridgeWallets[0] || null;
+        const convergenceIntensity = convergenceZones[0]?.intensity || 0;
+        const divergenceIntensity = divergenceZones[0]?.intensity || 0;
+        const routeContinuity = focusRouteRecord
+            ? `${focusRouteRecord.count} row${focusRouteRecord.count === 1 ? '' : 's'} / steps ${focusRouteRecord.firstStep}-${focusRouteRecord.lastStep}`
+            : topCorridor
+                ? `${topCorridor.count} row${topCorridor.count === 1 ? '' : 's'} / steps ${topCorridor.firstStep}-${topCorridor.lastStep}`
+                : 'No repeated corridor';
+        const tokenConcentrationLabel = topToken ? `${topToken.sharePct}%` : '0%';
+
+        return {
+            dominantFlowCorridors,
+            topTokenZones,
+            bridgeWallets,
+            convergenceZones,
+            divergenceZones,
+            topCorridor,
+            topToken,
+            topBridgeWallet,
+            bridgeWalletCount: bridgeWallets.length,
+            convergenceIntensity,
+            divergenceIntensity,
+            routeContinuity,
+            tokenConcentrationLabel,
+            totalEvents,
+            totalAmountWeight,
+            summaryItems: [
+                {
+                    label: 'Dominant Corridor',
+                    value: topCorridor ? `${topCorridor.count} rows` : 'No repeat',
+                    title: topCorridor ? `${topCorridor.label} / ${topCorridor.sharePct}% of visible staged rows` : 'No repeated visible corridor'
+                },
+                {
+                    label: 'Concentration Zone',
+                    value: topToken ? `${topToken.label} ${topToken.sharePct}%` : 'No token zone',
+                    title: topToken ? `${topToken.count} staged rows for ${topToken.label}` : 'No token concentration visible'
+                },
+                {
+                    label: 'Bridge Wallets',
+                    value: String(bridgeWallets.length),
+                    title: topBridgeWallet ? `${topBridgeWallet.label} spans ${topBridgeWallet.routeCount} visible corridors` : 'No multi-corridor wallet visible'
+                },
+                {
+                    label: 'Route Continuity',
+                    value: routeContinuity,
+                    title: 'Continuity is derived only from loaded staged replay rows'
+                }
+            ],
+            deterministic: true,
+            stagedHistoryOnly: true
+        };
+    }
+
+    function deriveReplayNarratives(summary = {}, context = {}) {
+        const narratives = [];
+        const focusEvent = context.focusEvent || null;
+        const filters = normalizeAuditFilters(context.auditFilters || context.filters || {});
+        const activeWallet = filters.counterparty !== 'all'
+            ? filters.counterparty
+            : focusEvent?.destinationWallet || focusEvent?.destination_wallet || focusEvent?.sourceWallet || focusEvent?.source_wallet || '';
+        const activeWalletRecord = activeWallet
+            ? [...(summary.bridgeWallets || []), ...(summary.convergenceZones || []), ...(summary.divergenceZones || [])]
+                .find(item => item.wallet === activeWallet) || null
+            : null;
+        const walletRows = activeWalletRecord?.count || (activeWallet
+            ? (context.events || []).filter(event => {
+                const source = normalizeAddressFilter(event.sourceWallet || event.source_wallet);
+                const destination = normalizeAddressFilter(event.destinationWallet || event.destination_wallet);
+                return source === activeWallet || destination === activeWallet;
+            }).length
+            : 0);
+        if (activeWallet) {
+            narratives.push({
+                kind: 'wallet',
+                title: 'Active Wallet Focus',
+                body: `${shortValue(activeWallet)} appears in ${walletRows} staged replay row${walletRows === 1 ? '' : 's'}. This is address-level flow context only, not an identity or control claim.`,
+                badge: walletRows ? `${walletRows} rows` : 'visible'
+            });
+        }
+        if (focusEvent?.step) {
+            narratives.push({
+                kind: 'event',
+                title: 'Replay Event Focus',
+                body: `Step ${focusEvent.step} sits at ${context.chronologyLabel || `${context.currentStep || 0}/${context.totalSteps || 0}`} with ${formatAmountToken(focusEvent)} on ${formatRoute(focusEvent)}. Chronology placement does not imply market causality.`,
+                badge: `#${focusEvent.step}`
+            });
+        }
+        if (summary.topCorridor) {
+            narratives.push({
+                kind: 'corridor',
+                title: 'Liquidity Corridor Significance',
+                body: `${summary.topCorridor.label} is the most repeated visible corridor with ${summary.topCorridor.count} staged row${summary.topCorridor.count === 1 ? '' : 's'} (${summary.topCorridor.sharePct}%). It reflects loaded replay routing only.`,
+                badge: `${summary.topCorridor.sharePct}%`
+            });
+        }
+        if (summary.topToken) {
+            narratives.push({
+                kind: 'token',
+                title: 'Token Concentration Zone',
+                body: `${summary.topToken.label} appears in ${summary.topToken.count} of ${summary.totalEvents} staged row${summary.totalEvents === 1 ? '' : 's'} (${summary.topToken.sharePct}%). This is transfer-row visibility, not liquidity truth.`,
+                badge: `${summary.topToken.sharePct}%`
+            });
+        }
+        if (summary.convergenceIntensity || summary.divergenceIntensity) {
+            const convergence = summary.convergenceZones?.[0];
+            const divergence = summary.divergenceZones?.[0];
+            narratives.push({
+                kind: 'convergence',
+                title: 'Replay Convergence / Divergence',
+                body: `Top convergence is ${convergence ? `${convergence.intensity} inbound row${convergence.intensity === 1 ? '' : 's'} at ${convergence.label}` : 'not visible'}; top divergence is ${divergence ? `${divergence.intensity} outbound row${divergence.intensity === 1 ? '' : 's'} at ${divergence.label}` : 'not visible'}. Endpoint reuse does not imply common ownership.`,
+                badge: `${summary.convergenceIntensity}/${summary.divergenceIntensity}`
+            });
+        }
+        if (summary.bridgeWallets?.length) {
+            const top = summary.bridgeWallets[0];
+            narratives.push({
+                kind: 'bridge',
+                title: 'High-Flow Bridge Wallets',
+                body: `${summary.bridgeWallets.length} wallet${summary.bridgeWallets.length === 1 ? '' : 's'} connect multiple visible corridors or repeated rows. ${top.label} spans ${top.routeCount} corridor${top.routeCount === 1 ? '' : 's'} in staged data only.`,
+                badge: `${summary.bridgeWallets.length} wallets`
+            });
+        }
+        const highGap = context.highGap || null;
+        if (highGap || focusEvent?.warning || context.continuity?.level !== 'high') {
+            const anomalyCopy = highGap
+                ? `${highGap.label || formatHistoryLikeFlag(highGap.code)} is the strongest replay boundary cue.`
+                : focusEvent?.warning || 'Replay continuity is partial for the currently staged window.';
+            narratives.push({
+                kind: 'anomaly',
+                title: 'Replay Anomaly Visibility',
+                body: `${anomalyCopy} Treat this as visibility into staged replay boundaries, not proof of missing behavior.`,
+                badge: highGap?.severity || context.continuity?.level || 'partial'
+            });
+        }
+        return narratives.slice(0, REPLAY_EXPANSION_CAPS.maxNarratives);
+    }
+
+    function deriveReplayReasoningChips(summary = {}, context = {}) {
+        const chips = [];
+        const filters = normalizeAuditFilters(context.auditFilters || context.filters || {});
+        const focusRoute = context.focusRoute || '';
+        const focusToken = context.focusToken || 'all';
+        const routeEvents = Array.isArray(context.routeEvents) ? context.routeEvents : [];
+        const highGap = context.highGap || null;
+        const continuity = context.continuity || {};
+        const currentStep = Number(context.currentStep) || 0;
+        const totalSteps = Number(context.totalSteps) || summary.totalEvents || 0;
+        const bridge = summary.topBridgeWallet || null;
+        chips.push(focusRoute && routeEvents.length
+            ? `Replay edges emphasized: ${routeEvents.length} same-corridor rows`
+            : 'Replay edges emphasized: staged chronology context');
+        chips.push(filters.counterparty !== 'all'
+            ? `Wallet highlighted: ${shortValue(filters.counterparty)} filter`
+            : bridge
+                ? `Wallet highlighted: ${bridge.routeCount} corridor bridge`
+                : 'Wallet highlighted: active replay endpoint');
+        if (hasActiveReplayFilters(filters)) {
+            chips.push('Replay suppression: unmatched filter rows are dimmed');
+        } else if (focusRoute) {
+            chips.push('Replay suppression: non-focus corridors are subdued');
+        } else if (highGap || continuity.level === 'provider_limited' || continuity.level === 'ambiguous') {
+            chips.push('Replay suppression: continuity boundary is visible');
+        } else {
+            chips.push('Replay suppression: none active');
+        }
+        chips.push(totalSteps ? `Chronology matters: step ${currentStep}/${totalSteps}` : 'Chronology matters: no step selected');
+        chips.push(summary.topCorridor
+            ? `Path prioritized: ${summary.topCorridor.count} visible corridor rows`
+            : 'Path prioritized: no repeated corridor');
+        chips.push(focusToken !== 'all'
+            ? `Token focus: ${focusToken}`
+            : summary.topToken
+                ? `Token focus: ${summary.topToken.label} concentration`
+                : 'Token focus: all visible tokens');
+        chips.push(highGap
+            ? `Anomaly cue: ${highGap.severity || 'gap'}`
+            : `Continuity: ${continuity.label || formatHistoryLikeFlag(continuity.level || 'partial')}`);
+        return chips.filter(Boolean).slice(0, REPLAY_EXPANSION_CAPS.maxReasoningChips);
+    }
+
+    function deriveReplayInvestigationLineage(context = {}) {
+        const events = Array.isArray(context.events) ? context.events : [];
+        const byStep = new Map(events.map(event => [Number(event.step) || 0, event]));
+        const stackSource = Array.isArray(context.investigationStack) && context.investigationStack.length
+            ? context.investigationStack
+            : Array.isArray(context.breadcrumbs) ? context.breadcrumbs.slice().reverse() : [];
+        const stack = stackSource
+            .map((item, index) => normalizeLineageItem(item, byStep, index, 'stack'))
+            .filter(Boolean)
+            .slice(0, REPLAY_EXPANSION_CAPS.maxLineageItems);
+        const recent = Array.isArray(context.recentEvents) ? context.recentEvents : [];
+        const breadcrumbs = Array.isArray(context.breadcrumbs) ? context.breadcrumbs.slice().reverse() : [];
+        const selectedStep = Number(context.selectedEvent?.step || context.currentEvent?.step || context.currentStep) || 0;
+        const jumpBackActions = uniqueLineageItems([...recent, ...breadcrumbs]
+            .map((item, index) => normalizeLineageItem(item, byStep, index, 'jump'))
+            .filter(item => item && Number(item.step) !== selectedStep))
+            .slice(0, 6);
+        const flowSource = Array.isArray(context.flowLineage) && context.flowLineage.length
+            ? context.flowLineage
+            : deriveFlowLineageFromContext(context);
+        const flowLineage = uniqueLineageItems(flowSource
+            .map((item, index) => normalizeLineageItem(item, byStep, index, 'flow'))
+            .filter(Boolean))
+            .slice(0, 6);
+        const neighborhood = context.neighborhood || {};
+        const neighborhoodContinuity = neighborhood.active
+            ? `${Number(neighborhood.events?.length) || 0} neighbor rows`
+            : context.routeComparison?.active
+                ? `${Number(context.routeComparison.sharedCount) || 0} shared rows`
+                : 'session-only';
+        return {
+            stack,
+            jumpBackActions,
+            flowLineage,
+            neighborhoodContinuity,
+            sessionOnly: true,
+            previewOnly: true
+        };
+    }
+
+    function deriveFlowLineageFromContext(context = {}) {
+        const items = [];
+        const selected = context.selectedEvent || context.currentEvent || null;
+        const route = selected ? getRouteKey(selected) : '';
+        if (selected?.step) {
+            items.push({
+                step: selected.step,
+                label: `Step ${selected.step}`,
+                detail: selected.token || selected.symbol || 'flow',
+                title: getEventTitle(selected)
+            });
+        }
+        (context.relationships?.repeatedRoute || []).slice(0, 3).forEach(event => {
+            items.push({
+                step: event.step,
+                label: route ? 'Same corridor' : `Step ${event.step}`,
+                detail: event.token || 'route',
+                title: getEventTitle(event)
+            });
+        });
+        (context.relationships?.sameToken || []).slice(0, 3).forEach(event => {
+            items.push({
+                step: event.step,
+                label: event.token || 'Same token',
+                detail: `#${event.step}`,
+                title: getEventTitle(event)
+            });
+        });
+        return items;
+    }
+
+    function normalizeLineageItem(item = {}, byStep = new Map(), index = 0, source = 'stack') {
+        const step = Math.max(0, Number(item.step || item.selectedStep || item.currentStep || item) || 0);
+        const event = byStep.get(step) || (typeof item === 'object' ? item : null);
+        if (!step && !event) return null;
+        const label = item.label || item.shortLabel || (step ? `Step ${step}` : source);
+        const detail = item.detail || item.value || event?.token || event?.symbol || (step ? `#${step}` : 'session');
+        return {
+            id: item.id || `${source}:${step || index}:${item.signature || event?.signature || ''}`,
+            step,
+            label: String(label).slice(0, 34),
+            detail: String(detail).slice(0, 34),
+            title: item.title || item.route || (event ? getEventTitle(event) : label),
+            route: item.route || (event ? getRouteKey(event) : ''),
+            token: item.token || event?.token || event?.symbol || '',
+            source
+        };
+    }
+
+    function uniqueLineageItems(items = []) {
+        const seen = new Set();
+        return items.filter(item => {
+            const key = item.id || `${item.step}:${item.label}:${item.detail}`;
+            if (!key || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
     }
 
     function eventTouchesContext(event = {}, route = '', token = 'all', wallets = new Set()) {
@@ -2138,6 +2734,8 @@
         deriveReplayClusters,
         deriveReplayNeighborhood,
         deriveReplayIntelligence,
+        deriveReplayFlowSummary,
+        deriveReplayInvestigationLineage,
         normalizeReplayGapMap,
         normalizeReplayContinuityProfile,
         buildReplayCheckpoint,

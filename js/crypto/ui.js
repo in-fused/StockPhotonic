@@ -363,6 +363,13 @@
         document.getElementById('crypto-fullscreen-toggle')?.addEventListener('click', () => {
             setFullscreen(!state.fullscreen);
         });
+        document.addEventListener('click', event => {
+            if (!event.target.closest?.('button[data-crypto-ux-mode]')) return;
+            window.setTimeout(() => {
+                renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+                updateInteractionDock();
+            }, 0);
+        });
         document.getElementById('crypto-mobile-reset-view')?.addEventListener('click', resetView);
         document.getElementById('crypto-mobile-center-wallet')?.addEventListener('click', centerTrackedWallet);
         document.getElementById('crypto-mobile-fullscreen-toggle')?.addEventListener('click', () => {
@@ -1441,10 +1448,13 @@
         const status = document.createElement('div');
         status.id = 'crypto-solana-status';
         status.className = 'crypto-status-stack grid gap-2 text-sm text-cyan-50/78';
+        const uxMode = getCryptoUxMode();
+        const showFlowFilters = uxMode === 'flow' || uxMode === 'analyst';
+        const showFlowQueue = uxMode === 'flow';
         status.innerHTML = `
             ${renderGeneratedDataManager(metadata, isGeneratedFixture, isSolana)}
-            ${renderFlowFilters()}
-            ${renderFlowQueueStatus()}
+            ${showFlowFilters ? renderFlowFilters() : ''}
+            ${showFlowQueue ? renderFlowQueueStatus() : ''}
         `;
         statusHost.appendChild(status);
         state.statusPanel = status;
@@ -1463,23 +1473,39 @@
         const selector = renderGeneratedFixtureSelector();
         const sourceTone = state.live.workerAvailable ? 'text-emerald-100/82' : isGeneratedFixture ? 'text-emerald-100/82' : isSolana ? 'text-cyan-50/78' : 'text-white/68';
         const sourceSnapshot = renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount);
+        const detailsOpen = state.dataMode === DATA_MODES.WALLET && !state.walletLookup.lastWallet ? ' open' : '';
+        const detailLabel = state.dataMode === DATA_MODES.WALLET
+            ? 'Wallet lookup'
+            : state.dataMode === DATA_MODES.LIVE
+                ? 'Live feed'
+                : 'Fixture';
 
         return `
-            <div class="crypto-control-group rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2">
-                <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="crypto-control-group crypto-source-state-block rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2">
+                <div class="crypto-source-state-head">
                     <div class="min-w-0">
-                        <div class="text-white/38">DATA SOURCE / MODE</div>
-                        <div class="${sourceTone} break-words">Source: ${escapeHtml(sourceLabel)}</div>
+                        <div class="text-white/38">SOURCE STATE</div>
+                        <div class="${sourceTone} break-words">${escapeHtml(sourceLabel)}</div>
                     </div>
-                    ${renderDataModeSwitch()}
+                    <div class="crypto-source-state-actions">
+                        ${renderDataModeSwitch()}
+                        <span class="crypto-source-boundary-badge" title="CryptoPhotonic browser code never calls Solana providers directly; Worker responses are sanitized before graphing.">No browser provider calls</span>
+                    </div>
                 </div>
-                ${renderControlHelp('Choose the source before investigating. Generated Fixture is local sample data, Wallet Lookup replaces the graph with a secure Worker response, and Live Feed shows sanitized Worker events only.')}
-                ${selector}
                 ${sourceSnapshot}
                 ${renderCryptoSessionStatusStrip()}
                 ${renderCryptoWorkflowHandoff()}
-                <div class="mt-2 text-yellow-100/76">${escapeHtml(getSourceBoundaryCopy())}</div>
-                ${renderWalletLookupControls()}
+                <details class="crypto-source-details"${detailsOpen}>
+                    <summary>
+                        <span>Source details</span>
+                        <small>${escapeHtml(detailLabel)}</small>
+                    </summary>
+                    <div class="crypto-source-details-body">
+                        <div class="crypto-source-boundary-copy">${escapeHtml(getSourceBoundaryCopy())}</div>
+                        ${selector}
+                        ${renderWalletLookupControls()}
+                    </div>
+                </details>
             </div>
         `;
     }
@@ -1489,7 +1515,7 @@
             const tracked = state.walletLookup.lastWallet || state.walletLookup.walletInput || state.graph?.metadata?.wallet_lookup_tracked_wallet || '';
             const visible = state.graph?.flowEdges?.length || 0;
             return `
-                <div class="crypto-data-source-snapshot mt-2 text-white/56">
+                <div class="crypto-data-source-snapshot crypto-source-summary-grid mt-2 text-white/56">
                     <div>Mode: Worker replacement graph</div>
                     <div title="${escapeAttr(tracked || 'No tracked wallet loaded')}">Tracked: ${escapeHtml(tracked ? shortLongValue(tracked) : '-')}</div>
                     <div>Returned / Visible: ${escapeHtml(state.walletLookup.eventCount || 0)} / ${escapeHtml(visible)}</div>
@@ -1498,7 +1524,7 @@
         }
         if (state.dataMode === DATA_MODES.LIVE) {
             return `
-                <div class="crypto-data-source-snapshot mt-2 text-white/56">
+                <div class="crypto-data-source-snapshot crypto-source-summary-grid mt-2 text-white/56">
                     <div>Mode: Sanitized live feed</div>
                     <div>Events: ${escapeHtml(state.live.eventCount || 0)} returned / ${escapeHtml(state.live.mergedEventCount || 0)} shown</div>
                     <div>Last Poll: ${escapeHtml(state.live.lastPollAt ? formatDateTime(state.live.lastPollAt) : '-')}</div>
@@ -1506,7 +1532,7 @@
             `;
         }
         return `
-            <div class="crypto-data-source-snapshot mt-2 text-white/56">
+            <div class="crypto-data-source-snapshot crypto-source-summary-grid mt-2 text-white/56">
                 <div>Mode: Local QA fixture</div>
                 <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Fixture Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
                 <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
@@ -1515,11 +1541,16 @@
         `;
     }
 
+    function getCryptoUxMode() {
+        const mode = document.body?.dataset?.cryptoUxMode || 'flow';
+        return ['flow', 'analyst', 'review', 'replay'].includes(mode) ? mode : 'flow';
+    }
+
     function renderCryptoSessionStatusStrip() {
         const status = getHistoryReplayStatus();
         const totalSteps = getHistoryReplayTotalSteps(status);
         const currentStep = Math.max(0, Math.min(totalSteps, Number(status.currentStep || state.historyPreview.audit?.selectedStep) || 0));
-        const mode = document.body?.dataset?.cryptoUxMode || 'flow';
+        const mode = getCryptoUxMode();
         const preset = getCryptoPresetLabel(state.activePresetKey);
         const replayLabel = state.historyPreview.workspaceMode
             ? totalSteps ? `Replay ${currentStep}/${totalSteps}` : 'Replay workspace'
@@ -1530,12 +1561,34 @@
             : state.historyPreview.corridorOverlayVisible === false
                 ? 'Corridor overlay hidden'
                 : 'Corridor ready';
-        const rows = [
-            ['Mode', `${formatCryptoStatusLabel(mode)} Mode`, 'Current Crypto operating mode.'],
-            ['Preset', preset, 'Session-only Crypto analyst preset.'],
-            ['Replay', replayLabel, 'Preview replay state; never merged into the active graph.'],
-            ['Corridor', corridorLabel, 'Visible replay corridor or focus state from staged data only.']
-        ];
+        const sourceLabel = getCurrentSourceLabel();
+        const visibleFlowCount = getVisibleFlowEdges().length;
+        const totalFlowCount = state.graph?.flowEdges?.length || 0;
+        const replayMode = mode === 'replay' || state.historyPreview.workspaceMode;
+        const rows = replayMode
+            ? [
+                ['Mode', `${formatCryptoStatusLabel(mode)} Mode`, 'Current Crypto operating mode.'],
+                ['Replay', replayLabel, 'Preview replay state; never merged into the active graph.'],
+                ['Corridor', corridorLabel, 'Visible replay corridor or focus state from staged data only.'],
+                ['Source', sourceLabel, 'Active graph source boundary.']
+            ]
+            : mode === 'review'
+                ? [
+                    ['Mode', 'Review Mode', 'Evidence/source review mode.'],
+                    ['Source', sourceLabel, 'Active graph source boundary.'],
+                    ['Boundary', 'No provider calls', 'Browser code does not call chain providers directly.']
+                ]
+                : mode === 'analyst'
+                    ? [
+                        ['Mode', 'Analyst Mode', 'Contextual inspector and relevant next actions.'],
+                        ['Preset', preset, 'Session-only Crypto analyst preset.'],
+                        ['Source', sourceLabel, 'Active graph source boundary.'],
+                        ['Visible', `${visibleFlowCount}/${totalFlowCount}`, 'Visible transfer legs after active filters.']
+                    ]
+                    : [
+                        ['Mode', 'Flow Mode', 'Graph and minimal flow controls.'],
+                        ['Source', sourceLabel, 'Active graph source boundary.']
+                    ];
         return `
             <div class="crypto-session-status-strip" aria-label="CryptoPhotonic compact session status">
                 ${rows.map(([label, value, title]) => `
@@ -1583,11 +1636,14 @@
 
     function buildCryptoWorkflowHandoffActions() {
         const actions = [];
+        const uxMode = getCryptoUxMode();
+        if (uxMode === 'flow' || uxMode === 'review') return actions;
         const walletMode = state.dataMode === DATA_MODES.WALLET;
         const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
         const hasLoadedWallet = Boolean(state.walletLookup.lastWallet && state.walletLookup.eventCount);
         const hasHistoryRows = Boolean((state.history.loadedTransactions || []).length || state.history.totalLoadedTransactions);
         const hasDataset = Boolean(state.historyPreview.dataset);
+        const replayMode = uxMode === 'replay' || state.historyPreview.workspaceMode;
         const replayStatus = getHistoryReplayStatus();
         const totalSteps = getHistoryReplayTotalSteps(replayStatus);
         const step = Math.max(0, Math.min(totalSteps, Number(replayStatus.currentStep || state.historyPreview.audit?.selectedStep) || 0));
@@ -1602,7 +1658,7 @@
             });
             actions.push({
                 label: 'Commands',
-                detail: 'Replay, corridor, lineage actions',
+                detail: replayMode ? 'Replay, corridor, lineage actions' : 'Search analyst actions',
                 icon: 'fa-terminal',
                 statusAction: 'open-command-palette',
                 title: 'Open the command palette.'
@@ -1620,6 +1676,17 @@
             disabled: !hasLoadedWallet && (!hasWallet || state.walletLookup.inFlight),
             title: hasLoadedWallet ? 'Open the flow investigation tab.' : 'Load sanitized wallet activity through the Worker.'
         });
+
+        if (!replayMode) {
+            actions.push({
+                label: 'Commands',
+                detail: 'Search modes and focused actions',
+                icon: 'fa-terminal',
+                statusAction: 'open-command-palette',
+                title: 'Open the command palette.'
+            });
+            return actions.slice(0, 2);
+        }
 
         actions.push({
             label: hasHistoryRows ? 'Replay Dataset' : 'Stage History',
@@ -12760,6 +12827,8 @@
     }
 
     function updateInteractionDock() {
+        const uxMode = getCryptoUxMode();
+        const replayDockVisible = uxMode === 'replay' || state.historyPreview.workspaceMode;
         const fullscreenButton = document.getElementById('crypto-dock-fullscreen');
         if (fullscreenButton) {
             fullscreenButton.setAttribute('aria-pressed', state.fullscreen ? 'true' : 'false');
@@ -12812,22 +12881,28 @@
         const walletMode = state.dataMode === DATA_MODES.WALLET;
         const loadButton = document.getElementById('crypto-dock-load-activity');
         if (loadButton) {
-            loadButton.classList.toggle('is-hidden', !walletMode);
-            loadButton.disabled = !walletMode || state.walletLookup.inFlight;
+            const visible = walletMode && (uxMode === 'analyst' || uxMode === 'review');
+            loadButton.classList.toggle('is-hidden', !visible);
+            loadButton.disabled = !visible || state.walletLookup.inFlight;
             loadButton.classList.toggle('is-disabled', loadButton.disabled);
             loadButton.setAttribute('aria-disabled', loadButton.disabled ? 'true' : 'false');
             loadButton.title = state.walletLookup.inFlight
                 ? 'Wallet activity is already loading.'
-                : 'Load activity for the wallet address in Wallet Lookup mode.';
+                : visible
+                    ? 'Load activity for the wallet address in Wallet Lookup mode.'
+                    : 'Switch to Analyst or Review mode to load wallet activity from the dock.';
         }
 
         const replayWorkspaceButton = document.getElementById('crypto-dock-replay-workspace');
         if (replayWorkspaceButton) {
+            replayWorkspaceButton.classList.toggle('is-hidden', !replayDockVisible);
             replayWorkspaceButton.classList.toggle('is-active', state.historyPreview.workspaceMode);
             replayWorkspaceButton.setAttribute('aria-pressed', state.historyPreview.workspaceMode ? 'true' : 'false');
             replayWorkspaceButton.title = state.historyPreview.workspaceMode
                 ? 'Exit Replay Workspace Mode and restore the active Wallet Lookup graph canvas.'
-                : 'Open the large preview-only replay workspace. No history data is merged.';
+                : replayDockVisible
+                    ? 'Open the large preview-only replay workspace. No history data is merged.'
+                    : 'Switch to Replay mode to open the preview replay workspace.';
             const icon = replayWorkspaceButton.querySelector('i');
             if (icon) {
                 icon.classList.toggle('fa-clapperboard', !state.historyPreview.workspaceMode);
@@ -12840,10 +12915,10 @@
         const mobileReplayWorkspaceButton = document.getElementById('crypto-mobile-replay-workspace');
         if (mobileReplayWorkspaceButton) {
             const hasPreviewDataset = hasHistoryPreviewDataset();
-            mobileReplayWorkspaceButton.classList.toggle('is-hidden', !hasPreviewDataset);
+            mobileReplayWorkspaceButton.classList.toggle('is-hidden', !hasPreviewDataset || !replayDockVisible);
             mobileReplayWorkspaceButton.classList.toggle('is-active', state.historyPreview.workspaceMode);
             mobileReplayWorkspaceButton.setAttribute('aria-pressed', state.historyPreview.workspaceMode ? 'true' : 'false');
-            mobileReplayWorkspaceButton.disabled = !hasPreviewDataset;
+            mobileReplayWorkspaceButton.disabled = !hasPreviewDataset || !replayDockVisible;
             mobileReplayWorkspaceButton.classList.toggle('is-disabled', mobileReplayWorkspaceButton.disabled);
             mobileReplayWorkspaceButton.title = state.historyPreview.workspaceMode
                 ? 'Exit preview replay workspace.'
@@ -12858,6 +12933,7 @@
         const replayStatus = getHistoryReplayStatus();
         const replayTotalSteps = getHistoryReplayTotalSteps(replayStatus);
         const replayCurrentStep = Math.max(0, Math.min(replayTotalSteps, Number(replayStatus.currentStep || state.historyPreview.audit?.selectedStep) || 0));
+        document.querySelector('.crypto-mobile-graph-overlay')?.classList.toggle('is-replay-active', replayDockVisible && state.historyPreview.workspaceMode && Boolean(state.historyPreview.dataset) && Boolean(replayTotalSteps));
         [
             ['crypto-mobile-replay-prev', replayCurrentStep <= 0, 'Previous staged replay event'],
             ['crypto-mobile-replay-next', replayTotalSteps <= 0 || replayCurrentStep >= replayTotalSteps, 'Next staged replay event']
@@ -12881,8 +12957,8 @@
             const datasetStale = state.historyPreview.datasetMetrics
                 && Number(state.historyPreview.datasetMetrics.stagedRowsReceived || 0) !== Number((state.history.loadedTransactions || []).length);
             const disabled = state.history.inFlight || Boolean(datasetStale);
-            replayButton.classList.toggle('is-hidden', !hasDataset);
-            replayButton.disabled = !hasDataset || disabled;
+            replayButton.classList.toggle('is-hidden', !hasDataset || !replayDockVisible);
+            replayButton.disabled = !hasDataset || !replayDockVisible || disabled;
             replayButton.classList.toggle('is-disabled', replayButton.disabled);
             replayButton.classList.toggle('is-active', Boolean(status.playing));
             replayButton.setAttribute('aria-pressed', status.playing ? 'true' : 'false');

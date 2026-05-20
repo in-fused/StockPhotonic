@@ -1,5 +1,13 @@
 # Roadmap Notes
 
+## D239-D248 Institutional UX Simplification Pass 1 - Surface Hierarchy Reset
+
+- Reset StockPhotonic and CryptoPhotonic graph surfaces around mode-based hierarchy so Explore/Flow defaults to the graph plus minimal controls, Analyst shows contextual next actions, Review narrows toward source/evidence controls, and Replay owns replay/corridor/lineage surfaces.
+- Collapsed low-priority HUD, status, legend, route, breadcrumb, minimap, handoff, and replay chrome by mode rather than removing the underlying D151-D238 systems.
+- Made fullscreen graph-first by default, with nonessential HUD hidden behind compact restore/control affordances.
+- Simplified command-palette default scope so current-mode actions appear first while search still reaches grouped commands and subtitles.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, or browser-side provider-call changes are part of D239-D248.
+
 ## D229-D238 Institutional Surface Polish + Dense-Graph Usability Pass
 
 - Tightened StockPhotonic dense HUD surfaces with compact status, handoff, active legend, narrative, and route workspace overflow behavior driven by existing session graph state.

@@ -1997,3 +1997,75 @@
                 max-width: 48vw;
             }
         }
+
+/* D239-D248 mobile hierarchy reset: one dock, one contextual drawer, no duplicate graph chips. */
+@media (max-width: 768px) {
+            .graph-floating-toolbar,
+            .crypto-floating-toolbar {
+                display: none !important;
+            }
+
+            .stock-mobile-graph-overlay .mobile-graph-hint,
+            .crypto-mobile-graph-overlay .mobile-graph-hint {
+                display: none !important;
+            }
+
+            .stock-mobile-graph-overlay .mobile-graph-action:not(#stock-mobile-route-prev):not(#stock-mobile-route-next),
+            .crypto-mobile-graph-overlay .mobile-graph-action:not(#crypto-mobile-replay-prev):not(#crypto-mobile-replay-next) {
+                display: none !important;
+            }
+
+            .stock-mobile-graph-overlay,
+            .crypto-mobile-graph-overlay {
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(0.65rem, env(safe-area-inset-right));
+                bottom: calc(5.25rem + env(safe-area-inset-bottom)) !important;
+                justify-content: center;
+                pointer-events: none;
+            }
+
+            .stock-mobile-graph-overlay:not(.is-route-active),
+            .crypto-mobile-graph-overlay:not(.is-replay-active) {
+                display: none !important;
+            }
+
+            .stock-mobile-graph-overlay .mobile-graph-actions,
+            .crypto-mobile-graph-overlay .mobile-graph-actions {
+                width: auto;
+                max-width: calc(100vw - 1.3rem);
+                margin: 0;
+                border: 1px solid rgba(125, 211, 252, 0.16);
+                border-radius: 999px;
+                background: rgba(2, 6, 23, 0.78);
+                padding: 0.24rem;
+                pointer-events: auto;
+            }
+
+            .stock-mobile-graph-overlay .mobile-graph-action,
+            .crypto-mobile-graph-overlay .mobile-graph-action {
+                min-width: 2.42rem;
+                min-height: 2.42rem;
+            }
+
+            body[data-stock-ux-mode="explore"] .graph-spatial-breadcrumbs,
+            body[data-stock-ux-mode="analyst"] .graph-spatial-breadcrumbs,
+            body[data-stock-ux-mode="review"] .graph-spatial-breadcrumbs,
+            body[data-crypto-ux-mode="flow"] .crypto-spatial-breadcrumbs,
+            body[data-crypto-ux-mode="analyst"] .crypto-spatial-breadcrumbs,
+            body[data-crypto-ux-mode="review"] .crypto-spatial-breadcrumbs {
+                display: none !important;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .stock-mobile-graph-overlay,
+            #crypto-photonic-view.is-crypto-fullscreen:not(.is-replay-workspace) .crypto-mobile-graph-overlay {
+                display: none !important;
+            }
+
+            .photonic-command-panel {
+                max-height: calc(100dvh - 5.5rem - env(safe-area-inset-bottom));
+            }
+
+            .photonic-command-results {
+                max-height: min(50dvh, 24rem);
+            }
+        }

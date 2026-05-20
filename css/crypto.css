@@ -3047,3 +3047,223 @@ body.crypto-graph-fullscreen-active > header,
 #crypto-photonic-view.is-crypto-density-compressed.is-replay-workspace .crypto-replay-lineage-group:nth-of-type(n+3) {
             display: none;
         }
+
+/* D239-D248 hierarchy reset: Crypto source state is compact and replay chrome is mode-owned. */
+#crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-workspace-toolbar {
+            justify-content: flex-end;
+            margin-bottom: 0.35rem !important;
+            border: 0;
+            background: transparent;
+            padding: 0;
+        }
+
+#crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-workspace-toolbar > div:first-child,
+#crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-workspace-toolbar #crypto-reset-layout {
+            display: none !important;
+        }
+
+#crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-workspace-toolbar [title*="browser"] {
+            min-height: 1.85rem;
+            padding: 0.38rem 0.62rem;
+            border-radius: 999px;
+            font-size: 0.58rem;
+            letter-spacing: 0;
+        }
+
+.crypto-source-state-block {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+.crypto-source-state-head,
+.crypto-source-state-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.55rem;
+            min-width: 0;
+        }
+
+.crypto-source-state-actions {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+.crypto-source-boundary-badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 1.74rem;
+            border: 1px solid rgba(250, 204, 21, 0.18);
+            border-radius: 999px;
+            background: rgba(250, 204, 21, 0.09);
+            color: rgba(254, 249, 195, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.54rem;
+            line-height: 1;
+            padding: 0.34rem 0.5rem;
+            white-space: nowrap;
+        }
+
+.crypto-source-details {
+            border-top: 1px solid rgba(148, 163, 184, 0.10);
+            padding-top: 0.4rem;
+        }
+
+.crypto-source-details summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            cursor: pointer;
+            list-style: none;
+            color: rgba(207, 250, 254, 0.78);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            text-transform: uppercase;
+        }
+
+.crypto-source-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+.crypto-source-details summary::after {
+            content: "+";
+            color: rgba(165, 243, 252, 0.72);
+        }
+
+.crypto-source-details[open] summary::after {
+            content: "-";
+        }
+
+.crypto-source-details small {
+            color: rgba(148, 163, 184, 0.66);
+            font-size: 0.5rem;
+            text-transform: none;
+        }
+
+.crypto-source-details-body {
+            display: grid;
+            gap: 0.5rem;
+            margin-top: 0.48rem;
+        }
+
+.crypto-source-boundary-copy {
+            border: 1px solid rgba(250, 204, 21, 0.14);
+            border-radius: 8px;
+            background: rgba(250, 204, 21, 0.06);
+            color: rgba(254, 249, 195, 0.74);
+            padding: 0.48rem 0.55rem;
+            font-size: 0.68rem;
+            line-height: 1.35;
+        }
+
+.crypto-source-summary-grid {
+            grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+            gap: 0.28rem;
+        }
+
+.crypto-source-summary-grid > div {
+            padding: 0.36rem 0.44rem;
+            font-size: 0.66rem;
+            line-height: 1.22;
+        }
+
+body[data-crypto-ux-mode="flow"] #crypto-photonic-view:not(.is-replay-workspace) .crypto-contextual-inspector,
+body[data-crypto-ux-mode="flow"] #crypto-photonic-view:not(.is-replay-workspace) .crypto-spatial-breadcrumbs,
+body[data-crypto-ux-mode="flow"] #crypto-photonic-view:not(.is-replay-workspace) .crypto-floating-toolbar {
+            display: none !important;
+        }
+
+body[data-crypto-ux-mode="analyst"] #crypto-photonic-view:not(.is-replay-workspace) .crypto-floating-toolbar,
+body[data-crypto-ux-mode="analyst"] #crypto-photonic-view:not(.is-replay-workspace) .crypto-spatial-breadcrumbs,
+body[data-crypto-ux-mode="review"] #crypto-photonic-view:not(.is-replay-workspace) .crypto-floating-toolbar,
+body[data-crypto-ux-mode="review"] #crypto-photonic-view:not(.is-replay-workspace) .crypto-spatial-breadcrumbs,
+body[data-crypto-ux-mode="replay"] #crypto-photonic-view:not(.is-replay-workspace) .crypto-floating-toolbar,
+body[data-crypto-ux-mode="flow"] #crypto-photonic-view .crypto-floating-toolbar [data-toggle-crypto-inspector],
+body[data-crypto-ux-mode="review"] #crypto-photonic-view .crypto-floating-toolbar [data-toggle-crypto-inspector],
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) #crypto-dock-replay-workspace,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) #crypto-dock-replay-toggle,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) #crypto-mobile-replay-workspace,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) #crypto-mobile-replay-prev,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) #crypto-mobile-replay-next {
+            display: none !important;
+        }
+
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) .crypto-replay-workspace-overlay,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) .crypto-replay-handoff,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) .crypto-replay-intelligence-panel,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) .crypto-replay-corridor-panel,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) .crypto-replay-lineage-panel,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) .crypto-replay-continuity-panel,
+body:not([data-crypto-ux-mode="replay"]) #crypto-photonic-view:not(.is-replay-workspace) .crypto-replay-graph-chronology {
+            display: none !important;
+        }
+
+body[data-crypto-ux-mode="review"] #crypto-photonic-view .crypto-workflow-handoff,
+body[data-crypto-ux-mode="review"] #crypto-photonic-view .crypto-history-collapse,
+body[data-crypto-ux-mode="review"] #crypto-photonic-view .crypto-history-preview-collapse,
+body[data-crypto-ux-mode="review"] #crypto-photonic-view .crypto-timeline-collapse {
+            display: none !important;
+        }
+
+body[data-crypto-ux-mode="replay"] #crypto-photonic-view .crypto-floating-toolbar [data-toggle-crypto-inspector],
+body[data-crypto-ux-mode="replay"] #crypto-photonic-view .crypto-spatial-breadcrumbs {
+            display: none !important;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen > .flex,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-os-bar,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-interaction-dock,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-floating-toolbar,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-spatial-breadcrumbs,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-contextual-inspector {
+            display: none !important;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
+            height: calc(100dvh - 1.7rem);
+            padding: 0.5rem !important;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-layout-grid {
+            display: block !important;
+            height: 100%;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-graph-column,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-canvas-wrap {
+            height: 100% !important;
+            min-height: 0 !important;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar {
+            position: absolute;
+            top: max(0.75rem, env(safe-area-inset-top));
+            right: max(0.75rem, env(safe-area-inset-right));
+            z-index: 86;
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0;
+            background: transparent;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar > div:first-child,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar .help-trigger,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-reset-view,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-reset-layout,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar [title*="browser"] {
+            display: none !important;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle {
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            min-height: 2.12rem;
+            border-radius: 999px;
+            border-color: rgba(45, 212, 191, 0.32);
+            background: rgba(2, 6, 23, 0.78);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.34);
+            backdrop-filter: blur(14px);
+        }

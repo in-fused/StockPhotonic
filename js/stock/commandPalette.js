@@ -174,6 +174,102 @@
         'replay-continuity-view'
     ]);
 
+    const DEFAULT_STOCK_COMMANDS = Object.freeze({
+        explore: [
+            'fit-graph',
+            'reset-graph',
+            'fullscreen-stock',
+            'focus-mode',
+            'controls',
+            'mode-analyst',
+            'mode-review',
+            'mode-replay',
+            'preset-exploration',
+            'preset-performance',
+            'center-selected-node',
+            'fit-selected-neighborhood',
+            'crypto-product'
+        ],
+        analyst: [
+            'fit-graph',
+            'fullscreen-stock',
+            'mode-explore',
+            'mode-review',
+            'controls',
+            'topology-summary',
+            'topology-centrality',
+            'compare-strongest-route',
+            'compare-source-route',
+            'preset-route',
+            'route-forward',
+            'route-backward',
+            'route-workspace',
+            'stage-current'
+        ],
+        review: [
+            'mode-explore',
+            'mode-analyst',
+            'source-workbench',
+            'source-lens',
+            'overlay-source-confidence',
+            'sec-preview',
+            'candidate-preview',
+            'preset-evidence',
+            'preset-evidence-investigation',
+            'source-gap-filter',
+            'clear-overlays',
+            'clear-selected-relationship'
+        ],
+        replay: [
+            'mode-explore',
+            'mode-analyst',
+            'fullscreen-stock',
+            'stock-replay-neighborhood',
+            'preset-replay-investigation',
+            'stock-chronology-next',
+            'stock-chronology-prev',
+            'stock-replay-checkpoint',
+            'route-forward',
+            'route-backward',
+            'clear-route-trace'
+        ]
+    });
+
+    const DEFAULT_CRYPTO_COMMANDS = Object.freeze({
+        flow: [
+            'stock-product',
+            'crypto-fullscreen',
+            'crypto-center',
+            'crypto-labels',
+            'crypto-product'
+        ],
+        analyst: [
+            'stock-product',
+            'crypto-fullscreen',
+            'crypto-center',
+            'crypto-labels',
+            'crypto-product'
+        ],
+        review: [
+            'stock-product',
+            'crypto-fullscreen',
+            'crypto-product'
+        ],
+        replay: [
+            'stock-product',
+            'crypto-fullscreen',
+            'crypto-replay',
+            'crypto-preset-replay-investigation',
+            'crypto-replay-next-event',
+            'crypto-replay-previous-event',
+            'crypto-center-replay',
+            'crypto-replay-next-corridor',
+            'crypto-replay-previous-corridor',
+            'crypto-replay-lineage',
+            'crypto-replay-toggle-narratives'
+        ]
+    });
+
     const state = {
         initialized: false,
         open: false,
@@ -422,8 +518,21 @@
     function getFilteredCommands() {
         const query = normalize(state.query);
         const commands = getCommands();
-        if (!query) return commands;
+        if (!query) return getDefaultCommandsForCurrentMode(commands);
         return commands.filter(item => normalize(`${item.label} ${item.group} ${item.subtitle} ${item.keywords} ${GROUP_META[item.group]?.summary || ''}`).includes(query));
+    }
+
+    function getDefaultCommandsForCurrentMode(commands = []) {
+        const isCrypto = document.body?.classList?.contains('is-crypto-active');
+        const mode = isCrypto
+            ? document.body?.dataset?.cryptoUxMode || 'flow'
+            : document.body?.dataset?.stockUxMode || 'explore';
+        const orderedIds = isCrypto
+            ? DEFAULT_CRYPTO_COMMANDS[mode] || DEFAULT_CRYPTO_COMMANDS.flow
+            : DEFAULT_STOCK_COMMANDS[mode] || DEFAULT_STOCK_COMMANDS.explore;
+        const byId = new Map(commands.map(item => [item.id, item]));
+        const scoped = orderedIds.map(id => byId.get(id)).filter(Boolean);
+        return scoped.length ? scoped : commands.slice(0, 14);
     }
 
     function render() {
@@ -600,7 +709,7 @@
     function updatePaletteCopy() {
         const hint = document.querySelector('#photonic-command-palette .photonic-command-hint');
         if (hint) {
-            hint.textContent = 'Search tasks, modes, presets, routes, replay states, and handoffs.';
+            hint.textContent = 'Current mode actions first. Search modes, routes, review controls, replay states, and handoffs.';
         }
     }
 

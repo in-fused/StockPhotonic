@@ -3071,3 +3071,181 @@ body.graph-fullscreen-active > header {
             top: min(32vh, 17rem);
             max-height: 5.8rem;
         }
+
+/* D239-D248 hierarchy reset: Stock graph chrome is mode-owned and collapsed unless it is the active surface. */
+body[data-stock-ux-mode="explore"] #graph-adaptive-hud,
+body[data-stock-ux-mode="explore"] #graph-os-status-panel,
+body[data-stock-ux-mode="explore"] #graph-investigation-narrative,
+body[data-stock-ux-mode="explore"] #graph-spatial-breadcrumbs,
+body[data-stock-ux-mode="explore"] #graph-timeline-rail,
+body[data-stock-ux-mode="explore"] #graph-workspace-memory,
+body[data-stock-ux-mode="explore"] #graph-investigation-rail,
+body[data-stock-ux-mode="explore"] #graph-cinematic-story,
+body[data-stock-ux-mode="explore"] #graph-annotation-layer,
+body[data-stock-ux-mode="explore"] #graph-route-workspace,
+body[data-stock-ux-mode="explore"] #graph-explorer-dock,
+body[data-stock-ux-mode="explore"] #graph-intelligence-card,
+body[data-stock-ux-mode="explore"] #graph-active-legend,
+body[data-stock-ux-mode="explore"] #graph-overlay-stats,
+body[data-stock-ux-mode="explore"] #sec-production-legend,
+body[data-stock-ux-mode="explore"] #graph-minimap-canvas,
+body[data-stock-ux-mode="explore"] #graph-minimap-toggle,
+body[data-stock-ux-mode="explore"] .graph-floating-toolbar {
+            display: none !important;
+        }
+
+body[data-stock-ux-mode="analyst"] #graph-active-legend,
+body[data-stock-ux-mode="analyst"] #graph-investigation-narrative,
+body[data-stock-ux-mode="analyst"] #graph-spatial-breadcrumbs,
+body[data-stock-ux-mode="analyst"] #graph-timeline-rail,
+body[data-stock-ux-mode="analyst"] #graph-workspace-memory,
+body[data-stock-ux-mode="analyst"] #graph-investigation-rail,
+body[data-stock-ux-mode="analyst"] #graph-cinematic-story,
+body[data-stock-ux-mode="analyst"] #graph-annotation-layer,
+body[data-stock-ux-mode="analyst"] #graph-adaptive-hud,
+body[data-stock-ux-mode="analyst"] #graph-explorer-dock,
+body[data-stock-ux-mode="analyst"] #graph-intelligence-card,
+body[data-stock-ux-mode="analyst"] #graph-overlay-stats,
+body[data-stock-ux-mode="analyst"] #sec-production-legend,
+body[data-stock-ux-mode="analyst"] #graph-minimap-canvas,
+body[data-stock-ux-mode="analyst"] #graph-minimap-toggle,
+body[data-stock-ux-mode="analyst"] .graph-floating-toolbar {
+            display: none !important;
+        }
+
+body[data-stock-ux-mode="analyst"] #graph-intelligence-view.is-route-workspace-compact #graph-os-status-panel {
+            display: none !important;
+        }
+
+body[data-stock-ux-mode="review"] #graph-os-status-panel,
+body[data-stock-ux-mode="review"] #graph-investigation-narrative,
+body[data-stock-ux-mode="review"] #graph-spatial-breadcrumbs,
+body[data-stock-ux-mode="review"] #graph-timeline-rail,
+body[data-stock-ux-mode="review"] #graph-workspace-memory,
+body[data-stock-ux-mode="review"] #graph-investigation-rail,
+body[data-stock-ux-mode="review"] #graph-route-workspace,
+body[data-stock-ux-mode="review"] #graph-cinematic-story,
+body[data-stock-ux-mode="review"] #graph-annotation-layer,
+body[data-stock-ux-mode="review"] #graph-explorer-dock,
+body[data-stock-ux-mode="review"] #graph-intelligence-card,
+body[data-stock-ux-mode="review"] #graph-overlay-stats,
+body[data-stock-ux-mode="review"] #graph-adaptive-hud,
+body[data-stock-ux-mode="review"] #graph-minimap-canvas,
+body[data-stock-ux-mode="review"] #graph-minimap-toggle,
+body[data-stock-ux-mode="review"] .graph-floating-toolbar {
+            display: none !important;
+        }
+
+body[data-stock-ux-mode="review"] #graph-active-legend {
+            top: 1rem;
+            right: 1rem;
+            width: min(17.5rem, calc(100% - 2rem));
+            max-height: min(15rem, calc(100% - 5rem));
+            padding: 0.5rem;
+        }
+
+body[data-stock-ux-mode="review"] .graph-active-legend-item:nth-child(n+7),
+body[data-stock-ux-mode="review"] .graph-active-legend-swatches span:nth-child(n+5) {
+            display: none;
+        }
+
+body[data-stock-ux-mode="replay"] #graph-os-status-panel,
+body[data-stock-ux-mode="replay"] #graph-active-legend,
+body[data-stock-ux-mode="replay"] #graph-investigation-narrative,
+body[data-stock-ux-mode="replay"] #graph-spatial-breadcrumbs,
+body[data-stock-ux-mode="replay"] #graph-workspace-memory,
+body[data-stock-ux-mode="replay"] #graph-investigation-rail,
+body[data-stock-ux-mode="replay"] #graph-cinematic-story,
+body[data-stock-ux-mode="replay"] #graph-annotation-layer,
+body[data-stock-ux-mode="replay"] #graph-explorer-dock,
+body[data-stock-ux-mode="replay"] #graph-intelligence-card,
+body[data-stock-ux-mode="replay"] #graph-overlay-stats,
+body[data-stock-ux-mode="replay"] #sec-production-legend,
+body[data-stock-ux-mode="replay"] #graph-adaptive-hud,
+body[data-stock-ux-mode="replay"] #graph-minimap-canvas,
+body[data-stock-ux-mode="replay"] #graph-minimap-toggle,
+body[data-stock-ux-mode="replay"] .graph-floating-toolbar {
+            display: none !important;
+        }
+
+body:not([data-stock-ux-mode="analyst"]):not([data-stock-ux-mode="replay"]) #graph-route-workspace {
+            display: none !important;
+        }
+
+body[data-stock-ux-mode="replay"] #graph-timeline-rail {
+            left: 1rem;
+            right: 1rem;
+            bottom: 1rem;
+        }
+
+body[data-stock-ux-mode="replay"] .graph-timeline-track {
+            max-width: min(48rem, calc(100% - 2rem));
+            border: 1px solid rgba(125, 211, 252, 0.12);
+            border-radius: 999px;
+            background: rgba(2, 6, 23, 0.56);
+            backdrop-filter: blur(12px);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-floating-toolbar,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-mode-hud,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-adaptive-hud,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-os-status-panel,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-investigation-narrative,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-spatial-breadcrumbs,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-timeline-rail,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-cinematic-story,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-workspace-memory,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-investigation-rail,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-annotation-layer,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #sec-production-legend,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-explorer-dock,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-route-workspace,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-intelligence-card,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-active-legend,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-overlay-stats,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-minimap-canvas,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden #graph-minimap-toggle,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-sidebar-column {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore {
+            z-index: 80;
+            min-height: 2.1rem;
+            padding: 0.46rem 0.72rem;
+            border-radius: 999px !important;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen:not(.is-hud-hidden) #graph-fullscreen-toggle {
+            display: inline-flex !important;
+        }
+
+.photonic-command-panel {
+            width: min(600px, calc(100vw - 2rem));
+            max-height: min(68dvh, 34rem);
+        }
+
+.photonic-command-results {
+            max-height: min(42vh, 22rem);
+        }
+
+.photonic-command-section-label small {
+            max-width: min(52%, 18rem);
+        }
+
+.photonic-command-row,
+.photonic-command-empty {
+            min-height: 2.02rem;
+            padding: 0.34rem 0.44rem;
+        }
+
+.photonic-command-row-subtitle {
+            font-size: 0.6rem;
+        }
+
+.photonic-command-row-status {
+            max-width: 7.4rem;
+            font-size: 0.52rem;
+        }

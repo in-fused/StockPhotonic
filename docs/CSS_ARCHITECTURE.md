@@ -128,6 +128,14 @@ D229-D238 institutional surface polish keeps that split:
 - Mobile fullscreen route/replay dock placement and compact command-palette overrides live in `mobile.css`.
 - CSS must not encode workflow intelligence, source authority, persistence guarantees, provider/API behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
 
+D239-D248 institutional UX simplification keeps systems intact but collapses inactive chrome by mode:
+
+- Stock surface hierarchy rules for Explore, Analyst, Review, Replay, graph-first fullscreen, and command-palette density live in `graph.css` because they orchestrate Stock graph chrome without changing graph intelligence ownership.
+- Crypto source-state clustering, mode-owned status/action visibility, replay-only corridor/lineage chrome, and graph-first fullscreen rules live in `crypto.css`.
+- Mobile duplicate-control hiding, contextual route/replay step affordances, breadcrumb suppression, and compact command-palette limits live in `mobile.css`.
+- JavaScript may choose current-mode command defaults or render compact source/status rows, but CSS must only react to stable mode attributes and product-scoped classes. Systems remain preserved, hidden, or collapsed by mode.
+- CSS must not encode source authority, replay certainty, wallet identity, persistence guarantees, provider/API behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

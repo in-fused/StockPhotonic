@@ -22,8 +22,14 @@
         'replay-focus',
         'replay-lineage',
         'replay-corridor',
+        'replay-next-corridor',
+        'replay-previous-corridor',
+        'replay-cluster',
+        'replay-bridge-wallet',
         'replay-token-concentration',
-        'replay-wallet-corridor'
+        'replay-wallet-corridor',
+        'replay-corridor-overlay',
+        'replay-continuity-view'
     ]);
 
     const state = {
@@ -237,9 +243,15 @@
             command('crypto-replay-previous-event', 'Previous Crypto Replay Event', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.previousReplayEvent?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-event') }),
             command('crypto-replay-cycle-focus', 'Cycle Crypto Replay Focus', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.cycleReplayFocus?.(1), { disabledReason: () => cryptoCommandDisabledReason('replay-focus') }),
             command('crypto-replay-cycle-focus-prev', 'Cycle Crypto Replay Focus Back', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.cycleReplayFocus?.(-1), { disabledReason: () => cryptoCommandDisabledReason('replay-focus') }),
+            command('crypto-replay-next-corridor', 'Next Replay Corridor', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.stepReplayCorridor?.(1), { disabledReason: () => cryptoCommandDisabledReason('replay-next-corridor') }),
+            command('crypto-replay-previous-corridor', 'Previous Replay Corridor', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.stepReplayCorridor?.(-1), { disabledReason: () => cryptoCommandDisabledReason('replay-previous-corridor') }),
+            command('crypto-replay-focus-cluster', 'Focus Replay Cluster', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.focusReplayCluster?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-cluster') }),
+            command('crypto-replay-toggle-corridor-overlay', 'Toggle Replay Corridor Overlay', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.toggleReplayCorridorOverlay?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-corridor-overlay') }),
+            command('crypto-replay-toggle-continuity-view', 'Toggle Replay Continuity View', 'Crypto Replay', () => window.CryptoPhotonic?.ui?.toggleReplayContinuityView?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-continuity-view') }),
 
             command('crypto-flow-corridor-isolate', 'Isolate Crypto Flow Corridor', 'Crypto Flow', () => window.CryptoPhotonic?.ui?.isolateReplayFlowCorridor?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-corridor') }),
-            command('crypto-liquidity-concentration', 'Focus Crypto Liquidity Concentration', 'Crypto Flow', () => window.CryptoPhotonic?.ui?.focusReplayLiquidityConcentration?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-token-concentration') }),
+            command('crypto-replay-bridge-wallet', 'Focus Replay Bridge Wallet', 'Crypto Flow', () => window.CryptoPhotonic?.ui?.focusReplayBridgeWallet?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-bridge-wallet') }),
+            command('crypto-replay-concentration-zone', 'Focus Replay Concentration Zone', 'Crypto Flow', () => window.CryptoPhotonic?.ui?.focusReplayConcentrationZone?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-token-concentration') }),
             command('crypto-wallet-corridor-focus', 'Focus Crypto Wallet Corridor', 'Crypto Flow', () => window.CryptoPhotonic?.ui?.focusReplayWalletCorridor?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-wallet-corridor') }),
 
             command('snapshot-current', 'Capture Graph Snapshot', 'Snapshot / Investigation', () => callGlobal('captureCurrentGraphSnapshot')),

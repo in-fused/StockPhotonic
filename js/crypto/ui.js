@@ -165,6 +165,8 @@
                 flowLineage: []
             },
             narrativesVisible: true,
+            corridorOverlayVisible: true,
+            continuityViewVisible: true,
             focusCycleIndex: 0,
             replaySpeed: 'standard',
             lastMessage: ''
@@ -8959,6 +8961,87 @@
         });
     }
 
+    async function stepReplayCorridor(direction = 1) {
+        if (!state.historyPreview.workspaceMode) setReplayWorkspaceMode(true, { force: true });
+        if (!state.historyPreview.dataset) {
+            await buildHistoryPreviewDataset({ skipRenderStatus: true });
+        }
+        const context = buildCurrentReplayWorkspaceContext();
+        const profile = context?.replayIntelligence?.corridorProfile || {};
+        const targetStep = Number(direction) < 0
+            ? Number(profile.previousCorridorStep) || 0
+            : Number(profile.nextCorridorStep) || 0;
+        const targetRoute = Number(direction) < 0
+            ? profile.previousCorridorRoute || ''
+            : profile.nextCorridorRoute || '';
+        if (!targetStep) {
+            state.historyPreview.lastMessage = Number(direction) < 0
+                ? 'No previous replay corridor transition is visible in the staged replay window.'
+                : 'No next replay corridor transition is visible in the staged replay window.';
+            updateReplayWorkspaceShell();
+            return null;
+        }
+        if (targetRoute) {
+            setReplayNeighborhoodFocus({
+                mode: 'route',
+                route: targetRoute
+            }, 'Replay corridor traversal narrowed to the selected staged route transition.', { persist: false });
+        }
+        return selectHistoryReplayEventByStep(targetStep, {
+            pause: true,
+            addBreadcrumb: true,
+            message: Number(direction) < 0
+                ? 'Replay moved to the previous visible corridor transition in staged data only.'
+                : 'Replay moved to the next visible corridor transition in staged data only.'
+        });
+    }
+
+    async function focusReplayCluster(options = {}) {
+        if (!state.historyPreview.workspaceMode) setReplayWorkspaceMode(true, { force: true });
+        if (!state.historyPreview.dataset) {
+            await buildHistoryPreviewDataset({ skipRenderStatus: true });
+        }
+        const context = buildCurrentReplayWorkspaceContext();
+        const clusters = context?.clusters || {};
+        const cluster = [
+            ...(clusters.routes || []),
+            ...(clusters.tokens || []),
+            ...(clusters.counterparties || []),
+            ...(clusters.hotspots || [])
+        ].sort((a, b) => Number(b.count || 0) - Number(a.count || 0) || String(a.label || '').localeCompare(String(b.label || '')))[0] || null;
+        if (!cluster) {
+            state.historyPreview.lastMessage = 'No replay cluster is visible above the bounded staged-row threshold.';
+            updateReplayWorkspaceShell();
+            return null;
+        }
+        setReplayNeighborhoodFocus({
+            mode: 'cluster',
+            clusterKey: cluster.key || '',
+            clusterKind: cluster.kind || '',
+            route: cluster.route || '',
+            token: cluster.token || 'all',
+            wallet: cluster.wallet || ''
+        }, 'Replay cluster focus uses repeated staged replay patterns only.', { persist: false });
+        const target = cluster.events?.[0] || (context.events || []).find(event => {
+            if (cluster.route) return getReplayEventRouteKey(event) === cluster.route;
+            if (cluster.token) return String(event.token || event.symbol || '').toUpperCase() === cluster.token;
+            if (cluster.wallet) return [
+                event.sourceWallet || event.source_wallet,
+                event.destinationWallet || event.destination_wallet
+            ].includes(cluster.wallet);
+            return false;
+        });
+        if (target?.step) {
+            return selectHistoryReplayEventByStep(target.step, {
+                pause: true,
+                addBreadcrumb: true,
+                persistCheckpoint: options.persist !== false,
+                message: 'Replay cluster focus uses repeated staged replay patterns only.'
+            });
+        }
+        return cluster;
+    }
+
     async function isolateReplayFlowCorridor(options = {}) {
         if (!state.historyPreview.workspaceMode) setReplayWorkspaceMode(true, { force: true });
         if (!state.historyPreview.dataset) {
@@ -9006,17 +9089,57 @@
         setReplayNeighborhoodFocus({
             mode: 'token',
             token: tokenZone.token
-        }, 'Liquidity concentration focus uses token visibility from staged replay rows only.', { persist: false });
+        }, 'Replay concentration focus uses token visibility from staged replay rows only.', { persist: false });
         const event = (context.events || []).find(item => String(item.token || item.symbol || '').toUpperCase() === tokenZone.token);
         if (event?.step) {
             return selectHistoryReplayEventByStep(event.step, {
                 pause: true,
                 addBreadcrumb: true,
                 persistCheckpoint: options.persist !== false,
-                message: 'Liquidity concentration focus uses token visibility from staged replay rows only.'
+                message: 'Replay concentration focus uses token visibility from staged replay rows only.'
             });
         }
         return tokenZone;
+    }
+
+    function focusReplayConcentrationZone(options = {}) {
+        return focusReplayLiquidityConcentration(options);
+    }
+
+    async function focusReplayBridgeWallet(options = {}) {
+        if (!state.historyPreview.workspaceMode) setReplayWorkspaceMode(true, { force: true });
+        if (!state.historyPreview.dataset) {
+            await buildHistoryPreviewDataset({ skipRenderStatus: true });
+        }
+        const context = buildCurrentReplayWorkspaceContext();
+        const bridge = context?.replayIntelligence?.flowSummary?.topBridgeWallet || null;
+        const wallet = bridge?.wallet || '';
+        if (!wallet) {
+            state.historyPreview.lastMessage = 'No replay bridge wallet is visible across staged replay corridors.';
+            updateReplayWorkspaceShell();
+            return null;
+        }
+        const filters = normalizeReplayAuditFilters(state.historyPreview.audit?.filters);
+        filters.counterparty = wallet;
+        state.historyPreview.audit.filters = filters;
+        state.historyPreview.audit.selectedWallet = wallet;
+        state.historyPreview.replayAnimator?.setAuditFilters?.(filters);
+        setReplayNeighborhoodFocus({
+            mode: 'wallet',
+            wallet
+        }, 'Replay bridge-wallet focus uses address-level staged corridor overlap only.', { persist: false });
+        const target = (context.events || []).find(item =>
+            (item.sourceWallet || item.source_wallet) === wallet ||
+            (item.destinationWallet || item.destination_wallet) === wallet);
+        if (target?.step) {
+            return selectHistoryReplayEventByStep(target.step, {
+                pause: true,
+                addBreadcrumb: true,
+                persistCheckpoint: options.persist !== false,
+                message: 'Replay bridge-wallet focus uses address-level staged corridor overlap only.'
+            });
+        }
+        return bridge;
     }
 
     async function focusReplayWalletCorridor() {
@@ -9042,6 +9165,28 @@
             mode: 'wallet',
             wallet
         }, 'Wallet corridor focus is derived from visible staged replay rows only.', { persist: false });
+    }
+
+    function toggleReplayCorridorOverlay(force) {
+        state.historyPreview.corridorOverlayVisible = typeof force === 'boolean'
+            ? force
+            : state.historyPreview.corridorOverlayVisible === false;
+        state.historyPreview.lastMessage = state.historyPreview.corridorOverlayVisible
+            ? 'Replay corridor overlay is visible. Corridor wording is derived from staged replay rows only.'
+            : 'Replay corridor overlay is hidden for this session. Replay data and filters are unchanged.';
+        updateReplayWorkspaceShell();
+        return state.historyPreview.corridorOverlayVisible;
+    }
+
+    function toggleReplayContinuityView(force) {
+        state.historyPreview.continuityViewVisible = typeof force === 'boolean'
+            ? force
+            : state.historyPreview.continuityViewVisible === false;
+        state.historyPreview.lastMessage = state.historyPreview.continuityViewVisible
+            ? 'Replay continuity view is visible. Confidence remains staged-window only.'
+            : 'Replay continuity view is hidden for this session. Continuity state is still used by reasoning chips.';
+        updateReplayWorkspaceShell();
+        return state.historyPreview.continuityViewVisible;
     }
 
     async function applyCryptoAnalystPreset(key = '') {
@@ -9116,7 +9261,9 @@
             recentEvents: audit.recentSteps || [],
             investigationStack: audit.investigationStack || [],
             flowLineage: audit.flowLineage || [],
-            narrativesVisible: state.historyPreview.narrativesVisible !== false
+            narrativesVisible: state.historyPreview.narrativesVisible !== false,
+            corridorOverlayVisible: state.historyPreview.corridorOverlayVisible !== false,
+            continuityViewVisible: state.historyPreview.continuityViewVisible !== false
         });
     }
 
@@ -9139,6 +9286,11 @@
                 ? { disabled: false, reason: '' }
                 : { disabled: true, reason: 'Open Crypto replay workspace with staged replay steps first.' };
         }
+        if (key === 'replay-corridor-overlay' || key === 'replay-continuity-view') {
+            return workspaceOpen
+                ? { disabled: false, reason: '' }
+                : { disabled: true, reason: 'Open Crypto replay workspace first.' };
+        }
         if (key === 'replay-lineage') {
             const hasLineage = (audit.investigationStack || []).length || (audit.recentSteps || []).length || (audit.breadcrumbs || []).length;
             return workspaceOpen && hasLineage
@@ -9151,11 +9303,33 @@
                 ? { disabled: false, reason: '' }
                 : { disabled: true, reason: 'No repeated replay corridor is visible yet.' };
         }
+        if (key === 'replay-next-corridor' || key === 'replay-previous-corridor') {
+            const context = workspaceOpen && hasDataset ? buildCurrentReplayWorkspaceContext() : null;
+            const profile = context?.replayIntelligence?.corridorProfile || {};
+            const step = key === 'replay-next-corridor'
+                ? Number(profile.nextCorridorStep) || 0
+                : Number(profile.previousCorridorStep) || 0;
+            return step
+                ? { disabled: false, reason: '' }
+                : { disabled: true, reason: 'No replay corridor transition is visible in that direction.' };
+        }
+        if (key === 'replay-cluster') {
+            const context = hasDataset ? buildCurrentReplayWorkspaceContext() : null;
+            return context?.clusters?.total
+                ? { disabled: false, reason: '' }
+                : { disabled: true, reason: 'No replay cluster is visible above the bounded threshold.' };
+        }
         if (key === 'replay-token-concentration') {
             const context = hasDataset ? buildCurrentReplayWorkspaceContext() : null;
             return context?.replayIntelligence?.flowSummary?.topToken
                 ? { disabled: false, reason: '' }
                 : { disabled: true, reason: 'No token concentration zone is visible yet.' };
+        }
+        if (key === 'replay-bridge-wallet') {
+            const context = hasDataset ? buildCurrentReplayWorkspaceContext() : null;
+            return context?.replayIntelligence?.flowSummary?.topBridgeWallet
+                ? { disabled: false, reason: '' }
+                : { disabled: true, reason: 'No bridge wallet spans visible replay corridors yet.' };
         }
         if (key === 'replay-wallet-corridor') {
             const context = hasDataset ? buildCurrentReplayWorkspaceContext() : null;
@@ -9254,6 +9428,8 @@
                 investigationStack: audit.investigationStack || [],
                 flowLineage: audit.flowLineage || [],
                 narrativesVisible: state.historyPreview.narrativesVisible !== false,
+                corridorOverlayVisible: state.historyPreview.corridorOverlayVisible !== false,
+                continuityViewVisible: state.historyPreview.continuityViewVisible !== false,
                 checkpoint,
                 bookmarks,
                 stale,
@@ -9700,6 +9876,27 @@
         if (action === 'toggle-narratives') {
             return toggleReplayNarratives();
         }
+        if (action === 'next-corridor') {
+            return stepReplayCorridor(1);
+        }
+        if (action === 'previous-corridor') {
+            return stepReplayCorridor(-1);
+        }
+        if (action === 'focus-cluster') {
+            return focusReplayCluster();
+        }
+        if (action === 'focus-bridge-wallet') {
+            return focusReplayBridgeWallet();
+        }
+        if (action === 'focus-concentration-zone') {
+            return focusReplayConcentrationZone();
+        }
+        if (action === 'toggle-corridor-overlay') {
+            return toggleReplayCorridorOverlay();
+        }
+        if (action === 'toggle-continuity-view') {
+            return toggleReplayContinuityView();
+        }
         if (action === 'continue-older' || action === 'continue-newer') {
             return continueReplayWindow(action === 'continue-older' ? 'older' : 'newer');
         }
@@ -9708,6 +9905,25 @@
         }
         if (action === 'collapse-neighborhood') {
             return setReplayNeighborhoodFocus(null, 'Replay neighborhood collapsed. Staged replay data and Wallet Lookup graph are unchanged.');
+        }
+        if (action === 'focus-corridor') {
+            const route = details.route || '';
+            const step = Number(details.step) || 0;
+            if (route) {
+                setReplayNeighborhoodFocus({
+                    mode: 'route',
+                    route
+                }, 'Replay corridor focus narrowed to staged same-route rows only.', { persist: false });
+            }
+            if (step) {
+                return selectHistoryReplayEventByStep(step, {
+                    pause: true,
+                    addBreadcrumb: true,
+                    message: 'Replay corridor focus narrowed to staged same-route rows only.'
+                });
+            }
+            updateReplayWorkspaceShell();
+            return route ? { route, stagedHistoryOnly: true } : null;
         }
         if (!event) {
             state.historyPreview.lastMessage = 'Select a replay transfer before running replay audit actions.';
@@ -12546,9 +12762,15 @@
         openReplayLineage,
         jumpBackReplayLineage,
         cycleReplayFocus,
+        stepReplayCorridor,
         isolateReplayFlowCorridor,
         focusReplayLiquidityConcentration,
+        focusReplayConcentrationZone,
+        focusReplayCluster,
+        focusReplayBridgeWallet,
         focusReplayWalletCorridor,
+        toggleReplayCorridorOverlay,
+        toggleReplayContinuityView,
         setReplayNarrativesVisible,
         toggleReplayNarratives,
         applyCryptoAnalystPreset,

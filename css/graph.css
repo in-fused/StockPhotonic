@@ -1837,6 +1837,23 @@ body.graph-fullscreen-active > header {
             color: rgba(253, 244, 255, 0.7);
         }
 
+.graph-continuity-chrome {
+            min-width: 0;
+            border-radius: 8px;
+        }
+
+.graph-traversal-chrome {
+            min-width: 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(125, 211, 252, 0.32) rgba(255, 255, 255, 0.04);
+        }
+
+.graph-traversal-chrome button {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
 .graph-investigation-narrative .graph-investigation-lineage {
             margin-top: 0.4rem;
         }

@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/base.css?v=d151-graph-os">
     <link rel="stylesheet" href="css/shell.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/graph.css?v=d153-cinematic-graph">
+    <link rel="stylesheet" href="css/graph.css?v=d209-replay-corridor">
     <link rel="stylesheet" href="css/stock.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/crypto.css?v=d153-cinematic-graph">
+    <link rel="stylesheet" href="css/crypto.css?v=d209-replay-corridor">
     <link rel="stylesheet" href="css/review.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/mobile.css?v=d153-cinematic-graph">
+    <link rel="stylesheet" href="css/mobile.css?v=d209-replay-corridor">
 </head>
 <body class="photonic-bg graph-first-os" data-stock-ux-mode="explore" data-crypto-ux-mode="flow" data-control-layer="primary">
     <header class="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
@@ -1345,7 +1345,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
     <script src="js/graph/semanticZoom.js?v=d152-semantic-zoom"></script>
-    <script src="js/graph/readability.js?v=d161-readability"></script>
+    <script src="js/graph/readability.js?v=d209-replay-corridor"></script>
     <script src="js/graph/minimap.js?v=d153-cinematic-graph"></script>
     <script src="js/graph/cinematic.js?v=d153-cinematic-graph"></script>
     <script src="js/graph/timeline.js?v=d165-timeline"></script>
@@ -1364,7 +1364,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/ui/search.js?v=d147-candidate-company-preview"></script>
     <script src="js/ui/controls.js"></script>
     <script src="js/ui/operatingShell.js?v=d151-graph-os"></script>
-    <script src="js/stock/commandPalette.js?v=d179-graph-os-validation"></script>
+    <script src="js/stock/commandPalette.js?v=d209-replay-corridor"></script>
     <script src="js/crypto/core.js"></script>
     <script src="js/crypto/graph.js"></script>
     <script src="js/crypto/layout.js"></script>
@@ -1372,14 +1372,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/crypto/statusPanels.js?v=d132-mega"></script>
     <script src="js/crypto/historyWorkspace.js?v=d132-mega"></script>
     <script src="js/crypto/investigationWorkspace.js?v=d132-mega"></script>
-    <script src="js/crypto/replayWorkspace.js?v=d135-replay-windows-checkpoints"></script>
+    <script src="js/crypto/replayWorkspace.js?v=d209-replay-corridor"></script>
     <script>
         window.CryptoPhotonicWorkerFeedEndpoint =
             "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/events";
         window.CryptoPhotonicWorkerWalletActivityEndpoint =
             "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/wallet-activity";
     </script>
-    <script src="js/crypto/ui.js?v=d152-semantic-zoom"></script>
+    <script src="js/crypto/ui.js?v=d209-replay-corridor"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -5864,6 +5864,25 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (selectedNode) {
                 chips.push(getSelectedNodeReasonChip(context));
             }
+            const sharedFlow = window.StockPhotonicGraph?.readability?.buildSharedFlowInterpretation?.({
+                domain: 'stock',
+                convergenceCount: activeRouteComparison?.convergenceNodeIds?.size || 0,
+                divergenceCount: activeRouteComparison?.divergenceNodeIds?.size || 0,
+                concentrationLabel: graphTopologyModel?.concentrationZones?.length ? `${graphTopologyModel.concentrationZones.length} zones` : '',
+                bridgeCount: graphTopologyModel?.bridgeSaturation?.length || 0,
+                corridorContinuity: graphTopologyModel?.corridorPressures?.length ? `${graphTopologyModel.corridorPressures.length} visible corridors` : '',
+                suppressionReason: graphOverlayPlan?.summary?.readabilityGated
+                    ? 'Replay/readability suppression is governed by visible graph density, active overlays, and protected routes.'
+                    : 'Replay/readability suppression is inactive or limited in the current Stock graph state.',
+                distinctSemantics: true
+            }) || {};
+            (sharedFlow.concepts || []).slice(0, 3).forEach(item => {
+                chips.push({
+                    label: item.label,
+                    reason: item.reason,
+                    kind: item.key
+                });
+            });
             const overlayChips = graphOverlayOrchestration.getReadabilitySummary?.(graphOverlayPlan, {
                 readabilityModel: graphReadabilityModel,
                 activeRelationshipRoute,

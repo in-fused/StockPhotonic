@@ -105,6 +105,14 @@ D199-D208 cross-market convergence keeps StockPhotonic and CryptoPhotonic on one
 - Replay narrative wording, liquidity/topology summaries, reasoning heuristics, replay lineage state, replay presets, and command availability remain JavaScript-owned and session-only.
 - CSS must not encode wallet identity, replay certainty, liquidity truth, provider semantics, persistence assumptions, backend behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
 
+D209-D218 institutional replay corridor intelligence keeps the same ownership:
+
+- Shared graph OS continuity and traversal chrome, including reusable reasoning-chip/traversal helpers, lives in `graph.css`.
+- Crypto replay corridor summaries, corridor transition strips, replay progression breadcrumbs, congestion/overlap chips, replay cluster interpretation, replay focus chips, and replay lineage hierarchy refinements live in `crypto.css`.
+- Mobile replay jump strips, lineage chips, corridor summaries, focus cycling controls, stack navigation, and continuity compression live in `mobile.css`.
+- Replay corridor derivation, continuity reasoning, traversal state, focus cycling, cluster weighting, chronology intelligence, command availability, and shared Stock/Crypto flow-language interpretation remain JavaScript-owned and session-only.
+- CSS must not encode wallet identity, replay certainty, liquidity truth, provider/source authority, persistence assumptions, backend/provider/API behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

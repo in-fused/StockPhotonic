@@ -654,6 +654,79 @@
             .replace(/\b\w/g, char => char.toUpperCase());
     }
 
+    function buildSharedFlowInterpretation(options = {}) {
+        const domain = String(options.domain || 'stock').toLowerCase() === 'crypto' ? 'crypto' : 'stock';
+        const stock = domain === 'stock';
+        const convergenceCount = Math.max(0, Number(options.convergenceCount) || 0);
+        const divergenceCount = Math.max(0, Number(options.divergenceCount) || 0);
+        const bridgeCount = Math.max(0, Number(options.bridgeCount) || 0);
+        const concentrationLabel = String(options.concentrationLabel || '').trim();
+        const corridorContinuity = String(options.corridorContinuity || '').trim();
+        const suppressionReason = String(options.suppressionReason || '').trim();
+        const concepts = [];
+        if (convergenceCount) {
+            concepts.push({
+                key: 'convergence',
+                label: `Convergence ${convergenceCount}`,
+                reason: stock
+                    ? `${convergenceCount} visible market relationship cue${convergenceCount === 1 ? '' : 's'} converge under the current graph reading.`
+                    : `${convergenceCount} inbound replay endpoint cue${convergenceCount === 1 ? '' : 's'} converge in staged rows only; no ownership claim is implied.`
+            });
+        }
+        if (divergenceCount) {
+            concepts.push({
+                key: 'divergence',
+                label: `Divergence ${divergenceCount}`,
+                reason: stock
+                    ? `${divergenceCount} visible relationship branch cue${divergenceCount === 1 ? '' : 's'} diverge under the current graph reading.`
+                    : `${divergenceCount} outbound replay endpoint cue${divergenceCount === 1 ? '' : 's'} diverge in staged rows only; no control claim is implied.`
+            });
+        }
+        if (concentrationLabel && concentrationLabel !== '0%') {
+            concepts.push({
+                key: 'concentration',
+                label: `Concentration ${concentrationLabel}`,
+                reason: stock
+                    ? `Concentration reflects visible company/topology density in the current graph state.`
+                    : `Concentration reflects token-row visibility in the staged replay window, not liquidity truth.`
+            });
+        }
+        if (bridgeCount) {
+            concepts.push({
+                key: 'bridge-significance',
+                label: `Bridge ${bridgeCount}`,
+                reason: stock
+                    ? `${bridgeCount} bridge cue${bridgeCount === 1 ? '' : 's'} connect visible company relationship areas.`
+                    : `${bridgeCount} address-level bridge cue${bridgeCount === 1 ? '' : 's'} span visible replay corridors; identity is not inferred.`
+            });
+        }
+        if (corridorContinuity) {
+            concepts.push({
+                key: 'corridor-continuity',
+                label: 'Corridor continuity',
+                reason: stock
+                    ? `Corridor continuity follows visible relationship lanes and in-session graph navigation.`
+                    : `Corridor continuity follows staged replay order and loaded route visibility only. ${corridorContinuity}`
+            });
+        }
+        if (suppressionReason) {
+            concepts.push({
+                key: 'suppression-reasoning',
+                label: 'Suppression reasoning',
+                reason: suppressionReason
+            });
+        }
+        return {
+            version: 'd209_shared_flow_interpretation_v1',
+            domain,
+            concepts: concepts.slice(0, 6),
+            chips: concepts.map(item => item.label).slice(0, 6),
+            deterministic: true,
+            distinctSemantics: true,
+            sessionOnly: true
+        };
+    }
+
     window.StockPhotonicGraph.readability = {
         createReadabilityController,
         getEdgeAdjustment,
@@ -662,6 +735,7 @@
         getLabelPriorityBoost,
         getFrameLinkLimit,
         getLinkRenderPriority,
-        drawSemanticFog
+        drawSemanticFog,
+        buildSharedFlowInterpretation
     };
 })();

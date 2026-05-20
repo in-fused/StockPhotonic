@@ -1433,6 +1433,141 @@
             font-size: 0.58rem;
         }
 
+.crypto-replay-corridor-panel {
+            margin-top: 0.55rem;
+            border: 1px solid rgba(125, 211, 252, 0.14);
+            background: rgba(2, 6, 23, 0.26);
+            padding: 0.52rem;
+        }
+
+.crypto-replay-corridor-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.32rem;
+            margin-top: 0.45rem;
+        }
+
+.crypto-replay-corridor-grid div {
+            min-width: 0;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 0.44rem;
+            background: rgba(255, 255, 255, 0.035);
+            padding: 0.34rem 0.38rem;
+        }
+
+.crypto-replay-corridor-grid span,
+        .crypto-replay-corridor-grid strong {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.crypto-replay-corridor-grid span {
+            color: rgba(203, 213, 225, 0.46);
+            font-size: 0.5rem;
+            text-transform: uppercase;
+        }
+
+.crypto-replay-corridor-grid strong {
+            margin-top: 0.12rem;
+            color: rgba(236, 254, 255, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+        }
+
+.crypto-replay-corridor-strip,
+        .crypto-replay-progression-breadcrumbs {
+            display: flex;
+            gap: 0.34rem;
+            margin-top: 0.45rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 0.08rem;
+            -webkit-overflow-scrolling: touch;
+        }
+
+.crypto-replay-corridor-strip button,
+        .crypto-replay-progression-breadcrumbs button {
+            flex: 0 0 auto;
+            min-width: 6.8rem;
+            max-width: 10.2rem;
+            min-height: 2.1rem;
+            border: 1px solid rgba(103, 232, 249, 0.14);
+            border-radius: 8px;
+            background: rgba(8, 145, 178, 0.08);
+            color: rgba(226, 232, 240, 0.74);
+            padding: 0.38rem 0.5rem;
+            text-align: left;
+        }
+
+.crypto-replay-progression-breadcrumbs button {
+            border-color: rgba(240, 171, 252, 0.15);
+            background: rgba(112, 26, 117, 0.12);
+        }
+
+.crypto-replay-corridor-strip button:hover:not(:disabled),
+        .crypto-replay-corridor-strip button:focus-visible,
+        .crypto-replay-progression-breadcrumbs button:hover:not(:disabled),
+        .crypto-replay-progression-breadcrumbs button:focus-visible {
+            border-color: rgba(34, 211, 238, 0.38);
+            background: rgba(14, 116, 144, 0.18);
+            color: rgba(255, 255, 255, 0.92);
+            outline: none;
+        }
+
+.crypto-replay-corridor-strip button span,
+        .crypto-replay-corridor-strip button strong,
+        .crypto-replay-progression-breadcrumbs button span,
+        .crypto-replay-progression-breadcrumbs button strong {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.crypto-replay-corridor-strip button span,
+        .crypto-replay-progression-breadcrumbs button span {
+            font-size: 0.56rem;
+            font-weight: 800;
+        }
+
+.crypto-replay-corridor-strip button strong,
+        .crypto-replay-progression-breadcrumbs button strong {
+            margin-top: 0.12rem;
+            color: rgba(125, 211, 252, 0.82);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.54rem;
+        }
+
+.crypto-replay-corridor-zones {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.28rem;
+            margin-top: 0.45rem;
+        }
+
+.crypto-replay-corridor-zones span {
+            max-width: 100%;
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            color: rgba(226, 232, 240, 0.62);
+            padding: 0.22rem 0.4rem;
+            font-size: 0.54rem;
+            line-height: 1.1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.crypto-replay-corridor-zones strong {
+            color: rgba(165, 243, 252, 0.82);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
 .crypto-replay-intelligence-metrics {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));

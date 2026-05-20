@@ -426,6 +426,37 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
 
+            .crypto-replay-corridor-panel {
+                padding: 0.46rem;
+            }
+
+            .crypto-replay-corridor-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .crypto-replay-corridor-strip,
+            .crypto-replay-progression-breadcrumbs {
+                gap: 0.3rem;
+                margin-top: 0.38rem;
+                scrollbar-width: none;
+            }
+
+            .crypto-replay-corridor-strip::-webkit-scrollbar,
+            .crypto-replay-progression-breadcrumbs::-webkit-scrollbar {
+                display: none;
+            }
+
+            .crypto-replay-corridor-strip button,
+            .crypto-replay-progression-breadcrumbs button {
+                min-width: 6.1rem;
+                min-height: 2.35rem;
+                padding: 0.42rem 0.48rem;
+            }
+
+            .crypto-replay-corridor-zones span:nth-child(n+5) {
+                display: none;
+            }
+
             .crypto-replay-narrative-stack {
                 gap: 0.3rem;
             }
@@ -1147,6 +1178,21 @@
 
             #crypto-photonic-view.is-replay-workspace .crypto-replay-summary-grid,
             #crypto-photonic-view.is-replay-workspace .crypto-replay-narrative-row:nth-child(n+4) {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-strip,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-progression-breadcrumbs {
+                max-width: 100%;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-zones span:nth-child(n+4) {
                 display: none;
             }
 

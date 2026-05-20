@@ -90,6 +90,13 @@ D179-D188 graph OS validation and analyst workflow consolidation keep the same o
 - Topology counts, overlay suppression reasons, readability budgets, active workspace state, command availability, analyst preset behavior, and render budget labels remain JavaScript-owned and session-only.
 - No CSS layer should imply persistence, backend/provider/API behavior, production-data mutation, source authority, topology meaning, or overlay truth.
 
+D189-D198 investigation narrative intelligence keeps the same ownership:
+
+- Stock investigation narrative cards, reasoning chips, investigation stack chrome, route lineage chips, and compact HUD narrative surfaces live in `graph.css`.
+- Mobile investigation compression, touch-safe narrative chips, compact stack/lineage behavior, and fullscreen mobile narrative ergonomics live in `mobile.css`.
+- Narrative derivation, reasoning heuristics, active investigation stack state, quick jump-back payloads, route/corridor/replay lineage, topology interpretation, overlay/readability explanations, and route significance wording remain JavaScript-owned and session-only.
+- CSS must not encode evidence truth, topology authority, relationship certainty, source authority, persistence semantics, backend/provider/API assumptions, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

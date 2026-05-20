@@ -424,6 +424,7 @@
                         <div id="graph-mode-hud" class="graph-mode-hud" aria-live="polite">Explore Mode</div>
                         <div id="graph-adaptive-hud" class="graph-adaptive-hud" aria-live="polite"></div>
                         <div id="graph-os-status-panel" class="graph-os-status-panel" aria-live="polite"></div>
+                        <div id="graph-investigation-narrative" class="graph-investigation-narrative" aria-live="polite"></div>
                         <div id="graph-spatial-breadcrumbs" class="graph-spatial-breadcrumbs" aria-live="polite"></div>
                         <div id="graph-timeline-rail" class="graph-timeline-rail" aria-live="polite"></div>
                         <div id="graph-cinematic-story" class="graph-cinematic-story" aria-live="polite"></div>
@@ -1690,6 +1691,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let adaptiveHudDomKey = '';
         let workspaceMemoryDomKey = '';
         let graphOsStatusDomKey = '';
+        let graphInvestigationNarrativeDomKey = '';
+        let graphInvestigationNarrativeCollapsed = false;
+        let graphInvestigationNarrativeCache = new Map();
         let graphTimelineDomKey = '';
         let investigationRailDomKey = '';
         let activeAnalystOverlayKey = '';
@@ -1936,6 +1940,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 refreshGraphAnnotationModel();
                 renderAdaptiveGraphHud();
                 renderGraphOsStatusPanel();
+                renderInvestigationNarrativeLayer();
                 renderGraphEmbeddedAnnotations();
             }
             renderGraphBreadcrumbs();
@@ -2905,6 +2910,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const selectionCleared = syncSelectionAfterVisibilityChange();
             if (!selectionCleared && selectedNode) showNodeDetails(selectedNode);
             if (options.fit && visibleNodes.length) fitGraph();
+            if (largeGraphNavigationModel?.focusKind === 'corridor') {
+                recordActiveCorridorLineage();
+                renderWorkspaceMemory();
+                renderInvestigationRail();
+                renderInvestigationNarrativeLayer();
+                refreshGraphTimelineModel();
+                renderGraphTimelineRail();
+            }
             triggerPulse(440);
             requestDraw();
         }
@@ -5393,6 +5406,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 renderActiveGraphLegend();
                 renderAdaptiveGraphHud();
                 renderGraphOsStatusPanel();
+                renderInvestigationNarrativeLayer();
                 renderWorkspaceMemory();
                 renderInvestigationRail();
                 renderGraphTimelineRail();
@@ -5502,7 +5516,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     workspace.stackDepth || 0,
                     workspace.pinnedRouteCount || 0,
                     workspace.replayCheckpointCount || 0,
-                    workspace.snapshotCount || 0
+                    workspace.snapshotCount || 0,
+                    workspace.activeInvestigationStack?.length || 0,
+                    workspace.focusHistory?.length || 0,
+                    workspace.activeRouteLineage?.length || 0,
+                    workspace.activeCorridorLineage?.length || 0,
+                    workspace.replayChronologyContinuity?.length || 0
                 ].join('|')
             };
         }
@@ -5612,6 +5631,382 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             return `<span><small>${escapeHtml(label)}</small><strong>${escapeHtml(String(value || 'None'))}</strong></span>`;
         }
 
+        function renderInvestigationNarrativeLayer() {
+            const panel = document.getElementById('graph-investigation-narrative');
+            if (!panel) return;
+            if (!visibleNodes.length) {
+                panel.classList.add('is-empty');
+                panel.innerHTML = '';
+                return;
+            }
+            const model = getInvestigationNarrativeModel();
+            const key = `${model.signature}|${graphInvestigationNarrativeCollapsed ? 1 : 0}|${graphFullscreenActive ? 1 : 0}`;
+            if (key === graphInvestigationNarrativeDomKey) return;
+            graphInvestigationNarrativeDomKey = key;
+
+            const chips = (model.chips || []).slice(0, graphInvestigationNarrativeCollapsed ? 3 : 5);
+            const reasoning = (model.reasoningChips || []).slice(0, graphInvestigationNarrativeCollapsed ? 3 : 6);
+            const lineage = (model.lineage || []).slice(0, graphInvestigationNarrativeCollapsed ? 2 : 4);
+            panel.innerHTML = `
+                <div class="graph-investigation-narrative-head">
+                    <span><i class="fa-solid ${escapeHtml(model.icon || 'fa-magnifying-glass-chart')}"></i> ${escapeHtml(model.kicker || 'Investigation')}</span>
+                    <button type="button" onclick="toggleInvestigationNarrative()" aria-pressed="${graphInvestigationNarrativeCollapsed ? 'true' : 'false'}" title="${graphInvestigationNarrativeCollapsed ? 'Expand investigation narrative' : 'Collapse investigation narrative'}" aria-label="${graphInvestigationNarrativeCollapsed ? 'Expand investigation narrative' : 'Collapse investigation narrative'}">
+                        <i class="fa-solid ${graphInvestigationNarrativeCollapsed ? 'fa-chevron-up' : 'fa-chevron-down'}"></i>
+                    </button>
+                </div>
+                <div class="graph-investigation-narrative-title">${escapeHtml(model.title || 'Graph context')}</div>
+                <div class="graph-investigation-narrative-copy">${escapeHtml(model.summary || '')}</div>
+                ${graphInvestigationNarrativeCollapsed ? '' : `<div class="graph-investigation-narrative-why">${escapeHtml(model.why || 'Derived from current visible graph metadata only.')}</div>`}
+                ${chips.length ? `<div class="graph-reasoning-chips">${chips.map(renderNarrativeChip).join('')}</div>` : ''}
+                ${reasoning.length ? `<div class="graph-reasoning-chips is-reasoning">${reasoning.map(renderNarrativeChip).join('')}</div>` : ''}
+                ${lineage.length ? `<div class="graph-investigation-lineage">${lineage.map(renderNarrativeLineageChip).join('')}</div>` : ''}
+            `;
+            panel.classList.remove('is-empty');
+            panel.classList.toggle('is-collapsed', graphInvestigationNarrativeCollapsed);
+        }
+
+        function toggleInvestigationNarrative(force) {
+            graphInvestigationNarrativeCollapsed = typeof force === 'boolean'
+                ? force
+                : !graphInvestigationNarrativeCollapsed;
+            graphInvestigationNarrativeDomKey = '';
+            renderInvestigationNarrativeLayer();
+        }
+
+        function getInvestigationNarrativeModel() {
+            const signature = getInvestigationNarrativeSignature();
+            if (graphInvestigationNarrativeCache.has(signature)) {
+                const cached = graphInvestigationNarrativeCache.get(signature);
+                graphInvestigationNarrativeCache.delete(signature);
+                graphInvestigationNarrativeCache.set(signature, cached);
+                return cached;
+            }
+            const model = buildInvestigationNarrativeModel(signature);
+            graphInvestigationNarrativeCache.set(signature, model);
+            while (graphInvestigationNarrativeCache.size > 24) {
+                graphInvestigationNarrativeCache.delete(graphInvestigationNarrativeCache.keys().next().value);
+            }
+            return model;
+        }
+
+        function getInvestigationNarrativeSignature() {
+            const workspace = investigationWorkspace.getSummary(getGraphIntelligenceContext());
+            return [
+                activeRouteComparison?.id || '',
+                activeRelationshipRoute?.id || activeRelationshipRoute?.label || '',
+                selectedNode?.id || '',
+                selectedRelationshipLink?.key || '',
+                activeEcosystemOverlayKey || '',
+                activeAnalystOverlayKey || '',
+                sourceCoverageLensEnabled ? 1 : 0,
+                largeGraphNavigationModel?.cacheKey || largeGraphNavigationModel?.mode || '',
+                graphTopologyModel?.signature || '',
+                graphOverlayPlan?.signature || '',
+                graphReadabilityModel?.signature || '',
+                graphTimelineModel?.signature || '',
+                workspace.activeWorkspaceId || workspace.workspaceId || '',
+                (workspace.activeInvestigationStack || []).slice(0, 4).map(item => item.id).join(','),
+                (workspace.focusHistory || []).slice(0, 4).map(item => item.id).join(','),
+                (workspace.activeRouteLineage || []).slice(0, 4).map(item => item.id).join(','),
+                (workspace.activeCorridorLineage || []).slice(0, 4).map(item => item.id).join(','),
+                (workspace.replayChronologyContinuity || []).slice(0, 4).map(item => item.id).join(',')
+            ].join('|');
+        }
+
+        function buildInvestigationNarrativeModel(signature) {
+            const context = getGraphIntelligenceContext();
+            const semantic = stockSemanticZoomState || getSemanticZoomState();
+            const workspace = investigationWorkspace.getSummary(context);
+            const base = buildPrimaryInvestigationNarrative(context, semantic);
+            const reasoningChips = buildGraphReasoningChips(context);
+            const lineage = buildInvestigationLineageChips(workspace);
+            const chips = [
+                ...(base.chips || []),
+                workspace.persistence || 'in-session only',
+                semantic.tierLabel || semantic.tier || 'graph'
+            ].filter(Boolean).slice(0, 6);
+            return {
+                signature,
+                ...base,
+                chips,
+                reasoningChips,
+                lineage,
+                deterministic: true,
+                sourceAware: Boolean(base.sourceAware)
+            };
+        }
+
+        function buildPrimaryInvestigationNarrative(context, semantic = {}) {
+            if (activeRouteComparison) {
+                const summary = stockRouteComparison.getComparisonSummary(activeRouteComparison);
+                const narrative = stockNarratives.buildRouteComparisonNarrative(activeRouteComparison, context) || {};
+                const interpretation = summary?.interpretation || activeRouteComparison.interpretation || {};
+                return {
+                    icon: 'fa-code-compare',
+                    kicker: 'Route Investigation',
+                    title: summary?.label || activeRouteComparison.label || 'Route comparison',
+                    summary: interpretation.convergenceSignificance || narrative.summary || 'Compared routes are active in the visible graph.',
+                    why: [
+                        interpretation.divergenceSignificance,
+                        interpretation.evidenceDensityExplanation,
+                        interpretation.bridgeCompanySignificance
+                    ].filter(Boolean).join(' '),
+                    chips: [
+                        ...(interpretation.chips || []),
+                        `${summary?.sharedEdgeCount || 0} shared`
+                    ],
+                    sourceAware: true
+                };
+            }
+
+            if (activeRelationshipRoute) {
+                const narrative = stockNarratives.buildRouteNarrative(activeRelationshipRoute, context) || {};
+                const interpretation = activeRelationshipRoute.summary?.interpretation || stockRouteComparison.interpretRoute?.(activeRelationshipRoute, activeRelationshipRoute.summary || {}, context) || {};
+                return {
+                    icon: 'fa-route',
+                    kicker: 'Route Investigation',
+                    title: activeRelationshipRoute.label || narrative.title || 'Relationship route',
+                    summary: narrative.summary || interpretation.routeRankExplanation || 'Route is derived from visible relationship metadata.',
+                    why: [
+                        interpretation.routeRankExplanation,
+                        interpretation.bridgeCompanySignificance,
+                        interpretation.evidenceDensityExplanation
+                    ].filter(Boolean).join(' '),
+                    chips: interpretation.chips || narrative.chips || [],
+                    sourceAware: true
+                };
+            }
+
+            const corridor = largeGraphNavigationModel?.focusKind === 'corridor'
+                ? getCurrentCorridorMemoryCandidate()
+                : null;
+            if (corridor) {
+                const narrative = stockNarratives.buildCorridorNarrative(corridor, context) || {};
+                const pressure = graphTopologyModel?.corridorPressures?.find(item => item.key === corridor.key);
+                return {
+                    icon: 'fa-road',
+                    kicker: 'Corridor Investigation',
+                    title: narrative.title || corridor.label || 'Corridor focus',
+                    summary: narrative.summary || `${corridor.label || 'Corridor'} groups visible relationship edges into a spatial reading lane.`,
+                    why: pressure
+                        ? `${pressure.label || corridor.label || 'This corridor'} is prioritized by ${pressure.edgeCount || 0} visible edges, ${pressure.sourced || 0} sourced edges, and current corridor pressure metadata.`
+                        : narrative.why || 'Corridor priority is derived from loaded visible graph metadata.',
+                    chips: narrative.chips || [],
+                    sourceAware: true
+                };
+            }
+
+            if (selectedNode) {
+                const profile = stockGraphIntelligence.getStrategicHubProfile?.(selectedNode, context) || {};
+                const narrative = stockNarratives.buildHubSignificanceNarrative(selectedNode, profile, context) || {};
+                const overlap = graphTopologyModel?.ecosystemOverlap?.nodes?.find(item => item.nodeId === selectedNode.id);
+                return {
+                    icon: 'fa-circle-dot',
+                    kicker: 'Focus Investigation',
+                    title: narrative.title || selectedNode.ticker || selectedNode.name || 'Selected company',
+                    summary: narrative.summary || `${selectedNode.ticker || selectedNode.name || 'The selected company'} is the current graph focus.`,
+                    why: overlap
+                        ? `${selectedNode.ticker || selectedNode.name || 'This node'} overlaps ${overlap.ecosystemCount || 0} ecosystem cue${(overlap.ecosystemCount || 0) === 1 ? '' : 's'} and ${overlap.corridorCount || 0} corridor cue${(overlap.corridorCount || 0) === 1 ? '' : 's'} in the visible topology.`
+                        : narrative.why || 'Node significance is limited to visible relationships and current graph scoring.',
+                    chips: narrative.chips || [],
+                    sourceAware: true
+                };
+            }
+
+            if (graphIntelligenceModel?.analystOverlay?.active) {
+                const layer = graphIntelligenceModel.analystOverlay;
+                return {
+                    icon: 'fa-layer-group',
+                    kicker: 'Overlay Investigation',
+                    title: layer.label || 'Analyst layer',
+                    summary: `${layer.shortLabel || layer.label || 'Layer'} highlights ${layer.edgeCount || layer.linkKeys?.size || 0} visible edge${(layer.edgeCount || layer.linkKeys?.size || 0) === 1 ? '' : 's'} from existing graph metadata.`,
+                    why: graphOverlayPlan?.dominant?.key === 'analyst'
+                        ? 'This analyst layer is dominant because it outranks lower-priority active layers in the overlay orchestration plan.'
+                        : 'Layer visibility is governed by the overlay orchestration plan and readability budget.',
+                    chips: [
+                        `${layer.edgeCount || layer.linkKeys?.size || 0} edges`,
+                        `${layer.nodeCount || layer.nodeIds?.size || 0} nodes`,
+                        graphOverlayPlan?.summary?.readabilityGated ? 'density gated' : 'open'
+                    ],
+                    sourceAware: true
+                };
+            }
+
+            if (graphIntelligenceModel?.overlay) {
+                const narrative = stockNarratives.buildEcosystemNarrative(graphIntelligenceModel.overlay, context) || {};
+                return {
+                    icon: 'fa-compass',
+                    kicker: 'Ecosystem Investigation',
+                    title: narrative.title || graphIntelligenceModel.overlay.label || 'Ecosystem overlay',
+                    summary: narrative.summary || 'Ecosystem overlay is derived from loaded relationship metadata.',
+                    why: narrative.why || 'Overlay significance is limited to current visible graph membership.',
+                    chips: narrative.chips || [],
+                    sourceAware: true
+                };
+            }
+
+            const topology = graphTopologyModel?.semanticSummary || {};
+            return {
+                icon: 'fa-draw-polygon',
+                kicker: 'Graph Investigation',
+                title: topology.headline || largeGraphNavigationModel?.focusLabel || 'Visible graph',
+                summary: topology.sentence || `${visibleNodes.length} visible companies and ${visibleLinks.length} visible edges are available for investigation.`,
+                why: topology.overlapCount
+                    ? `${topology.overlapCount} visible ecosystem overlap cue${topology.overlapCount === 1 ? '' : 's'} are present; inspect edges before treating overlap as evidence.`
+                    : 'No unsupported authority is implied; topology cues are deterministic readings of loaded visible metadata.',
+                chips: topology.chips || [`${visibleNodes.length} nodes`, `${visibleLinks.length} edges`],
+                sourceAware: false
+            };
+        }
+
+        function buildGraphReasoningChips(context = {}) {
+            const chips = [];
+            if (selectedNode) {
+                chips.push(getSelectedNodeReasonChip(context));
+            }
+            const overlayChips = graphOverlayOrchestration.getReadabilitySummary?.(graphOverlayPlan, {
+                readabilityModel: graphReadabilityModel,
+                activeRelationshipRoute,
+                activeRouteComparison,
+                selectedNode,
+                selectedRelationshipLink
+            })?.reasonChips || [];
+            chips.push(...overlayChips.map(item => ({
+                label: item.label,
+                reason: item.reason,
+                kind: item.key
+            })));
+            (graphReadabilityModel?.reasonChips || []).forEach(item => {
+                chips.push({
+                    label: item.label,
+                    reason: item.reason,
+                    kind: item.key
+                });
+            });
+            const corridor = largeGraphNavigationModel?.focusKind === 'corridor'
+                ? getCurrentCorridorMemoryCandidate()
+                : graphTopologyModel?.corridorPressures?.[0];
+            if (corridor) {
+                chips.push({
+                    label: `Corridor ${corridor.shortLabel || corridor.label || formatGraphOsLabel(corridor.key)}`,
+                    reason: `${corridor.label || 'Corridor'} is prioritized from visible edge count, source count, and corridor pressure metadata.`,
+                    kind: 'corridor-priority'
+                });
+            }
+            const comparisonSummary = stockRouteComparison.getComparisonSummary(activeRouteComparison);
+            const routeInterpretation = comparisonSummary?.interpretation || activeRelationshipRoute?.summary?.interpretation;
+            if (routeInterpretation?.routeRankExplanation) {
+                chips.push({
+                    label: 'Route rank',
+                    reason: routeInterpretation.routeRankExplanation,
+                    kind: 'route-rank'
+                });
+            }
+            return compactReasonChips(chips);
+        }
+
+        function getSelectedNodeReasonChip(context = {}) {
+            const label = selectedNode?.ticker || selectedNode?.name || 'Node';
+            if (activeRouteComparison?.nodeIds?.has(selectedNode.id)) {
+                return {
+                    label: `${label} on route`,
+                    reason: `${label} is highlighted because it belongs to the active route comparison.`,
+                    kind: 'node-route'
+                };
+            }
+            if (activeRelationshipRoute?.nodeIds?.has(selectedNode.id)) {
+                return {
+                    label: `${label} on route`,
+                    reason: `${label} is highlighted because it belongs to the active relationship route.`,
+                    kind: 'node-route'
+                };
+            }
+            if (graphIntelligenceModel?.overlay?.nodeIds?.has(selectedNode.id)) {
+                return {
+                    label: `${label} overlay`,
+                    reason: `${label} is highlighted because it belongs to the active ecosystem overlay.`,
+                    kind: 'node-overlay'
+                };
+            }
+            const topologyVisual = graphTopologyEngine.getNodeTopologyVisual(graphTopologyModel, selectedNode);
+            if (topologyVisual?.badgeLabel) {
+                return {
+                    label: `${label} ${topologyVisual.badgeLabel}`,
+                    reason: `${label} receives a topology cue from the current topology model.`,
+                    kind: 'node-topology'
+                };
+            }
+            return {
+                label: `${label} focus`,
+                reason: `${label} is highlighted because it is the selected investigation focus.`,
+                kind: 'node-focus'
+            };
+        }
+
+        function compactReasonChips(chips = []) {
+            const seen = new Set();
+            return chips.filter(item => {
+                if (!item?.label) return false;
+                const key = `${item.kind || item.label}:${item.label}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            }).slice(0, 8);
+        }
+
+        function buildInvestigationLineageChips(workspace = {}) {
+            const route = workspace.activeRouteLineage?.[0];
+            const corridor = workspace.activeCorridorLineage?.[0];
+            const replay = workspace.replayChronologyContinuity?.[0];
+            const focus = workspace.focusHistory?.[0];
+            return [
+                route ? {
+                    label: route.shortLabel || route.label || 'Route',
+                    reason: `${route.edgeCount || 0} edges in active route lineage`,
+                    list: 'routeLineage',
+                    index: 0,
+                    icon: 'fa-route'
+                } : null,
+                corridor ? {
+                    label: corridor.shortLabel || corridor.label || 'Corridor',
+                    reason: `${corridor.edgeCount || 0} edges in active corridor lineage`,
+                    list: 'corridorLineage',
+                    index: 0,
+                    icon: 'fa-road'
+                } : null,
+                replay ? {
+                    label: replay.shortLabel || replay.label || 'Replay',
+                    reason: replay.totalSteps ? `Step ${replay.selectedStep || 0}/${replay.totalSteps}` : 'Replay continuity checkpoint',
+                    list: 'replayLineage',
+                    index: 0,
+                    icon: 'fa-clock-rotate-left'
+                } : null,
+                focus ? {
+                    label: focus.shortLabel || focus.label || 'Focus',
+                    reason: 'Most recent analyst focus',
+                    list: 'focusHistory',
+                    index: 0,
+                    icon: 'fa-location-crosshairs'
+                } : null
+            ].filter(Boolean);
+        }
+
+        function renderNarrativeChip(chip) {
+            const value = typeof chip === 'string'
+                ? { label: chip, reason: chip }
+                : chip || {};
+            return `<span title="${escapeHtml(value.reason || value.label || '')}">${escapeHtml(value.label || '')}</span>`;
+        }
+
+        function renderNarrativeLineageChip(item) {
+            return `
+                <button type="button" onclick="restoreInvestigationStackItem('${escapeInlineJsString(item.list)}', ${Number(item.index) || 0})" title="${escapeHtml(item.reason || item.label)}">
+                    <i class="fa-solid ${escapeHtml(item.icon || 'fa-location-crosshairs')}"></i>
+                    <span>${escapeHtml(item.label)}</span>
+                </button>
+            `;
+        }
+
         function getGraphRouteStateLabel() {
             if (activeRouteComparison) {
                 const routeCount = activeRouteComparison.routeCount || activeRouteComparison.routes?.length || 0;
@@ -5658,9 +6053,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         function getAnalystModePresets() {
             return [
                 { key: 'exploration', label: 'Explore', icon: 'fa-compass', copy: 'Overview, balanced labels' },
+                { key: 'discovery_investigation', label: 'Discovery Investigation', icon: 'fa-magnifying-glass-chart', copy: 'Guides, hubs, stack' },
                 { key: 'topology', label: 'Topology', icon: 'fa-draw-polygon', copy: 'Topology card and hubs' },
                 { key: 'route', label: 'Route', icon: 'fa-route', copy: 'Compare or fit routes' },
                 { key: 'evidence', label: 'Evidence', icon: 'fa-shield-halved', copy: 'Source lens and review mode' },
+                { key: 'evidence_investigation', label: 'Evidence Investigation', icon: 'fa-file-shield', copy: 'Gaps, lens, source layer' },
+                { key: 'corridor_investigation', label: 'Corridor Investigation', icon: 'fa-road', copy: 'Corridor lane and density' },
+                { key: 'replay_investigation', label: 'Replay Investigation', icon: 'fa-clock-rotate-left', copy: 'Replay mode and chronology' },
                 { key: 'performance', label: 'Performance', icon: 'fa-gauge-high', copy: 'Lean overlays, core controls' }
             ];
         }
@@ -5678,6 +6077,22 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 sourceCoverageLensEnabled = false;
                 graphStoryMode = selectedNode ? 'overview' : '';
                 setLargeGraphMode('overview');
+            } else if (preset.key === 'discovery_investigation') {
+                window.setStockUxMode?.('analyst');
+                window.setPhotonicControlLayer?.('secondary');
+                activeGuidedDiscoveryKey = 'strongest_hubs';
+                activeAnalystOverlayKey = 'strategic_hubs';
+                activeEcosystemOverlayKey = '';
+                sourceCoverageLensEnabled = false;
+                graphStoryMode = 'guided';
+                largeGraphMode = largeGraphMode === 'overview' ? 'strategic_hubs' : largeGraphMode;
+                investigationWorkspace.recordFocus?.('preset', {
+                    id: 'preset:discovery-investigation',
+                    label: 'Discovery Investigation',
+                    shortLabel: 'Discovery',
+                    payload: buildCurrentGraphSnapshot()
+                });
+                applyLargeGraphNavigationChange({ fit: false });
             } else if (preset.key === 'topology') {
                 window.setStockUxMode?.('analyst');
                 window.setPhotonicControlLayer?.('secondary');
@@ -5695,6 +6110,42 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 window.setPhotonicControlLayer?.('advanced');
                 sourceCoverageLensEnabled = true;
                 setAnalystOverlay('source_confidence', { force: true });
+            } else if (preset.key === 'evidence_investigation') {
+                window.setStockUxMode?.('review');
+                window.setPhotonicControlLayer?.('advanced');
+                activeGuidedDiscoveryKey = 'evidence_gaps';
+                sourceCoverageLensEnabled = true;
+                activeAnalystOverlayKey = 'source_confidence';
+                graphStoryMode = 'source';
+                investigationWorkspace.recordFocus?.('preset', {
+                    id: 'preset:evidence-investigation',
+                    label: 'Evidence Investigation',
+                    shortLabel: 'Evidence',
+                    payload: buildCurrentGraphSnapshot()
+                });
+            } else if (preset.key === 'corridor_investigation') {
+                window.setStockUxMode?.('analyst');
+                window.setPhotonicControlLayer?.('secondary');
+                activeGuidedDiscoveryKey = '';
+                activeAnalystOverlayKey = 'corridor_density';
+                graphStoryMode = 'topology';
+                isolateDominantCorridor();
+                recordActiveCorridorLineage();
+            } else if (preset.key === 'replay_investigation') {
+                window.setStockUxMode?.('replay');
+                window.setPhotonicControlLayer?.('secondary');
+                graphStoryMode = 'replay';
+                if (activeRouteComparison || activeRelationshipRoute) {
+                    addStockReplayCheckpoint('preset');
+                } else {
+                    openStockReplayNeighborhood();
+                }
+                investigationWorkspace.recordFocus?.('preset', {
+                    id: 'preset:replay-investigation',
+                    label: 'Replay Investigation',
+                    shortLabel: 'Replay',
+                    payload: buildCurrentGraphSnapshot()
+                });
             } else if (preset.key === 'performance') {
                 window.setStockUxMode?.('explore');
                 window.setPhotonicControlLayer?.('primary');
@@ -5706,8 +6157,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 setLargeGraphMode('overview');
             }
             graphOsStatusDomKey = '';
+            graphInvestigationNarrativeDomKey = '';
             refreshGraphIntelligenceModel();
             renderGraphOsStatusPanel();
+            renderInvestigationNarrativeLayer();
             requestDraw();
             return preset;
         }
@@ -5867,12 +6320,22 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const queue = summary.investigationQueue || [];
             const tasks = summary.taskStack || [];
             const snapshots = summary.snapshots || [];
+            const stack = summary.activeInvestigationStack || [];
+            const quickJump = summary.quickJumpBackActions || [];
+            const routeLineage = summary.activeRouteLineage || [];
+            const corridorLineage = summary.activeCorridorLineage || [];
+            const replayLineage = summary.replayChronologyContinuity || [];
             const active = getCurrentWorkflowTarget();
             const key = [
                 active?.id || '',
                 queue.map(item => item.id).join(','),
                 tasks.map(item => item.id).join(','),
                 snapshots.map(item => item.id).join(','),
+                stack.map(item => item.id).join(','),
+                quickJump.map(item => item.id).join(','),
+                routeLineage.map(item => item.id).join(','),
+                corridorLineage.map(item => item.id).join(','),
+                replayLineage.map(item => item.id).join(','),
                 activeRouteComparison?.id || activeRelationshipRoute?.id || '',
                 selectedNode?.id || '',
                 largeGraphNavigationModel?.mode || '',
@@ -5890,6 +6353,27 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 <div class="graph-investigation-active" title="${escapeHtml(active?.detail || active?.label || 'No active investigation')}">
                     <strong>${escapeHtml(active?.label || 'Overview')}</strong>
                     <span>${escapeHtml(active?.detail || 'Ready for graph-native workflow')}</span>
+                </div>
+                <div class="graph-investigation-stack" aria-label="Active investigation stack">
+                    ${stack.slice(0, 4).map((item, index) => `
+                        <button type="button" onclick="restoreInvestigationStackItem('activeStack', ${index})" title="${escapeHtml(item.label)}">
+                            <i class="fa-solid ${escapeHtml(getWorkflowIcon(item.kind))}"></i>
+                            <span>${escapeHtml(item.shortLabel || item.label)}</span>
+                        </button>
+                    `).join('') || '<span>Stack ready</span>'}
+                </div>
+                <div class="graph-investigation-quick" aria-label="Quick jump back actions">
+                    ${quickJump.slice(0, 3).map((item, index) => `
+                        <button type="button" onclick="restoreInvestigationStackItem('quickJump', ${index})" title="${escapeHtml(item.label)}">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>${escapeHtml(item.shortLabel || item.label)}</span>
+                        </button>
+                    `).join('')}
+                </div>
+                <div class="graph-investigation-lineage" aria-label="Route corridor and replay lineage">
+                    ${routeLineage[0] ? `<button type="button" onclick="restoreInvestigationStackItem('routeLineage', 0)" title="${escapeHtml(routeLineage[0].label)}"><i class="fa-solid fa-route"></i><span>${escapeHtml(routeLineage[0].shortLabel || routeLineage[0].label)}</span></button>` : ''}
+                    ${corridorLineage[0] ? `<button type="button" onclick="restoreInvestigationStackItem('corridorLineage', 0)" title="${escapeHtml(corridorLineage[0].label)}"><i class="fa-solid fa-road"></i><span>${escapeHtml(corridorLineage[0].shortLabel || corridorLineage[0].label)}</span></button>` : ''}
+                    ${replayLineage[0] ? `<button type="button" onclick="restoreInvestigationStackItem('replayLineage', 0)" title="${escapeHtml(replayLineage[0].label)}"><i class="fa-solid fa-clock-rotate-left"></i><span>${escapeHtml(replayLineage[0].shortLabel || replayLineage[0].label)}</span></button>` : ''}
                 </div>
                 <div class="graph-investigation-lists">
                     ${queue.slice(0, 4).map((item, index) => `
@@ -5912,7 +6396,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     `).join('')}
                 </div>
             `;
-            rail.classList.toggle('is-empty', !queue.length && !snapshots.length && !tasks.length);
+            rail.classList.toggle('is-empty', !queue.length && !snapshots.length && !tasks.length && !stack.length && !quickJump.length && !routeLineage.length && !corridorLineage.length && !replayLineage.length);
         }
 
         function renderGraphTimelineRail() {
@@ -5954,6 +6438,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const queued = investigationWorkspace.queueInvestigation(target, { label: target.label });
             renderInvestigationRail();
             renderWorkspaceMemory();
+            renderInvestigationNarrativeLayer();
             refreshGraphTimelineModel();
             renderGraphTimelineRail();
             return queued;
@@ -5965,6 +6450,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             });
             renderInvestigationRail();
             renderWorkspaceMemory();
+            renderInvestigationNarrativeLayer();
             refreshGraphTimelineModel();
             renderGraphTimelineRail();
             return snapshot;
@@ -5978,6 +6464,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             investigationWorkspace.activateQueueItem(item.id);
             renderInvestigationRail();
             renderWorkspaceMemory();
+            renderInvestigationNarrativeLayer();
         }
 
         function restoreGraphSnapshot(index) {
@@ -5988,6 +6475,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             investigationWorkspace.remember('snapshot-restore', snapshot, { label: snapshot.label });
             renderInvestigationRail();
             renderWorkspaceMemory();
+            renderInvestigationNarrativeLayer();
         }
 
         function restoreGraphTimelineEvent(index) {
@@ -6008,6 +6496,18 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }
             if (event.kind === 'snapshot') {
                 restoreGraphSnapshot(event.snapshotIndex);
+                return;
+            }
+            if (Number.isFinite(event.stackIndex)) {
+                restoreInvestigationStackItem('activeStack', event.stackIndex);
+                return;
+            }
+            if (Number.isFinite(event.routeLineageIndex)) {
+                restoreInvestigationStackItem('routeLineage', event.routeLineageIndex);
+                return;
+            }
+            if (Number.isFinite(event.replayContinuityIndex)) {
+                restoreInvestigationStackItem('replayLineage', event.replayContinuityIndex);
                 return;
             }
             if (event.kind === 'ecosystem' && event.value) {
@@ -6156,8 +6656,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function getWorkflowIcon(kind) {
             if (kind === 'route-comparison' || kind === 'comparison-step') return 'fa-code-compare';
-            if (kind === 'route' || kind === 'route-step') return 'fa-route';
-            if (kind === 'corridor') return 'fa-road';
+            if (kind === 'route' || kind === 'route-step' || kind === 'route-lineage') return 'fa-route';
+            if (kind === 'corridor' || kind === 'corridor-lineage') return 'fa-road';
+            if (kind === 'replay-continuity') return 'fa-clock-rotate-left';
+            if (kind === 'preset') return 'fa-sliders';
             if (kind === 'node' || kind === 'hub') return 'fa-circle-dot';
             if (kind === 'snapshot') return 'fa-bookmark';
             if (kind === 'queue') return 'fa-list-check';
@@ -6220,10 +6722,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const dense = ['dense', 'very_dense', 'mega'].includes(graphScalingModel?.density?.key);
             const hasEmbeddedAnnotations = Boolean(graphAnnotationModel?.annotations?.length);
             const hasWorkflow = Boolean(graphTimelineModel?.events?.length || investigationWorkspace.getSummary(getGraphIntelligenceContext()).investigationQueueCount);
+            const hasNarrative = !document.getElementById('graph-investigation-narrative')?.classList.contains('is-empty');
             view?.classList.toggle('is-workspace-converged', true);
             view?.classList.toggle('is-route-workspace-compact', hasCompactRoute);
             view?.classList.toggle('is-density-compressed', dense);
             view?.classList.toggle('is-investigation-active', hasWorkflow);
+            view?.classList.toggle('is-investigation-narrative-active', hasNarrative);
             container?.classList.toggle('has-embedded-annotations', hasEmbeddedAnnotations);
             container?.classList.toggle('has-readability-suppression', Boolean(graphReadabilityModel?.budgets?.suppressedEstimate));
             if (container && graphScalabilityModel?.adaptiveQuality) {
@@ -6242,8 +6746,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 summary,
                 sharedEdgeCount: summary?.sharedEdgeCount || 0
             });
+            recordActiveRouteLineage(route);
             renderWorkspaceMemory();
+            renderInvestigationRail();
             renderAdaptiveGraphHud();
+            renderInvestigationNarrativeLayer();
             return pinned;
         }
 
@@ -6255,8 +6762,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 label: corridor.label || meta.label,
                 color: meta.color
             });
+            recordActiveCorridorLineage();
             renderWorkspaceMemory();
+            renderInvestigationRail();
             renderAdaptiveGraphHud();
+            renderInvestigationNarrativeLayer();
             return pinned;
         }
 
@@ -6267,7 +6777,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             })) || {};
             const pinned = investigationWorkspace.pinHub(selectedNode, profile);
             renderWorkspaceMemory();
+            renderInvestigationRail();
             renderAdaptiveGraphHud();
+            renderInvestigationNarrativeLayer();
             return pinned;
         }
 
@@ -6280,7 +6792,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 totalSteps: stockRouteComparison.getTraversalNodes(activeRouteComparison, activeRelationshipRoute).length,
                 reason
             });
+            investigationWorkspace.recordReplayContinuity?.(checkpoint, { reason });
             renderWorkspaceMemory();
+            renderInvestigationRail();
+            renderInvestigationNarrativeLayer();
+            refreshGraphTimelineModel();
+            renderGraphTimelineRail();
             return checkpoint;
         }
 
@@ -6328,9 +6845,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             adaptiveHudDomKey = '';
             investigationRailDomKey = '';
             graphTimelineDomKey = '';
+            graphInvestigationNarrativeDomKey = '';
+            graphInvestigationNarrativeCache = new Map();
             renderWorkspaceMemory();
             renderInvestigationRail();
             renderAdaptiveGraphHud();
+            renderInvestigationNarrativeLayer();
             refreshGraphTimelineModel();
             renderGraphTimelineRail();
         }
@@ -6345,9 +6865,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             adaptiveHudDomKey = '';
             investigationRailDomKey = '';
             graphTimelineDomKey = '';
+            graphInvestigationNarrativeDomKey = '';
             renderWorkspaceMemory();
             renderInvestigationRail();
             renderAdaptiveGraphHud();
+            renderInvestigationNarrativeLayer();
             refreshGraphTimelineModel();
             renderGraphTimelineRail();
             return workspace;
@@ -6363,9 +6885,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             adaptiveHudDomKey = '';
             investigationRailDomKey = '';
             graphTimelineDomKey = '';
+            graphInvestigationNarrativeDomKey = '';
             renderWorkspaceMemory();
             renderInvestigationRail();
             renderAdaptiveGraphHud();
+            renderInvestigationNarrativeLayer();
             refreshGraphTimelineModel();
             renderGraphTimelineRail();
             return workspace;
@@ -6388,6 +6912,86 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 };
             }
             return graphScalabilityModel?.corridorLaneIndex?.topLanes?.[0] || null;
+        }
+
+        function recordActiveRouteLineage(route = activeRouteComparison || activeRelationshipRoute) {
+            if (!route) return null;
+            const summary = activeRouteComparison && route === activeRouteComparison
+                ? stockRouteComparison.getComparisonSummary(activeRouteComparison)
+                : route.summary || {};
+            const item = investigationWorkspace.recordRouteLineage?.(route, {
+                summary,
+                sharedEdgeCount: summary?.sharedEdgeCount || 0,
+                interpretation: summary?.interpretation || route.interpretation || route.summary?.interpretation || null
+            });
+            graphInvestigationNarrativeDomKey = '';
+            return item;
+        }
+
+        function recordActiveCorridorLineage() {
+            const corridor = getCurrentCorridorMemoryCandidate();
+            if (!corridor?.key) return null;
+            const meta = graphCinematic.getCorridorMeta(corridor.key);
+            const pressure = graphTopologyModel?.corridorPressures?.find(item => item.key === corridor.key);
+            const item = investigationWorkspace.recordCorridorLineage?.({
+                ...corridor,
+                label: corridor.label || meta.label,
+                sourceBacked: corridor.sourceBacked || pressure?.sourced || 0,
+                secBacked: corridor.secBacked || pressure?.secBacked || 0,
+                color: corridor.color || meta.color
+            }, {
+                label: corridor.label || meta.label,
+                color: corridor.color || meta.color
+            });
+            graphInvestigationNarrativeDomKey = '';
+            return item;
+        }
+
+        function restoreInvestigationStackItem(list, index) {
+            const summary = investigationWorkspace.getSummary(getGraphIntelligenceContext());
+            const collections = {
+                quickJump: summary.quickJumpBackActions || [],
+                activeStack: summary.activeInvestigationStack || [],
+                focusHistory: summary.focusHistory || [],
+                routeLineage: summary.activeRouteLineage || [],
+                corridorLineage: summary.activeCorridorLineage || [],
+                replayLineage: summary.replayChronologyContinuity || []
+            };
+            const item = collections[list]?.[Number(index)];
+            if (!item) return null;
+            if (list === 'routeLineage' && item.ref) {
+                if (item.kind === 'route-comparison') {
+                    activeRouteComparison = item.ref;
+                    activeRelationshipRoute = item.ref.routes?.[0] || activeRelationshipRoute;
+                    graphStoryMode = 'route-comparison';
+                } else {
+                    activeRelationshipRoute = item.ref;
+                    activeRouteComparison = null;
+                    graphStoryMode = 'route';
+                }
+                refreshVisibleGraph();
+                fitRouteComparison();
+            } else if (list === 'corridorLineage' && item.key) {
+                largeGraphCorridorFocus = item.key;
+                largeGraphMode = 'corridor_focus';
+                applyLargeGraphNavigationChange({ fit: true });
+            } else if (item.payload) {
+                restoreWorkflowTarget(item.payload);
+            } else if (item.meta?.nodeId) {
+                selectNodeById(item.meta.nodeId);
+            } else if (item.meta?.corridorKey) {
+                largeGraphCorridorFocus = item.meta.corridorKey;
+                largeGraphMode = 'corridor_focus';
+                applyLargeGraphNavigationChange({ fit: true });
+            }
+            investigationWorkspace.remember('restore', item, { label: item.label });
+            graphInvestigationNarrativeDomKey = '';
+            renderInvestigationRail();
+            renderWorkspaceMemory();
+            renderInvestigationNarrativeLayer();
+            refreshGraphTimelineModel();
+            renderGraphTimelineRail();
+            return item;
         }
 
         function getWorkspaceMemoryIcon(kind) {
@@ -6782,8 +7386,16 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const routeRows = summary.routes.slice(0, 3).map(route => renderRouteWorkspaceRouteRow(route)).join('');
             const evidence = summary.evidence || {};
             const narrative = stockNarratives.buildRouteComparisonNarrative(activeRouteComparison, getGraphIntelligenceContext());
+            const interpretation = summary.interpretation || {};
             const divergence = summary.divergenceNotes?.[0] || 'Routes do not visibly split before filters end the paths.';
             const convergence = summary.convergenceNotes?.[0] || 'No later convergence node is distinct in this route pair.';
+            const lineageChips = [
+                interpretation.evidenceDensityLabel,
+                interpretation.convergenceLevel,
+                interpretation.bridgeCompanySignificance,
+                interpretation.corridorTransitionExplanation,
+                interpretation.ecosystemTransitionExplanation
+            ].filter(Boolean).slice(0, 5);
             panel.innerHTML = `
                 <div class="graph-route-workspace-header">
                     <div>
@@ -6802,6 +7414,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     ${narrative?.summary ? `<span>${escapeHtml(narrative.summary)}</span>` : ''}
                     <span>${escapeHtml(divergence)}</span>
                     <span>${escapeHtml(convergence)}</span>
+                    ${interpretation.evidenceDensityExplanation ? `<span>${escapeHtml(interpretation.evidenceDensityExplanation)}</span>` : ''}
+                    ${interpretation.routeRankExplanation ? `<span>${escapeHtml(interpretation.routeRankExplanation)}</span>` : ''}
+                </div>
+                <div class="graph-route-lineage" aria-label="Route narrative lineage">
+                    ${lineageChips.map(chip => `<span title="${escapeHtml(chip)}">${escapeHtml(chip)}</span>`).join('')}
                 </div>
                 <div class="graph-route-workspace-actions">
                     <button type="button" onclick="fitRouteComparison()" title="Fit compared routes"><i class="fa-solid fa-compress-arrows-alt"></i><span>Fit</span></button>
@@ -6823,11 +7440,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 .join(' / ') || 'No hub';
             const tier = summary.evidenceTiers?.[0]?.[0] || 'Evidence pending';
             const confidence = summary.confidenceTiers?.[0]?.[0] || 'Confidence pending';
+            const interpretation = summary.interpretation || {};
             return `
                 <div class="graph-route-workspace-route" style="--route-color:${escapeHtml(route.color)}">
                     <div><strong>${escapeHtml(route.slot || '')}</strong><span>${escapeHtml(route.shortLabel || route.label || 'Route')}</span></div>
                     <small>${escapeHtml(summary.linkCount || 0)} edges / ${escapeHtml(summary.sourceBacked || 0)} sourced / ${escapeHtml(tier)} / ${escapeHtml(confidence)}</small>
-                    <em>${escapeHtml(hubs)}</em>
+                    <em title="${escapeHtml(interpretation.routeRankExplanation || hubs)}">${escapeHtml(interpretation.evidenceDensityLabel || hubs)}</em>
                 </div>
             `;
         }
@@ -7345,6 +7963,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }
             if (largeGraphMode === 'route_isolation') refreshVisibleGraph();
             else refreshGraphIntelligenceModel();
+            recordActiveRouteLineage(activeRelationshipRoute);
             if (activeRelationshipRoute.nodes?.length > 1) {
                 fitGraphToNodes(activeRelationshipRoute.nodes, true, 150);
             }
@@ -7373,6 +7992,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (activeRelationshipRoute?.ecosystemKey && !activeEcosystemOverlayKey) activeEcosystemOverlayKey = activeRelationshipRoute.ecosystemKey;
             recordGraphNavigation('route-comparison', comparison.id, comparison.label || 'Route comparison');
             graphScalabilityController.rememberComparison(comparison);
+            recordActiveRouteLineage(comparison);
             if (options.isolate) {
                 largeGraphMode = 'route_isolation';
                 applyLargeGraphNavigationChange({ fit: true });
@@ -8981,6 +9601,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderRouteComparisonWorkspace();
             renderActiveGraphLegend();
             renderAdaptiveGraphHud();
+            renderInvestigationNarrativeLayer();
             renderWorkspaceMemory();
             renderInvestigationRail();
             renderGraphTimelineRail();
@@ -9051,11 +9672,16 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 entry,
                 ...graphNavigationTrail.filter(item => `${item.type}:${item.value}` !== signature)
             ].slice(0, 7);
-            investigationWorkspace.remember(entry.type, entry, { label: entry.label });
+            investigationWorkspace.remember(entry.type, {
+                ...entry,
+                payload: buildCurrentGraphSnapshot()
+            }, { label: entry.label });
             workspaceMemoryDomKey = '';
+            graphInvestigationNarrativeDomKey = '';
             renderGraphBreadcrumbs();
             renderWorkspaceMemory();
             renderInvestigationRail();
+            renderInvestigationNarrativeLayer();
             refreshGraphTimelineModel();
             renderGraphTimelineRail();
         }

@@ -25,7 +25,8 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 ## CURRENT FOCUS
 
 - Completed in D169-D178: institutional spatial market operating environment with deterministic topology gradients, concentration zones, corridor pressure, bridge saturation, ecosystem overlap, semantic topology summaries, session-only multi-workspaces, topology-aware choreography, overlay conflict suppression, graph-native commands, replay market intelligence convergence, fullscreen graph immersion, mobile graph OS refinement, and performance hardening.
-- D179-D188 consolidates graph OS usability and validation: compact status/self-check HUD, deterministic topology validation counts, overlay/readability explanations, clearer session-only workspace counts, command sections, analyst presets, fullscreen/mobile ergonomics, and derived-system performance safeguards without backend, provider/API, worker, SEC pipeline, source pipeline, persistence/auth/storage, browser-side provider-call, or production-data changes.
+- Completed in D179-D188: graph OS usability and validation with compact status/self-check HUD, deterministic topology validation counts, overlay/readability explanations, clearer session-only workspace counts, command sections, analyst presets, fullscreen/mobile ergonomics, and derived-system performance safeguards.
+- D189-D198 extends the graph OS investigation layer with compact deterministic narrative intelligence, reasoning chips, active investigation stack continuity, route/corridor/replay lineage, investigation presets, and mobile investigation compression while preserving static-browser delivery, session-only state, topology/overlay boundaries, and no backend, provider/API, worker, SEC pipeline, source pipeline, persistence/auth/storage, browser-side provider-call, or production-data changes.
 - UI/UX polish for the 2D Graph Intelligence workflow, especially guided discovery, default graph onboarding, active state comprehension, command-palette access, transient overlays, and mobile graph usability.
 - Intelligence layer clarity: company investigation workspace, graph-adjacent storytelling cards, embedded route/corridor/hub annotations, why-connected relationship cards, source/confidence labels, hubs, bridges, corridors, clusters, shared exposure, hidden relationships, ecosystem overlays, active graph legend, route tracing, route comparison summaries, industry correlations, portfolio exposure, deterministic evidence-aware narratives, and SEC-backed edge visibility.
 - Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, candidate-company preview staging, promotion readiness tables, reviewer decision states, graph-impact simulations, expansion batch summaries, triage artifacts, candidate-vs-production overlap comparison, and data expansion preflight reporting.
@@ -113,6 +114,13 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Expand graph-native commands toward user-selected route endpoints, workspace replay stacks, and topology comparison only after current command-palette and keyboard ergonomics are tested with analysts.
 - Continue Crypto replay intelligence only over staged replay datasets and Worker-owned sanitized history; do not add browser-side provider ingestion.
 - Treat future institutional overlays such as ownership, ETF overlap, institutional exposure, and liquidity as dormant until schemas, source policy, validation, and performance budgets exist.
+
+## D189-D198 FOLLOW-ON
+
+- Validate the investigation narrative card, reasoning chips, quick jump-back actions, and route/corridor/replay lineage with analysts before considering any persistent workspace design.
+- Keep narrative wording deterministic and evidence-aware: graph summaries may explain visible metadata, topology concentration, ecosystem overlap, and route/corridor transitions, but must not claim relationship authority beyond the loaded evidence model.
+- Preserve bounded caches and refresh-time narrative derivation only; do not introduce per-frame graph-wide scans, browser-side provider calls, backend/API dependencies, Worker changes, SEC/source-pipeline changes, or production data writes.
+- Keep future institutional investigation overlays behind explicit schemas, source policy, validation, and performance budgets.
 
 ## D141 FOLLOW-ON
 

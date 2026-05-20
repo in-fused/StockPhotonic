@@ -1537,7 +1537,10 @@ body.graph-fullscreen-active > header {
         }
 
 .graph-investigation-rail.is-empty .graph-investigation-active,
-.graph-investigation-rail.is-empty .graph-investigation-lists {
+.graph-investigation-rail.is-empty .graph-investigation-lists,
+.graph-investigation-rail.is-empty .graph-investigation-stack,
+.graph-investigation-rail.is-empty .graph-investigation-quick,
+.graph-investigation-rail.is-empty .graph-investigation-lineage {
             display: none;
         }
 
@@ -1606,6 +1609,70 @@ body.graph-fullscreen-active > header {
             margin-top: 0.5rem;
         }
 
+.graph-investigation-stack,
+.graph-investigation-quick,
+.graph-investigation-lineage,
+.graph-route-lineage,
+.graph-investigation-lineage {
+            display: flex;
+            align-items: center;
+            gap: 0.28rem;
+            margin-top: 0.42rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+        }
+
+.graph-investigation-stack::-webkit-scrollbar,
+.graph-investigation-quick::-webkit-scrollbar,
+.graph-investigation-lineage::-webkit-scrollbar,
+.graph-route-lineage::-webkit-scrollbar {
+            display: none;
+        }
+
+.graph-investigation-stack button,
+.graph-investigation-quick button,
+.graph-investigation-lineage button,
+.graph-route-lineage span,
+.graph-investigation-stack > span {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            max-width: 8.8rem;
+            min-height: 1.7rem;
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.42);
+            color: rgba(226, 232, 240, 0.68);
+            padding: 0.28rem 0.42rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.55rem;
+            line-height: 1;
+        }
+
+.graph-investigation-stack button span,
+.graph-investigation-quick button span,
+.graph-investigation-lineage button span,
+.graph-route-lineage span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-investigation-stack button:hover,
+.graph-investigation-stack button:focus-visible,
+.graph-investigation-quick button:hover,
+.graph-investigation-quick button:focus-visible,
+.graph-investigation-lineage button:hover,
+.graph-investigation-lineage button:focus-visible {
+            border-color: rgba(125, 211, 252, 0.34);
+            background: rgba(14, 116, 144, 0.16);
+            color: rgba(255, 255, 255, 0.92);
+            outline: none;
+        }
+
 .graph-investigation-lists button,
 .graph-investigation-task {
             display: inline-flex;
@@ -1641,6 +1708,137 @@ body.graph-fullscreen-active > header {
 
 .graph-container.has-readability-suppression #graph-canvas {
             filter: saturate(0.96) contrast(1.02);
+        }
+
+.graph-investigation-narrative {
+            position: absolute;
+            left: 1rem;
+            top: 5rem;
+            z-index: 22;
+            width: min(21rem, calc(100% - 24rem));
+            max-height: min(32%, 15.5rem);
+            overflow: hidden;
+            border: 1px solid rgba(125, 211, 252, 0.16);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.68);
+            box-shadow: 0 16px 44px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(15px);
+            color: rgba(226, 232, 240, 0.78);
+            padding: 0.54rem;
+            pointer-events: auto;
+        }
+
+.graph-investigation-narrative.is-empty {
+            display: none;
+        }
+
+.graph-investigation-narrative.is-collapsed {
+            width: min(17rem, calc(100% - 22rem));
+            max-height: 7.6rem;
+        }
+
+.graph-investigation-narrative-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            color: rgba(165, 243, 252, 0.74);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+.graph-investigation-narrative-head span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.34rem;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-investigation-narrative-head button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.7rem;
+            height: 1.7rem;
+            flex: 0 0 auto;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.46);
+            color: rgba(226, 232, 240, 0.76);
+        }
+
+.graph-investigation-narrative-head button:hover,
+.graph-investigation-narrative-head button:focus-visible {
+            border-color: rgba(125, 211, 252, 0.34);
+            color: #ffffff;
+            outline: none;
+        }
+
+.graph-investigation-narrative-title {
+            margin-top: 0.32rem;
+            color: rgba(255, 255, 255, 0.92);
+            font-size: 0.82rem;
+            font-weight: 760;
+            line-height: 1.15;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-investigation-narrative-copy,
+.graph-investigation-narrative-why {
+            margin-top: 0.28rem;
+            color: rgba(203, 213, 225, 0.66);
+            font-size: 0.64rem;
+            line-height: 1.35;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+.graph-investigation-narrative-copy {
+            -webkit-line-clamp: 2;
+        }
+
+.graph-investigation-narrative-why {
+            -webkit-line-clamp: 2;
+            color: rgba(207, 250, 254, 0.62);
+        }
+
+.graph-reasoning-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.28rem;
+            margin-top: 0.42rem;
+        }
+
+.graph-reasoning-chips span {
+            max-width: 10rem;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(207, 250, 254, 0.74);
+            padding: 0.28rem 0.42rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.55rem;
+            line-height: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-reasoning-chips.is-reasoning span {
+            border-color: rgba(240, 171, 252, 0.15);
+            color: rgba(253, 244, 255, 0.7);
+        }
+
+.graph-investigation-narrative .graph-investigation-lineage {
+            margin-top: 0.4rem;
         }
 
 .graph-annotation-layer {
@@ -2148,6 +2346,13 @@ body.graph-fullscreen-active > header {
             background: rgba(2, 6, 23, 0.64);
         }
 
+.graph-first-os .graph-investigation-narrative {
+            top: 4.75rem;
+            width: min(18.5rem, calc(100% - 23rem));
+            max-height: min(26%, 13rem);
+            background: rgba(2, 6, 23, 0.62);
+        }
+
 .graph-first-os .graph-timeline-track {
             max-width: min(54rem, calc(100% - 17rem));
         }
@@ -2171,6 +2376,11 @@ body.graph-fullscreen-active > header {
         }
 
 .graph-first-os .graph-route-workspace-copy span:nth-child(n+2) {
+            display: none;
+        }
+
+.graph-first-os .graph-route-lineage span:nth-child(n+4),
+.graph-first-os .graph-reasoning-chips.is-reasoning span:nth-child(n+4) {
             display: none;
         }
 
@@ -2362,18 +2572,25 @@ body.graph-fullscreen-active > header {
         }
 
 .graph-os-presets {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
+            display: flex;
             gap: 0.28rem;
             margin-top: 0.5rem;
             border-top: 1px solid rgba(148, 163, 184, 0.1);
             padding-top: 0.48rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+        }
+
+.graph-os-presets::-webkit-scrollbar {
+            display: none;
         }
 
 .graph-os-presets button {
             display: grid;
             justify-items: center;
             gap: 0.16rem;
+            flex: 0 0 5.2rem;
             min-width: 0;
             min-height: 3.2rem;
             border: 1px solid rgba(148, 163, 184, 0.14);
@@ -2430,6 +2647,12 @@ body.graph-fullscreen-active > header {
         }
 
 #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-os-status-panel {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-investigation-narrative {
             opacity: 0;
             pointer-events: none;
             visibility: hidden;

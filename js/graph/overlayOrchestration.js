@@ -215,7 +215,15 @@
                 : plan ? 'Open'
                     : 'Unavailable',
             conflictSuppression: Boolean(plan?.summary?.conflictSuppression),
-            derivedOnly: Boolean(plan?.summary?.derivedOnly ?? true)
+            derivedOnly: Boolean(plan?.summary?.derivedOnly ?? true),
+            dominantReason: getDominantReason(plan),
+            suppressionReason: getSuppressionReason(plan, suppressedEdgeCount),
+            reasonChips: buildReasonChips(plan, {
+                suppressedEdgeCount,
+                protectedEdgeCount,
+                tickerBudget,
+                fullBudget
+            })
         };
     }
 
@@ -348,6 +356,61 @@
         if (Array.isArray(value)) return value.length;
         if (value instanceof Map || value instanceof Set) return value.size;
         return 0;
+    }
+
+    function getDominantReason(plan = null) {
+        if (!plan?.dominant) return 'No active overlay layer is dominant in the current graph state.';
+        return `${plan.dominant.label} is dominant because it has the highest active orchestration priority in this graph state.`;
+    }
+
+    function getSuppressionReason(plan = null, suppressedEdgeCount = 0) {
+        const suppressedLayers = Array.isArray(plan?.suppressedLayers) ? plan.suppressedLayers.length : 0;
+        if (suppressedLayers) {
+            return `${suppressedLayers} active overlay layer${suppressedLayers === 1 ? '' : 's'} are suppressed to preserve graph readability.`;
+        }
+        if (suppressedEdgeCount) {
+            return `${suppressedEdgeCount} visible edge${suppressedEdgeCount === 1 ? '' : 's'} are gated by readability budget.`;
+        }
+        return 'No overlay layer suppression is active.';
+    }
+
+    function buildReasonChips(plan = null, counts = {}) {
+        if (!plan) return [];
+        const chips = [];
+        if (plan.dominant) {
+            chips.push({
+                key: 'dominant-overlay',
+                label: plan.dominant.label,
+                reason: getDominantReason(plan)
+            });
+        }
+        if (plan.suppressedLayers?.length) {
+            chips.push({
+                key: 'suppressed-layers',
+                label: `${plan.suppressedLayers.length} suppressed`,
+                reason: getSuppressionReason(plan, counts.suppressedEdgeCount)
+            });
+        }
+        if (counts.suppressedEdgeCount) {
+            chips.push({
+                key: 'suppressed-edges',
+                label: `${counts.suppressedEdgeCount} gated`,
+                reason: 'Readability model hides lower-priority background edges after protected routes and selections are reserved.'
+            });
+        }
+        if (counts.protectedEdgeCount) {
+            chips.push({
+                key: 'protected-path',
+                label: `${counts.protectedEdgeCount} protected`,
+                reason: 'Selection, route, comparison, or guided edges are protected before overlay suppression is applied.'
+            });
+        }
+        chips.push({
+            key: 'label-budget',
+            label: counts.tickerBudget || counts.fullBudget ? `${counts.tickerBudget || 0}/${counts.fullBudget || 0} labels` : 'label budget',
+            reason: 'Label limits come from the readability budget and overlay conflict plan.'
+        });
+        return chips.slice(0, 5);
     }
 
     function normalizeDensity(source = {}, nodeCount = 0, edgeCount = 0) {

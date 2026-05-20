@@ -13,7 +13,10 @@
         tasks: 10,
         history: 12,
         snapshots: 6,
-        timeline: 18
+        timeline: 18,
+        focus: 14,
+        lineage: 10,
+        quickJump: 6
     });
 
     function createSessionWorkspace(options = {}) {
@@ -27,7 +30,9 @@
             if (!entry) return null;
             state.updatedAt = entry.createdAt || now();
             pushUnique(state.stack, entry, LIMITS.stack);
+            pushUnique(state.activeInvestigationStack, entry, LIMITS.stack);
             pushUnique(state.jumpHistory, entry, LIMITS.history);
+            if (isFocusKind(kind)) pushUnique(state.focusHistory, entry, LIMITS.focus);
             pushTimeline(entry);
             if (kind !== 'heartbeat') pushUnique(state.breadcrumbs, entry, LIMITS.breadcrumbs);
             return entry;
@@ -38,6 +43,7 @@
             if (!routeLike) return null;
             pushUnique(state.pinnedRoutes, routeLike, LIMITS.routes);
             pushUnique(state.routeWorkspaceStack, routeLike, LIMITS.stack);
+            pushUnique(state.activeRouteLineage, routeLike, LIMITS.lineage);
             remember('route-pin', routeLike, { label: routeLike.label });
             return routeLike;
         }
@@ -46,6 +52,7 @@
             const item = normalizeCorridor(corridor, meta);
             if (!item) return null;
             pushUnique(state.pinnedCorridors, item, LIMITS.corridors);
+            pushUnique(state.activeCorridorLineage, item, LIMITS.lineage);
             remember('corridor-pin', item, { label: item.label });
             return item;
         }
@@ -63,7 +70,60 @@
             if (!item) return null;
             pushUnique(state.replayCheckpoints, item, LIMITS.checkpoints);
             pushUnique(state.replayWorkspaceStack, item, LIMITS.stack);
+            pushUnique(state.replayChronologyContinuity, item, LIMITS.lineage);
             remember('replay-checkpoint', item, { label: item.label });
+            return item;
+        }
+
+        function recordFocus(kind, payload = {}, meta = {}) {
+            const item = remember(kind || payload.kind || 'focus', payload, meta);
+            if (item) pushUnique(state.focusHistory, item, LIMITS.focus);
+            return item;
+        }
+
+        function recordRouteLineage(route, meta = {}) {
+            const routeLike = normalizeRoute(route, meta);
+            if (!routeLike) return null;
+            pushUnique(state.activeRouteLineage, routeLike, LIMITS.lineage);
+            pushUnique(state.routeWorkspaceStack, routeLike, LIMITS.stack);
+            pushTimeline({
+                ...routeLike,
+                kind: routeLike.kind === 'route-comparison' ? 'route-lineage' : 'route',
+                meta: {
+                    routeId: routeLike.id,
+                    mode: routeLike.mode || ''
+                }
+            });
+            return routeLike;
+        }
+
+        function recordCorridorLineage(corridor, meta = {}) {
+            const item = normalizeCorridor(corridor, meta);
+            if (!item) return null;
+            pushUnique(state.activeCorridorLineage, item, LIMITS.lineage);
+            pushTimeline({
+                ...item,
+                kind: 'corridor-lineage',
+                meta: {
+                    corridorKey: item.key
+                }
+            });
+            return item;
+        }
+
+        function recordReplayContinuity(checkpoint = {}, meta = {}) {
+            const item = normalizeCheckpoint(checkpoint, meta, now());
+            if (!item) return null;
+            pushUnique(state.replayChronologyContinuity, item, LIMITS.lineage);
+            pushUnique(state.replayWorkspaceStack, item, LIMITS.stack);
+            pushTimeline({
+                ...item,
+                kind: 'replay-continuity',
+                meta: {
+                    selectedStep: item.selectedStep,
+                    totalSteps: item.totalSteps
+                }
+            });
             return item;
         }
 
@@ -144,6 +204,11 @@
             state.routeWorkspaceStack = [];
             state.replayWorkspaceStack = [];
             state.stagingArea = [];
+            state.activeInvestigationStack = [];
+            state.focusHistory = [];
+            state.activeRouteLineage = [];
+            state.activeCorridorLineage = [];
+            state.replayChronologyContinuity = [];
         }
 
         function remove(kind, id) {
@@ -204,6 +269,12 @@
                 routeWorkspaceStack: state.routeWorkspaceStack.slice(0, LIMITS.stack),
                 replayWorkspaceStack: state.replayWorkspaceStack.slice(0, LIMITS.stack),
                 stagingArea: state.stagingArea.slice(0, LIMITS.queue),
+                activeInvestigationStack: state.activeInvestigationStack.slice(0, LIMITS.stack),
+                focusHistory: state.focusHistory.slice(0, LIMITS.focus),
+                activeRouteLineage: state.activeRouteLineage.slice(0, LIMITS.lineage),
+                activeCorridorLineage: state.activeCorridorLineage.slice(0, LIMITS.lineage),
+                replayChronologyContinuity: state.replayChronologyContinuity.slice(0, LIMITS.lineage),
+                quickJumpBackActions: buildQuickJumpBackActions(state),
                 pinnedRoutes: state.pinnedRoutes.slice(0, LIMITS.routes),
                 pinnedCorridors: state.pinnedCorridors.slice(0, LIMITS.corridors),
                 pinnedHubs: state.pinnedHubs.slice(0, LIMITS.hubs),
@@ -303,6 +374,10 @@
             pinCorridor,
             pinHub,
             addReplayCheckpoint,
+            recordFocus,
+            recordRouteLineage,
+            recordCorridorLineage,
+            recordReplayContinuity,
             collectCurrentRoutes,
             queueInvestigation,
             activateQueueItem,
@@ -341,6 +416,11 @@
             routeWorkspaceStack: [],
             replayWorkspaceStack: [],
             stagingArea: [],
+            activeInvestigationStack: [],
+            focusHistory: [],
+            activeRouteLineage: [],
+            activeCorridorLineage: [],
+            replayChronologyContinuity: [],
             activeWorkspaceId: String(id || 'session'),
             createdAt,
             updatedAt: createdAt
@@ -397,6 +477,7 @@
             kind: String(kind || 'item'),
             label: String(label),
             value: String(payload.value ?? payload.key ?? payload.id ?? ''),
+            payload: payload.payload || payload,
             createdAt,
             meta: {
                 routeId: payload.routeId || payload.id || '',
@@ -424,6 +505,7 @@
             sharedEdgeCount: route.sharedLinkKeys?.size || meta.sharedEdgeCount || 0,
             sourceBacked: summary.sourceBacked || meta.sourceBacked || route.evidence?.sourceBacked || 0,
             secBacked: summary.secBacked || meta.secBacked || route.evidence?.secBacked || 0,
+            interpretation: route.interpretation || meta.interpretation || null,
             ref: route,
             createdAt: Date.now()
         };
@@ -474,8 +556,41 @@
             selectedStep,
             totalSteps: Number(checkpoint.totalSteps || meta.totalSteps || 0),
             windowLabel: checkpoint.windowLabel || meta.windowLabel || '',
+            reason: checkpoint.reason || meta.reason || '',
             createdAt
         };
+    }
+
+    function buildQuickJumpBackActions(state) {
+        const merged = [
+            ...state.focusHistory,
+            ...state.jumpHistory,
+            ...state.snapshots
+        ];
+        const seen = new Set();
+        return merged.filter(item => {
+            const key = item.id || `${item.kind}:${item.value || item.label}`;
+            if (!key || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        }).slice(0, LIMITS.quickJump);
+    }
+
+    function isFocusKind(kind) {
+        return [
+            'node',
+            'candidate-node',
+            'sec-node',
+            'relationship',
+            'route',
+            'route-comparison',
+            'corridor',
+            'ecosystem',
+            'layer',
+            'mode',
+            'snapshot-restore',
+            'restore'
+        ].includes(String(kind || ''));
     }
 
     function getList(state, kind) {

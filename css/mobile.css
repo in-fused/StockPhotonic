@@ -216,6 +216,22 @@
                 display: none;
             }
 
+            .graph-investigation-stack,
+            .graph-investigation-quick,
+            .graph-investigation-lineage {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 0.1rem;
+            }
+
+            .graph-investigation-stack button,
+            .graph-investigation-quick button,
+            .graph-investigation-lineage button {
+                min-height: 2rem;
+                max-width: 7.6rem;
+                padding: 0.36rem 0.5rem;
+            }
+
             .graph-investigation-lists {
                 flex-wrap: nowrap;
                 overflow-x: auto;
@@ -1506,6 +1522,52 @@
                 padding: 0.46rem;
             }
 
+            .graph-investigation-narrative {
+                top: min(20rem, calc(36dvh + 4.2rem));
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(0.65rem, env(safe-area-inset-right));
+                width: auto;
+                max-height: 6.4rem;
+                padding: 0.46rem;
+            }
+
+            .graph-investigation-narrative.is-collapsed {
+                width: auto;
+                max-height: 5.2rem;
+            }
+
+            .graph-investigation-narrative-title {
+                font-size: 0.72rem;
+            }
+
+            .graph-investigation-narrative-copy {
+                -webkit-line-clamp: 1;
+            }
+
+            .graph-investigation-narrative-why,
+            .graph-reasoning-chips.is-reasoning,
+            .graph-investigation-narrative .graph-investigation-lineage {
+                display: none;
+            }
+
+            .graph-reasoning-chips {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            .graph-reasoning-chips::-webkit-scrollbar {
+                display: none;
+            }
+
+            .graph-reasoning-chips span {
+                flex: 0 0 auto;
+                max-width: 8.2rem;
+                min-height: 1.8rem;
+                display: inline-flex;
+                align-items: center;
+            }
+
             .graph-os-status-grid,
             .graph-os-readability-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1554,7 +1616,18 @@
                 max-height: min(28dvh, 13rem);
             }
 
+            #graph-intelligence-view.is-graph-fullscreen .graph-investigation-narrative {
+                top: min(15rem, calc(30dvh + 1.2rem));
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(3.9rem, calc(3.8rem + env(safe-area-inset-right)));
+                max-height: 5.7rem;
+            }
+
             #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-os-status-panel {
+                display: none;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-investigation-narrative {
                 display: none;
             }
 

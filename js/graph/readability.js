@@ -56,6 +56,7 @@
                 nodeProminence,
                 budgets,
                 semanticFog,
+                reasonChips: buildReasonChips({ density, semantic, budgets, protectedLinkKeys, activeRouteLinkKeys, activeCorridorKey, corridorIndex }),
                 notes: {
                     adaptiveEdgeThinning: budgets.edgeBudget < links.length,
                     semanticEdgeFading: density.key !== 'core' || semantic.tierRank <= 1,
@@ -256,6 +257,44 @@
             protectedLinkCount: protectedCount,
             activeWorkflow
         };
+    }
+
+    function buildReasonChips({ density, semantic, budgets, protectedLinkKeys, activeRouteLinkKeys, activeCorridorKey, corridorIndex }) {
+        const chips = [];
+        if (budgets.suppressedEstimate > 0) {
+            chips.push({
+                key: 'readability-suppression',
+                label: `${budgets.suppressedEstimate} gated`,
+                reason: `${budgets.suppressedEstimate} visible edge${budgets.suppressedEstimate === 1 ? '' : 's'} exceed the ${budgets.edgeBudget}-edge readability budget.`
+            });
+        }
+        if (protectedLinkKeys.size || activeRouteLinkKeys.size) {
+            const count = Math.max(protectedLinkKeys.size, activeRouteLinkKeys.size);
+            chips.push({
+                key: 'protected-context',
+                label: `${count} protected`,
+                reason: 'Selected, route, overlay, or guided edges stay visible before density suppression is applied.'
+            });
+        }
+        if (activeCorridorKey) {
+            chips.push({
+                key: 'active-corridor',
+                label: formatKey(activeCorridorKey),
+                reason: 'The active corridor receives extra readability budget before background edges are thinned.'
+            });
+        } else if (corridorIndex?.topCorridors?.length) {
+            chips.push({
+                key: 'corridor-priority',
+                label: formatKey(corridorIndex.topCorridors[0].key),
+                reason: 'The top corridor is prioritized by visible edge count, strength, and source-backed edge count.'
+            });
+        }
+        chips.push({
+            key: 'label-budget',
+            label: `${budgets.tickerLabelBudget} labels`,
+            reason: `Label budget follows ${semantic.tier || 'relationship'} semantic tier and ${density.key || 'core'} graph density.`
+        });
+        return chips.slice(0, 5);
     }
 
     function buildSemanticFog(context, density, semantic, budgets) {

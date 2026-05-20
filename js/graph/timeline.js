@@ -78,6 +78,56 @@
             });
         });
 
+        const activeStack = Array.isArray(workspace.activeInvestigationStack) ? workspace.activeInvestigationStack : [];
+        activeStack.slice(0, 4).forEach((item, index) => {
+            events.push({
+                id: `stack:${item.id || index}`,
+                kind: item.kind || 'stack',
+                label: item.shortLabel || item.label || `Focus ${index + 1}`,
+                detail: 'Investigation stack',
+                stackIndex: index,
+                value: item.value,
+                priority: 52 - index
+            });
+        });
+
+        const routeLineage = Array.isArray(workspace.activeRouteLineage) ? workspace.activeRouteLineage : [];
+        routeLineage.slice(0, 3).forEach((item, index) => {
+            events.push({
+                id: `route-lineage:${item.id || index}`,
+                kind: item.kind || 'route-lineage',
+                label: item.shortLabel || item.label || `Route ${index + 1}`,
+                detail: `${item.edgeCount || 0} edges`,
+                routeLineageIndex: index,
+                priority: 50 - index
+            });
+        });
+
+        const corridorLineage = Array.isArray(workspace.activeCorridorLineage) ? workspace.activeCorridorLineage : [];
+        corridorLineage.slice(0, 3).forEach((item, index) => {
+            events.push({
+                id: `corridor-lineage:${item.id || item.key || index}`,
+                kind: 'corridor',
+                label: item.shortLabel || item.label || `Corridor ${index + 1}`,
+                detail: `${item.edgeCount || 0} edges`,
+                value: item.key,
+                corridorLineageIndex: index,
+                priority: 49 - index
+            });
+        });
+
+        const replayContinuity = Array.isArray(workspace.replayChronologyContinuity) ? workspace.replayChronologyContinuity : [];
+        replayContinuity.slice(0, 3).forEach((item, index) => {
+            events.push({
+                id: `replay-continuity:${item.id || index}`,
+                kind: 'replay-continuity',
+                label: item.shortLabel || item.label || `Replay ${index + 1}`,
+                detail: item.totalSteps ? `Step ${item.selectedStep || 0}/${item.totalSteps}` : 'Replay continuity',
+                replayContinuityIndex: index,
+                priority: 47 - index
+            });
+        });
+
         const snapshots = Array.isArray(workspace.snapshots) ? workspace.snapshots : [];
         snapshots.slice(0, 4).forEach((snapshot, index) => {
             events.push({

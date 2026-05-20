@@ -46,6 +46,9 @@
 
         const topology = deriveRouteTopology(normalizedRoutes, sharedNodeIds);
         const evidence = summarizeComparisonEvidence(normalizedRoutes, context);
+        const interpretation = interpretComparison(normalizedRoutes, topology, evidence, context, {
+            sharedEdgeCount: sharedLinkKeys.size
+        });
         const label = options.label || normalizedRoutes.map(route => route.shortLabel || route.label).join(' vs ');
 
         return {
@@ -64,6 +67,7 @@
             divergenceNotes: topology.divergenceNotes,
             convergenceNotes: topology.convergenceNotes,
             evidence,
+            interpretation,
             createdAt: Date.now()
         };
     }
@@ -162,7 +166,8 @@
             sharedNodeCount: comparison.sharedNodeIds?.size || 0,
             divergenceNotes: comparison.divergenceNotes || [],
             convergenceNotes: comparison.convergenceNotes || [],
-            evidence: comparison.evidence || {}
+            evidence: comparison.evidence || {},
+            interpretation: comparison.interpretation || null
         };
     }
 
@@ -208,6 +213,14 @@
             .sort((a, b) => b.score - a.score || String(a.node?.ticker || a.node?.name || '').localeCompare(String(b.node?.ticker || b.node?.name || '')))
             .slice(0, 4)
             .map(item => item.node);
+        const interpretation = interpretRoute({ ...route, links, nodes }, {
+            sourceBacked,
+            secBacked,
+            avgStrength,
+            evidenceTiers,
+            confidenceTiers,
+            strongestNodes
+        }, context);
 
         return {
             label: route.label || 'Route',
@@ -218,7 +231,8 @@
             avgStrength,
             evidenceTiers,
             confidenceTiers,
-            strongestNodes
+            strongestNodes,
+            interpretation
         };
     }
 
@@ -233,6 +247,86 @@
             sourceBackedRatio: allLinks.length ? sourceBacked / allLinks.length : 0,
             evidenceTiers: countBy(allLinks, link => context.getRelationshipEvidenceTier?.(link)?.label || 'Evidence pending'),
             confidenceTiers: countBy(allLinks, link => context.getRelationshipConfidenceTier?.(link)?.label || 'Confidence pending')
+        };
+    }
+
+    function interpretRoute(route, summary = {}, context = {}) {
+        const links = Array.isArray(route.links) ? route.links : [];
+        const nodes = Array.isArray(route.nodes) ? route.nodes : [];
+        const corridorSequence = compactSequence(links.map(link => getPrimaryCorridorKey(link, context)).filter(Boolean));
+        const ecosystemSequence = compactSequence(links.map(link => getPrimaryEcosystemKey(link, context)).filter(Boolean));
+        const bridgeNodes = getBridgeNodes(nodes, links).slice(0, 3);
+        const evidenceTotal = links.length;
+        const sourceBacked = Number(summary.sourceBacked ?? links.filter(link => context.relationshipHasSourceEvidence?.(link)).length);
+        const secBacked = Number(summary.secBacked ?? links.filter(link => context.isSecBackedConnection?.(link)).length);
+        const sourceRatio = evidenceTotal ? sourceBacked / evidenceTotal : 0;
+        const densityLabel = sourceRatio >= 0.72
+            ? 'high source density'
+            : sourceRatio >= 0.38
+                ? 'mixed source density'
+                : evidenceTotal ? 'limited source density' : 'no visible edges';
+
+        return {
+            bridgeCompanyCount: bridgeNodes.length,
+            bridgeCompanyLabels: bridgeNodes.map(getNodeLabel),
+            corridorSequence,
+            ecosystemSequence,
+            corridorTransitionCount: Math.max(0, corridorSequence.length - 1),
+            ecosystemTransitionCount: Math.max(0, ecosystemSequence.length - 1),
+            evidenceDensityLabel: densityLabel,
+            evidenceDensityExplanation: `${sourceBacked} of ${evidenceTotal} visible route edge${evidenceTotal === 1 ? '' : 's'} include source evidence; ${secBacked} are SEC-backed.`,
+            bridgeCompanySignificance: bridgeNodes.length
+                ? `${bridgeNodes.map(getNodeLabel).join(', ')} bridge different visible sectors along this route.`
+                : 'No cross-sector bridge company is distinct in the current visible route.',
+            ecosystemTransitionExplanation: ecosystemSequence.length > 1
+                ? `Route metadata crosses ${ecosystemSequence.length} ecosystem cue${ecosystemSequence.length === 1 ? '' : 's'}: ${ecosystemSequence.map(formatKey).join(' to ')}.`
+                : ecosystemSequence.length === 1
+                    ? `Route metadata stays within ${formatKey(ecosystemSequence[0])}.`
+                    : 'No ecosystem transition metadata is visible for this route.',
+            corridorTransitionExplanation: corridorSequence.length > 1
+                ? `Route corridor cues move from ${corridorSequence.map(formatKey).join(' to ')}.`
+                : corridorSequence.length === 1
+                    ? `Route stays in the ${formatKey(corridorSequence[0])} corridor cue.`
+                    : 'No corridor transition metadata is visible for this route.',
+            routeRankExplanation: getRouteRankExplanation(route, summary),
+            chips: [
+                densityLabel,
+                bridgeNodes.length ? `${bridgeNodes.length} bridge node${bridgeNodes.length === 1 ? '' : 's'}` : 'no bridge split',
+                corridorSequence.length ? `${corridorSequence.length} corridor cue${corridorSequence.length === 1 ? '' : 's'}` : 'no corridor cue',
+                ecosystemSequence.length ? `${ecosystemSequence.length} ecosystem cue${ecosystemSequence.length === 1 ? '' : 's'}` : 'no ecosystem cue'
+            ]
+        };
+    }
+
+    function interpretComparison(routes, topology, evidence, context = {}, options = {}) {
+        const routeInterpretations = routes.map(route => route.summary?.interpretation || interpretRoute(route, route.summary || {}, context));
+        const bridgeLabels = uniqueStrings(routeInterpretations.flatMap(item => item.bridgeCompanyLabels || [])).slice(0, 4);
+        const corridorTransitions = routeInterpretations.reduce((sum, item) => sum + Number(item.corridorTransitionCount || 0), 0);
+        const ecosystemTransitions = routeInterpretations.reduce((sum, item) => sum + Number(item.ecosystemTransitionCount || 0), 0);
+        const sharedEdges = Number(options.sharedEdgeCount || 0);
+        const sourceRatio = evidence.totalEdges ? Number(evidence.sourceBacked || 0) / evidence.totalEdges : 0;
+        return {
+            convergenceSignificance: topology.convergenceNotes?.[0] || 'No later route convergence point is distinct in the current visible graph.',
+            divergenceSignificance: topology.divergenceNotes?.[0] || 'Route divergence is limited under the current visible edge set.',
+            bridgeCompanySignificance: bridgeLabels.length
+                ? `${bridgeLabels.join(', ')} appear as bridge-company cues across compared routes.`
+                : 'No distinct bridge-company cue is shared across the compared routes.',
+            evidenceDensityExplanation: `${evidence.sourceBacked || 0} of ${evidence.totalEdges || 0} unique compared edge${(evidence.totalEdges || 0) === 1 ? '' : 's'} include source evidence; ${evidence.secBacked || 0} are SEC-backed.`,
+            ecosystemTransitionExplanation: ecosystemTransitions
+                ? `${ecosystemTransitions} ecosystem transition cue${ecosystemTransitions === 1 ? '' : 's'} appear across compared route metadata.`
+                : 'Compared routes do not expose ecosystem transition metadata in this view.',
+            corridorTransitionExplanation: corridorTransitions
+                ? `${corridorTransitions} corridor transition cue${corridorTransitions === 1 ? '' : 's'} appear across compared route metadata.`
+                : 'Compared routes do not expose corridor transition metadata in this view.',
+            routeRankExplanation: `${routes[0]?.shortLabel || routes[0]?.label || 'Primary route'} is first because it is the requested primary comparison mode, not because a new ranking system was derived.`,
+            convergenceLevel: topology.convergenceNodeIds?.size ? 'visible convergence' : sharedEdges ? 'shared-edge overlap' : 'limited overlap',
+            evidenceDensityLabel: sourceRatio >= 0.72 ? 'high source density' : sourceRatio >= 0.38 ? 'mixed source density' : 'limited source density',
+            chips: [
+                `${routes.length} deterministic routes`,
+                topology.convergenceNodeIds?.size ? `${topology.convergenceNodeIds.size} convergence` : 'no convergence node',
+                topology.divergenceNodeIds?.size ? `${topology.divergenceNodeIds.size} divergence` : 'limited divergence',
+                `${evidence.sourceBacked || 0}/${evidence.totalEdges || 0} sourced`
+            ]
         };
     }
 
@@ -312,6 +406,50 @@
         return Number(profile.score || 0) + Number(node?.degree || 0) * 0.8;
     }
 
+    function getPrimaryCorridorKey(link, context = {}) {
+        const spatial = context.getGraphLinkSpatialMeta?.(link) || {};
+        return spatial.primaryCorridorKey || spatial.corridorKeys?.[0] || '';
+    }
+
+    function getPrimaryEcosystemKey(link, context = {}) {
+        const keys = context.stockGraphIntelligence?.getLinkEcosystemKeys?.(link, context) || [];
+        return Array.isArray(keys) ? keys[0] || '' : '';
+    }
+
+    function getBridgeNodes(nodes = [], links = []) {
+        const bridgeIds = new Set();
+        links.forEach(link => {
+            if (!link?.source || !link?.target) return;
+            if (link.source.sector && link.target.sector && link.source.sector !== link.target.sector) {
+                bridgeIds.add(link.source.id);
+                bridgeIds.add(link.target.id);
+            }
+        });
+        return nodes.filter(node => bridgeIds.has(node.id));
+    }
+
+    function compactSequence(values = []) {
+        const sequence = [];
+        values.forEach(value => {
+            if (!value || sequence[sequence.length - 1] === value) return;
+            sequence.push(value);
+        });
+        return sequence.slice(0, 5);
+    }
+
+    function uniqueStrings(values = []) {
+        return [...new Set(values.filter(Boolean).map(value => String(value)))];
+    }
+
+    function getRouteRankExplanation(route = {}, summary = {}) {
+        const mode = String(route.mode || '').replace(/[_:|-]+/g, ' ');
+        const strength = Math.round((Number(summary.avgStrength || 0)) * 100);
+        if (mode.includes('sec') || mode.includes('source')) return `Route is prioritized by the requested source-backed mode with ${summary.sourceBacked || 0} sourced visible edges.`;
+        if (mode.includes('ecosystem')) return 'Route is prioritized by the requested ecosystem mode and visible ecosystem metadata.';
+        if (mode.includes('portfolio')) return 'Route is prioritized by the active portfolio context and loaded graph relationships.';
+        return `Route is prioritized by the requested ${mode || 'relationship'} mode with ${strength}% average visible edge strength.`;
+    }
+
     function getNodesFromLinks(links = [], seed = null) {
         const nodes = [];
         if (seed) nodes.push(seed);
@@ -348,6 +486,12 @@
         return link?.key || '';
     }
 
+    function formatKey(key) {
+        return String(key || 'cue')
+            .replace(/[_:|-]+/g, ' ')
+            .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
     function clamp01(value) {
         return Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
     }
@@ -360,6 +504,7 @@
         getLinkComparisonVisual,
         getNodeComparisonVisual,
         getTraversalNodes,
-        getComparisonSummary
+        getComparisonSummary,
+        interpretRoute
     };
 })();

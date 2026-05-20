@@ -424,8 +424,10 @@
                         <div id="graph-mode-hud" class="graph-mode-hud" aria-live="polite">Explore Mode</div>
                         <div id="graph-adaptive-hud" class="graph-adaptive-hud" aria-live="polite"></div>
                         <div id="graph-spatial-breadcrumbs" class="graph-spatial-breadcrumbs" aria-live="polite"></div>
+                        <div id="graph-timeline-rail" class="graph-timeline-rail" aria-live="polite"></div>
                         <div id="graph-cinematic-story" class="graph-cinematic-story" aria-live="polite"></div>
                         <div id="graph-workspace-memory" class="graph-workspace-memory" aria-live="polite"></div>
+                        <div id="graph-investigation-rail" class="graph-investigation-rail" aria-live="polite"></div>
                         <div id="graph-annotation-layer" class="graph-annotation-layer" aria-live="polite"></div>
                         <div class="mobile-graph-overlay stock-mobile-graph-overlay" aria-label="Mobile StockPhotonic graph controls">
                             <div class="mobile-graph-hint rounded-2xl px-3 py-2 text-[10px] font-mono">Pinch to zoom &bull; Drag to pan &bull; Tap nodes/flows</div>
@@ -438,6 +440,12 @@
                                 </button>
                                 <button id="stock-mobile-fullscreen-toggle" type="button" onclick="toggleGraphFullscreen()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Toggle StockPhotonic fullscreen graph" aria-label="Toggle StockPhotonic fullscreen graph">
                                     <i class="fa-solid fa-expand"></i>
+                                </button>
+                                <button type="button" onclick="stepRouteNode(1)" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Step active route" aria-label="Step active route">
+                                    <i class="fa-solid fa-forward-step"></i>
+                                </button>
+                                <button type="button" onclick="captureCurrentGraphSnapshot()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Save session graph snapshot" aria-label="Save session graph snapshot">
+                                    <i class="fa-regular fa-bookmark"></i>
                                 </button>
                             </div>
                         </div>
@@ -1332,8 +1340,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/graph/viewport.js"></script>
     <script src="js/graph/interactions.js"></script>
     <script src="js/graph/semanticZoom.js?v=d152-semantic-zoom"></script>
+    <script src="js/graph/readability.js?v=d161-readability"></script>
     <script src="js/graph/minimap.js?v=d153-cinematic-graph"></script>
     <script src="js/graph/cinematic.js?v=d153-cinematic-graph"></script>
+    <script src="js/graph/timeline.js?v=d165-timeline"></script>
     <script src="js/graph/scalableInfrastructure.js?v=d160-spatial-workspace"></script>
     <script src="js/graph/spatialAnnotations.js?v=d160-spatial-workspace"></script>
     <script src="js/graph/layouts.js"></script>
@@ -1375,7 +1385,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonicData failed to load');
         }
 
-        if (!window.StockPhotonicGraph?.viewport || !window.StockPhotonicGraph?.interactions || !window.StockPhotonicGraph?.semanticZoom || !window.StockPhotonicGraph?.minimap || !window.StockPhotonicGraph?.cinematic || !window.StockPhotonicGraph?.scalableInfrastructure || !window.StockPhotonicGraph?.spatialAnnotations) {
+        if (!window.StockPhotonicGraph?.viewport || !window.StockPhotonicGraph?.interactions || !window.StockPhotonicGraph?.semanticZoom || !window.StockPhotonicGraph?.readability || !window.StockPhotonicGraph?.minimap || !window.StockPhotonicGraph?.cinematic || !window.StockPhotonicGraph?.timeline || !window.StockPhotonicGraph?.scalableInfrastructure || !window.StockPhotonicGraph?.spatialAnnotations) {
             throw new Error('StockPhotonic graph modules failed to load');
         }
 
@@ -1432,8 +1442,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             viewport: graphViewport,
             interactions: graphInteractions,
             semanticZoom: graphSemanticZoom,
+            readability: graphReadability,
             minimap: graphMinimap,
             cinematic: graphCinematic,
+            timeline: graphTimeline,
             scalableInfrastructure: graphScalableInfrastructure,
             spatialAnnotations: graphSpatialAnnotations,
             layouts: graphLayouts,
@@ -1660,12 +1672,18 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let graphMinimapCollapsed = false;
         let graphMinimapModel = null;
         let graphScalabilityModel = null;
+        let graphReadabilityModel = null;
+        let graphTimelineModel = null;
         let graphAnnotationModel = null;
         let graphAnnotationDomKey = '';
         let adaptiveHudDomKey = '';
         let workspaceMemoryDomKey = '';
+        let graphTimelineDomKey = '';
+        let investigationRailDomKey = '';
+        let activeAnalystOverlayKey = '';
         const investigationWorkspace = stockInvestigationContinuity.createSessionWorkspace();
         const graphScalabilityController = graphScalableInfrastructure.createGraphScalabilityController();
+        const graphReadabilityController = graphReadability.createReadabilityController();
         const graphOverlayFoundationRegistry = graphScalableInfrastructure.createOverlayFoundationRegistry();
 
         let selectedNode = null;
@@ -1810,7 +1828,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             get graphIntelligenceModel() { return graphIntelligenceModel; },
             get graphScalingModel() { return graphScalingModel; },
             get graphScalabilityModel() { return graphScalabilityModel; },
+            get graphReadabilityModel() { return graphReadabilityModel; },
+            get graphTimelineModel() { return graphTimelineModel; },
             get largeGraphNavigationModel() { return largeGraphNavigationModel; },
+            get activeAnalystOverlayKey() { return activeAnalystOverlayKey; },
             get sourceCoverageLensEnabled() { return sourceCoverageLensEnabled; },
             get graphStoryMode() { return graphStoryMode; },
             get signalStrengthThreshold() { return signalStrengthThreshold; },
@@ -1832,6 +1853,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             NEXUS_AXIS_SPREAD,
             graphViewport,
             graphCinematic,
+            graphReadability,
             clamp,
             hexToRgba,
             getOrbitOffset,
@@ -1860,6 +1882,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             getStockUxMode,
             getSemanticZoomState,
             onSemanticZoomState: value => { stockSemanticZoomState = value; },
+            onReadabilityState: value => { graphReadabilityModel = value; },
             getGraphLinkSpatialMeta
         };
 
@@ -3480,6 +3503,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 graphIntelligenceModel,
                 graphScalingModel,
                 graphScalabilityModel,
+                graphReadabilityModel,
+                graphTimelineModel,
                 stockGraphIntelligence,
                 stockRouteComparison,
                 stockKeyboardTraversal,
@@ -3487,6 +3512,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 stockNarratives,
                 graphCinematic,
                 graphOverlayFoundationRegistry,
+                investigationWorkspace,
+                activeAnalystOverlayKey,
                 activeClusterNodeIds,
                 adjacencyById,
                 nodeById,
@@ -3540,6 +3567,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             graphIntelligenceCache = new Map();
             graphScalingModel = null;
             graphScalabilityModel = null;
+            graphReadabilityModel = null;
+            graphTimelineModel = null;
             graphAnnotationModel = null;
             largeGraphNavigationModel = null;
             activeClusterNodeIds = new Set();
@@ -4448,6 +4477,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 bounds,
                 viewportWorldRect: getMinimapViewportWorldRect()
             });
+            const minimapPlan = graphScalabilityModel?.minimapPlan || {};
+            const routeLinkKeys = activeRouteComparison?.linkKeys || activeRelationshipRoute?.linkKeys || focusLinkKeys || new Set();
+            const minimapNodes = sampleForMinimap(visibleNodes, minimapPlan.nodeSampleLimit);
+            const minimapLinks = sampleForMinimap(visibleLinks, minimapPlan.edgeSampleLimit, routeLinkKeys);
             const selectedNodeIds = new Set([
                 selectedNode?.id,
                 selectedSecPreviewNode?.id,
@@ -4455,15 +4488,33 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 ...focusNeighborIds
             ].filter(id => id !== undefined && id !== null));
             graphMinimap.drawStockMinimap(ctx, graphMinimapModel, {
-                nodes: visibleNodes,
-                links: visibleLinks,
-                routeLinkKeys: activeRouteComparison?.linkKeys || activeRelationshipRoute?.linkKeys || focusLinkKeys || new Set(),
+                nodes: minimapNodes,
+                links: minimapLinks,
+                routeLinkKeys,
                 routeComparison: activeRouteComparison,
                 selectedNodeIds,
                 semanticZoom: stockSemanticZoomState || getSemanticZoomState(),
                 getNodeLayoutPosition,
                 getLinkSpatialMeta: getGraphLinkSpatialMeta
             });
+        }
+
+        function sampleForMinimap(items, limit, protectedKeys = null) {
+            const safeLimit = Number(limit) || 0;
+            if (!safeLimit || !Array.isArray(items) || items.length <= safeLimit) return items;
+            const protectedItems = protectedKeys
+                ? items.filter(item => protectedKeys.has(item.key || item.id)).slice(0, Math.floor(safeLimit * 0.35))
+                : [];
+            const protectedIds = new Set(protectedItems.map(item => item.key || item.id));
+            const step = Math.max(1, Math.floor(items.length / safeLimit));
+            const sampled = [...protectedItems];
+            for (let index = 0; index < items.length && sampled.length < safeLimit; index += step) {
+                const item = items[index];
+                const key = item.key || item.id;
+                if (protectedIds.has(key)) continue;
+                sampled.push(item);
+            }
+            return sampled;
         }
 
         function getMinimapViewportWorldRect() {
@@ -5275,9 +5326,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 scale,
                 canvasWidth,
                 canvasHeight,
+                activeAnalystOverlayKey,
                 getGraphLinkSpatialMeta,
                 getNodeLayoutPosition
             }));
+            refreshGraphReadabilityModel();
         }
 
         function refreshGraphIntelligenceModel(options = {}) {
@@ -5286,8 +5339,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 ...stockGraphIntelligence.buildGraphIntelligenceModel(getGraphIntelligenceContext()),
                 largeGraphNavigation: largeGraphNavigationModel
             };
+            refreshGraphReadabilityModel();
             graphNodeIntelligenceVisualCache = new Map();
             graphLinkIntelligenceVisualCache = new Map();
+            refreshGraphTimelineModel();
             refreshGraphAnnotationModel();
 
             if (options.render !== false) {
@@ -5297,10 +5352,37 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 renderActiveGraphLegend();
                 renderAdaptiveGraphHud();
                 renderWorkspaceMemory();
+                renderInvestigationRail();
+                renderGraphTimelineRail();
                 renderGraphEmbeddedAnnotations();
                 updateGraphOverlayStats();
                 applyWorkspaceConvergenceState();
             }
+        }
+
+        function refreshGraphTimelineModel() {
+            graphTimelineModel = graphTimeline.buildStockTimeline(getGraphIntelligenceContext({
+                investigationWorkspaceSummary: investigationWorkspace.getSummary(getGraphIntelligenceContext()),
+                routeComparisonSequenceIndex,
+                stockSemanticZoomState,
+                activeAnalystOverlayKey
+            }));
+            graphTimelineDomKey = '';
+        }
+
+        function refreshGraphReadabilityModel() {
+            graphReadabilityModel = graphReadabilityController.buildModel(getGraphIntelligenceContext({
+                stockGraphIntelligence,
+                graphScalingModel,
+                graphScalabilityModel,
+                stockSemanticZoomState: stockSemanticZoomState || graphSemanticZoom.getStockSemanticState(renderContext, graphScalingModel?.density || {}),
+                scale,
+                canvasWidth,
+                canvasHeight,
+                activeAnalystOverlayKey,
+                getGraphLinkSpatialMeta,
+                getNodeLayoutPosition
+            }));
         }
 
         function refreshGraphAnnotationModel() {
@@ -5341,17 +5423,20 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const corridorActive = Boolean(getCurrentCorridorMemoryCandidate());
             const hubActive = Boolean(selectedNode);
             const hiddenEdges = Number(budget.suppressedEstimate || 0);
+            const readabilityHidden = Number(graphReadabilityModel?.budgets?.suppressedEstimate || 0);
             const layerReady = overlaySummary.tierReady.length;
 
             hud.innerHTML = `
                 <div class="graph-adaptive-hud-strip">
                     <span title="Semantic zoom tier"><i class="fa-solid fa-layer-group"></i>${escapeHtml(semantic.tierLabel || 'Graph')}</span>
                     <span title="Viewport-aware edge budget"><i class="fa-solid fa-gauge-high"></i>${escapeHtml(String(budget.budget || visibleLinks.length))}/${escapeHtml(String(visibleLinks.length))}</span>
-                    ${hiddenEdges ? `<span title="Edges intentionally suppressed by density budgeting"><i class="fa-solid fa-eye-slash"></i>${escapeHtml(String(hiddenEdges))}</span>` : ''}
-                    <span title="Dormant future overlay foundations"><i class="fa-solid fa-shapes"></i>${escapeHtml(String(layerReady))}</span>
+                    ${(hiddenEdges || readabilityHidden) ? `<span title="Edges intentionally suppressed by density budgeting"><i class="fa-solid fa-eye-slash"></i>${escapeHtml(String(Math.max(hiddenEdges, readabilityHidden)))}</span>` : ''}
+                    <span title="Density-aware analyst layers"><i class="fa-solid fa-shapes"></i>${escapeHtml(String(layerReady))}</span>
                     <button type="button" onclick="pinCurrentRoute()" ${routeActive ? '' : 'disabled'} title="Pin active route or comparison" aria-label="Pin active route or comparison"><i class="fa-solid fa-route"></i></button>
                     <button type="button" onclick="pinCurrentCorridor()" ${corridorActive ? '' : 'disabled'} title="Pin active corridor" aria-label="Pin active corridor"><i class="fa-solid fa-road"></i></button>
                     <button type="button" onclick="pinSelectedHub()" ${hubActive ? '' : 'disabled'} title="Pin selected hub" aria-label="Pin selected hub"><i class="fa-solid fa-thumbtack"></i></button>
+                    <button type="button" onclick="queueCurrentInvestigation()" title="Queue current investigation" aria-label="Queue current investigation"><i class="fa-solid fa-list-check"></i></button>
+                    <button type="button" onclick="captureCurrentGraphSnapshot()" title="Save session graph snapshot" aria-label="Save session graph snapshot"><i class="fa-regular fa-bookmark"></i></button>
                     <button type="button" onclick="toggleStockInspector()" title="Toggle inspector" aria-label="Toggle inspector"><i class="fa-solid fa-sidebar"></i></button>
                     <button type="button" onclick="toggleGraphControlDrawer()" title="Toggle graph controls" aria-label="Toggle graph controls"><i class="fa-solid fa-sliders"></i></button>
                 </div>
@@ -5363,12 +5448,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const panel = document.getElementById('graph-workspace-memory');
             if (!panel) return;
             const summary = investigationWorkspace.getSummary(getGraphIntelligenceContext());
-            const totalPins = summary.pinnedRouteCount + summary.pinnedCorridorCount + summary.pinnedHubCount + summary.replayCheckpointCount;
+            const totalPins = summary.pinnedRouteCount + summary.pinnedCorridorCount + summary.pinnedHubCount + summary.replayCheckpointCount + (summary.snapshotCount || 0);
             const items = [
                 ...summary.pinnedRoutes.map((item, index) => ({ ...item, list: 'routes', index })),
                 ...summary.pinnedCorridors.map((item, index) => ({ ...item, list: 'corridors', index })),
                 ...summary.pinnedHubs.map((item, index) => ({ ...item, list: 'hubs', index })),
-                ...summary.replayCheckpoints.map((item, index) => ({ ...item, list: 'checkpoints', index }))
+                ...summary.replayCheckpoints.map((item, index) => ({ ...item, list: 'checkpoints', index })),
+                ...(summary.snapshots || []).map((item, index) => ({ ...item, list: 'snapshots', index }))
             ].slice(0, 6);
             const key = [
                 totalPins,
@@ -5402,6 +5488,312 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
             `;
             panel.classList.remove('hidden');
+        }
+
+        function renderInvestigationRail() {
+            const rail = document.getElementById('graph-investigation-rail');
+            if (!rail) return;
+            const summary = investigationWorkspace.getSummary(getGraphIntelligenceContext());
+            const queue = summary.investigationQueue || [];
+            const tasks = summary.taskStack || [];
+            const snapshots = summary.snapshots || [];
+            const active = getCurrentWorkflowTarget();
+            const key = [
+                active?.id || '',
+                queue.map(item => item.id).join(','),
+                tasks.map(item => item.id).join(','),
+                snapshots.map(item => item.id).join(','),
+                activeRouteComparison?.id || activeRelationshipRoute?.id || '',
+                selectedNode?.id || '',
+                largeGraphNavigationModel?.mode || '',
+                activeAnalystOverlayKey
+            ].join('|');
+            if (key === investigationRailDomKey) return;
+            investigationRailDomKey = key;
+
+            rail.innerHTML = `
+                <div class="graph-investigation-rail-head">
+                    <span><i class="fa-solid fa-list-check"></i> Investigation</span>
+                    <button type="button" onclick="queueCurrentInvestigation()" title="Queue current graph state" aria-label="Queue current graph state"><i class="fa-solid fa-plus"></i></button>
+                    <button type="button" onclick="captureCurrentGraphSnapshot()" title="Save session graph snapshot" aria-label="Save session graph snapshot"><i class="fa-regular fa-bookmark"></i></button>
+                </div>
+                <div class="graph-investigation-active" title="${escapeHtml(active?.detail || active?.label || 'No active investigation')}">
+                    <strong>${escapeHtml(active?.label || 'Overview')}</strong>
+                    <span>${escapeHtml(active?.detail || 'Ready for graph-native workflow')}</span>
+                </div>
+                <div class="graph-investigation-lists">
+                    ${queue.slice(0, 4).map((item, index) => `
+                        <button type="button" onclick="activateQueuedInvestigation(${index})" title="${escapeHtml(item.label)}">
+                            <i class="fa-solid ${escapeHtml(getWorkflowIcon(item.kind))}"></i>
+                            <span>${escapeHtml(item.shortLabel || item.label)}</span>
+                        </button>
+                    `).join('')}
+                    ${snapshots.slice(0, 3).map((item, index) => `
+                        <button type="button" onclick="restoreGraphSnapshot(${index})" title="${escapeHtml(item.label)}">
+                            <i class="fa-regular fa-bookmark"></i>
+                            <span>${escapeHtml(item.shortLabel || item.label)}</span>
+                        </button>
+                    `).join('')}
+                    ${tasks.slice(0, 3).map(item => `
+                        <span class="graph-investigation-task" title="${escapeHtml(item.label)}">
+                            <i class="fa-solid fa-check-double"></i>
+                            <span>${escapeHtml(item.shortLabel || item.label)}</span>
+                        </span>
+                    `).join('')}
+                </div>
+            `;
+            rail.classList.toggle('is-empty', !queue.length && !snapshots.length && !tasks.length);
+        }
+
+        function renderGraphTimelineRail() {
+            const rail = document.getElementById('graph-timeline-rail');
+            if (!rail) return;
+            if (!graphTimelineModel) refreshGraphTimelineModel();
+            const model = graphTimelineModel || {};
+            const events = model.events || [];
+            const key = `${model.signature || ''}|${graphFullscreenActive ? 1 : 0}`;
+            if (key === graphTimelineDomKey) return;
+            graphTimelineDomKey = key;
+
+            if (!events.length) {
+                rail.innerHTML = '';
+                rail.classList.add('hidden');
+                return;
+            }
+
+            rail.innerHTML = `
+                <div class="graph-timeline-track" role="list" aria-label="Graph investigation timeline">
+                    ${events.slice(0, 12).map((event, index) => `
+                        <button type="button"
+                            role="listitem"
+                            class="graph-timeline-event is-${escapeHtml(event.kind || 'event')} ${event.active ? 'is-active' : ''}"
+                            onclick="restoreGraphTimelineEvent(${index})"
+                            title="${escapeHtml(`${event.label}${event.detail ? ` / ${event.detail}` : ''}`)}">
+                            <i class="fa-solid ${escapeHtml(getWorkflowIcon(event.kind))}"></i>
+                            <span>${escapeHtml(event.label)}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            rail.classList.remove('hidden');
+        }
+
+        function queueCurrentInvestigation() {
+            const target = getCurrentWorkflowTarget();
+            if (!target) return null;
+            const queued = investigationWorkspace.queueInvestigation(target, { label: target.label });
+            renderInvestigationRail();
+            renderWorkspaceMemory();
+            refreshGraphTimelineModel();
+            renderGraphTimelineRail();
+            return queued;
+        }
+
+        function captureCurrentGraphSnapshot() {
+            const snapshot = investigationWorkspace.captureSnapshot(buildCurrentGraphSnapshot(), {
+                label: getCurrentWorkflowTarget()?.label || 'Graph snapshot'
+            });
+            renderInvestigationRail();
+            renderWorkspaceMemory();
+            refreshGraphTimelineModel();
+            renderGraphTimelineRail();
+            return snapshot;
+        }
+
+        function activateQueuedInvestigation(index) {
+            const summary = investigationWorkspace.getSummary(getGraphIntelligenceContext());
+            const item = summary.investigationQueue?.[Number(index)];
+            if (!item) return;
+            restoreWorkflowTarget(item);
+            investigationWorkspace.activateQueueItem(item.id);
+            renderInvestigationRail();
+            renderWorkspaceMemory();
+        }
+
+        function restoreGraphSnapshot(index) {
+            const summary = investigationWorkspace.getSummary(getGraphIntelligenceContext());
+            const snapshot = summary.snapshots?.[Number(index)];
+            if (!snapshot) return;
+            restoreWorkflowTarget(snapshot.payload || snapshot);
+            investigationWorkspace.remember('snapshot-restore', snapshot, { label: snapshot.label });
+            renderInvestigationRail();
+            renderWorkspaceMemory();
+        }
+
+        function restoreGraphTimelineEvent(index) {
+            const event = graphTimelineModel?.events?.[Number(index)];
+            if (!event) return;
+            if (event.nodeId !== undefined && event.nodeId !== null) {
+                const node = nodeById.get(event.nodeId);
+                if (node) {
+                    routeComparisonSequenceIndex = Number.isFinite(event.routeIndex) ? event.routeIndex : routeComparisonSequenceIndex;
+                    selectNode(node, { preserveFilters: true });
+                    animateGraphFocusToNode(node, { minScale: 0.82, centerBiasY: 0.48 });
+                    return;
+                }
+            }
+            if (event.kind === 'queue') {
+                activateQueuedInvestigation(event.queueIndex);
+                return;
+            }
+            if (event.kind === 'snapshot') {
+                restoreGraphSnapshot(event.snapshotIndex);
+                return;
+            }
+            if (event.kind === 'ecosystem' && event.value) {
+                setEcosystemOverlay(event.value, { fit: true });
+                return;
+            }
+            if (event.kind === 'layer' && event.value) {
+                setAnalystOverlay(event.value);
+                return;
+            }
+            if (event.kind === 'corridor' && event.value) {
+                largeGraphCorridorFocus = event.value;
+                largeGraphMode = 'corridor_focus';
+                applyLargeGraphNavigationChange({ fit: true });
+            }
+        }
+
+        function getCurrentWorkflowTarget() {
+            if (activeRouteComparison) {
+                return {
+                    id: `comparison:${activeRouteComparison.id}`,
+                    kind: 'route-comparison',
+                    label: activeRouteComparison.label || 'Route comparison',
+                    shortLabel: 'Compare',
+                    detail: `${activeRouteComparison.routeCount || activeRouteComparison.routes?.length || 0} routes / ${activeRouteComparison.sharedLinkKeys?.size || 0} shared`,
+                    payload: buildCurrentGraphSnapshot()
+                };
+            }
+            if (activeRelationshipRoute) {
+                return {
+                    id: `route:${activeRelationshipRoute.id || activeRelationshipRoute.mode || activeRelationshipRoute.label}`,
+                    kind: 'route',
+                    label: activeRelationshipRoute.label || 'Relationship route',
+                    shortLabel: activeRelationshipRoute.shortLabel || 'Route',
+                    detail: `${activeRelationshipRoute.linkKeys?.size || 0} edges`,
+                    payload: buildCurrentGraphSnapshot()
+                };
+            }
+            if (largeGraphNavigationModel?.focusKind === 'corridor') {
+                return {
+                    id: `corridor:${largeGraphNavigationModel.corridorKey}`,
+                    kind: 'corridor',
+                    label: largeGraphNavigationModel.focusLabel || 'Corridor focus',
+                    shortLabel: largeGraphNavigationModel.modeShortLabel || 'Corridor',
+                    detail: `${largeGraphNavigationModel.progressiveDisclosure?.visibleEdgeCount || 0} edges`,
+                    payload: buildCurrentGraphSnapshot()
+                };
+            }
+            if (selectedNode) {
+                return {
+                    id: `node:${selectedNode.id}`,
+                    kind: 'node',
+                    label: selectedNode.ticker || selectedNode.name || 'Company',
+                    shortLabel: selectedNode.ticker || 'Node',
+                    detail: `${visibleEdgeCountByNodeId.get(selectedNode.id) || selectedNode.degree || 0} visible edges`,
+                    nodeId: selectedNode.id,
+                    payload: buildCurrentGraphSnapshot()
+                };
+            }
+            if (activeAnalystOverlayKey && graphIntelligenceModel.analystOverlay?.active) {
+                return {
+                    id: `layer:${activeAnalystOverlayKey}`,
+                    kind: 'layer',
+                    label: graphIntelligenceModel.analystOverlay.label || 'Analyst layer',
+                    shortLabel: graphIntelligenceModel.analystOverlay.shortLabel || 'Layer',
+                    detail: `${graphIntelligenceModel.analystOverlay.edgeCount || 0} edges`,
+                    payload: buildCurrentGraphSnapshot()
+                };
+            }
+            return {
+                id: 'overview',
+                kind: 'overview',
+                label: 'Graph overview',
+                shortLabel: 'Overview',
+                detail: `${visibleNodes.length} nodes / ${visibleLinks.length} edges`,
+                payload: buildCurrentGraphSnapshot()
+            };
+        }
+
+        function buildCurrentGraphSnapshot() {
+            return {
+                id: `snapshot:${Date.now()}`,
+                kind: 'snapshot',
+                label: getSnapshotLabel(),
+                shortLabel: selectedNode?.ticker || activeRouteComparison?.shortLabel || activeRelationshipRoute?.shortLabel || largeGraphNavigationModel?.modeShortLabel || 'Snapshot',
+                selectedNodeId: selectedNode?.id ?? null,
+                selectedRelationshipKey: selectedRelationshipLink?.key || '',
+                activeEcosystemOverlayKey,
+                sourceCoverageLensEnabled,
+                activeGuidedDiscoveryKey,
+                activeAnalystOverlayKey,
+                largeGraphMode,
+                largeGraphEcosystemFocus,
+                largeGraphCorridorFocus,
+                largeGraphNeighborhoodDepth,
+                routeComparisonId: activeRouteComparison?.id || '',
+                activeRouteComparisonRef: activeRouteComparison,
+                activeRelationshipRouteRef: activeRelationshipRoute,
+                selectedRelationshipRef: selectedRelationshipLink,
+                activeRouteLabel: activeRelationshipRoute?.label || '',
+                routeComparisonSequenceIndex,
+                scale,
+                offsetX,
+                offsetY,
+                summary: `${visibleNodes.length} nodes / ${visibleLinks.length} edges`,
+                createdAt: Date.now()
+            };
+        }
+
+        function restoreWorkflowTarget(item = {}) {
+            const payload = item.payload || item;
+            graphNavigationTrailSuppressed = true;
+            if (payload.activeEcosystemOverlayKey !== undefined) activeEcosystemOverlayKey = payload.activeEcosystemOverlayKey || '';
+            if (payload.sourceCoverageLensEnabled !== undefined) sourceCoverageLensEnabled = Boolean(payload.sourceCoverageLensEnabled);
+            if (payload.activeGuidedDiscoveryKey !== undefined) activeGuidedDiscoveryKey = payload.activeGuidedDiscoveryKey || '';
+            if (payload.activeAnalystOverlayKey !== undefined) activeAnalystOverlayKey = payload.activeAnalystOverlayKey || '';
+            if ('activeRouteComparisonRef' in payload) activeRouteComparison = payload.activeRouteComparisonRef || null;
+            if ('activeRelationshipRouteRef' in payload) activeRelationshipRoute = payload.activeRelationshipRouteRef || null;
+            if ('selectedRelationshipRef' in payload) selectedRelationshipLink = payload.selectedRelationshipRef || null;
+            if (payload.largeGraphMode) largeGraphMode = payload.largeGraphMode;
+            largeGraphEcosystemFocus = payload.largeGraphEcosystemFocus || '';
+            largeGraphCorridorFocus = payload.largeGraphCorridorFocus || '';
+            largeGraphNeighborhoodDepth = Math.max(1, Number(payload.largeGraphNeighborhoodDepth) || 1);
+            routeComparisonSequenceIndex = Number.isFinite(payload.routeComparisonSequenceIndex) ? payload.routeComparisonSequenceIndex : -1;
+            refreshVisibleGraph();
+            if (payload.selectedNodeId !== undefined && payload.selectedNodeId !== null) {
+                const node = nodeById.get(payload.selectedNodeId);
+                if (node) selectNode(node, { preserveFilters: true });
+            }
+            if (Number.isFinite(payload.scale) && Number.isFinite(payload.offsetX) && Number.isFinite(payload.offsetY)) {
+                setView(payload.scale, payload.offsetX, payload.offsetY);
+            }
+            graphNavigationTrailSuppressed = false;
+            triggerPulse(520);
+            requestDraw();
+        }
+
+        function getSnapshotLabel() {
+            if (activeRouteComparison) return activeRouteComparison.label || 'Route comparison snapshot';
+            if (activeRelationshipRoute) return activeRelationshipRoute.label || 'Route snapshot';
+            if (selectedNode) return `${selectedNode.ticker || selectedNode.name || 'Company'} snapshot`;
+            if (largeGraphNavigationModel?.isActive) return stockLargeGraphNavigation.formatNavigationLabel(largeGraphNavigationModel);
+            if (graphIntelligenceModel.analystOverlay?.active) return graphIntelligenceModel.analystOverlay.label || 'Analyst layer snapshot';
+            return 'Graph overview snapshot';
+        }
+
+        function getWorkflowIcon(kind) {
+            if (kind === 'route-comparison' || kind === 'comparison-step') return 'fa-code-compare';
+            if (kind === 'route' || kind === 'route-step') return 'fa-route';
+            if (kind === 'corridor') return 'fa-road';
+            if (kind === 'node' || kind === 'hub') return 'fa-circle-dot';
+            if (kind === 'snapshot') return 'fa-bookmark';
+            if (kind === 'queue') return 'fa-list-check';
+            if (kind === 'layer') return 'fa-layer-group';
+            if (kind === 'ecosystem') return 'fa-compass';
+            return 'fa-location-crosshairs';
         }
 
         function renderGraphEmbeddedAnnotations() {
@@ -5457,10 +5849,17 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const hasCompactRoute = Boolean(activeRouteComparison || activeRelationshipRoute);
             const dense = ['dense', 'very_dense', 'mega'].includes(graphScalingModel?.density?.key);
             const hasEmbeddedAnnotations = Boolean(graphAnnotationModel?.annotations?.length);
+            const hasWorkflow = Boolean(graphTimelineModel?.events?.length || investigationWorkspace.getSummary(getGraphIntelligenceContext()).investigationQueueCount);
             view?.classList.toggle('is-workspace-converged', true);
             view?.classList.toggle('is-route-workspace-compact', hasCompactRoute);
             view?.classList.toggle('is-density-compressed', dense);
+            view?.classList.toggle('is-investigation-active', hasWorkflow);
             container?.classList.toggle('has-embedded-annotations', hasEmbeddedAnnotations);
+            container?.classList.toggle('has-readability-suppression', Boolean(graphReadabilityModel?.budgets?.suppressedEstimate));
+            if (container && graphScalabilityModel?.adaptiveQuality) {
+                container.dataset.graphQuality = String(Math.round(graphScalabilityModel.adaptiveQuality.quality * 100));
+                container.dataset.animationBudget = String(graphScalabilityModel.adaptiveQuality.animationFrameBudgetMs);
+            }
         }
 
         function pinCurrentRoute() {
@@ -5521,8 +5920,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 ? summary.pinnedRoutes
                 : list === 'corridors'
                     ? summary.pinnedCorridors
-                    : list === 'hubs'
-                        ? summary.pinnedHubs
+                : list === 'hubs'
+                    ? summary.pinnedHubs
+                    : list === 'snapshots'
+                        ? summary.snapshots
                         : summary.replayCheckpoints;
             const item = collection[Number(index)];
             if (!item) return;
@@ -5544,6 +5945,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 applyLargeGraphNavigationChange({ fit: true });
             } else if (list === 'hubs' && item.nodeId !== undefined) {
                 selectNodeById(item.nodeId);
+            } else if (list === 'snapshots') {
+                restoreWorkflowTarget(item.payload || item);
             }
             investigationWorkspace.remember('restore', item, { label: item.label });
             renderWorkspaceMemory();
@@ -5553,8 +5956,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             investigationWorkspace.clear();
             workspaceMemoryDomKey = '';
             adaptiveHudDomKey = '';
+            investigationRailDomKey = '';
+            graphTimelineDomKey = '';
             renderWorkspaceMemory();
+            renderInvestigationRail();
             renderAdaptiveGraphHud();
+            refreshGraphTimelineModel();
+            renderGraphTimelineRail();
         }
 
         function getCurrentCorridorMemoryCandidate() {
@@ -5576,6 +5984,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (kind === 'corridor') return 'fa-road';
             if (kind === 'hub') return 'fa-circle-nodes';
             if (kind === 'replay-checkpoint') return 'fa-bookmark';
+            if (kind === 'snapshot') return 'fa-bookmark';
             return 'fa-thumbtack';
         }
 
@@ -5641,6 +6050,22 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     </button>
                 `;
             }).join('');
+            const analystLayerButtons = stockGraphIntelligence.getAnalystOverlayDefinitions(getGraphIntelligenceContext())
+                .slice(0, 8)
+                .map(layer => {
+                    const active = activeAnalystOverlayKey === layer.key && graphIntelligenceModel.analystOverlay?.active;
+                    return `
+                        <button type="button"
+                            onclick="setAnalystOverlay('${escapeInlineJsString(layer.key)}')"
+                            class="graph-explorer-action graph-layer-action ${active ? 'is-active' : ''}"
+                            aria-pressed="${active ? 'true' : 'false'}"
+                            ${layer.enabled ? '' : 'disabled'}
+                            title="${escapeHtml(layer.enabled ? layer.description : layer.disabledReason)}">
+                            <i class="fa-solid ${escapeHtml(layer.icon || 'fa-layer-group')}"></i>
+                            <span>${escapeHtml(layer.shortLabel)}</span>
+                        </button>
+                    `;
+                }).join('');
 
             dock.innerHTML = `
                 <div class="graph-explorer-group graph-guide-group">
@@ -5650,6 +6075,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 <div class="graph-explorer-group">
                     <span class="graph-explorer-label">Overlays</span>
                     ${ecosystemButtons}
+                </div>
+                <div class="graph-explorer-group graph-layer-group">
+                    <span class="graph-explorer-label">Layers</span>
+                    ${analystLayerButtons}
                 </div>
                 <div class="graph-explorer-group">
                     <span class="graph-explorer-label">Lens</span>
@@ -5693,6 +6122,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 html = renderRouteTraceCard(activeRelationshipRoute);
             } else if (graphIntelligenceModel.guidedDiscovery) {
                 html = renderGuidedDiscoveryCard(graphIntelligenceModel.guidedDiscovery);
+            } else if (graphIntelligenceModel.analystOverlay?.active || activeAnalystOverlayKey) {
+                html = renderAnalystOverlayCard(graphIntelligenceModel.analystOverlay);
             } else if (graphIntelligenceModel.overlay) {
                 html = renderEcosystemOverlayCard(graphIntelligenceModel.overlay);
             } else if (sourceCoverageLensEnabled) {
@@ -5709,6 +6140,50 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             card.innerHTML = html;
             card.classList.remove('hidden');
+        }
+
+        function renderAnalystOverlayCard(layer) {
+            if (!layer) return '';
+            if (!layer.active) {
+                return `
+                    <div class="graph-card-header">
+                        <div>
+                            <div class="graph-card-eyebrow">Analyst Layer</div>
+                            <div class="graph-card-title">${escapeHtml(layer.label || 'Layer gated')}</div>
+                        </div>
+                        <button type="button" onclick="setAnalystOverlay('')" class="graph-card-close" aria-label="Clear analyst layer"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="graph-card-body">${escapeHtml(layer.disabledReason || 'This layer is dormant under the current density and semantic tier.')}</div>
+                `;
+            }
+            const summary = graphIntelligenceModel.semanticLayers?.summary;
+            return `
+                <div class="graph-card-header">
+                    <div>
+                        <div class="graph-card-eyebrow">Analyst Layer</div>
+                        <div class="graph-card-title">${escapeHtml(layer.label)}</div>
+                    </div>
+                    <button type="button" onclick="setAnalystOverlay('')" class="graph-card-close" aria-label="Clear analyst layer"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="graph-card-body">${escapeHtml(layer.summary || layer.description || 'Layer derived from loaded graph metadata.')}</div>
+                ${summary?.sentence ? `<div class="graph-card-quote">${escapeHtml(summary.sentence)}</div>` : ''}
+                <div class="graph-card-metrics">
+                    <div><span>${layer.nodeCount || layer.nodes?.length || 0}</span><small>nodes</small></div>
+                    <div><span>${layer.edgeCount || layer.links?.length || 0}</span><small>edges</small></div>
+                    <div><span>${escapeHtml(layer.densityKey || graphScalingModel?.density?.key || 'core')}</span><small>density</small></div>
+                    <div><span>${escapeHtml(layer.semanticTier || stockSemanticZoomState?.tier || 'tier')}</span><small>tier</small></div>
+                </div>
+                <div class="graph-card-chips">
+                    <span style="border-color:${escapeHtml(layer.color)}; color:${escapeHtml(layer.color)};">${escapeHtml(layer.shortLabel || layer.label)}</span>
+                    ${(layer.chips || []).slice(0, 5).map(chip => `<span>${escapeHtml(chip)}</span>`).join('')}
+                    <span>derived only</span>
+                </div>
+                <div class="graph-card-actions">
+                    <button type="button" onclick="queueCurrentInvestigation()" class="graph-card-action"><i class="fa-solid fa-list-check"></i><span>Queue</span></button>
+                    <button type="button" onclick="captureCurrentGraphSnapshot()" class="graph-card-action"><i class="fa-regular fa-bookmark"></i><span>Snapshot</span></button>
+                    <button type="button" onclick="setAnalystOverlay('', { force: true })" class="graph-card-action"><i class="fa-solid fa-xmark"></i><span>Clear</span></button>
+                </div>
+            `;
         }
 
         function renderSelectedGraphStoryCard(story) {
@@ -5905,6 +6380,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const sourceRatio = Math.round((evidence.sourcedRatio || 0) * 100);
             const scaling = graphIntelligenceModel.largeGraphScaling || graphScalingModel || {};
             const density = scaling.density || {};
+            const semanticLayers = graphIntelligenceModel.semanticLayers || {};
+            const semanticHints = semanticLayers.semanticHints || [];
             return `
                 <div class="graph-card-header">
                     <div>
@@ -5926,6 +6403,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     ${topHub ? `<span>Hub ${escapeHtml(topHub.ticker || topHub.name || '')}</span>` : '<span>Hub pending</span>'}
                     ${bridge ? `<span>Bridge ${escapeHtml(bridge.ticker || bridge.name || '')}</span>` : '<span>Bridge scan ready</span>'}
                     <span>${evidence.missingCount || 0} evidence gaps</span>
+                    ${semanticHints.slice(0, 2).map(hint => `<span>${escapeHtml(hint.label)}</span>`).join('')}
                 </div>
                 <div class="graph-card-actions">
                     ${stockGraphIntelligence.getGuidedDiscoveryFlows().map(flow => `
@@ -6120,6 +6598,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         : 'None';
             const filterCount = getActiveGraphFilterCount();
             const guide = graphIntelligenceModel.guidedDiscovery;
+            const analystLayer = graphIntelligenceModel.analystOverlay;
             const tierStates = graphIntelligenceModel.sourceCoverage?.tierStates || stockGraphIntelligence.EVIDENCE_TIER_META || {};
 
             legend.innerHTML = `
@@ -6130,6 +6609,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 <div class="graph-active-legend-grid">
                     ${renderLegendItem('Guide', guide ? guide.shortLabel : 'Off', guide?.color || '')}
                     ${renderLegendItem('Overlay', overlay ? overlay.shortLabel : 'Off', overlay?.color || '')}
+                    ${renderLegendItem('Layer', analystLayer?.active ? `${analystLayer.shortLabel} ${analystLayer.edgeCount || 0}` : activeAnalystOverlayKey ? 'Gated' : 'Off', analystLayer?.active ? analystLayer.color : '')}
                     ${renderLegendItem('Navigate', largeGraphNavigationModel?.isActive ? stockLargeGraphNavigation.formatNavigationLabel(largeGraphNavigationModel) : 'Overview', largeGraphNavigationModel?.isActive ? '#a5f3fc' : '')}
                     ${renderLegendItem('Route', comparisonSummary ? `${comparisonSummary.routeCount} compared / ${comparisonSummary.sharedEdgeCount} shared` : route ? `${route.label || 'Route'} (${route.linkKeys?.size || 0})` : 'Off', comparisonSummary ? '#f0abfc' : route ? '#ffffff' : '')}
                     ${renderLegendItem('Sources', sourceCoverageLensEnabled ? 'Lens on' : 'Lens off', sourceCoverageLensEnabled ? '#22d3ee' : '')}
@@ -6180,6 +6660,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 crossSectorOnlyFilter,
                 currentSearch,
                 signalStrengthThreshold > 0,
+                activeAnalystOverlayKey,
                 isFocusModeActive(),
                 isPortfolioAnalysisActive()
             ].filter(Boolean).length;
@@ -6262,6 +6743,26 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             requestDraw();
         }
 
+        function setAnalystOverlay(key, options = {}) {
+            const definitions = stockGraphIntelligence.getAnalystOverlayDefinitions(getGraphIntelligenceContext());
+            const definition = definitions.find(item => item.key === key);
+            if (!definition || !definition.enabled) {
+                activeAnalystOverlayKey = '';
+            } else {
+                activeAnalystOverlayKey = activeAnalystOverlayKey === key && !options.force ? '' : key;
+            }
+            if (activeAnalystOverlayKey) {
+                recordGraphNavigation('layer', activeAnalystOverlayKey, definition.shortLabel || definition.label || 'Layer');
+            }
+            graphStoryMode = activeAnalystOverlayKey ? 'analyst-layer' : graphStoryMode === 'analyst-layer' ? '' : graphStoryMode;
+            refreshGraphIntelligenceModel();
+            if (options.fit && graphIntelligenceModel.analystOverlay?.nodes?.length) {
+                fitGraphToNodes(graphIntelligenceModel.analystOverlay.nodes, true, 130);
+            }
+            triggerPulse(460);
+            requestDraw();
+        }
+
         function toggleSourceCoverageLens(force) {
             sourceCoverageLensEnabled = typeof force === 'boolean' ? force : !sourceCoverageLensEnabled;
             graphStoryMode = sourceCoverageLensEnabled ? 'source' : graphStoryMode === 'source' ? '' : graphStoryMode;
@@ -6277,6 +6778,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             activeRouteComparison = null;
             routeComparisonSequenceIndex = -1;
             activeGuidedDiscoveryKey = '';
+            activeAnalystOverlayKey = '';
             selectedRelationshipLink = null;
             graphStoryMode = '';
             focusNeighborIds = selectedNode ? focusNeighborIds : new Set();
@@ -6465,8 +6967,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const node = routeNodes[routeComparisonSequenceIndex];
             if (!node) return null;
             selectNode(node, { preserveFilters: true });
-            animateGraphFocusToNode(node, { minScale: 0.86, centerBiasY: 0.48 });
+            animateGraphFocusToNode(node, { kind: 'route-step', minScale: 0.86, centerBiasY: 0.48 });
             recordGraphNavigation('node', node.id, `${node.ticker || node.name || 'Route node'} route step`);
+            addStockReplayCheckpoint('route-step');
             return node;
         }
 
@@ -7343,6 +7846,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             activeRouteComparison = null;
             routeComparisonSequenceIndex = -1;
             activeGuidedDiscoveryKey = '';
+            activeAnalystOverlayKey = '';
             largeGraphMode = 'overview';
             largeGraphEcosystemFocus = '';
             largeGraphCorridorFocus = '';
@@ -7863,21 +8367,23 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 requestDraw();
                 return;
             }
+            const choreography = graphCinematic.getFocusChoreography?.(options.kind || 'node', renderContext, options) || {};
             const position = getNodeLayoutPosition(node);
             const point = worldToScreen(position.x, position.y);
             const withinComfortZone = point.x > canvasWidth * 0.22 &&
                 point.x < canvasWidth * 0.78 &&
                 point.y > canvasHeight * 0.18 &&
                 point.y < canvasHeight * 0.78 &&
-                scale >= (options.minScale || 0.65);
+                scale >= (choreography.minScale || options.minScale || 0.65);
             if (withinComfortZone) {
                 requestDraw();
                 return;
             }
-            const nextScale = clamp(Math.max(scale, options.minScale || 0.72), MIN_SCALE, MAX_SCALE);
+            const nextScale = clamp(Math.max(scale, choreography.minScale || options.minScale || 0.72), MIN_SCALE, MAX_SCALE);
             const nextOffsetX = canvasWidth * 0.5 - position.x * nextScale;
-            const nextOffsetY = canvasHeight * (options.centerBiasY || 0.5) - position.y * nextScale;
-            const distance = Math.hypot(point.x - canvasWidth * 0.5, point.y - canvasHeight * (options.centerBiasY || 0.5));
+            const centerBiasY = choreography.centerBiasY || options.centerBiasY || 0.5;
+            const nextOffsetY = canvasHeight * centerBiasY - position.y * nextScale;
+            const distance = Math.hypot(point.x - canvasWidth * 0.5, point.y - canvasHeight * centerBiasY);
             animateView(nextScale, nextOffsetX, nextOffsetY, graphCinematic.getCinematicViewDuration('focus', renderContext, { distance }));
         }
 
@@ -7962,6 +8468,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderActiveGraphLegend();
             renderAdaptiveGraphHud();
             renderWorkspaceMemory();
+            renderInvestigationRail();
+            renderGraphTimelineRail();
             renderGraphEmbeddedAnnotations();
             applyWorkspaceConvergenceState();
             updateVisibleGraphStatus();
@@ -8033,6 +8541,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             workspaceMemoryDomKey = '';
             renderGraphBreadcrumbs();
             renderWorkspaceMemory();
+            renderInvestigationRail();
+            refreshGraphTimelineModel();
+            renderGraphTimelineRail();
         }
 
         function renderGraphBreadcrumbs() {
@@ -8487,6 +8998,22 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 overlay.insertAdjacentHTML('beforeend', `
                     <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] font-mono tracking-[1.1px]" style="border-color:${graphIntelligenceModel.guidedDiscovery.color}; color:${graphIntelligenceModel.guidedDiscovery.color}; background:rgba(3,7,18,0.74);">
                         Guide ${escapeHtml(graphIntelligenceModel.guidedDiscovery.shortLabel)} ${graphIntelligenceModel.guidedDiscovery.links.length} edges
+                    </span>
+                `);
+            }
+
+            if (graphIntelligenceModel.analystOverlay?.active) {
+                overlay.insertAdjacentHTML('beforeend', `
+                    <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] font-mono tracking-[1.1px]" style="border-color:${graphIntelligenceModel.analystOverlay.color}; color:${graphIntelligenceModel.analystOverlay.color}; background:rgba(3,7,18,0.74);">
+                        Layer ${escapeHtml(graphIntelligenceModel.analystOverlay.shortLabel)} ${escapeHtml(String(graphIntelligenceModel.analystOverlay.edgeCount || 0))} edges
+                    </span>
+                `);
+            }
+
+            if (graphReadabilityModel?.budgets?.suppressedEstimate) {
+                overlay.insertAdjacentHTML('beforeend', `
+                    <span class="graph-stat-pill rounded-full px-2.5 py-1 text-[10px] text-slate-100/70 font-mono tracking-[1.1px] border border-white/12 bg-white/6">
+                        Readability ${escapeHtml(String(graphReadabilityModel.budgets.edgeBudget || 0))}/${escapeHtml(String(visibleLinks.length))} edges
                     </span>
                 `);
             }

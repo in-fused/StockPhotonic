@@ -91,6 +91,12 @@
         const oldestLabel = context.oldestLabel || getTimelineBoundaryLabel(events, 'oldest') || 'Oldest staged';
         const newestLabel = context.newestLabel || getTimelineBoundaryLabel(events, 'newest') || 'Newest staged';
         const progressPct = totalSteps ? Math.round((currentStep / totalSteps) * 100) : Math.max(0, Math.min(100, Number(context.progressPct) || 0));
+        const graphTimeline = window.StockPhotonicGraph?.timeline?.buildReplayTimeline?.({
+            events,
+            bookmarks,
+            currentStep,
+            totalSteps
+        }) || { markers: [], currentStep, totalSteps };
 
         return {
             ...context,
@@ -117,6 +123,7 @@
             eventSummary,
             bookmarks,
             majorNavigation,
+            graphTimeline,
             oldestLabel,
             newestLabel
         };
@@ -182,6 +189,7 @@
                         ${renderReplayTimelineGapMarkers(gapMap, totalSteps)}
                         <div class="crypto-replay-current-marker" style="left:${escapeAttr(progressPct)}%" aria-hidden="true"></div>
                     </div>
+                    ${renderReplayGraphChronology(context.graphTimeline, scrubberDisabled)}
                     <div id="crypto-replay-workspace-current-summary" class="crypto-replay-current-summary">${escapeHtml(eventSummary.compact || 'No replay event selected yet.')}</div>
                 </div>
                 <div class="crypto-replay-workspace-controls">
@@ -307,6 +315,25 @@
                 title="${escapeAttr(marker.title || marker.label)}"
                 aria-hidden="true"></span>
         `).join('');
+    }
+
+    function renderReplayGraphChronology(graphTimeline = {}, scrubberDisabled = false) {
+        const markers = Array.isArray(graphTimeline.markers) ? graphTimeline.markers.slice(0, 10) : [];
+        if (!markers.length) return '';
+        return `
+            <div class="crypto-replay-graph-chronology" aria-label="Replay graph chronology">
+                ${markers.map(marker => `
+                    <button type="button"
+                        data-crypto-replay-jump-step="${escapeAttr(marker.step)}"
+                        class="${marker.active ? 'is-active' : ''}"
+                        ${scrubberDisabled ? 'disabled' : ''}
+                        title="${escapeAttr(marker.label)}">
+                        <span style="left:${escapeAttr(marker.positionPct || 0)}%" aria-hidden="true"></span>
+                        <strong>${escapeHtml(marker.label)}</strong>
+                    </button>
+                `).join('')}
+            </div>
+        `;
     }
 
     function renderReplayContinuityPanel(profile = {}, gapMap = {}) {
@@ -796,6 +823,13 @@
                     Number(button.dataset.cryptoReplayBookmarkStep) || 0,
                     button.dataset.cryptoReplayBookmarkKey || ''
                 );
+            });
+        });
+        root.querySelectorAll('[data-crypto-replay-jump-step]').forEach(button => {
+            button.addEventListener('click', () => {
+                handlers.seek?.(Number(button.dataset.cryptoReplayJumpStep) || 0, {
+                    source: 'graph-chronology'
+                });
             });
         });
         root.querySelectorAll('[data-crypto-replay-select-step]').forEach(button => {

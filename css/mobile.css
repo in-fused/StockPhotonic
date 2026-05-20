@@ -179,6 +179,50 @@
                 padding: 0.58rem;
             }
 
+            .graph-timeline-rail {
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(0.65rem, env(safe-area-inset-right));
+                bottom: calc(10.1rem + env(safe-area-inset-bottom));
+            }
+
+            .graph-timeline-track {
+                max-width: 100%;
+                padding-bottom: 0.25rem;
+            }
+
+            .graph-timeline-event {
+                min-height: 2.2rem;
+                max-width: 8.25rem;
+                padding: 0.46rem 0.58rem;
+                font-size: 0.6rem;
+            }
+
+            .graph-investigation-rail {
+                top: auto;
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(0.65rem, env(safe-area-inset-right));
+                bottom: calc(13.65rem + env(safe-area-inset-bottom));
+                width: auto;
+                max-height: min(18dvh, 8.75rem);
+                overflow-y: auto;
+                padding: 0.48rem;
+            }
+
+            .graph-investigation-rail.is-empty {
+                display: none;
+            }
+
+            .graph-investigation-active {
+                display: none;
+            }
+
+            .graph-investigation-lists {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: 0.12rem;
+                scrollbar-width: thin;
+            }
+
             .graph-active-legend-grid {
                 grid-template-columns: repeat(3, minmax(0, 1fr));
                 gap: 0.28rem;
@@ -229,6 +273,11 @@
 
             .mobile-graph-actions {
                 max-width: 46%;
+            }
+
+            .mobile-graph-action {
+                min-width: 2.65rem;
+                min-height: 2.65rem;
             }
 
             .crypto-surface {
@@ -309,6 +358,13 @@
                 min-height: 2.45rem;
                 max-width: 8.5rem;
                 padding: 0.5rem 0.58rem;
+            }
+
+            .crypto-replay-graph-chronology button {
+                min-height: 2.35rem;
+                min-width: 5rem;
+                max-width: 7.25rem;
+                padding: 0.46rem 0.55rem;
             }
 
             .crypto-replay-event-grid {

@@ -471,6 +471,32 @@
         return Math.round(base * (1 + distanceBoost));
     }
 
+    function getFocusChoreography(kind, context = {}, options = {}) {
+        const semantic = context.semanticZoomState || context.semanticZoom || {};
+        const density = context.graphScalingModel?.density || {};
+        const routeActive = Boolean(context.activeRouteComparison || context.activeRelationshipRoute);
+        const corridorActive = context.largeGraphNavigationModel?.focusKind === 'corridor';
+        const compact = isCompactCanvas(context);
+        const scaleFloor = kind === 'route-step'
+            ? 0.9
+            : kind === 'corridor'
+                ? 0.72
+                : kind === 'replay'
+                    ? 0.82
+                    : 0.76;
+        const densityLift = density.key === 'mega' ? 0.1 : density.key === 'very_dense' ? 0.06 : 0;
+        const semanticLift = semantic.tier === 'inspection' ? 0.06 : semantic.tier === 'relationship' ? 0.03 : 0;
+        return {
+            kind,
+            minScale: clamp(Number(options.minScale) || scaleFloor + densityLift + semanticLift, 0.58, 1.18),
+            centerBiasY: compact ? 0.52 : routeActive ? 0.47 : corridorActive ? 0.49 : 0.5,
+            breathingMs: density.key === 'mega' ? 920 : density.key === 'very_dense' ? 820 : 700,
+            routeRevealMs: routeActive ? 760 : 0,
+            spotlightRadius: compact ? 92 : routeActive ? 122 : 108,
+            intentional: true
+        };
+    }
+
     function isMotionSettled() {
         return stockMotionState.offsets.size === 0;
     }
@@ -540,6 +566,7 @@
         getStockEdgeBundle,
         getStockMotionProfile,
         getCinematicViewDuration,
+        getFocusChoreography,
         getCorridorMeta,
         easeOutCubic,
         isMotionSettled

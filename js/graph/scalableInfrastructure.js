@@ -40,6 +40,11 @@
             const semanticTiles = getOrBuild(caches.semanticTiles, `tiles:${signature}`, () => buildSemanticTilePrep(nodes, links, context, density));
             const minimapPlan = getOrBuild(caches.minimap, `minimap:${signature}`, () => buildMinimapScalingPlan(nodes, links, density));
             const replayChunks = getOrBuild(caches.replayChunks, `replay:${signature}`, () => buildReplayChunkPrep(context, links, density));
+            const renderQueues = buildBoundedRenderQueues(nodes, links, context, density, semantic, viewportEdgeBudget);
+            const adaptiveQuality = buildAdaptiveQualityPlan(context, density, semantic, viewportEdgeBudget);
+            const memoryBudget = buildGraphMemoryBudget(nodes, links, density);
+            const annotationBudget = buildAnnotationThrottlePlan(context, density, semantic);
+            const routeCachePlan = buildRouteCacheRefinementPlan(context, density);
 
             return {
                 signature,
@@ -51,6 +56,11 @@
                 semanticTiles,
                 minimapPlan,
                 replayChunks,
+                renderQueues,
+                adaptiveQuality,
+                memoryBudget,
+                annotationBudget,
+                routeCachePlan,
                 routeCache: caches.route.stats(),
                 comparisonCache: caches.comparison.stats(),
                 progressiveHydration: {
@@ -63,7 +73,10 @@
                 performanceContract: {
                     perFrameScans: false,
                     derivedOnRefresh: true,
-                    dataMutation: false
+                    dataMutation: false,
+                    boundedRenderQueues: true,
+                    dynamicQualityScaling: true,
+                    progressiveHydrationPrepOnly: true
                 }
             };
         }
@@ -323,6 +336,141 @@
         };
     }
 
+    function buildBoundedRenderQueues(nodes, links, context, density, semantic, viewportEdgeBudget) {
+        const protectedLinkKeys = new Set([
+            ...(context.activeRouteComparison?.linkKeys || []),
+            ...(context.activeRelationshipRoute?.linkKeys || []),
+            ...(context.focusLinkKeys || []),
+            ...(context.portfolioEdgeKeys || [])
+        ]);
+        const edgeLimit = Math.max(80, Number(viewportEdgeBudget.budget) || links.length);
+        const nodeLimit = density.key === 'mega' ? 260 : density.key === 'very_dense' ? 360 : density.key === 'dense' ? 480 : nodes.length;
+        const labelLimit = density.key === 'mega'
+            ? semantic.tier === 'inspection' ? 44 : 24
+            : density.key === 'very_dense'
+                ? semantic.tier === 'inspection' ? 58 : 36
+                : density.key === 'dense'
+                    ? 52
+                    : 84;
+        const edgeQueue = links
+            .map(link => ({
+                key: link.key,
+                priority: getQueueLinkPriority(link, context, protectedLinkKeys),
+                protected: protectedLinkKeys.has(link.key)
+            }))
+            .sort((a, b) => Number(b.protected) - Number(a.protected) || b.priority - a.priority)
+            .slice(0, edgeLimit);
+        const labelQueue = nodes
+            .map(node => ({
+                nodeId: node.id,
+                label: node.ticker || node.name || '',
+                priority: getQueueNodePriority(node, context)
+            }))
+            .sort((a, b) => b.priority - a.priority || a.label.localeCompare(b.label))
+            .slice(0, labelLimit);
+        return {
+            edgeQueue,
+            labelQueue,
+            nodeQueueLimit: Math.min(nodes.length, nodeLimit),
+            edgeQueueLimit: edgeLimit,
+            labelQueueLimit: labelLimit,
+            protectedEdgeCount: protectedLinkKeys.size,
+            bounded: true,
+            noPerFrameFullScanRequired: true
+        };
+    }
+
+    function buildAdaptiveQualityPlan(context, density, semantic, viewportEdgeBudget) {
+        const activeMotion = Boolean(context.activeRouteComparison || context.activeRelationshipRoute || context.selectedNode || context.graphStoryMode);
+        const densityScale = density.key === 'mega'
+            ? 0.62
+            : density.key === 'very_dense'
+                ? 0.74
+                : density.key === 'dense'
+                    ? 0.86
+                    : 1;
+        const semanticScale = semantic.tier === 'macro'
+            ? 0.74
+            : semantic.tier === 'cluster'
+                ? 0.86
+                : semantic.tier === 'inspection'
+                    ? 1.08
+                    : 1;
+        const quality = Math.max(0.48, Math.min(1, densityScale * semanticScale + (activeMotion ? 0.08 : 0)));
+        return {
+            quality,
+            edgeAlphaScale: Math.max(0.42, quality),
+            glowScale: Math.max(0.36, quality * 0.92),
+            animationFrameBudgetMs: density.key === 'mega' ? 10 : density.key === 'very_dense' ? 11.5 : 13,
+            minimapFrameBudgetMs: density.key === 'mega' ? 3.4 : 4.8,
+            routeRevealChunkSize: density.key === 'mega' ? 16 : density.key === 'very_dense' ? 22 : 32,
+            replayChunkSize: density.key === 'mega' ? 36 : density.key === 'very_dense' ? 48 : 64,
+            annotationFrameThrottleMs: density.key === 'mega' ? 180 : density.key === 'very_dense' ? 130 : 90,
+            viewportEdgeBudget: viewportEdgeBudget.budget
+        };
+    }
+
+    function buildGraphMemoryBudget(nodes, links, density) {
+        const nodeBytes = nodes.length * 420;
+        const edgeBytes = links.length * 520;
+        const cacheBytes = density.key === 'mega' ? 420000 : density.key === 'very_dense' ? 360000 : 300000;
+        return {
+            estimatedBytes: nodeBytes + edgeBytes + cacheBytes,
+            nodeBudget: density.key === 'mega' ? 900 : density.key === 'very_dense' ? 1200 : 1800,
+            edgeBudget: density.key === 'mega' ? 1800 : density.key === 'very_dense' ? 2600 : 4200,
+            cacheEntryBudget: density.key === 'mega' ? 48 : 72,
+            progressiveHydrationPrepared: true,
+            clientOnly: true
+        };
+    }
+
+    function buildAnnotationThrottlePlan(context, density, semantic) {
+        const baseLimit = density.key === 'mega' ? 3 : density.key === 'very_dense' ? 4 : 6;
+        return {
+            maxVisibleAnnotations: context.selectedNode || context.activeRouteComparison || context.activeRelationshipRoute
+                ? baseLimit + 1
+                : baseLimit,
+            renderIntervalMs: density.key === 'mega' ? 180 : density.key === 'very_dense' ? 130 : 90,
+            routeAnnotationPriority: Boolean(context.activeRouteComparison || context.activeRelationshipRoute),
+            semanticTier: semantic.tier || 'relationship',
+            throttleDomWrites: true
+        };
+    }
+
+    function buildRouteCacheRefinementPlan(context, density) {
+        const activeRouteSize =
+            (context.activeRouteComparison?.linkKeys?.size || 0) +
+            (context.activeRelationshipRoute?.linkKeys?.size || 0);
+        return {
+            activeRouteSize,
+            chunkSize: density.key === 'mega' ? 18 : density.key === 'very_dense' ? 24 : 34,
+            revisitShortcutLimit: density.key === 'mega' ? 5 : 8,
+            comparisonBranchLimit: 4,
+            preserveRouteComparison: true,
+            cacheOnlyDerivedViews: true
+        };
+    }
+
+    function getQueueLinkPriority(link, context, protectedLinkKeys) {
+        const strength = Math.max(0, Math.min(1, Number(link?.strength) || 0));
+        let score = strength * 120;
+        if (protectedLinkKeys.has(link.key)) score += 1400;
+        if (context.relationshipHasSourceEvidence?.(link)) score += 70;
+        if (context.isSecBackedConnection?.(link)) score += 90;
+        score += Math.min(120, (Number(link.source?.degree) || 0) + (Number(link.target?.degree) || 0));
+        return score;
+    }
+
+    function getQueueNodePriority(node, context) {
+        let score = Number(node?.degree) || 0;
+        if (context.selectedNode?.id === node.id) score += 1400;
+        if (context.focusNeighborIds?.has(node.id)) score += 480;
+        if (context.activeRouteComparison?.nodeIds?.has(node.id) || context.activeRelationshipRoute?.nodeIds?.has(node.id)) score += 820;
+        if (context.topLabelIds?.has(node.id)) score += 260;
+        score += Math.max(0, 300 - (Number(node.rank) || 300)) * 0.2;
+        return score;
+    }
+
     function summarizeRouteCacheEntry(route) {
         return {
             id: route.id || '',
@@ -375,6 +523,7 @@
             semantic.tier || '',
             context.largeGraphMode || context.largeGraphNavigationModel?.mode || '',
             context.activeEcosystemOverlayKey || '',
+            context.activeAnalystOverlayKey || '',
             context.activeGuidedDiscoveryKey || '',
             context.selectedNode?.id || '',
             context.activeRouteComparison?.id || '',

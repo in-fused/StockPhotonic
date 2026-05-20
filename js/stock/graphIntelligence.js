@@ -197,6 +197,74 @@
         'enterprise_saas_workflow'
     ];
 
+    const ANALYST_OVERLAY_DEFINITIONS = [
+        {
+            key: 'source_confidence',
+            label: 'Source Confidence',
+            shortLabel: 'SRC',
+            color: '#22d3ee',
+            icon: 'fa-shield-halved',
+            description: 'Edges grouped by attached source and evidence-policy metadata already loaded in the graph.'
+        },
+        {
+            key: 'sec_backed',
+            label: 'SEC-backed Edges',
+            shortLabel: 'SEC',
+            color: '#fbbf24',
+            icon: 'fa-file-shield',
+            description: 'Production edges whose current metadata is marked SEC-backed.'
+        },
+        {
+            key: 'strategic_hubs',
+            label: 'Strategic Hubs',
+            shortLabel: 'HUB',
+            color: '#67e8f9',
+            icon: 'fa-circle-nodes',
+            description: 'Companies with deterministic hub, bridge, corridor, and repeated-exposure significance from visible topology.'
+        },
+        {
+            key: 'corridor_density',
+            label: 'Corridor Density',
+            shortLabel: 'COR',
+            color: '#34d399',
+            icon: 'fa-road',
+            description: 'Dense relationship corridors derived from existing relationship categories and endpoint metadata.'
+        },
+        {
+            key: 'bridge_company',
+            label: 'Bridge Companies',
+            shortLabel: 'BRG',
+            color: '#f0abfc',
+            icon: 'fa-share-nodes',
+            description: 'Companies connecting multiple visible sectors, industry groups, ecosystems, or corridors.'
+        },
+        {
+            key: 'ecosystem_overlap',
+            label: 'Ecosystem Overlap',
+            shortLabel: 'OVR',
+            color: '#a3e635',
+            icon: 'fa-layer-group',
+            description: 'Nodes and edges whose existing metadata places them in more than one semantic ecosystem.'
+        },
+        {
+            key: 'evidence_concentration',
+            label: 'Evidence Concentration',
+            shortLabel: 'EVD',
+            color: '#7cffc8',
+            icon: 'fa-magnifying-glass-chart',
+            description: 'Topology zones where visible relationships concentrate sourced or high-tier evidence.'
+        },
+        {
+            key: 'route_heat',
+            label: 'Route Heat',
+            shortLabel: 'HEAT',
+            color: '#fb7185',
+            icon: 'fa-route',
+            description: 'Active route, route-comparison, or strongest visible route concentration.'
+        }
+    ];
+    const ANALYST_OVERLAY_BY_KEY = new Map(ANALYST_OVERLAY_DEFINITIONS.map(item => [item.key, item]));
+
     const SOURCE_STATE_META = {
         sec_backed: {
             key: 'sec_backed',
@@ -318,9 +386,20 @@
         const evidenceGaps = buildEvidenceGapDiscovery(context);
         const defaultDiscovery = buildDefaultDiscoveryModel(context);
         const largeGraphScaling = buildLargeGraphScalingSummary(context);
+        const semanticLayers = buildSemanticIntelligenceLayers({
+            ...context,
+            largeGraphScaling
+        });
+        const analystOverlay = buildAnalystOverlayModel(context.activeAnalystOverlayKey, {
+            ...context,
+            largeGraphScaling,
+            semanticLayers
+        });
 
         return {
             overlay,
+            analystOverlay,
+            semanticLayers,
             selectedStory,
             relationshipExplanation,
             sourceCoverage,
@@ -1297,6 +1376,416 @@
         };
     }
 
+    function getAnalystOverlayDefinitions(context = {}) {
+        const density = getContextDensity(context);
+        const semanticTier = context.stockSemanticZoomState?.tier || context.semanticZoom?.tier || 'relationship';
+        return ANALYST_OVERLAY_DEFINITIONS.map(definition => {
+            const gate = getAnalystOverlayGate(definition.key, context, density, semanticTier);
+            return {
+                ...definition,
+                enabled: gate.enabled,
+                disabledReason: gate.disabledReason,
+                densityAware: true,
+                derivedOnly: true
+            };
+        });
+    }
+
+    function buildAnalystOverlayModel(key, context = {}) {
+        const definition = ANALYST_OVERLAY_BY_KEY.get(String(key || ''));
+        if (!definition) return null;
+        const density = getContextDensity(context);
+        const semanticTier = context.stockSemanticZoomState?.tier || context.semanticZoom?.tier || 'relationship';
+        const gate = getAnalystOverlayGate(definition.key, context, density, semanticTier);
+        if (!gate.enabled) {
+            return {
+                ...definition,
+                active: false,
+                disabledReason: gate.disabledReason,
+                nodeIds: new Set(),
+                linkKeys: new Set(),
+                nodes: [],
+                links: [],
+                edgeCount: 0,
+                nodeCount: 0,
+                densityKey: density.key,
+                semanticTier,
+                derivedOnly: true
+            };
+        }
+
+        const links = context.visibleLinks || [];
+        const nodes = context.visibleNodes || [];
+        let overlayLinks = [];
+        let overlayNodes = [];
+        let summary = '';
+        let chips = [];
+
+        if (definition.key === 'source_confidence') {
+            overlayLinks = links
+                .filter(link => context.relationshipHasSourceEvidence?.(link) || getLinkTrustTierState(link, context).key === 'verified' || getLinkTrustTierState(link, context).key === 'strong_inferred')
+                .sort((a, b) => getEvidenceRank(b, context) - getEvidenceRank(a, context) || getStrength(b) - getStrength(a));
+            overlayNodes = uniqueNodes(overlayLinks.flatMap(link => [link.source, link.target]));
+            const sourcedRatio = links.length ? overlayLinks.length / links.length : 0;
+            summary = `${overlayLinks.length} visible edges have attached or high-tier evidence metadata.`;
+            chips = [`${Math.round(sourcedRatio * 100)}% visible`, `${overlayLinks.filter(link => context.isSecBackedConnection?.(link)).length} SEC`];
+        } else if (definition.key === 'sec_backed') {
+            overlayLinks = links.filter(link => context.isSecBackedConnection?.(link));
+            overlayNodes = uniqueNodes(overlayLinks.flatMap(link => [link.source, link.target]));
+            summary = `${overlayLinks.length} visible production edges are SEC-backed.`;
+            chips = [`${overlayNodes.length} endpoints`, 'production only'];
+        } else if (definition.key === 'strategic_hubs') {
+            const hubProfiles = getStrategicHubProfiles(nodes, context, getOverlayNodeLimit(density));
+            overlayNodes = hubProfiles.map(item => item.node);
+            const ids = new Set(overlayNodes.map(node => node.id));
+            overlayLinks = links.filter(link => ids.has(link.source?.id) || ids.has(link.target?.id));
+            summary = `${overlayNodes.length} visible companies meet deterministic strategic hub criteria.`;
+            chips = hubProfiles.slice(0, 3).map(item => item.node.ticker || item.node.name).filter(Boolean);
+        } else if (definition.key === 'corridor_density') {
+            const corridors = buildSemanticCorridorGroups(context).slice(0, density.key === 'mega' ? 2 : 3);
+            const corridorKeys = new Set(corridors.map(item => item.key));
+            overlayLinks = links.filter(link => getLinkCorridorKeysFromContext(link, context).some(corridorKey => corridorKeys.has(corridorKey)));
+            overlayNodes = uniqueNodes(overlayLinks.flatMap(link => [link.source, link.target]));
+            summary = `${corridors.length} high-density corridors account for ${overlayLinks.length} visible edges.`;
+            chips = corridors.map(item => item.shortLabel || item.label).slice(0, 3);
+        } else if (definition.key === 'bridge_company') {
+            const bridgeRows = nodes
+                .map(node => ({ node, role: getNodeRole(node, context), profile: getStrategicHubProfile(node, context) }))
+                .filter(item => ['bridge', 'ecosystem_bridge', 'cross_sector_anchor'].includes(item.role.key) || item.profile.roles.includes('ecosystem_bridge'))
+                .sort((a, b) => b.profile.bridgeSignificanceScore - a.profile.bridgeSignificanceScore || String(a.node.ticker || '').localeCompare(String(b.node.ticker || '')))
+                .slice(0, getOverlayNodeLimit(density));
+            overlayNodes = bridgeRows.map(item => item.node);
+            const ids = new Set(overlayNodes.map(node => node.id));
+            overlayLinks = links.filter(link => ids.has(link.source?.id) || ids.has(link.target?.id));
+            summary = `${overlayNodes.length} visible companies bridge sectors, industry groups, ecosystems, or corridors.`;
+            chips = bridgeRows.slice(0, 3).map(item => item.node.ticker || item.node.name).filter(Boolean);
+        } else if (definition.key === 'ecosystem_overlap') {
+            const overlapNodes = nodes
+                .map(node => ({ node, ecosystems: getDominantEcosystemsForNode(node, context) }))
+                .filter(item => item.ecosystems.length >= 2)
+                .sort((a, b) => b.ecosystems.length - a.ecosystems.length || String(a.node.ticker || '').localeCompare(String(b.node.ticker || '')))
+                .slice(0, getOverlayNodeLimit(density));
+            overlayNodes = overlapNodes.map(item => item.node);
+            const ids = new Set(overlayNodes.map(node => node.id));
+            overlayLinks = links.filter(link => ids.has(link.source?.id) || ids.has(link.target?.id) || getLinkEcosystemKeys(link, context).length >= 2);
+            summary = `${overlayNodes.length} visible companies overlap multiple semantic ecosystems.`;
+            chips = overlapNodes.slice(0, 3).map(item => `${item.node.ticker || item.node.name} ${item.ecosystems.length}`).filter(Boolean);
+        } else if (definition.key === 'evidence_concentration') {
+            const topEvidenceNodes = nodes
+                .map(node => {
+                    const items = context.adjacencyById?.get(node.id) || [];
+                    const visible = items.filter(item => context.visibleLinkKeys?.has(item.link.key));
+                    const sourced = visible.filter(item => context.relationshipHasSourceEvidence?.(item.link) || context.isSecBackedConnection?.(item.link));
+                    return {
+                        node,
+                        visible: visible.length,
+                        sourced: sourced.length,
+                        score: sourced.length * 2 + (visible.length ? sourced.length / visible.length : 0) * 5
+                    };
+                })
+                .filter(item => item.sourced > 0)
+                .sort((a, b) => b.score - a.score || String(a.node.ticker || '').localeCompare(String(b.node.ticker || '')))
+                .slice(0, getOverlayNodeLimit(density));
+            overlayNodes = topEvidenceNodes.map(item => item.node);
+            const ids = new Set(overlayNodes.map(node => node.id));
+            overlayLinks = links.filter(link => ids.has(link.source?.id) || ids.has(link.target?.id)).filter(link => context.relationshipHasSourceEvidence?.(link) || context.isSecBackedConnection?.(link));
+            summary = `${overlayLinks.length} visible sourced edges concentrate around ${overlayNodes.length} companies.`;
+            chips = topEvidenceNodes.slice(0, 3).map(item => `${item.node.ticker || item.node.name} ${item.sourced}/${item.visible}`).filter(Boolean);
+        } else if (definition.key === 'route_heat') {
+            if (context.activeRouteComparison?.linkKeys?.size) {
+                overlayLinks = links.filter(link => context.activeRouteComparison.linkKeys.has(link.key));
+                overlayNodes = uniqueNodes(overlayLinks.flatMap(link => [link.source, link.target]));
+                summary = `${overlayLinks.length} route-comparison edges are active.`;
+                chips = [`${context.activeRouteComparison.routeCount || context.activeRouteComparison.routes?.length || 0} routes`, `${context.activeRouteComparison.sharedLinkKeys?.size || 0} shared`];
+            } else if (context.activeRelationshipRoute?.linkKeys?.size) {
+                overlayLinks = links.filter(link => context.activeRelationshipRoute.linkKeys.has(link.key));
+                overlayNodes = uniqueNodes(overlayLinks.flatMap(link => [link.source, link.target]));
+                summary = `${overlayLinks.length} active route edges are visible.`;
+                chips = [context.activeRelationshipRoute.shortLabel || context.activeRelationshipRoute.label || 'Route'];
+            } else {
+                const route = buildRoute('strongest', context);
+                overlayLinks = route.links || [];
+                overlayNodes = route.nodes || uniqueNodes(overlayLinks.flatMap(link => [link.source, link.target]));
+                summary = `${overlayLinks.length} strongest-route edges are available from the current seed.`;
+                chips = [route.label || 'Strongest route'];
+            }
+        }
+
+        const linkLimit = getOverlayLinkLimit(density, context);
+        overlayLinks = overlayLinks.slice(0, linkLimit);
+        const linkKeys = new Set(overlayLinks.map(link => link.key));
+        const nodeIds = new Set(overlayNodes.map(node => node.id));
+        overlayLinks.forEach(link => {
+            if (link.source) nodeIds.add(link.source.id);
+            if (link.target) nodeIds.add(link.target.id);
+        });
+        overlayNodes = uniqueNodes([
+            ...overlayNodes,
+            ...nodes.filter(node => nodeIds.has(node.id))
+        ]).slice(0, getOverlayNodeLimit(density) + 20);
+
+        return {
+            ...definition,
+            active: true,
+            nodes: overlayNodes,
+            links: overlayLinks,
+            nodeIds,
+            linkKeys,
+            nodeCount: nodeIds.size,
+            edgeCount: linkKeys.size,
+            summary,
+            chips,
+            densityKey: density.key,
+            semanticTier,
+            derivedOnly: true,
+            disabledWhenCluttering: true,
+            forceReveal: Boolean(context.selectedNode || context.activeRelationshipRoute || context.activeRouteComparison)
+        };
+    }
+
+    function buildSemanticIntelligenceLayers(context = {}) {
+        const visibleLinks = context.visibleLinks || [];
+        const visibleNodes = context.visibleNodes || [];
+        const relationshipCategories = countBy(visibleLinks, link => context.getRelationshipTypeLabel?.(link) || link.relationship_type || link.type || 'Relationship')
+            .slice(0, 8)
+            .map(([label, count]) => ({ label, count }));
+        const corridorGroups = buildSemanticCorridorGroups(context);
+        const ecosystemClusters = getEcosystemDefinitions()
+            .map(ecosystem => {
+                const links = visibleLinks.filter(link => getCachedLinkEcosystemMatch(link, ecosystem, context).matched);
+                const nodes = uniqueNodes(links.flatMap(link => [link.source, link.target]));
+                return {
+                    key: ecosystem.key,
+                    label: ecosystem.label,
+                    shortLabel: ecosystem.shortLabel,
+                    color: ecosystem.color,
+                    edgeCount: links.length,
+                    nodeCount: nodes.length,
+                    sourceBacked: links.filter(link => context.relationshipHasSourceEvidence?.(link)).length
+                };
+            })
+            .filter(item => item.edgeCount > 0)
+            .sort((a, b) => b.edgeCount - a.edgeCount || b.sourceBacked - a.sourceBacked || a.label.localeCompare(b.label));
+        const routeWeighting = buildSemanticRouteWeighting(context);
+        const hubSignificance = getStrategicHubProfiles(visibleNodes, context, 8).map(item => ({
+            nodeId: item.node.id,
+            ticker: item.node.ticker || item.node.name || '',
+            score: item.profile.score,
+            role: item.profile.primaryRoleLabel,
+            sourceBackedRatio: item.profile.sourceBackedRatio,
+            corridorCount: item.profile.corridorCount
+        }));
+        const semanticHints = buildSemanticInvestigationHints({
+            relationshipCategories,
+            corridorGroups,
+            ecosystemClusters,
+            routeWeighting,
+            hubSignificance,
+            context
+        });
+
+        return {
+            version: 'd166_semantic_layers_v1',
+            relationshipCategories,
+            corridorGroups,
+            ecosystemClusters,
+            routeWeighting,
+            hubSignificance,
+            semanticHints,
+            summary: buildSemanticGraphSummary(visibleNodes, visibleLinks, {
+                relationshipCategories,
+                corridorGroups,
+                ecosystemClusters,
+                hubSignificance
+            }),
+            deterministic: true,
+            derivedFromLoadedMetadataOnly: true
+        };
+    }
+
+    function buildSemanticCorridorGroups(context = {}) {
+        const buckets = new Map();
+        (context.visibleLinks || []).forEach(link => {
+            const keys = getLinkCorridorKeysFromContext(link, context);
+            keys.forEach(key => {
+                const bucket = buckets.get(key) || {
+                    key,
+                    label: formatKey(key),
+                    shortLabel: formatKey(key).split(' ').slice(0, 2).join(' '),
+                    edgeCount: 0,
+                    sourceBacked: 0,
+                    secBacked: 0,
+                    avgStrength: 0,
+                    strength: 0,
+                    linkKeys: new Set()
+                };
+                bucket.edgeCount += 1;
+                bucket.strength += getStrength(link);
+                bucket.linkKeys.add(link.key);
+                if (context.relationshipHasSourceEvidence?.(link)) bucket.sourceBacked += 1;
+                if (context.isSecBackedConnection?.(link)) bucket.secBacked += 1;
+                buckets.set(key, bucket);
+            });
+        });
+        return [...buckets.values()]
+            .map(bucket => ({
+                ...bucket,
+                avgStrength: bucket.edgeCount ? bucket.strength / bucket.edgeCount : 0,
+                sourceBackedRatio: bucket.edgeCount ? bucket.sourceBacked / bucket.edgeCount : 0
+            }))
+            .sort((a, b) => b.edgeCount - a.edgeCount || b.sourceBacked - a.sourceBacked || a.label.localeCompare(b.label))
+            .slice(0, 10);
+    }
+
+    function buildSemanticRouteWeighting(context = {}) {
+        const route = context.activeRouteComparison || context.activeRelationshipRoute || null;
+        const links = route?.linkKeys?.size
+            ? (context.visibleLinks || []).filter(link => route.linkKeys.has(link.key))
+            : (context.visibleLinks || []).slice().sort((a, b) => getStrength(b) - getStrength(a)).slice(0, 12);
+        const totalStrength = links.reduce((sum, link) => sum + getStrength(link), 0);
+        const sourced = links.filter(link => context.relationshipHasSourceEvidence?.(link)).length;
+        const secBacked = links.filter(link => context.isSecBackedConnection?.(link)).length;
+        return {
+            mode: context.activeRouteComparison ? 'comparison' : context.activeRelationshipRoute ? 'active-route' : 'strongest-visible',
+            edgeCount: links.length,
+            avgStrength: links.length ? totalStrength / links.length : 0,
+            sourceBackedRatio: links.length ? sourced / links.length : 0,
+            secBacked,
+            relationshipCategories: countBy(links, link => context.getRelationshipTypeLabel?.(link) || link.relationship_type || link.type || 'Relationship').slice(0, 5)
+        };
+    }
+
+    function buildSemanticInvestigationHints(model = {}) {
+        const hints = [];
+        const topCorridor = model.corridorGroups?.[0];
+        const topEcosystem = model.ecosystemClusters?.[0];
+        const topHub = model.hubSignificance?.[0];
+        const route = model.routeWeighting || {};
+        if (topHub) {
+            hints.push({
+                key: 'hub',
+                label: `Open ${topHub.ticker}`,
+                reason: `${topHub.role} with ${topHub.corridorCount} corridor${topHub.corridorCount === 1 ? '' : 's'}.`
+            });
+        }
+        if (topCorridor) {
+            hints.push({
+                key: 'corridor',
+                label: topCorridor.shortLabel || topCorridor.label,
+                reason: `${topCorridor.edgeCount} visible edges, ${Math.round(topCorridor.sourceBackedRatio * 100)}% sourced.`
+            });
+        }
+        if (topEcosystem) {
+            hints.push({
+                key: 'ecosystem',
+                label: topEcosystem.shortLabel || topEcosystem.label,
+                reason: `${topEcosystem.edgeCount} visible edges across ${topEcosystem.nodeCount} companies.`
+            });
+        }
+        if (route.edgeCount && route.sourceBackedRatio < 0.35) {
+            hints.push({
+                key: 'evidence',
+                label: 'Review route evidence',
+                reason: `Only ${Math.round(route.sourceBackedRatio * 100)}% of route edges are sourced.`
+            });
+        }
+        return hints.slice(0, 4);
+    }
+
+    function buildSemanticGraphSummary(nodes, links, layers) {
+        const topRelationship = layers.relationshipCategories?.[0];
+        const topCorridor = layers.corridorGroups?.[0];
+        const topEcosystem = layers.ecosystemClusters?.[0];
+        return {
+            nodeCount: nodes.length,
+            edgeCount: links.length,
+            topRelationship: topRelationship?.label || '',
+            topCorridor: topCorridor?.label || '',
+            topEcosystem: topEcosystem?.label || '',
+            hubCount: layers.hubSignificance?.length || 0,
+            sentence: `${nodes.length} visible companies and ${links.length} visible relationships are currently organized around ${topEcosystem?.shortLabel || topEcosystem?.label || topCorridor?.shortLabel || topRelationship?.label || 'the loaded topology'}.`
+        };
+    }
+
+    function getAnalystOverlayGate(key, context, density, semanticTier) {
+        const hasFocus = Boolean(context.selectedNode || context.selectedRelationshipLink || context.activeRelationshipRoute || context.activeRouteComparison || context.largeGraphNavigationModel?.isActive);
+        const cluttered = ['mega', 'very_dense'].includes(density.key) && !hasFocus;
+        if (cluttered && !['strategic_hubs', 'sec_backed'].includes(key)) {
+            return {
+                enabled: false,
+                disabledReason: 'Density gated until a focus, route, corridor, or navigation workspace is active.'
+            };
+        }
+        if (semanticTier === 'macro' && ['route_heat', 'evidence_concentration'].includes(key) && !hasFocus) {
+            return {
+                enabled: false,
+                disabledReason: 'Macro tier keeps this layer dormant until investigation focus is present.'
+            };
+        }
+        return { enabled: true, disabledReason: '' };
+    }
+
+    function getOverlayLinkLimit(density, context) {
+        if (context.activeRouteComparison || context.activeRelationshipRoute || context.selectedNode) return 260;
+        if (density.key === 'mega') return 72;
+        if (density.key === 'very_dense') return 110;
+        if (density.key === 'dense') return 160;
+        return 240;
+    }
+
+    function getOverlayNodeLimit(density) {
+        if (density.key === 'mega') return 24;
+        if (density.key === 'very_dense') return 36;
+        if (density.key === 'dense') return 52;
+        return 76;
+    }
+
+    function getContextDensity(context = {}) {
+        const source = context.graphScalingModel?.density || context.largeGraphScaling?.density || {};
+        const nodeCount = (context.visibleNodes || []).length;
+        const edgeCount = (context.visibleLinks || []).length;
+        const ratio = Number(source.ratio || edgeCount / Math.max(1, nodeCount)) || 0;
+        const key = source.key || (nodeCount > 520 || edgeCount > 1100 || ratio > 4.2
+            ? 'mega'
+            : nodeCount > 160 || edgeCount > 360 || ratio > 3.15
+                ? 'very_dense'
+                : nodeCount > 100 || edgeCount > 210 || ratio > 2.25
+                    ? 'dense'
+                    : 'core');
+        return {
+            key,
+            label: source.label || formatKey(key),
+            nodeCount,
+            edgeCount,
+            ratio
+        };
+    }
+
+    function getEvidenceRank(link, context) {
+        if (context.isSecBackedConnection?.(link)) return 6;
+        const tier = getLinkTrustTierState(link, context);
+        const rank = {
+            verified: 5,
+            strong_inferred: 4,
+            context_only: 2,
+            needs_review: 1
+        };
+        return rank[tier?.key] || 0;
+    }
+
+    function getLinkCorridorKeysFromContext(link, context) {
+        const spatial = context.getGraphLinkSpatialMeta?.(link) || {};
+        if (Array.isArray(spatial.corridorKeys) && spatial.corridorKeys.length) return spatial.corridorKeys;
+        if (spatial.primaryCorridorKey) return [spatial.primaryCorridorKey];
+        const ecosystems = getLinkEcosystemKeys(link, context);
+        if (ecosystems.includes('ai_infrastructure') || ecosystems.includes('semiconductor_supply_chain') || ecosystems.includes('cloud_hyperscaler')) return ['ai_compute_foundry_cloud'];
+        if (ecosystems.includes('financial_payments')) return ['financial_market_infrastructure'];
+        if (ecosystems.includes('energy_infrastructure')) return ['energy_grid_infrastructure'];
+        if (ecosystems.includes('healthcare_biotech')) return ['healthcare_pharma_benefits'];
+        if (ecosystems.includes('enterprise_saas_workflow')) return ['enterprise_workflow_security'];
+        return [];
+    }
+
     function buildLargeGraphScalingSummary(context) {
         const scalingTools = window.StockPhotonicStock?.graphScaling;
         const model = scalingTools?.buildScalingModel?.({
@@ -1320,6 +1809,8 @@
     function getNodeVisualMeta(node, context) {
         const route = context.activeRelationshipRoute?.nodeIds?.has(node.id);
         const overlay = context.graphIntelligenceModel?.overlay?.nodeIds?.has(node.id);
+        const analystOverlay = context.graphIntelligenceModel?.analystOverlay?.active &&
+            context.graphIntelligenceModel.analystOverlay.nodeIds?.has(node.id);
         const guided = context.graphIntelligenceModel?.guidedDiscovery?.nodeIds?.has(node.id);
         const defaultDiscovery = !context.selectedNode &&
             !context.selectedRelationshipLink &&
@@ -1352,6 +1843,9 @@
         else if (sourceCoverage) {
             badgeLabel = sourceCoverage.shortLabel;
             color = sourceCoverage.color;
+        } else if (analystOverlay) {
+            badgeLabel = context.graphIntelligenceModel?.analystOverlay?.shortLabel || 'LAYER';
+            color = context.graphIntelligenceModel?.analystOverlay?.color || color;
         } else if (navigation && context.largeGraphNavigationModel?.focusKind === 'hubs') {
             badgeLabel = 'HUB';
             color = '#22d3ee';
@@ -1368,6 +1862,7 @@
         return {
             route,
             overlay,
+            analystOverlay,
             guided,
             navigation,
             defaultDiscovery,
@@ -1377,7 +1872,7 @@
             sourceCoverage,
             color,
             badgeLabel,
-            emphasized: Boolean(route || selectedEdgeEndpoint || cluster || overlay || guided || navigation || sourceCoverage || defaultDiscovery)
+            emphasized: Boolean(route || selectedEdgeEndpoint || cluster || overlay || analystOverlay || guided || navigation || sourceCoverage || defaultDiscovery)
         };
     }
 
@@ -1385,6 +1880,8 @@
         const route = context.activeRelationshipRoute?.linkKeys?.has(link.key);
         const selected = context.selectedRelationshipLink?.key === link.key;
         const overlay = context.graphIntelligenceModel?.overlay?.linkKeys?.has(link.key);
+        const analystOverlay = context.graphIntelligenceModel?.analystOverlay?.active &&
+            context.graphIntelligenceModel.analystOverlay.linkKeys?.has(link.key);
         const guided = context.graphIntelligenceModel?.guidedDiscovery?.linkKeys?.has(link.key);
         const navigation = context.largeGraphNavigationModel?.isActive &&
             context.largeGraphNavigationModel?.mode !== 'production_only' &&
@@ -1394,6 +1891,7 @@
             ? getLinkTrustTierState(link, context)
             : null;
         const overlayColor = context.graphIntelligenceModel?.overlay?.color;
+        const analystOverlayColor = context.graphIntelligenceModel?.analystOverlay?.color;
         const guidedColor = context.graphIntelligenceModel?.guidedDiscovery?.color;
         const routeColor = getRouteColor(context.activeRelationshipRoute, context);
         const sourceColor = sourceCoverage?.color;
@@ -1402,14 +1900,15 @@
             route,
             selected,
             overlay,
+            analystOverlay,
             guided,
             navigation,
             sourceCoverage,
-            forceDraw: Boolean(route || selected || overlay || guided || navigation),
-            dimmed: Boolean((context.activeEcosystemOverlayKey || context.sourceCoverageLensEnabled || context.activeGuidedDiscoveryKey) && !route && !selected && !overlay && !guided),
-            color: route ? routeColor : selected ? '#ffffff' : sourceColor || guidedColor || overlayColor || (navigation ? '#a5f3fc' : ''),
-            widthBoost: route ? 2.25 : selected ? 2.4 : guided ? 1.35 : overlay ? 1.1 : navigation ? 0.45 : sourceCoverage ? 0.35 : 0,
-            alphaBoost: route ? 0.45 : selected ? 0.52 : guided ? 0.34 : overlay ? 0.28 : navigation ? 0.18 : sourceCoverage ? 0.18 : 0,
+            forceDraw: Boolean(route || selected || overlay || analystOverlay && context.graphIntelligenceModel?.analystOverlay?.forceReveal || guided || navigation),
+            dimmed: Boolean((context.activeEcosystemOverlayKey || context.activeAnalystOverlayKey || context.sourceCoverageLensEnabled || context.activeGuidedDiscoveryKey) && !route && !selected && !overlay && !analystOverlay && !guided),
+            color: route ? routeColor : selected ? '#ffffff' : sourceColor || guidedColor || overlayColor || analystOverlayColor || (navigation ? '#a5f3fc' : ''),
+            widthBoost: route ? 2.25 : selected ? 2.4 : guided ? 1.35 : overlay ? 1.1 : analystOverlay ? 0.85 : navigation ? 0.45 : sourceCoverage ? 0.35 : 0,
+            alphaBoost: route ? 0.45 : selected ? 0.52 : guided ? 0.34 : overlay ? 0.28 : analystOverlay ? 0.24 : navigation ? 0.18 : sourceCoverage ? 0.18 : 0,
             dashPattern: sourceCoverage?.key === 'needs_review' ? [3, 7] : sourceCoverage?.key === 'context_only' ? [2, 6] : null
         };
     }
@@ -1581,6 +2080,12 @@
         return Math.max(0, Math.min(1, Number(link?.strength) || 0));
     }
 
+    function formatKey(key) {
+        return String(key || 'Graph')
+            .replace(/[_:|-]+/g, ' ')
+            .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
     window.StockPhotonicStock.graphIntelligence = {
         ECOSYSTEMS,
         ECOSYSTEM_SEQUENCE,
@@ -1590,9 +2095,12 @@
         getEcosystemDefinition,
         getGuidedDiscoveryFlows,
         getGuidedDiscoveryFlow,
+        getAnalystOverlayDefinitions,
         getRelationshipTypeMeaning,
         buildGraphIntelligenceModel,
         buildEcosystemOverlay,
+        buildAnalystOverlayModel,
+        buildSemanticIntelligenceLayers,
         buildGuidedDiscoveryModel,
         buildDefaultDiscoveryModel,
         buildEvidenceGapDiscovery,

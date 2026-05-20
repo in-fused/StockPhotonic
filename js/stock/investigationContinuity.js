@@ -8,7 +8,12 @@
         corridors: 6,
         hubs: 8,
         checkpoints: 6,
-        collections: 4
+        collections: 4,
+        queue: 8,
+        tasks: 10,
+        history: 12,
+        snapshots: 6,
+        timeline: 18
     });
 
     function createSessionWorkspace(options = {}) {
@@ -21,6 +26,11 @@
             pinnedHubs: [],
             replayCheckpoints: [],
             routeCollections: [],
+            investigationQueue: [],
+            taskStack: [],
+            jumpHistory: [],
+            snapshots: [],
+            chronology: [],
             activeWorkspaceId: 'session'
         };
 
@@ -28,6 +38,8 @@
             const entry = normalizeEntry(kind, payload, meta, now());
             if (!entry) return null;
             pushUnique(state.stack, entry, LIMITS.stack);
+            pushUnique(state.jumpHistory, entry, LIMITS.history);
+            pushTimeline(entry);
             if (kind !== 'heartbeat') pushUnique(state.breadcrumbs, entry, LIMITS.breadcrumbs);
             return entry;
         }
@@ -80,6 +92,49 @@
             return collection;
         }
 
+        function queueInvestigation(target = {}, meta = {}) {
+            const item = normalizeWorkflowItem('queued-investigation', target, meta, now());
+            if (!item) return null;
+            pushUnique(state.investigationQueue, item, LIMITS.queue);
+            pushTask({
+                id: `task:${item.id}`,
+                kind: item.kind,
+                label: `Investigate ${item.shortLabel || item.label}`,
+                shortLabel: item.shortLabel || item.label,
+                payload: item.payload || target.payload || target
+            });
+            remember('queue', item, { label: item.label });
+            return item;
+        }
+
+        function activateQueueItem(id) {
+            const key = String(id || '');
+            const item = state.investigationQueue.find(entry => entry.id === key) || null;
+            if (!item) return null;
+            state.investigationQueue = [
+                item,
+                ...state.investigationQueue.filter(entry => entry.id !== key)
+            ].slice(0, LIMITS.queue);
+            remember('queue-activate', item, { label: item.label });
+            return item;
+        }
+
+        function pushTask(task = {}, meta = {}) {
+            const item = normalizeWorkflowItem(task.kind || 'task', task, meta, now());
+            if (!item) return null;
+            pushUnique(state.taskStack, item, LIMITS.tasks);
+            pushTimeline(item);
+            return item;
+        }
+
+        function captureSnapshot(snapshot = {}, meta = {}) {
+            const item = normalizeSnapshot(snapshot, meta, now());
+            if (!item) return null;
+            pushUnique(state.snapshots, item, LIMITS.snapshots);
+            remember('snapshot', item, { label: item.label });
+            return item;
+        }
+
         function clear() {
             state.breadcrumbs = [];
             state.stack = [];
@@ -88,6 +143,11 @@
             state.pinnedHubs = [];
             state.replayCheckpoints = [];
             state.routeCollections = [];
+            state.investigationQueue = [];
+            state.taskStack = [];
+            state.jumpHistory = [];
+            state.snapshots = [];
+            state.chronology = [];
         }
 
         function remove(kind, id) {
@@ -98,6 +158,20 @@
             const next = list.filter(item => item.id !== key);
             list.splice(0, list.length, ...next);
             return next.length !== before;
+        }
+
+        function pushTimeline(item) {
+            if (!item?.id) return;
+            const entry = {
+                id: `timeline:${item.id}`,
+                kind: item.kind || 'event',
+                label: item.label || item.shortLabel || item.kind || 'Event',
+                shortLabel: item.shortLabel || item.label || 'Event',
+                value: item.value || '',
+                createdAt: item.createdAt || now(),
+                meta: item.meta || {}
+            };
+            pushUnique(state.chronology, entry, LIMITS.timeline);
         }
 
         function getSummary(context = {}) {
@@ -118,13 +192,21 @@
                 pinnedHubCount: state.pinnedHubs.length,
                 replayCheckpointCount: state.replayCheckpoints.length,
                 routeCollectionCount: state.routeCollections.length,
+                investigationQueueCount: state.investigationQueue.length,
+                taskStackCount: state.taskStack.length,
+                snapshotCount: state.snapshots.length,
                 latest: state.stack[0] || null,
                 breadcrumbs: state.breadcrumbs.slice(0, LIMITS.breadcrumbs),
+                jumpHistory: state.jumpHistory.slice(0, LIMITS.history),
+                chronology: state.chronology.slice(0, LIMITS.timeline),
                 pinnedRoutes: state.pinnedRoutes.slice(0, LIMITS.routes),
                 pinnedCorridors: state.pinnedCorridors.slice(0, LIMITS.corridors),
                 pinnedHubs: state.pinnedHubs.slice(0, LIMITS.hubs),
                 replayCheckpoints: state.replayCheckpoints.slice(0, LIMITS.checkpoints),
                 routeCollections: state.routeCollections.slice(0, LIMITS.collections),
+                investigationQueue: state.investigationQueue.slice(0, LIMITS.queue),
+                taskStack: state.taskStack.slice(0, LIMITS.tasks),
+                snapshots: state.snapshots.slice(0, LIMITS.snapshots),
                 reversible: true,
                 persistence: 'in-session only'
             };
@@ -138,9 +220,54 @@
             pinHub,
             addReplayCheckpoint,
             collectCurrentRoutes,
+            queueInvestigation,
+            activateQueueItem,
+            pushTask,
+            captureSnapshot,
             remove,
             clear,
             getSummary
+        };
+    }
+
+    function normalizeWorkflowItem(kind, payload = {}, meta = {}, createdAt = Date.now()) {
+        const source = payload.payload || payload;
+        const label = meta.label || payload.label || payload.shortLabel || source.label || source.shortLabel || kind;
+        if (!label) return null;
+        const id = payload.id || meta.id || `${kind}:${signature(label)}:${source.selectedNodeId ?? source.nodeId ?? source.value ?? ''}`;
+        return {
+            id: String(id),
+            kind: String(payload.kind || kind || 'task'),
+            label: String(label),
+            shortLabel: String(payload.shortLabel || source.shortLabel || label).slice(0, 28),
+            value: String(payload.value ?? source.value ?? source.selectedNodeId ?? source.nodeId ?? ''),
+            payload: source,
+            createdAt,
+            meta: {
+                nodeId: source.selectedNodeId ?? source.nodeId ?? payload.nodeId ?? '',
+                routeId: source.routeComparisonId || payload.routeId || '',
+                corridorKey: source.largeGraphCorridorFocus || payload.corridorKey || '',
+                layerKey: source.activeAnalystOverlayKey || payload.layerKey || ''
+            }
+        };
+    }
+
+    function normalizeSnapshot(snapshot = {}, meta = {}, createdAt = Date.now()) {
+        const label = meta.label || snapshot.label || snapshot.shortLabel || 'Graph snapshot';
+        const id = snapshot.id || `snapshot:${signature(label)}:${createdAt}`;
+        return {
+            id: String(id),
+            kind: 'snapshot',
+            label: String(label),
+            shortLabel: String(snapshot.shortLabel || label).slice(0, 28),
+            summary: snapshot.summary || '',
+            payload: snapshot,
+            createdAt,
+            meta: {
+                nodeId: snapshot.selectedNodeId ?? '',
+                corridorKey: snapshot.largeGraphCorridorFocus || '',
+                layerKey: snapshot.activeAnalystOverlayKey || ''
+            }
         };
     }
 

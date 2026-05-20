@@ -660,6 +660,23 @@ body.graph-fullscreen-active > header {
             box-shadow: 0 0 18px rgba(251, 191, 36, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.055);
         }
 
+.graph-layer-group {
+            border-color: rgba(163, 230, 53, 0.16);
+            background: rgba(5, 12, 10, 0.72);
+        }
+
+.graph-layer-action.is-active {
+            border-color: rgba(163, 230, 53, 0.54);
+            background: rgba(34, 197, 94, 0.13);
+            box-shadow: 0 0 18px rgba(34, 197, 94, 0.10), inset 0 0 0 1px rgba(255, 255, 255, 0.045);
+        }
+
+.graph-explorer-action:disabled {
+            cursor: not-allowed;
+            opacity: 0.42;
+            box-shadow: none;
+        }
+
 .graph-intelligence-card {
             position: absolute;
             top: 5.25rem;
@@ -991,6 +1008,15 @@ body.graph-fullscreen-active > header {
             max-width: min(44rem, calc(100vw - 29rem));
         }
 
+#graph-intelligence-view.is-graph-fullscreen .graph-timeline-track {
+            max-width: min(64rem, calc(100vw - 28rem));
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-investigation-rail {
+            top: min(41vh, 22rem);
+            right: 1rem;
+        }
+
 #graph-intelligence-view.is-graph-fullscreen .graph-intelligence-card {
             top: min(33vh, 18rem);
             left: 1rem;
@@ -1009,7 +1035,8 @@ body.graph-fullscreen-active > header {
         }
 
 #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-adaptive-hud,
-#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-workspace-memory {
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-workspace-memory,
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-investigation-rail {
             opacity: 0;
             pointer-events: none;
             visibility: hidden;
@@ -1347,6 +1374,199 @@ body.graph-fullscreen-active > header {
             background: rgba(14, 165, 233, 0.14);
             color: #ffffff;
             outline: none;
+        }
+
+.graph-timeline-rail {
+            position: absolute;
+            left: 1rem;
+            right: 1rem;
+            bottom: 0.82rem;
+            z-index: 8;
+            pointer-events: none;
+        }
+
+.graph-timeline-rail.hidden {
+            display: none;
+        }
+
+.graph-timeline-track {
+            display: flex;
+            align-items: center;
+            gap: 0.34rem;
+            max-width: min(56rem, calc(100% - 18rem));
+            overflow-x: auto;
+            padding: 0.2rem;
+            scrollbar-width: thin;
+            pointer-events: auto;
+        }
+
+.graph-timeline-event {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.34rem;
+            flex: 0 0 auto;
+            min-height: 2rem;
+            max-width: 10rem;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            border-radius: 999px;
+            background: rgba(2, 6, 23, 0.72);
+            color: rgba(226, 232, 240, 0.72);
+            padding: 0.42rem 0.58rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.62rem;
+            backdrop-filter: blur(14px);
+            transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+        }
+
+.graph-timeline-event span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-timeline-event.is-active,
+.graph-timeline-event:hover,
+.graph-timeline-event:focus-visible {
+            border-color: rgba(125, 211, 252, 0.42);
+            background: rgba(14, 116, 144, 0.16);
+            color: rgba(240, 253, 250, 0.96);
+            outline: none;
+        }
+
+.graph-timeline-event.is-layer {
+            border-color: rgba(163, 230, 53, 0.26);
+        }
+
+.graph-timeline-event.is-snapshot,
+.graph-timeline-event.is-queue {
+            border-color: rgba(240, 171, 252, 0.20);
+        }
+
+.graph-investigation-rail {
+            position: absolute;
+            right: 1rem;
+            top: 13.1rem;
+            z-index: 8;
+            width: min(18rem, calc(100% - 2rem));
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.70);
+            box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
+            backdrop-filter: blur(18px);
+            padding: 0.55rem;
+            pointer-events: auto;
+        }
+
+.graph-investigation-rail.is-empty {
+            width: auto;
+        }
+
+.graph-investigation-rail.is-empty .graph-investigation-active,
+.graph-investigation-rail.is-empty .graph-investigation-lists {
+            display: none;
+        }
+
+.graph-investigation-rail-head {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            color: rgba(165, 243, 252, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+.graph-investigation-rail-head span {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+.graph-investigation-rail-head button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.8rem;
+            height: 1.8rem;
+            flex: 0 0 auto;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.055);
+            color: rgba(236, 254, 255, 0.76);
+        }
+
+.graph-investigation-active {
+            display: grid;
+            gap: 0.12rem;
+            margin-top: 0.48rem;
+            border: 1px solid rgba(125, 211, 252, 0.14);
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.42);
+            padding: 0.48rem;
+        }
+
+.graph-investigation-active strong,
+.graph-investigation-active span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-investigation-active strong {
+            color: rgba(248, 250, 252, 0.9);
+            font-size: 0.76rem;
+            font-weight: 720;
+        }
+
+.graph-investigation-active span {
+            color: rgba(203, 213, 225, 0.54);
+            font-size: 0.64rem;
+        }
+
+.graph-investigation-lists {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.32rem;
+            margin-top: 0.5rem;
+        }
+
+.graph-investigation-lists button,
+.graph-investigation-task {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.32rem;
+            min-width: 0;
+            max-width: 8.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.045);
+            color: rgba(226, 232, 240, 0.70);
+            padding: 0.34rem 0.48rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+        }
+
+.graph-investigation-lists button span,
+.graph-investigation-task span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-investigation-lists button:hover,
+.graph-investigation-lists button:focus-visible,
+.graph-investigation-rail-head button:hover,
+.graph-investigation-rail-head button:focus-visible {
+            border-color: rgba(125, 211, 252, 0.34);
+            color: rgba(255, 255, 255, 0.92);
+            outline: none;
+        }
+
+.graph-container.has-readability-suppression #graph-canvas {
+            filter: saturate(0.96) contrast(1.02);
         }
 
 .graph-annotation-layer {
@@ -1846,6 +2066,16 @@ body.graph-fullscreen-active > header {
             width: min(20.5rem, calc(100% - 13rem));
             bottom: 5.45rem;
             padding: 0.56rem;
+        }
+
+.graph-first-os .graph-investigation-rail {
+            top: 12.25rem;
+            width: min(16.5rem, calc(100% - 2rem));
+            background: rgba(2, 6, 23, 0.64);
+        }
+
+.graph-first-os .graph-timeline-track {
+            max-width: min(54rem, calc(100% - 17rem));
         }
 
 .graph-first-os .graph-route-workspace-routes {

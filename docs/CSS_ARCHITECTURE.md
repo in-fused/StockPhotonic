@@ -67,6 +67,14 @@ D155-D160 workspace convergence and scalable intelligence foundations preserve t
 - Mobile graph OS rules for bottom-sheet minimization, adaptive HUD scrolling, annotation chip compression, route workspace compacting, graph-only immersion, and minimap touch ergonomics live in `mobile.css`.
 - Scalable graph caches, semantic tile prep, corridor lane indexes, label anchor caches, narrative summaries, and disabled overlay foundation definitions are JavaScript-owned. CSS should style stable classes only and must not imply fake overlay data, source authority, or persistence guarantees.
 
+D161-D168 analyst OS, readability, timeline, overlay, and scalability evolution preserve the same split:
+
+- Stock massive-readability UI affordances, analyst layer dock states, graph timeline rail, investigation queue rail, session snapshot buttons, readability suppression state, and graph-first fullscreen placement live in `graph.css`.
+- Crypto replay graph chronology controls and replay convergence chrome live in `crypto.css`.
+- Mobile graph OS maturity rules for timeline placement, investigation rail compression, touch route/snapshot actions, replay chronology buttons, and fullscreen graph-only ergonomics live in `mobile.css`.
+- Readability budgets, semantic edge fading, corridor suppression, node prominence, label queues, graph timeline models, investigation workflow state, analyst overlay derivation, semantic intelligence summaries, render queues, animation budgets, memory budgets, and progressive hydration prep are JavaScript-owned.
+- CSS must react only to stable classes/attributes such as `.graph-layer-action.is-active`, `.graph-timeline-rail`, `.graph-investigation-rail`, `.has-readability-suppression`, `.crypto-replay-graph-chronology`, and mobile product scopes. CSS must not encode relationship truth, source authority, overlay membership, route priority, persistence guarantees, or backend assumptions.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

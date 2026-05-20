@@ -83,6 +83,13 @@ D169-D178 institutional spatial OS, topology, multi-workspace, replay intelligen
 - Spatial topology derivation, multi-workspace state, choreography pacing, overlay conflict suppression, graph-native command actions, replay intelligence summaries, semantic heuristics, route/topology weighting, overlay caches, topology caches, render budgets, and fullscreen performance budgets are JavaScript-owned.
 - CSS must not encode topology scores, overlay membership, replay anomaly meaning, source authority, persistence guarantees, browser ingestion behavior, or backend assumptions.
 
+D179-D188 graph OS validation and analyst workflow consolidation keep the same ownership:
+
+- Stock graph OS status/self-check panels, topology validation summaries, overlay/readability summaries, analyst preset chrome, workspace count chips, fullscreen compact HUD placement, and graph-native command section labels live in `graph.css`.
+- Mobile touch compression for the graph OS status panel, topology/readability summaries, workspace counts, command section headings, fullscreen restore behavior, and compact preset controls lives in `mobile.css`.
+- Topology counts, overlay suppression reasons, readability budgets, active workspace state, command availability, analyst preset behavior, and render budget labels remain JavaScript-owned and session-only.
+- No CSS layer should imply persistence, backend/provider/API behavior, production-data mutation, source authority, topology meaning, or overlay truth.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

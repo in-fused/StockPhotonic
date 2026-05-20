@@ -1496,6 +1496,96 @@
             .photonic-command-results {
                 max-height: min(54dvh, 28rem);
             }
+
+            .graph-os-status-panel {
+                top: 3.85rem;
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(0.65rem, env(safe-area-inset-right));
+                width: auto;
+                max-height: min(32dvh, 15rem);
+                padding: 0.46rem;
+            }
+
+            .graph-os-status-grid,
+            .graph-os-readability-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.24rem;
+            }
+
+            .graph-os-count-strip {
+                display: flex;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            .graph-os-count-strip::-webkit-scrollbar {
+                display: none;
+            }
+
+            .graph-os-count-strip span {
+                flex: 0 0 5.8rem;
+            }
+
+            .graph-os-presets {
+                display: flex;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            .graph-os-presets::-webkit-scrollbar {
+                display: none;
+            }
+
+            .graph-os-presets button {
+                flex: 0 0 5.4rem;
+                min-height: 3rem;
+            }
+
+            #graph-os-status-panel:not(.is-empty) ~ .graph-active-legend {
+                display: none !important;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-os-status-panel {
+                position: absolute;
+                top: 0.65rem;
+                left: max(0.65rem, env(safe-area-inset-left));
+                right: max(3.9rem, calc(3.8rem + env(safe-area-inset-right)));
+                width: auto;
+                max-height: min(28dvh, 13rem);
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-os-status-panel {
+                display: none;
+            }
+
+            .graph-workspace-counts {
+                display: flex;
+                overflow-x: auto;
+                scrollbar-width: none;
+            }
+
+            .graph-workspace-counts::-webkit-scrollbar {
+                display: none;
+            }
+
+            .graph-workspace-counts span {
+                flex: 0 0 4.8rem;
+            }
+
+            .graph-workspace-session-note {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .photonic-command-section-label {
+                position: sticky;
+                top: 0;
+                z-index: 1;
+                margin-top: 0.3rem;
+                background: rgba(2, 6, 23, 0.96);
+                padding: 0.18rem 0;
+            }
         }
 
 @media (max-width: 480px) {

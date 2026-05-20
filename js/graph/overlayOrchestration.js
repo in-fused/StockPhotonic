@@ -176,6 +176,49 @@
         return defaultNodeAdjustment();
     }
 
+    function getReadabilitySummary(plan = null, options = {}) {
+        const readability = options.readabilityModel || {};
+        const route = options.activeRouteComparison || options.activeRelationshipRoute || null;
+        const selected = options.selectedNode || options.selectedRelationshipLink || null;
+        const visibleLayers = Array.isArray(plan?.visibleLayers) ? plan.visibleLayers : [];
+        const activeLayers = Array.isArray(plan?.activeLayers) ? plan.activeLayers : [];
+        const suppressedLayers = Array.isArray(plan?.suppressedLayers) ? plan.suppressedLayers : [];
+        const labelMultiplier = Number(plan?.labelPolicy?.labelLimitMultiplier || 1);
+        const tickerBudget = Number(readability?.budgets?.tickerLabelBudget || 0);
+        const fullBudget = Number(readability?.budgets?.fullLabelBudget || 0);
+        const suppressedEdgeCount = count(readability?.suppressedLinkKeys) || Number(readability?.budgets?.suppressedEstimate || 0);
+        const protectedEdgeCount = count(readability?.protectedLinkKeys) ||
+            Number(readability?.budgets?.protectedLinkCount || 0) ||
+            count(route?.linkKeys) ||
+            (selected ? 1 : 0);
+        return {
+            available: Boolean(plan),
+            activeOverlayLayer: plan?.dominant?.label || visibleLayers[0]?.label || activeLayers[0]?.label || 'None',
+            activeLayerCount: activeLayers.length,
+            visibleLayerCount: visibleLayers.length,
+            suppressedLayerCount: suppressedLayers.length,
+            suppressedLayerLabels: suppressedLayers.map(layer => layer.label).filter(Boolean).slice(0, 4),
+            labelBudgetState: tickerBudget || fullBudget
+                ? `${tickerBudget || 0} ticker / ${fullBudget || 0} full`
+                : `x${labelMultiplier.toFixed(2)}`,
+            labelLimitMultiplier: labelMultiplier,
+            edgeSuppressionState: suppressedEdgeCount
+                ? `${suppressedEdgeCount} edge${suppressedEdgeCount === 1 ? '' : 's'} gated`
+                : 'No edge gating',
+            suppressedEdgeCount,
+            protectedPathState: protectedEdgeCount
+                ? `${protectedEdgeCount} protected`
+                : 'None active',
+            protectedEdgeCount,
+            readabilityGatingStatus: plan?.summary?.readabilityGated
+                ? 'Density gated'
+                : plan ? 'Open'
+                    : 'Unavailable',
+            conflictSuppression: Boolean(plan?.summary?.conflictSuppression),
+            derivedOnly: Boolean(plan?.summary?.derivedOnly ?? true)
+        };
+    }
+
     function collectLayers(context = {}) {
         const model = context.graphIntelligenceModel || {};
         return [
@@ -301,6 +344,12 @@
         };
     }
 
+    function count(value) {
+        if (Array.isArray(value)) return value.length;
+        if (value instanceof Map || value instanceof Set) return value.size;
+        return 0;
+    }
+
     function normalizeDensity(source = {}, nodeCount = 0, edgeCount = 0) {
         const ratio = Number(source.ratio || source.density || edgeCount / Math.max(1, nodeCount)) || 0;
         const key = source.key || (nodeCount > 520 || edgeCount > 1100 || ratio > 4.2
@@ -356,6 +405,7 @@
     window.StockPhotonicGraph.overlayOrchestration = {
         createOverlayOrchestrator,
         getLinkAdjustment,
-        getNodeAdjustment
+        getNodeAdjustment,
+        getReadabilitySummary
     };
 })();

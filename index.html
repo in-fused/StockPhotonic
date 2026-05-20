@@ -423,6 +423,7 @@
                         </div>
                         <div id="graph-mode-hud" class="graph-mode-hud" aria-live="polite">Explore Mode</div>
                         <div id="graph-adaptive-hud" class="graph-adaptive-hud" aria-live="polite"></div>
+                        <div id="graph-os-status-panel" class="graph-os-status-panel" aria-live="polite"></div>
                         <div id="graph-spatial-breadcrumbs" class="graph-spatial-breadcrumbs" aria-live="polite"></div>
                         <div id="graph-timeline-rail" class="graph-timeline-rail" aria-live="polite"></div>
                         <div id="graph-cinematic-story" class="graph-cinematic-story" aria-live="polite"></div>
@@ -440,6 +441,9 @@
                                 </button>
                                 <button id="stock-mobile-fullscreen-toggle" type="button" onclick="toggleGraphFullscreen()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Toggle StockPhotonic fullscreen graph" aria-label="Toggle StockPhotonic fullscreen graph">
                                     <i class="fa-solid fa-expand"></i>
+                                </button>
+                                <button type="button" onclick="openPhotonicCommandPalette()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Open graph commands" aria-label="Open graph commands">
+                                    <i class="fa-solid fa-terminal"></i>
                                 </button>
                                 <button type="button" onclick="stepRouteNode(1)" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Step active route" aria-label="Step active route">
                                     <i class="fa-solid fa-forward-step"></i>
@@ -1359,6 +1363,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/ui/search.js?v=d147-candidate-company-preview"></script>
     <script src="js/ui/controls.js"></script>
     <script src="js/ui/operatingShell.js?v=d151-graph-os"></script>
+    <script src="js/stock/commandPalette.js?v=d179-graph-os-validation"></script>
     <script src="js/crypto/core.js"></script>
     <script src="js/crypto/graph.js"></script>
     <script src="js/crypto/layout.js"></script>
@@ -1684,9 +1689,11 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let graphAnnotationDomKey = '';
         let adaptiveHudDomKey = '';
         let workspaceMemoryDomKey = '';
+        let graphOsStatusDomKey = '';
         let graphTimelineDomKey = '';
         let investigationRailDomKey = '';
         let activeAnalystOverlayKey = '';
+        let activeAnalystPresetKey = '';
         const investigationWorkspace = stockInvestigationContinuity.createSessionWorkspace();
         const graphScalabilityController = graphScalableInfrastructure.createGraphScalabilityController();
         const graphReadabilityController = graphReadability.createReadabilityController();
@@ -1928,6 +1935,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 adaptiveHudDomKey = '';
                 refreshGraphAnnotationModel();
                 renderAdaptiveGraphHud();
+                renderGraphOsStatusPanel();
                 renderGraphEmbeddedAnnotations();
             }
             renderGraphBreadcrumbs();
@@ -5384,6 +5392,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 renderRouteComparisonWorkspace();
                 renderActiveGraphLegend();
                 renderAdaptiveGraphHud();
+                renderGraphOsStatusPanel();
                 renderWorkspaceMemory();
                 renderInvestigationRail();
                 renderGraphTimelineRail();
@@ -5439,6 +5448,268 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 getGraphLinkSpatialMeta,
                 getNodeLayoutPosition
             }));
+        }
+
+        function getStockGraphOsSnapshot() {
+            const semantic = stockSemanticZoomState || {};
+            const workspace = investigationWorkspace.getSummary(getGraphIntelligenceContext());
+            const topologyValidation = graphTopologyEngine.getValidationSummary?.(graphTopologyModel) || {};
+            const overlayReadability = graphOverlayOrchestration.getReadabilitySummary?.(graphOverlayPlan, {
+                readabilityModel: graphReadabilityModel,
+                activeRelationshipRoute,
+                activeRouteComparison,
+                selectedNode,
+                selectedRelationshipLink
+            }) || {};
+            const quality = graphScalabilityModel?.adaptiveQuality || {};
+            const budget = graphScalabilityModel?.viewportEdgeBudget || {};
+            const density = graphScalingModel?.density || graphReadabilityModel?.density || {};
+            const routeState = getGraphRouteStateLabel();
+            const commandContext = getGraphCommandContextLabel(workspace);
+            const topologyFocus = getGraphTopologyFocusLabel(topologyValidation);
+            const renderQualityMode = getGraphRenderQualityLabel(quality);
+            const performanceBudgetTier = density.label || formatGraphOsLabel(density.key || budget.densityKey || 'core');
+
+            return {
+                topologyModelStatus: topologyValidation.topologyStatus || 'Unavailable',
+                overlayPlanStatus: graphOverlayPlan?.version ? 'Ready' : graphOverlayPlan ? 'Derived' : 'Unavailable',
+                activeWorkspace: workspace.workspaceLabel || 'Session',
+                workspace,
+                routeState,
+                topologyFocus,
+                commandContext,
+                renderQualityMode,
+                performanceBudgetTier,
+                topologyValidation,
+                overlayReadability,
+                densityKey: density.key || budget.densityKey || 'core',
+                semanticTier: semantic.tierLabel || formatGraphOsLabel(semantic.tier || 'relationship'),
+                edgeBudget: budget.budget || graphReadabilityModel?.budgets?.edgeBudget || visibleLinks.length,
+                visibleNodeCount: visibleNodes.length,
+                visibleEdgeCount: visibleLinks.length,
+                activePresetKey: activeAnalystPresetKey,
+                commandSignature: [
+                    visibleNodes.length,
+                    visibleLinks.length,
+                    selectedNode?.id || '',
+                    selectedRelationshipLink?.key || '',
+                    activeRelationshipRoute?.id || '',
+                    activeRouteComparison?.id || '',
+                    largeGraphNavigationModel?.mode || '',
+                    activeAnalystOverlayKey || '',
+                    sourceCoverageLensEnabled ? 1 : 0,
+                    workspace.activeWorkspaceId || workspace.workspaceId || '',
+                    workspace.stackDepth || 0,
+                    workspace.pinnedRouteCount || 0,
+                    workspace.replayCheckpointCount || 0,
+                    workspace.snapshotCount || 0
+                ].join('|')
+            };
+        }
+
+        function renderGraphOsStatusPanel() {
+            const panel = document.getElementById('graph-os-status-panel');
+            if (!panel) return;
+            if (!visibleNodes.length) {
+                panel.classList.add('is-empty');
+                panel.innerHTML = '';
+                return;
+            }
+            const snapshot = getStockGraphOsSnapshot();
+            const workspace = snapshot.workspace || {};
+            const validation = snapshot.topologyValidation || {};
+            const overlay = snapshot.overlayReadability || {};
+            const presetDefinitions = getAnalystModePresets();
+            const key = [
+                snapshot.commandSignature,
+                snapshot.topologyModelStatus,
+                snapshot.overlayPlanStatus,
+                snapshot.topologyFocus,
+                snapshot.renderQualityMode,
+                snapshot.performanceBudgetTier,
+                snapshot.edgeBudget,
+                validation.densityZoneCount,
+                validation.concentrationZoneCount,
+                validation.corridorPressureCount,
+                validation.bridgeSaturationCount,
+                validation.ecosystemOverlapCount,
+                validation.routeImportanceSignalCount,
+                validation.semanticSummaryAvailable ? 1 : 0,
+                overlay.activeOverlayLayer,
+                overlay.suppressedLayerCount,
+                overlay.suppressedEdgeCount,
+                overlay.protectedEdgeCount,
+                activeAnalystPresetKey
+            ].join('|');
+            if (key === graphOsStatusDomKey) return;
+            graphOsStatusDomKey = key;
+
+            const topologyCounts = [
+                ['Density', validation.densityZoneCount],
+                ['Concentration', validation.concentrationZoneCount],
+                ['Corridors', validation.corridorPressureCount],
+                ['Bridges', validation.bridgeSaturationCount],
+                ['Overlap', validation.ecosystemOverlapCount],
+                ['Route signals', validation.routeImportanceSignalCount]
+            ];
+            const suppressedLabel = overlay.suppressedLayerLabels?.length
+                ? overlay.suppressedLayerLabels.join(', ')
+                : 'None';
+            const pinCount = (workspace.pinnedRouteCount || 0) + (workspace.pinnedCorridorCount || 0) + (workspace.pinnedHubCount || 0);
+
+            panel.innerHTML = `
+                <div class="graph-os-status-head">
+                    <span><i class="fa-solid fa-network-wired"></i> Graph OS</span>
+                    <strong>${escapeHtml(snapshot.performanceBudgetTier)}</strong>
+                </div>
+                <div class="graph-os-status-grid">
+                    ${renderGraphOsMetric('Topology', snapshot.topologyModelStatus)}
+                    ${renderGraphOsMetric('Overlay', snapshot.overlayPlanStatus)}
+                    ${renderGraphOsMetric('Workspace', snapshot.activeWorkspace)}
+                    ${renderGraphOsMetric('Route', snapshot.routeState)}
+                    ${renderGraphOsMetric('Focus', snapshot.topologyFocus)}
+                    ${renderGraphOsMetric('Command', snapshot.commandContext)}
+                    ${renderGraphOsMetric('Quality', snapshot.renderQualityMode)}
+                    ${renderGraphOsMetric('Budget', `${snapshot.edgeBudget}/${snapshot.visibleEdgeCount}`)}
+                </div>
+                <div class="graph-os-summary-section">
+                    <div class="graph-os-summary-title">Topology Validation <small>${escapeHtml(validation.semanticSummaryLabel || 'Fallback')}</small></div>
+                    <div class="graph-os-count-strip">
+                        ${topologyCounts.map(([label, value]) => `
+                            <span title="${escapeHtml(`${label} count from the current topology model`)}"><strong>${escapeHtml(String(value ?? 0))}</strong><small>${escapeHtml(label)}</small></span>
+                        `).join('')}
+                    </div>
+                    <p>${escapeHtml(validation.safeFallbackText || 'Topology summary is unavailable for the current graph state.')}</p>
+                </div>
+                <div class="graph-os-summary-section">
+                    <div class="graph-os-summary-title">Overlay / Readability <small>${escapeHtml(overlay.readabilityGatingStatus || 'Unavailable')}</small></div>
+                    <div class="graph-os-readability-grid">
+                        ${renderGraphOsMetric('Active layer', overlay.activeOverlayLayer || 'None')}
+                        ${renderGraphOsMetric('Suppressed', suppressedLabel)}
+                        ${renderGraphOsMetric('Labels', overlay.labelBudgetState || 'Unavailable')}
+                        ${renderGraphOsMetric('Edges', overlay.edgeSuppressionState || 'Unavailable')}
+                        ${renderGraphOsMetric('Protected', overlay.protectedPathState || 'None')}
+                        ${renderGraphOsMetric('Pins', `${pinCount} pins / ${workspace.snapshotCount || 0} snaps`)}
+                    </div>
+                </div>
+                <div class="graph-os-presets" aria-label="Analyst mode presets">
+                    ${presetDefinitions.map(preset => `
+                        <button type="button"
+                            class="${preset.key === activeAnalystPresetKey ? 'is-active' : ''}"
+                            onclick="applyGraphAnalystPreset('${escapeInlineJsString(preset.key)}')"
+                            title="${escapeHtml(preset.copy)}">
+                            <i class="fa-solid ${escapeHtml(preset.icon)}"></i>
+                            <span>${escapeHtml(preset.label)}</span>
+                            <small>${escapeHtml(preset.copy)}</small>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            panel.classList.remove('is-empty');
+        }
+
+        function renderGraphOsMetric(label, value) {
+            return `<span><small>${escapeHtml(label)}</small><strong>${escapeHtml(String(value || 'None'))}</strong></span>`;
+        }
+
+        function getGraphRouteStateLabel() {
+            if (activeRouteComparison) {
+                const routeCount = activeRouteComparison.routeCount || activeRouteComparison.routes?.length || 0;
+                const sharedCount = activeRouteComparison.sharedLinkKeys?.size || 0;
+                return `Comparison ${routeCount}/${sharedCount}`;
+            }
+            if (activeRelationshipRoute) {
+                return `${activeRelationshipRoute.shortLabel || activeRelationshipRoute.label || 'Route'} ${activeRelationshipRoute.linkKeys?.size || 0}`;
+            }
+            return 'No route';
+        }
+
+        function getGraphCommandContextLabel(workspace = {}) {
+            if (activeRouteComparison) return 'Route comparison';
+            if (activeRelationshipRoute) return 'Route trace';
+            if (selectedRelationshipLink) return 'Relationship';
+            if (selectedNode) return selectedNode.ticker || selectedNode.name || 'Selection';
+            if (activeAnalystOverlayKey) return 'Analyst layer';
+            if (sourceCoverageLensEnabled) return 'Evidence lens';
+            if (largeGraphNavigationModel?.isActive) return largeGraphNavigationModel.modeShortLabel || 'Navigation';
+            if ((workspace.stackDepth || 0) > 0) return 'Workspace';
+            return `${formatGraphOsLabel(getStockUxMode())} graph`;
+        }
+
+        function getGraphTopologyFocusLabel(validation = {}) {
+            if (graphStoryMode === 'topology') return validation.semanticHeadline || 'Topology';
+            if (largeGraphNavigationModel?.isActive) return largeGraphNavigationModel.focusLabel || largeGraphNavigationModel.modeShortLabel || 'Navigation';
+            if (activeRouteComparison || activeRelationshipRoute) return 'Route topology';
+            return validation.semanticHeadline || 'Visible graph';
+        }
+
+        function getGraphRenderQualityLabel(quality = {}) {
+            const score = Number(quality.quality || 1);
+            const mode = score <= 0.64 ? 'Safe' : score <= 0.84 ? 'Balanced' : 'Full';
+            return `${mode} ${Math.round(score * 100)}%`;
+        }
+
+        function formatGraphOsLabel(value) {
+            return String(value || 'Graph')
+                .replace(/[_:|-]+/g, ' ')
+                .replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        function getAnalystModePresets() {
+            return [
+                { key: 'exploration', label: 'Explore', icon: 'fa-compass', copy: 'Overview, balanced labels' },
+                { key: 'topology', label: 'Topology', icon: 'fa-draw-polygon', copy: 'Topology card and hubs' },
+                { key: 'route', label: 'Route', icon: 'fa-route', copy: 'Compare or fit routes' },
+                { key: 'evidence', label: 'Evidence', icon: 'fa-shield-halved', copy: 'Source lens and review mode' },
+                { key: 'performance', label: 'Performance', icon: 'fa-gauge-high', copy: 'Lean overlays, core controls' }
+            ];
+        }
+
+        function applyGraphAnalystPreset(key) {
+            const preset = getAnalystModePresets().find(item => item.key === key);
+            if (!preset) return null;
+            activeAnalystPresetKey = preset.key;
+            if (preset.key === 'exploration') {
+                window.setStockUxMode?.('explore');
+                window.setPhotonicControlLayer?.('primary');
+                activeGuidedDiscoveryKey = '';
+                activeAnalystOverlayKey = '';
+                activeEcosystemOverlayKey = '';
+                sourceCoverageLensEnabled = false;
+                graphStoryMode = selectedNode ? 'overview' : '';
+                setLargeGraphMode('overview');
+            } else if (preset.key === 'topology') {
+                window.setStockUxMode?.('analyst');
+                window.setPhotonicControlLayer?.('secondary');
+                largeGraphMode = largeGraphMode === 'overview' ? 'strategic_hubs' : largeGraphMode;
+                showTopologySummary();
+                applyLargeGraphNavigationChange({ fit: false });
+            } else if (preset.key === 'route') {
+                window.setStockUxMode?.('analyst');
+                window.setPhotonicControlLayer?.('secondary');
+                if (activeRouteComparison) fitRouteComparison();
+                else if (activeRelationshipRoute) fitGraphToNodes(activeRelationshipRoute.nodes || [], true, 150);
+                else compareStrongestRoute();
+            } else if (preset.key === 'evidence') {
+                window.setStockUxMode?.('review');
+                window.setPhotonicControlLayer?.('advanced');
+                sourceCoverageLensEnabled = true;
+                setAnalystOverlay('source_confidence', { force: true });
+            } else if (preset.key === 'performance') {
+                window.setStockUxMode?.('explore');
+                window.setPhotonicControlLayer?.('primary');
+                activeGuidedDiscoveryKey = '';
+                activeAnalystOverlayKey = '';
+                activeEcosystemOverlayKey = '';
+                sourceCoverageLensEnabled = false;
+                graphStoryMode = '';
+                setLargeGraphMode('overview');
+            }
+            graphOsStatusDomKey = '';
+            refreshGraphIntelligenceModel();
+            renderGraphOsStatusPanel();
+            requestDraw();
+            return preset;
         }
 
         function refreshGraphAnnotationModel() {
@@ -5505,6 +5776,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
             `;
             hud.classList.toggle('is-empty', !visibleNodes.length);
+            renderGraphOsStatusPanel();
         }
 
         function renderWorkspaceMemory() {
@@ -5533,13 +5805,22 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             workspaceMemoryDomKey = key;
 
             if (!totalPins && !summary.stackDepth && workspaceTabs.length <= 1) {
-                panel.classList.add('hidden');
-                panel.innerHTML = '';
+                panel.classList.remove('hidden');
+                panel.innerHTML = `
+                    <div class="graph-workspace-memory-head">
+                        <span><i class="fa-solid fa-diagram-project"></i> ${escapeHtml(summary.workspaceLabel || 'Session')} Workspace</span>
+                        <strong>0</strong>
+                        <button type="button" onclick="createAnalystWorkspace()" title="Create a session-only analyst workspace" aria-label="Create analyst workspace"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <div class="graph-workspace-session-note">Session-only graph memory. Routes, replay checkpoints, snapshots, and pins clear on reload.</div>
+                `;
+                renderGraphOsStatusPanel();
                 return;
             }
 
             panel.innerHTML = `
                 <div class="graph-workspace-tabs" role="tablist" aria-label="Analyst graph workspaces">
+                    <button type="button" onclick="cycleAnalystWorkspace(-1)" title="Previous session-only workspace" aria-label="Previous analyst workspace"><i class="fa-solid fa-chevron-left"></i></button>
                     ${workspaceTabs.slice(0, 5).map(item => `
                         <button type="button"
                             role="tab"
@@ -5548,9 +5829,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                             onclick="switchAnalystWorkspace('${escapeInlineJsString(item.id)}')"
                             title="${escapeHtml(`${item.label}${item.latestLabel ? ` / ${item.latestLabel}` : ''}`)}">
                             <span>${escapeHtml(item.shortLabel || item.label)}</span>
-                            <small>${escapeHtml(String(item.stackDepth || item.snapshotCount || item.stagingDepth || 0))}</small>
+                            <small>${escapeHtml(String(item.routeStackDepth + item.replayStackDepth + item.snapshotCount || item.stagingDepth || 0))}</small>
                         </button>
                     `).join('')}
+                    <button type="button" onclick="cycleAnalystWorkspace(1)" title="Next session-only workspace" aria-label="Next analyst workspace"><i class="fa-solid fa-chevron-right"></i></button>
                     <button type="button" onclick="createAnalystWorkspace()" title="Create a session-only analyst workspace" aria-label="Create analyst workspace"><i class="fa-solid fa-plus"></i></button>
                 </div>
                 <div class="graph-workspace-memory-head">
@@ -5558,6 +5840,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <strong>${escapeHtml(String(summary.stackDepth))}</strong>
                     <button type="button" onclick="clearInvestigationWorkspace()" title="Clear session workspace memory" aria-label="Clear session workspace memory"><i class="fa-solid fa-eraser"></i></button>
                 </div>
+                <div class="graph-workspace-counts" aria-label="Session-only workspace staged counts">
+                    <span><strong>${escapeHtml(String(summary.pinnedRouteCount + summary.routeCollectionCount))}</strong><small>routes</small></span>
+                    <span><strong>${escapeHtml(String(summary.replayCheckpointCount))}</strong><small>replays</small></span>
+                    <span><strong>${escapeHtml(String(summary.snapshotCount || 0))}</strong><small>snapshots</small></span>
+                    <span><strong>${escapeHtml(String(summary.pinnedRouteCount + summary.pinnedCorridorCount + summary.pinnedHubCount))}</strong><small>pins</small></span>
+                </div>
+                <div class="graph-workspace-session-note">Session-only. Nothing here is persisted, authenticated, or written to production data.</div>
                 <div class="graph-workspace-memory-items">
                     ${items.map(item => `
                         <button type="button" onclick="restoreInvestigationWorkspaceItem('${escapeInlineJsString(item.list)}', ${item.index})" title="${escapeHtml(item.label)}">
@@ -5568,6 +5857,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
             `;
             panel.classList.remove('hidden');
+            renderGraphOsStatusPanel();
         }
 
         function renderInvestigationRail() {

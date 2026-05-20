@@ -136,6 +136,49 @@
         return model.linkVisuals?.get(link.key) || null;
     }
 
+    function getValidationSummary(model = null) {
+        if (!model) {
+            return {
+                available: false,
+                topologyStatus: 'Unavailable',
+                densityZoneCount: 0,
+                concentrationZoneCount: 0,
+                corridorPressureCount: 0,
+                bridgeSaturationCount: 0,
+                ecosystemOverlapCount: 0,
+                routeImportanceSignalCount: 0,
+                semanticSummaryAvailable: false,
+                semanticSummaryLabel: 'Unavailable',
+                safeFallbackText: 'Topology validation summary will appear after the visible graph model is derived.',
+                deterministic: true,
+                metadataDerivedOnly: true
+            };
+        }
+        const ecosystemNodes = Array.isArray(model.ecosystemOverlap?.nodes) ? model.ecosystemOverlap.nodes.length : 0;
+        const ecosystemLinks = Array.isArray(model.ecosystemOverlap?.links) ? model.ecosystemOverlap.links.length : 0;
+        const semanticAvailable = Boolean(model.semanticSummary?.headline || model.semanticSummary?.sentence);
+        return {
+            available: true,
+            topologyStatus: model.version ? 'Ready' : 'Derived',
+            densityZoneCount: count(model.densityZones),
+            concentrationZoneCount: count(model.concentrationZones),
+            corridorPressureCount: count(model.corridorPressures),
+            bridgeSaturationCount: count(model.bridgeSaturation),
+            ecosystemOverlapCount: ecosystemNodes + ecosystemLinks,
+            ecosystemOverlapNodeCount: ecosystemNodes,
+            ecosystemOverlapLinkCount: ecosystemLinks,
+            routeImportanceSignalCount: count(model.routeImportance?.links),
+            semanticSummaryAvailable: semanticAvailable,
+            semanticSummaryLabel: semanticAvailable ? 'Available' : 'Fallback only',
+            semanticHeadline: model.semanticSummary?.headline || '',
+            safeFallbackText: semanticAvailable
+                ? model.semanticSummary.sentence || model.semanticSummary.headline
+                : 'No semantic topology sentence is available for the current model.',
+            deterministic: Boolean(model.semanticSummary?.deterministic ?? true),
+            metadataDerivedOnly: Boolean(model.semanticSummary?.metadataDerivedOnly ?? true)
+        };
+    }
+
     function buildNodeMetrics(nodes, links, context) {
         const metrics = new Map();
         nodes.forEach(node => {
@@ -608,6 +651,12 @@
         map.set(key, (map.get(key) || 0) + 1);
     }
 
+    function count(value) {
+        if (Array.isArray(value)) return value.length;
+        if (value instanceof Map || value instanceof Set) return value.size;
+        return 0;
+    }
+
     function toRgba(context, color, alpha) {
         if (typeof context.hexToRgba === 'function' && /^#/.test(color || '')) return context.hexToRgba(color, alpha);
         return `rgba(34, 211, 238, ${alpha})`;
@@ -631,6 +680,7 @@
         createTopologyController,
         drawTopologyField,
         getNodeTopologyVisual,
-        getLinkTopologyVisual
+        getLinkTopologyVisual,
+        getValidationSummary
     };
 })();

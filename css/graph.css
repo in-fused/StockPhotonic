@@ -2235,3 +2235,222 @@ body.graph-fullscreen-active > header {
                 opacity: 0.36;
             }
         }
+
+/* D179-D188 graph OS validation, workspace clarity, and graph-native command grouping. */
+.graph-os-status-panel {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 21;
+            width: min(20.5rem, calc(100% - 2rem));
+            max-height: min(44%, 19rem);
+            overflow-y: auto;
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.72);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32), 0 0 22px rgba(34, 211, 238, 0.07);
+            backdrop-filter: blur(15px);
+            color: rgba(226, 232, 240, 0.78);
+            padding: 0.54rem;
+            pointer-events: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(125, 211, 252, 0.32) rgba(255, 255, 255, 0.04);
+        }
+
+.graph-os-status-panel.is-empty {
+            display: none;
+        }
+
+.graph-os-status-head,
+.graph-os-summary-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            color: rgba(207, 250, 254, 0.84);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+.graph-os-status-head span {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.34rem;
+            min-width: 0;
+        }
+
+.graph-os-status-head strong,
+.graph-os-summary-title small {
+            flex: 0 0 auto;
+            border: 1px solid rgba(52, 211, 153, 0.18);
+            border-radius: 999px;
+            background: rgba(6, 78, 59, 0.18);
+            color: rgba(187, 247, 208, 0.82);
+            padding: 0.24rem 0.38rem;
+            font-size: 0.52rem;
+            font-weight: 700;
+        }
+
+.graph-os-status-grid,
+.graph-os-readability-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.32rem;
+            margin-top: 0.46rem;
+        }
+
+.graph-os-status-grid span,
+.graph-os-readability-grid span,
+.graph-os-count-strip span,
+.graph-workspace-counts span {
+            min-width: 0;
+            border: 1px solid rgba(148, 163, 184, 0.13);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.46);
+            padding: 0.36rem 0.42rem;
+        }
+
+.graph-os-status-grid small,
+.graph-os-readability-grid small,
+.graph-os-count-strip small,
+.graph-workspace-counts small {
+            display: block;
+            color: rgba(148, 163, 184, 0.78);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.5rem;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+.graph-os-status-grid strong,
+.graph-os-readability-grid strong,
+.graph-os-count-strip strong,
+.graph-workspace-counts strong {
+            display: block;
+            margin-top: 0.16rem;
+            color: rgba(248, 250, 252, 0.92);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            line-height: 1.15;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-os-summary-section {
+            margin-top: 0.48rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            padding-top: 0.48rem;
+        }
+
+.graph-os-summary-section p,
+.graph-workspace-session-note {
+            margin-top: 0.34rem;
+            color: rgba(203, 213, 225, 0.58);
+            font-size: 0.62rem;
+            line-height: 1.35;
+        }
+
+.graph-os-count-strip,
+.graph-workspace-counts {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.3rem;
+            margin-top: 0.42rem;
+        }
+
+.graph-os-presets {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.28rem;
+            margin-top: 0.5rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            padding-top: 0.48rem;
+        }
+
+.graph-os-presets button {
+            display: grid;
+            justify-items: center;
+            gap: 0.16rem;
+            min-width: 0;
+            min-height: 3.2rem;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.48);
+            color: rgba(226, 232, 240, 0.76);
+            padding: 0.32rem 0.24rem;
+            text-align: center;
+        }
+
+.graph-os-presets button:hover,
+.graph-os-presets button:focus-visible,
+.graph-os-presets button.is-active {
+            border-color: rgba(34, 211, 238, 0.36);
+            background: rgba(8, 145, 178, 0.16);
+            color: #ffffff;
+            outline: none;
+        }
+
+.graph-os-presets button span,
+.graph-os-presets button small {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-os-presets button span {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.5rem;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+.graph-os-presets button small {
+            color: rgba(203, 213, 225, 0.54);
+            font-size: 0.48rem;
+            line-height: 1;
+        }
+
+#graph-os-status-panel:not(.is-empty) ~ .graph-active-legend {
+            top: clamp(17rem, 48%, 25rem);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-os-status-panel {
+            top: 1rem;
+            right: 1rem;
+            width: min(20rem, calc(100vw - 2rem));
+            max-height: min(42dvh, 19rem);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen #graph-os-status-panel:not(.is-empty) ~ .graph-active-legend {
+            top: min(62dvh, 33rem);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-hud-hidden .graph-os-status-panel {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+        }
+
+.graph-workspace-counts {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-top: 0.38rem;
+        }
+
+.graph-workspace-session-note {
+            margin-top: 0.36rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.54rem;
+        }
+
+.photonic-command-section-label {
+            margin: 0.42rem 0 0.18rem;
+            color: rgba(125, 211, 252, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            letter-spacing: 0;
+            text-transform: uppercase;
+        }

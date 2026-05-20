@@ -18,25 +18,14 @@
 
     function createSessionWorkspace(options = {}) {
         const now = typeof options.now === 'function' ? options.now : () => Date.now();
-        const state = {
-            breadcrumbs: [],
-            stack: [],
-            pinnedRoutes: [],
-            pinnedCorridors: [],
-            pinnedHubs: [],
-            replayCheckpoints: [],
-            routeCollections: [],
-            investigationQueue: [],
-            taskStack: [],
-            jumpHistory: [],
-            snapshots: [],
-            chronology: [],
-            activeWorkspaceId: 'session'
-        };
+        const workspaces = new Map();
+        let state = createWorkspaceState('session', 'Session', now());
+        workspaces.set(state.id, state);
 
         function remember(kind, payload = {}, meta = {}) {
             const entry = normalizeEntry(kind, payload, meta, now());
             if (!entry) return null;
+            state.updatedAt = entry.createdAt || now();
             pushUnique(state.stack, entry, LIMITS.stack);
             pushUnique(state.jumpHistory, entry, LIMITS.history);
             pushTimeline(entry);
@@ -48,6 +37,7 @@
             const routeLike = normalizeRoute(route, meta);
             if (!routeLike) return null;
             pushUnique(state.pinnedRoutes, routeLike, LIMITS.routes);
+            pushUnique(state.routeWorkspaceStack, routeLike, LIMITS.stack);
             remember('route-pin', routeLike, { label: routeLike.label });
             return routeLike;
         }
@@ -72,6 +62,7 @@
             const item = normalizeCheckpoint(checkpoint, meta, now());
             if (!item) return null;
             pushUnique(state.replayCheckpoints, item, LIMITS.checkpoints);
+            pushUnique(state.replayWorkspaceStack, item, LIMITS.stack);
             remember('replay-checkpoint', item, { label: item.label });
             return item;
         }
@@ -96,6 +87,7 @@
             const item = normalizeWorkflowItem('queued-investigation', target, meta, now());
             if (!item) return null;
             pushUnique(state.investigationQueue, item, LIMITS.queue);
+            pushUnique(state.stagingArea, item, LIMITS.queue);
             pushTask({
                 id: `task:${item.id}`,
                 kind: item.kind,
@@ -131,6 +123,7 @@
             const item = normalizeSnapshot(snapshot, meta, now());
             if (!item) return null;
             pushUnique(state.snapshots, item, LIMITS.snapshots);
+            pushUnique(state.stagingArea, item, LIMITS.queue);
             remember('snapshot', item, { label: item.label });
             return item;
         }
@@ -148,6 +141,9 @@
             state.jumpHistory = [];
             state.snapshots = [];
             state.chronology = [];
+            state.routeWorkspaceStack = [];
+            state.replayWorkspaceStack = [];
+            state.stagingArea = [];
         }
 
         function remove(kind, id) {
@@ -184,6 +180,12 @@
 
             return {
                 activeWorkspaceId: state.activeWorkspaceId,
+                workspaceId: state.id,
+                workspaceLabel: state.label,
+                workspacePriority: state.priority,
+                workspaceCreatedAt: state.createdAt,
+                workspaceUpdatedAt: state.updatedAt,
+                workspaces: getWorkspaceSummaries(),
                 active,
                 stackDepth: state.stack.length,
                 breadcrumbCount: state.breadcrumbs.length,
@@ -199,6 +201,9 @@
                 breadcrumbs: state.breadcrumbs.slice(0, LIMITS.breadcrumbs),
                 jumpHistory: state.jumpHistory.slice(0, LIMITS.history),
                 chronology: state.chronology.slice(0, LIMITS.timeline),
+                routeWorkspaceStack: state.routeWorkspaceStack.slice(0, LIMITS.stack),
+                replayWorkspaceStack: state.replayWorkspaceStack.slice(0, LIMITS.stack),
+                stagingArea: state.stagingArea.slice(0, LIMITS.queue),
                 pinnedRoutes: state.pinnedRoutes.slice(0, LIMITS.routes),
                 pinnedCorridors: state.pinnedCorridors.slice(0, LIMITS.corridors),
                 pinnedHubs: state.pinnedHubs.slice(0, LIMITS.hubs),
@@ -212,8 +217,87 @@
             };
         }
 
+        function createWorkspace(label = 'Workspace', seed = {}, meta = {}) {
+            const id = meta.id || `workspace:${signature(label)}:${now()}`;
+            const workspace = createWorkspaceState(id, label, now(), {
+                priority: Number(meta.priority) || 0
+            });
+            workspaces.set(workspace.id, workspace);
+            state = workspace;
+            state.activeWorkspaceId = workspace.id;
+            if (seed && Object.keys(seed).length) {
+                captureSnapshot(seed, { label: seed.label || label });
+            }
+            remember('workspace-create', { id: workspace.id, label: workspace.label }, { label: workspace.label });
+            return getWorkspaceSummary(workspace);
+        }
+
+        function switchWorkspace(id) {
+            const key = String(id || '');
+            const next = workspaces.get(key);
+            if (!next) return null;
+            state = next;
+            state.activeWorkspaceId = state.id;
+            state.updatedAt = now();
+            remember('workspace-switch', { id: state.id, label: state.label }, { label: state.label });
+            return getWorkspaceSummary(state);
+        }
+
+        function cycleWorkspace(direction = 1) {
+            const list = getWorkspaceSummaries();
+            if (!list.length) return null;
+            const currentIndex = Math.max(0, list.findIndex(item => item.id === state.id));
+            const delta = direction < 0 ? -1 : 1;
+            const nextIndex = (currentIndex + delta + list.length) % list.length;
+            return switchWorkspace(list[nextIndex].id);
+        }
+
+        function prioritizeWorkspace(id = state.id, priority = 1) {
+            const workspace = workspaces.get(String(id || ''));
+            if (!workspace) return null;
+            workspace.priority = Number(priority) || 0;
+            workspace.updatedAt = now();
+            return getWorkspaceSummary(workspace);
+        }
+
+        function getActiveWorkspaceSnapshot() {
+            return {
+                id: state.id,
+                label: state.label,
+                priority: state.priority,
+                latestSnapshot: state.snapshots[0] || null,
+                latestStackItem: state.stack[0] || null,
+                routeStackDepth: state.routeWorkspaceStack.length,
+                replayStackDepth: state.replayWorkspaceStack.length,
+                stagingDepth: state.stagingArea.length
+            };
+        }
+
+        function getWorkspaceSummaries() {
+            return [...workspaces.values()]
+                .map(getWorkspaceSummary)
+                .sort((a, b) => Number(b.active) - Number(a.active) || b.priority - a.priority || b.updatedAt - a.updatedAt || a.label.localeCompare(b.label));
+        }
+
+        function getWorkspaceSummary(workspace) {
+            return {
+                id: workspace.id,
+                label: workspace.label,
+                shortLabel: workspace.shortLabel,
+                active: workspace.id === state.id,
+                priority: Number(workspace.priority) || 0,
+                stackDepth: workspace.stack.length,
+                routeStackDepth: workspace.routeWorkspaceStack.length,
+                replayStackDepth: workspace.replayWorkspaceStack.length,
+                stagingDepth: workspace.stagingArea.length,
+                snapshotCount: workspace.snapshots.length,
+                updatedAt: workspace.updatedAt || workspace.createdAt,
+                latestLabel: workspace.stack[0]?.shortLabel || workspace.snapshots[0]?.shortLabel || ''
+            };
+        }
+
         return {
-            state,
+            get state() { return state; },
             remember,
             pinRoute,
             pinCorridor,
@@ -224,9 +308,42 @@
             activateQueueItem,
             pushTask,
             captureSnapshot,
+            createWorkspace,
+            switchWorkspace,
+            cycleWorkspace,
+            prioritizeWorkspace,
+            getActiveWorkspaceSnapshot,
+            getWorkspaceSummaries,
             remove,
             clear,
             getSummary
+        };
+    }
+
+    function createWorkspaceState(id, label, createdAt = Date.now(), options = {}) {
+        return {
+            id: String(id || 'session'),
+            label: String(label || 'Session'),
+            shortLabel: String(label || 'Session').slice(0, 18),
+            priority: Number(options.priority) || 0,
+            breadcrumbs: [],
+            stack: [],
+            pinnedRoutes: [],
+            pinnedCorridors: [],
+            pinnedHubs: [],
+            replayCheckpoints: [],
+            routeCollections: [],
+            investigationQueue: [],
+            taskStack: [],
+            jumpHistory: [],
+            snapshots: [],
+            chronology: [],
+            routeWorkspaceStack: [],
+            replayWorkspaceStack: [],
+            stagingArea: [],
+            activeWorkspaceId: String(id || 'session'),
+            createdAt,
+            updatedAt: createdAt
         };
     }
 

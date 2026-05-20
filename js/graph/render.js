@@ -49,8 +49,21 @@
         const readability = getReadabilityState(context, density, semantic);
         context.onReadabilityState?.(readability);
         context.onSemanticZoomState?.(semantic);
+        const topologyChoreography = getCinematicSystem(context)?.getTopologyChoreography?.(context, context.graphTopologyModel, {
+            now,
+            timestamp,
+            density,
+            semantic
+        }) || null;
         drawBackground(context, ctx);
         getReadabilitySystem(context)?.drawSemanticFog?.(context, ctx, readability);
+        getTopologySystem(context)?.drawTopologyField?.(context, ctx, context.graphTopologyModel, {
+            now,
+            timestamp,
+            density,
+            semantic,
+            choreography: topologyChoreography
+        });
         updateScreenCache(context, orbitFrame);
         const cinematicFrame = getCinematicSystem(context)?.prepareStockFrame?.(context, {
             now,
@@ -224,7 +237,10 @@
         const semantic = getSemanticState(context, density);
         const semanticEdge = getSemanticEdgeDisposition(context, link, semantic, intelligenceVisual);
         const readabilityEdge = getReadabilityEdgeAdjustment(context, link, intelligenceVisual, semantic);
+        const topologyEdge = getTopologyLinkVisual(context, link);
+        const overlayEdge = getOverlayLinkAdjustment(context, link, intelligenceVisual);
         if (!semanticEdge.draw || !readabilityEdge.draw) return;
+        if (!overlayEdge.draw) return;
         let color = intelligenceVisual.color || relationshipVisual.color || context.EDGE_COLORS[link.relationship_type] || context.EDGE_COLORS[link.type] || context.DEFAULT_EDGE_COLOR;
         const isFocused = context.selectedNode && context.focusLinkKeys.has(link.key);
         const isHoveredLink = context.hoveredNode && (context.hoveredNode.id === link.source.id || context.hoveredNode.id === link.target.id);
@@ -269,6 +285,12 @@
             width = Math.max(0.2, width * 0.72);
         }
 
+        if (topologyEdge?.emphasized && !intelligenceVisual.route && !intelligenceVisual.selected && !intelligenceVisual.routeComparison?.active) {
+            color = intelligenceVisual.color || topologyEdge.color || color;
+            alpha = Math.max(alpha, topologyEdge.alphaFloor || 0.24);
+            width = Math.max(width + (topologyEdge.widthBoost || 0), 0.76 + strength * 0.78);
+        }
+
         if (intelligenceVisual.sourceCoverage && !intelligenceVisual.route && !intelligenceVisual.selected) {
             alpha = Math.max(alpha, 0.28 + strength * 0.18 + (intelligenceVisual.alphaBoost || 0));
             width = Math.max(width + (intelligenceVisual.widthBoost || 0), 0.8 + strength * 0.75);
@@ -289,7 +311,7 @@
             width = Math.max(0.18, width + (relationshipVisual.widthBoost || 0));
         }
 
-        const densityProtected = Boolean(isFocused || isHoveredLink || isPortfolioLink || touchesIndustryGroup || intelligenceVisual.forceDraw || semanticEdge.protectedEdge || readabilityEdge.protectedEdge);
+        const densityProtected = Boolean(isFocused || isHoveredLink || isPortfolioLink || touchesIndustryGroup || intelligenceVisual.forceDraw || topologyEdge?.protected || semanticEdge.protectedEdge || readabilityEdge.protectedEdge);
         if (semanticEdge.corridor && !hasFocus && !isHoveredLink && !isPortfolioLink) {
             alpha = Math.max(alpha, semantic.tierRank <= 1 ? 0.34 + strength * 0.2 : 0.28 + strength * 0.18);
             width = Math.max(width, semantic.tierRank <= 1 ? 0.95 + strength * 0.95 : 0.8 + strength * 0.8);
@@ -301,6 +323,10 @@
         if (!densityProtected && !readabilityEdge.protectedEdge) {
             alpha *= readabilityEdge.alphaMultiplier;
             width = Math.max(0.12, width * readabilityEdge.widthMultiplier);
+        }
+        if (!densityProtected) {
+            alpha *= overlayEdge.alphaMultiplier || 1;
+            width = Math.max(0.12, width * (overlayEdge.widthMultiplier || 1));
         }
         if (density.dense && !densityProtected) {
             alpha *= density.veryDense ? 0.58 : 0.72;
@@ -314,6 +340,8 @@
             ? 34
             : isPortfolioLink ? 28 : isFocused ? 24 : isHoveredLink ? 22 : intelligenceVisual.guided ? 24 : intelligenceVisual.overlay ? 22 : isStrongSignal ? 16 : 3 + strength * 5) * semanticEdge.shadowMultiplier;
         ctx.shadowBlur *= readabilityEdge.shadowMultiplier || 1;
+        ctx.shadowBlur *= overlayEdge.shadowMultiplier || 1;
+        ctx.shadowBlur *= topologyEdge?.shadowMultiplier || 1;
         ctx.shadowColor = isPortfolioLink ? '#ffd700' : color;
         ctx.setLineDash(Array.isArray(intelligenceVisual.dashPattern)
             ? intelligenceVisual.dashPattern
@@ -453,9 +481,13 @@
         const perspectiveShade = getPerspectiveShade(context, node);
         const intelligenceVisual = context.getGraphNodeIntelligenceVisual?.(node) || {};
         const readabilityNode = getReadabilityNodeAdjustment(context, node);
+        const topologyNode = getTopologyNodeVisual(context, node);
+        const overlayNode = getOverlayNodeAdjustment(context, node, intelligenceVisual);
         let alpha = (industryDimmed ? 0.16 : focusDimmed ? 0.18 : isPortfolioTopNexus ? 0.96 : isPortfolioRepeatedExposure ? 0.92 : isPortfolioAdjacent ? 0.84 : isCorrelationHintNode ? 0.78 : 1) * perspectiveShade;
         if (intelligenceVisual.emphasized && !industryDimmed) alpha = Math.max(alpha, intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint ? 0.98 : 0.82);
+        if (topologyNode?.emphasized && !industryDimmed && !focusDimmed) alpha = Math.max(alpha, topologyNode.alphaFloor || 0.72);
         alpha *= readabilityNode.alphaMultiplier || 1;
+        alpha *= overlayNode.alphaMultiplier || 1;
         const color = node.color || '#00f9ff';
         const portfolioHaloColor = isPortfolioHolding
             ? '#ffd700'
@@ -467,11 +499,15 @@
                         ? '#a5f3fc'
                         : intelligenceVisual.emphasized
                             ? intelligenceVisual.color || color
+                            : topologyNode?.emphasized
+                                ? topologyNode.color || color
                             : color;
 
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.shadowBlur = (isSelected ? 34 : isPortfolioHolding ? 38 : isSearchHighlighted ? 42 : intelligenceVisual.route || intelligenceVisual.selectedEdgeEndpoint ? 36 : intelligenceVisual.guided ? 28 : isHovered ? 22 : isPortfolioTopNexus ? 32 : intelligenceVisual.overlay || intelligenceVisual.analystOverlay ? 24 : intelligenceVisual.defaultDiscovery ? 18 : isPortfolioRepeatedExposure ? 24 : isPortfolioAdjacent ? 18 : isClusterNode ? 18 : isCorrelationHintNode ? 16 : 12) * (readabilityNode.glowMultiplier || 1);
+        ctx.shadowBlur *= overlayNode.glowMultiplier || 1;
+        ctx.shadowBlur *= topologyNode?.glowMultiplier || 1;
         ctx.shadowColor = isSelected ? '#ffffff' : portfolioHaloColor;
 
         const glow = ctx.createRadialGradient(point.x, point.y, 1, point.x, point.y, radius * 4.3);
@@ -556,6 +592,12 @@
         }
 
         drawNodeIntelligenceCue(context, ctx, point, radius, intelligenceVisual, {
+            industryDimmed,
+            focusDimmed,
+            isSelected,
+            isHovered
+        });
+        drawTopologyNodeCue(context, ctx, point, radius, topologyNode, {
             industryDimmed,
             focusDimmed,
             isSelected,
@@ -690,8 +732,10 @@
         const density = getDensityProfile(context);
         const semantic = getSemanticState(context, density);
         const heuristics = context.graphScalingModel?.renderHeuristics || {};
+        const overlayLabelMultiplier = context.graphOverlayPlan?.labelPolicy?.labelLimitMultiplier || 1;
         const fullLimit = Number(heuristics.labelLimitFull);
         const tickerLimit = Number(heuristics.labelLimitTicker);
+        const applyOverlayBudget = limit => Math.max(4, Math.round(limit * overlayLabelMultiplier));
         let baseLimit = 0;
         if (labelMode === 'full') {
             if (Number.isFinite(fullLimit) && !context.selectedNode) baseLimit = fullLimit;
@@ -700,7 +744,7 @@
             else if (density.dense && !context.selectedNode) baseLimit = 42;
             else baseLimit = context.selectedNode ? 68 : 54;
             const readabilityBudget = getReadabilityLabelBudget(context, labelMode, semantic);
-            return Math.min(baseLimit, semantic.labelBudget || baseLimit, readabilityBudget || baseLimit);
+            return applyOverlayBudget(Math.min(baseLimit, semantic.labelBudget || baseLimit, readabilityBudget || baseLimit));
         }
         if (Number.isFinite(tickerLimit) && !context.selectedNode) baseLimit = tickerLimit;
         else if (density.mega && !context.selectedNode) baseLimit = 12;
@@ -708,7 +752,7 @@
         else if (density.dense && !context.selectedNode) baseLimit = 28;
         else baseLimit = context.selectedNode ? 52 : 36;
         const readabilityBudget = getReadabilityLabelBudget(context, labelMode, semantic);
-        return Math.min(baseLimit, semantic.labelBudget || baseLimit, readabilityBudget || baseLimit);
+        return applyOverlayBudget(Math.min(baseLimit, semantic.labelBudget || baseLimit, readabilityBudget || baseLimit));
     }
 
     function shouldDrawLabel(context, node, labelMode) {
@@ -726,6 +770,8 @@
         if (intelligenceVisual.guided && context.scale > (density.dense ? 0.62 : 0.5)) return true;
         if (intelligenceVisual.defaultDiscovery && context.scale > (density.dense ? 0.68 : 0.56) && intelligenceVisual.role?.key !== 'normal') return true;
         if (intelligenceVisual.overlay && context.scale > (density.dense ? 0.68 : 0.56) && intelligenceVisual.role?.key !== 'normal') return true;
+        const topologyVisual = getTopologyNodeVisual(context, node);
+        if (topologyVisual?.emphasized && context.scale > (density.dense ? 0.58 : 0.48)) return true;
         if (context.isPortfolioAnalysisActive() && context.isPortfolioHighlightedNode(node)) return true;
         if (context.selectedNode && context.focusNeighborIds.has(node.id)) return true;
         if (context.selectedNode && context.activeClusterNodeIds.has(node.id) && !context.isFocusModeActive()) return true;
@@ -748,6 +794,9 @@
         if (context.hoveredNode && context.hoveredNode.id === node.id) return boost + 900;
         if (intelligenceVisual.overlay && intelligenceVisual.role?.key !== 'normal') return boost + 830 + (node.degree || 0);
         if (intelligenceVisual.defaultDiscovery && intelligenceVisual.role?.key !== 'normal') return boost + 800 + (node.degree || 0);
+        const topologyVisual = getTopologyNodeVisual(context, node);
+        const overlayAdjustment = getOverlayNodeAdjustment(context, node, intelligenceVisual);
+        if (topologyVisual?.emphasized) return boost + 680 + (topologyVisual.labelPriorityBoost || 0) + (overlayAdjustment.labelPriorityBoost || 0) + (node.degree || 0);
         if (context.isPortfolioNode(node)) return boost + 780 + node.degree;
         if (context.isPortfolioTopNexusNode(node)) return boost + 720 + node.degree;
         if (context.isPortfolioRepeatedExposureNode(node)) return boost + 670 + node.degree;
@@ -834,6 +883,41 @@
 
     function getReadabilityLinkPriority(context, link) {
         return getReadabilitySystem(context)?.getLinkRenderPriority?.(context, link) || 0;
+    }
+
+    function getTopologySystem(context) {
+        return context.graphTopologyEngine || window.StockPhotonicGraph?.topologyEngine || null;
+    }
+
+    function getTopologyNodeVisual(context, node) {
+        return getTopologySystem(context)?.getNodeTopologyVisual?.(context.graphTopologyModel, node) || null;
+    }
+
+    function getTopologyLinkVisual(context, link) {
+        return getTopologySystem(context)?.getLinkTopologyVisual?.(context.graphTopologyModel, link) || null;
+    }
+
+    function getOverlaySystem(context) {
+        return context.graphOverlayOrchestration || window.StockPhotonicGraph?.overlayOrchestration || null;
+    }
+
+    function getOverlayLinkAdjustment(context, link, visual) {
+        return getOverlaySystem(context)?.getLinkAdjustment?.(context.graphOverlayPlan, link, visual) || {
+            draw: true,
+            alphaMultiplier: 1,
+            widthMultiplier: 1,
+            shadowMultiplier: 1,
+            priorityBoost: 0
+        };
+    }
+
+    function getOverlayNodeAdjustment(context, node, visual = {}) {
+        return getOverlaySystem(context)?.getNodeAdjustment?.(context.graphOverlayPlan, node, visual) || {
+            alphaMultiplier: 1,
+            radiusMultiplier: 1,
+            glowMultiplier: 1,
+            labelPriorityBoost: 0
+        };
     }
 
     function getCinematicSystem(context) {
@@ -966,6 +1050,11 @@
             let radius = getScreenNodeRadius(context, node) * (point.perspectiveScale || 1);
             const readabilityNode = getReadabilityNodeAdjustment(context, node);
             radius *= readabilityNode.radiusMultiplier || 1;
+            const topologyNode = getTopologyNodeVisual(context, node);
+            if (topologyNode?.radiusMultiplier) radius *= topologyNode.radiusMultiplier;
+            const intelligenceVisual = context.getGraphNodeIntelligenceVisual?.(node) || {};
+            const overlayNode = getOverlayNodeAdjustment(context, node, intelligenceVisual);
+            radius *= overlayNode.radiusMultiplier || 1;
             let pseudoDepth = point.depthNormalized || 0;
 
             if (frame.active) {
@@ -1003,11 +1092,14 @@
         const semantic = getSemanticState(context);
         const semanticEdge = getSemanticEdgeDisposition(context, link, semantic, intelligenceVisual);
         const readabilityEdge = getReadabilityEdgeAdjustment(context, link, intelligenceVisual, semantic);
-        if (!semanticEdge.draw || !readabilityEdge.draw) return false;
+        const topologyEdge = getTopologyLinkVisual(context, link);
+        const overlayEdge = getOverlayLinkAdjustment(context, link, intelligenceVisual);
+        if (!semanticEdge.draw || !readabilityEdge.draw || !overlayEdge.draw) return false;
         const industryFilterActive = context.isIndustryGroupFilterActive();
         const touchesIndustryGroup = industryFilterActive && context.linkTouchesCurrentIndustryGroup(link);
         const isPortfolioLink = context.isPortfolioAnalysisActive() && context.portfolioEdgeKeys.has(link.key);
-        if (context.signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && !isPortfolioLink && !intelligenceVisual.forceDraw && !semanticEdge.protectedEdge && link.strength < getWeakEdgeThreshold(context)) return false;
+        const protectedByIntelligence = Boolean(intelligenceVisual.forceDraw || topologyEdge?.protected || semanticEdge.protectedEdge || readabilityEdge.protectedEdge || overlayEdge.reason === 'protected');
+        if (context.signalStrengthThreshold <= 0 && !isFocused && !touchesIndustryGroup && !isPortfolioLink && !protectedByIntelligence && link.strength < getWeakEdgeThreshold(context)) return false;
 
         const sourceX = link.source._screenX;
         const sourceY = link.source._screenY;
@@ -1055,7 +1147,9 @@
         const semanticEdge = getSemanticEdgeDisposition(context, link, semantic, visual);
         const strength = Number(link?.strength) || 0;
         const readabilityEdge = getReadabilityEdgeAdjustment(context, link, visual, semantic);
-        let score = strength * 100 + (semanticEdge.priorityBoost || 0) + (readabilityEdge.priorityBoost || 0) + getReadabilityLinkPriority(context, link);
+        const topologyEdge = getTopologyLinkVisual(context, link);
+        const overlayEdge = getOverlayLinkAdjustment(context, link, visual);
+        let score = strength * 100 + (semanticEdge.priorityBoost || 0) + (readabilityEdge.priorityBoost || 0) + (topologyEdge?.priorityBoost || 0) + (overlayEdge.priorityBoost || 0) + getReadabilityLinkPriority(context, link);
         if (visual.forceDraw || visual.route || visual.routeComparison?.active || visual.selected || visual.guided || visual.overlay || visual.sourceCoverage) score += 1000;
         if (context.portfolioEdgeKeys?.has(link.key)) score += 850;
         if (context.focusLinkKeys?.has(link.key)) score += 800;
@@ -1110,6 +1204,32 @@
             drawNodeIntelligenceBadge(ctx, point, radius, visual.badgeLabel || visual.role?.shortLabel || '', color);
         }
 
+        ctx.restore();
+    }
+
+    function drawTopologyNodeCue(context, ctx, point, radius, visual, state) {
+        if (!visual?.emphasized) return;
+        if (state.industryDimmed || state.focusDimmed && !state.isSelected && !state.isHovered) return;
+        const semantic = getSemanticState(context);
+        if (semantic.tier === 'inspection' && !state.isSelected && !state.isHovered) return;
+        const color = visual.color || '#22d3ee';
+        const alpha = state.isSelected || state.isHovered
+            ? 0.46
+            : semantic.tierRank <= 1 ? 0.28 : 0.2;
+        const scale = visual.kind === 'capital' ? 2.65 : visual.kind === 'bridge' ? 2.42 : 2.24;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = visual.kind === 'capital' ? 1.35 : 1;
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = color;
+        if (visual.kind === 'bridge') ctx.setLineDash([4, 7]);
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, radius * scale, 0, Math.PI * 2);
+        ctx.stroke();
+        if ((state.isSelected || state.isHovered || semantic.tierRank <= 1) && visual.badgeLabel) {
+            drawNodeIntelligenceBadge(ctx, point, radius * 0.92, visual.badgeLabel, color);
+        }
         ctx.restore();
     }
 

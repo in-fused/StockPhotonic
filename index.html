@@ -1345,6 +1345,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/graph/cinematic.js?v=d153-cinematic-graph"></script>
     <script src="js/graph/timeline.js?v=d165-timeline"></script>
     <script src="js/graph/scalableInfrastructure.js?v=d160-spatial-workspace"></script>
+    <script src="js/graph/topologyEngine.js?v=d169-topology-os"></script>
+    <script src="js/graph/overlayOrchestration.js?v=d172-overlay-orchestration"></script>
     <script src="js/graph/spatialAnnotations.js?v=d160-spatial-workspace"></script>
     <script src="js/graph/layouts.js"></script>
     <script src="js/graph/render.js?v=d153-cinematic-graph"></script>
@@ -1385,7 +1387,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             throw new Error('StockPhotonicData failed to load');
         }
 
-        if (!window.StockPhotonicGraph?.viewport || !window.StockPhotonicGraph?.interactions || !window.StockPhotonicGraph?.semanticZoom || !window.StockPhotonicGraph?.readability || !window.StockPhotonicGraph?.minimap || !window.StockPhotonicGraph?.cinematic || !window.StockPhotonicGraph?.timeline || !window.StockPhotonicGraph?.scalableInfrastructure || !window.StockPhotonicGraph?.spatialAnnotations) {
+        if (!window.StockPhotonicGraph?.viewport || !window.StockPhotonicGraph?.interactions || !window.StockPhotonicGraph?.semanticZoom || !window.StockPhotonicGraph?.readability || !window.StockPhotonicGraph?.minimap || !window.StockPhotonicGraph?.cinematic || !window.StockPhotonicGraph?.timeline || !window.StockPhotonicGraph?.scalableInfrastructure || !window.StockPhotonicGraph?.topologyEngine || !window.StockPhotonicGraph?.overlayOrchestration || !window.StockPhotonicGraph?.spatialAnnotations) {
             throw new Error('StockPhotonic graph modules failed to load');
         }
 
@@ -1447,6 +1449,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             cinematic: graphCinematic,
             timeline: graphTimeline,
             scalableInfrastructure: graphScalableInfrastructure,
+            topologyEngine: graphTopologyEngine,
+            overlayOrchestration: graphOverlayOrchestration,
             spatialAnnotations: graphSpatialAnnotations,
             layouts: graphLayouts,
             render: graphRender,
@@ -1673,6 +1677,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let graphMinimapModel = null;
         let graphScalabilityModel = null;
         let graphReadabilityModel = null;
+        let graphTopologyModel = null;
+        let graphOverlayPlan = null;
         let graphTimelineModel = null;
         let graphAnnotationModel = null;
         let graphAnnotationDomKey = '';
@@ -1684,6 +1690,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         const investigationWorkspace = stockInvestigationContinuity.createSessionWorkspace();
         const graphScalabilityController = graphScalableInfrastructure.createGraphScalabilityController();
         const graphReadabilityController = graphReadability.createReadabilityController();
+        const graphTopologyController = graphTopologyEngine.createTopologyController();
+        const graphOverlayOrchestrator = graphOverlayOrchestration.createOverlayOrchestrator();
         const graphOverlayFoundationRegistry = graphScalableInfrastructure.createOverlayFoundationRegistry();
 
         let selectedNode = null;
@@ -1829,11 +1837,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             get graphScalingModel() { return graphScalingModel; },
             get graphScalabilityModel() { return graphScalabilityModel; },
             get graphReadabilityModel() { return graphReadabilityModel; },
+            get graphTopologyModel() { return graphTopologyModel; },
+            get graphOverlayPlan() { return graphOverlayPlan; },
             get graphTimelineModel() { return graphTimelineModel; },
             get largeGraphNavigationModel() { return largeGraphNavigationModel; },
             get activeAnalystOverlayKey() { return activeAnalystOverlayKey; },
             get sourceCoverageLensEnabled() { return sourceCoverageLensEnabled; },
             get graphStoryMode() { return graphStoryMode; },
+            get graphFullscreenActive() { return graphFullscreenActive; },
             get signalStrengthThreshold() { return signalStrengthThreshold; },
             get orbitEnabled() { return false; },
             get perspectiveEnabled() { return perspectiveEnabled; },
@@ -1854,6 +1865,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             graphViewport,
             graphCinematic,
             graphReadability,
+            graphTopologyEngine,
+            graphOverlayOrchestration,
             clamp,
             hexToRgba,
             getOrbitOffset,
@@ -2077,7 +2090,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     },
                     {
                         label: 'ROUTE COMPARISON AND KEYBOARD',
-                        body: '<strong>Compare strongest route</strong>, <strong>Compare source-backed route</strong>, and <strong>Compare ecosystem route</strong> are available from the command palette. Keyboard traversal: <strong>Alt+H</strong> next hub, <strong>Alt+B</strong> next bridge, <strong>Alt+C</strong> next corridor, <strong>Alt+R</strong> step route, <strong>Alt+F</strong> fit selected neighborhood, <strong>Alt+Enter</strong> center selected node, <strong>Alt+X</strong> clear comparison. Add Shift to reverse traversal.'
+                        body: '<strong>Compare strongest route</strong>, <strong>Compare source-backed route</strong>, and <strong>Compare ecosystem route</strong> are available from the command palette. Keyboard traversal: <strong>Alt+H</strong> next hub, <strong>Alt+B</strong> next bridge, <strong>Alt+C</strong> next corridor, <strong>Alt+R</strong> step route, <strong>Alt+W</strong> workspace, <strong>Alt+T</strong> topology, <strong>Alt+G</strong> central hub, <strong>Alt+F</strong> fit selected neighborhood, <strong>Alt+Enter</strong> center selected node, <strong>Alt+X</strong> clear comparison. Add Shift to reverse traversal.'
                     },
                     {
                         label: 'WHAT THIS DOES NOT CLAIM',
@@ -3500,10 +3513,13 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 largeGraphNeighborhoodDepth,
                 largeGraphNavigationModel,
                 graphStoryMode,
+                graphFullscreenActive,
                 graphIntelligenceModel,
                 graphScalingModel,
                 graphScalabilityModel,
                 graphReadabilityModel,
+                graphTopologyModel,
+                graphOverlayPlan,
                 graphTimelineModel,
                 stockGraphIntelligence,
                 stockRouteComparison,
@@ -3568,6 +3584,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             graphScalingModel = null;
             graphScalabilityModel = null;
             graphReadabilityModel = null;
+            graphTopologyModel = null;
+            graphOverlayPlan = null;
             graphTimelineModel = null;
             graphAnnotationModel = null;
             largeGraphNavigationModel = null;
@@ -5335,10 +5353,25 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function refreshGraphIntelligenceModel(options = {}) {
             if (!graphScalingModel) refreshGraphScalingModel();
+            refreshGraphTopologyModel();
             graphIntelligenceModel = {
                 ...stockGraphIntelligence.buildGraphIntelligenceModel(getGraphIntelligenceContext()),
                 largeGraphNavigation: largeGraphNavigationModel
             };
+            refreshGraphOverlayPlan();
+            graphScalabilityModel = graphScalabilityController.buildModel(getGraphIntelligenceContext({
+                stockGraphIntelligence,
+                graphScalingModel,
+                graphTopologyModel,
+                graphOverlayPlan,
+                stockSemanticZoomState: stockSemanticZoomState || graphSemanticZoom.getStockSemanticState(renderContext, graphScalingModel?.density || {}),
+                scale,
+                canvasWidth,
+                canvasHeight,
+                activeAnalystOverlayKey,
+                getGraphLinkSpatialMeta,
+                getNodeLayoutPosition
+            }));
             refreshGraphReadabilityModel();
             graphNodeIntelligenceVisualCache = new Map();
             graphLinkIntelligenceVisualCache = new Map();
@@ -5360,6 +5393,27 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             }
         }
 
+        function refreshGraphTopologyModel() {
+            graphTopologyModel = graphTopologyController.buildStockTopologyModel(getGraphIntelligenceContext({
+                stockGraphIntelligence,
+                stockSemanticZoomState: stockSemanticZoomState || graphSemanticZoom.getStockSemanticState(renderContext, graphScalingModel?.density || {}),
+                scale,
+                layoutMode,
+                canvasWidth,
+                canvasHeight,
+                getGraphLinkSpatialMeta,
+                getNodeLayoutPosition
+            }));
+        }
+
+        function refreshGraphOverlayPlan() {
+            graphOverlayPlan = graphOverlayOrchestrator.buildPlan(getGraphIntelligenceContext({
+                graphTopologyModel,
+                graphIntelligenceModel,
+                stockSemanticZoomState: stockSemanticZoomState || graphSemanticZoom.getStockSemanticState(renderContext, graphScalingModel?.density || {})
+            }));
+        }
+
         function refreshGraphTimelineModel() {
             graphTimelineModel = graphTimeline.buildStockTimeline(getGraphIntelligenceContext({
                 investigationWorkspaceSummary: investigationWorkspace.getSummary(getGraphIntelligenceContext()),
@@ -5375,6 +5429,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 stockGraphIntelligence,
                 graphScalingModel,
                 graphScalabilityModel,
+                graphTopologyModel,
+                graphOverlayPlan,
                 stockSemanticZoomState: stockSemanticZoomState || graphSemanticZoom.getStockSemanticState(renderContext, graphScalingModel?.density || {}),
                 scale,
                 canvasWidth,
@@ -5411,6 +5467,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 workspace.pinnedRouteCount,
                 workspace.pinnedCorridorCount,
                 workspace.pinnedHubCount,
+                workspace.activeWorkspaceId || workspace.workspaceId || '',
+                graphTopologyModel?.semanticSummary?.headline || '',
+                graphOverlayPlan?.summary?.suppressedLayerCount || 0,
                 activeRouteComparison?.id || activeRelationshipRoute?.id || '',
                 selectedNode?.id || '',
                 largeGraphNavigationModel?.mode || '',
@@ -5425,13 +5484,17 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const hiddenEdges = Number(budget.suppressedEstimate || 0);
             const readabilityHidden = Number(graphReadabilityModel?.budgets?.suppressedEstimate || 0);
             const layerReady = overlaySummary.tierReady.length;
+            const topologyHeadline = graphTopologyModel?.semanticSummary?.headline || 'Topology';
+            const suppressedLayers = Number(graphOverlayPlan?.summary?.suppressedLayerCount || 0);
 
             hud.innerHTML = `
                 <div class="graph-adaptive-hud-strip">
                     <span title="Semantic zoom tier"><i class="fa-solid fa-layer-group"></i>${escapeHtml(semantic.tierLabel || 'Graph')}</span>
+                    <span title="${escapeHtml(graphTopologyModel?.semanticSummary?.sentence || 'Spatial topology model derived from visible graph metadata.')}"><i class="fa-solid fa-draw-polygon"></i>${escapeHtml(topologyHeadline)}</span>
                     <span title="Viewport-aware edge budget"><i class="fa-solid fa-gauge-high"></i>${escapeHtml(String(budget.budget || visibleLinks.length))}/${escapeHtml(String(visibleLinks.length))}</span>
                     ${(hiddenEdges || readabilityHidden) ? `<span title="Edges intentionally suppressed by density budgeting"><i class="fa-solid fa-eye-slash"></i>${escapeHtml(String(Math.max(hiddenEdges, readabilityHidden)))}</span>` : ''}
-                    <span title="Density-aware analyst layers"><i class="fa-solid fa-shapes"></i>${escapeHtml(String(layerReady))}</span>
+                    <span title="Density-aware analyst layers"><i class="fa-solid fa-shapes"></i>${escapeHtml(String(layerReady))}${suppressedLayers ? `/${escapeHtml(String(suppressedLayers))}` : ''}</span>
+                    <button type="button" onclick="cycleAnalystWorkspace(1)" title="Switch analyst workspace" aria-label="Switch analyst workspace"><i class="fa-solid fa-table-columns"></i></button>
                     <button type="button" onclick="pinCurrentRoute()" ${routeActive ? '' : 'disabled'} title="Pin active route or comparison" aria-label="Pin active route or comparison"><i class="fa-solid fa-route"></i></button>
                     <button type="button" onclick="pinCurrentCorridor()" ${corridorActive ? '' : 'disabled'} title="Pin active corridor" aria-label="Pin active corridor"><i class="fa-solid fa-road"></i></button>
                     <button type="button" onclick="pinSelectedHub()" ${hubActive ? '' : 'disabled'} title="Pin selected hub" aria-label="Pin selected hub"><i class="fa-solid fa-thumbtack"></i></button>
@@ -5448,6 +5511,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const panel = document.getElementById('graph-workspace-memory');
             if (!panel) return;
             const summary = investigationWorkspace.getSummary(getGraphIntelligenceContext());
+            const workspaceTabs = summary.workspaces || [];
             const totalPins = summary.pinnedRouteCount + summary.pinnedCorridorCount + summary.pinnedHubCount + summary.replayCheckpointCount + (summary.snapshotCount || 0);
             const items = [
                 ...summary.pinnedRoutes.map((item, index) => ({ ...item, list: 'routes', index })),
@@ -5457,6 +5521,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 ...(summary.snapshots || []).map((item, index) => ({ ...item, list: 'snapshots', index }))
             ].slice(0, 6);
             const key = [
+                summary.activeWorkspaceId || summary.workspaceId || '',
+                workspaceTabs.map(item => `${item.id}:${item.stackDepth}:${item.active ? 1 : 0}`).join(','),
                 totalPins,
                 summary.stackDepth,
                 items.map(item => item.id).join(','),
@@ -5466,15 +5532,29 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (key === workspaceMemoryDomKey) return;
             workspaceMemoryDomKey = key;
 
-            if (!totalPins && !summary.stackDepth) {
+            if (!totalPins && !summary.stackDepth && workspaceTabs.length <= 1) {
                 panel.classList.add('hidden');
                 panel.innerHTML = '';
                 return;
             }
 
             panel.innerHTML = `
+                <div class="graph-workspace-tabs" role="tablist" aria-label="Analyst graph workspaces">
+                    ${workspaceTabs.slice(0, 5).map(item => `
+                        <button type="button"
+                            role="tab"
+                            aria-selected="${item.active ? 'true' : 'false'}"
+                            class="${item.active ? 'is-active' : ''}"
+                            onclick="switchAnalystWorkspace('${escapeInlineJsString(item.id)}')"
+                            title="${escapeHtml(`${item.label}${item.latestLabel ? ` / ${item.latestLabel}` : ''}`)}">
+                            <span>${escapeHtml(item.shortLabel || item.label)}</span>
+                            <small>${escapeHtml(String(item.stackDepth || item.snapshotCount || item.stagingDepth || 0))}</small>
+                        </button>
+                    `).join('')}
+                    <button type="button" onclick="createAnalystWorkspace()" title="Create a session-only analyst workspace" aria-label="Create analyst workspace"><i class="fa-solid fa-plus"></i></button>
+                </div>
                 <div class="graph-workspace-memory-head">
-                    <span><i class="fa-solid fa-diagram-project"></i> Session Stack</span>
+                    <span><i class="fa-solid fa-diagram-project"></i> ${escapeHtml(summary.workspaceLabel || 'Session')} Stack</span>
                     <strong>${escapeHtml(String(summary.stackDepth))}</strong>
                     <button type="button" onclick="clearInvestigationWorkspace()" title="Clear session workspace memory" aria-label="Clear session workspace memory"><i class="fa-solid fa-eraser"></i></button>
                 </div>
@@ -5965,6 +6045,48 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             renderGraphTimelineRail();
         }
 
+        function createAnalystWorkspace(label = '') {
+            const target = getCurrentWorkflowTarget();
+            const workspaceLabel = label || target.shortLabel || target.label || `Workspace ${Date.now()}`;
+            const workspace = investigationWorkspace.createWorkspace(workspaceLabel, buildCurrentGraphSnapshot(), {
+                priority: target.kind === 'route-comparison' || target.kind === 'route' ? 2 : target.kind === 'corridor' ? 1 : 0
+            });
+            workspaceMemoryDomKey = '';
+            adaptiveHudDomKey = '';
+            investigationRailDomKey = '';
+            graphTimelineDomKey = '';
+            renderWorkspaceMemory();
+            renderInvestigationRail();
+            renderAdaptiveGraphHud();
+            refreshGraphTimelineModel();
+            renderGraphTimelineRail();
+            return workspace;
+        }
+
+        function switchAnalystWorkspace(id) {
+            const workspace = investigationWorkspace.switchWorkspace(id);
+            if (!workspace) return null;
+            const summary = investigationWorkspace.getSummary(getGraphIntelligenceContext());
+            const snapshot = summary.snapshots?.[0] || null;
+            if (snapshot?.payload) restoreWorkflowTarget(snapshot.payload);
+            workspaceMemoryDomKey = '';
+            adaptiveHudDomKey = '';
+            investigationRailDomKey = '';
+            graphTimelineDomKey = '';
+            renderWorkspaceMemory();
+            renderInvestigationRail();
+            renderAdaptiveGraphHud();
+            refreshGraphTimelineModel();
+            renderGraphTimelineRail();
+            return workspace;
+        }
+
+        function cycleAnalystWorkspace(direction = 1) {
+            const workspace = investigationWorkspace.cycleWorkspace(direction);
+            if (!workspace) return null;
+            return switchAnalystWorkspace(workspace.id);
+        }
+
         function getCurrentCorridorMemoryCandidate() {
             if (largeGraphNavigationModel?.focusKind === 'corridor') {
                 const lane = graphScalabilityModel?.corridorLaneIndex?.lanes?.find(item => item.key === largeGraphNavigationModel.corridorKey);
@@ -5993,15 +6115,25 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (graphNodeIntelligenceVisualCache.has(node.id)) return graphNodeIntelligenceVisualCache.get(node.id);
             const baseVisual = stockGraphIntelligence.getNodeVisualMeta(node, getGraphIntelligenceContext());
             const comparisonVisual = stockRouteComparison.getNodeComparisonVisual(node, activeRouteComparison);
+            const topologyVisual = graphTopologyEngine.getNodeTopologyVisual(graphTopologyModel, node);
             const visual = comparisonVisual?.active
                 ? {
                     ...baseVisual,
                     routeComparison: comparisonVisual,
+                    topology: topologyVisual,
                     color: comparisonVisual.color || baseVisual.color,
                     badgeLabel: comparisonVisual.badgeLabel || baseVisual.badgeLabel,
                     emphasized: true
                 }
-                : baseVisual;
+                : topologyVisual?.emphasized
+                    ? {
+                        ...baseVisual,
+                        topology: topologyVisual,
+                        color: baseVisual.color || topologyVisual.color,
+                        badgeLabel: baseVisual.badgeLabel || topologyVisual.badgeLabel,
+                        emphasized: Boolean(baseVisual.emphasized || topologyVisual.emphasized)
+                    }
+                    : { ...baseVisual, topology: topologyVisual };
             graphNodeIntelligenceVisualCache.set(node.id, visual);
             return visual;
         }
@@ -6012,17 +6144,19 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const baseVisual = stockGraphIntelligence.getLinkVisualMeta(link, getGraphIntelligenceContext());
             const spatial = getGraphLinkSpatialMeta(link);
             const comparisonVisual = stockRouteComparison.getLinkComparisonVisual(link, activeRouteComparison);
+            const topologyVisual = graphTopologyEngine.getLinkTopologyVisual(graphTopologyModel, link);
             const topCorridorKeys = new Set((graphScalingModel?.corridorBuckets || []).slice(0, 2).map(bucket => bucket.key));
             const corridor = Boolean(spatial.primaryCorridorKey && topCorridorKeys.has(spatial.primaryCorridorKey));
             const visual = {
                 ...baseVisual,
                 routeComparison: comparisonVisual,
+                topology: topologyVisual,
                 spatial,
-                corridor,
-                forceDraw: Boolean(baseVisual.forceDraw || comparisonVisual?.active),
-                color: comparisonVisual?.active ? comparisonVisual.color : baseVisual.color,
-                widthBoost: baseVisual.widthBoost + (comparisonVisual?.active ? comparisonVisual.shared ? 1.8 : 1.35 : 0),
-                alphaBoost: baseVisual.alphaBoost + (comparisonVisual?.active ? 0.46 : 0)
+                corridor: Boolean(corridor || topologyVisual?.corridorKey),
+                forceDraw: Boolean(baseVisual.forceDraw || comparisonVisual?.active || topologyVisual?.protected),
+                color: comparisonVisual?.active ? comparisonVisual.color : baseVisual.color || topologyVisual?.color || '',
+                widthBoost: baseVisual.widthBoost + (comparisonVisual?.active ? comparisonVisual.shared ? 1.8 : 1.35 : 0) + (topologyVisual?.widthBoost || 0),
+                alphaBoost: baseVisual.alphaBoost + (comparisonVisual?.active ? 0.46 : 0) + (topologyVisual?.emphasized ? 0.1 : 0)
             };
             graphLinkIntelligenceVisualCache.set(link.key, visual);
             return visual;
@@ -6112,7 +6246,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (!card) return;
 
             let html = '';
-            if (graphIntelligenceModel.relationshipExplanation) {
+            if (graphStoryMode === 'topology' && graphTopologyModel) {
+                html = renderTopologyIntelligenceCard(graphTopologyModel);
+            } else if (graphIntelligenceModel.relationshipExplanation) {
                 html = renderRelationshipExplanationCard(graphIntelligenceModel.relationshipExplanation);
             } else if (graphIntelligenceModel.selectedStory) {
                 html = renderSelectedGraphStoryCard(graphIntelligenceModel.selectedStory);
@@ -6140,6 +6276,41 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             card.innerHTML = html;
             card.classList.remove('hidden');
+        }
+
+        function renderTopologyIntelligenceCard(model) {
+            const summary = model?.semanticSummary || {};
+            const topCorridor = model?.corridorPressures?.[0];
+            const topZone = model?.concentrationZones?.[0] || model?.densityZones?.[0];
+            const topBridge = model?.bridgeSaturation?.[0];
+            return `
+                <div class="graph-card-header">
+                    <div>
+                        <div class="graph-card-eyebrow">Spatial Market Topology</div>
+                        <div class="graph-card-title">${escapeHtml(summary.headline || 'Topology')}</div>
+                    </div>
+                    <button type="button" onclick="hideTopologySummary()" class="graph-card-close" aria-label="Close topology summary"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="graph-card-body">${escapeHtml(summary.sentence || 'Topology summary is derived from visible graph metadata only.')}</div>
+                <div class="graph-card-metrics">
+                    <div><span>${escapeHtml(String(model?.densityZones?.length || 0))}</span><small>zones</small></div>
+                    <div><span>${escapeHtml(String(model?.corridorPressures?.length || 0))}</span><small>corridors</small></div>
+                    <div><span>${escapeHtml(String(model?.ecosystemOverlap?.nodes?.length || 0))}</span><small>overlaps</small></div>
+                    <div><span>${escapeHtml(`${Math.round((summary.imbalance || 0) * 100)}%`)}</span><small>imbalance</small></div>
+                </div>
+                <div class="graph-card-chips">
+                    ${(summary.chips || []).map(chip => `<span>${escapeHtml(chip)}</span>`).join('')}
+                    ${topCorridor ? `<span>${escapeHtml(topCorridor.shortLabel || topCorridor.label)} pressure ${Math.round((topCorridor.pressure || 0) * 100)}%</span>` : ''}
+                    ${topZone ? `<span>${escapeHtml(topZone.label || 'Concentration')}</span>` : ''}
+                    ${topBridge ? `<span>Bridge ${escapeHtml(topBridge.label)}</span>` : ''}
+                </div>
+                <div class="graph-card-actions">
+                    <button type="button" onclick="jumpToMarketCentralHub()" class="graph-card-action"><i class="fa-solid fa-circle-nodes"></i><span>Central Hub</span></button>
+                    <button type="button" onclick="jumpToPressureCorridor()" class="graph-card-action"><i class="fa-solid fa-road"></i><span>Pressure Corridor</span></button>
+                    <button type="button" onclick="setAnalystOverlay('corridor_density')" class="graph-card-action"><i class="fa-solid fa-layer-group"></i><span>Corridor Layer</span></button>
+                    <button type="button" onclick="captureCurrentGraphSnapshot()" class="graph-card-action"><i class="fa-regular fa-bookmark"></i><span>Snapshot</span></button>
+                </div>
+            `;
         }
 
         function renderAnalystOverlayCard(layer) {
@@ -6702,6 +6873,59 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             if (graphStoryMode === 'guided') graphStoryMode = selectedNode ? 'overview' : '';
             refreshGraphIntelligenceModel();
             requestDraw();
+        }
+
+        function showTopologySummary() {
+            if (!graphTopologyModel) refreshGraphTopologyModel();
+            graphStoryMode = 'topology';
+            renderGraphNativeIntelligenceCard();
+            renderAdaptiveGraphHud();
+            renderSpatialStorytellingCue();
+            triggerPulse(420);
+            requestDraw();
+            return graphTopologyModel;
+        }
+
+        function hideTopologySummary() {
+            if (graphStoryMode === 'topology') graphStoryMode = '';
+            renderGraphNativeIntelligenceCard();
+            renderSpatialStorytellingCue();
+        }
+
+        function jumpToMarketCentralHub() {
+            if (!graphTopologyModel) refreshGraphTopologyModel();
+            const zone = graphTopologyModel?.concentrationZones?.[0];
+            const visual = zone?.nodeId !== undefined ? nodeById.get(zone.nodeId) : null;
+            const fallback = [...(graphTopologyModel?.nodeVisuals || new Map()).entries()]
+                .sort((a, b) => (b[1]?.score || 0) - (a[1]?.score || 0))[0];
+            const node = visual || (fallback ? nodeById.get(fallback[0]) : null) || getBestStrategicHub();
+            if (!node) return null;
+            selectNode(node, { preserveFilters: true });
+            animateGraphFocusToNode(node, { kind: 'topology', minScale: 0.84, centerBiasY: 0.48 });
+            graphStoryMode = 'topology';
+            return node;
+        }
+
+        function jumpToPressureCorridor() {
+            if (!graphTopologyModel) refreshGraphTopologyModel();
+            const corridor = graphTopologyModel?.corridorPressures?.[0];
+            if (!corridor?.key) return null;
+            largeGraphCorridorFocus = corridor.key;
+            largeGraphMode = 'corridor_focus';
+            graphStoryMode = 'topology';
+            applyLargeGraphNavigationChange({ fit: true });
+            return corridor;
+        }
+
+        function stepGraphChronology(direction = 1) {
+            if (!graphTimelineModel) refreshGraphTimelineModel();
+            const events = graphTimelineModel?.events || [];
+            if (!events.length) return null;
+            const activeIndex = Math.max(0, events.findIndex(event => event.active));
+            const delta = direction < 0 ? -1 : 1;
+            const nextIndex = (activeIndex + delta + events.length) % events.length;
+            restoreGraphTimelineEvent(nextIndex);
+            return events[nextIndex];
         }
 
         function followGuidedDiscoveryRoute() {
@@ -8619,6 +8843,20 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         semantic.tierLabel || 'Graph detail',
                         navigation?.focusKind === 'route' ? 'route isolation' : 'trace visible'
                     ]
+                };
+            }
+
+            if (graphStoryMode === 'topology' && graphTopologyModel?.semanticSummary) {
+                const summary = graphTopologyModel.semanticSummary;
+                return {
+                    kicker: 'Spatial topology',
+                    title: summary.headline || 'Market topology',
+                    body: summary.sentence || 'Topology cues are derived from visible graph metadata and staged as a graph-native operating layer.',
+                    chips: [
+                        summary.topCorridor || 'corridor pressure',
+                        summary.topBridge || summary.topZone || 'centrality',
+                        graphCinematic.getTopologyChoreography?.(renderContext, graphTopologyModel, { semantic, density: graphScalingModel?.density })?.revealPacing || semantic.tierLabel || 'topology'
+                    ].filter(Boolean)
                 };
             }
 
@@ -11371,6 +11609,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 else if (key === 'b') traverseStock('bridge', direction);
                 else if (key === 'c') traverseStock('corridor', direction);
                 else if (key === 'r') stepRouteNode(direction);
+                else if (key === 'w') cycleAnalystWorkspace(direction);
+                else if (key === 't') showTopologySummary();
+                else if (key === 'g') jumpToMarketCentralHub();
                 else if (key === 'enter') centerSelectedNode();
                 else if (key === 'f') fitSelectedNeighborhood();
                 else if (key === 'x') clearRouteComparison();

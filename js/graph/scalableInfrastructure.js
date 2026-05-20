@@ -23,7 +23,9 @@
             strategicHubs: createLru(maxEntries),
             semanticTiles: createLru(maxEntries),
             minimap: createLru(maxEntries),
-            replayChunks: createLru(maxEntries)
+            replayChunks: createLru(maxEntries),
+            topologyTiles: createLru(maxEntries),
+            overlayPlans: createLru(maxEntries)
         };
 
         function buildModel(context = {}) {
@@ -40,6 +42,8 @@
             const semanticTiles = getOrBuild(caches.semanticTiles, `tiles:${signature}`, () => buildSemanticTilePrep(nodes, links, context, density));
             const minimapPlan = getOrBuild(caches.minimap, `minimap:${signature}`, () => buildMinimapScalingPlan(nodes, links, density));
             const replayChunks = getOrBuild(caches.replayChunks, `replay:${signature}`, () => buildReplayChunkPrep(context, links, density));
+            const topologyPrep = getOrBuild(caches.topologyTiles, `topology:${signature}:${context.graphTopologyModel?.signature || ''}`, () => buildTopologyTilePrep(context, nodes, links, density));
+            const overlayCachePlan = getOrBuild(caches.overlayPlans, `overlay:${signature}:${context.graphOverlayPlan?.signature || ''}`, () => buildOverlayCachePlan(context, density, semantic));
             const renderQueues = buildBoundedRenderQueues(nodes, links, context, density, semantic, viewportEdgeBudget);
             const adaptiveQuality = buildAdaptiveQualityPlan(context, density, semantic, viewportEdgeBudget);
             const memoryBudget = buildGraphMemoryBudget(nodes, links, density);
@@ -56,6 +60,8 @@
                 semanticTiles,
                 minimapPlan,
                 replayChunks,
+                topologyPrep,
+                overlayCachePlan,
                 renderQueues,
                 adaptiveQuality,
                 memoryBudget,
@@ -63,6 +69,8 @@
                 routeCachePlan,
                 routeCache: caches.route.stats(),
                 comparisonCache: caches.comparison.stats(),
+                topologyCache: caches.topologyTiles.stats(),
+                overlayCache: caches.overlayPlans.stats(),
                 progressiveHydration: {
                     prepared: true,
                     clientOnly: true,
@@ -76,6 +84,8 @@
                     dataMutation: false,
                     boundedRenderQueues: true,
                     dynamicQualityScaling: true,
+                    topologyCached: true,
+                    overlayPlanCached: true,
                     progressiveHydrationPrepOnly: true
                 }
             };
@@ -336,6 +346,43 @@
         };
     }
 
+    function buildTopologyTilePrep(context, nodes, links, density) {
+        const model = context.graphTopologyModel || {};
+        const zones = [
+            ...(model.densityZones || []),
+            ...(model.concentrationZones || [])
+        ];
+        const corridorCount = model.corridorPressures?.length || 0;
+        return {
+            zoneDrawLimit: density.key === 'mega' ? 5 : 7,
+            zoneCount: zones.length,
+            corridorCount,
+            routeImportanceLimit: density.key === 'mega' ? 18 : 28,
+            bridgeCueLimit: density.key === 'mega' ? 8 : 12,
+            ecosystemOverlapLimit: density.key === 'mega' ? 8 : 12,
+            nodeCount: nodes.length,
+            edgeCount: links.length,
+            derivedOnly: true,
+            cachedAt: Date.now()
+        };
+    }
+
+    function buildOverlayCachePlan(context, density, semantic) {
+        const plan = context.graphOverlayPlan || {};
+        const activeLayerCount = plan.summary?.activeLayerCount || plan.activeLayers?.length || 0;
+        const visibleLayerCount = plan.summary?.visibleLayerCount || plan.visibleLayers?.length || 0;
+        return {
+            activeLayerCount,
+            visibleLayerCount,
+            suppressedLayerCount: plan.summary?.suppressedLayerCount || plan.suppressedLayers?.length || 0,
+            labelLimitMultiplier: plan.labelPolicy?.labelLimitMultiplier || 1,
+            edgeBackgroundAlpha: plan.edgePolicy?.backgroundAlpha || 1,
+            maxVisibleLayers: density.key === 'mega' || semantic.tier === 'macro' ? 2 : 4,
+            suppressConflicts: true,
+            cachedAt: Date.now()
+        };
+    }
+
     function buildBoundedRenderQueues(nodes, links, context, density, semantic, viewportEdgeBudget) {
         const protectedLinkKeys = new Set([
             ...(context.activeRouteComparison?.linkKeys || []),
@@ -405,6 +452,9 @@
             minimapFrameBudgetMs: density.key === 'mega' ? 3.4 : 4.8,
             routeRevealChunkSize: density.key === 'mega' ? 16 : density.key === 'very_dense' ? 22 : 32,
             replayChunkSize: density.key === 'mega' ? 36 : density.key === 'very_dense' ? 48 : 64,
+            topologyZoneLimit: density.key === 'mega' ? 5 : density.key === 'very_dense' ? 6 : 8,
+            overlayLayerLimit: density.key === 'mega' || semantic.tier === 'macro' ? 2 : 4,
+            fullscreenRenderScale: context.graphFullscreenActive ? Math.max(0.58, quality * 0.94) : quality,
             annotationFrameThrottleMs: density.key === 'mega' ? 180 : density.key === 'very_dense' ? 130 : 90,
             viewportEdgeBudget: viewportEdgeBudget.budget
         };

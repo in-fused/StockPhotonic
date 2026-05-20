@@ -24,7 +24,7 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 
 ## CURRENT FOCUS
 
-- D161-D168 analyst spatial operating environment: improve massive graph readability, add reversible investigation execution workflows, deepen focus cinema, add density-gated analyst overlays, converge graph timeline/replay continuity, expand semantic intelligence layers, mature mobile graph OS ergonomics, and harden scalability/performance without backend, provider, ingestion, storage/auth, or production-data changes.
+- D169-D178 institutional spatial market operating environment: make the graph act more like the investigation workspace, topology engine, intelligence interface, and operating shell through deterministic topology gradients, concentration zones, corridor pressure, bridge saturation, ecosystem overlap, semantic topology summaries, session-only multi-workspaces, topology-aware choreography, overlay conflict suppression, graph-native commands, replay market intelligence convergence, fullscreen graph immersion, mobile graph OS refinement, and performance hardening without backend, provider, ingestion, storage/auth, worker, refresh, or production-data changes.
 - UI/UX polish for the 2D Graph Intelligence workflow, especially guided discovery, default graph onboarding, active state comprehension, command-palette access, transient overlays, and mobile graph usability.
 - Intelligence layer clarity: company investigation workspace, graph-adjacent storytelling cards, embedded route/corridor/hub annotations, why-connected relationship cards, source/confidence labels, hubs, bridges, corridors, clusters, shared exposure, hidden relationships, ecosystem overlays, active graph legend, route tracing, route comparison summaries, industry correlations, portfolio exposure, deterministic evidence-aware narratives, and SEC-backed edge visibility.
 - Review layer clarity: evidence review queue, source aging labels, URL-derived source-host diversity, stale/pending indicators, candidate review grouping, candidate-company preview staging, promotion readiness tables, reviewer decision states, graph-impact simulations, expansion batch summaries, triage artifacts, candidate-vs-production overlap comparison, and data expansion preflight reporting.
@@ -103,6 +103,15 @@ Document: StockPhotonic Roadmap. StockPhotonic is a static photonic graph applic
 - Add precomputed readability and semantic-tile manifests only if runtime derivation becomes too expensive for static delivery.
 - Keep any future persisted investigation workspace behind an explicit storage/auth architecture; the current queue, task stack, jump history, snapshots, and chronology are intentionally session-only.
 - Continue Crypto replay convergence through Worker-owned sanitized replay data only; do not add browser-side provider ingestion.
+
+## D169-D178 FOLLOW-ON
+
+- Validate topology density gradients, concentration zones, corridor pressure, bridge saturation, ecosystem overlap, and semantic topology summaries against larger static production graphs before promoting any optional precomputed topology manifest.
+- Keep multi-workspace analyst state session-only until a storage/auth architecture is intentionally designed; do not persist notes or workspace state as relationship proof.
+- Add reviewer-authored market topology notes only as review artifacts with source governance, not as graph relationship claims.
+- Expand graph-native commands toward user-selected route endpoints, workspace replay stacks, and topology comparison only after current command-palette and keyboard ergonomics are tested with analysts.
+- Continue Crypto replay intelligence only over staged replay datasets and Worker-owned sanitized history; do not add browser-side provider ingestion.
+- Treat future institutional overlays such as ownership, ETF overlap, institutional exposure, and liquidity as dormant until schemas, source policy, validation, and performance budgets exist.
 
 ## D141 FOLLOW-ON
 

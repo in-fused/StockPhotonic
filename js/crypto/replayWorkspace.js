@@ -7,6 +7,7 @@
     const REPLAY_CONTINUITY_VERSION = 'd136_staged_continuity_confidence_v1';
     const REPLAY_CLUSTER_VERSION = 'd136_replay_cluster_v1';
     const REPLAY_NEIGHBORHOOD_VERSION = 'd136_replay_neighborhood_v1';
+    const REPLAY_INTELLIGENCE_VERSION = 'd174_replay_market_intelligence_convergence_v1';
     const DEFAULT_AUDIT_FILTERS = Object.freeze({
         token: 'all',
         direction: 'all',
@@ -97,6 +98,19 @@
             currentStep,
             totalSteps
         }) || { markers: [], currentStep, totalSteps };
+        const replayIntelligence = deriveReplayIntelligence({
+            events,
+            currentEvent,
+            selectedEvent,
+            gapMap,
+            continuityProfile,
+            clusters,
+            neighborhood,
+            routeComparison,
+            graphTimeline,
+            currentStep,
+            totalSteps
+        });
 
         return {
             ...context,
@@ -124,6 +138,7 @@
             bookmarks,
             majorNavigation,
             graphTimeline,
+            replayIntelligence,
             oldestLabel,
             newestLabel
         };
@@ -154,6 +169,7 @@
         const continuityProfile = context.continuityProfile || {};
         const neighborhood = context.neighborhood || {};
         const clusters = context.clusters || {};
+        const replayIntelligence = context.replayIntelligence || {};
         const filterOptions = context.filterOptions || getReplayFilterOptions(context.events || []);
         const filteredEvents = context.filteredEvents || [];
         const breadcrumbs = context.breadcrumbs || [];
@@ -212,6 +228,7 @@
                 </div>
                 ${renderReplayWindowOverview(windowStatus, checkpoint, warnings)}
                 ${renderReplayContinuityPanel(continuityProfile, gapMap)}
+                ${renderReplayIntelligencePanel(replayIntelligence)}
                 <div class="crypto-replay-bookmark-strip" aria-label="Replay bookmarks">
                     ${bookmarks.map(bookmark => renderBookmark(bookmark, currentBookmarkStep, scrubberDisabled)).join('') || '<div class="crypto-replay-bookmark-empty">Build replay steps to derive bookmarks.</div>'}
                 </div>
@@ -361,6 +378,28 @@
                             ${escapeHtml(gap.label || formatHistoryLikeFlag(gap.code))}
                         </span>
                     `).join('') || '<span class="crypto-replay-gap-chip is-low">No explicit gap flags in this staged window</span>'}
+                </div>
+            </section>
+        `;
+    }
+
+    function renderReplayIntelligencePanel(intelligence = {}) {
+        if (!intelligence || !intelligence.version) return '';
+        return `
+            <section class="crypto-replay-intelligence-panel" aria-label="Replay market intelligence">
+                <div class="crypto-replay-intelligence-head">
+                    <span>Replay Intelligence</span>
+                    <strong>${escapeHtml(intelligence.focusLabel || 'Staged replay')}</strong>
+                </div>
+                <div class="crypto-replay-intelligence-copy">${escapeHtml(intelligence.narrative || 'Replay intelligence is derived from staged transfer metadata only.')}</div>
+                <div class="crypto-replay-intelligence-metrics">
+                    <span><strong>${escapeHtml(String(intelligence.routeEventCount || 0))}</strong><small>route</small></span>
+                    <span><strong>${escapeHtml(String(intelligence.sharedEventCount || 0))}</strong><small>shared</small></span>
+                    <span><strong>${escapeHtml(String(intelligence.gapCount || 0))}</strong><small>gaps</small></span>
+                    <span><strong>${escapeHtml(intelligence.chronologyLabel || '0/0')}</strong><small>step</small></span>
+                </div>
+                <div class="crypto-replay-intelligence-chips">
+                    ${(intelligence.chips || []).slice(0, 5).map(chip => `<span>${escapeHtml(chip)}</span>`).join('')}
                 </div>
             </section>
         `;
@@ -1293,6 +1332,72 @@
         };
     }
 
+    function deriveReplayIntelligence(context = {}) {
+        const events = Array.isArray(context.events) ? context.events : [];
+        const currentEvent = context.currentEvent || null;
+        const selectedEvent = context.selectedEvent || currentEvent;
+        const focusEvent = selectedEvent || currentEvent || events[0] || null;
+        const focusRoute = getRouteKey(focusEvent || {});
+        const focusToken = normalizeTokenFilter(focusEvent?.token || focusEvent?.symbol || focusEvent?.token_mint);
+        const routeEvents = focusRoute ? events.filter(event => getRouteKey(event) === focusRoute) : [];
+        const routeSet = new Set(events.map(getRouteKey).filter(Boolean));
+        const tokenEvents = focusToken !== 'all'
+            ? events.filter(event => normalizeTokenFilter(event.token || event.symbol || event.token_mint) === focusToken)
+            : [];
+        const gapMap = context.gapMap || {};
+        const gaps = Array.isArray(gapMap.gaps) ? gapMap.gaps : [];
+        const highGap = gaps.find(gap => gap.severity === 'high') || gaps[0] || null;
+        const clusters = context.clusters || {};
+        const topCluster = [
+            ...(clusters.routes || []),
+            ...(clusters.tokens || []),
+            ...(clusters.counterparties || []),
+            ...(clusters.hotspots || [])
+        ].sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0) || String(a.label || '').localeCompare(String(b.label || '')))[0] || null;
+        const routeComparison = context.routeComparison || {};
+        const continuity = context.continuityProfile || {};
+        const chronologyLabel = `${Number(context.currentStep) || 0}/${Number(context.totalSteps) || events.length || 0}`;
+        const routeNarrative = routeComparison.active
+            ? routeComparison.detail
+            : focusRoute
+                ? `${routeEvents.length} staged transfer${routeEvents.length === 1 ? '' : 's'} share the active route; ${routeSet.size} route corridor${routeSet.size === 1 ? '' : 's'} are visible in this replay window.`
+                : `${events.length} staged transfer${events.length === 1 ? '' : 's'} are available for chronology review.`;
+        const anomaly = highGap
+            ? `${highGap.label || formatHistoryLikeFlag(highGap.code)} is the strongest replay boundary cue.`
+            : focusEvent?.warning
+                ? focusEvent.warning
+                : continuity.level === 'high'
+                    ? 'No explicit replay gap marker is active in the staged window.'
+                    : 'Replay is bounded to staged preview history.';
+        const focusLabel = focusToken !== 'all'
+            ? `${focusToken} / ${focusRoute ? formatRoute(focusEvent) : 'route scan'}`
+            : focusRoute ? formatRoute(focusEvent) : 'Chronology scan';
+        return {
+            version: REPLAY_INTELLIGENCE_VERSION,
+            focusLabel,
+            narrative: `${routeNarrative} ${anomaly}`,
+            routeEventCount: routeEvents.length,
+            tokenEventCount: tokenEvents.length,
+            routeCount: routeSet.size,
+            sharedEventCount: Number(routeComparison.sharedCount) || 0,
+            gapCount: gaps.length,
+            chronologyLabel,
+            continuityLevel: continuity.level || 'partial',
+            topClusterLabel: topCluster?.label || '',
+            chips: [
+                continuity.label || formatHistoryLikeFlag(continuity.level || 'partial'),
+                focusToken !== 'all' ? `${focusToken} ${tokenEvents.length}` : '',
+                topCluster ? `${formatHistoryLikeFlag(topCluster.kind)} ${topCluster.count}` : '',
+                routeComparison.active ? `${routeComparison.sharedCount || 0} shared events` : `${routeSet.size} routes`,
+                highGap ? highGap.severity : 'staged only'
+            ].filter(Boolean),
+            deterministic: true,
+            metadataDerivedOnly: true,
+            previewOnly: true,
+            stagedHistoryOnly: true
+        };
+    }
+
     function eventTouchesContext(event = {}, route = '', token = 'all', wallets = new Set()) {
         const eventRoute = getRouteKey(event);
         const eventToken = normalizeTokenFilter(event.token || event.symbol || event.token_mint);
@@ -2032,6 +2137,7 @@
         deriveReplayContinuityProfile,
         deriveReplayClusters,
         deriveReplayNeighborhood,
+        deriveReplayIntelligence,
         normalizeReplayGapMap,
         normalizeReplayContinuityProfile,
         buildReplayCheckpoint,

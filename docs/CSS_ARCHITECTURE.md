@@ -75,6 +75,14 @@ D161-D168 analyst OS, readability, timeline, overlay, and scalability evolution 
 - Readability budgets, semantic edge fading, corridor suppression, node prominence, label queues, graph timeline models, investigation workflow state, analyst overlay derivation, semantic intelligence summaries, render queues, animation budgets, memory budgets, and progressive hydration prep are JavaScript-owned.
 - CSS must react only to stable classes/attributes such as `.graph-layer-action.is-active`, `.graph-timeline-rail`, `.graph-investigation-rail`, `.has-readability-suppression`, `.crypto-replay-graph-chronology`, and mobile product scopes. CSS must not encode relationship truth, source authority, overlay membership, route priority, persistence guarantees, or backend assumptions.
 
+D169-D178 institutional spatial OS, topology, multi-workspace, replay intelligence, and performance hardening preserve the same split:
+
+- Stock topology HUD chips, topology intelligence cards, graph workspace tabs, workspace memory refinements, fullscreen graph immersion, and topology-aware graph chrome live in `graph.css`.
+- Crypto replay intelligence convergence panels and replay market chronology readouts live in `crypto.css`.
+- Mobile graph OS refinements for touch-first workspace tabs, adaptive HUD scrolling, replay intelligence compression, graph timeline ergonomics, and fullscreen graph immersion live in `mobile.css`.
+- Spatial topology derivation, multi-workspace state, choreography pacing, overlay conflict suppression, graph-native command actions, replay intelligence summaries, semantic heuristics, route/topology weighting, overlay caches, topology caches, render budgets, and fullscreen performance budgets are JavaScript-owned.
+- CSS must not encode topology scores, overlay membership, replay anomaly meaning, source authority, persistence guarantees, browser ingestion behavior, or backend assumptions.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

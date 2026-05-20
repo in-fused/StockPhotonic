@@ -497,6 +497,40 @@
         };
     }
 
+    function getTopologyChoreography(context = {}, model = null, options = {}) {
+        const semantic = options.semantic || context.semanticZoomState || context.semanticZoom || {};
+        const density = options.density || context.graphScalingModel?.density || {};
+        const tierRank = Number(semantic.tierRank ?? (semantic.tier === 'macro' ? 0 : semantic.tier === 'cluster' ? 1 : 2));
+        const pressure = Number(model?.corridorPressures?.[0]?.pressure) || 0;
+        const imbalance = Number(model?.semanticSummary?.imbalance) || 0;
+        const routeActive = Boolean(context.activeRouteComparison || context.activeRelationshipRoute);
+        const compact = isCompactCanvas(context);
+        const time = Number(options.now) || getNow();
+        const breathingRate = density.key === 'mega' ? 0.00145 : density.key === 'very_dense' ? 0.00165 : 0.0019;
+        const breathing = 1 + Math.sin(time * breathingRate) * (routeActive ? 0.018 : 0.012);
+        const revealPacing = tierRank <= 0
+            ? 'macro-topology'
+            : tierRank === 1
+                ? 'cluster-corridor'
+                : routeActive
+                    ? 'route-investigation'
+                    : 'relationship-detail';
+
+        return {
+            version: 'd171_graph_choreography_topology_v1',
+            revealPacing,
+            breathing,
+            fieldAlphaMultiplier: clamp(0.84 + pressure * 0.32 + imbalance * 0.18, 0.78, routeActive ? 1.16 : 1.08),
+            fieldRadiusMultiplier: clamp(breathing * (compact ? 0.92 : 1), 0.88, 1.08),
+            corridorTraversalMs: Math.round((density.key === 'mega' ? 920 : 760) * (routeActive ? 0.86 : 1)),
+            routeRevealChunkSize: density.key === 'mega' ? 10 : density.key === 'very_dense' ? 14 : 20,
+            cameraStage: routeActive ? 'route-corridor' : pressure > 0.62 ? 'pressure-corridor' : 'market-topology',
+            semanticTier: semantic.tier || 'relationship',
+            intentional: true,
+            perFrameScan: false
+        };
+    }
+
     function isMotionSettled() {
         return stockMotionState.offsets.size === 0;
     }
@@ -567,6 +601,7 @@
         getStockMotionProfile,
         getCinematicViewDuration,
         getFocusChoreography,
+        getTopologyChoreography,
         getCorridorMeta,
         easeOutCubic,
         isMotionSettled

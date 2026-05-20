@@ -1255,6 +1255,103 @@
             color: rgba(236, 254, 255, 0.82);
         }
 
+.crypto-replay-intelligence-panel {
+            margin-top: 0.72rem;
+            border: 1px solid rgba(103, 232, 249, 0.15);
+            border-radius: 0.55rem;
+            background:
+                linear-gradient(145deg, rgba(34, 211, 238, 0.08), rgba(240, 171, 252, 0.045)),
+                rgba(15, 23, 42, 0.28);
+            padding: 0.62rem;
+        }
+
+.crypto-replay-intelligence-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+            color: rgba(165, 243, 252, 0.72);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+.crypto-replay-intelligence-head strong {
+            min-width: 0;
+            color: rgba(255, 255, 255, 0.86);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-transform: none;
+        }
+
+.crypto-replay-intelligence-copy {
+            margin-top: 0.42rem;
+            color: rgba(226, 232, 240, 0.58);
+            font-size: 0.64rem;
+            line-height: 1.36;
+        }
+
+.crypto-replay-intelligence-metrics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.32rem;
+            margin-top: 0.52rem;
+        }
+
+.crypto-replay-intelligence-metrics span {
+            min-width: 0;
+            border: 1px solid rgba(255, 255, 255, 0.075);
+            border-radius: 0.42rem;
+            background: rgba(255, 255, 255, 0.035);
+            padding: 0.34rem 0.38rem;
+            text-align: center;
+        }
+
+.crypto-replay-intelligence-metrics strong,
+.crypto-replay-intelligence-metrics small {
+            display: block;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.crypto-replay-intelligence-metrics strong {
+            color: rgba(255, 255, 255, 0.9);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.65rem;
+        }
+
+.crypto-replay-intelligence-metrics small {
+            margin-top: 0.12rem;
+            color: rgba(203, 213, 225, 0.45);
+            font-size: 0.5rem;
+            text-transform: uppercase;
+        }
+
+.crypto-replay-intelligence-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.28rem;
+            margin-top: 0.46rem;
+        }
+
+.crypto-replay-intelligence-chips span {
+            max-width: 100%;
+            border: 1px solid rgba(103, 232, 249, 0.13);
+            border-radius: 999px;
+            background: rgba(8, 145, 178, 0.08);
+            color: rgba(207, 250, 254, 0.68);
+            padding: 0.24rem 0.38rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.54rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
 .crypto-replay-gap-chip-row {
             display: flex;
             gap: 0.3rem;

@@ -1008,6 +1008,12 @@ body.graph-fullscreen-active > header {
             max-width: min(44rem, calc(100vw - 29rem));
         }
 
+#graph-intelligence-view.is-graph-fullscreen .graph-workspace-tabs button {
+            min-height: 1.9rem;
+            border-color: rgba(103, 232, 249, 0.18);
+            background: rgba(2, 6, 23, 0.58);
+        }
+
 #graph-intelligence-view.is-graph-fullscreen .graph-timeline-track {
             max-width: min(64rem, calc(100vw - 28rem));
         }
@@ -1293,6 +1299,74 @@ body.graph-fullscreen-active > header {
 
 .graph-workspace-memory.hidden {
             display: none !important;
+        }
+
+.graph-workspace-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0.32rem;
+            margin-bottom: 0.36rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+        }
+
+.graph-workspace-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+.graph-workspace-tabs button {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+            min-width: 2rem;
+            max-width: 8.8rem;
+            min-height: 1.75rem;
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            border-radius: 6px;
+            background: rgba(15, 23, 42, 0.42);
+            color: rgba(226, 232, 240, 0.7);
+            padding: 0.28rem 0.42rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.56rem;
+            line-height: 1;
+        }
+
+.graph-workspace-tabs button span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+.graph-workspace-tabs button small {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.05rem;
+            height: 1.05rem;
+            border-radius: 999px;
+            background: rgba(103, 232, 249, 0.12);
+            color: rgba(207, 250, 254, 0.78);
+            font-size: 0.5rem;
+        }
+
+.graph-workspace-tabs button:hover,
+.graph-workspace-tabs button:focus-visible,
+.graph-workspace-tabs button.is-active,
+.graph-workspace-tabs button[aria-selected="true"] {
+            border-color: rgba(103, 232, 249, 0.36);
+            background: rgba(14, 165, 233, 0.14);
+            color: rgba(255, 255, 255, 0.92);
+            outline: none;
+        }
+
+.graph-workspace-tabs button.is-active small,
+.graph-workspace-tabs button[aria-selected="true"] small {
+            background: rgba(34, 211, 238, 0.18);
+            color: #ffffff;
         }
 
 .graph-workspace-memory-head {

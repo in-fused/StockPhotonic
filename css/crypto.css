@@ -2903,3 +2903,147 @@ body.crypto-graph-fullscreen-active > header,
                 background: rgba(2, 6, 23, 0.72) !important;
             }
         }
+
+/* D229-D238 dense graph usability polish. State is driven by Crypto semantic UI, styling stays surface-only. */
+.crypto-mode-hud {
+            max-width: min(100%, 18rem);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-mode-hud {
+            min-height: 1.82rem;
+            padding: 0.36rem 0.5rem;
+            font-size: 0.6rem;
+            background: rgba(15, 23, 42, 0.68);
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-session-status-strip {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 0.24rem;
+            margin-top: 0.42rem;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-session-status-strip span {
+            border-radius: 6px;
+            padding: 0.32rem 0.36rem;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-session-status-strip small {
+            font-size: 0.48rem;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-session-status-strip strong {
+            margin-top: 0.14rem;
+            font-size: 0.56rem;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-workflow-handoff {
+            margin-top: 0.42rem;
+            padding-top: 0.4rem;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-workflow-handoff-head small {
+            display: none;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-workflow-handoff-actions,
+#crypto-photonic-view.is-crypto-density-compressed .crypto-replay-handoff {
+            display: flex;
+            gap: 0.26rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-workflow-handoff-actions::-webkit-scrollbar,
+#crypto-photonic-view.is-crypto-density-compressed .crypto-replay-handoff::-webkit-scrollbar {
+            display: none;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-workflow-handoff-actions button,
+#crypto-photonic-view.is-crypto-density-compressed .crypto-replay-handoff button {
+            flex: 0 0 6.6rem;
+            min-height: 2.08rem;
+            padding: 0.3rem 0.38rem;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-workflow-handoff-actions button small,
+#crypto-photonic-view.is-crypto-density-compressed .crypto-replay-handoff button small {
+            display: none;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-control-group {
+            padding: 0.58rem !important;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed .crypto-data-source-snapshot,
+#crypto-photonic-view.is-crypto-density-compressed .crypto-wallet-status-line {
+            max-height: 2.7rem;
+            overflow: hidden;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen.is-crypto-density-compressed .crypto-panel {
+            height: calc(100dvh - 6.2rem);
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen.is-crypto-density-compressed .crypto-layout-grid {
+            grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+            gap: 0.75rem;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen.is-crypto-density-compressed .crypto-side-column {
+            max-height: calc(100dvh - 7rem);
+            overflow-y: auto;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen.is-crypto-density-compressed .crypto-status-stack .crypto-control-group:nth-child(n+3) {
+            max-height: 10.5rem;
+            overflow-y: auto;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen.is-crypto-density-compressed .crypto-session-status-strip {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-panel {
+            background: rgba(2, 6, 23, 0.84);
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-current-summary {
+            max-height: 3.3rem;
+            overflow: hidden;
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-continuity-panel,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-intelligence-panel,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-panel,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-lineage-panel {
+            padding: 0.48rem;
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-continuity-copy,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-intelligence-copy {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-intelligence-metrics,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-summary-grid,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-grid {
+            gap: 0.24rem;
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-narrative-row:nth-child(n+5),
+#crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-zones span:nth-child(n+5),
+#crypto-photonic-view.is-replay-workspace .crypto-replay-lineage-group:nth-of-type(n+4) {
+            display: none;
+        }
+
+#crypto-photonic-view.is-crypto-density-compressed.is-replay-workspace .crypto-replay-narrative-row:nth-child(n+4),
+#crypto-photonic-view.is-crypto-density-compressed.is-replay-workspace .crypto-replay-corridor-zones span:nth-child(n+4),
+#crypto-photonic-view.is-crypto-density-compressed.is-replay-workspace .crypto-replay-lineage-group:nth-of-type(n+3) {
+            display: none;
+        }

@@ -1,5 +1,12 @@
 # Roadmap Notes
 
+## D229-D238 Institutional Surface Polish + Dense-Graph Usability Pass
+
+- Tightened StockPhotonic dense HUD surfaces with compact status, handoff, active legend, narrative, and route workspace overflow behavior driven by existing session graph state.
+- Added CryptoPhotonic dense semantic compaction for status strips, handoff cues, fullscreen side panels, and replay workspace narrative/corridor/lineage surfaces without changing replay data semantics.
+- Improved mobile fullscreen route and replay control placement with horizontal, graph-first control docks and compact command-palette spacing while preserving grouped, searchable commands and subtitles.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, or browser-side provider-call changes are part of D229-D238.
+
 ## D219-D228 Institutional Dual-Surface Workflow Refinement + Analyst Productivity Hardening
 
 - Refined the shared command palette with searchable command subtitles, grouped scan summaries, active mode/preset badges, and deterministic disabled-state reasons.

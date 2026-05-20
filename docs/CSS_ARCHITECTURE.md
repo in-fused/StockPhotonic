@@ -121,6 +121,13 @@ D219-D228 dual-surface workflow refinement keeps the same ownership:
 - Command subtitles, active preset labels, disabled-state reasons, workflow cue selection, replay corridor availability, and session-only boundaries remain JavaScript-owned.
 - CSS must not encode workflow intelligence, source authority, persistence guarantees, provider/API behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
 
+D229-D238 institutional surface polish keeps that split:
+
+- Stock dense HUD compaction continues to react to JavaScript-owned graph state such as `.is-density-compressed`; Stock status, legend, narrative, route workspace, and command-palette override rules live in `graph.css`.
+- Crypto dense HUD compaction reacts to `js/crypto/ui.js` adding `.is-crypto-density-compressed` from existing semantic zoom state; Crypto status, handoff, and replay workspace overflow rules live in `crypto.css`.
+- Mobile fullscreen route/replay dock placement and compact command-palette overrides live in `mobile.css`.
+- CSS must not encode workflow intelligence, source authority, persistence guarantees, provider/API behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

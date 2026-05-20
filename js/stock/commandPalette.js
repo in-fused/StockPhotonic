@@ -448,7 +448,7 @@
             return `
                 <div class="photonic-command-section-label">
                     <span>${escapeHtml(group)}</span>
-                    <small>${escapeHtml(`${groupCommands.length} ${groupCommands.length === 1 ? 'action' : 'actions'}${meta.summary ? ` / ${meta.summary}` : ''}`)}</small>
+                    <small>${escapeHtml(getGroupSummaryCopy(groupCommands.length, meta.summary))}</small>
                 </div>
                 ${groupCommands.map(entry => renderRow(entry.item, entry.index)).join('')}
             `;
@@ -510,7 +510,7 @@
             'mode-review': 'review',
             'mode-replay': 'replay'
         };
-        if (modeMap[item.id] && modeMap[item.id] === stockMode) return { label: 'Current mode', current: true };
+        if (modeMap[item.id] && modeMap[item.id] === stockMode) return { label: 'Current', current: true };
         if (item.id === 'fullscreen-stock' && document.body?.classList?.contains('graph-fullscreen-active')) return { label: 'Open', current: true };
         if (item.id === 'crypto-fullscreen' && cryptoState.fullscreen) return { label: 'Open', current: true };
 
@@ -526,7 +526,7 @@
             'preset-replay-investigation': 'replay_investigation'
         };
         if (stockPresetMap[item.id] && stockSnapshot.activePresetKey === stockPresetMap[item.id]) {
-            return { label: 'Active preset', current: true };
+            return { label: 'Active', current: true };
         }
 
         const cryptoPresetMap = {
@@ -536,7 +536,7 @@
             'crypto-preset-wallet-corridor': 'wallet_corridor_focus'
         };
         if (cryptoPresetMap[item.id] && cryptoState.activePresetKey === cryptoPresetMap[item.id]) {
-            return { label: 'Active preset', current: true };
+            return { label: 'Active', current: true };
         }
         if (item.id === 'crypto-replay' && cryptoState.historyPreview?.workspaceMode) return { label: 'Open', current: true };
         if (item.id.startsWith('crypto-')) return { label: cryptoMode === 'replay' ? 'Replay mode' : 'Crypto' };
@@ -600,8 +600,13 @@
     function updatePaletteCopy() {
         const hint = document.querySelector('#photonic-command-palette .photonic-command-hint');
         if (hint) {
-            hint.textContent = 'Search graph commands by task, mode, preset, route, corridor, replay state, or workflow handoff.';
+            hint.textContent = 'Search tasks, modes, presets, routes, replay states, and handoffs.';
         }
+    }
+
+    function getGroupSummaryCopy(count, summary = '') {
+        const countCopy = `${count} ${count === 1 ? 'action' : 'actions'}`;
+        return summary ? `${countCopy} - ${summary}` : countCopy;
     }
 
     function getPalette() {

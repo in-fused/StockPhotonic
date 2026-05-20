@@ -2861,3 +2861,213 @@ body.graph-fullscreen-active > header {
 .photonic-command-row-status.is-disabled {
             color: rgba(248, 113, 113, 0.76);
         }
+
+/* D229-D238 institutional surface polish: dense HUD compaction without changing graph intelligence ownership. */
+.photonic-command-panel {
+            max-height: min(78dvh, 42rem);
+        }
+
+.photonic-command-topline {
+            padding: 0.68rem 0.78rem;
+        }
+
+.photonic-command-hint {
+            font-size: 0.72rem;
+            line-height: 1.25;
+        }
+
+.photonic-command-input-wrap {
+            margin: 0.55rem 0.68rem;
+            padding: 0.5rem 0.62rem;
+        }
+
+.photonic-command-input-wrap input {
+            font-size: 0.9rem;
+        }
+
+.photonic-command-results {
+            gap: 0.18rem;
+            max-height: min(54vh, 31rem);
+            padding: 0 0.68rem 0.68rem;
+        }
+
+.photonic-command-section-label {
+            margin: 0.34rem 0 0.12rem;
+            font-size: 0.54rem;
+        }
+
+.photonic-command-section-label small {
+            max-width: min(64%, 25rem);
+            font-size: 0.5rem;
+        }
+
+.photonic-command-row,
+.photonic-command-empty {
+            min-height: 2.24rem;
+            gap: 0.62rem;
+            padding: 0.42rem 0.52rem;
+        }
+
+.photonic-command-row-main {
+            gap: 0.08rem;
+        }
+
+.photonic-command-row-subtitle {
+            font-size: 0.66rem;
+            line-height: 1.15;
+        }
+
+.photonic-command-row-status {
+            max-width: 9rem;
+            padding: 0.18rem 0.34rem;
+            font-size: 0.58rem;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-adaptive-hud {
+            max-width: min(36rem, calc(100% - 25rem));
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-adaptive-hud-strip {
+            gap: 0.22rem;
+            padding: 0.24rem;
+            background: rgba(2, 6, 23, 0.76);
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-adaptive-hud-strip span,
+#graph-intelligence-view.is-density-compressed .graph-adaptive-hud-strip button {
+            min-height: 1.7rem;
+            padding: 0.3rem 0.38rem;
+            font-size: 0.54rem;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-adaptive-hud-strip button {
+            width: 1.7rem;
+            padding: 0;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-adaptive-hud-strip span:nth-of-type(n+5) {
+            display: none;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-os-status-panel {
+            width: min(18.25rem, calc(100% - 2rem));
+            max-height: min(34%, 14rem);
+            padding: 0.44rem;
+            background: rgba(2, 6, 23, 0.82);
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-os-status-grid,
+#graph-intelligence-view.is-density-compressed .graph-os-readability-grid {
+            gap: 0.24rem;
+            margin-top: 0.34rem;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-os-status-grid span,
+#graph-intelligence-view.is-density-compressed .graph-os-readability-grid span,
+#graph-intelligence-view.is-density-compressed .graph-os-count-strip span,
+#graph-intelligence-view.is-density-compressed .graph-workspace-counts span {
+            padding: 0.3rem 0.34rem;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-os-status-grid span:nth-child(n+7),
+#graph-intelligence-view.is-density-compressed .graph-os-summary-section,
+#graph-intelligence-view.is-density-compressed .graph-os-presets {
+            display: none;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-workflow-handoff {
+            margin-top: 0.36rem;
+            padding-top: 0.36rem;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-workflow-handoff-actions {
+            display: flex;
+            gap: 0.24rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: none;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-workflow-handoff-actions::-webkit-scrollbar {
+            display: none;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-workflow-handoff-actions button {
+            flex: 0 0 6.2rem;
+            min-height: 2.05rem;
+            padding: 0.28rem 0.34rem;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-workflow-handoff-actions button small {
+            display: none;
+        }
+
+#graph-intelligence-view.is-density-compressed #graph-os-status-panel:not(.is-empty) ~ .graph-active-legend {
+            display: none;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-active-legend {
+            width: min(16.5rem, calc(100% - 2rem));
+            max-height: min(12rem, calc(100% - 5rem));
+            padding: 0.48rem;
+            overflow-y: auto;
+            background: rgba(2, 6, 23, 0.8);
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-active-legend-grid {
+            gap: 0.26rem;
+            margin-top: 0.4rem;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-active-legend-item {
+            padding: 0.32rem 0.36rem;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-active-legend-item:nth-child(n+7),
+#graph-intelligence-view.is-density-compressed .graph-active-legend-swatches span:nth-child(n+5) {
+            display: none;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-investigation-narrative {
+            width: min(17rem, calc(100% - 24rem));
+            max-height: 6.8rem;
+            padding: 0.46rem;
+            background: rgba(2, 6, 23, 0.78);
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-investigation-narrative-copy {
+            -webkit-line-clamp: 1;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-investigation-narrative-why,
+#graph-intelligence-view.is-density-compressed .graph-reasoning-chips.is-reasoning,
+#graph-intelligence-view.is-density-compressed .graph-investigation-narrative .graph-investigation-lineage {
+            display: none;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-route-workspace {
+            width: min(18.5rem, calc(100% - 14rem));
+            max-height: min(34%, 12rem);
+            padding: 0.48rem;
+            overflow: hidden;
+            background: rgba(2, 6, 23, 0.82);
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-route-workspace-metrics,
+#graph-intelligence-view.is-density-compressed .graph-route-workspace-copy,
+#graph-intelligence-view.is-density-compressed .graph-route-workspace-route em {
+            display: none;
+        }
+
+#graph-intelligence-view.is-density-compressed .graph-route-lineage span:nth-child(n+3) {
+            display: none;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-density-compressed .graph-os-status-panel {
+            max-height: min(28dvh, 12rem);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen.is-density-compressed .graph-investigation-narrative {
+            top: min(32vh, 17rem);
+            max-height: 5.8rem;
+        }

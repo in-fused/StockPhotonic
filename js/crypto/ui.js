@@ -7686,12 +7686,17 @@
     function syncCryptoSemanticUi() {
         const semantic = state.semanticZoom;
         if (!semantic) return;
+        const compressedDensity = ['dense', 'very_dense', 'mega'].includes(String(semantic.densityKey || ''))
+            || semantic.tier === 'macro'
+            || semantic.tier === 'cluster';
+        state.root?.classList?.toggle('is-crypto-density-compressed', compressedDensity);
+        const wrap = state.canvas?.parentElement;
+        wrap?.classList?.toggle('is-crypto-density-compressed', compressedDensity);
         const key = `${semantic.tier}|${semantic.mode}|${semantic.densityKey}`;
         if (state.lastSemanticUiKey === key) return;
         state.lastSemanticUiKey = key;
         state.root?.dataset && (state.root.dataset.semanticZoomTier = semantic.tier);
         state.root?.dataset && (state.root.dataset.semanticDensity = semantic.densityKey || '');
-        const wrap = state.canvas?.parentElement;
         if (wrap?.dataset) {
             wrap.dataset.semanticZoomTier = semantic.tier;
             wrap.dataset.semanticDensity = semantic.densityKey || '';

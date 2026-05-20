@@ -1818,3 +1818,182 @@
                 display: none;
             }
         }
+
+/* D229-D238 mobile dense-graph usability pass. */
+@media (max-width: 768px) {
+            .photonic-command-topline {
+                padding: 0.58rem 0.62rem;
+            }
+
+            .photonic-command-title {
+                font-size: 0.95rem;
+            }
+
+            .photonic-command-hint {
+                font-size: 0.68rem;
+                line-height: 1.22;
+            }
+
+            .photonic-command-input-wrap {
+                margin: 0.45rem 0.56rem;
+                padding: 0.46rem 0.52rem;
+            }
+
+            .photonic-command-results {
+                gap: 0.14rem;
+                max-height: min(60dvh, 30rem);
+                padding: 0 0.56rem 0.56rem;
+            }
+
+            .photonic-command-section-label {
+                gap: 0.42rem;
+            }
+
+            .photonic-command-section-label small {
+                max-width: 54vw;
+            }
+
+            .photonic-command-row {
+                align-items: center;
+                min-height: 2.12rem;
+                padding: 0.36rem 0.42rem;
+            }
+
+            .photonic-command-row-subtitle {
+                font-size: 0.62rem;
+            }
+
+            .photonic-command-row-status {
+                flex: 0 1 6.8rem;
+                max-width: 6.8rem;
+                white-space: nowrap;
+                line-height: 1;
+            }
+
+            #graph-intelligence-view.is-density-compressed .graph-os-status-panel {
+                max-height: min(24dvh, 10.8rem);
+            }
+
+            #graph-intelligence-view.is-density-compressed .graph-os-status-grid span:nth-child(n+5) {
+                display: none;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen.is-density-compressed .graph-investigation-narrative {
+                display: none;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .stock-mobile-graph-overlay {
+                left: max(0.55rem, env(safe-area-inset-left));
+                right: max(0.55rem, env(safe-area-inset-right));
+                bottom: calc(0.55rem + env(safe-area-inset-bottom)) !important;
+                align-items: center;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .stock-mobile-graph-overlay .mobile-graph-hint {
+                display: none;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .stock-mobile-graph-overlay .mobile-graph-actions {
+                width: 100%;
+                max-width: none;
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: 0.3rem;
+                border: 1px solid rgba(125, 211, 252, 0.16);
+                border-radius: 999px;
+                background: rgba(2, 6, 23, 0.78);
+                padding: 0.26rem;
+                scrollbar-width: none;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .stock-mobile-graph-overlay .mobile-graph-actions::-webkit-scrollbar {
+                display: none;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .stock-mobile-graph-overlay .mobile-graph-action {
+                flex: 0 0 2.45rem;
+                min-width: 2.45rem;
+                min-height: 2.45rem;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .graph-route-workspace {
+                bottom: calc(4.4rem + env(safe-area-inset-bottom));
+                max-height: min(22dvh, 10rem);
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-graph-overlay,
+            #crypto-photonic-view.is-replay-workspace .crypto-mobile-graph-overlay {
+                top: calc(0.55rem + env(safe-area-inset-top));
+                bottom: auto !important;
+                left: max(0.55rem, env(safe-area-inset-left));
+                right: max(0.55rem, env(safe-area-inset-right));
+                align-items: center;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-graph-overlay .mobile-graph-hint,
+            #crypto-photonic-view.is-replay-workspace .crypto-mobile-graph-overlay .mobile-graph-hint {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-graph-overlay .mobile-graph-actions,
+            #crypto-photonic-view.is-replay-workspace .crypto-mobile-graph-overlay .mobile-graph-actions {
+                width: 100%;
+                max-width: none;
+                margin-left: 0;
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: 0.3rem;
+                border: 1px solid rgba(45, 212, 191, 0.16);
+                border-radius: 999px;
+                background: rgba(2, 6, 23, 0.78);
+                padding: 0.26rem;
+                scrollbar-width: none;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-graph-overlay .mobile-graph-actions::-webkit-scrollbar,
+            #crypto-photonic-view.is-replay-workspace .crypto-mobile-graph-overlay .mobile-graph-actions::-webkit-scrollbar {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-mobile-graph-overlay .mobile-graph-action,
+            #crypto-photonic-view.is-replay-workspace .crypto-mobile-graph-overlay .mobile-graph-action {
+                flex: 0 0 2.45rem;
+                min-width: 2.45rem;
+                min-height: 2.45rem;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-interaction-dock {
+                display: none;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-overlay {
+                padding-top: calc(3.85rem + env(safe-area-inset-top));
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-toolbar {
+                max-height: min(28dvh, 13rem);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-event {
+                max-height: min(31dvh, 14rem);
+            }
+        }
+
+@media (max-width: 480px) {
+            .photonic-command-row {
+                gap: 0.42rem;
+            }
+
+            .photonic-command-row-status {
+                max-width: 5.8rem;
+                font-size: 0.54rem;
+            }
+
+            .photonic-command-section-label small {
+                max-width: 48vw;
+            }
+        }

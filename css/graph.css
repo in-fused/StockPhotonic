@@ -3401,3 +3401,54 @@ body[data-stock-ux-mode="replay"] .stock-primary-action-rail [data-primary-mode=
 .interaction-overflow-menu .interaction-dock-split {
             border-radius: 8px;
         }
+
+/* D269-D278 visual QA cleanup: keep preserved Stock graph chrome mode-owned and non-competing. */
+body[data-stock-ux-mode="analyst"] #graph-intelligence-view:not(.is-investigation-active) #graph-os-status-panel,
+body[data-stock-ux-mode="analyst"] #graph-intelligence-view.is-route-workspace-compact #graph-os-status-panel {
+            display: none !important;
+        }
+
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-os-status-panel,
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-investigation-narrative,
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-workspace-memory,
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-investigation-rail,
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-route-workspace,
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-intelligence-card,
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-active-legend,
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-overlay-stats {
+            display: none !important;
+        }
+
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-spatial-breadcrumbs,
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-minimap-canvas,
+.graph-first-os #graph-intelligence-view.is-inspector-open #graph-minimap-toggle,
+.graph-first-os #graph-intelligence-view.is-inspector-open #sec-production-legend {
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+body[data-stock-ux-mode="explore"] .stock-primary-action-rail {
+            margin-bottom: 0.65rem;
+        }
+
+body[data-stock-ux-mode="explore"] .stock-interaction-dock {
+            margin-bottom: 0.65rem;
+        }
+
+body[data-stock-ux-mode="explore"] .stock-interaction-dock .interaction-dock-label {
+            display: none;
+        }
+
+body[data-stock-ux-mode="explore"] .stock-secondary-actions > summary {
+            min-height: 2.24rem;
+            padding: 0.46rem 0.62rem;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen:not(.is-hud-hidden) #graph-os-status-panel,
+#graph-intelligence-view.is-graph-fullscreen:not(.is-hud-hidden) #graph-investigation-narrative,
+#graph-intelligence-view.is-graph-fullscreen:not(.is-hud-hidden) #graph-active-legend,
+#graph-intelligence-view.is-graph-fullscreen:not(.is-hud-hidden) #graph-route-workspace {
+            max-height: min(18dvh, 9.5rem);
+            overflow: hidden;
+        }

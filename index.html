@@ -143,7 +143,7 @@
                 <div class="graph-os-actions" role="group" aria-label="Graph quick actions">
                     <button type="button" class="graph-os-action" onclick="openPhotonicCommandPalette()" title="Open command palette" aria-label="Open command palette"><i class="fa-solid fa-terminal"></i><span>Command</span></button>
                     <button type="button" class="graph-os-action" data-toggle-graph-controls onclick="toggleGraphControlDrawer()" aria-pressed="false" title="Open progressive graph controls" aria-label="Open progressive graph controls"><i class="fa-solid fa-sliders"></i><span>Controls</span></button>
-                    <button type="button" class="graph-os-action" data-toggle-stock-inspector onclick="toggleStockInspector()" aria-pressed="false" title="Open contextual inspector" aria-label="Open contextual inspector"><i class="fa-solid fa-sidebar"></i><span>Inspector</span></button>
+                    <button type="button" class="graph-os-action" data-toggle-stock-inspector onclick="toggleStockInspector()" aria-pressed="false" title="Open contextual inspector" aria-label="Open contextual inspector"><i class="fa-solid fa-table-columns"></i><span>Inspector</span></button>
                 </div>
             </div>
 
@@ -474,7 +474,7 @@
                             <button type="button" onclick="toggleFocusMode()" title="Toggle Focus Mode" aria-label="Toggle Focus Mode"><i class="fa-solid fa-bullseye"></i></button>
                             <button type="button" onclick="openPhotonicCommandPalette()" title="Open command palette" aria-label="Open command palette"><i class="fa-solid fa-terminal"></i></button>
                             <button type="button" data-toggle-graph-controls onclick="toggleGraphControlDrawer()" aria-pressed="false" title="Open graph controls" aria-label="Open graph controls"><i class="fa-solid fa-sliders"></i></button>
-                            <button type="button" data-toggle-stock-inspector onclick="toggleStockInspector()" aria-pressed="false" title="Open contextual inspector" aria-label="Open contextual inspector"><i class="fa-solid fa-sidebar"></i></button>
+                            <button type="button" data-toggle-stock-inspector onclick="toggleStockInspector()" aria-pressed="false" title="Open contextual inspector" aria-label="Open contextual inspector"><i class="fa-solid fa-table-columns"></i></button>
                         </div>
                         <div id="graph-mode-hud" class="graph-mode-hud" aria-live="polite">Explore Mode</div>
                         <div id="graph-adaptive-hud" class="graph-adaptive-hud" aria-live="polite"></div>
@@ -1195,7 +1195,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
                 <div class="graph-os-actions" role="group" aria-label="Crypto quick actions">
                     <button type="button" class="graph-os-action" onclick="openPhotonicCommandPalette()" title="Open command palette" aria-label="Open command palette"><i class="fa-solid fa-terminal"></i><span>Command</span></button>
-                    <button type="button" class="graph-os-action" data-toggle-crypto-inspector onclick="toggleCryptoInspector()" aria-pressed="false" title="Open Crypto inspector" aria-label="Open Crypto inspector"><i class="fa-solid fa-sidebar"></i><span>Inspector</span></button>
+                    <button type="button" class="graph-os-action" data-toggle-crypto-inspector onclick="toggleCryptoInspector()" aria-pressed="false" title="Open Crypto inspector" aria-label="Open Crypto inspector"><i class="fa-solid fa-table-columns"></i><span>Inspector</span></button>
                     <div id="crypto-mode-hud" class="crypto-mode-hud" aria-live="polite">Flow Mode</div>
                 </div>
             </div>
@@ -1204,12 +1204,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 <article class="mode-primary-action" data-primary-mode="flow">
                     <div>
                         <div class="mode-primary-kicker">Flow Primary Action</div>
-                        <h2>Inspect wallet or flow</h2>
-                        <p>Keep the graph first, then open the selected wallet or transfer detail only when needed.</p>
+                        <h2>Select a wallet or flow</h2>
+                        <p>Keep the graph first; details open after a wallet or transfer is selected.</p>
                     </div>
                     <button type="button" onclick="runCryptoPrimaryAction('flow')" class="mode-primary-button">
                         <i class="fa-solid fa-wave-square"></i>
-                        <span>Inspect Flow</span>
+                        <span>Center Graph</span>
                     </button>
                 </article>
                 <article class="mode-primary-action" data-primary-mode="analyst">
@@ -1252,7 +1252,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">LOCAL GRAPH WORKSPACE</div>
                     <div class="text-sm text-white/50 mt-1">Reviewed fixture data under <span class="font-mono text-cyan-50/78">data/crypto/</span></div>
                 </div>
-                <div class="crypto-workspace-boundary-note" title="CryptoPhotonic browser code never calls Solana providers directly; Worker responses are sanitized before graphing.">Source boundary is visible in Review mode and the inspector.</div>
+                <div class="crypto-workspace-boundary-note" title="CryptoPhotonic browser code never calls Solana providers directly; Worker responses are sanitized before graphing.">No browser provider calls</div>
                 <button id="crypto-fullscreen-toggle" type="button" class="focus-button px-4 py-2 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Expand the Crypto graph canvas for fullscreen investigation" aria-pressed="false">
                     <i class="fa-solid fa-expand"></i>
                     <span>Expand Graph</span>
@@ -1324,7 +1324,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                             <button type="button" onclick="window.CryptoPhotonic?.ui?.centerTrackedWallet?.()" title="Center tracked wallet" aria-label="Center tracked wallet"><i class="fa-solid fa-crosshairs"></i></button>
                             <button type="button" onclick="window.CryptoPhotonic?.ui?.cycleLabelDensity?.()" title="Cycle label density" aria-label="Cycle label density"><i class="fa-solid fa-tags"></i></button>
                             <button type="button" onclick="openPhotonicCommandPalette()" title="Open command palette" aria-label="Open command palette"><i class="fa-solid fa-terminal"></i></button>
-                            <button type="button" data-toggle-crypto-inspector onclick="toggleCryptoInspector()" aria-pressed="false" title="Open Crypto inspector" aria-label="Open Crypto inspector"><i class="fa-solid fa-sidebar"></i></button>
+                            <button type="button" data-toggle-crypto-inspector onclick="toggleCryptoInspector()" aria-pressed="false" title="Open Crypto inspector" aria-label="Open Crypto inspector"><i class="fa-solid fa-table-columns"></i></button>
                         </div>
                         <div id="crypto-replay-workspace-overlay" class="crypto-replay-workspace-overlay" aria-live="polite"></div>
                         <div id="crypto-graph-hover-overlay" class="crypto-graph-hover-overlay" aria-hidden="true"></div>
@@ -6660,7 +6660,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     <button type="button" onclick="pinSelectedHub()" ${hubActive ? '' : 'disabled'} title="Pin selected hub" aria-label="Pin selected hub"><i class="fa-solid fa-thumbtack"></i></button>
                     <button type="button" onclick="queueCurrentInvestigation()" title="Queue current investigation" aria-label="Queue current investigation"><i class="fa-solid fa-list-check"></i></button>
                     <button type="button" onclick="captureCurrentGraphSnapshot()" title="Save session graph snapshot" aria-label="Save session graph snapshot"><i class="fa-regular fa-bookmark"></i></button>
-                    <button type="button" onclick="toggleStockInspector()" title="Toggle inspector" aria-label="Toggle inspector"><i class="fa-solid fa-sidebar"></i></button>
+                    <button type="button" onclick="toggleStockInspector()" title="Toggle inspector" aria-label="Toggle inspector"><i class="fa-solid fa-table-columns"></i></button>
                     <button type="button" onclick="toggleGraphControlDrawer()" title="Toggle graph controls" aria-label="Toggle graph controls"><i class="fa-solid fa-sliders"></i></button>
                 </div>
             `;

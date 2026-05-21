@@ -2153,3 +2153,47 @@
                 display: none !important;
             }
         }
+
+/* D269-D278 mobile visual QA: keep one bottom strip and suppress route/replay chips while drawers own context. */
+@media (max-width: 768px) {
+            body[data-stock-ux-mode="explore"] .stock-mobile-graph-overlay,
+            body[data-crypto-ux-mode="flow"] .crypto-mobile-graph-overlay,
+            .graph-first-os #graph-intelligence-view.is-inspector-open .stock-mobile-graph-overlay,
+            #crypto-photonic-view.is-crypto-inspector-open .crypto-mobile-graph-overlay {
+                display: none !important;
+            }
+
+            body[data-crypto-ux-mode="flow"] #crypto-photonic-view:not(.is-crypto-inspector-requested):not(.has-mobile-drawer-context) .crypto-mobile-investigation-drawer {
+                display: none !important;
+            }
+
+            body[data-crypto-ux-mode="flow"] #crypto-photonic-view.is-crypto-inspector-requested .crypto-contextual-inspector {
+                display: none !important;
+            }
+
+            .stock-mobile-graph-overlay .mobile-graph-actions,
+            .crypto-mobile-graph-overlay .mobile-graph-actions {
+                flex-wrap: nowrap;
+                max-width: min(100%, 18rem);
+                overflow-x: auto;
+                overflow-y: hidden;
+                scrollbar-width: none;
+            }
+
+            .stock-mobile-graph-overlay .mobile-graph-actions::-webkit-scrollbar,
+            .crypto-mobile-graph-overlay .mobile-graph-actions::-webkit-scrollbar {
+                display: none;
+            }
+
+            .graph-first-os #graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore,
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle {
+                min-width: 2.48rem;
+                min-height: 2.48rem;
+                padding: 0;
+            }
+
+            .graph-first-os #graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore span,
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle span {
+                display: none;
+            }
+        }

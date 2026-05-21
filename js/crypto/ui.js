@@ -368,6 +368,18 @@
             setFullscreen(!state.fullscreen);
         });
         document.addEventListener('click', event => {
+            if (event.target.closest?.('[data-toggle-crypto-inspector]')) {
+                const requested = !state.root?.classList.contains('is-crypto-inspector-requested');
+                setCryptoInspectorRequested(requested);
+                window.setTimeout(() => window.toggleCryptoInspector?.(requested), 0);
+                return;
+            }
+            if (event.target.closest?.('.crypto-inspector-header .contextual-inspector-close')) {
+                setCryptoInspectorRequested(false);
+                window.setTimeout(() => window.toggleCryptoInspector?.(false), 0);
+            }
+        });
+        document.addEventListener('click', event => {
             if (!event.target.closest?.('button[data-crypto-ux-mode]')) return;
             window.setTimeout(() => {
                 renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -1761,7 +1773,7 @@
                 {
                     label: hasSelection ? 'Open Detail' : 'Select Item',
                     detail: hasSelection ? 'Selected object context' : 'Wallet or flow first',
-                    icon: 'fa-sidebar',
+                    icon: 'fa-table-columns',
                     statusAction: 'open-details',
                     disabled: !hasSelection,
                     title: hasSelection ? 'Open the selected object in the inspector.' : 'Select a wallet or flow before opening details.'
@@ -2312,7 +2324,7 @@
         const emptyState = getWalletLookupEmptyStateDetails(intelligence);
         const depthNote = getWalletDepthExpansionNote();
         return `
-            <details class="crypto-collapse crypto-intelligence-collapse" open>
+            <details class="crypto-collapse crypto-intelligence-collapse">
                 <summary>
                     <span>Wallet Intelligence</span>
                     <span>${escapeHtml(intelligence.visibleLegs)} visible legs</span>
@@ -2743,12 +2755,14 @@
 
     function setMobileDrawerState(nextState, options = {}) {
         state.mobileDrawerState = normalizeMobileDrawerState(nextState);
+        state.root?.classList.toggle('has-mobile-drawer-context', state.mobileDrawerState !== 'collapsed');
         if (!options.skipRender) renderMobileInvestigationDrawer();
         return state.mobileDrawerState;
     }
 
     function openMobileDrawerForSelection(preferredState = 'half') {
         if (!isMobileViewport()) return;
+        state.root?.classList.add('has-mobile-drawer-context');
         setMobileDrawerState(preferredState, { skipRender: true });
     }
 
@@ -8267,18 +8281,22 @@
         }
 
         if (nextMode === 'flow') {
+            setCryptoInspectorRequested(hasSelection);
             setInvestigationTab(hasSelection ? 'details' : 'summary');
             window.toggleCryptoInspector?.(hasSelection);
             if (!hasSelection) centerTrackedWallet();
         } else if (nextMode === 'analyst') {
+            setCryptoInspectorRequested(false);
             setFocusSelectionEnabled(true);
             setInvestigationTab(hasSelection ? 'details' : 'flows');
             window.toggleCryptoInspector?.(true);
             centerTrackedWallet();
         } else if (nextMode === 'review') {
+            setCryptoInspectorRequested(false);
             setInvestigationTab('summary');
             window.toggleCryptoInspector?.(true);
         } else {
+            setCryptoInspectorRequested(false);
             setInvestigationTab('replay');
             if (hasHistoryPreviewDataset()) {
                 clearCryptoPrimaryActionNotice();
@@ -8298,7 +8316,6 @@
             renderDetails();
             updateInteractionDock();
         }
-        if (nextMode === 'review') openCryptoSourceDetails();
         renderMobileInvestigationDrawer();
         return true;
     }
@@ -8363,6 +8380,10 @@
     function normalizeLabelDensity(mode) {
         const key = String(mode || '').toLowerCase();
         return LABEL_DENSITY_MODES[key] ? key : 'balanced';
+    }
+
+    function setCryptoInspectorRequested(requested) {
+        state.root?.classList.toggle('is-crypto-inspector-requested', Boolean(requested));
     }
 
     function getLabelDensityMode() {

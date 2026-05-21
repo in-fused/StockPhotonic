@@ -3365,3 +3365,76 @@ body[data-crypto-ux-mode="replay"] .crypto-primary-action-rail [data-primary-mod
 body[data-crypto-ux-mode="review"] #crypto-photonic-view .crypto-workflow-handoff {
             display: block !important;
         }
+
+/* D269-D278 visual QA cleanup: source/replay chrome stays compact, disclosed, and mode-owned. */
+body[data-crypto-ux-mode="flow"] .crypto-workspace-boundary-note,
+body[data-crypto-ux-mode="analyst"] .crypto-workspace-boundary-note,
+body[data-crypto-ux-mode="replay"] .crypto-workspace-boundary-note {
+            display: inline-flex;
+        }
+
+.crypto-workspace-boundary-note {
+            min-height: 1.74rem;
+            max-width: min(100%, 16rem);
+            border-radius: 999px;
+            padding: 0.34rem 0.54rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+body[data-crypto-ux-mode="flow"] #crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-workspace-toolbar,
+body[data-crypto-ux-mode="analyst"] #crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-workspace-toolbar {
+            min-height: 0;
+            margin-bottom: 0.42rem !important;
+        }
+
+body[data-crypto-ux-mode="flow"] #crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-workspace-toolbar {
+            opacity: 0.86;
+        }
+
+body[data-crypto-ux-mode="flow"] #crypto-solana-status .crypto-workflow-handoff,
+body[data-crypto-ux-mode="flow"] #crypto-solana-status .crypto-data-source-snapshot > div:nth-child(n+3),
+body[data-crypto-ux-mode="flow"] #crypto-solana-status .crypto-session-status-strip span:nth-child(n+3) {
+            display: none !important;
+        }
+
+body[data-crypto-ux-mode="flow"] #crypto-solana-status .crypto-source-state-block {
+            gap: 0.35rem;
+        }
+
+body[data-crypto-ux-mode="flow"] #crypto-solana-status .crypto-source-state-head {
+            align-items: center;
+        }
+
+body[data-crypto-ux-mode="flow"] #crypto-solana-status .crypto-source-details,
+body[data-crypto-ux-mode="analyst"] #crypto-solana-status .crypto-source-details {
+            margin-top: 0.08rem;
+            padding-top: 0.32rem;
+        }
+
+body[data-crypto-ux-mode="flow"] #crypto-solana-status .crypto-source-details:not([open]) .crypto-source-details-body,
+body[data-crypto-ux-mode="analyst"] #crypto-solana-status .crypto-source-details:not([open]) .crypto-source-details-body,
+body[data-crypto-ux-mode="review"] #crypto-solana-status .crypto-source-details:not([open]) .crypto-source-details-body {
+            display: none;
+        }
+
+@media (min-width: 769px) {
+            body[data-crypto-ux-mode="flow"] #crypto-photonic-view.is-crypto-inspector-requested.is-crypto-inspector-open:not(.is-crypto-fullscreen):not(.is-replay-workspace) .crypto-contextual-inspector {
+                display: block !important;
+            }
+        }
+
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-replay-workspace-overlay,
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-replay-handoff,
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-replay-intelligence-panel,
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-replay-corridor-panel,
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-replay-lineage-panel,
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-replay-continuity-panel,
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-replay-graph-chronology {
+            display: none !important;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-boundary-note {
+            display: none !important;
+        }

@@ -150,6 +150,13 @@ D259-D268 functional integrity cleanup keeps ownership unchanged:
 - Mobile route/replay step visibility remains controlled by `mobile.css` so default mobile surfaces show only relevant step buttons and no duplicate graph control strip.
 - Control availability, Worker endpoint status, Wallet Lookup state, command-palette disabled reasons, and replay readiness remain JavaScript-owned. CSS must only style working, disabled, pending, or hidden states and must not encode backend/provider/API behavior, Worker implementation, SEC/source-pipeline behavior, persistence/auth/storage, or browser-side provider calls.
 
+D269-D278 visual QA cleanup keeps selectors in their existing owners:
+
+- Stock layout-collision suppression for inspector-open and mode-owned graph chrome lives in `graph.css`; it only hides preserved overlays when they compete for the same graph space.
+- Crypto source-boundary compacting, source-detail disclosure posture, and replay chrome suppression live in `crypto.css`; replay readiness and source state remain JavaScript-owned.
+- Mobile one-strip/one-drawer collision cleanup and fullscreen compact affordance rules live in `mobile.css`.
+- D269-D278 does not introduce backend/provider/API, browser-side provider-call, Worker, SEC/source-pipeline, persistence/auth/storage, or production-data CSS assumptions.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

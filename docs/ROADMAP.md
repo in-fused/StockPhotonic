@@ -1,5 +1,12 @@
 # Roadmap Notes
 
+## D269-D278 Visual QA Simplification + Layout Collision Cleanup
+
+- Tightened StockPhotonic graph-first mode ownership so first-load Explore remains graph plus primary/command controls, and inspector-open state suppresses competing status, route, legend, minimap, and investigation chrome.
+- Kept CryptoPhotonic Flow calm with compact provider-boundary visibility, collapsed source/wallet details by default, and replay/history surfaces hidden unless Replay or staged data makes them relevant.
+- Preserved primary actions, secondary overflow, command-palette access, fullscreen graph-first behavior, and mobile one-strip/one-drawer posture without adding product capability.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, or browser-side provider-call changes are part of D269-D278.
+
 ## D259-D268 Functional Integrity Audit + Dead-Control Cleanup
 
 - Audited StockPhotonic and CryptoPhotonic visible control paths so default actions either execute, show deterministic unavailable copy, or stay behind command/search/disclosure surfaces.

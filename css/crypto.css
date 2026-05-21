@@ -334,6 +334,51 @@
             background: rgba(253, 224, 71, 0.08);
         }
 
+.crypto-mode-switch .crypto-data-mode-button.is-pending,
+        #crypto-live-mode-toggle.is-pending {
+            border-color: rgba(253, 224, 71, 0.34);
+            background: rgba(253, 224, 71, 0.10);
+            color: rgba(254, 249, 195, 0.86);
+        }
+
+.crypto-mode-switch .crypto-data-mode-button:disabled,
+        #crypto-live-mode-toggle:disabled {
+            cursor: not-allowed;
+            opacity: 0.52;
+        }
+
+.crypto-wallet-history-gated {
+            border: 1px solid rgba(253, 224, 71, 0.16);
+            border-radius: 0.75rem;
+            background: rgba(253, 224, 71, 0.07);
+            color: rgba(254, 249, 195, 0.76);
+            font-size: 0.78rem;
+            line-height: 1.4;
+            padding: 0.75rem 0.85rem;
+        }
+
+.crypto-primary-action-notice {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            border: 1px solid rgba(125, 211, 252, 0.18);
+            border-radius: 0.75rem;
+            background: rgba(14, 116, 144, 0.16);
+            color: rgba(224, 242, 254, 0.86);
+            font-size: 0.78rem;
+            line-height: 1.4;
+            padding: 0.65rem 0.8rem;
+            overflow-wrap: anywhere;
+        }
+
+.crypto-primary-action-notice.is-warn {
+            border-color: rgba(253, 224, 71, 0.22);
+            background: rgba(253, 224, 71, 0.10);
+            color: rgba(254, 249, 195, 0.88);
+        }
+
 .crypto-guided-action-label {
             font-weight: 700;
             line-height: 1.22;

@@ -52,6 +52,12 @@
         return escapeHtml(value).replaceAll('`', '&#096;');
     }
 
+    function replayControlAttrs(disabled, enabledTitle, disabledTitle) {
+        const isDisabled = Boolean(disabled);
+        const title = isDisabled ? disabledTitle || enabledTitle : enabledTitle;
+        return `${isDisabled ? 'disabled aria-disabled="true"' : ''} title="${escapeAttr(title || '')}"`;
+    }
+
     function buildReplayContext(context = {}) {
         const status = context.status || {};
         const events = normalizeReplayEvents(context);
@@ -225,10 +231,10 @@
                         <div id="crypto-replay-workspace-status" class="mt-1 text-xs text-fuchsia-50/78 leading-relaxed">${escapeHtml(context.readinessCopy || '')}</div>
                     </div>
                     <div class="crypto-replay-workspace-actions">
-                        <button id="crypto-replay-workspace-build" type="button" class="is-primary" ${stateInFlight ? 'disabled' : ''}>Build Dataset</button>
-                        <button id="crypto-replay-workspace-show" type="button" ${!hasDataset || stateInFlight ? 'disabled' : ''}>Render Graph</button>
-                        <button id="crypto-replay-workspace-start" type="button" ${startDisabled ? 'disabled' : ''}>${escapeHtml(status.playing ? 'Pause' : 'Play')}</button>
-                        <button id="crypto-replay-workspace-exit" type="button">Exit</button>
+                        <button id="crypto-replay-workspace-build" type="button" class="is-primary" ${replayControlAttrs(stateInFlight, 'Build a preview replay dataset from staged Worker history only.', 'Worker history is loading; wait before building the replay dataset.')}>Build Dataset</button>
+                        <button id="crypto-replay-workspace-show" type="button" ${replayControlAttrs(!hasDataset || stateInFlight, 'Render the preview graph in the replay workspace. Active Wallet Lookup graph remains unchanged.', !hasDataset ? 'Build a preview replay dataset before rendering the replay graph.' : 'Worker history is loading; wait before rendering.')}>Render Graph</button>
+                        <button id="crypto-replay-workspace-start" type="button" ${replayControlAttrs(startDisabled, status.playing ? 'Pause the preview-only replay.' : 'Play the preview-only replay.', 'Build a preview dataset with staged replay steps before playback.')}>${escapeHtml(status.playing ? 'Pause' : 'Play')}</button>
+                        <button id="crypto-replay-workspace-exit" type="button" title="Exit Replay Workspace and return to the active graph.">Exit</button>
                     </div>
                 </div>
                 <div class="crypto-replay-timeline-rail">
@@ -248,21 +254,21 @@
                     ${renderReplayHandoffCues(context, scrubberDisabled)}
                 </div>
                 <div class="crypto-replay-workspace-controls">
-                    <button id="crypto-replay-workspace-jump-start" type="button" ${scrubberDisabled || currentStep <= 0 ? 'disabled' : ''}>Start</button>
-                    <button id="crypto-replay-workspace-prev-major" type="button" ${previousMajorDisabled ? 'disabled' : ''}>Prev Major</button>
-                    <button id="crypto-replay-workspace-prev" type="button" ${scrubberDisabled || currentStep <= 0 ? 'disabled' : ''}>Prev</button>
-                    <button id="crypto-replay-workspace-next" type="button" ${scrubberDisabled || currentStep >= totalSteps ? 'disabled' : ''}>Next</button>
-                    <button id="crypto-replay-workspace-next-major" type="button" ${nextMajorDisabled ? 'disabled' : ''}>Next Major</button>
-                    <button id="crypto-replay-workspace-jump-end" type="button" ${scrubberDisabled || currentStep >= totalSteps ? 'disabled' : ''}>End</button>
-                    <button id="crypto-replay-workspace-window-prev" type="button" ${scrubberDisabled || !windowStatus.canContinueNewer ? 'disabled' : ''}>Continue Newer</button>
-                    <button id="crypto-replay-workspace-window-next" type="button" ${scrubberDisabled || (!windowStatus.canContinueOlder && !windowStatus.olderRequiresProviderPage) ? 'disabled' : ''}>Continue Older</button>
-                    <button id="crypto-replay-workspace-boundary-oldest" type="button" ${scrubberDisabled || !totalSteps ? 'disabled' : ''}>Window Start</button>
-                    <button id="crypto-replay-workspace-boundary-newest" type="button" ${scrubberDisabled || !totalSteps ? 'disabled' : ''}>Window End</button>
-                    <button id="crypto-replay-workspace-reset" type="button" ${!hasDataset ? 'disabled' : ''}>Reset</button>
-                    <button id="crypto-replay-workspace-checkpoint-save" type="button" ${!hasDataset || !totalSteps ? 'disabled' : ''}>Save Checkpoint</button>
-                    <button id="crypto-replay-workspace-checkpoint-resume" type="button" ${!checkpoint ? 'disabled' : ''}>Resume Checkpoint</button>
+                    <button id="crypto-replay-workspace-jump-start" type="button" ${replayControlAttrs(scrubberDisabled || currentStep <= 0, 'Jump to the first staged replay step.', 'Build replay steps and move past the first step before jumping to start.')}>Start</button>
+                    <button id="crypto-replay-workspace-prev-major" type="button" ${replayControlAttrs(previousMajorDisabled, 'Jump to the previous major staged replay bookmark.', 'No previous major replay bookmark is available.')}>Prev Major</button>
+                    <button id="crypto-replay-workspace-prev" type="button" ${replayControlAttrs(scrubberDisabled || currentStep <= 0, 'Step to the previous staged replay event.', 'No previous staged replay event is available.')}>Prev</button>
+                    <button id="crypto-replay-workspace-next" type="button" ${replayControlAttrs(scrubberDisabled || currentStep >= totalSteps, 'Step to the next staged replay event.', 'No next staged replay event is available.')}>Next</button>
+                    <button id="crypto-replay-workspace-next-major" type="button" ${replayControlAttrs(nextMajorDisabled, 'Jump to the next major staged replay bookmark.', 'No next major replay bookmark is available.')}>Next Major</button>
+                    <button id="crypto-replay-workspace-jump-end" type="button" ${replayControlAttrs(scrubberDisabled || currentStep >= totalSteps, 'Jump to the final staged replay step.', 'Build replay steps and stop before the final step before jumping to end.')}>End</button>
+                    <button id="crypto-replay-workspace-window-prev" type="button" ${replayControlAttrs(scrubberDisabled || !windowStatus.canContinueNewer, 'Continue into the newer staged replay window.', 'No newer staged replay window is available.')}>Continue Newer</button>
+                    <button id="crypto-replay-workspace-window-next" type="button" ${replayControlAttrs(scrubberDisabled || (!windowStatus.canContinueOlder && !windowStatus.olderRequiresProviderPage), 'Continue into the older staged replay window.', 'No older staged replay window is available from current Worker history.')}>Continue Older</button>
+                    <button id="crypto-replay-workspace-boundary-oldest" type="button" ${replayControlAttrs(scrubberDisabled || !totalSteps, 'Jump to the oldest staged event in this replay window.', 'Build replay steps before using replay window boundaries.')}>Window Start</button>
+                    <button id="crypto-replay-workspace-boundary-newest" type="button" ${replayControlAttrs(scrubberDisabled || !totalSteps, 'Jump to the newest staged event in this replay window.', 'Build replay steps before using replay window boundaries.')}>Window End</button>
+                    <button id="crypto-replay-workspace-reset" type="button" ${replayControlAttrs(!hasDataset, 'Reset the preview-only replay state.', 'Build a preview dataset before resetting replay state.')}>Reset</button>
+                    <button id="crypto-replay-workspace-checkpoint-save" type="button" ${replayControlAttrs(!hasDataset || !totalSteps, 'Save a session replay checkpoint for staged replay context.', 'Build replay steps before saving a checkpoint.')}>Save Checkpoint</button>
+                    <button id="crypto-replay-workspace-checkpoint-resume" type="button" ${replayControlAttrs(!checkpoint, 'Resume the saved staged replay checkpoint.', 'No staged replay checkpoint has been saved yet.')}>Resume Checkpoint</button>
                     ${Object.entries(speedOptions).map(([value, label]) => `
-                        <button type="button" data-crypto-replay-workspace-speed="${escapeAttr(value)}" ${stateInFlight ? 'disabled' : ''} class="${value === speed ? 'is-primary' : ''}">${escapeHtml(label)}</button>
+                        <button type="button" data-crypto-replay-workspace-speed="${escapeAttr(value)}" ${replayControlAttrs(stateInFlight, `Set replay speed to ${label}.`, 'Worker history is loading; wait before changing replay speed.')} class="${value === speed ? 'is-primary' : ''}">${escapeHtml(label)}</button>
                     `).join('')}
                 </div>
                 ${renderReplayWindowOverview(windowStatus, checkpoint, warnings)}

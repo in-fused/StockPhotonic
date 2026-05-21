@@ -58,6 +58,10 @@
         dataset: null,
         dataMode: 'generated_fixture',
         activePresetKey: '',
+        primaryActionNotice: {
+            message: '',
+            tone: 'info'
+        },
         modeVersion: 0,
         generatedManifest: null,
         generatedFixtures: [],
@@ -737,7 +741,12 @@
             }
             return null;
         } finally {
-            if (requestModeVersion === state.modeVersion || state.dataMode !== DATA_MODES.LIVE) state.live.inFlight = false;
+            if (requestModeVersion === state.modeVersion || state.dataMode !== DATA_MODES.LIVE) {
+                state.live.inFlight = false;
+                if (requestModeVersion === state.modeVersion && state.dataMode === DATA_MODES.LIVE) {
+                    renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+                }
+            }
         }
     }
 
@@ -1114,20 +1123,30 @@
 
     function getCurrentSourceLabel() {
         if (state.dataMode === DATA_MODES.WALLET) {
-            return SOURCE_LABELS.worker_wallet_lookup;
+            if (state.walletLookup.inFlight) return 'Wallet Lookup (loading Worker response)';
+            if (state.walletLookup.lastError && !state.walletLookup.lastLoadedAt) return 'Wallet Lookup unavailable';
+            if (hasLoadedWalletReplacementGraph()) return SOURCE_LABELS.worker_wallet_lookup;
+            if (state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0) return 'Wallet Lookup (no returned events)';
+            return 'Wallet Lookup (waiting for address)';
         }
         if (state.dataMode === DATA_MODES.LIVE) {
-            return SOURCE_LABELS.worker_feed;
+            return getLiveFeedSourceLabel();
         }
         return SOURCE_LABELS[state.datasetSourceKind] || SOURCE_LABELS.built_in;
     }
 
     function getSourceBoundaryCopy() {
         if (state.dataMode === DATA_MODES.WALLET) {
+            if (state.walletLookup.inFlight) return 'Wallet Lookup is loading a sanitized Worker response. The active graph remains an empty replacement shell until the Worker response is applied.';
+            if (state.walletLookup.lastError && !state.walletLookup.lastLoadedAt) return 'Wallet Lookup is unavailable for this request. No fixture, live feed, staged history, or provider data is merged.';
+            if (state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0) return 'Wallet Lookup completed through the secure Worker, but no recent sanitized events were returned. No wallet relationships are implied.';
             return 'Wallet Lookup replaces the active graph with one secure Worker response. It is not merged with generated fixtures, Live Feed events, or staged history.';
         }
         if (state.dataMode === DATA_MODES.LIVE) {
-            return 'Live Feed shows only sanitized Worker events. No provider keys, wallet-history pages, or browser provider calls are used.';
+            if (!state.live.endpointValid) return 'Live Feed is unavailable because the Worker feed endpoint is not configured for this host. The browser does not call chain providers directly.';
+            if (state.live.lastError && !hasLoadedLiveFeedEvents()) return `${state.live.lastError}. Live Feed uses only sanitized Worker events and never calls chain providers directly.`;
+            if (!hasLoadedLiveFeedEvents()) return 'Live Feed is waiting for sanitized Worker events. It is not a direct provider connection and does not imply live graph activity until events are returned and shown.';
+            return 'Live Feed shows only sanitized Worker events already returned by the Worker. No provider keys, wallet-history pages, or browser provider calls are used.';
         }
         if (!state.live.endpointValid) {
             return 'Generated Fixture uses local sample files. Load Activity in Wallet Lookup asks the secure Worker for recent activity.';
@@ -1148,11 +1167,38 @@
         if (!state.live.endpointValid) return 'Worker Feed OFF / endpoint unavailable';
         if (!state.live.enabled) return `Worker Feed OFF / polls every ${Math.round(state.live.pollMs / 1000)}s when enabled`;
         if (state.live.inFlight) return 'Polling Worker Feed';
-        if (state.live.workerAvailable) {
+        if (hasLoadedLiveFeedEvents()) {
             const merged = `${state.live.mergedEventCount} merged`;
             return `Worker Feed OK / ${merged}`;
         }
+        if (state.live.workerAvailable) return 'Worker reachable / no events loaded';
         return state.live.lastError || 'Waiting for Worker Feed';
+    }
+
+    function hasLoadedLiveFeedEvents() {
+        return Boolean(state.live.workerAvailable && state.live.eventCount > 0 && state.live.mergedEventCount > 0);
+    }
+
+    function getLiveFeedSourceLabel() {
+        if (!state.live.endpointValid) return 'Live Feed unavailable (Worker endpoint)';
+        if (state.live.inFlight) return 'Live Feed polling Worker';
+        if (hasLoadedLiveFeedEvents()) return SOURCE_LABELS.worker_feed;
+        if (state.live.lastError) return 'Live Feed unavailable (Worker endpoint)';
+        if (state.live.workerAvailable) return 'Live Feed waiting (0 Worker events)';
+        return 'Live Feed pending Worker response';
+    }
+
+    function getLiveFeedToggleTitle() {
+        if (!state.live.endpointValid) return 'Live Feed unavailable: Worker feed endpoint is not configured for this host.';
+        if (state.live.inFlight) return 'Live Feed is polling the Worker now.';
+        if (hasLoadedLiveFeedEvents()) return 'Live Feed is showing sanitized Worker events only. No browser provider calls are made.';
+        if (state.dataMode === DATA_MODES.LIVE && state.live.workerAvailable) return 'Worker responded, but no sanitized events are loaded into the graph yet.';
+        if (state.live.lastError) return `${state.live.lastError}. No browser provider calls are made.`;
+        return 'Switch to sanitized Worker event feed. No browser provider calls are made.';
+    }
+
+    function hasLoadedWalletReplacementGraph() {
+        return Boolean(state.walletLookup.lastLoadedAt && state.walletLookup.lastWallet && state.walletLookup.eventCount > 0 && state.walletLookup.mergedEventCount > 0);
     }
 
     function getWorkerEventDedupeKey(event = {}) {
@@ -1471,7 +1517,7 @@
         const generatedAt = activeFixture.generated_at || metadata.generated_at || '';
         const transactionCount = activeFixture.transaction_count ?? metadata.generated_transaction_count ?? metadata.transaction_count ?? null;
         const selector = renderGeneratedFixtureSelector();
-        const sourceTone = state.live.workerAvailable ? 'text-emerald-100/82' : isGeneratedFixture ? 'text-emerald-100/82' : isSolana ? 'text-cyan-50/78' : 'text-white/68';
+        const sourceTone = hasLoadedLiveFeedEvents() || isGeneratedFixture ? 'text-emerald-100/82' : state.dataMode === DATA_MODES.LIVE ? 'text-yellow-50/82' : isSolana ? 'text-cyan-50/78' : 'text-white/68';
         const sourceSnapshot = renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount);
         const detailsOpen = '';
         const detailLabel = state.dataMode === DATA_MODES.WALLET
@@ -1514,18 +1560,40 @@
         if (state.dataMode === DATA_MODES.WALLET) {
             const tracked = state.walletLookup.lastWallet || state.walletLookup.walletInput || state.graph?.metadata?.wallet_lookup_tracked_wallet || '';
             const visible = state.graph?.flowEdges?.length || 0;
+            const stateLabel = state.walletLookup.inFlight
+                ? 'Loading Worker response'
+                : hasLoadedWalletReplacementGraph()
+                    ? 'Loaded Worker replacement graph'
+                    : state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0
+                        ? 'Loaded / no returned events'
+                        : state.walletLookup.lastError
+                            ? 'Worker unavailable for request'
+                            : 'Waiting for wallet input';
             return `
                 <div class="crypto-data-source-snapshot crypto-source-summary-grid mt-2 text-white/56">
                     <div>Mode: Worker replacement graph</div>
+                    <div>State: ${escapeHtml(stateLabel)}</div>
                     <div title="${escapeAttr(tracked || 'No tracked wallet loaded')}">Tracked: ${escapeHtml(tracked ? shortLongValue(tracked) : '-')}</div>
                     <div>Returned / Visible: ${escapeHtml(state.walletLookup.eventCount || 0)} / ${escapeHtml(visible)}</div>
                 </div>
             `;
         }
         if (state.dataMode === DATA_MODES.LIVE) {
+            const liveState = hasLoadedLiveFeedEvents()
+                ? 'Loaded Worker events'
+                : state.live.inFlight
+                    ? 'Polling Worker'
+                    : !state.live.endpointValid
+                        ? 'Worker endpoint unavailable'
+                        : state.live.workerAvailable
+                            ? 'Worker reachable / no events'
+                            : state.live.lastError
+                                ? 'Worker unavailable'
+                                : 'Waiting for Worker response';
             return `
                 <div class="crypto-data-source-snapshot crypto-source-summary-grid mt-2 text-white/56">
                     <div>Mode: Sanitized live feed</div>
+                    <div>State: ${escapeHtml(liveState)}</div>
                     <div>Events: ${escapeHtml(state.live.eventCount || 0)} returned / ${escapeHtml(state.live.mergedEventCount || 0)} shown</div>
                     <div>Last Poll: ${escapeHtml(state.live.lastPollAt ? formatDateTime(state.live.lastPollAt) : '-')}</div>
                 </div>
@@ -1646,7 +1714,7 @@
         const walletMode = state.dataMode === DATA_MODES.WALLET;
         const hasSelection = Boolean(state.selectedId || state.selectedFlowId || state.historyPreview.selectedEvent);
         const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
-        const hasLoadedWallet = Boolean(state.walletLookup.lastWallet && state.walletLookup.eventCount);
+        const hasLoadedWallet = hasLoadedWalletReplacementGraph();
         const hasHistoryRows = Boolean((state.history.loadedTransactions || []).length || state.history.totalLoadedTransactions);
         const hasDataset = Boolean(state.historyPreview.dataset);
         const replayMode = uxMode === 'replay' || state.historyPreview.workspaceMode;
@@ -1713,10 +1781,12 @@
         if (!walletMode) {
             actions.push({
                 label: 'Wallet Mode',
-                detail: 'Switch to Worker wallet lookup',
+                detail: replayMode ? 'Wallet Lookup required' : 'Switch to Worker wallet lookup',
                 icon: 'fa-wallet',
                 mode: DATA_MODES.WALLET,
-                title: 'Switch to Wallet Lookup before staging history or replay.'
+                title: replayMode
+                    ? 'Replay needs Wallet Lookup data returned by the secure Worker before preview controls are available.'
+                    : 'Switch to Wallet Lookup before staging history or replay.'
             });
             actions.push({
                 label: 'Commands',
@@ -1738,6 +1808,17 @@
             disabled: !hasLoadedWallet && (!hasWallet || state.walletLookup.inFlight),
             title: hasLoadedWallet ? 'Open the flow investigation tab.' : 'Load sanitized wallet activity through the Worker.'
         });
+
+        if (!hasLoadedWallet) {
+            actions.push({
+                label: 'Commands',
+                detail: 'Advanced actions stay searchable',
+                icon: 'fa-terminal',
+                statusAction: 'open-command-palette',
+                title: 'Open the command palette for advanced CryptoPhotonic actions.'
+            });
+            return actions.slice(0, 2);
+        }
 
         if (!replayMode) {
             actions.push({
@@ -1837,11 +1918,51 @@
         return `
             <div class="crypto-mode-switch flex flex-wrap gap-1.5" role="group" aria-label="CryptoPhotonic data mode">
                 ${modes.map(([mode, label]) => {
-                    const active = state.dataMode === mode;
-                    return `<button type="button" data-crypto-mode="${escapeAttr(mode)}" aria-pressed="${active ? 'true' : 'false'}" title="${escapeAttr(help[mode])}" class="rounded-full border ${active ? 'border-emerald-200/40 bg-emerald-300/16 text-emerald-50/90' : 'border-cyan-200/15 bg-slate-950/45 text-cyan-50/70'} px-2.5 py-1 hover:border-cyan-100/35">${escapeHtml(label)}</button>`;
+                    const buttonState = getDataModeButtonState(mode, help[mode]);
+                    return `<button type="button" data-crypto-mode="${escapeAttr(mode)}" aria-pressed="${buttonState.active ? 'true' : 'false'}" ${buttonState.disabled ? 'disabled aria-disabled="true"' : ''} title="${escapeAttr(buttonState.title)}" class="crypto-data-mode-button rounded-full border ${escapeAttr(buttonState.className)} px-2.5 py-1 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">${escapeHtml(buttonState.label || label)}</button>`;
                 }).join('')}
             </div>
         `;
+    }
+
+    function getDataModeButtonState(mode, fallbackTitle = '') {
+        const current = state.dataMode === mode;
+        if (mode === DATA_MODES.LIVE) {
+            const active = current && hasLoadedLiveFeedEvents();
+            const pending = current && !active && state.live.endpointValid;
+            const disabled = !state.live.endpointValid;
+            return {
+                active,
+                disabled,
+                label: current
+                    ? active
+                        ? 'Live Feed Loaded'
+                        : pending
+                            ? 'Live Feed Waiting'
+                            : 'Live Feed'
+                    : 'Live Feed',
+                title: disabled ? getLiveFeedToggleTitle() : current ? getLiveFeedToggleTitle() : fallbackTitle,
+                className: active
+                    ? 'is-active border-emerald-200/40 bg-emerald-300/16 text-emerald-50/90'
+                    : pending
+                        ? 'is-pending border-yellow-200/34 bg-yellow-300/12 text-yellow-50/86'
+                        : disabled
+                            ? 'is-disabled border-white/10 bg-slate-950/40 text-white/42'
+                            : 'border-cyan-200/15 bg-slate-950/45 text-cyan-50/70'
+            };
+        }
+        const active = current;
+        return {
+            active,
+            disabled: false,
+            label: mode === DATA_MODES.WALLET && current && hasLoadedWalletReplacementGraph()
+                ? 'Wallet Lookup Loaded'
+                : null,
+            title: fallbackTitle,
+            className: active
+                ? 'is-active border-emerald-200/40 bg-emerald-300/16 text-emerald-50/90'
+                : 'border-cyan-200/15 bg-slate-950/45 text-cyan-50/70'
+        };
     }
 
     function renderGeneratedFixtureSelector() {
@@ -1874,6 +1995,19 @@
     function renderWalletLookupControls() {
         const status = getWalletLookupStatusLabel();
         const value = state.walletLookup.walletInput || state.walletLookup.lastWallet || '';
+        const emptyInput = !String(value || '').trim();
+        const submitDisabled = state.walletLookup.inFlight || emptyInput;
+        const submitTitle = state.walletLookup.inFlight
+            ? 'Wallet Lookup is already loading from the secure Worker.'
+            : emptyInput
+                ? 'Enter a wallet address before loading Worker activity.'
+                : 'Load recent sanitized wallet activity from the Worker and replace the active graph.';
+        const refreshDisabled = state.walletLookup.inFlight || !state.walletLookup.lastWallet;
+        const refreshTitle = state.walletLookup.inFlight
+            ? 'Wallet Lookup is already loading from the secure Worker.'
+            : refreshDisabled
+                ? 'Load a wallet once before refreshing Worker activity.'
+                : 'Run the last wallet lookup again without changing the entered address.';
         return `
             <form id="crypto-wallet-lookup-form" class="mt-3 grid gap-2">
                 <div class="text-white/38">WALLET INVESTIGATION</div>
@@ -1884,8 +2018,8 @@
                         <input id="crypto-wallet-lookup-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${escapeAttr(value)}" placeholder="Solana wallet address" class="w-full min-h-10 bg-slate-950/80 border border-cyan-200/15 rounded-xl px-3 py-2 text-cyan-50/82 outline-none placeholder:text-white/28">
                     </label>
                     <div class="crypto-wallet-lookup-action-grid grid gap-2">
-                        <button id="crypto-wallet-lookup-submit" type="submit" ${state.walletLookup.inFlight ? 'disabled' : ''} title="Load recent sanitized wallet activity from the Worker and replace the active graph." class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Activity</button>
-                        <button id="crypto-wallet-lookup-refresh" type="button" ${state.walletLookup.inFlight || !(state.walletLookup.lastWallet || value) ? 'disabled' : ''} title="Run the last wallet lookup again without changing the entered address." class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
+                        <button id="crypto-wallet-lookup-submit" type="submit" ${submitDisabled ? 'disabled aria-disabled="true"' : ''} title="${escapeAttr(submitTitle)}" class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Load Activity</button>
+                        <button id="crypto-wallet-lookup-refresh" type="button" ${refreshDisabled ? 'disabled aria-disabled="true"' : ''} title="${escapeAttr(refreshTitle)}" class="min-h-10 rounded-xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2 text-cyan-50/82 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">Refresh</button>
                     </div>
                 </div>
                 <div class="grid grid-cols-1 gap-2">
@@ -1903,14 +2037,31 @@
     function getWalletLookupStatusLabel() {
         if (state.walletLookup.inFlight) return 'Loading from secure Worker';
         if (state.walletLookup.lastError) return state.walletLookup.lastError;
-        if (state.walletLookup.eventCount > 0) {
-            return `${state.walletLookup.eventCount} returned / ${state.walletLookup.mergedEventCount} shown`;
+        if (!state.walletLookup.walletInput && !state.walletLookup.lastWallet && !state.walletLookup.lastLoadedAt) {
+            return 'Empty input: enter a wallet address before loading Worker activity.';
         }
-        return 'No wallet lookup loaded';
+        if (state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0) {
+            return 'Worker response loaded: no recent sanitized activity returned.';
+        }
+        if (state.walletLookup.eventCount > 0 && state.walletLookup.mergedEventCount === 0) {
+            return 'Worker response loaded: returned events were filtered from the visible graph.';
+        }
+        if (state.walletLookup.eventCount > 0) {
+            return `Loaded Worker replacement graph: ${state.walletLookup.eventCount} returned / ${state.walletLookup.mergedEventCount} shown`;
+        }
+        return 'Wallet Lookup ready: load a Worker response to replace the graph.';
     }
 
     function renderWalletHistoryControls() {
         if (state.dataMode !== DATA_MODES.WALLET) return '';
+        if (!state.walletLookup.lastLoadedAt || state.walletLookup.eventCount <= 0) {
+            const message = state.walletLookup.inFlight
+                ? 'History and replay controls appear after Wallet Lookup finishes loading Worker data.'
+                : state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0
+                    ? 'History and replay controls remain hidden because the Worker returned no recent sanitized events.'
+                    : 'History and replay controls remain hidden until Wallet Lookup loads Worker wallet data.';
+            return `<div class="crypto-wallet-history-gated">${escapeHtml(message)}</div>`;
+        }
         const disabled = isWalletHistoryLoadMoreDisabled();
         const status = getWalletHistoryStatusLabel();
         const coverage = getWalletHistoryCoverage();
@@ -1951,6 +2102,8 @@
         if (state.history.inFlight) return 'History is already loading through the Worker.';
         if (state.history.providerDiagnosticsInFlight) return 'Provider diagnostics are checking Worker readiness. Wait before staging history.';
         if (!(state.walletLookup.lastWallet || state.walletLookup.walletInput)) return 'Enter and load a wallet before staging history.';
+        if (!state.walletLookup.lastLoadedAt) return 'Load Wallet Lookup data before staging history.';
+        if (state.walletLookup.eventCount <= 0) return 'Worker returned no wallet events, so history staging remains hidden.';
         if (state.history.providerPagesLoaded > 0 && !state.history.moreAvailable) return getWalletHistoryStuckMessage();
         if (!state.history.backendProviderConnected) return 'Worker wallet-history adapter is not connected; browser provider calls remain disabled.';
         return 'History loading is unavailable for the current state.';
@@ -1984,11 +2137,13 @@
 
     function isWalletHistoryLoadMoreDisabled() {
         const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
+        const hasLoadedWalletData = Boolean(state.walletLookup.lastLoadedAt && state.walletLookup.eventCount > 0);
         const noMoreBackendPages = state.history.providerPagesLoaded > 0 && !state.history.moreAvailable;
         return state.walletLookup.inFlight
             || state.history.inFlight
             || state.history.providerDiagnosticsInFlight
             || !hasWallet
+            || !hasLoadedWalletData
             || noMoreBackendPages
             || !state.history.backendProviderConnected;
     }
@@ -2869,6 +3024,17 @@
                 </div>
             `;
         }
+        if (!hasLoadedWalletReplacementGraph()) {
+            return `
+                <div class="crypto-tab-section">
+                    <div class="crypto-empty-state">
+                        <div class="crypto-kicker">HISTORY</div>
+                        <h3>Load Wallet Lookup data first</h3>
+                        <p>${escapeHtml(getWalletHistoryLoadMoreDisabledTitle())}</p>
+                    </div>
+                </div>
+            `;
+        }
         return `
             <div class="crypto-tab-section">
                 ${renderGuidedActionGrid(buildHistoryGuidedActions(), {
@@ -2925,6 +3091,17 @@
                 </div>
             `;
         }
+        if (!hasLoadedWalletReplacementGraph()) {
+            return `
+                <div class="crypto-tab-section">
+                    <div class="crypto-empty-state">
+                        <div class="crypto-kicker">REPLAY</div>
+                        <h3>Replay waiting for Wallet Lookup data</h3>
+                        <p>${escapeHtml(getCryptoReplayPrimaryFallbackMessage())}</p>
+                    </div>
+                </div>
+            `;
+        }
         return `
             <div class="crypto-tab-section">
                 ${renderGuidedActionGrid(buildReplayGuidedActions(), {
@@ -2964,8 +3141,9 @@
                 title: state.historyPreview.workspaceMode ? 'Exit Replay Workspace' : 'Open Replay Workspace',
                 detail: state.historyPreview.workspaceMode
                     ? 'Return the main stage to the active Wallet Lookup graph.'
-                    : 'Use the large graph stage for preview-only replay.',
+                    : hasDataset ? 'Use the large graph stage for preview-only replay.' : 'Build a preview dataset first.',
                 historyAction: 'toggle-replay-workspace',
+                disabled: !hasDataset && !state.historyPreview.workspaceMode,
                 tone: state.historyPreview.workspaceMode ? 'warn' : 'strong'
             },
             {
@@ -5568,8 +5746,18 @@
         const sourceLabel = getCurrentSourceLabel();
         const motionLabel = state.flowMotion.enabled ? 'Motion: On' : 'Motion: Off';
         const queueLabel = state.flowReplay.playing ? 'Pause Flow Queue' : 'Play Flow Queue';
-        const liveLabel = state.dataMode === DATA_MODES.LIVE ? 'Live Feed Active' : 'Switch to Live Feed';
+        const liveLoaded = hasLoadedLiveFeedEvents();
+        const livePending = state.dataMode === DATA_MODES.LIVE && !liveLoaded && state.live.endpointValid;
+        const liveDisabled = !state.live.endpointValid || state.live.inFlight;
+        const liveLabel = state.dataMode === DATA_MODES.LIVE
+            ? liveLoaded ? 'Live Feed Loaded' : 'Live Feed Waiting'
+            : 'Switch to Live Feed';
         const liveStatus = getLiveStatusLabel();
+        const liveClass = liveLoaded
+            ? 'is-active border-emerald-200/35 bg-emerald-300/15 text-emerald-50/86'
+            : livePending
+                ? 'is-pending border-yellow-200/28 bg-yellow-300/10 text-yellow-50/82'
+                : 'border-cyan-200/15 bg-cyan-300/10 text-cyan-50/78';
         return `
             <div class="crypto-control-group rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2">
                 <div class="flex flex-wrap items-center justify-between gap-2">
@@ -5578,7 +5766,7 @@
                         <div class="text-white/66">${escapeHtml(orderedCount)} ordered flows / ${escapeHtml(motionLabel)} / Source: ${escapeHtml(sourceLabel)} / ${escapeHtml(liveStatus)}</div>
                     </div>
                     <div class="flex flex-wrap gap-1.5">
-                        <button id="crypto-live-mode-toggle" type="button" aria-pressed="${state.live.enabled ? 'true' : 'false'}" title="Switch to the sanitized Worker event feed. No browser provider calls are made." class="rounded-full border ${state.live.enabled ? 'border-emerald-200/35 bg-emerald-300/15 text-emerald-50/86' : 'border-cyan-200/15 bg-cyan-300/10 text-cyan-50/78'} px-2.5 py-1 hover:border-cyan-100/35">${escapeHtml(liveLabel)}</button>
+                        <button id="crypto-live-mode-toggle" type="button" aria-pressed="${liveLoaded ? 'true' : 'false'}" ${liveDisabled ? 'disabled aria-disabled="true"' : ''} title="${escapeAttr(getLiveFeedToggleTitle())}" class="rounded-full border ${liveClass} px-2.5 py-1 hover:border-cyan-100/35 disabled:opacity-50 disabled:cursor-not-allowed">${escapeHtml(liveLabel)}</button>
                         <button id="crypto-flow-queue-toggle" type="button" title="Play or pause the ordered transfer-flow replay queue." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(queueLabel)}</button>
                         <button id="crypto-flow-queue-step" type="button" title="Advance the queue by one visible flow." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">Step Flow</button>
                         <button id="crypto-flow-motion-toggle" type="button" title="Turn animated flow pulses on or off without changing graph data." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-2.5 py-1 text-cyan-50/78 hover:border-cyan-100/35">${escapeHtml(motionLabel)}</button>
@@ -5769,6 +5957,8 @@
         status.querySelector('#crypto-wallet-lookup-input')?.addEventListener('input', event => {
             state.walletLookup.walletInput = event.target.value;
             state.walletLookup.lastError = '';
+            syncWalletLookupInputControls(status);
+            updateInteractionDock();
         });
         status.querySelector('#crypto-wallet-lookup-form')?.addEventListener('submit', event => {
             event.preventDefault();
@@ -5944,6 +6134,41 @@
         });
     }
 
+    function syncWalletLookupInputControls(root = document) {
+        const input = root.querySelector?.('#crypto-wallet-lookup-input') || document.getElementById('crypto-wallet-lookup-input');
+        const submit = root.querySelector?.('#crypto-wallet-lookup-submit') || document.getElementById('crypto-wallet-lookup-submit');
+        const refresh = root.querySelector?.('#crypto-wallet-lookup-refresh') || document.getElementById('crypto-wallet-lookup-refresh');
+        const status = root.querySelector?.('#crypto-wallet-lookup-status') || document.getElementById('crypto-wallet-lookup-status');
+        const value = String(input?.value || state.walletLookup.walletInput || '').trim();
+        const submitDisabled = state.walletLookup.inFlight || !value;
+        if (submit) {
+            submit.disabled = submitDisabled;
+            submit.classList.toggle('is-disabled', submitDisabled);
+            submit.setAttribute('aria-disabled', submitDisabled ? 'true' : 'false');
+            submit.title = state.walletLookup.inFlight
+                ? 'Wallet Lookup is already loading from the secure Worker.'
+                : !value
+                    ? 'Enter a wallet address before loading Worker activity.'
+                    : 'Load recent sanitized wallet activity from the Worker and replace the active graph.';
+        }
+        if (refresh) {
+            const refreshDisabled = state.walletLookup.inFlight || !state.walletLookup.lastWallet;
+            refresh.disabled = refreshDisabled;
+            refresh.classList.toggle('is-disabled', refreshDisabled);
+            refresh.setAttribute('aria-disabled', refreshDisabled ? 'true' : 'false');
+            refresh.title = state.walletLookup.inFlight
+                ? 'Wallet Lookup is already loading from the secure Worker.'
+                : refreshDisabled
+                    ? 'Load a wallet once before refreshing Worker activity.'
+                    : 'Run the last wallet lookup again without changing the entered address.';
+        }
+        if (status && !state.walletLookup.inFlight && !state.walletLookup.lastError && !state.walletLookup.lastLoadedAt) {
+            status.textContent = value
+                ? 'Wallet Lookup ready: load this address through the secure Worker.'
+                : 'Empty input: enter a wallet address before loading Worker activity.';
+        }
+    }
+
     async function switchDataMode(mode) {
         if (!Object.values(DATA_MODES).includes(mode)) return state.dataMode;
         if (mode === state.dataMode) {
@@ -6009,6 +6234,11 @@
     async function loadWalletActivity(wallet, options = {}) {
         const normalizedWallet = String(wallet || '').trim();
         state.walletLookup.walletInput = normalizedWallet;
+        if (!normalizedWallet) {
+            state.walletLookup.lastError = 'Enter a wallet address before loading Worker activity.';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return null;
+        }
         if (!isValidSolanaWalletAddress(normalizedWallet)) {
             state.walletLookup.lastError = 'Enter a valid Solana wallet address';
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -6135,6 +6365,12 @@
     async function loadMoreWalletHistory(options = {}) {
         const wallet = state.walletLookup.lastWallet || state.walletLookup.walletInput || '';
         state.investigationTab = 'history';
+        if (isWalletHistoryLoadMoreDisabled()) {
+            state.history.lastError = getWalletHistoryLoadMoreDisabledTitle();
+            state.history.lastMessage = 'No wallet-history page was loaded.';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return null;
+        }
         state.history.inFlight = true;
         state.history.lastError = '';
         state.history.progress = {
@@ -8024,6 +8260,7 @@
         const nextMode = ['flow', 'analyst', 'review', 'replay'].includes(mode) ? mode : getCryptoUxMode();
         const hasSelection = Boolean(state.selectedId || state.selectedFlowId || state.historyPreview.selectedEvent);
         window.setCryptoUxMode?.(nextMode);
+        if (nextMode !== 'replay') clearCryptoPrimaryActionNotice();
 
         if (nextMode !== 'replay' && state.historyPreview.workspaceMode) {
             setReplayWorkspaceMode(false);
@@ -8043,8 +8280,16 @@
             window.toggleCryptoInspector?.(true);
         } else {
             setInvestigationTab('replay');
-            if (hasHistoryPreviewDataset()) setReplayWorkspaceMode(true);
-            window.toggleCryptoInspector?.(false);
+            if (hasHistoryPreviewDataset()) {
+                clearCryptoPrimaryActionNotice();
+                setReplayWorkspaceMode(true);
+                window.toggleCryptoInspector?.(false);
+            } else {
+                state.historyPreview.lastMessage = getCryptoReplayPrimaryFallbackMessage();
+                announceCryptoPrimaryAction(state.historyPreview.lastMessage, 'warn');
+                setReplayWorkspaceMode(false);
+                window.toggleCryptoInspector?.(true);
+            }
         }
 
         if (state.graph) {
@@ -8056,6 +8301,63 @@
         if (nextMode === 'review') openCryptoSourceDetails();
         renderMobileInvestigationDrawer();
         return true;
+    }
+
+    function getCryptoReplayPrimaryFallbackMessage() {
+        if (state.dataMode !== DATA_MODES.WALLET) {
+            return 'Replay needs loaded Wallet Lookup data. Switch to Wallet Lookup and load a Worker response before opening the preview replay workspace.';
+        }
+        if (state.walletLookup.inFlight) {
+            return 'Replay is waiting for Wallet Lookup to finish loading from the secure Worker.';
+        }
+        if (!state.walletLookup.lastLoadedAt) {
+            return 'Replay needs a loaded Wallet Lookup response before staged history or preview datasets are available.';
+        }
+        if (state.walletLookup.eventCount <= 0) {
+            return 'Replay remains unavailable because the Worker returned no recent sanitized wallet events.';
+        }
+        if (!(state.history.loadedTransactions || []).length) {
+            return 'Replay needs staged Worker history rows. Use History after Wallet Lookup data exists.';
+        }
+        return 'Build a preview replay dataset before opening Replay Workspace.';
+    }
+
+    function announceCryptoPrimaryAction(message, tone = 'info') {
+        state.primaryActionNotice = {
+            message: String(message || ''),
+            tone: tone === 'warn' ? 'warn' : 'info'
+        };
+        renderCryptoPrimaryActionNotice();
+    }
+
+    function clearCryptoPrimaryActionNotice() {
+        if (!state.primaryActionNotice.message) return;
+        state.primaryActionNotice = {
+            message: '',
+            tone: 'info'
+        };
+        renderCryptoPrimaryActionNotice();
+    }
+
+    function renderCryptoPrimaryActionNotice() {
+        const rail = document.querySelector('.crypto-primary-action-rail');
+        if (!rail) return;
+        rail.querySelectorAll('.crypto-primary-action-notice').forEach(node => node.remove());
+        const message = String(state.primaryActionNotice.message || '').trim();
+        if (!message) return;
+        const activeMode = getCryptoUxMode();
+        const target = Array.from(rail.querySelectorAll('[data-primary-mode]'))
+            .find(node => node.dataset.primaryMode === activeMode) || rail;
+        const notice = document.createElement('div');
+        notice.className = `crypto-primary-action-notice is-${state.primaryActionNotice.tone === 'warn' ? 'warn' : 'info'}`;
+        notice.setAttribute('role', 'status');
+        notice.title = message;
+        const icon = document.createElement('i');
+        icon.className = `fa-solid ${state.primaryActionNotice.tone === 'warn' ? 'fa-circle-exclamation' : 'fa-circle-info'}`;
+        const copy = document.createElement('span');
+        copy.textContent = message;
+        notice.append(icon, copy);
+        target.append(notice);
     }
 
     function normalizeLabelDensity(mode) {
@@ -9721,7 +10023,16 @@
         const totalSteps = getHistoryReplayTotalSteps(status);
         const workspaceOpen = Boolean(state.historyPreview.workspaceMode);
         const audit = state.historyPreview.audit || {};
-        if (key === 'replay-workspace' || key === 'preset-liquidity-flow') return { disabled: false, reason: '' };
+        if (key === 'replay-workspace') {
+            return hasDataset
+                ? { disabled: false, reason: '' }
+                : { disabled: true, reason: getCryptoReplayPrimaryFallbackMessage() };
+        }
+        if (key === 'preset-liquidity-flow') {
+            return (state.graph?.flowEdges || []).length
+                ? { disabled: false, reason: '' }
+                : { disabled: true, reason: 'Load visible Crypto flows before applying Liquidity Flow.' };
+        }
         if (key === 'replay-narrative') {
             return workspaceOpen ? { disabled: false, reason: '' } : { disabled: true, reason: 'Open Crypto replay workspace first.' };
         }
@@ -13018,25 +13329,34 @@
         const loadButton = document.getElementById('crypto-dock-load-activity');
         if (loadButton) {
             const visible = walletMode && (uxMode === 'analyst' || uxMode === 'review');
+            const lookupInput = String(document.getElementById('crypto-wallet-lookup-input')?.value || state.walletLookup.walletInput || state.walletLookup.lastWallet || '').trim();
             loadButton.classList.toggle('is-hidden', !visible);
-            loadButton.disabled = !visible || state.walletLookup.inFlight;
+            loadButton.disabled = !visible || state.walletLookup.inFlight || !lookupInput;
             loadButton.classList.toggle('is-disabled', loadButton.disabled);
             loadButton.setAttribute('aria-disabled', loadButton.disabled ? 'true' : 'false');
             loadButton.title = state.walletLookup.inFlight
                 ? 'Wallet activity is already loading.'
-                : visible
+                : !lookupInput
+                    ? 'Enter a wallet address in Wallet Lookup before loading activity.'
+                    : visible
                     ? 'Load activity for the wallet address in Wallet Lookup mode.'
                     : 'Switch to Analyst or Review mode to load wallet activity from the dock.';
         }
 
         const replayWorkspaceButton = document.getElementById('crypto-dock-replay-workspace');
         if (replayWorkspaceButton) {
+            const hasDataset = Boolean(state.historyPreview.dataset);
             replayWorkspaceButton.classList.toggle('is-hidden', !replayDockVisible);
             replayWorkspaceButton.classList.toggle('is-active', state.historyPreview.workspaceMode);
             replayWorkspaceButton.setAttribute('aria-pressed', state.historyPreview.workspaceMode ? 'true' : 'false');
+            replayWorkspaceButton.disabled = !state.historyPreview.workspaceMode && (!replayDockVisible || !hasDataset);
+            replayWorkspaceButton.classList.toggle('is-disabled', replayWorkspaceButton.disabled);
+            replayWorkspaceButton.setAttribute('aria-disabled', replayWorkspaceButton.disabled ? 'true' : 'false');
             replayWorkspaceButton.title = state.historyPreview.workspaceMode
                 ? 'Exit Replay Workspace Mode and restore the active Wallet Lookup graph canvas.'
-                : replayDockVisible
+                : !hasDataset
+                    ? 'Build a preview replay dataset from loaded Wallet Lookup history before opening the replay workspace.'
+                    : replayDockVisible
                     ? 'Open the large preview-only replay workspace. No history data is merged.'
                     : 'Switch to Replay mode to open the preview replay workspace.';
             const icon = replayWorkspaceButton.querySelector('i');
@@ -13139,6 +13459,11 @@
         if (state.dataMode !== DATA_MODES.WALLET) return false;
         const input = document.getElementById('crypto-wallet-lookup-input');
         const wallet = input?.value || state.walletLookup.walletInput || state.walletLookup.lastWallet || '';
+        if (!String(wallet || '').trim()) {
+            state.walletLookup.lastError = 'Enter a wallet address before loading Worker activity.';
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+            return false;
+        }
         loadWalletActivity(wallet);
         return true;
     }

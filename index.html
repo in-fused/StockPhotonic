@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/base.css?v=d151-graph-os">
     <link rel="stylesheet" href="css/shell.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/graph.css?v=d249-primary-actions">
+    <link rel="stylesheet" href="css/graph.css?v=d259-functional-integrity">
     <link rel="stylesheet" href="css/stock.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/crypto.css?v=d249-primary-actions">
+    <link rel="stylesheet" href="css/crypto.css?v=d259-functional-integrity">
     <link rel="stylesheet" href="css/review.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/mobile.css?v=d249-primary-actions">
+    <link rel="stylesheet" href="css/mobile.css?v=d259-functional-integrity">
 </head>
 <body class="photonic-bg graph-first-os" data-stock-ux-mode="explore" data-crypto-ux-mode="flow" data-control-layer="primary">
     <header class="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
@@ -1439,7 +1439,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/ui/search.js?v=d147-candidate-company-preview"></script>
     <script src="js/ui/controls.js"></script>
     <script src="js/ui/operatingShell.js?v=d151-graph-os"></script>
-    <script src="js/stock/commandPalette.js?v=d239-hierarchy-reset"></script>
+    <script src="js/stock/commandPalette.js?v=d259-functional-integrity"></script>
     <script src="js/crypto/core.js"></script>
     <script src="js/crypto/graph.js"></script>
     <script src="js/crypto/layout.js"></script>
@@ -1447,14 +1447,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
     <script src="js/crypto/statusPanels.js?v=d132-mega"></script>
     <script src="js/crypto/historyWorkspace.js?v=d132-mega"></script>
     <script src="js/crypto/investigationWorkspace.js?v=d132-mega"></script>
-    <script src="js/crypto/replayWorkspace.js?v=d219-productivity"></script>
+    <script src="js/crypto/replayWorkspace.js?v=d259-functional-integrity"></script>
     <script>
         window.CryptoPhotonicWorkerFeedEndpoint =
             "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/events";
         window.CryptoPhotonicWorkerWalletActivityEndpoint =
             "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/wallet-activity";
     </script>
-    <script src="js/crypto/ui.js?v=d239-hierarchy-reset"></script>
+    <script src="js/crypto/ui.js?v=d259-functional-integrity"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -1773,6 +1773,10 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         let investigationRailDomKey = '';
         let activeAnalystOverlayKey = '';
         let activeAnalystPresetKey = '';
+        let stockPrimaryActionNotice = {
+            message: '',
+            tone: 'info'
+        };
         const investigationWorkspace = stockInvestigationContinuity.createSessionWorkspace();
         const graphScalabilityController = graphScalableInfrastructure.createGraphScalabilityController();
         const graphReadabilityController = graphReadability.createReadabilityController();
@@ -2098,6 +2102,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             window.setStockUxMode?.(nextMode);
 
             if (nextMode === 'explore') {
+                clearStockPrimaryActionNotice();
                 window.setPhotonicControlLayer?.('primary');
                 toggleGraphControlDrawer(true);
                 window.requestAnimationFrame(() => {
@@ -2110,17 +2115,38 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             if (nextMode === 'analyst') {
                 window.setPhotonicControlLayer?.('secondary');
+                const routeAvailability = getStockCommandAvailability('compare');
+                if (routeAvailability.disabled) {
+                    announceStockPrimaryAction(routeAvailability.reason || 'Stock graph is not ready for route comparison yet.', 'warn');
+                    toggleStockInspector(true);
+                    renderGraphOsStatusPanel();
+                    return;
+                }
+                let result = null;
                 if (activeRouteComparison) {
-                    openCurrentRouteWorkspace();
+                    result = openCurrentRouteWorkspace();
                 } else if (activeRelationshipRoute) {
-                    stepRouteNode(1);
+                    result = stepRouteNode(1);
                 } else {
-                    compareStrongestRoute();
+                    result = compareStrongestRoute();
+                }
+                if (!result) {
+                    announceStockPrimaryAction('Select a company or broaden filters before starting a route comparison.', 'warn');
+                    toggleStockInspector(true);
+                    renderGraphOsStatusPanel();
+                } else {
+                    clearStockPrimaryActionNotice();
                 }
                 return;
             }
 
             if (nextMode === 'review') {
+                if (getStockCommandAvailability('compare').disabled) {
+                    announceStockPrimaryAction('Review mode needs the Stock graph to finish loading before evidence context can open.', 'warn');
+                    renderGraphOsStatusPanel();
+                    return;
+                }
+                clearStockPrimaryActionNotice();
                 window.setPhotonicControlLayer?.('advanced');
                 toggleSourceCoverageLens(true);
                 setAnalystOverlay('source_confidence', { force: true });
@@ -2136,8 +2162,14 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             window.setPhotonicControlLayer?.('secondary');
             if (activeRouteComparison || activeRelationshipRoute) {
                 addStockReplayCheckpoint('primary-action');
-            } else {
+                clearStockPrimaryActionNotice();
+            } else if (visibleNodes.length) {
+                announceStockPrimaryAction('No active route was selected, so Replay opened the best visible neighborhood instead.', 'info');
                 openStockReplayNeighborhood();
+            } else {
+                announceStockPrimaryAction('Replay needs a visible Stock graph route or neighborhood before timeline context can open.', 'warn');
+                renderGraphOsStatusPanel();
+                return;
             }
             refreshGraphTimelineModel();
             renderGraphTimelineRail();
@@ -2155,6 +2187,25 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     window.CryptoPhotonic?.ui?.centerTrackedWallet?.();
                 }
             }
+        }
+
+        function announceStockPrimaryAction(message, tone = 'info') {
+            stockPrimaryActionNotice = {
+                message: String(message || ''),
+                tone: tone === 'warn' ? 'warn' : 'info'
+            };
+            adaptiveHudDomKey = '';
+            renderAdaptiveGraphHud();
+        }
+
+        function clearStockPrimaryActionNotice() {
+            if (!stockPrimaryActionNotice.message) return;
+            stockPrimaryActionNotice = {
+                message: '',
+                tone: 'info'
+            };
+            adaptiveHudDomKey = '';
+            renderAdaptiveGraphHud();
         }
 
         function setupHelpGuide() {
@@ -3298,6 +3349,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const hasSelection = Boolean(selectedNode || selectedRelationshipLink);
             const hasComparison = Boolean(activeRouteComparison);
             const hasRoute = hasComparison || Boolean(activeRelationshipRoute);
+            const hasVisibleGraph = visible;
             if (key === 'compare') {
                 return visible
                     ? { disabled: false, reason: '' }
@@ -3323,6 +3375,27 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 return hasComparison
                     ? { disabled: false, reason: '' }
                     : { disabled: true, reason: 'Create a route comparison first.' };
+            }
+            if (key === 'timeline') {
+                if (!graphTimelineModel) refreshGraphTimelineModel();
+                return graphTimelineModel?.events?.length
+                    ? { disabled: false, reason: '' }
+                    : { disabled: true, reason: 'No Stock replay timeline events are available yet.' };
+            }
+            if (key === 'replay-context') {
+                return hasRoute || hasVisibleGraph
+                    ? { disabled: false, reason: '' }
+                    : { disabled: true, reason: 'Open a visible Stock graph route or neighborhood first.' };
+            }
+            if (key === 'replay-checkpoint') {
+                return hasRoute
+                    ? { disabled: false, reason: '' }
+                    : { disabled: true, reason: 'Trace or compare a route before saving a replay checkpoint.' };
+            }
+            if (key === 'corridor-active') {
+                return getCurrentCorridorMemoryCandidate()
+                    ? { disabled: false, reason: '' }
+                    : { disabled: true, reason: 'Focus a corridor before pinning it.' };
             }
             return { disabled: false, reason: '' };
         }
@@ -6557,7 +6630,9 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 activeRouteComparison?.id || activeRelationshipRoute?.id || '',
                 selectedNode?.id || '',
                 largeGraphNavigationModel?.mode || '',
-                graphFullscreenActive ? 1 : 0
+                graphFullscreenActive ? 1 : 0,
+                stockPrimaryActionNotice.message,
+                stockPrimaryActionNotice.tone
             ].join('|');
             if (key === adaptiveHudDomKey) return;
             adaptiveHudDomKey = key;
@@ -6573,6 +6648,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
             hud.innerHTML = `
                 <div class="graph-adaptive-hud-strip">
+                    ${stockPrimaryActionNotice.message ? `<span class="graph-primary-action-notice is-${escapeHtml(stockPrimaryActionNotice.tone)}" title="${escapeHtml(stockPrimaryActionNotice.message)}"><i class="fa-solid ${stockPrimaryActionNotice.tone === 'warn' ? 'fa-circle-exclamation' : 'fa-circle-info'}"></i>${escapeHtml(stockPrimaryActionNotice.message)}</span>` : ''}
                     <span title="Semantic zoom tier"><i class="fa-solid fa-layer-group"></i>${escapeHtml(semantic.tierLabel || 'Graph')}</span>
                     <span title="${escapeHtml(graphTopologyModel?.semanticSummary?.sentence || 'Spatial topology model derived from visible graph metadata.')}"><i class="fa-solid fa-draw-polygon"></i>${escapeHtml(topologyHeadline)}</span>
                     <span title="Viewport-aware edge budget"><i class="fa-solid fa-gauge-high"></i>${escapeHtml(String(budget.budget || visibleLinks.length))}/${escapeHtml(String(visibleLinks.length))}</span>

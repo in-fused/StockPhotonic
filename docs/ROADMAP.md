@@ -1,5 +1,12 @@
 # Roadmap Notes
 
+## D259-D268 Functional Integrity Audit + Dead-Control Cleanup
+
+- Audited StockPhotonic and CryptoPhotonic visible control paths so default actions either execute, show deterministic unavailable copy, or stay behind command/search/disclosure surfaces.
+- Tightened Crypto Live Feed and Wallet Lookup state language around fixture, Worker replacement graph, unavailable Worker endpoint, loading, no returned events, and preview-only replay separation without adding provider access.
+- Kept mobile graph controls limited to route/replay step buttons and kept command-palette defaults concise while advanced unavailable commands remain searchable with disabled reasons.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, or browser-side provider-call changes are part of D259-D268.
+
 ## D249-D258 Institutional UX Simplification Pass 2 - Primary Action Workflow Rebuild
 
 - Rebuilt StockPhotonic and CryptoPhotonic mode flows around one primary action per mode, with secondary graph/replay/source controls preserved behind compact overflow or disclosure surfaces.

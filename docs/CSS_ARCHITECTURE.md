@@ -118,6 +118,7 @@ D219-D228 dual-surface workflow refinement keeps the same ownership:
 - Shared command-palette scanability refinements and Stock graph handoff chrome, including `.photonic-command-row-*` and `.graph-workflow-handoff*`, live in `graph.css` because they extend graph OS behavior loaded after shared shell styles.
 - Crypto session status and workflow handoff selectors, including `.crypto-session-status-strip`, `.crypto-workflow-handoff*`, and `.crypto-replay-handoff`, live in `crypto.css`.
 - Responsive/touch compression for command subtitles, handoff strips, session status chips, and route/replay previous/next affordances lives in `mobile.css`.
+
 - Command subtitles, active preset labels, disabled-state reasons, workflow cue selection, replay corridor availability, and session-only boundaries remain JavaScript-owned.
 - CSS must not encode workflow intelligence, source authority, persistence guarantees, provider/API behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
 
@@ -142,6 +143,12 @@ D249-D258 continues the simplification by making preserved systems mode-owned be
 - Crypto primary-action rail, source-boundary disclosure posture, and mode-owned workflow cues live in `crypto.css`; replay/source/data details remain available behind disclosures and command-palette search.
 - Mobile simplification rules for one bottom control strip, one contextual drawer, and overflowed secondary graph tools live in `mobile.css`.
 - D249-D258 does not introduce backend/provider/API, browser-side provider-call, Worker, SEC/source-pipeline, persistence/auth/storage, or production-data CSS assumptions.
+
+D259-D268 functional integrity cleanup keeps ownership unchanged:
+
+- Stock fallback/disabled primary-action chrome lives in `graph.css`; Crypto data-mode pending states and Wallet Lookup history gating live in `crypto.css`.
+- Mobile route/replay step visibility remains controlled by `mobile.css` so default mobile surfaces show only relevant step buttons and no duplicate graph control strip.
+- Control availability, Worker endpoint status, Wallet Lookup state, command-palette disabled reasons, and replay readiness remain JavaScript-owned. CSS must only style working, disabled, pending, or hidden states and must not encode backend/provider/API behavior, Worker implementation, SEC/source-pipeline behavior, persistence/auth/storage, or browser-side provider calls.
 
 ## Selector Scope Rules
 

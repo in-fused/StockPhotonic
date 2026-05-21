@@ -209,11 +209,9 @@
         replay: [
             'mode-replay',
             'stock-replay-neighborhood',
-            'stock-chronology-next',
-            'stock-chronology-prev',
-            'stock-replay-checkpoint',
             'controls',
-            'mode-analyst'
+            'mode-analyst',
+            'mode-review'
         ]
     });
 
@@ -243,10 +241,8 @@
         replay: [
             'crypto-mode-replay',
             'crypto-replay',
-            'crypto-replay-next-event',
-            'crypto-replay-previous-event',
-            'crypto-center-replay',
             'crypto-mode-analyst',
+            'crypto-mode-review',
             'stock-product'
         ]
     });
@@ -386,11 +382,11 @@
             command('preset-discovery-investigation', 'Preset: Discovery Investigation', 'Navigate', () => callGlobal('applyGraphAnalystPreset', 'discovery_investigation')),
             command('preset-performance', 'Preset: Performance Mode', 'Navigate', () => callGlobal('applyGraphAnalystPreset', 'performance')),
             command('large-overview', 'Large Graph Overview', 'Navigate', () => callGlobal('setLargeGraphMode', 'overview')),
-            command('large-ecosystem', 'Ecosystem Focus', 'Navigate', () => callGlobal('setLargeGraphMode', 'ecosystem_focus')),
-            command('large-neighborhood', 'Neighborhood Isolation', 'Navigate', () => callGlobal('setLargeGraphMode', 'neighborhood')),
-            command('large-hubs', 'Strategic Hub Mode', 'Navigate', () => callGlobal('setLargeGraphMode', 'strategic_hubs')),
-            command('large-production', 'Production-Only Graph', 'Navigate', () => callGlobal('setLargeGraphMode', 'production_only')),
-            command('large-preview', 'Preview-Only Graph', 'Navigate', () => callGlobal('setLargeGraphMode', 'preview_only')),
+            command('large-ecosystem', 'Ecosystem Focus', 'Navigate', () => callGlobal('setLargeGraphMode', 'ecosystem_focus'), { disabledReason: () => stockReadyReason() }),
+            command('large-neighborhood', 'Neighborhood Isolation', 'Navigate', () => callGlobal('setLargeGraphMode', 'neighborhood'), { disabledReason: () => stockReadyReason() }),
+            command('large-hubs', 'Strategic Hub Mode', 'Navigate', () => callGlobal('setLargeGraphMode', 'strategic_hubs'), { disabledReason: () => stockReadyReason() }),
+            command('large-production', 'Production-Only Graph', 'Navigate', () => callGlobal('setLargeGraphMode', 'production_only'), { disabledReason: () => stockReadyReason() }),
+            command('large-preview', 'Preview-Only Graph', 'Navigate', () => callGlobal('setLargeGraphMode', 'preview_only'), { disabledReason: () => stockReadyReason() }),
             command('center-selected-node', 'Center Selected Node', 'Navigate', () => callGlobal('centerSelectedNode'), { disabledReason: () => stockDisabledReason('selected-node') }),
             command('fit-selected-neighborhood', 'Fit Selected Neighborhood', 'Navigate', () => callGlobal('fitSelectedNeighborhood'), { disabledReason: () => stockDisabledReason('selected-node') }),
             command('jump-selected-node', 'Jump To Selected Node', 'Navigate', () => callGlobal('jumpToSelectedGraphNode'), { disabledReason: () => stockDisabledReason('selected-node') }),
@@ -409,7 +405,7 @@
             command('workspace-next', 'Next Session Workspace', 'Workspace', () => callGlobal('cycleAnalystWorkspace', 1)),
             command('workspace-prev', 'Previous Session Workspace', 'Workspace', () => callGlobal('cycleAnalystWorkspace', -1)),
             command('pin-current-route', 'Pin Current Route', 'Workspace', () => callGlobal('pinCurrentRoute'), { disabledReason: () => stockDisabledReason('route-step') }),
-            command('pin-current-corridor', 'Pin Current Corridor', 'Workspace', () => callGlobal('pinCurrentCorridor')),
+            command('pin-current-corridor', 'Pin Current Corridor', 'Workspace', () => callGlobal('pinCurrentCorridor'), { disabledReason: () => stockDisabledReason('corridor-active') }),
             command('pin-selected-hub', 'Pin Selected Hub', 'Workspace', () => callGlobal('pinSelectedHub'), { disabledReason: () => stockDisabledReason('selected-node') }),
             command('clear-session-workspace', 'Clear Session Workspace', 'Workspace', () => callGlobal('clearInvestigationWorkspace')),
 
@@ -443,14 +439,14 @@
             command('clear-overlays', 'Clear Graph Overlays', 'Overlay', () => callGlobal('clearGraphIntelligenceOverlays')),
             command('preset-evidence', 'Preset: Evidence Mode', 'Overlay', () => callGlobal('applyGraphAnalystPreset', 'evidence')),
             command('preset-evidence-investigation', 'Preset: Evidence Investigation', 'Overlay', () => callGlobal('applyGraphAnalystPreset', 'evidence_investigation')),
-            command('center-ecosystem', 'Center Active Ecosystem', 'Overlay', () => callGlobal('centerActiveEcosystem')),
-            command('focus-bridges', 'Focus Bridge Companies', 'Overlay', () => callGlobal('focusBridgeCompanies')),
+            command('center-ecosystem', 'Center Active Ecosystem', 'Overlay', () => callGlobal('centerActiveEcosystem'), { disabledReason: () => stockReadyReason() }),
+            command('focus-bridges', 'Focus Bridge Companies', 'Overlay', () => callGlobal('focusBridgeCompanies'), { disabledReason: () => stockDisabledReason('bridges') }),
 
-            command('stock-replay-neighborhood', 'Open Stock Replay Neighborhood', 'Replay / Timeline', () => callGlobal('openStockReplayNeighborhood')),
+            command('stock-replay-neighborhood', 'Open Stock Replay Neighborhood', 'Replay / Timeline', () => callGlobal('openStockReplayNeighborhood'), { disabledReason: () => stockDisabledReason('replay-context') }),
             command('preset-replay-investigation', 'Preset: Replay Investigation', 'Replay / Timeline', () => callGlobal('applyGraphAnalystPreset', 'replay_investigation')),
-            command('stock-chronology-next', 'Next Graph Chronology Event', 'Replay / Timeline', () => callGlobal('stepGraphChronology', 1)),
-            command('stock-chronology-prev', 'Previous Graph Chronology Event', 'Replay / Timeline', () => callGlobal('stepGraphChronology', -1)),
-            command('stock-replay-checkpoint', 'Save Stock Replay Checkpoint', 'Replay / Timeline', () => callGlobal('addStockReplayCheckpoint')),
+            command('stock-chronology-next', 'Next Graph Chronology Event', 'Replay / Timeline', () => callGlobal('stepGraphChronology', 1), { disabledReason: () => stockDisabledReason('timeline') }),
+            command('stock-chronology-prev', 'Previous Graph Chronology Event', 'Replay / Timeline', () => callGlobal('stepGraphChronology', -1), { disabledReason: () => stockDisabledReason('timeline') }),
+            command('stock-replay-checkpoint', 'Save Stock Replay Checkpoint', 'Replay / Timeline', () => callGlobal('addStockReplayCheckpoint'), { disabledReason: () => stockDisabledReason('replay-checkpoint') }),
             command('crypto-replay', 'Toggle Crypto Replay Workspace', 'Crypto Workspace', () => window.CryptoPhotonic?.ui?.toggleReplayWorkspaceMode?.(), { disabledReason: () => cryptoCommandDisabledReason('replay-workspace') }),
             command('crypto-preset-replay-investigation', 'Crypto Replay Investigation preset', 'Crypto Workspace', () => window.CryptoPhotonic?.ui?.applyCryptoAnalystPreset?.('replay_investigation'), { disabledReason: () => cryptoCommandDisabledReason('replay-workspace') }),
             command('crypto-preset-liquidity-flow', 'Crypto Liquidity Flow preset', 'Crypto Workspace', () => window.CryptoPhotonic?.ui?.applyCryptoAnalystPreset?.('liquidity_flow'), { disabledReason: () => cryptoCommandDisabledReason('preset-liquidity-flow') }),
@@ -518,7 +514,8 @@
             : DEFAULT_STOCK_COMMANDS[mode] || DEFAULT_STOCK_COMMANDS.explore;
         const byId = new Map(commands.map(item => [item.id, item]));
         const scoped = orderedIds.map(id => byId.get(id)).filter(Boolean);
-        return scoped.length ? scoped : commands.slice(0, 14);
+        const enabledScoped = scoped.filter(item => !getCommandDisabledReason(item));
+        return enabledScoped.length ? enabledScoped : scoped.length ? scoped : commands.slice(0, 14);
     }
 
     function render() {

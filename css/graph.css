@@ -3329,6 +3329,20 @@ body[data-stock-ux-mode="replay"] .graph-timeline-track {
             box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.10);
         }
 
+.graph-primary-action-notice {
+            max-width: min(34rem, 72vw);
+            border-color: rgba(125, 211, 252, 0.18) !important;
+            background: rgba(14, 116, 144, 0.16) !important;
+            color: rgba(224, 242, 254, 0.86) !important;
+            overflow-wrap: anywhere;
+        }
+
+.graph-primary-action-notice.is-warn {
+            border-color: rgba(253, 224, 71, 0.22) !important;
+            background: rgba(253, 224, 71, 0.10) !important;
+            color: rgba(254, 249, 195, 0.88) !important;
+        }
+
 body[data-stock-ux-mode="explore"] .stock-primary-action-rail [data-primary-mode="explore"],
 body[data-stock-ux-mode="analyst"] .stock-primary-action-rail [data-primary-mode="analyst"],
 body[data-stock-ux-mode="review"] .stock-primary-action-rail [data-primary-mode="review"],

@@ -3249,3 +3249,141 @@ body[data-stock-ux-mode="replay"] .graph-timeline-track {
             max-width: 7.4rem;
             font-size: 0.52rem;
         }
+
+/* D249-D258 primary-action rebuild: Stock defaults to one mode-owned action and compact secondary tools. */
+.stock-header-secondary {
+            display: none !important;
+        }
+
+.mode-primary-action-rail {
+            display: grid;
+            gap: 0.65rem;
+            margin: -0.25rem 0 0.85rem;
+        }
+
+.mode-primary-action {
+            display: none;
+            align-items: center;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.85rem;
+            border: 1px solid rgba(125, 211, 252, 0.16);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.48);
+            padding: 0.78rem 0.9rem;
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.20);
+        }
+
+.mode-primary-action > div {
+            min-width: 0;
+        }
+
+.mode-primary-kicker {
+            margin-bottom: 0.18rem;
+            color: rgba(165, 243, 252, 0.62);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            letter-spacing: 0.08em;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+.mode-primary-action h2 {
+            margin: 0;
+            color: rgba(240, 249, 255, 0.94);
+            font-size: 1rem;
+            font-weight: 650;
+            letter-spacing: 0;
+            line-height: 1.15;
+        }
+
+.mode-primary-action p {
+            margin: 0.2rem 0 0;
+            color: rgba(186, 230, 253, 0.68);
+            font-size: 0.76rem;
+            line-height: 1.35;
+        }
+
+.mode-primary-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            min-height: 2.45rem;
+            border: 1px solid rgba(125, 211, 252, 0.34);
+            border-radius: 8px;
+            background: rgba(14, 116, 144, 0.22);
+            color: rgba(240, 249, 255, 0.94);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.68rem;
+            line-height: 1;
+            padding: 0.55rem 0.78rem;
+            white-space: nowrap;
+            transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+        }
+
+.mode-primary-button:hover,
+.mode-primary-button:focus-visible {
+            border-color: rgba(34, 211, 238, 0.62);
+            background: rgba(8, 145, 178, 0.32);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.10);
+        }
+
+body[data-stock-ux-mode="explore"] .stock-primary-action-rail [data-primary-mode="explore"],
+body[data-stock-ux-mode="analyst"] .stock-primary-action-rail [data-primary-mode="analyst"],
+body[data-stock-ux-mode="review"] .stock-primary-action-rail [data-primary-mode="review"],
+body[data-stock-ux-mode="replay"] .stock-primary-action-rail [data-primary-mode="replay"] {
+            display: grid;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .stock-primary-action-rail {
+            display: none !important;
+        }
+
+.interaction-overflow {
+            position: relative;
+            flex: 0 0 auto;
+        }
+
+.interaction-overflow > summary {
+            cursor: pointer;
+            list-style: none;
+        }
+
+.interaction-overflow > summary::-webkit-details-marker {
+            display: none;
+        }
+
+.interaction-overflow > summary i:last-child {
+            font-size: 0.58rem;
+            opacity: 0.72;
+            transition: transform 160ms ease;
+        }
+
+.interaction-overflow[open] > summary i:last-child {
+            transform: rotate(180deg);
+        }
+
+.interaction-overflow-menu {
+            position: absolute;
+            top: calc(100% + 0.45rem);
+            right: 0;
+            z-index: 72;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 0.38rem;
+            width: max-content;
+            max-width: min(36rem, calc(100vw - 2rem));
+            border: 1px solid rgba(125, 211, 252, 0.16);
+            border-radius: 8px;
+            background: rgba(2, 6, 23, 0.94);
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.38);
+            padding: 0.48rem;
+            backdrop-filter: blur(18px);
+        }
+
+.interaction-overflow-menu .interaction-dock-button,
+.interaction-overflow-menu .interaction-dock-split {
+            border-radius: 8px;
+        }

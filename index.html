@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/base.css?v=d151-graph-os">
     <link rel="stylesheet" href="css/shell.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/graph.css?v=d239-hierarchy-reset">
+    <link rel="stylesheet" href="css/graph.css?v=d249-primary-actions">
     <link rel="stylesheet" href="css/stock.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/crypto.css?v=d239-hierarchy-reset">
+    <link rel="stylesheet" href="css/crypto.css?v=d249-primary-actions">
     <link rel="stylesheet" href="css/review.css?v=d151-graph-os">
-    <link rel="stylesheet" href="css/mobile.css?v=d239-hierarchy-reset">
+    <link rel="stylesheet" href="css/mobile.css?v=d249-primary-actions">
 </head>
 <body class="photonic-bg graph-first-os" data-stock-ux-mode="explore" data-crypto-ux-mode="flow" data-control-layer="primary">
     <header class="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
@@ -35,12 +35,12 @@
                     <span class="font-mono text-emerald-400 text-xs tracking-widest">LIVE - APR 29 2026</span>
                 </div>
 
-                <button onclick="fitGraph()" class="focus-button px-4 py-2 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                <button onclick="fitGraph()" class="stock-header-secondary focus-button px-4 py-2 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
                     <i class="fa-solid fa-compress"></i>
                     <span>FIT</span>
                 </button>
 
-                <button onclick="resetAll()" class="focus-button px-4 py-2 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
+                <button onclick="resetAll()" class="stock-header-secondary focus-button px-4 py-2 text-xs rounded-3xl border border-white/20 flex items-center gap-x-2">
                     <i class="fa-solid fa-undo"></i>
                     <span>RESET</span>
                 </button>
@@ -88,39 +88,47 @@
         <nav id="stock-interaction-dock" class="interaction-dock stock-interaction-dock" aria-label="StockPhotonic interaction dock">
             <div class="interaction-dock-label">
                 <i class="fa-solid fa-sliders"></i>
-                <span>Interaction Dock</span>
+                <span>Secondary Tools</span>
             </div>
             <div class="interaction-dock-actions">
-                <div class="interaction-dock-split" role="group" aria-label="Stock view reset controls">
-                    <button type="button" onclick="fitGraph()" class="interaction-dock-button" title="Fit visible StockPhotonic graph" aria-label="Fit visible StockPhotonic graph">
-                        <i class="fa-solid fa-compress-arrows-alt"></i>
-                        <span>Fit</span>
-                    </button>
-                    <button type="button" onclick="resetAll()" class="interaction-dock-button" title="Reset StockPhotonic filters, layout, and view" aria-label="Reset StockPhotonic filters, layout, and view">
-                        <i class="fa-solid fa-rotate-left"></i>
-                        <span>Reset</span>
-                    </button>
-                </div>
-                <button id="stock-dock-fullscreen" type="button" onclick="toggleGraphFullscreen()" aria-pressed="false" class="interaction-dock-button" title="Open StockPhotonic fullscreen graph" aria-label="Toggle StockPhotonic fullscreen graph">
-                    <i class="fa-solid fa-expand"></i>
-                    <span>Fullscreen</span>
-                </button>
-                <button type="button" onclick="openPhotonicHelp('stock')" class="interaction-dock-button" title="Open StockPhotonic guide" aria-label="Open StockPhotonic guide">
-                    <i class="fa-regular fa-circle-question"></i>
-                    <span>Help</span>
-                </button>
-                <button id="stock-dock-focus" type="button" onclick="toggleFocusMode()" aria-pressed="false" class="interaction-dock-button" title="Toggle Focus Mode" aria-label="Toggle Focus Mode">
-                    <i class="fa-solid fa-bullseye"></i>
-                    <span>Focus</span>
-                </button>
-                <button id="stock-dock-perspective" type="button" onclick="togglePerspectiveMode()" aria-pressed="false" class="interaction-dock-button" title="Toggle Perspective Mode" aria-label="Toggle Perspective Mode">
-                    <i class="fa-solid fa-cubes"></i>
-                    <span>Perspective</span>
-                </button>
-                <button id="stock-dock-orb" type="button" onclick="toggleOrbMap()" aria-pressed="false" class="interaction-dock-button" title="Toggle Orb Map" aria-label="Toggle Orb Map">
-                    <i class="fa-solid fa-globe"></i>
-                    <span>Orb</span>
-                </button>
+                <details class="interaction-overflow stock-secondary-actions">
+                    <summary class="interaction-dock-button" aria-label="Open StockPhotonic secondary graph tools">
+                        <i class="fa-solid fa-ellipsis"></i>
+                        <span>Graph Tools</span>
+                    </summary>
+                    <div class="interaction-overflow-menu" role="group" aria-label="StockPhotonic secondary graph tools">
+                        <div class="interaction-dock-split" role="group" aria-label="Stock view reset controls">
+                            <button type="button" onclick="fitGraph()" class="interaction-dock-button" title="Fit visible StockPhotonic graph" aria-label="Fit visible StockPhotonic graph">
+                                <i class="fa-solid fa-compress-arrows-alt"></i>
+                                <span>Fit</span>
+                            </button>
+                            <button type="button" onclick="resetAll()" class="interaction-dock-button" title="Reset StockPhotonic filters, layout, and view" aria-label="Reset StockPhotonic filters, layout, and view">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Reset</span>
+                            </button>
+                        </div>
+                        <button id="stock-dock-fullscreen" type="button" onclick="toggleGraphFullscreen()" aria-pressed="false" class="interaction-dock-button" title="Open StockPhotonic fullscreen graph" aria-label="Toggle StockPhotonic fullscreen graph">
+                            <i class="fa-solid fa-expand"></i>
+                            <span>Fullscreen</span>
+                        </button>
+                        <button type="button" onclick="openPhotonicHelp('stock')" class="interaction-dock-button" title="Open StockPhotonic guide" aria-label="Open StockPhotonic guide">
+                            <i class="fa-regular fa-circle-question"></i>
+                            <span>Help</span>
+                        </button>
+                        <button id="stock-dock-focus" type="button" onclick="toggleFocusMode()" aria-pressed="false" class="interaction-dock-button" title="Toggle Focus Mode" aria-label="Toggle Focus Mode">
+                            <i class="fa-solid fa-bullseye"></i>
+                            <span>Focus</span>
+                        </button>
+                        <button id="stock-dock-perspective" type="button" onclick="togglePerspectiveMode()" aria-pressed="false" class="interaction-dock-button" title="Toggle Perspective Mode" aria-label="Toggle Perspective Mode">
+                            <i class="fa-solid fa-cubes"></i>
+                            <span>Perspective</span>
+                        </button>
+                        <button id="stock-dock-orb" type="button" onclick="toggleOrbMap()" aria-pressed="false" class="interaction-dock-button" title="Toggle Orb Map" aria-label="Toggle Orb Map">
+                            <i class="fa-solid fa-globe"></i>
+                            <span>Orb</span>
+                        </button>
+                    </div>
+                </details>
             </div>
         </nav>
 
@@ -138,6 +146,53 @@
                     <button type="button" class="graph-os-action" data-toggle-stock-inspector onclick="toggleStockInspector()" aria-pressed="false" title="Open contextual inspector" aria-label="Open contextual inspector"><i class="fa-solid fa-sidebar"></i><span>Inspector</span></button>
                 </div>
             </div>
+
+            <section class="mode-primary-action-rail stock-primary-action-rail" aria-label="StockPhotonic primary mode action">
+                <article class="mode-primary-action" data-primary-mode="explore">
+                    <div>
+                        <div class="mode-primary-kicker">Explore Primary Action</div>
+                        <h2>Search or select a company</h2>
+                        <p>Start with a ticker or company name, then inspect the selected neighborhood.</p>
+                    </div>
+                    <button type="button" onclick="runStockPrimaryAction('explore')" class="mode-primary-button">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>Search Company</span>
+                    </button>
+                </article>
+                <article class="mode-primary-action" data-primary-mode="analyst">
+                    <div>
+                        <div class="mode-primary-kicker">Analyst Primary Action</div>
+                        <h2>Compare route or inspect corridor</h2>
+                        <p>Build a relationship path from the visible graph or continue the current route.</p>
+                    </div>
+                    <button type="button" onclick="runStockPrimaryAction('analyst')" class="mode-primary-button">
+                        <i class="fa-solid fa-route"></i>
+                        <span>Compare Route</span>
+                    </button>
+                </article>
+                <article class="mode-primary-action" data-primary-mode="review">
+                    <div>
+                        <div class="mode-primary-kicker">Review Primary Action</div>
+                        <h2>Inspect evidence and source state</h2>
+                        <p>Open source-aware overlays and the single contextual inspector for the active graph state.</p>
+                    </div>
+                    <button type="button" onclick="runStockPrimaryAction('review')" class="mode-primary-button">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Inspect Evidence</span>
+                    </button>
+                </article>
+                <article class="mode-primary-action" data-primary-mode="replay">
+                    <div>
+                        <div class="mode-primary-kicker">Replay Primary Action</div>
+                        <h2>Use timeline and replay actions</h2>
+                        <p>Open the session replay neighborhood or checkpoint the active route context.</p>
+                    </div>
+                    <button type="button" onclick="runStockPrimaryAction('replay')" class="mode-primary-button">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Open Replay</span>
+                    </button>
+                </article>
+            </section>
 
             <div id="graph-control-drawer" class="graph-intelligence-controls graph-control-drawer is-collapsed glass rounded-3xl p-4 mb-6 flex flex-wrap items-center gap-3 border border-white/10" aria-label="Progressive graph controls">
                 <div class="graph-control-drawer-header">
@@ -432,28 +487,12 @@
                         <div id="graph-investigation-rail" class="graph-investigation-rail" aria-live="polite"></div>
                         <div id="graph-annotation-layer" class="graph-annotation-layer" aria-live="polite"></div>
                         <div class="mobile-graph-overlay stock-mobile-graph-overlay" aria-label="Mobile StockPhotonic graph controls">
-                            <div class="mobile-graph-hint rounded-2xl px-3 py-2 text-[10px] font-mono">Pinch to zoom &bull; Drag to pan &bull; Tap nodes/flows</div>
                             <div class="mobile-graph-actions">
-                                <button type="button" onclick="mobileResetGraphView()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Reset and fit the StockPhotonic graph view" aria-label="Reset StockPhotonic graph view">
-                                    <i class="fa-solid fa-rotate-left"></i>
-                                </button>
-                                <button type="button" onclick="fitGraph()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Fit visible StockPhotonic graph" aria-label="Fit StockPhotonic graph">
-                                    <i class="fa-solid fa-compress-arrows-alt"></i>
-                                </button>
-                                <button id="stock-mobile-fullscreen-toggle" type="button" onclick="toggleGraphFullscreen()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Toggle StockPhotonic fullscreen graph" aria-label="Toggle StockPhotonic fullscreen graph">
-                                    <i class="fa-solid fa-expand"></i>
-                                </button>
-                                <button type="button" onclick="openPhotonicCommandPalette()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Open graph commands" aria-label="Open graph commands">
-                                    <i class="fa-solid fa-terminal"></i>
-                                </button>
                                 <button id="stock-mobile-route-prev" type="button" onclick="stepRouteNode(-1)" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Previous active route node" aria-label="Previous active route node">
                                     <i class="fa-solid fa-backward-step"></i>
                                 </button>
                                 <button id="stock-mobile-route-next" type="button" onclick="stepRouteNode(1)" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Next active route node" aria-label="Next active route node">
                                     <i class="fa-solid fa-forward-step"></i>
-                                </button>
-                                <button type="button" onclick="captureCurrentGraphSnapshot()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Save session graph snapshot" aria-label="Save session graph snapshot">
-                                    <i class="fa-regular fa-bookmark"></i>
                                 </button>
                             </div>
                         </div>
@@ -486,8 +525,8 @@
                     <div id="empty-sidebar" class="glass rounded-3xl p-6 border border-white/10 h-full min-h-[320px] overflow-y-auto">
                         <div class="h-full min-h-[320px] flex flex-col items-center justify-center text-center">
                             <i class="fa-solid fa-project-diagram text-5xl text-white/20 mb-4"></i>
-                            <div class="font-semibold text-white/60">Loading graph intelligence</div>
-                            <div class="text-xs text-white/35 mt-2 max-w-xs">The default dashboard is derived from the static dataset.</div>
+                            <div class="font-semibold text-white/60">Select a company or relationship</div>
+                            <div class="text-xs text-white/35 mt-2 max-w-xs">Use the primary action for this mode; details, evidence, and replay state stay here when needed.</div>
                         </div>
                     </div>
                 </div>
@@ -1161,68 +1200,117 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                 </div>
             </div>
 
+            <section class="mode-primary-action-rail crypto-primary-action-rail" aria-label="CryptoPhotonic primary mode action">
+                <article class="mode-primary-action" data-primary-mode="flow">
+                    <div>
+                        <div class="mode-primary-kicker">Flow Primary Action</div>
+                        <h2>Inspect wallet or flow</h2>
+                        <p>Keep the graph first, then open the selected wallet or transfer detail only when needed.</p>
+                    </div>
+                    <button type="button" onclick="runCryptoPrimaryAction('flow')" class="mode-primary-button">
+                        <i class="fa-solid fa-wave-square"></i>
+                        <span>Inspect Flow</span>
+                    </button>
+                </article>
+                <article class="mode-primary-action" data-primary-mode="analyst">
+                    <div>
+                        <div class="mode-primary-kicker">Analyst Primary Action</div>
+                        <h2>Focus wallet or corridor</h2>
+                        <p>Center the tracked wallet and isolate the selected wallet/flow context.</p>
+                    </div>
+                    <button type="button" onclick="runCryptoPrimaryAction('analyst')" class="mode-primary-button">
+                        <i class="fa-solid fa-bullseye"></i>
+                        <span>Focus Wallet</span>
+                    </button>
+                </article>
+                <article class="mode-primary-action" data-primary-mode="review">
+                    <div>
+                        <div class="mode-primary-kicker">Review Primary Action</div>
+                        <h2>Review source and data boundary</h2>
+                        <p>Inspect source mode, Worker boundary, and staged-data labels without changing graph data.</p>
+                    </div>
+                    <button type="button" onclick="runCryptoPrimaryAction('review')" class="mode-primary-button">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span>Review Boundary</span>
+                    </button>
+                </article>
+                <article class="mode-primary-action" data-primary-mode="replay">
+                    <div>
+                        <div class="mode-primary-kicker">Replay Primary Action</div>
+                        <h2>Use replay workspace actions</h2>
+                        <p>Open preview replay controls for staged history; active wallet lookup data stays separate.</p>
+                    </div>
+                    <button type="button" onclick="runCryptoPrimaryAction('replay')" class="mode-primary-button">
+                        <i class="fa-solid fa-clapperboard"></i>
+                        <span>Open Replay</span>
+                    </button>
+                </article>
+            </section>
+
             <div class="crypto-workspace-toolbar flex flex-wrap items-center justify-between gap-3 mb-4">
                 <div>
                     <div class="text-[10px] font-mono tracking-[1.4px] text-cyan-100/72">LOCAL GRAPH WORKSPACE</div>
                     <div class="text-sm text-white/50 mt-1">Reviewed fixture data under <span class="font-mono text-cyan-50/78">data/crypto/</span></div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <button id="crypto-fullscreen-toggle" type="button" aria-pressed="false" title="Expand the Crypto graph canvas for fullscreen investigation" class="rounded-full border border-cyan-200/20 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/82 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">
-                        <i class="fa-solid fa-expand mr-1"></i><span>Expand Graph</span>
-                    </button>
-                    <button type="button" onclick="openPhotonicHelp('crypto')" title="Open a plain-English guide for CryptoPhotonic controls and graph meaning." class="help-trigger rounded-full border px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/82 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">
-                        <i class="fa-regular fa-circle-question mr-1"></i><span>How to Use</span>
-                    </button>
-                    <button id="crypto-reset-view" type="button" title="Return Crypto pan and zoom to the default graph view." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/78 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">RESET VIEW</button>
-                    <button id="crypto-reset-layout" type="button" title="Rebuild Crypto node positions while preserving the current data mode and filters." class="rounded-full border border-cyan-200/15 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-mono tracking-[1.2px] text-cyan-50/78 hover:border-cyan-100/35 hover:bg-cyan-300/16 transition">RESET LAYOUT</button>
-                    <div title="CryptoPhotonic browser code never calls Solana providers directly; Worker responses are sanitized before graphing." class="text-[10px] font-mono tracking-[1.2px] text-yellow-100/75 rounded-full border border-yellow-300/20 bg-yellow-300/10 px-3 py-1.5">NO BROWSER PROVIDER CALLS</div>
-                </div>
+                <div class="crypto-workspace-boundary-note" title="CryptoPhotonic browser code never calls Solana providers directly; Worker responses are sanitized before graphing.">Source boundary is visible in Review mode and the inspector.</div>
+                <button id="crypto-fullscreen-toggle" type="button" class="focus-button px-4 py-2 text-xs rounded-3xl border border-cyan-300/25 flex items-center gap-x-2" title="Expand the Crypto graph canvas for fullscreen investigation" aria-pressed="false">
+                    <i class="fa-solid fa-expand"></i>
+                    <span>Expand Graph</span>
+                </button>
             </div>
 
             <nav id="crypto-interaction-dock" class="interaction-dock crypto-interaction-dock" aria-label="CryptoPhotonic interaction dock">
                 <div class="interaction-dock-label">
                     <i class="fa-solid fa-satellite-dish"></i>
-                    <span>Interaction Dock</span>
+                    <span>Secondary Tools</span>
                 </div>
                 <div class="interaction-dock-actions">
-                    <div class="interaction-dock-split" role="group" aria-label="Crypto view controls">
-                        <button type="button" onclick="window.CryptoPhotonic?.ui?.resetView?.()" class="interaction-dock-button" title="Reset CryptoPhotonic pan and zoom" aria-label="Reset CryptoPhotonic view">
-                            <i class="fa-solid fa-rotate-left"></i>
-                            <span>Reset View</span>
-                        </button>
-                        <button type="button" onclick="window.CryptoPhotonic?.ui?.centerTrackedWallet?.()" class="interaction-dock-button" title="Center tracked wallet or selected node" aria-label="Center tracked wallet or selected node">
-                            <i class="fa-solid fa-crosshairs"></i>
-                            <span>Center Wallet</span>
-                        </button>
-                    </div>
-                    <button id="crypto-dock-fullscreen" type="button" onclick="window.CryptoPhotonic?.ui?.setFullscreen?.(!window.CryptoPhotonic?.ui?.getState?.().fullscreen)" aria-pressed="false" class="interaction-dock-button" title="Open CryptoPhotonic fullscreen graph" aria-label="Toggle CryptoPhotonic fullscreen graph">
-                        <i class="fa-solid fa-expand"></i>
-                        <span>Fullscreen</span>
-                    </button>
-                    <button id="crypto-dock-focus-selection" type="button" onclick="window.CryptoPhotonic?.ui?.toggleFocusSelection?.()" aria-pressed="true" class="interaction-dock-button is-active" title="Focus selected CryptoPhotonic nodes and flows" aria-label="Toggle CryptoPhotonic Focus Selection">
-                        <i class="fa-solid fa-bullseye"></i>
-                        <span>Focus On</span>
-                    </button>
-                    <button id="crypto-dock-label-density" type="button" onclick="window.CryptoPhotonic?.ui?.cycleLabelDensity?.()" aria-pressed="false" class="interaction-dock-button" title="Cycle graph label density" aria-label="Cycle graph label density">
-                        <i class="fa-solid fa-tags"></i>
-                        <span>Labels: Balanced</span>
-                    </button>
-                    <button type="button" onclick="openPhotonicHelp('crypto')" class="interaction-dock-button" title="Open CryptoPhotonic guide" aria-label="Open CryptoPhotonic guide">
-                        <i class="fa-regular fa-circle-question"></i>
-                        <span>Help</span>
-                    </button>
-                    <button id="crypto-dock-load-activity" type="button" onclick="window.CryptoPhotonic?.ui?.loadWalletActivityFromDock?.()" class="interaction-dock-button is-hidden" title="Load activity for the wallet address in Wallet Lookup mode" aria-label="Load wallet activity">
-                        <i class="fa-solid fa-cloud-arrow-down"></i>
-                        <span>Load Activity</span>
-                    </button>
-                    <button id="crypto-dock-replay-workspace" type="button" onclick="window.CryptoPhotonic?.ui?.toggleReplayWorkspaceMode?.()" aria-pressed="false" class="interaction-dock-button" title="Open preview-only replay workspace" aria-label="Toggle preview replay workspace">
-                        <i class="fa-solid fa-clapperboard"></i>
-                        <span>Replay Mode</span>
-                    </button>
-                    <button id="crypto-dock-replay-toggle" type="button" onclick="window.CryptoPhotonic?.ui?.toggleHistoryReplayFromDock?.()" class="interaction-dock-button is-hidden" title="Start or pause the preview-only lifetime replay" aria-label="Start or pause preview lifetime replay">
-                        <i class="fa-solid fa-play"></i>
-                        <span>Start Replay</span>
-                    </button>
+                    <details class="interaction-overflow crypto-secondary-actions">
+                        <summary class="interaction-dock-button" aria-label="Open CryptoPhotonic secondary graph tools">
+                            <i class="fa-solid fa-ellipsis"></i>
+                            <span>Graph Tools</span>
+                        </summary>
+                        <div class="interaction-overflow-menu" role="group" aria-label="CryptoPhotonic secondary graph tools">
+                            <div class="interaction-dock-split" role="group" aria-label="Crypto view controls">
+                                <button type="button" onclick="window.CryptoPhotonic?.ui?.resetView?.()" class="interaction-dock-button" title="Reset CryptoPhotonic pan and zoom" aria-label="Reset CryptoPhotonic view">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    <span>Reset View</span>
+                                </button>
+                                <button type="button" onclick="window.CryptoPhotonic?.ui?.centerTrackedWallet?.()" class="interaction-dock-button" title="Center tracked wallet or selected node" aria-label="Center tracked wallet or selected node">
+                                    <i class="fa-solid fa-crosshairs"></i>
+                                    <span>Center Wallet</span>
+                                </button>
+                            </div>
+                            <button id="crypto-dock-fullscreen" type="button" onclick="window.CryptoPhotonic?.ui?.setFullscreen?.(!window.CryptoPhotonic?.ui?.getState?.().fullscreen)" aria-pressed="false" class="interaction-dock-button" title="Open CryptoPhotonic fullscreen graph" aria-label="Toggle CryptoPhotonic fullscreen graph">
+                                <i class="fa-solid fa-expand"></i>
+                                <span>Fullscreen</span>
+                            </button>
+                            <button id="crypto-dock-focus-selection" type="button" onclick="window.CryptoPhotonic?.ui?.toggleFocusSelection?.()" aria-pressed="true" class="interaction-dock-button is-active" title="Focus selected CryptoPhotonic nodes and flows" aria-label="Toggle CryptoPhotonic Focus Selection">
+                                <i class="fa-solid fa-bullseye"></i>
+                                <span>Focus On</span>
+                            </button>
+                            <button id="crypto-dock-label-density" type="button" onclick="window.CryptoPhotonic?.ui?.cycleLabelDensity?.()" aria-pressed="false" class="interaction-dock-button" title="Cycle graph label density" aria-label="Cycle graph label density">
+                                <i class="fa-solid fa-tags"></i>
+                                <span>Labels: Balanced</span>
+                            </button>
+                            <button type="button" onclick="openPhotonicHelp('crypto')" class="interaction-dock-button" title="Open CryptoPhotonic guide" aria-label="Open CryptoPhotonic guide">
+                                <i class="fa-regular fa-circle-question"></i>
+                                <span>Help</span>
+                            </button>
+                            <button id="crypto-dock-load-activity" type="button" onclick="window.CryptoPhotonic?.ui?.loadWalletActivityFromDock?.()" class="interaction-dock-button is-hidden" title="Load activity for the wallet address in Wallet Lookup mode" aria-label="Load wallet activity">
+                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                                <span>Load Activity</span>
+                            </button>
+                            <button id="crypto-dock-replay-workspace" type="button" onclick="window.CryptoPhotonic?.ui?.toggleReplayWorkspaceMode?.()" aria-pressed="false" class="interaction-dock-button" title="Open preview-only replay workspace" aria-label="Toggle preview replay workspace">
+                                <i class="fa-solid fa-clapperboard"></i>
+                                <span>Replay Mode</span>
+                            </button>
+                            <button id="crypto-dock-replay-toggle" type="button" onclick="window.CryptoPhotonic?.ui?.toggleHistoryReplayFromDock?.()" class="interaction-dock-button is-hidden" title="Start or pause the preview-only lifetime replay" aria-label="Start or pause preview lifetime replay">
+                                <i class="fa-solid fa-play"></i>
+                                <span>Start Replay</span>
+                            </button>
+                        </div>
+                    </details>
                 </div>
             </nav>
 
@@ -1242,37 +1330,12 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         <div id="crypto-graph-hover-overlay" class="crypto-graph-hover-overlay" aria-hidden="true"></div>
                         <div id="crypto-spatial-breadcrumbs" class="crypto-spatial-breadcrumbs" aria-live="polite"></div>
                         <div class="mobile-graph-overlay crypto-mobile-graph-overlay" aria-label="Mobile CryptoPhotonic graph controls">
-                            <div class="mobile-graph-hint rounded-2xl px-3 py-2 text-[10px] font-mono">Pinch to zoom &bull; Drag to pan &bull; Tap nodes/flows</div>
                             <div class="mobile-graph-actions">
-                                <button id="crypto-mobile-reset-view" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Reset CryptoPhotonic graph view" aria-label="Reset CryptoPhotonic graph view">
-                                    <i class="fa-solid fa-rotate-left"></i>
-                                </button>
-                                <button id="crypto-mobile-center-wallet" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Center tracked wallet or selected node" aria-label="Center tracked wallet or selected node">
-                                    <i class="fa-solid fa-crosshairs"></i>
-                                </button>
-                                <button id="crypto-mobile-label-density-toggle" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Cycle CryptoPhotonic label density" aria-label="Cycle CryptoPhotonic label density">
-                                    <i class="fa-solid fa-tags"></i>
-                                </button>
-                                <button id="crypto-mobile-focus-selection" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Toggle CryptoPhotonic Focus Selection" aria-label="Toggle CryptoPhotonic Focus Selection" aria-pressed="true">
-                                    <i class="fa-solid fa-bullseye"></i>
-                                </button>
-                                <button type="button" onclick="openPhotonicCommandPalette()" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Open Crypto commands" aria-label="Open Crypto commands">
-                                    <i class="fa-solid fa-terminal"></i>
-                                </button>
-                                <button id="crypto-mobile-open-details" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Open selected object details" aria-label="Open selected object details">
-                                    <i class="fa-solid fa-circle-info"></i>
-                                </button>
-                                <button id="crypto-mobile-replay-workspace" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Open preview replay workspace" aria-label="Open preview replay workspace" aria-pressed="false">
-                                    <i class="fa-solid fa-clapperboard"></i>
-                                </button>
                                 <button id="crypto-mobile-replay-prev" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Previous staged replay event" aria-label="Previous staged replay event">
                                     <i class="fa-solid fa-backward-step"></i>
                                 </button>
                                 <button id="crypto-mobile-replay-next" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono is-hidden" title="Next staged replay event" aria-label="Next staged replay event">
                                     <i class="fa-solid fa-forward-step"></i>
-                                </button>
-                                <button id="crypto-mobile-fullscreen-toggle" type="button" class="mobile-graph-action rounded-full text-[10px] font-mono" title="Toggle CryptoPhotonic fullscreen graph" aria-label="Toggle CryptoPhotonic fullscreen graph">
-                                    <i class="fa-solid fa-expand"></i>
                                 </button>
                             </div>
                         </div>
@@ -1294,8 +1357,8 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                         <div id="crypto-detail-panel" class="glass rounded-3xl p-6 border border-white/10 min-h-[320px] overflow-y-auto">
                             <div class="h-full min-h-[220px] flex flex-col items-center justify-center text-center">
                                 <i class="fa-solid fa-wallet text-5xl text-white/20 mb-4"></i>
-                                <div class="font-semibold text-white/60">Crypto graph inactive</div>
-                                <div class="text-xs text-white/35 mt-2 max-w-xs">Select CryptoPhotonic to initialize the isolated sample graph.</div>
+                                <div class="font-semibold text-white/60">Select a wallet or flow</div>
+                                <div class="text-xs text-white/35 mt-2 max-w-xs">Use the active mode's primary action; source, replay, and debug details stay collapsed until opened.</div>
                             </div>
                         </div>
                     </div>
@@ -2028,6 +2091,70 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
 
         function closePhotonicHelp() {
             document.getElementById('photonic-help-backdrop')?.classList.remove('is-open');
+        }
+
+        function runStockPrimaryAction(mode = getStockUxMode()) {
+            const nextMode = ['explore', 'analyst', 'review', 'replay'].includes(mode) ? mode : getStockUxMode();
+            window.setStockUxMode?.(nextMode);
+
+            if (nextMode === 'explore') {
+                window.setPhotonicControlLayer?.('primary');
+                toggleGraphControlDrawer(true);
+                window.requestAnimationFrame(() => {
+                    const input = document.getElementById('search-input');
+                    input?.focus();
+                    input?.select?.();
+                });
+                return;
+            }
+
+            if (nextMode === 'analyst') {
+                window.setPhotonicControlLayer?.('secondary');
+                if (activeRouteComparison) {
+                    openCurrentRouteWorkspace();
+                } else if (activeRelationshipRoute) {
+                    stepRouteNode(1);
+                } else {
+                    compareStrongestRoute();
+                }
+                return;
+            }
+
+            if (nextMode === 'review') {
+                window.setPhotonicControlLayer?.('advanced');
+                toggleSourceCoverageLens(true);
+                setAnalystOverlay('source_confidence', { force: true });
+                toggleStockInspector(true);
+                if (selectedNode) showNodeDetails(selectedNode);
+                else if (selectedRelationshipLink?.source) selectNode(selectedRelationshipLink.source, { preserveFilters: true });
+                else showDefaultDashboard();
+                renderGraphOsStatusPanel();
+                requestDraw();
+                return;
+            }
+
+            window.setPhotonicControlLayer?.('secondary');
+            if (activeRouteComparison || activeRelationshipRoute) {
+                addStockReplayCheckpoint('primary-action');
+            } else {
+                openStockReplayNeighborhood();
+            }
+            refreshGraphTimelineModel();
+            renderGraphTimelineRail();
+            syncStockMobileRouteControls();
+        }
+
+        function runCryptoPrimaryAction(mode = document.body?.dataset?.cryptoUxMode || 'flow') {
+            const nextMode = ['flow', 'analyst', 'review', 'replay'].includes(mode) ? mode : 'flow';
+            window.setCryptoUxMode?.(nextMode);
+            const handled = window.CryptoPhotonic?.ui?.runPrimaryModeAction?.(nextMode);
+            if (!handled) {
+                if (nextMode === 'replay') window.CryptoPhotonic?.ui?.setReplayWorkspaceMode?.(true);
+                else {
+                    window.toggleCryptoInspector?.(true);
+                    window.CryptoPhotonic?.ui?.centerTrackedWallet?.();
+                }
+            }
         }
 
         function setupHelpGuide() {
@@ -5678,7 +5805,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         }
 
         function renderGraphWorkflowHandoff(cues = []) {
-            const items = cues.filter(Boolean).slice(0, 4);
+            const items = cues.filter(Boolean).slice(0, 3);
             if (!items.length) return '';
             return `
                 <div class="graph-workflow-handoff" aria-label="StockPhotonic next workflow actions">

@@ -1,5 +1,12 @@
 # Roadmap Notes
 
+## D249-D258 Institutional UX Simplification Pass 2 - Primary Action Workflow Rebuild
+
+- Rebuilt StockPhotonic and CryptoPhotonic mode flows around one primary action per mode, with secondary graph/replay/source controls preserved behind compact overflow or disclosure surfaces.
+- Standardized mode-owned next-action cues so only 2-3 relevant actions appear at a time while command-palette search still reaches advanced systems.
+- Simplified first-load and mobile workflow posture around calm defaults, one contextual inspector surface per product, one mobile bottom control strip, and one contextual drawer.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, or browser-side provider-call changes are part of D249-D258.
+
 ## D239-D248 Institutional UX Simplification Pass 1 - Surface Hierarchy Reset
 
 - Reset StockPhotonic and CryptoPhotonic graph surfaces around mode-based hierarchy so Explore/Flow defaults to the graph plus minimal controls, Analyst shows contextual next actions, Review narrows toward source/evidence controls, and Replay owns replay/corridor/lineage surfaces.

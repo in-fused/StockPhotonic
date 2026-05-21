@@ -136,6 +136,13 @@ D239-D248 institutional UX simplification keeps systems intact but collapses ina
 - JavaScript may choose current-mode command defaults or render compact source/status rows, but CSS must only react to stable mode attributes and product-scoped classes. Systems remain preserved, hidden, or collapsed by mode.
 - CSS must not encode source authority, replay certainty, wallet identity, persistence guarantees, provider/API behavior, browser-side provider calls, Worker behavior, SEC/source-pipeline behavior, or storage/auth behavior.
 
+D249-D258 continues the simplification by making preserved systems mode-owned behind primary actions:
+
+- Stock primary-action rail and secondary tool overflow styles live in `graph.css`; the underlying graph, route, replay, topology, and source systems remain intact and are only hidden, collapsed, or focused by mode.
+- Crypto primary-action rail, source-boundary disclosure posture, and mode-owned workflow cues live in `crypto.css`; replay/source/data details remain available behind disclosures and command-palette search.
+- Mobile simplification rules for one bottom control strip, one contextual drawer, and overflowed secondary graph tools live in `mobile.css`.
+- D249-D258 does not introduce backend/provider/API, browser-side provider-call, Worker, SEC/source-pipeline, persistence/auth/storage, or production-data CSS assumptions.
+
 ## Selector Scope Rules
 
 Stock-specific styles should stay under Stock-owned selectors such as `#stock-photonic-surface`, `.stock-*`, `.source-*`, `.relationship-*`, and `.review-*`.

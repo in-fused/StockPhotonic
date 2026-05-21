@@ -1473,7 +1473,7 @@
         const selector = renderGeneratedFixtureSelector();
         const sourceTone = state.live.workerAvailable ? 'text-emerald-100/82' : isGeneratedFixture ? 'text-emerald-100/82' : isSolana ? 'text-cyan-50/78' : 'text-white/68';
         const sourceSnapshot = renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount);
-        const detailsOpen = state.dataMode === DATA_MODES.WALLET && !state.walletLookup.lastWallet ? ' open' : '';
+        const detailsOpen = '';
         const detailLabel = state.dataMode === DATA_MODES.WALLET
             ? 'Wallet lookup'
             : state.dataMode === DATA_MODES.LIVE
@@ -1634,11 +1634,17 @@
         `;
     }
 
+    function openCryptoSourceDetails() {
+        const details = document.querySelector('#crypto-solana-status .crypto-source-details');
+        if (!details) return false;
+        details.open = true;
+        return true;
+    }
+
     function buildCryptoWorkflowHandoffActions() {
-        const actions = [];
         const uxMode = getCryptoUxMode();
-        if (uxMode === 'flow' || uxMode === 'review') return actions;
         const walletMode = state.dataMode === DATA_MODES.WALLET;
+        const hasSelection = Boolean(state.selectedId || state.selectedFlowId || state.historyPreview.selectedEvent);
         const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
         const hasLoadedWallet = Boolean(state.walletLookup.lastWallet && state.walletLookup.eventCount);
         const hasHistoryRows = Boolean((state.history.loadedTransactions || []).length || state.history.totalLoadedTransactions);
@@ -1647,6 +1653,62 @@
         const replayStatus = getHistoryReplayStatus();
         const totalSteps = getHistoryReplayTotalSteps(replayStatus);
         const step = Math.max(0, Math.min(totalSteps, Number(replayStatus.currentStep || state.historyPreview.audit?.selectedStep) || 0));
+
+        if (uxMode === 'flow') {
+            return [
+                {
+                    label: hasSelection ? 'Open Detail' : 'Select Flow',
+                    detail: hasSelection ? 'Use the single inspector' : 'Tap a wallet or transfer leg',
+                    icon: 'fa-circle-info',
+                    statusAction: 'open-details',
+                    disabled: !hasSelection,
+                    title: hasSelection ? 'Open the selected wallet or flow in the inspector.' : 'Select a wallet or flow before opening details.'
+                },
+                {
+                    label: 'Analyst Focus',
+                    detail: 'Wallet/corridor mode',
+                    icon: 'fa-chart-simple',
+                    statusAction: 'primary-analyst',
+                    title: 'Switch to Analyst mode for focused wallet and corridor inspection.'
+                },
+                {
+                    label: 'Commands',
+                    detail: 'Advanced actions',
+                    icon: 'fa-terminal',
+                    statusAction: 'open-command-palette',
+                    title: 'Search advanced CryptoPhotonic actions.'
+                }
+            ];
+        }
+
+        if (uxMode === 'review') {
+            return [
+                {
+                    label: 'Source Details',
+                    detail: 'Boundary disclosure',
+                    icon: 'fa-shield-halved',
+                    statusAction: 'source-details',
+                    title: 'Open source and data-boundary details.'
+                },
+                {
+                    label: hasSelection ? 'Open Detail' : 'Select Item',
+                    detail: hasSelection ? 'Selected object context' : 'Wallet or flow first',
+                    icon: 'fa-sidebar',
+                    statusAction: 'open-details',
+                    disabled: !hasSelection,
+                    title: hasSelection ? 'Open the selected object in the inspector.' : 'Select a wallet or flow before opening details.'
+                },
+                {
+                    label: 'Commands',
+                    detail: 'Review controls',
+                    icon: 'fa-terminal',
+                    statusAction: 'open-command-palette',
+                    title: 'Search advanced review actions.'
+                }
+            ];
+        }
+
+        const actions = [];
 
         if (!walletMode) {
             actions.push({
@@ -1663,7 +1725,7 @@
                 statusAction: 'open-command-palette',
                 title: 'Open the command palette.'
             });
-            return actions;
+            return actions.slice(0, 2);
         }
 
         actions.push({
@@ -1679,13 +1741,21 @@
 
         if (!replayMode) {
             actions.push({
+                label: 'Focus Wallet',
+                detail: 'Center visible context',
+                icon: 'fa-location-crosshairs',
+                statusAction: 'focus-wallet',
+                disabled: !state.graph,
+                title: 'Center the tracked wallet and keep direct context focused.'
+            });
+            actions.push({
                 label: 'Commands',
                 detail: 'Search modes and focused actions',
                 icon: 'fa-terminal',
                 statusAction: 'open-command-palette',
                 title: 'Open the command palette.'
             });
-            return actions.slice(0, 2);
+            return actions.slice(0, 3);
         }
 
         actions.push({
@@ -1723,7 +1793,7 @@
             });
         }
 
-        return actions.slice(0, 4);
+        return actions.slice(0, 3);
     }
 
     function getCryptoPresetLabel(key = '') {
@@ -5133,7 +5203,7 @@
             });
         }
 
-        return actions.slice(0, 4);
+        return actions.slice(0, 3);
     }
 
     function getWalletDominantDirection(edges = []) {
@@ -5610,6 +5680,27 @@
         const key = String(action || '');
         if (key === 'open-command-palette') {
             window.openPhotonicCommandPalette?.();
+            return true;
+        }
+        if (key === 'primary-flow') return runPrimaryModeAction('flow');
+        if (key === 'primary-analyst') return runPrimaryModeAction('analyst');
+        if (key === 'primary-review') return runPrimaryModeAction('review');
+        if (key === 'primary-replay') return runPrimaryModeAction('replay');
+        if (key === 'open-details') {
+            setInvestigationTab('details');
+            window.toggleCryptoInspector?.(true);
+            setMobileDrawerState('expanded');
+            return true;
+        }
+        if (key === 'source-details') {
+            runPrimaryModeAction('review');
+            openCryptoSourceDetails();
+            return true;
+        }
+        if (key === 'focus-wallet') {
+            setFocusSelectionEnabled(true);
+            centerTrackedWallet();
+            setInvestigationTab('flows');
             return true;
         }
         if (key === 'load-wallet') {
@@ -7920,6 +8011,51 @@
         render();
         updateInteractionDock();
         return state.focusSelection;
+    }
+
+    function setFocusSelectionEnabled(enabled) {
+        const nextEnabled = Boolean(enabled);
+        if (state.focusSelection !== nextEnabled) return toggleFocusSelection();
+        updateInteractionDock();
+        return state.focusSelection;
+    }
+
+    function runPrimaryModeAction(mode = getCryptoUxMode()) {
+        const nextMode = ['flow', 'analyst', 'review', 'replay'].includes(mode) ? mode : getCryptoUxMode();
+        const hasSelection = Boolean(state.selectedId || state.selectedFlowId || state.historyPreview.selectedEvent);
+        window.setCryptoUxMode?.(nextMode);
+
+        if (nextMode !== 'replay' && state.historyPreview.workspaceMode) {
+            setReplayWorkspaceMode(false);
+        }
+
+        if (nextMode === 'flow') {
+            setInvestigationTab(hasSelection ? 'details' : 'summary');
+            window.toggleCryptoInspector?.(hasSelection);
+            if (!hasSelection) centerTrackedWallet();
+        } else if (nextMode === 'analyst') {
+            setFocusSelectionEnabled(true);
+            setInvestigationTab(hasSelection ? 'details' : 'flows');
+            window.toggleCryptoInspector?.(true);
+            centerTrackedWallet();
+        } else if (nextMode === 'review') {
+            setInvestigationTab('summary');
+            window.toggleCryptoInspector?.(true);
+        } else {
+            setInvestigationTab('replay');
+            if (hasHistoryPreviewDataset()) setReplayWorkspaceMode(true);
+            window.toggleCryptoInspector?.(false);
+        }
+
+        if (state.graph) {
+            renderSolanaStatusCopy({ metadata: state.graph.metadata || {} });
+        } else {
+            renderDetails();
+            updateInteractionDock();
+        }
+        if (nextMode === 'review') openCryptoSourceDetails();
+        renderMobileInvestigationDrawer();
+        return true;
     }
 
     function normalizeLabelDensity(mode) {
@@ -13117,6 +13253,7 @@
         nextReplayEvent,
         previousReplayEvent,
         updateInteractionDock,
+        runPrimaryModeAction,
         getCommandAvailability: getCryptoCommandAvailability,
         getFlowQueue: () => state.flowQueue,
         setFlowAnimationEnabled,

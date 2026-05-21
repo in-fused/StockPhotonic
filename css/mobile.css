@@ -2069,3 +2069,87 @@
                 max-height: min(50dvh, 24rem);
             }
         }
+
+/* D249-D258 mobile workflow simplification: one bottom strip, one contextual drawer, overflowed secondary tools. */
+@media (max-width: 768px) {
+            .mode-primary-action-rail {
+                margin: 0 0 0.65rem;
+            }
+
+            .mode-primary-action {
+                grid-template-columns: minmax(0, 1fr);
+                gap: 0.58rem;
+                padding: 0.68rem;
+            }
+
+            .mode-primary-action h2 {
+                font-size: 0.94rem;
+            }
+
+            .mode-primary-action p {
+                font-size: 0.7rem;
+            }
+
+            .mode-primary-button {
+                width: 100%;
+                min-height: 2.5rem;
+            }
+
+            .stock-interaction-dock .interaction-dock-actions,
+            .crypto-interaction-dock .interaction-dock-actions {
+                overflow: visible;
+            }
+
+            .interaction-overflow,
+            .interaction-overflow > summary.interaction-dock-button {
+                width: 100%;
+            }
+
+            .interaction-overflow > summary.interaction-dock-button span {
+                display: inline;
+                font-size: 0.58rem;
+            }
+
+            .interaction-overflow-menu {
+                position: fixed;
+                top: auto;
+                left: calc(0.65rem + env(safe-area-inset-left));
+                right: calc(0.65rem + env(safe-area-inset-right));
+                bottom: calc(4.95rem + env(safe-area-inset-bottom));
+                width: auto;
+                max-width: none;
+                max-height: min(44dvh, 22rem);
+                overflow-y: auto;
+                justify-content: flex-start;
+                gap: 0.34rem;
+                padding: 0.45rem;
+            }
+
+            .interaction-overflow-menu .interaction-dock-button {
+                flex: 1 1 calc(50% - 0.34rem);
+                min-width: min(9.5rem, calc(50vw - 1rem));
+                border-radius: 8px;
+            }
+
+            .interaction-overflow-menu .interaction-dock-button span {
+                display: inline;
+                white-space: normal;
+                text-align: left;
+                line-height: 1.1;
+            }
+
+            .interaction-overflow-menu .interaction-dock-split {
+                flex: 1 1 100%;
+                width: 100%;
+                border-radius: 8px;
+            }
+
+            .interaction-overflow-menu .interaction-dock-split .interaction-dock-button {
+                min-width: 0;
+            }
+
+            #graph-intelligence-view.is-graph-fullscreen .mode-primary-action-rail,
+            #crypto-photonic-view.is-crypto-fullscreen .mode-primary-action-rail {
+                display: none !important;
+            }
+        }

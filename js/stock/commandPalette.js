@@ -70,10 +70,15 @@
         'perspective-mode': ['Toggle depth cues on the same 2D graph.', 'depth perspective'],
         'orb-map': ['Open or hide the spatial orb overview.', 'orb spatial map'],
         'controls': ['Open progressive controls for the active mode.', 'drawer controls sliders'],
+        'focus-stock-search': ['Search or select a StockPhotonic company.', 'stock search company ticker select'],
         'mode-explore': ['Broad graph scanning mode.', 'explore ux mode'],
         'mode-analyst': ['Route, topology, and workspace workflow mode.', 'analyst ux mode'],
         'mode-review': ['Evidence and source-review workflow mode.', 'review ux mode'],
         'mode-replay': ['Chronology and replay checkpoint workflow mode.', 'replay ux mode'],
+        'crypto-mode-flow': ['Wallet and flow inspection mode.', 'crypto flow ux mode'],
+        'crypto-mode-analyst': ['Wallet and corridor focus mode.', 'crypto analyst ux mode'],
+        'crypto-mode-review': ['Source and data boundary review mode.', 'crypto review ux mode'],
+        'crypto-mode-replay': ['Preview replay workspace mode.', 'crypto replay ux mode'],
         'preset-exploration': ['Balanced overview preset.', 'preset exploration balanced'],
         'preset-discovery-investigation': ['Guided hubs, overlays, and stack handoff.', 'preset discovery investigation'],
         'preset-performance': ['Lean overlays for dense graph work.', 'preset performance safe'],
@@ -176,97 +181,73 @@
 
     const DEFAULT_STOCK_COMMANDS = Object.freeze({
         explore: [
-            'fit-graph',
-            'reset-graph',
-            'fullscreen-stock',
-            'focus-mode',
+            'focus-stock-search',
             'controls',
             'mode-analyst',
             'mode-review',
             'mode-replay',
-            'preset-exploration',
-            'preset-performance',
-            'center-selected-node',
-            'fit-selected-neighborhood',
             'crypto-product'
         ],
         analyst: [
-            'fit-graph',
-            'fullscreen-stock',
-            'mode-explore',
-            'mode-review',
-            'controls',
-            'topology-summary',
-            'topology-centrality',
-            'compare-strongest-route',
+            'mode-analyst',
             'compare-source-route',
-            'preset-route',
-            'route-forward',
-            'route-backward',
+            'inspect-strongest-route',
+            'next-corridor',
             'route-workspace',
-            'stage-current'
+            'controls',
+            'mode-review'
         ],
         review: [
-            'mode-explore',
-            'mode-analyst',
-            'source-workbench',
+            'mode-review',
             'source-lens',
             'overlay-source-confidence',
-            'sec-preview',
-            'candidate-preview',
-            'preset-evidence',
-            'preset-evidence-investigation',
+            'source-workbench',
             'source-gap-filter',
-            'clear-overlays',
-            'clear-selected-relationship'
+            'controls',
+            'mode-replay'
         ],
         replay: [
-            'mode-explore',
-            'mode-analyst',
-            'fullscreen-stock',
+            'mode-replay',
             'stock-replay-neighborhood',
-            'preset-replay-investigation',
             'stock-chronology-next',
             'stock-chronology-prev',
             'stock-replay-checkpoint',
-            'route-forward',
-            'route-backward',
-            'clear-route-trace'
+            'controls',
+            'mode-analyst'
         ]
     });
 
     const DEFAULT_CRYPTO_COMMANDS = Object.freeze({
         flow: [
-            'stock-product',
-            'crypto-fullscreen',
+            'crypto-mode-flow',
             'crypto-center',
-            'crypto-labels',
-            'crypto-product'
+            'crypto-mode-analyst',
+            'crypto-mode-review',
+            'stock-product'
         ],
         analyst: [
-            'stock-product',
-            'crypto-fullscreen',
+            'crypto-mode-analyst',
             'crypto-center',
             'crypto-labels',
-            'crypto-product'
+            'crypto-mode-review',
+            'crypto-mode-replay',
+            'stock-product'
         ],
         review: [
-            'stock-product',
+            'crypto-mode-review',
+            'crypto-mode-flow',
+            'crypto-mode-analyst',
             'crypto-fullscreen',
-            'crypto-product'
+            'stock-product'
         ],
         replay: [
-            'stock-product',
-            'crypto-fullscreen',
+            'crypto-mode-replay',
             'crypto-replay',
-            'crypto-preset-replay-investigation',
             'crypto-replay-next-event',
             'crypto-replay-previous-event',
             'crypto-center-replay',
-            'crypto-replay-next-corridor',
-            'crypto-replay-previous-corridor',
-            'crypto-replay-lineage',
-            'crypto-replay-toggle-narratives'
+            'crypto-mode-analyst',
+            'stock-product'
         ]
     });
 
@@ -392,10 +373,15 @@
             command('perspective-mode', 'Toggle Perspective Mode', 'Navigate', () => callGlobal('togglePerspectiveMode')),
             command('orb-map', 'Toggle Orb Map', 'Navigate', () => callGlobal('toggleOrbMap')),
             command('controls', 'Open Graph Controls', 'Navigate', () => window.setGraphControlDrawer?.(true)),
+            command('focus-stock-search', 'Search / Select Company', 'Navigate', () => focusStockCompanySearch()),
             command('mode-explore', 'Explore UX Mode', 'Navigate', () => window.setStockUxMode?.('explore')),
             command('mode-analyst', 'Analyst UX Mode', 'Navigate', () => window.setStockUxMode?.('analyst')),
             command('mode-review', 'Review UX Mode', 'Navigate', () => window.setStockUxMode?.('review')),
             command('mode-replay', 'Replay UX Mode', 'Navigate', () => window.setStockUxMode?.('replay')),
+            command('crypto-mode-flow', 'Crypto Flow Mode', 'Navigate', () => setCryptoUxModeFromPalette('flow')),
+            command('crypto-mode-analyst', 'Crypto Analyst Mode', 'Navigate', () => setCryptoUxModeFromPalette('analyst')),
+            command('crypto-mode-review', 'Crypto Review Mode', 'Navigate', () => setCryptoUxModeFromPalette('review')),
+            command('crypto-mode-replay', 'Crypto Replay Mode', 'Navigate', () => setCryptoUxModeFromPalette('replay')),
             command('preset-exploration', 'Preset: Exploration Mode', 'Navigate', () => callGlobal('applyGraphAnalystPreset', 'exploration')),
             command('preset-discovery-investigation', 'Preset: Discovery Investigation', 'Navigate', () => callGlobal('applyGraphAnalystPreset', 'discovery_investigation')),
             command('preset-performance', 'Preset: Performance Mode', 'Navigate', () => callGlobal('applyGraphAnalystPreset', 'performance')),
@@ -412,7 +398,7 @@
             command('source-workbench', 'Open Source Workbench', 'Navigate', () => callGlobal('setAppView', 'source')),
             command('stock-product', 'Switch To StockPhotonic', 'Navigate', () => callGlobal('setProductView', 'stock')),
             command('crypto-product', 'Switch To CryptoPhotonic', 'Navigate', () => callGlobal('setProductView', 'crypto')),
-            command('crypto-fullscreen', 'Toggle Crypto Fullscreen', 'Navigate', () => window.CryptoPhotonic?.ui?.setFullscreen?.(!window.CryptoPhotonic?.ui?.getState?.().fullscreen)),
+            command('crypto-fullscreen', 'Toggle Crypto Fullscreen', 'Navigate', () => window.CryptoPhotonic?.ui?.setFullscreen?.(!window.CryptoPhotonic?.ui?.getState?.().fullscreen), { disabledReason: () => cryptoReadyReason() }),
 
             command('topology-summary', 'Show Topology Summary', 'Topology', () => callGlobal('showTopologySummary')),
             command('topology-centrality', 'Jump Market-Central Hub', 'Topology', () => callGlobal('jumpToMarketCentralHub'), { disabledReason: () => stockReadyReason() }),
@@ -497,8 +483,8 @@
             command('source-gap-filter', 'Show Evidence Gap Filter', 'Snapshot / Investigation', () => callGlobal('showEvidenceGapFilter')),
             command('clear-selected-relationship', 'Clear Selected Relationship', 'Snapshot / Investigation', () => callGlobal('clearSelectedRelationship')),
             command('clear-route-trace', 'Clear Route Trace', 'Snapshot / Investigation', () => callGlobal('clearRelationshipRoute')),
-            command('crypto-labels', 'Cycle Crypto Labels', 'Snapshot / Investigation', () => window.CryptoPhotonic?.ui?.cycleLabelDensity?.()),
-            command('crypto-center', 'Center Tracked Wallet', 'Snapshot / Investigation', () => window.CryptoPhotonic?.ui?.centerTrackedWallet?.())
+            command('crypto-labels', 'Cycle Crypto Labels', 'Snapshot / Investigation', () => window.CryptoPhotonic?.ui?.cycleLabelDensity?.(), { disabledReason: () => cryptoReadyReason() }),
+            command('crypto-center', 'Center Tracked Wallet', 'Snapshot / Investigation', () => window.CryptoPhotonic?.ui?.centerTrackedWallet?.(), { disabledReason: () => cryptoReadyReason() })
         ].filter(item => GROUPS.includes(item.group));
     }
 
@@ -613,13 +599,20 @@
         const cryptoMode = document.body?.dataset?.cryptoUxMode || 'flow';
         const cryptoState = item.id.startsWith('crypto-') ? window.CryptoPhotonic?.ui?.getState?.() || {} : {};
 
-        const modeMap = {
+        const stockModeMap = {
             'mode-explore': 'explore',
             'mode-analyst': 'analyst',
             'mode-review': 'review',
             'mode-replay': 'replay'
         };
-        if (modeMap[item.id] && modeMap[item.id] === stockMode) return { label: 'Current', current: true };
+        const cryptoModeMap = {
+            'crypto-mode-flow': 'flow',
+            'crypto-mode-analyst': 'analyst',
+            'crypto-mode-review': 'review',
+            'crypto-mode-replay': 'replay'
+        };
+        if (stockModeMap[item.id] && stockModeMap[item.id] === stockMode) return { label: 'Current', current: true };
+        if (cryptoModeMap[item.id] && cryptoModeMap[item.id] === cryptoMode) return { label: 'Current', current: true };
         if (item.id === 'fullscreen-stock' && document.body?.classList?.contains('graph-fullscreen-active')) return { label: 'Open', current: true };
         if (item.id === 'crypto-fullscreen' && cryptoState.fullscreen) return { label: 'Open', current: true };
 
@@ -689,9 +682,34 @@
         return '';
     }
 
+    function cryptoReadyReason() {
+        return isCryptoInitialized() ? '' : 'Open CryptoPhotonic first.';
+    }
+
     function isCryptoInitialized() {
         const cryptoState = window.CryptoPhotonic?.ui?.getState?.();
         return Boolean(cryptoState?.initialized);
+    }
+
+    function focusStockCompanySearch() {
+        callGlobal('setProductView', 'stock');
+        window.setStockUxMode?.('explore');
+        window.setPhotonicControlLayer?.('primary');
+        window.setGraphControlDrawer?.(true);
+        window.requestAnimationFrame?.(() => {
+            const input = document.getElementById('search-input');
+            input?.focus();
+            input?.select?.();
+        });
+    }
+
+    function setCryptoUxModeFromPalette(mode) {
+        callGlobal('setProductView', 'crypto');
+        if (typeof window.CryptoPhotonic?.ui?.runPrimaryModeAction === 'function') {
+            window.CryptoPhotonic.ui.runPrimaryModeAction(mode);
+            return;
+        }
+        window.setCryptoUxMode?.(mode);
     }
 
     function callGlobal(name, ...args) {
@@ -709,13 +727,12 @@
     function updatePaletteCopy() {
         const hint = document.querySelector('#photonic-command-palette .photonic-command-hint');
         if (hint) {
-            hint.textContent = 'Current mode actions first. Search modes, routes, review controls, replay states, and handoffs.';
+            hint.textContent = 'Current mode actions first. Search for advanced controls when needed.';
         }
     }
 
     function getGroupSummaryCopy(count, summary = '') {
-        const countCopy = `${count} ${count === 1 ? 'action' : 'actions'}`;
-        return summary ? `${countCopy} - ${summary}` : countCopy;
+        return summary || `${count} searchable ${count === 1 ? 'action' : 'actions'}`;
     }
 
     function getPalette() {

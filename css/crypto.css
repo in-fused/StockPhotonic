@@ -3267,3 +3267,56 @@ body[data-crypto-ux-mode="replay"] #crypto-photonic-view .crypto-spatial-breadcr
             box-shadow: 0 16px 40px rgba(0, 0, 0, 0.34);
             backdrop-filter: blur(14px);
         }
+
+/* D249-D258 primary-action rebuild: Crypto modes own one obvious action while source/replay details stay disclosed. */
+.crypto-workspace-boundary-note {
+            display: inline-flex;
+            align-items: center;
+            min-height: 1.95rem;
+            border: 1px solid rgba(250, 204, 21, 0.18);
+            border-radius: 8px;
+            background: rgba(250, 204, 21, 0.07);
+            color: rgba(254, 249, 195, 0.78);
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.58rem;
+            line-height: 1.25;
+            padding: 0.42rem 0.62rem;
+        }
+
+body:not([data-crypto-ux-mode="review"]) .crypto-workspace-boundary-note {
+            display: none;
+        }
+
+body[data-crypto-ux-mode="flow"] .crypto-primary-action-rail [data-primary-mode="flow"],
+body[data-crypto-ux-mode="analyst"] .crypto-primary-action-rail [data-primary-mode="analyst"],
+body[data-crypto-ux-mode="review"] .crypto-primary-action-rail [data-primary-mode="review"],
+body[data-crypto-ux-mode="replay"] .crypto-primary-action-rail [data-primary-mode="replay"] {
+            display: grid;
+            border-color: rgba(45, 212, 191, 0.18);
+            background: rgba(5, 46, 45, 0.46);
+        }
+
+.crypto-primary-action-rail .mode-primary-button {
+            border-color: rgba(45, 212, 191, 0.34);
+            background: rgba(13, 148, 136, 0.20);
+        }
+
+.crypto-primary-action-rail .mode-primary-button:hover,
+.crypto-primary-action-rail .mode-primary-button:focus-visible {
+            border-color: rgba(94, 234, 212, 0.62);
+            background: rgba(13, 148, 136, 0.32);
+            box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.10);
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-primary-action-rail {
+            display: none !important;
+        }
+
+.crypto-secondary-actions .interaction-overflow-menu {
+            border-color: rgba(45, 212, 191, 0.18);
+            background: rgba(2, 24, 22, 0.95);
+        }
+
+body[data-crypto-ux-mode="review"] #crypto-photonic-view .crypto-workflow-handoff {
+            display: block !important;
+        }

@@ -14,6 +14,7 @@ Examples:
 - `data/crypto/solana-sample-flow.json`
 - `data/crypto/sample_wallet_history.json`
 - `data/crypto/sample_replay_cache.json`
+- `data/crypto/generated/*.sample.json`
 
 ### Provider-Fetched Cache Data
 
@@ -70,6 +71,24 @@ Replay cache entries should include:
 - raw reference metadata without raw provider payloads
 
 `scripts/crypto_normalize_transactions.py --write-replay-cache` generates replay cache JSON from normalized rows. The replay cache is derived local review state; it must not include raw provider payloads, provider request URLs, provider headers, API keys, bearer tokens, signing material, or browser-side provider calls.
+
+### Generated Static Graph Fixtures
+
+D329-D338 adds `scripts/crypto_build_generated_fixture.py`, a local-only generated fixture builder that converts normalized wallet history or replay cache JSON into browser-readable CryptoPhotonic graph datasets under `data/crypto/generated/`. The builder defaults to dry-run, writes only when `--write` is supplied, updates `data/crypto/generated/manifest.json` only when `--manifest` is supplied, and keeps the default output boundary inside `data/crypto/generated/`.
+
+Generated fixtures are static/cache artifacts for browser rendering and replay review. They are not live blockchain fetches, production truth, source-of-funds evidence, wallet identity evidence, ownership evidence, risk labels, criminality labels, or complete-history claims. Generated sample fixtures and manifest entries must explicitly mark:
+
+- `sample`
+- `fixture`
+- `sanitized`
+- `production_meaning: false`
+- `live_blockchain_fetching: false`
+- `browser_provider_calls: false`
+- `provider_keys_included: false`
+
+Generated graph fixtures should include wallets, tokens, transactions, transaction groups, parser quality summaries, cache/pagination summaries, replay cache references when present, and sanitized raw-reference flags. They must not include provider keys, request URLs, request headers, raw provider payloads, bearer tokens, private URLs, signing material, or browser-side provider-call instructions.
+
+The browser may read generated fixture JSON and the generated manifest as static files. It must continue to use only static/cache/Worker-normalized data and must not call chain providers directly.
 
 ### Review/Export Files
 

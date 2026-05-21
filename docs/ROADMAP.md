@@ -1,5 +1,13 @@
 # Roadmap Notes
 
+## D329-D338 Crypto Static Cache Ingestion + Generated Fixture Builder
+
+- Added a local-only generated fixture builder that converts normalized wallet history or replay cache JSON into browser-readable CryptoPhotonic graph artifacts under `data/crypto/generated/`, with dry-run defaults and writes gated by `--write`.
+- Added a demo-safe generated manifest workflow for sample/cache fixtures, including sanitized, production-meaning false, browser-provider-calls false, transaction count, signature group count, source, wallet, and generated timestamp metadata.
+- Generated fixtures preserve parser confidence reasons, parser limitations, signature grouping, transfer-leg indexing, swap-like grouping, sanitized raw-reference flags, parser quality summaries, cache/pagination summaries, and replay cache references when present.
+- The browser remains static/cache/Worker-normalized only. Provider keys remain local/server-side only, provider calls require explicit local tooling opt-in, and generated files are cache artifacts rather than production truth or live-data claims.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, browser-side provider-call, or secret-handling changes are part of D329-D338.
+
 ## D319-D328 Crypto Multi-Step Parser Accuracy + Cache Review Harness
 
 - Strengthened local Crypto transaction normalization with deterministic signature grouping, visible transfer-leg indexing, multi-leg transfer labeling, cautious swap-like grouping, and explicit parser confidence reasons/limitations.

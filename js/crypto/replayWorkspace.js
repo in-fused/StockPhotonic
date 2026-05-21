@@ -742,6 +742,7 @@
                 <div><span>Time</span><strong>${escapeHtml(summary.time || '-')}</strong></div>
                 <div><span>Amount</span><strong>${escapeHtml(summary.amountToken || '-')}</strong></div>
                 <div><span>Direction</span><strong>${escapeHtml(summary.direction || '-')}</strong></div>
+                <div><span>Type</span><strong>${escapeHtml(summary.eventTypeLabel || 'Unknown / Unsupported Event')}</strong></div>
                 <div><span>Signature</span><strong>${escapeHtml(summary.signature || '-')}</strong></div>
             </div>
             <div class="crypto-replay-event-warning">${escapeHtml(summary.warning || 'Preview-only staged history. No identity, ownership, risk, criminality, or investment claims.')}</div>
@@ -835,6 +836,7 @@
         const warnings = Array.isArray(context.warnings) ? context.warnings : [];
         const continuity = context.continuityProfile || {};
         const gapMap = context.gapMap || {};
+        const parserLimitations = getParserLimitations(event);
         return `
             <section class="crypto-replay-drilldown">
                 <div class="crypto-replay-event-kicker">TRANSFER DRILLDOWN</div>
@@ -843,6 +845,8 @@
                     ${renderDrilldownItem('Destination', event.destinationWallet || event.destination_wallet || '-', true)}
                     ${renderDrilldownItem('Amount', event.amountDisplay || event.amount_display || event.amount || '-')}
                     ${renderDrilldownItem('Token', event.token || event.symbol || event.token_mint || '-')}
+                    ${renderDrilldownItem('Event Type', event.eventTypeLabel || getReplayEventTypeLabel(event.eventType || event.event_type))}
+                    ${renderDrilldownItem('Parser Confidence', formatParserConfidence(event.parserConfidence ?? event.parser_confidence ?? event.confidence))}
                     ${renderDrilldownItem('Direction', formatDirectionLabel(event.direction))}
                     ${renderDrilldownItem('Timestamp', formatTimestamp(event.timestamp) || '-')}
                     ${renderDrilldownItem('Signature', event.signature || event.transaction_hash || '-', true)}
@@ -851,6 +855,7 @@
                     ${renderDrilldownItem('Provider / Confidence', `${providerState}${Number.isFinite(confidence) ? ` / ${Math.round(confidence)}%` : ''}`)}
                     ${renderDrilldownItem('Continuity', continuity.label || 'Staged continuity')}
                     ${renderDrilldownItem('Gap Impact', `${gapMap.gaps?.length || 0} marker${gapMap.gaps?.length === 1 ? '' : 's'} / ${gapMap.confidenceImpact || gapMap.confidence_impact || 0}% impact`)}
+                    ${renderDrilldownItem('Parser Limits', parserLimitations.length ? parserLimitations.join(', ') : 'None reported')}
                 </div>
                 <div class="crypto-replay-event-warning">${escapeHtml(warnings[0] || event.warning || 'Staged replay warning: partial history may omit transfers outside loaded pages.')}</div>
             </section>
@@ -2537,6 +2542,13 @@
                 direction: transaction.direction || transaction.metadata?.direction || '',
                 sourceWallet: transaction.source_wallet || '',
                 destinationWallet: transaction.destination_wallet || '',
+                eventType: normalizeReplayEventType(transaction.event_type || transaction.eventType || transaction.metadata?.event_type || transaction.transaction_type || transaction.transactionType || transaction.type),
+                parserConfidence: transaction.parser_confidence ?? transaction.parserConfidence ?? transaction.confidence ?? '',
+                parserLimitations: getParserLimitations(transaction),
+                outerInstructionIndex: transaction.outer_instruction_index ?? transaction.outerInstructionIndex ?? transaction.metadata?.outer_instruction_index ?? null,
+                innerInstructionIndex: transaction.inner_instruction_index ?? transaction.innerInstructionIndex ?? transaction.metadata?.inner_instruction_index ?? null,
+                programId: transaction.program_id || transaction.programId || transaction.source_program || transaction.metadata?.program_id || '',
+                swapLegGroup: transaction.swap_leg_group || transaction.swapLegGroup || transaction.metadata?.swap_leg_group || '',
                 warning: transaction.warning || transaction.metadata?.warning || ''
             }));
     }
@@ -2558,8 +2570,19 @@
             direction: event.direction || '',
             sourceWallet: event.sourceWallet || event.source_wallet || '',
             destinationWallet: event.destinationWallet || event.destination_wallet || '',
+            eventType: normalizeReplayEventType(event.eventType || event.event_type || event.transaction_type || event.transactionType || event.type),
+            parserConfidence: event.parserConfidence ?? event.parser_confidence ?? event.confidence ?? '',
+            parserLimitations: getParserLimitations(event),
+            outerInstructionIndex: event.outerInstructionIndex ?? event.outer_instruction_index ?? null,
+            innerInstructionIndex: event.innerInstructionIndex ?? event.inner_instruction_index ?? null,
+            programId: event.programId || event.program_id || '',
+            swapLegGroup: event.swapLegGroup || event.swap_leg_group || '',
             warning: event.warning || event.confidenceWarning || ''
         };
+        if (normalized.eventType === 'unknown_unsupported_event' && normalized.parserLimitations.length) {
+            normalized.eventType = 'parser_limited_event';
+        }
+        normalized.eventTypeLabel = getReplayEventTypeLabel(normalized.eventType);
         normalized.amountToken = formatAmountToken(normalized);
         normalized.route = formatRoute(normalized);
         normalized.signatureShort = shortValue(normalized.signature);
@@ -2929,8 +2952,12 @@
         const signature = shortValue(event?.signature || status.signature || '');
         const time = formatTimestamp(event?.timestamp || status.timestamp || '');
         const confidence = Number(options.confidence);
+        const eventType = event?.eventType || event?.event_type || status.eventType || status.event_type || '';
+        const eventTypeLabel = getReplayEventTypeLabel(eventType);
+        const parserLimitations = getParserLimitations(event || status);
         const warning = event?.warning
             || options.warning
+            || (parserLimitations.length ? `Parser-limited staged event: ${parserLimitations[0]}.` : '')
             || (Number.isFinite(confidence) ? `Completeness confidence ${Math.max(0, Math.min(100, Math.round(confidence)))}%. Preview-only staged data.` : '');
         return {
             step,
@@ -2939,13 +2966,55 @@
             time: time || 'No timestamp',
             amountToken,
             direction,
+            eventType,
+            eventTypeLabel,
             route,
             signature: signature || 'No signature',
             warning,
             compact: step
-                ? `Step ${step}/${total || '-'} / ${time || 'No timestamp'} / ${amountToken} / ${signature || 'No signature'}`
+                ? `Step ${step}/${total || '-'} / ${time || 'No timestamp'} / ${eventTypeLabel} / ${amountToken} / ${signature || 'No signature'}`
                 : 'No replay event selected yet.'
         };
+    }
+
+    function normalizeReplayEventType(value = '') {
+        const key = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+        if (['transfer', 'token_transfer', 'native_transfer', 'direct_transfer'].includes(key)) return 'direct_transfer';
+        if (['multi_leg', 'multi_leg_transfer', 'routed_transfer'].includes(key)) return 'multi_leg_transfer';
+        if (['swap', 'swap_like', 'swap_like_flow'].includes(key)) return 'swap_like_flow';
+        if (['parser_limited', 'parser_limited_event', 'limited'].includes(key)) return 'parser_limited_event';
+        if (key === 'unknown_unsupported_event') return key;
+        return key || 'unknown_unsupported_event';
+    }
+
+    function getReplayEventTypeLabel(value = '') {
+        const key = normalizeReplayEventType(value);
+        if (key === 'direct_transfer') return 'Direct Transfer';
+        if (key === 'multi_leg_transfer') return 'Multi-Leg Transfer';
+        if (key === 'swap_like_flow') return 'Swap-Like Flow';
+        if (key === 'parser_limited_event') return 'Parser-Limited Event';
+        return 'Unknown / Unsupported Event';
+    }
+
+    function getParserLimitations(event = {}) {
+        return [
+            event.parserLimitations,
+            event.parser_limitations,
+            event.limitations,
+            event.metadata?.parserLimitations,
+            event.metadata?.parser_limitations,
+            event.metadata?.limitations
+        ].flatMap(value => Array.isArray(value) ? value : value ? [value] : [])
+            .map(value => String(value || '').trim())
+            .filter((value, index, list) => value && list.indexOf(value) === index)
+            .slice(0, 8);
+    }
+
+    function formatParserConfidence(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return '-';
+        const pct = number <= 1 ? number * 100 : number;
+        return `${Math.max(0, Math.min(100, Math.round(pct)))}%`;
     }
 
     function getCurrentEvent(status = {}, events = [], currentStep = Number(status.currentStep) || 0) {

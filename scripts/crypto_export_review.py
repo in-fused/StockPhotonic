@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""Export CryptoPhotonic normalized transaction JSON to review CSV."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+from pathlib import Path
+from typing import Any
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DATA_DIR = REPO_ROOT / "data" / "crypto"
+DEFAULT_INPUT = DEFAULT_DATA_DIR / "sample_wallet_history.json"
+DEFAULT_OUTPUT = DEFAULT_DATA_DIR / "crypto_review_export.sample.csv"
+
+CSV_FIELDS = [
+    "signature",
+    "slot",
+    "timestamp",
+    "source_wallet",
+    "destination_wallet",
+    "token_mint",
+    "amount",
+    "transfer_direction",
+    "outer_instruction_index",
+    "inner_instruction_index",
+    "program_id",
+    "event_type",
+    "swap_leg_group",
+    "parser_confidence",
+    "parser_limitations",
+    "raw_reference",
+]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Export normalized CryptoPhotonic transaction JSON to CSV. Defaults to dry-run and writes nothing.",
+    )
+    parser.add_argument("--input", default=str(DEFAULT_INPUT), help="Normalized JSON input path.")
+    parser.add_argument("--output", default=str(DEFAULT_OUTPUT), help="CSV output path. Default is under data/crypto/.")
+    parser.add_argument("--write", action="store_true", help="Write CSV. Without this flag the command is dry-run only.")
+    parser.add_argument("--xlsx", action="store_true", help="Also write XLSX when openpyxl is installed.")
+    return parser.parse_args()
+
+
+def resolve_path(raw_path: str) -> Path:
+    path = Path(raw_path)
+    if not path.is_absolute():
+        path = (REPO_ROOT / path).resolve()
+    return path.resolve()
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def extract_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = as_list(payload.get("normalized_transactions"))
+    if rows:
+        return [row for row in rows if isinstance(row, dict)]
+    window_rows: list[dict[str, Any]] = []
+    for window in as_list(payload.get("replay_windows")):
+        if isinstance(window, dict):
+            window_rows.extend(row for row in as_list(window.get("events")) if isinstance(row, dict))
+    return window_rows
+
+
+def serialize_cell(value: Any) -> str:
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, sort_keys=True)
+    if value is None:
+        return ""
+    return str(value)
+
+
+def to_csv_rows(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    return [
+        {field: serialize_cell(row.get(field, "")) for field in CSV_FIELDS}
+        for row in rows
+    ]
+
+
+def write_csv(path: Path, rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def maybe_write_xlsx(csv_path: Path, rows: list[dict[str, str]]) -> str:
+    try:
+        from openpyxl import Workbook  # type: ignore
+    except ImportError:
+        return "openpyxl unavailable; XLSX skipped"
+
+    xlsx_path = csv_path.with_suffix(".xlsx")
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Crypto Review"
+    sheet.append(CSV_FIELDS)
+    for row in rows:
+        sheet.append([row.get(field, "") for field in CSV_FIELDS])
+    workbook.save(xlsx_path)
+    return f"XLSX written: {xlsx_path}"
+
+
+def main() -> int:
+    args = parse_args()
+    input_path = resolve_path(args.input)
+    output_path = resolve_path(args.output)
+    payload = load_json(input_path)
+    rows = extract_rows(payload)
+    csv_rows = to_csv_rows(rows)
+    parser_limited = sum(1 for row in rows if row.get("event_type") == "parser_limited_event" or row.get("parser_limitations"))
+
+    xlsx_status = "not requested"
+    if args.write:
+        write_csv(output_path, csv_rows)
+        if args.xlsx:
+            xlsx_status = maybe_write_xlsx(output_path, csv_rows)
+    elif args.xlsx:
+        xlsx_status = "dry-run; XLSX not written"
+
+    print("CryptoPhotonic review export")
+    print(f"- Input: {input_path}")
+    print(f"- CSV rows: {len(csv_rows)}")
+    print(f"- Parser-limited/limited rows: {parser_limited}")
+    print(f"- Write mode: {'write' if args.write else 'dry-run'}")
+    print(f"- CSV output: {output_path}")
+    print(f"- XLSX: {xlsx_status}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

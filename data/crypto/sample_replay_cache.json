@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "name": "CryptoPhotonic sample replay cache",
+    "version": "d299_sample_replay_cache_v1",
+    "sample": true,
+    "fixture": true,
+    "production_meaning": false,
+    "live_blockchain_fetching": false,
+    "browser_provider_calls": false,
+    "provider_keys_included": false,
+    "source": "sample_fixture_only",
+    "chain": "solana",
+    "wallet": "samplewallet11111111111111111111111111111111",
+    "generated_at": "2026-05-20T00:00:00Z",
+    "disclaimer": "Synthetic replay cache for UI and export contract testing only. Not live history."
+  },
+  "cache": {
+    "cache_id": "sample-replay-cache-d299",
+    "cache_schema": "d299_replay_cache_v1",
+    "cache_state": "sample_cache",
+    "source_rows": 3,
+    "normalized_event_count": 3,
+    "full_history_loaded": false,
+    "parser_limited_count": 1,
+    "no_browser_provider_calls": true
+  },
+  "replay_windows": [
+    {
+      "window_id": "sample-replay-window-001",
+      "window_label": "Sample replay window 1/1",
+      "current_window_index": 1,
+      "total_windows": 1,
+      "ordinal_start": 1,
+      "ordinal_end": 3,
+      "partial": true,
+      "continuity_confidence": {
+        "score": 54,
+        "level": "partial",
+        "limitations": [
+          "sample cache is not full wallet history",
+          "parser-limited event included"
+        ]
+      },
+      "events": [
+        {
+          "step": 1,
+          "signature": "sampledirectsignature111111111111111111111111111111111111111111111",
+          "timestamp": "2026-05-20T00:01:00Z",
+          "source_wallet": "samplewallet11111111111111111111111111111111",
+          "destination_wallet": "samplecounterparty222222222222222222222222222",
+          "token_mint": "native:sol",
+          "symbol": "SOL",
+          "amount": "1.250000000",
+          "transfer_direction": "outbound",
+          "event_type": "direct_transfer",
+          "parser_confidence": 0.92,
+          "parser_limitations": [
+            "fixture_sample_only"
+          ]
+        },
+        {
+          "step": 2,
+          "signature": "sampleswapsignature333333333333333333333333333333333333333333333",
+          "timestamp": "2026-05-20T00:04:00Z",
+          "source_wallet": "samplewallet11111111111111111111111111111111",
+          "destination_wallet": "samplepool555555555555555555555555555555555",
+          "token_mint": "samplemintusdc44444444444444444444444444444444",
+          "symbol": "sUSDC",
+          "amount": "25.000000",
+          "transfer_direction": "outbound",
+          "event_type": "swap_like_flow",
+          "swap_leg_group": "sampleswapsignature333333333333333333333333333333333333333333333:swap:0",
+          "parser_confidence": 0.68,
+          "parser_limitations": [
+            "swap-like flow inferred from paired legs",
+            "liquidity route not proven",
+            "fixture_sample_only"
+          ]
+        },
+        {
+          "step": 3,
+          "signature": "samplelimitedsignature7777777777777777777777777777777777777777777",
+          "timestamp": "2026-05-20T00:08:00Z",
+          "source_wallet": "",
+          "destination_wallet": "samplecounterparty888888888888888888888888888",
+          "token_mint": "samplemintunknown77777777777777777777777777777",
+          "symbol": "TOKEN",
+          "amount": "0",
+          "transfer_direction": "unknown",
+          "event_type": "parser_limited_event",
+          "parser_confidence": 0.31,
+          "parser_limitations": [
+            "source wallet unavailable in sample row",
+            "amount unavailable",
+            "unsupported instruction shape",
+            "fixture_sample_only"
+          ]
+        }
+      ]
+    }
+  ]
+}

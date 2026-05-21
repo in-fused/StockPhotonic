@@ -1,0 +1,115 @@
+{
+  "metadata": {
+    "name": "CryptoPhotonic sample normalized wallet history",
+    "version": "d299_sample_wallet_history_v1",
+    "sample": true,
+    "fixture": true,
+    "production_meaning": false,
+    "live_blockchain_fetching": false,
+    "browser_provider_calls": false,
+    "provider_keys_included": false,
+    "source": "sample_fixture_only",
+    "chain": "solana",
+    "wallet": "samplewallet11111111111111111111111111111111",
+    "generated_at": "2026-05-20T00:00:00Z",
+    "disclaimer": "Synthetic sample for local parser and UI contract testing only. Not a live wallet record."
+  },
+  "normalized_transactions": [
+    {
+      "signature": "sampledirectsignature111111111111111111111111111111111111111111111",
+      "slot": 301000001,
+      "timestamp": "2026-05-20T00:01:00Z",
+      "source_wallet": "samplewallet11111111111111111111111111111111",
+      "destination_wallet": "samplecounterparty222222222222222222222222222",
+      "token_mint": "native:sol",
+      "symbol": "SOL",
+      "amount": "1.250000000",
+      "transfer_direction": "outbound",
+      "outer_instruction_index": 2,
+      "inner_instruction_index": null,
+      "program_id": "11111111111111111111111111111111",
+      "event_type": "direct_transfer",
+      "swap_leg_group": null,
+      "balance_delta_summary": {
+        "samplewallet11111111111111111111111111111111": "-1.25 SOL",
+        "samplecounterparty222222222222222222222222222": "+1.25 SOL"
+      },
+      "parser_confidence": 0.92,
+      "parser_limitations": [
+        "fixture_sample_only",
+        "fee impact omitted"
+      ],
+      "raw_reference": {
+        "source_file": "data/crypto/sample_wallet_history.json",
+        "raw_payload_stored": false,
+        "provider": "none",
+        "record_index": 0
+      }
+    },
+    {
+      "signature": "sampleswapsignature333333333333333333333333333333333333333333333",
+      "slot": 301000222,
+      "timestamp": "2026-05-20T00:04:00Z",
+      "source_wallet": "samplewallet11111111111111111111111111111111",
+      "destination_wallet": "samplepool555555555555555555555555555555555",
+      "token_mint": "samplemintusdc44444444444444444444444444444444",
+      "symbol": "sUSDC",
+      "amount": "25.000000",
+      "transfer_direction": "outbound",
+      "outer_instruction_index": 4,
+      "inner_instruction_index": 0,
+      "program_id": "sampleammprogram999999999999999999999999999",
+      "event_type": "swap_like_flow",
+      "swap_leg_group": "sampleswapsignature333333333333333333333333333333333333333333333:swap:0",
+      "balance_delta_summary": {
+        "samplewallet11111111111111111111111111111111": "-25.0 sUSDC, +145000.0 sBONK",
+        "samplepool555555555555555555555555555555555": "+25.0 sUSDC, -145000.0 sBONK"
+      },
+      "parser_confidence": 0.68,
+      "parser_limitations": [
+        "swap-like flow inferred from paired legs",
+        "liquidity route not proven",
+        "fixture_sample_only"
+      ],
+      "raw_reference": {
+        "source_file": "data/crypto/sample_wallet_history.json",
+        "raw_payload_stored": false,
+        "provider": "none",
+        "record_index": 1
+      }
+    },
+    {
+      "signature": "samplelimitedsignature7777777777777777777777777777777777777777777",
+      "slot": 301000333,
+      "timestamp": "2026-05-20T00:08:00Z",
+      "source_wallet": "",
+      "destination_wallet": "samplecounterparty888888888888888888888888888",
+      "token_mint": "samplemintunknown77777777777777777777777777777",
+      "symbol": "TOKEN",
+      "amount": "0",
+      "transfer_direction": "unknown",
+      "outer_instruction_index": 6,
+      "inner_instruction_index": 2,
+      "program_id": "sampleprogramlimited77777777777777777777777777",
+      "event_type": "parser_limited_event",
+      "swap_leg_group": null,
+      "balance_delta_summary": {
+        "known_delta_count": 1,
+        "unknown_delta_count": 1
+      },
+      "parser_confidence": 0.31,
+      "parser_limitations": [
+        "source wallet unavailable in sample row",
+        "amount unavailable",
+        "unsupported instruction shape",
+        "fixture_sample_only"
+      ],
+      "raw_reference": {
+        "source_file": "data/crypto/sample_wallet_history.json",
+        "raw_payload_stored": false,
+        "provider": "none",
+        "record_index": 2
+      }
+    }
+  ]
+}

@@ -318,7 +318,8 @@
         legacy_sample: 'Generated Fixture',
         built_in: 'Generated Fixture',
         worker_feed: 'Live Feed (Worker Events)',
-        worker_wallet_lookup: 'Wallet Lookup (Worker Replacement)'
+        worker_wallet_lookup: 'Wallet Lookup (Worker Replacement)',
+        sample_cache: 'Sample Cache (Fixture)'
     };
     const NOISE_ADDRESS_PREFIXES = [
         'computebudget111111111111111111111111111111',
@@ -1144,7 +1145,16 @@
         if (state.dataMode === DATA_MODES.LIVE) {
             return getLiveFeedSourceLabel();
         }
+        if (isSampleCacheMetadata(state.graph?.metadata || {})) return SOURCE_LABELS.sample_cache;
         return SOURCE_LABELS[state.datasetSourceKind] || SOURCE_LABELS.built_in;
+    }
+
+    function isSampleCacheMetadata(metadata = {}) {
+        const source = String(metadata.source || metadata.cache_state || metadata.cache_schema || '').toLowerCase();
+        return metadata.sample_cache === true
+            || metadata.fixture_cache === true
+            || source.includes('sample_cache')
+            || source.includes('replay_cache');
     }
 
     function getSourceBoundaryCopy() {
@@ -1169,10 +1179,13 @@
         if (state.live.workerAvailable) {
             return 'Browser fetches only sanitized Worker feed events. No provider keys or direct provider calls are used.';
         }
-        if (state.datasetSourceKind === 'generated') {
-            return 'Generated Fixture uses local sample files for repeatable QA. Wallet Lookup and Live Feed remain separate Worker-backed modes.';
+        if (isSampleCacheMetadata(state.graph?.metadata || {})) {
+            return 'Sample Cache mode uses local fixture/cache JSON for repeatable parser and replay QA. It is not live chain history, and Wallet Lookup/Live Feed remain separate Worker-backed modes.';
         }
-        return 'Generated Fixture uses local sample files. Wallet Lookup and Live Feed remain separate Worker-backed modes.';
+        if (state.datasetSourceKind === 'generated') {
+            return 'Generated Fixture uses local sample/cache files for repeatable QA. Wallet Lookup and Live Feed remain separate Worker-backed modes.';
+        }
+        return 'Generated Fixture uses local sample/cache files. Wallet Lookup and Live Feed remain separate Worker-backed modes.';
     }
 
     function getLiveStatusLabel() {
@@ -1530,7 +1543,7 @@
         const transactionCount = activeFixture.transaction_count ?? metadata.generated_transaction_count ?? metadata.transaction_count ?? null;
         const selector = renderGeneratedFixtureSelector();
         const sourceTone = hasLoadedLiveFeedEvents() || isGeneratedFixture ? 'text-emerald-100/82' : state.dataMode === DATA_MODES.LIVE ? 'text-yellow-50/82' : isSolana ? 'text-cyan-50/78' : 'text-white/68';
-        const sourceSnapshot = renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount);
+        const sourceSnapshot = renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount, metadata);
         const detailsOpen = '';
         const detailLabel = state.dataMode === DATA_MODES.WALLET
             ? 'Wallet lookup'
@@ -1568,7 +1581,7 @@
         `;
     }
 
-    function renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount) {
+    function renderDataSourceSnapshot(generatedWallet, generatedAt, transactionCount, metadata = {}) {
         if (state.dataMode === DATA_MODES.WALLET) {
             const tracked = state.walletLookup.lastWallet || state.walletLookup.walletInput || state.graph?.metadata?.wallet_lookup_tracked_wallet || '';
             const visible = state.graph?.flowEdges?.length || 0;
@@ -1611,9 +1624,12 @@
                 </div>
             `;
         }
+        const modeLabel = isSampleCacheMetadata(metadata)
+            ? 'Local sample cache'
+            : 'Local QA fixture';
         return `
             <div class="crypto-data-source-snapshot crypto-source-summary-grid mt-2 text-white/56">
-                <div>Mode: Local QA fixture</div>
+                <div>Mode: ${escapeHtml(modeLabel)}</div>
                 <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Fixture Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
                 <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
                 <div>Tx: ${escapeHtml(transactionCount ?? '-')}</div>
@@ -2214,6 +2230,7 @@
         if (coverage.fullLoaded && !coverage.limited && !coverage.rateLimited) badges.push({ label: 'Likely Complete (best effort)', className: 'border-emerald-200/18 bg-emerald-300/10 text-emerald-50/78' });
         if (state.history.lastStatus === 'provider_unavailable') badges.push({ label: 'provider unavailable', className: 'border-yellow-200/18 bg-yellow-300/10 text-yellow-50/78' });
         if (!state.history.providerConfigured && state.history.pagesLoaded > 0) badges.push({ label: 'provider unconfirmed', className: 'border-white/12 bg-white/[0.045] text-white/58' });
+        if (getWalletHistoryParserLimitedCount()) badges.push({ label: 'Parser Limited', className: 'border-yellow-200/18 bg-yellow-300/10 text-yellow-50/78' });
         return badges;
     }
 
@@ -3264,12 +3281,14 @@
         const coverage = getWalletHistoryCoverage();
         const badges = getWalletHistoryStatusBadges();
         const scanCache = getWalletHistoryScanCache();
+        const parserLimited = getWalletHistoryParserLimitedCount();
         const compactRows = [
             ['Coverage', coverage.label, coverage.detail],
             ['Provider', `${getWalletHistoryProviderDisplay()} / ${getWalletHistoryProviderStateDisplay()}`, getWalletHistoryConfigurationTitle()],
             ['Confidence', `${getWalletHistoryCompletenessConfidence()}% / replay ${getWalletHistoryReplayCoverage()}%`, 'Confidence and replay coverage are scan-state estimates, not completeness claims.'],
             ['Cache', getWalletHistoryCacheDisplay(), getWalletHistoryCacheTitle()],
             ['Scan Cache', getWalletHistoryScanCacheLabel(scanCache), getWalletHistoryScanCacheTitle(scanCache)],
+            ['Parser', parserLimited ? `${parserLimited} limited row${parserLimited === 1 ? '' : 's'}` : 'No limited rows reported', 'Parser limitation metadata is carried from staged Worker/cache rows and does not prove unsupported events are harmless or meaningful.'],
             ['Next Cursor', state.history.nextCursor ? shortLongValue(state.history.nextCursor) : 'None', state.history.nextCursor || 'No additional cursor is staged.']
         ];
         return `
@@ -3440,6 +3459,7 @@
 
     function renderHistoryPreviewDatasetMetrics(metrics = {}, stale = false) {
         const warning = (metrics.warnings || [])[0] || '';
+        const parserLimited = getWalletHistoryParserLimitedCount();
         const staleCopy = stale
             ? '<div class="mt-2 rounded-lg border border-yellow-200/18 bg-yellow-300/10 px-3 py-2 text-yellow-50/78 leading-relaxed">Staged history changed after this dataset was built. Build Preview Dataset again before copying.</div>'
             : '';
@@ -3452,6 +3472,7 @@
                 ${renderWalletHistoryMetric('Rows', `${metrics.stagedRowsProcessed}/${metrics.stagedRowsReceived}`, 'Processed staged rows / received staged rows.')}
                 ${renderWalletHistoryMetric('Duplicates', metrics.duplicateTransferRowsSkipped, 'Duplicate staged transfer rows skipped.')}
                 ${renderWalletHistoryMetric('Missing Wallets', metrics.transferRowsOmittedMissingWallets, 'Transfer candidates omitted because graph endpoints were missing.')}
+                ${renderWalletHistoryMetric('Parser Limited', parserLimited, 'Rows with parser limitation metadata from staged Worker/cache data.')}
                 ${renderWalletHistoryMetric('Preview Only', metrics.previewOnly && metrics.notMerged ? 'Yes' : 'Check', metrics.boundary || 'Dataset is preview-only and not merged.')}
             </div>
             <div class="mt-2 text-white/54 leading-relaxed">${escapeHtml(metrics.boundary || 'Preview dataset built. Active graph unchanged.')}</div>
@@ -4542,6 +4563,9 @@
     }
 
     function renderWalletHistoryBrowserRow(row = {}) {
+        const parserCopy = row.parserLimitations?.length
+            ? ` / ${row.parserLimitations.length} parser note${row.parserLimitations.length === 1 ? '' : 's'}`
+            : '';
         return `
             <div class="min-w-0 rounded-lg border border-white/10 bg-white/[0.035] px-3 py-2">
                 <div class="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
@@ -4549,13 +4573,15 @@
                         <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <span class="font-mono text-[10px] text-white/44">${escapeHtml(row.timestamp || '-')}</span>
                             <span class="rounded-full border border-cyan-200/16 bg-cyan-300/10 px-2 py-0.5 text-[10px] text-cyan-50/78">${escapeHtml(row.type || 'Unknown / Unclassified')}</span>
+                            <span class="rounded-full border border-fuchsia-200/14 bg-fuchsia-300/8 px-2 py-0.5 text-[10px] text-fuchsia-50/74">${escapeHtml(row.eventTypeLabel || 'Unknown / Unsupported Event')}</span>
                             <span class="font-mono text-[10px] text-white/36" title="${escapeAttr(row.signatureFull || '')}">${escapeHtml(row.signature || '-')}</span>
                         </div>
                         <div class="mt-1 text-cyan-50/78 break-words">${escapeHtml(row.relationship || 'Wallet relationship unavailable')}</div>
+                        ${row.parserLimitations?.length ? `<div class="mt-1 text-[10px] text-yellow-50/70">${escapeHtml(row.parserLimitations.slice(0, 2).join(' / '))}</div>` : ''}
                     </div>
                     <div class="sm:text-right text-white/48">
                         <div class="break-words">${escapeHtml(row.tokens || 'Tokens unavailable')}</div>
-                        <div class="mt-0.5 text-[10px]">${escapeHtml(row.transferCount)}</div>
+                        <div class="mt-0.5 text-[10px]">${escapeHtml(`${row.transferCount}${parserCopy}`)}</div>
                     </div>
                 </div>
             </div>
@@ -4571,6 +4597,7 @@
     function summarizeWalletHistoryTransaction(transaction = {}, index = 0) {
         const signature = getHistoryTransactionSignature(transaction, index);
         const type = getHistoryTransactionTypeLabel(transaction);
+        const eventType = getHistoryTransactionEventType(transaction);
         const tokens = getHistoryTokenSymbols(transaction);
         const transferCount = getHistoryTransferCount(transaction);
         return {
@@ -4578,12 +4605,75 @@
             type,
             signatureFull: signature,
             signature: signature ? shortHash(signature) : `row-${index + 1}`,
+            eventType,
+            eventTypeLabel: getHistoryEventTypeLabel(eventType),
             relationship: getHistoryWalletRelationship(transaction),
             tokens: tokens.length ? tokens.join(', ') : '',
+            parserLimitations: getHistoryParserLimitations(transaction),
             transferCount: transferCount == null
                 ? 'Transfer count unavailable'
                 : `${transferCount} transfer${transferCount === 1 ? '' : 's'}`
         };
+    }
+
+    function getHistoryTransactionEventType(transaction = {}) {
+        const direct = transaction.event_type || transaction.eventType || transaction.metadata?.event_type || transaction.metadata?.eventType || '';
+        if (direct) return normalizeHistoryEventType(direct);
+        if (getHistoryParserLimitations(transaction).length) return 'parser_limited_event';
+        const transferCount = getHistoryTransferCount(transaction);
+        const typeText = `${transaction.type || ''} ${transaction.transaction_type || ''} ${transaction.transactionType || ''}`.toLowerCase();
+        if (typeText.includes('swap')) return 'swap_like_flow';
+        if (Number(transferCount) > 1) return 'multi_leg_transfer';
+        if (Number(transferCount) === 1) return 'direct_transfer';
+        return 'unknown_unsupported_event';
+    }
+
+    function normalizeHistoryEventType(value = '') {
+        const key = String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+        if (['transfer', 'token_transfer', 'native_transfer', 'direct_transfer'].includes(key)) return 'direct_transfer';
+        if (['multi_leg', 'multi_leg_transfer', 'routed_transfer'].includes(key)) return 'multi_leg_transfer';
+        if (['swap', 'swap_like', 'swap_like_flow'].includes(key)) return 'swap_like_flow';
+        if (['parser_limited', 'parser_limited_event', 'limited'].includes(key)) return 'parser_limited_event';
+        if (key === 'unknown_unsupported_event') return key;
+        return key || 'unknown_unsupported_event';
+    }
+
+    function getHistoryEventTypeLabel(value = '') {
+        const key = normalizeHistoryEventType(value);
+        if (key === 'direct_transfer') return 'Direct Transfer';
+        if (key === 'multi_leg_transfer') return 'Multi-Leg Transfer';
+        if (key === 'swap_like_flow') return 'Swap-Like Flow';
+        if (key === 'parser_limited_event') return 'Parser-Limited Event';
+        return 'Unknown / Unsupported Event';
+    }
+
+    function getHistoryParserLimitations(transaction = {}) {
+        const values = [
+            transaction.parser_limitations,
+            transaction.parserLimitations,
+            transaction.metadata?.parser_limitations,
+            transaction.metadata?.parserLimitations,
+            transaction.limitations,
+            transaction.metadata?.limitations
+        ];
+        return values.flatMap(value => Array.isArray(value) ? value : value ? [value] : [])
+            .map(value => String(value || '').trim())
+            .filter((value, index, list) => value && list.indexOf(value) === index)
+            .slice(0, 8);
+    }
+
+    function getWalletHistoryParserLimitedCount() {
+        return (state.history.loadedTransactions || []).filter(transaction => {
+            const eventType = getHistoryTransactionEventType(transaction);
+            return eventType === 'parser_limited_event' || getHistoryParserLimitations(transaction).length > 0;
+        }).length;
+    }
+
+    function formatHistoryParserConfidence(value) {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return '-';
+        const pct = number <= 1 ? number * 100 : number;
+        return `${Math.max(0, Math.min(100, Math.round(pct)))}%`;
     }
 
     function getWalletHistoryProviderDisplay() {
@@ -4692,6 +4782,8 @@
 
     function getWalletHistoryScanCacheLabel(cache = getWalletHistoryScanCache()) {
         if (!cache || !Object.keys(cache).length) return 'Not reported';
+        const stateText = String(cache.cache_state || cache.state || '').toLowerCase();
+        if (cache.sample === true || cache.fixture === true || stateText === 'sample_cache') return 'Sample Cache / fixture only';
         const pages = Number(cache.normalized_pages_persisted) || 0;
         const tx = Number(cache.normalized_transactions_persisted) || 0;
         const stateLabel = cache.persisted ? 'Persisted' : 'Pending';
@@ -4766,6 +4858,7 @@
         if (state.history.lastStatus === 'provider_not_configured') return state.history.lastMessage || 'Worker history provider is not configured.';
         if (state.history.lastStatus === 'diagnostics_ok') return state.history.lastMessage || 'Provider diagnostics are current. No history page was fetched or staged.';
         if (getWalletHistoryGapFlags().length) return `Scan gap flags reported: ${getWalletHistoryGapFlags().map(formatHistoryFlag).join(', ')}. Replay remains incomplete.`;
+        if (getWalletHistoryParserLimitedCount()) return 'Some staged history rows carry parser limitations. Replay labels remain bounded and unsupported events are not over-interpreted.';
         if (isLanaPlaceholderHistoryState()) return 'lana placeholder history is not a browser provider. Configure it behind the Worker before loading real pages.';
         if (!state.history.backendProviderConnected) return 'History provider is unavailable in the browser until the Worker adapter is connected; direct provider calls remain disabled.';
         if (state.history.pagesLoaded && !state.history.loadedTransactions.length) return 'History page loaded, but it did not contain inspectable transactions.';
@@ -11218,6 +11311,8 @@
         const sourceWallet = event.sourceWallet || event.source_wallet || '';
         const destinationWallet = event.destinationWallet || event.destination_wallet || '';
         const signature = event.signature || event.transaction_hash || '';
+        const eventType = getHistoryTransactionEventType(event);
+        const parserLimitations = getHistoryParserLimitations(event);
         const relationships = namespace.replayWorkspace?.deriveReplayRelationships?.(event, getHistoryReplayEvents()) || {};
         return `
             ${renderDetailsSelectionHeader({
@@ -11234,8 +11329,11 @@
             })}
             ${renderDetailSection('Replay Event Profile', `
                 ${detailRow('Step', `${event.step || '-'}${event.totalSteps ? ` / ${event.totalSteps}` : ''}`)}
+                ${detailRow('Event Type', getHistoryEventTypeLabel(eventType))}
                 ${detailRow('Direction', getHistoryReplayDirectionLabel(event.direction))}
                 ${detailRow('Amount / Token', getHistoryReplayAmountTokenLabel(event))}
+                ${detailRow('Parser Confidence', formatHistoryParserConfidence(event.parserConfidence ?? event.parser_confidence ?? event.confidence))}
+                ${detailRow('Parser Limits', parserLimitations.length ? parserLimitations.join(', ') : 'None reported')}
                 ${detailRow('Timestamp', event.timestamp ? formatPreviewTimestamp(event.timestamp) : '-')}
                 ${detailRow('Source Wallet', sourceWallet || '-', { shorten: true })}
                 ${detailRow('Destination Wallet', destinationWallet || '-', { shorten: true })}
@@ -11916,6 +12014,8 @@
     function serializeReplayEventSnapshot(event = {}) {
         const sourceWallet = event.sourceWallet || event.source_wallet || '';
         const destinationWallet = event.destinationWallet || event.destination_wallet || '';
+        const eventType = getHistoryTransactionEventType(event);
+        const parserLimitations = getHistoryParserLimitations(event);
         return {
             step: Number(event.step) || 0,
             total_steps: Number(event.totalSteps) || 0,
@@ -11925,6 +12025,10 @@
             destination_wallet_short: destinationWallet ? shortLongValue(destinationWallet) : '',
             amount_token: getHistoryReplayAmountTokenLabel(event),
             direction: getHistoryReplayDirectionLabel(event.direction),
+            event_type: eventType,
+            event_type_label: getHistoryEventTypeLabel(eventType),
+            parser_confidence: Number(event.parserConfidence ?? event.parser_confidence ?? event.confidence) || 0,
+            parser_limitations: parserLimitations,
             timestamp: event.timestamp ? safeDateIso(event.timestamp) : null,
             signature: event.signature || event.transaction_hash || '',
             preview_only: true,

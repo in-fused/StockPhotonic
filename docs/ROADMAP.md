@@ -1,5 +1,19 @@
 # Roadmap Notes
 
+## D309-D318 Local Provider Adapter + Replay Cache Builder
+
+- Added the local/server-side `crypto_provider_adapters.py` boundary for sanitized wallet-history provider pages, with Helius support behind caller-enforced `--allow-network` and environment-only provider keys.
+- Wired `crypto_fetch_history.py` to the adapter while preserving dry-run/no-write defaults, refusing network fetches without `--allow-network`, and emitting cache metadata for cursor, pagination, provider state, and browser/provider-key boundaries.
+- Extended `crypto_normalize_transactions.py` with normalized cache metadata and `--write-replay-cache` generation from normalized rows, including replay-window continuity metadata without raw provider payloads or secrets.
+- Updated the Crypto local data contract for D309-D318 provider-cache and replay-cache requirements; no browser-side provider calls, frontend provider integration, Worker API, SEC pipeline, source pipeline, persistence/auth/storage, or secret-handling changes are part of D309-D318.
+
+## D299-D308 Crypto Data Integrity + Multi-Step Transaction Pipeline Foundation
+
+- Began the CryptoPhotonic data integrity pipeline with a local data contract, sample normalized wallet history, and sample replay cache artifacts that are explicitly fixture/sample-only.
+- Added local dry-run script skeletons for wallet-history cache preparation, normalized transaction schema output, and CSV review export; provider/network use remains explicit and provider keys are environment-only.
+- Extended Crypto UI/replay labels to distinguish fixture/cache/Worker/no-history/parser-limited states while keeping the browser limited to static/cache/Worker-normalized data only.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, or browser-side provider-call changes are part of D299-D308.
+
 ## D289-D298 Final UX Consolidation + Institutional Presentation Pass
 
 - Consolidated StockPhotonic and CryptoPhotonic first-load presentation around calmer institutional headings, tighter mode/action rhythm, and less developer-oriented default copy.

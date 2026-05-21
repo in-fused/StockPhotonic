@@ -3557,3 +3557,228 @@ body[data-stock-ux-mode="replay"] .graph-annotation-chip.is-corridor {
 .graph-first-os .contextual-inspector details.sidebar-section[open] > summary.sidebar-section-title::after {
             content: "-";
         }
+
+/* D289-D298 final UX consolidation: institutional rhythm, restrained emphasis, and quiet graph chrome. */
+#stock-photonic-surface > .flex:first-child {
+            margin-bottom: 1.15rem !important;
+            gap: 1.1rem;
+        }
+
+#stock-photonic-surface > .flex:first-child h1 {
+            line-height: 0.96;
+            letter-spacing: 0;
+        }
+
+#stock-photonic-surface > .flex:first-child p {
+            max-width: 48rem;
+            color: rgba(226, 232, 240, 0.62);
+            line-height: 1.38;
+        }
+
+#stock-photonic-surface .app-view-tabs,
+#graph-intelligence-view .graph-os-bar {
+            margin-bottom: 1rem;
+        }
+
+#graph-intelligence-view .graph-mode-button,
+#graph-intelligence-view .graph-os-action,
+#stock-interaction-dock .interaction-dock-button {
+            border-color: rgba(148, 163, 184, 0.14);
+            background: rgba(2, 6, 23, 0.42);
+            color: rgba(226, 232, 240, 0.70);
+            box-shadow: none;
+        }
+
+#graph-intelligence-view .graph-mode-button.is-active,
+#graph-intelligence-view .graph-mode-button[aria-pressed="true"] {
+            border-color: rgba(125, 211, 252, 0.30);
+            background: rgba(14, 116, 144, 0.16);
+            color: rgba(240, 249, 255, 0.92);
+            box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.08);
+        }
+
+#graph-intelligence-view .graph-os-action:hover,
+#graph-intelligence-view .graph-os-action:focus-visible,
+#stock-interaction-dock .interaction-dock-button:hover,
+#stock-interaction-dock .interaction-dock-button:focus-visible {
+            border-color: rgba(125, 211, 252, 0.34);
+            background: rgba(14, 116, 144, 0.18);
+            color: rgba(255, 255, 255, 0.92);
+            box-shadow: none;
+        }
+
+.graph-first-os .mode-primary-action {
+            gap: 1rem;
+            border-color: rgba(148, 163, 184, 0.13);
+            background:
+                linear-gradient(135deg, rgba(14, 116, 144, 0.08), rgba(15, 23, 42, 0.18)),
+                rgba(2, 6, 23, 0.42);
+            padding: 0.82rem 0.95rem;
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+        }
+
+.graph-first-os .mode-primary-kicker {
+            margin-bottom: 0.22rem;
+            color: rgba(165, 243, 252, 0.54);
+            font-size: 0.56rem;
+            letter-spacing: 0.07em;
+        }
+
+.graph-first-os .mode-primary-action h2 {
+            color: rgba(248, 250, 252, 0.92);
+            font-size: 0.98rem;
+            line-height: 1.18;
+        }
+
+.graph-first-os .mode-primary-action p {
+            margin-top: 0.24rem;
+            color: rgba(203, 213, 225, 0.58);
+            font-size: 0.74rem;
+            line-height: 1.42;
+        }
+
+.graph-first-os .mode-primary-button {
+            border-color: rgba(125, 211, 252, 0.24);
+            background: rgba(14, 116, 144, 0.16);
+            color: rgba(240, 249, 255, 0.88);
+            box-shadow: none;
+        }
+
+.graph-first-os .mode-primary-button:hover,
+.graph-first-os .mode-primary-button:focus-visible {
+            border-color: rgba(125, 211, 252, 0.40);
+            background: rgba(14, 116, 144, 0.22);
+            box-shadow: 0 0 0 1px rgba(125, 211, 252, 0.08);
+        }
+
+.graph-container {
+            border-color: rgba(148, 163, 184, 0.10);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.26), inset 0 0 0 1px rgba(125, 211, 252, 0.035);
+        }
+
+.graph-mode-hud,
+.graph-adaptive-hud-strip,
+.graph-workspace-memory,
+.graph-investigation-rail,
+.graph-route-workspace,
+.graph-active-legend,
+.graph-spatial-breadcrumbs button,
+.graph-spatial-breadcrumbs span,
+.graph-timeline-event,
+.graph-minimap-canvas,
+.graph-minimap-toggle {
+            border-color: rgba(148, 163, 184, 0.12);
+            box-shadow: 0 14px 36px rgba(0, 0, 0, 0.20);
+        }
+
+.graph-mode-hud,
+.graph-spatial-breadcrumbs button,
+.graph-spatial-breadcrumbs span,
+.graph-timeline-event {
+            color: rgba(226, 232, 240, 0.64);
+        }
+
+.graph-active-legend,
+.graph-investigation-rail,
+.graph-workspace-memory,
+.graph-minimap-canvas {
+            opacity: 0.84;
+            filter: saturate(0.82);
+        }
+
+.graph-minimap-canvas {
+            width: min(152px, 22vw);
+            height: 100px;
+        }
+
+.graph-minimap-toggle {
+            bottom: calc(1rem + 106px);
+            opacity: 0.76;
+        }
+
+.graph-minimap-toggle:hover,
+.graph-minimap-toggle:focus-visible,
+.graph-minimap-toggle[aria-pressed="true"] {
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+        }
+
+.graph-floating-toolbar button.is-active,
+.graph-floating-toolbar button[aria-pressed="true"],
+.graph-adaptive-hud-strip button:hover,
+.graph-adaptive-hud-strip button:focus-visible,
+.graph-workspace-tabs button.is-active,
+.graph-workspace-tabs button[aria-selected="true"],
+.graph-timeline-event.is-active {
+            border-color: rgba(125, 211, 252, 0.32);
+            background: rgba(14, 116, 144, 0.14);
+            color: rgba(240, 253, 250, 0.90);
+            box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.06);
+        }
+
+body[data-stock-ux-mode="review"] #graph-active-legend {
+            opacity: 0.80;
+            filter: saturate(0.78);
+        }
+
+body[data-stock-ux-mode="replay"] .graph-timeline-track {
+            max-width: min(44rem, calc(100% - 2rem));
+            gap: 0.3rem;
+            border-color: rgba(148, 163, 184, 0.11);
+            background: rgba(2, 6, 23, 0.42);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.18);
+        }
+
+body[data-stock-ux-mode="replay"] .graph-timeline-event {
+            min-height: 1.92rem;
+            border-color: rgba(148, 163, 184, 0.12);
+            background: rgba(2, 6, 23, 0.54);
+            color: rgba(226, 232, 240, 0.66);
+        }
+
+body[data-stock-ux-mode="replay"] .graph-timeline-event.is-active {
+            border-color: rgba(125, 211, 252, 0.34);
+            background: rgba(14, 116, 144, 0.18);
+            color: rgba(240, 253, 250, 0.94);
+        }
+
+.graph-first-os #graph-intelligence-view.is-inspector-open .stock-primary-action-rail,
+.graph-first-os #graph-intelligence-view.is-inspector-open .stock-interaction-dock {
+            opacity: 0.48;
+            filter: saturate(0.72);
+        }
+
+.graph-first-os .contextual-inspector .contextual-inspector-header {
+            border-color: rgba(148, 163, 184, 0.13);
+            box-shadow: 0 16px 42px rgba(0, 0, 0, 0.20);
+        }
+
+.graph-first-os .contextual-inspector #sidebar,
+.graph-first-os .contextual-inspector #empty-sidebar {
+            padding: 0.95rem !important;
+            box-shadow: 0 22px 62px rgba(0, 0, 0, 0.22);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen {
+            background:
+                radial-gradient(circle at 50% 48%, rgba(8, 145, 178, 0.10), transparent 38rem),
+                rgba(1, 5, 14, 0.985);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .graph-container {
+            border-color: rgba(148, 163, 184, 0.10);
+            box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.035), 0 40px 120px rgba(0, 0, 0, 0.38);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore {
+            opacity: 0.58;
+            border-color: rgba(148, 163, 184, 0.14);
+            background: rgba(2, 6, 23, 0.46);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.20);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore:hover,
+#graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore:focus-visible {
+            opacity: 0.92;
+            border-color: rgba(125, 211, 252, 0.28);
+            background: rgba(2, 6, 23, 0.68);
+        }

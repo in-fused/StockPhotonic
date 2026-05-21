@@ -42,6 +42,13 @@ D279-D288 interaction-polish selectors keep that same ownership:
 - Crypto inspector transition overrides, replay workspace/chip softening, selected flow chrome quieting, and fullscreen restore quieting live in `crypto.css`.
 - Touch-specific inspector/drawer/overlay collision rules live in `mobile.css`.
 
+D289-D298 final UX consolidation preserves that ownership:
+
+- Stock first-impression hierarchy, restrained Stock active states, minimap/legend/breadcrumb quieting, replay timeline polish, contextual inspector rhythm, and Stock fullscreen presentation overrides live in `graph.css`.
+- Crypto first-impression hierarchy, restrained Crypto active states, source-boundary badge quieting, replay chronology/corridor/lineage polish, contextual inspector rhythm, and Crypto fullscreen presentation overrides live in `crypto.css`.
+- Mobile typography tightening, one-strip overlay quieting, bottom-sheet/drawer sizing, replay workspace compression, and mobile fullscreen restore quieting live in `mobile.css`.
+- These selectors remain presentation-only and must not encode production data, provider/API behavior, Worker behavior, source authority, replay certainty, persistence/auth/storage assumptions, or browser-side provider-call behavior.
+
 D152 semantic graph intelligence keeps the same ownership model:
 
 - Stock semantic minimap states, minimap collapse controls, graph-tier breadcrumb treatment, and canvas-adjacent graph navigation affordances live in `graph.css`.

@@ -3543,3 +3543,237 @@ body[data-crypto-ux-mode="review"] #crypto-solana-status .crypto-source-details:
             border-color: rgba(94, 234, 212, 0.34);
             background: rgba(2, 6, 23, 0.76);
         }
+
+/* D289-D298 final UX consolidation: calm liquidity investigation hierarchy and replay readability. */
+#crypto-photonic-view > .flex:first-child {
+            margin-bottom: 1.15rem !important;
+            gap: 1.1rem;
+        }
+
+#crypto-photonic-view > .flex:first-child h1 {
+            line-height: 0.96;
+            letter-spacing: 0;
+        }
+
+#crypto-photonic-view > .flex:first-child p {
+            max-width: 48rem;
+            color: rgba(226, 232, 240, 0.62);
+            line-height: 1.38;
+        }
+
+#crypto-photonic-view .crypto-panel {
+            border-color: rgba(148, 163, 184, 0.10);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.24), inset 0 0 0 1px rgba(45, 212, 191, 0.035);
+        }
+
+#crypto-photonic-view .crypto-os-bar {
+            margin-bottom: 1rem;
+        }
+
+#crypto-photonic-view .graph-mode-button,
+#crypto-photonic-view .graph-os-action,
+.crypto-interaction-dock .interaction-dock-button,
+.crypto-workspace-boundary-note {
+            border-color: rgba(148, 163, 184, 0.14);
+            background: rgba(2, 6, 23, 0.42);
+            color: rgba(226, 232, 240, 0.70);
+            box-shadow: none;
+        }
+
+#crypto-photonic-view .graph-mode-button.is-active,
+#crypto-photonic-view .graph-mode-button[aria-pressed="true"] {
+            border-color: rgba(45, 212, 191, 0.30);
+            background: rgba(13, 148, 136, 0.15);
+            color: rgba(240, 253, 250, 0.92);
+            box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.08);
+        }
+
+#crypto-photonic-view .graph-os-action:hover,
+#crypto-photonic-view .graph-os-action:focus-visible,
+.crypto-interaction-dock .interaction-dock-button:hover,
+.crypto-interaction-dock .interaction-dock-button:focus-visible {
+            border-color: rgba(45, 212, 191, 0.32);
+            background: rgba(13, 148, 136, 0.18);
+            color: rgba(255, 255, 255, 0.92);
+            box-shadow: none;
+        }
+
+.crypto-interaction-dock .interaction-dock-button.is-active,
+.crypto-interaction-dock .interaction-dock-button[aria-pressed="true"] {
+            border-color: rgba(45, 212, 191, 0.24);
+            background: rgba(13, 148, 136, 0.12);
+            color: rgba(204, 251, 241, 0.82);
+            box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.05);
+        }
+
+#crypto-photonic-view .mode-primary-action {
+            border-color: rgba(148, 163, 184, 0.13);
+            background:
+                linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(15, 23, 42, 0.18)),
+                rgba(2, 6, 23, 0.42);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
+        }
+
+body[data-crypto-ux-mode="flow"] .crypto-primary-action-rail [data-primary-mode="flow"],
+body[data-crypto-ux-mode="analyst"] .crypto-primary-action-rail [data-primary-mode="analyst"],
+body[data-crypto-ux-mode="review"] .crypto-primary-action-rail [data-primary-mode="review"],
+body[data-crypto-ux-mode="replay"] .crypto-primary-action-rail [data-primary-mode="replay"] {
+            border-color: rgba(45, 212, 191, 0.18);
+            background:
+                linear-gradient(135deg, rgba(13, 148, 136, 0.10), rgba(15, 23, 42, 0.18)),
+                rgba(2, 24, 22, 0.38);
+        }
+
+.crypto-primary-action-rail .mode-primary-button {
+            border-color: rgba(45, 212, 191, 0.24);
+            background: rgba(13, 148, 136, 0.15);
+            box-shadow: none;
+        }
+
+.crypto-primary-action-rail .mode-primary-button:hover,
+.crypto-primary-action-rail .mode-primary-button:focus-visible {
+            border-color: rgba(94, 234, 212, 0.38);
+            background: rgba(13, 148, 136, 0.22);
+            box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.08);
+        }
+
+.crypto-workspace-boundary-note {
+            max-width: min(100%, 18rem);
+            border-color: rgba(250, 204, 21, 0.14);
+            background: rgba(250, 204, 21, 0.055);
+            color: rgba(254, 249, 195, 0.70);
+        }
+
+.crypto-mode-hud,
+.crypto-spatial-breadcrumbs span,
+.crypto-session-status-strip span,
+.crypto-workflow-handoff-actions button,
+.crypto-replay-handoff button {
+            border-color: rgba(148, 163, 184, 0.12);
+            background: rgba(2, 6, 23, 0.42);
+            box-shadow: none;
+        }
+
+.crypto-mode-hud,
+.crypto-spatial-breadcrumbs span {
+            color: rgba(226, 232, 240, 0.62);
+        }
+
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-primary-action-rail,
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-interaction-dock {
+            opacity: 0.48;
+            filter: saturate(0.72);
+        }
+
+#crypto-photonic-view .crypto-contextual-inspector .contextual-inspector-header {
+            border-color: rgba(148, 163, 184, 0.13);
+            box-shadow: 0 16px 42px rgba(0, 0, 0, 0.20);
+        }
+
+#crypto-photonic-view .crypto-contextual-inspector .crypto-sidebar-stack,
+#crypto-detail-panel {
+            padding-top: 0.92rem;
+            box-shadow: 0 22px 62px rgba(0, 0, 0, 0.22);
+        }
+
+.crypto-mobile-investigation-drawer {
+            border-color: rgba(148, 163, 184, 0.14);
+            background:
+                linear-gradient(135deg, rgba(13, 148, 136, 0.08), rgba(15, 23, 42, 0.16)),
+                rgba(2, 6, 23, 0.88);
+            box-shadow: 0 20px 58px rgba(0, 0, 0, 0.34);
+        }
+
+.crypto-mobile-drawer-button[aria-pressed="true"] {
+            border-color: rgba(45, 212, 191, 0.30);
+            background: rgba(13, 148, 136, 0.14);
+            box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.06);
+        }
+
+.crypto-replay-workspace-panel {
+            border-color: rgba(148, 163, 184, 0.12);
+            background: rgba(2, 6, 23, 0.66);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+        }
+
+.crypto-replay-current-marker {
+            border-color: rgba(240, 171, 252, 0.62);
+            box-shadow: 0 0 0 3px rgba(240, 171, 252, 0.10), 0 0 14px rgba(34, 211, 238, 0.20);
+        }
+
+.crypto-replay-gap-marker,
+.crypto-replay-gap-marker.is-high,
+.crypto-replay-gap-marker.is-low {
+            box-shadow: 0 0 0 0.14rem rgba(148, 163, 184, 0.06);
+        }
+
+.crypto-replay-corridor-strip,
+.crypto-replay-progression-breadcrumbs,
+.crypto-replay-lineage-strip,
+.crypto-replay-graph-chronology,
+.crypto-replay-bookmark-strip,
+.crypto-history-replay-jump-strip {
+            gap: 0.3rem;
+        }
+
+.crypto-replay-corridor-strip button,
+.crypto-replay-progression-breadcrumbs button,
+.crypto-replay-lineage-strip button,
+.crypto-replay-graph-chronology button,
+.crypto-replay-bookmark,
+.crypto-history-replay-jump-strip button {
+            border-color: rgba(148, 163, 184, 0.12);
+            background: rgba(2, 6, 23, 0.42);
+            color: rgba(226, 232, 240, 0.66);
+            box-shadow: none;
+        }
+
+.crypto-replay-graph-chronology button span {
+            background: rgba(240, 171, 252, 0.34);
+            opacity: 0.58;
+        }
+
+.crypto-replay-graph-chronology button.is-active,
+.crypto-replay-bookmark.is-active {
+            border-color: rgba(240, 171, 252, 0.32);
+            background: rgba(126, 34, 206, 0.14);
+            color: rgba(253, 244, 255, 0.90);
+            box-shadow: inset 0 0 0 1px rgba(240, 171, 252, 0.06);
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-strip,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-progression-breadcrumbs,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-zones,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-lineage-panel {
+            opacity: 0.72;
+            filter: saturate(0.74);
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-event {
+            opacity: 0.92;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen {
+            background:
+                radial-gradient(circle at 48% 46%, rgba(13, 148, 136, 0.10), transparent 38rem),
+                rgba(1, 5, 14, 0.985);
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-panel {
+            border-color: rgba(148, 163, 184, 0.10);
+            box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.035), 0 40px 120px rgba(0, 0, 0, 0.38);
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle {
+            opacity: 0.58;
+            border-color: rgba(148, 163, 184, 0.14);
+            background: rgba(2, 6, 23, 0.46);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.20);
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle:hover,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle:focus-visible {
+            opacity: 0.92;
+            border-color: rgba(94, 234, 212, 0.28);
+            background: rgba(2, 6, 23, 0.68);
+        }

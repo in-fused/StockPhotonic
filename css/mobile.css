@@ -2230,3 +2230,223 @@
                 max-height: calc(min(58dvh, 32rem) - 3.6rem) !important;
             }
         }
+
+/* D289-D298 mobile final polish: cleaner first impression, quieter chips, and stable overlays. */
+@media (max-width: 768px) {
+            #stock-photonic-surface > .flex:first-child,
+            #crypto-photonic-view > .flex:first-child {
+                gap: 0.82rem;
+                margin-bottom: 0.85rem !important;
+            }
+
+            #stock-photonic-surface > .flex:first-child h1,
+            #crypto-photonic-view > .flex:first-child h1 {
+                font-size: clamp(2.15rem, 11vw, 3.3rem);
+                line-height: 0.98;
+            }
+
+            .graph-first-os .product-view-switch,
+            .graph-first-os .app-view-tabs,
+            .graph-os-bar,
+            .crypto-os-bar {
+                gap: 0.32rem;
+                padding: 0.32rem;
+            }
+
+            .graph-mode-button,
+            .graph-os-action,
+            .product-view-tab,
+            .app-view-tab {
+                min-height: 2.08rem;
+                padding: 0.46rem 0.56rem;
+                font-size: 0.62rem;
+            }
+
+            .mode-primary-action-rail {
+                margin-bottom: 0.58rem;
+            }
+
+            .mode-primary-action {
+                gap: 0.5rem;
+                border-color: rgba(148, 163, 184, 0.12);
+                background: rgba(2, 6, 23, 0.42);
+                padding: 0.62rem;
+                box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
+            }
+
+            .mode-primary-kicker {
+                font-size: 0.52rem;
+            }
+
+            .mode-primary-action h2 {
+                font-size: 0.88rem;
+                line-height: 1.16;
+            }
+
+            .mode-primary-action p {
+                font-size: 0.66rem;
+                line-height: 1.32;
+            }
+
+            .mode-primary-button {
+                min-height: 2.28rem;
+                font-size: 0.62rem;
+            }
+
+            .interaction-dock {
+                margin-bottom: 0.58rem;
+            }
+
+            .interaction-overflow-menu {
+                bottom: calc(4.45rem + env(safe-area-inset-bottom));
+                max-height: min(38dvh, 19rem);
+                border-color: rgba(148, 163, 184, 0.14);
+                background: rgba(2, 6, 23, 0.92);
+                box-shadow: 0 20px 58px rgba(0, 0, 0, 0.34);
+            }
+
+            .graph-first-os #graph-intelligence-view:not(.is-graph-fullscreen) .graph-container,
+            #crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-canvas-wrap {
+                height: clamp(460px, 66dvh, 700px) !important;
+                min-height: 460px !important;
+                border-color: rgba(148, 163, 184, 0.10);
+                box-shadow: 0 22px 64px rgba(0, 0, 0, 0.22);
+            }
+
+            .stock-mobile-graph-overlay,
+            .crypto-mobile-graph-overlay {
+                bottom: calc(4.82rem + env(safe-area-inset-bottom)) !important;
+            }
+
+            .stock-mobile-graph-overlay .mobile-graph-actions,
+            .crypto-mobile-graph-overlay .mobile-graph-actions {
+                max-width: min(100%, 15rem);
+                border-color: rgba(148, 163, 184, 0.13);
+                background: rgba(2, 6, 23, 0.72);
+                box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
+            }
+
+            .stock-mobile-graph-overlay .mobile-graph-action,
+            .crypto-mobile-graph-overlay .mobile-graph-action {
+                min-width: 2.3rem;
+                min-height: 2.3rem;
+                border-color: rgba(148, 163, 184, 0.12);
+                background: rgba(15, 23, 42, 0.56);
+                color: rgba(226, 232, 240, 0.74);
+                box-shadow: none;
+            }
+
+            .graph-first-os .contextual-inspector,
+            #crypto-photonic-view .crypto-contextual-inspector {
+                left: max(0.55rem, env(safe-area-inset-left));
+                right: max(0.55rem, env(safe-area-inset-right));
+                bottom: max(0.55rem, env(safe-area-inset-bottom));
+                max-height: min(55dvh, 30rem);
+                border-radius: 8px;
+            }
+
+            .graph-first-os .contextual-inspector #sidebar,
+            .graph-first-os .contextual-inspector #empty-sidebar,
+            #crypto-photonic-view .crypto-contextual-inspector .crypto-sidebar-stack {
+                max-height: calc(min(55dvh, 30rem) - 3.45rem) !important;
+                padding: 0.68rem !important;
+                background: rgba(2, 6, 23, 0.90) !important;
+            }
+
+            .contextual-inspector-header {
+                min-height: 3.2rem;
+                padding: 0.68rem 0.78rem;
+            }
+
+            .crypto-mobile-investigation-drawer {
+                left: max(0.55rem, env(safe-area-inset-left));
+                right: max(0.55rem, env(safe-area-inset-right));
+                bottom: max(0.55rem, env(safe-area-inset-bottom));
+                max-height: min(52dvh, 24rem);
+                border-color: rgba(148, 163, 184, 0.14);
+                box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+            }
+
+            .crypto-mobile-investigation-drawer.is-collapsed {
+                max-height: 4.7rem;
+            }
+
+            .crypto-mobile-drawer-inner {
+                gap: 0.5rem;
+                padding: 0.45rem 0.58rem 0.62rem;
+            }
+
+            .crypto-mobile-drawer-handle {
+                min-height: 1.05rem;
+            }
+
+            .crypto-mobile-drawer-button {
+                min-height: 2rem;
+                border-color: rgba(148, 163, 184, 0.12);
+                background: rgba(15, 23, 42, 0.46);
+                color: rgba(226, 232, 240, 0.72);
+            }
+
+            .graph-first-os #graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore,
+            #crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle {
+                min-width: 2.32rem;
+                min-height: 2.32rem;
+                opacity: 0.58;
+                border-color: rgba(148, 163, 184, 0.14);
+                background: rgba(2, 6, 23, 0.50);
+                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.20);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-overlay {
+                padding: calc(3.42rem + env(safe-area-inset-top)) 0.5rem 0.5rem;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-toolbar {
+                max-height: min(25dvh, 12rem);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-event {
+                max-height: min(29dvh, 13rem);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-panel {
+                padding: 0.58rem;
+                border-color: rgba(148, 163, 184, 0.12);
+                box-shadow: 0 14px 38px rgba(0, 0, 0, 0.24);
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-strip,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-progression-breadcrumbs,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-lineage-strip,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-graph-chronology {
+                gap: 0.26rem;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-strip button,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-progression-breadcrumbs button,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-lineage-strip button,
+            #crypto-photonic-view.is-replay-workspace .crypto-replay-graph-chronology button {
+                min-height: 1.95rem;
+                padding: 0.32rem 0.44rem;
+            }
+        }
+
+@media (max-width: 480px) {
+            .graph-mode-button span,
+            .graph-os-action span,
+            .product-view-tab span,
+            .app-view-tab span {
+                max-width: 8.5rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .mode-primary-action p {
+                display: none;
+            }
+
+            .interaction-overflow-menu .interaction-dock-button {
+                min-width: min(8.4rem, calc(50vw - 0.95rem));
+            }
+        }

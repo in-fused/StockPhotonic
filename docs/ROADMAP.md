@@ -1,5 +1,12 @@
 # Roadmap Notes
 
+## D289-D298 Final UX Consolidation + Institutional Presentation Pass
+
+- Consolidated StockPhotonic and CryptoPhotonic first-load presentation around calmer institutional headings, tighter mode/action rhythm, and less developer-oriented default copy.
+- Quieted active/selected chrome, minimap, legends, breadcrumbs, replay chips, contextual inspectors, fullscreen restore affordances, and replay workspace strips so the active graph surface remains dominant.
+- Tightened mobile spacing, bottom-sheet inspectors, drawer sizing, graph overlays, replay strips, and fullscreen restore controls to avoid awkward stacking while preserving the graph-first posture.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, or browser-side provider-call changes are part of D289-D298.
+
 ## D279-D288 Institutional Interaction Polish + Contextual Flow Refinement
 
 - Smoothed StockPhotonic and CryptoPhotonic inspector-open transitions so contextual panels feel attached to the active graph state while surrounding mode chrome quiets instead of competing.

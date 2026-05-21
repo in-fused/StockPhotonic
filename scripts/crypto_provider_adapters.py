@@ -120,28 +120,47 @@ def infer_event_type(transaction: dict[str, Any]) -> str:
     return "unknown_unsupported_event"
 
 
-def first_transfer(transaction: dict[str, Any]) -> dict[str, Any]:
+def transfer_rows(transaction: dict[str, Any]) -> list[tuple[dict[str, Any], str]]:
+    rows: list[tuple[dict[str, Any], str]] = []
     for transfer in as_list(transaction.get("tokenTransfers")):
         if isinstance(transfer, dict):
-            return transfer
+            rows.append((transfer, "token"))
     for transfer in as_list(transaction.get("nativeTransfers")):
         if isinstance(transfer, dict):
-            return transfer
-    return {}
+            rows.append((transfer, "native"))
+    return rows or [({}, "unknown")]
 
 
-def sanitize_helius_transaction(transaction: dict[str, Any], index: int, wallet: str) -> dict[str, Any]:
-    transfer = first_transfer(transaction)
+def sanitize_helius_transfer(transaction: dict[str, Any], transfer: dict[str, Any], transfer_kind: str, index: int, leg_index: int, wallet: str) -> dict[str, Any]:
     source_wallet = clean_string(first_present(transfer.get("fromUserAccount"), transfer.get("fromUser"), transfer.get("from")))
     destination_wallet = clean_string(first_present(transfer.get("toUserAccount"), transfer.get("toUser"), transfer.get("to")))
-    token_mint = clean_string(first_present(transfer.get("mint"), "native:sol" if transaction.get("nativeTransfers") else ""))
-    amount = first_present(transfer.get("tokenAmount"), transfer.get("amount"), "0")
+    token_mint = clean_string(first_present(transfer.get("mint"), "native:sol" if transfer_kind == "native" else ""))
+    amount = first_present(transfer.get("tokenAmount"), transfer.get("amount"))
     event_type = infer_event_type(transaction)
     limitations = ["provider_payload_sanitized"]
     if event_type == "unknown_unsupported_event":
         limitations.append("unsupported provider transaction type")
+    if event_type == "swap_like_flow":
+        limitations.append("provider swap label requires visible leg review")
+    if not source_wallet:
+        limitations.append("source wallet unavailable")
+    if not destination_wallet:
+        limitations.append("destination wallet unavailable")
+    if not token_mint:
+        limitations.append("token mint unavailable")
+    if amount in (None, ""):
+        limitations.append("amount unavailable")
+    confidence = 0.58 if event_type == "unknown_unsupported_event" else 0.72
+    missing_count = sum(1 for value in (source_wallet, destination_wallet, token_mint, clean_string(amount)) if not value)
+    if missing_count:
+        confidence = min(confidence, max(0.24, 0.76 - (missing_count * 0.11)))
     return {
         "signature": clean_string(transaction.get("signature")),
+        "signature_group_id": None,
+        "signature_group_index": None,
+        "signature_group_size": None,
+        "transfer_leg_index": leg_index,
+        "transfer_leg_count": None,
         "slot": transaction.get("slot"),
         "timestamp": parse_unix_timestamp(transaction.get("timestamp")),
         "source_wallet": source_wallet,
@@ -153,20 +172,31 @@ def sanitize_helius_transaction(transaction: dict[str, Any], index: int, wallet:
         "inner_instruction_index": None,
         "program_id": clean_string(first_present(transfer.get("programId"), transaction.get("source"))),
         "event_type": event_type,
+        "multi_leg_signature": False,
         "swap_leg_group": None,
         "balance_delta_summary": {},
-        "parser_confidence": 0.58 if event_type == "unknown_unsupported_event" else 0.72,
+        "parser_confidence": confidence,
+        "parser_confidence_reason": "provider-normalized transfer leg; review signature grouping",
         "parser_limitations": limitations,
         "raw_reference": {
             "provider": "helius",
             "provider_record_type": clean_string(transaction.get("type")),
+            "provider_transfer_kind": transfer_kind,
             "raw_payload_stored": False,
             "record_index": index,
+            "transfer_leg_index": leg_index,
             "request_url_stored": False,
             "request_headers_stored": False,
             "provider_key_stored": False,
         },
     }
+
+
+def sanitize_helius_transaction(transaction: dict[str, Any], index: int, wallet: str) -> list[dict[str, Any]]:
+    return [
+        sanitize_helius_transfer(transaction, transfer, transfer_kind, index, leg_index, wallet)
+        for leg_index, (transfer, transfer_kind) in enumerate(transfer_rows(transaction), start=1)
+    ]
 
 
 class HeliusProviderAdapter:
@@ -225,9 +255,11 @@ class HeliusProviderAdapter:
             raise ProviderAdapterError("provider_unexpected_response_shape")
 
         transactions = [item for item in parsed if isinstance(item, dict)]
-        normalized = [sanitize_helius_transaction(item, index, wallet) for index, item in enumerate(transactions)]
-        next_cursor = clean_string(normalized[-1].get("signature")) if len(normalized) >= bounded_limit and normalized else None
-        more_available = bool(next_cursor and len(normalized) >= bounded_limit)
+        normalized: list[dict[str, Any]] = []
+        for index, item in enumerate(transactions):
+            normalized.extend(sanitize_helius_transaction(item, index, wallet))
+        next_cursor = clean_string(transactions[-1].get("signature")) if len(transactions) >= bounded_limit and transactions else None
+        more_available = bool(next_cursor and len(transactions) >= bounded_limit)
         return ProviderPage(
             provider=self.name,
             chain=self.chain,

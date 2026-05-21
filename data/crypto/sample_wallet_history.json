@@ -17,6 +17,11 @@
   "normalized_transactions": [
     {
       "signature": "sampledirectsignature111111111111111111111111111111111111111111111",
+      "signature_group_id": "signature:sampledirectsignature111111111111111111111111111111111111111111111",
+      "signature_group_index": 1,
+      "signature_group_size": 1,
+      "transfer_leg_index": 1,
+      "transfer_leg_count": 1,
       "slot": 301000001,
       "timestamp": "2026-05-20T00:01:00Z",
       "source_wallet": "samplewallet11111111111111111111111111111111",
@@ -29,12 +34,14 @@
       "inner_instruction_index": null,
       "program_id": "11111111111111111111111111111111",
       "event_type": "direct_transfer",
+      "multi_leg_signature": false,
       "swap_leg_group": null,
       "balance_delta_summary": {
         "samplewallet11111111111111111111111111111111": "-1.25 SOL",
         "samplecounterparty222222222222222222222222222": "+1.25 SOL"
       },
       "parser_confidence": 0.92,
+      "parser_confidence_reason": "fixture direct transfer with source, destination, mint, and amount",
       "parser_limitations": [
         "fixture_sample_only",
         "fee impact omitted"
@@ -48,6 +55,11 @@
     },
     {
       "signature": "sampleswapsignature333333333333333333333333333333333333333333333",
+      "signature_group_id": "signature:sampleswapsignature333333333333333333333333333333333333333333333",
+      "signature_group_index": 1,
+      "signature_group_size": 2,
+      "transfer_leg_index": 1,
+      "transfer_leg_count": 2,
       "slot": 301000222,
       "timestamp": "2026-05-20T00:04:00Z",
       "source_wallet": "samplewallet11111111111111111111111111111111",
@@ -60,12 +72,14 @@
       "inner_instruction_index": 0,
       "program_id": "sampleammprogram999999999999999999999999999",
       "event_type": "swap_like_flow",
+      "multi_leg_signature": true,
       "swap_leg_group": "sampleswapsignature333333333333333333333333333333333333333333333:swap:0",
       "balance_delta_summary": {
         "samplewallet11111111111111111111111111111111": "-25.0 sUSDC, +145000.0 sBONK",
         "samplepool555555555555555555555555555555555": "+25.0 sUSDC, -145000.0 sBONK"
       },
       "parser_confidence": 0.68,
+      "parser_confidence_reason": "paired outbound leg visible under same signature; route not provider-proven",
       "parser_limitations": [
         "swap-like flow inferred from paired legs",
         "liquidity route not proven",
@@ -79,7 +93,51 @@
       }
     },
     {
+      "signature": "sampleswapsignature333333333333333333333333333333333333333333333",
+      "signature_group_id": "signature:sampleswapsignature333333333333333333333333333333333333333333333",
+      "signature_group_index": 2,
+      "signature_group_size": 2,
+      "transfer_leg_index": 2,
+      "transfer_leg_count": 2,
+      "slot": 301000222,
+      "timestamp": "2026-05-20T00:04:00Z",
+      "source_wallet": "samplepool555555555555555555555555555555555",
+      "destination_wallet": "samplewallet11111111111111111111111111111111",
+      "token_mint": "samplemintbonk66666666666666666666666666666666",
+      "symbol": "sBONK",
+      "amount": "145000.000000",
+      "transfer_direction": "inbound",
+      "outer_instruction_index": 4,
+      "inner_instruction_index": 1,
+      "program_id": "sampleammprogram999999999999999999999999999",
+      "event_type": "swap_like_flow",
+      "multi_leg_signature": true,
+      "swap_leg_group": "sampleswapsignature333333333333333333333333333333333333333333333:swap:0",
+      "balance_delta_summary": {
+        "samplewallet11111111111111111111111111111111": "-25.0 sUSDC, +145000.0 sBONK",
+        "samplepool555555555555555555555555555555555": "+25.0 sUSDC, -145000.0 sBONK"
+      },
+      "parser_confidence": 0.68,
+      "parser_confidence_reason": "paired inbound leg visible under same signature; route not provider-proven",
+      "parser_limitations": [
+        "swap-like flow inferred from paired legs",
+        "liquidity route not proven",
+        "fixture_sample_only"
+      ],
+      "raw_reference": {
+        "source_file": "data/crypto/sample_wallet_history.json",
+        "raw_payload_stored": false,
+        "provider": "none",
+        "record_index": 2
+      }
+    },
+    {
       "signature": "samplelimitedsignature7777777777777777777777777777777777777777777",
+      "signature_group_id": "signature:samplelimitedsignature7777777777777777777777777777777777777777777",
+      "signature_group_index": 1,
+      "signature_group_size": 1,
+      "transfer_leg_index": 1,
+      "transfer_leg_count": 1,
       "slot": 301000333,
       "timestamp": "2026-05-20T00:08:00Z",
       "source_wallet": "",
@@ -92,12 +150,14 @@
       "inner_instruction_index": 2,
       "program_id": "sampleprogramlimited77777777777777777777777777",
       "event_type": "parser_limited_event",
+      "multi_leg_signature": false,
       "swap_leg_group": null,
       "balance_delta_summary": {
         "known_delta_count": 1,
         "unknown_delta_count": 1
       },
       "parser_confidence": 0.31,
+      "parser_confidence_reason": "parser-limited event; missing source wallet; missing amount",
       "parser_limitations": [
         "source wallet unavailable in sample row",
         "amount unavailable",
@@ -108,7 +168,7 @@
         "source_file": "data/crypto/sample_wallet_history.json",
         "raw_payload_stored": false,
         "provider": "none",
-        "record_index": 2
+        "record_index": 3
       }
     }
   ]

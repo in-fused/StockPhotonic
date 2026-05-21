@@ -17,6 +17,11 @@ DEFAULT_OUTPUT = DEFAULT_DATA_DIR / "crypto_review_export.sample.csv"
 
 CSV_FIELDS = [
     "signature",
+    "signature_group_id",
+    "signature_group_index",
+    "signature_group_size",
+    "transfer_leg_index",
+    "transfer_leg_count",
     "slot",
     "timestamp",
     "source_wallet",
@@ -28,8 +33,10 @@ CSV_FIELDS = [
     "inner_instruction_index",
     "program_id",
     "event_type",
+    "multi_leg_signature",
     "swap_leg_group",
     "parser_confidence",
+    "parser_confidence_reason",
     "parser_limitations",
     "raw_reference",
 ]
@@ -80,6 +87,37 @@ def serialize_cell(value: Any) -> str:
     return str(value)
 
 
+def clean_text(value: Any) -> str:
+    return str(value).strip() if value not in (None, "") else ""
+
+
+def amount_is_missing(row: dict[str, Any]) -> bool:
+    amount = clean_text(row.get("amount")).lower()
+    limitations = [str(item).lower() for item in as_list(row.get("parser_limitations"))]
+    return amount in {"", "none", "null", "nan"} or any("amount unavailable" in item or "missing amount" in item for item in limitations)
+
+
+def summarize_rows(rows: list[dict[str, Any]]) -> dict[str, int]:
+    event_type_counts: dict[str, int] = {}
+    signatures = {row.get("signature_group_id") or row.get("signature") for row in rows if row.get("signature_group_id") or row.get("signature")}
+    for row in rows:
+        event_type = clean_text(row.get("event_type")) or "unknown_unsupported_event"
+        event_type_counts[event_type] = event_type_counts.get(event_type, 0) + 1
+    return {
+        "signature_group_count": len(signatures),
+        "direct_transfer_count": event_type_counts.get("direct_transfer", 0),
+        "multi_leg_transfer_count": event_type_counts.get("multi_leg_transfer", 0),
+        "swap_like_flow_count": event_type_counts.get("swap_like_flow", 0),
+        "parser_limited_count": sum(1 for row in rows if row.get("event_type") == "parser_limited_event" or any("parser-limited" in str(item).lower() for item in as_list(row.get("parser_limitations")))),
+        "parser_limitation_row_count": sum(1 for row in rows if row.get("parser_limitations")),
+        "unknown_unsupported_count": event_type_counts.get("unknown_unsupported_event", 0),
+        "missing_amount_count": sum(1 for row in rows if amount_is_missing(row)),
+        "missing_source_count": sum(1 for row in rows if not row.get("source_wallet")),
+        "missing_destination_count": sum(1 for row in rows if not row.get("destination_wallet")),
+        "missing_mint_count": sum(1 for row in rows if not row.get("token_mint")),
+    }
+
+
 def to_csv_rows(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
     return [
         {field: serialize_cell(row.get(field, "")) for field in CSV_FIELDS}
@@ -119,7 +157,7 @@ def main() -> int:
     payload = load_json(input_path)
     rows = extract_rows(payload)
     csv_rows = to_csv_rows(rows)
-    parser_limited = sum(1 for row in rows if row.get("event_type") == "parser_limited_event" or row.get("parser_limitations"))
+    summary = summarize_rows(rows)
 
     xlsx_status = "not requested"
     if args.write:
@@ -132,7 +170,14 @@ def main() -> int:
     print("CryptoPhotonic review export")
     print(f"- Input: {input_path}")
     print(f"- CSV rows: {len(csv_rows)}")
-    print(f"- Parser-limited/limited rows: {parser_limited}")
+    print(f"- Signatures grouped: {summary['signature_group_count']}")
+    print(f"- Direct transfers: {summary['direct_transfer_count']}")
+    print(f"- Multi-leg transfers: {summary['multi_leg_transfer_count']}")
+    print(f"- Swap-like flows: {summary['swap_like_flow_count']}")
+    print(f"- Parser-limited rows: {summary['parser_limited_count']}")
+    print(f"- Parser limitation rows: {summary['parser_limitation_row_count']}")
+    print(f"- Unknown/unsupported rows: {summary['unknown_unsupported_count']}")
+    print(f"- Missing amount/source/destination/mint: {summary['missing_amount_count']}/{summary['missing_source_count']}/{summary['missing_destination_count']}/{summary['missing_mint_count']}")
     print(f"- Write mode: {'write' if args.write else 'dry-run'}")
     print(f"- CSV output: {output_path}")
     print(f"- XLSX: {xlsx_status}")

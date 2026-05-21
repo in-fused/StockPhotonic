@@ -1,5 +1,12 @@
 # Roadmap Notes
 
+## D319-D328 Crypto Multi-Step Parser Accuracy + Cache Review Harness
+
+- Strengthened local Crypto transaction normalization with deterministic signature grouping, visible transfer-leg indexing, multi-leg transfer labeling, cautious swap-like grouping, and explicit parser confidence reasons/limitations.
+- Added parser quality summaries to CLI output, normalized cache metadata, and replay cache output, including signature group counts, event type counts, parser-limited counts, continuity confidence reason, pagination/cursor state, and missing amount/source/destination/mint counts.
+- Extended review CSV/XLSX export fields to preserve parser confidence reasons and event grouping metadata, and refreshed Crypto local data contract/sample schema fields for multi-leg and swap-like review.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, browser-side provider-call, or secret-handling changes are part of D319-D328.
+
 ## D309-D318 Local Provider Adapter + Replay Cache Builder
 
 - Added the local/server-side `crypto_provider_adapters.py` boundary for sanitized wallet-history provider pages, with Helius support behind caller-enforced `--allow-network` and environment-only provider keys.

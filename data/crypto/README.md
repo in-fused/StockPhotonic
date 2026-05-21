@@ -59,8 +59,13 @@ Replay cache entries should include:
 - source wallet input
 - scan/window metadata
 - cursor and pagination metadata from the normalized cache
+- signature group count
+- parser-limited count
+- event type counts
+- continuity confidence reason
 - normalized transaction events
 - parser confidence
+- parser confidence reason
 - parser limitations
 - raw reference metadata without raw provider payloads
 
@@ -75,6 +80,11 @@ Review/export files are analyst-facing artifacts generated from normalized JSON,
 Normalized transaction events should support these fields:
 
 - `signature`
+- `signature_group_id`
+- `signature_group_index`
+- `signature_group_size`
+- `transfer_leg_index`
+- `transfer_leg_count`
 - `slot`
 - `timestamp`
 - `source_wallet`
@@ -86,11 +96,19 @@ Normalized transaction events should support these fields:
 - `inner_instruction_index`
 - `program_id`
 - `event_type`
+- `multi_leg_signature`
 - `swap_leg_group`
 - `balance_delta_summary`
 - `parser_confidence`
+- `parser_confidence_reason`
 - `parser_limitations`
 - `raw_reference`
+
+Rows are grouped deterministically by signature. Multiple visible transfer legs under one signature must remain separate rows with preserved source wallet, destination wallet, token mint, amount, and outer/inner instruction indices when available. Group fields are review aids only; they must not synthesize routes from unrelated legs.
+
+Swap-like rows require visible inbound and outbound leg evidence under the same signature. When the parser can only infer a route or liquidity path from paired legs, normalized rows must carry explicit parser limitations such as `route or liquidity path not proven`.
+
+Parser confidence should be paired with `parser_confidence_reason`. Missing source, destination, amount, or token mint fields, unsupported event shapes, downgraded swap labels, and parser-limited rows should lower confidence and remain visible in review/export output.
 
 Recommended event type labels:
 

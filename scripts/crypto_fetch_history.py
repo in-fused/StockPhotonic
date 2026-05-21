@@ -92,9 +92,47 @@ def empty_cache_metadata(args: argparse.Namespace, network_ready: bool) -> dict[
     }
 
 
+def as_list(value: Any) -> list[Any]:
+    return value if isinstance(value, list) else []
+
+
+def clean_text(value: Any) -> str:
+    return str(value).strip() if value not in (None, "") else ""
+
+
+def amount_is_missing(row: dict[str, Any]) -> bool:
+    amount = clean_text(row.get("amount")).lower()
+    limitations = [str(item).lower() for item in as_list(row.get("parser_limitations"))]
+    return amount in {"", "none", "null", "nan"} or any("amount unavailable" in item or "missing amount" in item for item in limitations)
+
+
+def summarize_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    event_type_counts: dict[str, int] = {}
+    signatures = {row.get("signature_group_id") or row.get("signature") for row in rows if row.get("signature_group_id") or row.get("signature")}
+    for row in rows:
+        event_type = clean_text(row.get("event_type")) or "unknown_unsupported_event"
+        event_type_counts[event_type] = event_type_counts.get(event_type, 0) + 1
+    return {
+        "rows_read": len(rows),
+        "signature_group_count": len(signatures),
+        "direct_transfer_count": event_type_counts.get("direct_transfer", 0),
+        "multi_leg_transfer_count": event_type_counts.get("multi_leg_transfer", 0),
+        "swap_like_flow_count": event_type_counts.get("swap_like_flow", 0),
+        "parser_limited_count": sum(1 for row in rows if row.get("event_type") == "parser_limited_event" or any("parser-limited" in str(item).lower() for item in as_list(row.get("parser_limitations")))),
+        "parser_limitation_row_count": sum(1 for row in rows if row.get("parser_limitations")),
+        "unknown_unsupported_count": event_type_counts.get("unknown_unsupported_event", 0),
+        "missing_amount_count": sum(1 for row in rows if amount_is_missing(row)),
+        "missing_source_count": sum(1 for row in rows if not row.get("source_wallet")),
+        "missing_destination_count": sum(1 for row in rows if not row.get("destination_wallet")),
+        "missing_mint_count": sum(1 for row in rows if not row.get("token_mint")),
+        "event_type_counts": event_type_counts,
+    }
+
+
 def build_cache_payload(args: argparse.Namespace, network_ready: bool, provider_page: Any | None = None) -> dict[str, Any]:
     cache_metadata = provider_page.cache_metadata() if provider_page else empty_cache_metadata(args, network_ready)
     normalized_transactions = provider_page.normalized_transactions if provider_page else []
+    parser_quality_summary = summarize_rows(normalized_transactions)
     return {
         "metadata": {
             "name": "CryptoPhotonic local wallet history cache",
@@ -113,11 +151,22 @@ def build_cache_payload(args: argparse.Namespace, network_ready: bool, provider_
             "network_ready": network_ready,
         },
         "normalized_cache_metadata": cache_metadata,
+        "parser_quality_summary": parser_quality_summary,
         "cache": {
             "cache_schema": "d309_wallet_history_cache_v1",
             "cache_state": "provider_page" if provider_page else "dry_run" if not args.write else "local_empty_cache",
             "source": "local_cli_provider_adapter" if provider_page else "local_cli_dry_run",
             "normalized_event_count": len(normalized_transactions),
+            "signature_group_count": parser_quality_summary.get("signature_group_count", 0),
+            "parser_limited_count": parser_quality_summary.get("parser_limited_count", 0),
+            "parser_limitation_row_count": parser_quality_summary.get("parser_limitation_row_count", 0),
+            "event_type_counts": parser_quality_summary.get("event_type_counts", {}),
+            "missing_field_counts": {
+                "amount": parser_quality_summary.get("missing_amount_count", 0),
+                "source_wallet": parser_quality_summary.get("missing_source_count", 0),
+                "destination_wallet": parser_quality_summary.get("missing_destination_count", 0),
+                "token_mint": parser_quality_summary.get("missing_mint_count", 0),
+            },
             "cursor": cache_metadata.get("cursor"),
             "current_cursor": cache_metadata.get("current_cursor"),
             "next_cursor": cache_metadata.get("next_cursor"),
@@ -170,6 +219,7 @@ def main() -> int:
             raise SystemExit(f"Provider request failed: {error}") from error
     network_ready = bool(args.allow_network and api_key_present and args.wallet)
     payload = build_cache_payload(args, network_ready, provider_page)
+    summary = payload.get("parser_quality_summary", {})
 
     if args.write:
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -181,7 +231,15 @@ def main() -> int:
     print(f"- Network allowed: {args.allow_network}")
     print(f"- Provider key env checked: {args.api_key_env if args.allow_network else '(not checked; dry network mode)'}")
     print(f"- Provider request sent: {str(bool(provider_page)).lower()}")
-    print(f"- Rows returned: {len(provider_page.normalized_transactions) if provider_page else 0}")
+    print(f"- Rows returned: {summary.get('rows_read', 0)}")
+    print(f"- Signatures grouped: {summary.get('signature_group_count', 0)}")
+    print(f"- Direct transfers: {summary.get('direct_transfer_count', 0)}")
+    print(f"- Multi-leg transfers: {summary.get('multi_leg_transfer_count', 0)}")
+    print(f"- Swap-like flows: {summary.get('swap_like_flow_count', 0)}")
+    print(f"- Parser-limited rows: {summary.get('parser_limited_count', 0)}")
+    print(f"- Parser limitation rows: {summary.get('parser_limitation_row_count', 0)}")
+    print(f"- Unknown/unsupported rows: {summary.get('unknown_unsupported_count', 0)}")
+    print(f"- Missing amount/source/destination/mint: {summary.get('missing_amount_count', 0)}/{summary.get('missing_source_count', 0)}/{summary.get('missing_destination_count', 0)}/{summary.get('missing_mint_count', 0)}")
     print(f"- Next cursor: {'present' if provider_page and provider_page.next_cursor else 'none'}")
     print(f"- Write mode: {'write' if args.write else 'dry-run'}")
     print(f"- Output: {output_path}")

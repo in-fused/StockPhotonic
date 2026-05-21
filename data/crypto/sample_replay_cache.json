@@ -18,10 +18,23 @@
     "cache_id": "sample-replay-cache-d299",
     "cache_schema": "d299_replay_cache_v1",
     "cache_state": "sample_cache",
-    "source_rows": 3,
-    "normalized_event_count": 3,
+    "source_rows": 4,
+    "normalized_event_count": 4,
+    "signature_group_count": 3,
     "full_history_loaded": false,
     "parser_limited_count": 1,
+    "parser_limitation_row_count": 4,
+    "event_type_counts": {
+      "direct_transfer": 1,
+      "swap_like_flow": 2,
+      "parser_limited_event": 1
+    },
+    "missing_field_counts": {
+      "amount": 1,
+      "source_wallet": 1,
+      "destination_wallet": 0,
+      "token_mint": 0
+    },
     "no_browser_provider_calls": true
   },
   "replay_windows": [
@@ -31,11 +44,12 @@
       "current_window_index": 1,
       "total_windows": 1,
       "ordinal_start": 1,
-      "ordinal_end": 3,
+      "ordinal_end": 4,
       "partial": true,
       "continuity_confidence": {
         "score": 54,
         "level": "partial",
+        "reason": "cursor exhaustion not proven; parser limitations present in replay window",
         "limitations": [
           "sample cache is not full wallet history",
           "parser-limited event included"
@@ -45,6 +59,11 @@
         {
           "step": 1,
           "signature": "sampledirectsignature111111111111111111111111111111111111111111111",
+          "signature_group_id": "signature:sampledirectsignature111111111111111111111111111111111111111111111",
+          "signature_group_index": 1,
+          "signature_group_size": 1,
+          "transfer_leg_index": 1,
+          "transfer_leg_count": 1,
           "timestamp": "2026-05-20T00:01:00Z",
           "source_wallet": "samplewallet11111111111111111111111111111111",
           "destination_wallet": "samplecounterparty222222222222222222222222222",
@@ -53,7 +72,9 @@
           "amount": "1.250000000",
           "transfer_direction": "outbound",
           "event_type": "direct_transfer",
+          "multi_leg_signature": false,
           "parser_confidence": 0.92,
+          "parser_confidence_reason": "fixture direct transfer with source, destination, mint, and amount",
           "parser_limitations": [
             "fixture_sample_only"
           ]
@@ -61,6 +82,11 @@
         {
           "step": 2,
           "signature": "sampleswapsignature333333333333333333333333333333333333333333333",
+          "signature_group_id": "signature:sampleswapsignature333333333333333333333333333333333333333333333",
+          "signature_group_index": 1,
+          "signature_group_size": 2,
+          "transfer_leg_index": 1,
+          "transfer_leg_count": 2,
           "timestamp": "2026-05-20T00:04:00Z",
           "source_wallet": "samplewallet11111111111111111111111111111111",
           "destination_wallet": "samplepool555555555555555555555555555555555",
@@ -69,8 +95,10 @@
           "amount": "25.000000",
           "transfer_direction": "outbound",
           "event_type": "swap_like_flow",
+          "multi_leg_signature": true,
           "swap_leg_group": "sampleswapsignature333333333333333333333333333333333333333333333:swap:0",
           "parser_confidence": 0.68,
+          "parser_confidence_reason": "paired outbound leg visible under same signature; route not provider-proven",
           "parser_limitations": [
             "swap-like flow inferred from paired legs",
             "liquidity route not proven",
@@ -79,7 +107,38 @@
         },
         {
           "step": 3,
+          "signature": "sampleswapsignature333333333333333333333333333333333333333333333",
+          "signature_group_id": "signature:sampleswapsignature333333333333333333333333333333333333333333333",
+          "signature_group_index": 2,
+          "signature_group_size": 2,
+          "transfer_leg_index": 2,
+          "transfer_leg_count": 2,
+          "timestamp": "2026-05-20T00:04:00Z",
+          "source_wallet": "samplepool555555555555555555555555555555555",
+          "destination_wallet": "samplewallet11111111111111111111111111111111",
+          "token_mint": "samplemintbonk66666666666666666666666666666666",
+          "symbol": "sBONK",
+          "amount": "145000.000000",
+          "transfer_direction": "inbound",
+          "event_type": "swap_like_flow",
+          "multi_leg_signature": true,
+          "swap_leg_group": "sampleswapsignature333333333333333333333333333333333333333333333:swap:0",
+          "parser_confidence": 0.68,
+          "parser_confidence_reason": "paired inbound leg visible under same signature; route not provider-proven",
+          "parser_limitations": [
+            "swap-like flow inferred from paired legs",
+            "liquidity route not proven",
+            "fixture_sample_only"
+          ]
+        },
+        {
+          "step": 4,
           "signature": "samplelimitedsignature7777777777777777777777777777777777777777777",
+          "signature_group_id": "signature:samplelimitedsignature7777777777777777777777777777777777777777777",
+          "signature_group_index": 1,
+          "signature_group_size": 1,
+          "transfer_leg_index": 1,
+          "transfer_leg_count": 1,
           "timestamp": "2026-05-20T00:08:00Z",
           "source_wallet": "",
           "destination_wallet": "samplecounterparty888888888888888888888888888",
@@ -88,7 +147,9 @@
           "amount": "0",
           "transfer_direction": "unknown",
           "event_type": "parser_limited_event",
+          "multi_leg_signature": false,
           "parser_confidence": 0.31,
+          "parser_confidence_reason": "parser-limited event; missing source wallet; missing amount",
           "parser_limitations": [
             "source wallet unavailable in sample row",
             "amount unavailable",

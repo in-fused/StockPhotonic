@@ -140,11 +140,12 @@
         const selected = context.selectedNode?.id === node.id;
         const hovered = context.hoveredNode?.id === node.id;
         if (selected || hovered) {
+            const selectedFocus = Boolean(selected);
             return {
-                radiusMultiplier: Math.max(1.16, entry.radiusMultiplier),
+                radiusMultiplier: Math.max(selectedFocus ? 1.22 : 1.08, entry.radiusMultiplier),
                 alphaMultiplier: 1,
-                glowMultiplier: 1.22,
-                labelPriorityBoost: 1000,
+                glowMultiplier: selectedFocus ? 0.9 : 0.74,
+                labelPriorityBoost: selectedFocus ? 1200 : 520,
                 prominence: 'focus'
             };
         }
@@ -468,7 +469,7 @@
             prominence.set(node.id, {
                 radiusMultiplier,
                 alphaMultiplier,
-                glowMultiplier: important ? 1.05 + priorityRatio * 0.18 : 0.68 + priorityRatio * 0.18,
+                glowMultiplier: selected ? 0.9 : important ? 0.82 + priorityRatio * 0.14 : 0.6 + priorityRatio * 0.16,
                 labelPriorityBoost: important ? 220 + priorityRatio * 180 : priorityRatio * 60,
                 prominence: selected ? 'focus' : route ? 'route' : important ? 'anchor' : 'background',
                 visibleDegree: metric.visibleDegree || 0

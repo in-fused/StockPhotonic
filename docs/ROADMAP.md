@@ -1,5 +1,12 @@
 # Roadmap Notes
 
+## D279-D288 Institutional Interaction Polish + Contextual Flow Refinement
+
+- Smoothed StockPhotonic and CryptoPhotonic inspector-open transitions so contextual panels feel attached to the active graph state while surrounding mode chrome quiets instead of competing.
+- Tuned selected Stock nodes, Crypto wallets, selected flows, and replay pulses toward clearer rings and calmer suppression rather than high-glow emphasis.
+- Refined replay and fullscreen posture with slower Crypto flow stepping, softer replay/corridor chips, subtler restore affordances, and mobile rules that avoid stacked inspector, drawer, and overlay controls.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, or browser-side provider-call changes are part of D279-D288.
+
 ## D269-D278 Visual QA Simplification + Layout Collision Cleanup
 
 - Tightened StockPhotonic graph-first mode ownership so first-load Explore remains graph plus primary/command controls, and inspector-open state suppresses competing status, route, legend, minimap, and investigation chrome.

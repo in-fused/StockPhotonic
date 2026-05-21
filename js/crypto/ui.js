@@ -188,7 +188,7 @@
             index: 0,
             activeFlowId: null,
             lastStepAt: 0,
-            stepMs: 1150
+            stepMs: 1450
         },
         flowQueue: null,
         flowMotion: {
@@ -250,11 +250,11 @@
         hoverThrottleMs: 42
     };
     const FLOW_ANIMATION = {
-        maxPulsedEdges: 7,
-        frameMs: 33,
-        minDurationMs: 1400,
-        maxDurationMs: 3600,
-        idlePauseMs: 950
+        maxPulsedEdges: 4,
+        frameMs: 42,
+        minDurationMs: 1700,
+        maxDurationMs: 4200,
+        idlePauseMs: 1250
     };
     const DETAIL_LIMITS = {
         connectedWallets: 4,
@@ -9140,31 +9140,31 @@
         ctx.save();
         if ((selected || hovered || trackedWallet || selectedFlowEndpoint || (interaction.hasTokenIsolation && connected)) && !muted) {
             ctx.save();
-            ctx.globalAlpha = selected ? 0.3 : trackedWallet ? 0.22 : hovered ? 0.18 : selectedFlowEndpoint ? 0.16 : 0.1;
+            ctx.globalAlpha = selected ? 0.18 : trackedWallet ? 0.18 : hovered ? 0.13 : selectedFlowEndpoint ? 0.12 : 0.08;
             ctx.fillStyle = selected ? 'rgba(255, 255, 255, 0.92)' : node.color;
             ctx.shadowColor = selected ? '#67e8f9' : node.color;
-            ctx.shadowBlur = selected ? 30 : trackedWallet ? 26 : 16;
+            ctx.shadowBlur = selected ? 18 : trackedWallet ? 18 : 10;
             ctx.beginPath();
-            ctx.arc(node.x, node.y, radius + (selected ? 13 : trackedWallet ? 11 : 8), 0, Math.PI * 2);
+            ctx.arc(node.x, node.y, radius + (selected ? 10 : trackedWallet ? 9 : 7), 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         }
         ctx.shadowColor = node.color;
-        ctx.shadowBlur = trackedWallet ? 30 : selected ? 28 : hovered ? 17 : selectedFlowEndpoint ? 15 : connected ? 8 : 3;
+        ctx.shadowBlur = trackedWallet ? 18 : selected ? 16 : hovered ? 10 : selectedFlowEndpoint ? 9 : connected ? 5 : 2;
         ctx.globalAlpha = muted ? (interaction.hasSelected ? 0.28 : 0.42) : 1;
         ctx.fillStyle = 'rgba(2, 6, 23, 0.92)';
         ctx.strokeStyle = trackedWallet ? '#ecfeff' : selected ? '#fef3c7' : hovered ? '#ffffff' : selectedFlowEndpoint ? '#67e8f9' : node.color;
-        ctx.lineWidth = trackedWallet ? 4.4 : selected ? 4 : hovered ? 2.6 : selectedFlowEndpoint ? 2.7 : connected ? 1.8 : 1.1;
+        ctx.lineWidth = trackedWallet ? 3.4 : selected ? 3.25 : hovered ? 2.1 : selectedFlowEndpoint ? 2.25 : connected ? 1.65 : 1.1;
         if (isHubNode(node)) {
             ctx.globalAlpha = muted ? 0.34 : 0.88;
             ctx.strokeStyle = node.color;
-            ctx.lineWidth = selected ? 2.8 : hovered ? 2.2 : 1.4;
+            ctx.lineWidth = selected ? 2.2 : hovered ? 1.9 : 1.35;
             ctx.beginPath();
             ctx.arc(node.x, node.y, radius + 6, 0, Math.PI * 2);
             ctx.stroke();
             ctx.globalAlpha = muted ? (interaction.hasSelected ? 0.28 : 0.42) : 1;
             ctx.strokeStyle = selected ? '#fef3c7' : hovered ? '#ffffff' : selectedFlowEndpoint ? '#67e8f9' : node.color;
-            ctx.lineWidth = selected ? 4 : hovered ? 2.6 : selectedFlowEndpoint ? 2.7 : connected ? 1.8 : 1.1;
+            ctx.lineWidth = selected ? 3.25 : hovered ? 2.1 : selectedFlowEndpoint ? 2.25 : connected ? 1.65 : 1.1;
         }
         ctx.beginPath();
         ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
@@ -9174,17 +9174,17 @@
         if (selected && !muted) {
             ctx.save();
             ctx.shadowBlur = 0;
-            ctx.globalAlpha = 0.92;
+            ctx.globalAlpha = 0.74;
             ctx.strokeStyle = '#67e8f9';
-            ctx.lineWidth = 1.6;
+            ctx.lineWidth = 1.35;
             ctx.beginPath();
-            ctx.arc(node.x, node.y, radius + 6, 0, Math.PI * 2);
+            ctx.arc(node.x, node.y, radius + 5, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
         } else if (hovered && !selected && !muted) {
             ctx.save();
             ctx.shadowBlur = 0;
-            ctx.globalAlpha = 0.62;
+            ctx.globalAlpha = 0.46;
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 1.1;
             ctx.beginPath();
@@ -13136,10 +13136,10 @@
         if (isSelectedFlow) {
             return {
                 opacity: 1,
-                width: baseWidth + 3.7,
-                shadowBlur: 28,
+                width: baseWidth + 2.55,
+                shadowBlur: 16,
                 shadowColor: edge.color || '#67e8f9',
-                arrowSize: 13,
+                arrowSize: 11,
                 glowTrack: true,
                 selected: true
             };
@@ -13148,10 +13148,10 @@
         if (isReplayActive) {
             return {
                 opacity: 1,
-                width: baseWidth + 3,
-                shadowBlur: 24,
+                width: baseWidth + 2.15,
+                shadowBlur: 15,
                 shadowColor: edge.color || '#22d3ee',
-                arrowSize: 12,
+                arrowSize: 10,
                 glowTrack: true
             };
         }
@@ -13178,11 +13178,11 @@
                             : semanticDim ? Math.max(0.08, (semantic.weakFlowAlpha || 0.24) * baseOpacity)
                                 : isFlow ? Math.max(0.38, baseOpacity * 0.76) : Math.max(0.24, baseOpacity * 0.55),
                 width: isHoveredFlow
-                    ? baseWidth + 2.4
+                    ? baseWidth + 1.65
                     : topologyBoost ? baseWidth + 1.1
                         : ambientPulsed ? baseWidth + 0.55
                             : semanticDim ? Math.max(0.5, baseWidth * (semantic.weakFlowWidthMultiplier || 0.6)) : baseWidth,
-                shadowBlur: isHoveredFlow ? 16 : topologyBoost ? 12 : ambientPulsed ? 9 : edge.is_large_value ? 7 : 0,
+                shadowBlur: isHoveredFlow ? 10 : topologyBoost ? 9 : ambientPulsed ? 5 : edge.is_large_value ? 5 : 0,
                 shadowColor: edge.color || '#22d3ee',
                 arrowSize: isHoveredFlow || topologyBoost ? 11 : 8,
                 glowTrack: isHoveredFlow || topologyBoost
@@ -13196,8 +13196,8 @@
         if (connected) {
             return {
                 opacity: isFlow ? 1 : isExposure ? 0.56 : 0.34,
-                width: baseWidth + (isFlow ? 2.7 : isExposure ? 0.45 : 0.1),
-                shadowBlur: isFlow ? 19 : 6,
+                width: baseWidth + (isFlow ? 1.85 : isExposure ? 0.45 : 0.1),
+                shadowBlur: isFlow ? 11 : 4,
                 shadowColor: edge.color || '#22d3ee',
                 arrowSize: isFlow ? 11 : 8,
                 glowTrack: isFlow

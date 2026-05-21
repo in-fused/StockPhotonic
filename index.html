@@ -9223,24 +9223,26 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
             const density = scaling?.density || {};
             const navigation = largeGraphNavigationModel;
             const panel = `
-                <div class="sidebar-section" data-large-graph-panel="true">
-                    <div class="sidebar-section-title">Large-Graph Navigation</div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="promotion-planner-mini-metric rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">DENSITY</div>
-                            <div class="font-display text-xl text-white">${escapeHtml(density.label || 'Core graph')}</div>
+                <details class="sidebar-section" data-large-graph-panel="true">
+                    <summary class="sidebar-section-title">Large-Graph Navigation</summary>
+                    <div class="mt-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="promotion-planner-mini-metric rounded-2xl p-3">
+                                <div class="text-[10px] text-white/40 font-mono">DENSITY</div>
+                                <div class="font-display text-xl text-white">${escapeHtml(density.label || 'Core graph')}</div>
+                            </div>
+                            <div class="promotion-planner-mini-metric rounded-2xl p-3">
+                                <div class="text-[10px] text-white/40 font-mono">NAV MODE</div>
+                                <div class="font-display text-xl text-white">${escapeHtml(navigation?.modeShortLabel || 'Overview')}</div>
+                            </div>
                         </div>
-                        <div class="promotion-planner-mini-metric rounded-2xl p-3">
-                            <div class="text-[10px] text-white/40 font-mono">NAV MODE</div>
-                            <div class="font-display text-xl text-white">${escapeHtml(navigation?.modeShortLabel || 'Overview')}</div>
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <button type="button" onclick="setLargeGraphMode('strategic_hubs')" class="graph-card-action"><i class="fa-solid fa-circle-nodes"></i><span>Hubs</span></button>
+                            <button type="button" onclick="setLargeGraphMode('neighborhood')" class="graph-card-action"><i class="fa-solid fa-location-crosshairs"></i><span>Local</span></button>
+                            <button type="button" onclick="setLargeGraphMode('production_only')" class="graph-card-action"><i class="fa-solid fa-shield-halved"></i><span>Production</span></button>
                         </div>
                     </div>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <button type="button" onclick="setLargeGraphMode('strategic_hubs')" class="graph-card-action"><i class="fa-solid fa-circle-nodes"></i><span>Hubs</span></button>
-                        <button type="button" onclick="setLargeGraphMode('neighborhood')" class="graph-card-action"><i class="fa-solid fa-location-crosshairs"></i><span>Local</span></button>
-                        <button type="button" onclick="setLargeGraphMode('production_only')" class="graph-card-action"><i class="fa-solid fa-shield-halved"></i><span>Production</span></button>
-                    </div>
-                </div>
+                </details>
             `;
             container.insertAdjacentHTML('beforeend', panel);
         }

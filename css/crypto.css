@@ -3438,3 +3438,108 @@ body[data-crypto-ux-mode="review"] #crypto-solana-status .crypto-source-details:
 #crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-boundary-note {
             display: none !important;
         }
+
+/* D279-D288 interaction polish: calmer contextual inspector, replay rhythm, and fullscreen focus. */
+.crypto-primary-action-rail,
+.crypto-interaction-dock,
+.crypto-workspace-toolbar,
+.crypto-contextual-inspector,
+.crypto-replay-workspace-panel,
+.crypto-mobile-investigation-drawer {
+            transition:
+                opacity 220ms ease,
+                transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 180ms ease,
+                background 180ms ease,
+                filter 220ms ease;
+        }
+
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-primary-action-rail,
+#crypto-photonic-view.is-crypto-inspector-open:not(.is-replay-workspace) .crypto-interaction-dock {
+            opacity: 0.64;
+            filter: saturate(0.86);
+        }
+
+#crypto-photonic-view .crypto-contextual-inspector .contextual-inspector-header {
+            border-color: rgba(45, 212, 191, 0.14);
+            background: rgba(2, 6, 23, 0.86);
+            box-shadow: 0 16px 42px rgba(0, 0, 0, 0.26);
+        }
+
+#crypto-photonic-view .crypto-contextual-inspector .crypto-sidebar-stack,
+#crypto-detail-panel {
+            box-shadow: 0 22px 62px rgba(0, 0, 0, 0.26);
+        }
+
+@media (min-width: 1024px) {
+            #crypto-photonic-view:not(.is-crypto-fullscreen) .crypto-contextual-inspector {
+                transform: translate3d(0.72rem, 0, 0) scale(0.985);
+                transition:
+                    opacity 240ms ease,
+                    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+                    filter 220ms ease;
+            }
+
+            #crypto-photonic-view.is-crypto-inspector-open:not(.is-crypto-fullscreen) .crypto-contextual-inspector {
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+
+            #crypto-photonic-view.is-crypto-inspector-open:not(.is-crypto-fullscreen) .crypto-canvas-wrap {
+                box-shadow:
+                    0 26px 86px rgba(0, 0, 0, 0.36),
+                    inset 0 0 0 1px rgba(45, 212, 191, 0.045);
+            }
+        }
+
+#crypto-detail-panel > .h-full {
+            color: rgba(226, 232, 240, 0.68);
+        }
+
+#crypto-detail-panel > .h-full i {
+            color: rgba(94, 234, 212, 0.18) !important;
+        }
+
+.crypto-replay-workspace-panel {
+            border-color: rgba(217, 70, 239, 0.16);
+            background: rgba(2, 6, 23, 0.70);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28), 0 0 18px rgba(217, 70, 239, 0.045);
+        }
+
+.crypto-replay-workspace-controls button,
+.crypto-replay-workspace-actions button {
+            border-color: rgba(148, 163, 184, 0.10);
+            background: rgba(15, 23, 42, 0.46);
+            color: rgba(226, 232, 240, 0.68);
+        }
+
+.crypto-replay-workspace-controls button.is-primary,
+.crypto-replay-workspace-actions button.is-primary {
+            border-color: rgba(217, 70, 239, 0.26);
+            background: rgba(126, 34, 206, 0.14);
+            color: rgba(253, 244, 255, 0.88);
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-strip,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-progression-breadcrumbs,
+#crypto-photonic-view.is-replay-workspace .crypto-replay-corridor-zones {
+            opacity: 0.78;
+            filter: saturate(0.82);
+        }
+
+#crypto-photonic-view.is-replay-workspace .crypto-replay-workspace-toolbar {
+            opacity: 0.86;
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle {
+            opacity: 0.72;
+            border-color: rgba(45, 212, 191, 0.18);
+            background: rgba(2, 6, 23, 0.58);
+            box-shadow: 0 14px 38px rgba(0, 0, 0, 0.24);
+        }
+
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle:hover,
+#crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle:focus-visible {
+            opacity: 1;
+            border-color: rgba(94, 234, 212, 0.34);
+            background: rgba(2, 6, 23, 0.76);
+        }

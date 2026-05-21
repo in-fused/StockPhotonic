@@ -36,6 +36,12 @@ D151 graph-first operating-system selectors follow the same ownership split:
 - `.source-workbench-toggle` and `.source-workbench-panel-body` live in `review.css`.
 - Mobile bottom-sheet inspector behavior, compact graph OS controls, mobile command-palette layout, and mobile graph viewport sizing live in `mobile.css`.
 
+D279-D288 interaction-polish selectors keep that same ownership:
+
+- Stock inspector transition overrides, fullscreen restore quieting, replay timeline/chip softening, and Stock contextual-inspector disclosure styling live in `graph.css`.
+- Crypto inspector transition overrides, replay workspace/chip softening, selected flow chrome quieting, and fullscreen restore quieting live in `crypto.css`.
+- Touch-specific inspector/drawer/overlay collision rules live in `mobile.css`.
+
 D152 semantic graph intelligence keeps the same ownership model:
 
 - Stock semantic minimap states, minimap collapse controls, graph-tier breadcrumb treatment, and canvas-adjacent graph navigation affordances live in `graph.css`.

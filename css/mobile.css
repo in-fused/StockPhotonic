@@ -2196,4 +2196,37 @@
             #crypto-photonic-view.is-crypto-fullscreen .crypto-workspace-toolbar #crypto-fullscreen-toggle span {
                 display: none;
             }
+
+            .graph-first-os #graph-intelligence-view.is-inspector-open .stock-primary-action-rail,
+            .graph-first-os #graph-intelligence-view.is-inspector-open .stock-interaction-dock,
+            #crypto-photonic-view.is-crypto-inspector-open .crypto-primary-action-rail,
+            #crypto-photonic-view.is-crypto-inspector-open .crypto-interaction-dock {
+                opacity: 0;
+                transform: translate3d(0, 0.45rem, 0);
+                pointer-events: none;
+            }
+
+            #crypto-photonic-view.is-replay-workspace .crypto-mobile-investigation-drawer,
+            #crypto-photonic-view.is-replay-workspace.is-crypto-inspector-open .crypto-contextual-inspector {
+                display: none !important;
+            }
+
+            .graph-first-os #graph-intelligence-view.is-inspector-open .graph-control-drawer.is-open,
+            #crypto-photonic-view.is-crypto-inspector-open .crypto-mobile-graph-overlay {
+                display: none !important;
+            }
+
+            .graph-first-os .contextual-inspector,
+            #crypto-photonic-view .crypto-contextual-inspector {
+                max-height: min(58dvh, 32rem);
+                transition:
+                    opacity 220ms ease,
+                    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+            }
+
+            .graph-first-os .contextual-inspector #sidebar,
+            .graph-first-os .contextual-inspector #empty-sidebar,
+            #crypto-photonic-view .crypto-contextual-inspector .crypto-sidebar-stack {
+                max-height: calc(min(58dvh, 32rem) - 3.6rem) !important;
+            }
         }

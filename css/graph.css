@@ -3452,3 +3452,108 @@ body[data-stock-ux-mode="explore"] .stock-secondary-actions > summary {
             max-height: min(18dvh, 9.5rem);
             overflow: hidden;
         }
+
+/* D279-D288 interaction polish: contextual motion, quiet chrome, and immersive fullscreen. */
+.graph-first-os .stock-primary-action-rail,
+.graph-first-os .stock-interaction-dock,
+.graph-first-os .graph-mode-hud,
+.graph-first-os .graph-adaptive-hud {
+            transition: opacity 220ms ease, transform 220ms ease, filter 220ms ease;
+        }
+
+.graph-first-os #graph-intelligence-view.is-inspector-open .stock-primary-action-rail,
+.graph-first-os #graph-intelligence-view.is-inspector-open .stock-interaction-dock {
+            opacity: 0.62;
+            filter: saturate(0.86);
+        }
+
+.graph-first-os .contextual-inspector {
+            filter: saturate(0.96);
+        }
+
+.graph-first-os .contextual-inspector .contextual-inspector-header {
+            border-color: rgba(125, 211, 252, 0.14);
+            background: rgba(2, 6, 23, 0.86);
+            box-shadow: 0 16px 42px rgba(0, 0, 0, 0.26);
+        }
+
+.graph-first-os .contextual-inspector #sidebar,
+.graph-first-os .contextual-inspector #empty-sidebar {
+            box-shadow: 0 22px 62px rgba(0, 0, 0, 0.28);
+        }
+
+@media (min-width: 1024px) {
+            .graph-first-os .contextual-inspector {
+                transform: translate3d(0.72rem, 0, 0) scale(0.985);
+                transition:
+                    opacity 240ms ease,
+                    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+                    filter 220ms ease;
+            }
+
+            .graph-first-os #graph-intelligence-view.is-inspector-open .contextual-inspector {
+                transform: translate3d(0, 0, 0) scale(1);
+            }
+        }
+
+.graph-first-os #graph-intelligence-view.is-inspector-open .graph-container {
+            box-shadow:
+                0 26px 86px rgba(0, 0, 0, 0.36),
+                inset 0 0 0 1px rgba(125, 211, 252, 0.045);
+        }
+
+body[data-stock-ux-mode="replay"] .graph-timeline-track {
+            border-color: rgba(125, 211, 252, 0.10);
+            background: rgba(2, 6, 23, 0.46);
+            box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
+        }
+
+body[data-stock-ux-mode="replay"] .graph-timeline-step,
+body[data-stock-ux-mode="replay"] .graph-annotation-chip.is-corridor {
+            opacity: 0.82;
+            filter: saturate(0.86);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore {
+            opacity: 0.72;
+            border-color: rgba(125, 211, 252, 0.18);
+            background: rgba(2, 6, 23, 0.58);
+            box-shadow: 0 14px 38px rgba(0, 0, 0, 0.24);
+            transition: opacity 180ms ease, background 180ms ease, border-color 180ms ease;
+        }
+
+#graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore:hover,
+#graph-intelligence-view.is-graph-fullscreen .fullscreen-hud-restore:focus-visible {
+            opacity: 1;
+            border-color: rgba(125, 211, 252, 0.34);
+            background: rgba(2, 6, 23, 0.76);
+        }
+
+#graph-intelligence-view.is-graph-fullscreen:not(.is-hud-hidden) .graph-intelligence-controls,
+#graph-intelligence-view.is-graph-fullscreen:not(.is-hud-hidden) .graph-os-status-panel,
+#graph-intelligence-view.is-graph-fullscreen:not(.is-hud-hidden) .graph-investigation-narrative,
+#graph-intelligence-view.is-graph-fullscreen:not(.is-hud-hidden) .graph-active-legend {
+            opacity: 0.78;
+            filter: saturate(0.88);
+        }
+
+.graph-first-os .contextual-inspector details.sidebar-section > summary.sidebar-section-title {
+            cursor: pointer;
+            list-style: none;
+        }
+
+.graph-first-os .contextual-inspector details.sidebar-section > summary.sidebar-section-title::-webkit-details-marker {
+            display: none;
+        }
+
+.graph-first-os .contextual-inspector details.sidebar-section > summary.sidebar-section-title::after {
+            content: "+";
+            float: right;
+            color: rgba(125, 211, 252, 0.62);
+            font-size: 0.8rem;
+            line-height: 1;
+        }
+
+.graph-first-os .contextual-inspector details.sidebar-section[open] > summary.sidebar-section-title::after {
+            content: "-";
+        }

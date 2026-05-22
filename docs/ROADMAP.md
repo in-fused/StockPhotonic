@@ -1,5 +1,15 @@
 # Roadmap Notes
 
+## D349-D368 Crypto Real Provider Ingestion + Worker Polling Safeguards
+
+- Added a guarded local/server-side provider ingestion path for legitimate Solana wallet history backfill: network is opt-in with `--allow-network`, writes are opt-in with `--write`, wallet scope is explicit, provider keys are environment-only, and request/page/retry/cooldown/backoff limits are bounded.
+- Added first-class normalized cache metadata for provider/cache/cursor/rate-limit states, including cache id/version, provider label, pages loaded, next cursor, cursor exhaustion, retry-after, provider limit, and conservative full-history claim gating.
+- Added a local Worker contract documentation/validation helper for `/api/crypto/wallet-activity`, `/api/crypto/wallet-history`, `/api/crypto/events`, and `/api/crypto/provider-diagnostics`; it documents expected responses only and does not implement or deploy a Worker.
+- Tightened Crypto UI Worker boundaries: Live Feed is Worker-only, disabled unless a safe Worker endpoint is configured, bounded by safe polling intervals, backed off or stopped on rate-limit metadata, and does not mark Live Feed active unless real Worker events are rendered.
+- Tightened Wallet Lookup/history staging: staged history requires a loaded Worker wallet graph first, loads next pages only through the Worker adapter, stops on rate limits, provider limits, missing cursors, or UI page caps, and never merges staged history into the active graph.
+- Preserved Local Cache gating: sample/mock/dev fixtures cannot become active graph data, provider-cache artifacts must be non-sample/sanitized/provider-cache-derived, and the active graph remains empty unless real Worker data or an explicitly selected provider-fetched cache is available.
+- No production data, backend/provider/API implementation, Worker implementation, SEC pipeline, source pipeline, persistence/auth/storage, browser-side provider-call, or secret-handling changes are part of D349-D368.
+
 ## D339-D348 Crypto Real-Data-Only Mode + Placeholder Removal
 
 - Removed default Crypto placeholder/sample graph behavior: first load now stays empty until Worker Wallet Lookup, Worker Live Feed events, or an explicitly selected provider-fetched Local Cache artifact is available.

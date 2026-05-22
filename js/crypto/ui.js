@@ -26,6 +26,7 @@
     const DEFAULT_WORKER_FEED_ENDPOINT = '/api/crypto/events';
     const DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT = '/api/crypto/wallet-activity';
     const DEFAULT_WORKER_WALLET_HISTORY_ENDPOINT = '/api/crypto/wallet-history';
+    const DEFAULT_WORKER_PROVIDER_DIAGNOSTICS_ENDPOINT = '/api/crypto/provider-diagnostics';
 
     const state = {
         initialized: false,
@@ -70,15 +71,27 @@
         live: {
             enabled: false,
             endpoint: DEFAULT_WORKER_FEED_ENDPOINT,
+            endpointConfigured: false,
             endpointValid: true,
-            pollMs: 4000,
+            pollMs: 15000,
             pollTimerId: null,
             inFlight: false,
             hasFetched: false,
             workerAvailable: false,
             lastPollAt: 0,
+            nextPollAt: 0,
             lastEventAt: '',
             lastError: '',
+            rateLimited: false,
+            retryAfterSeconds: null,
+            providerLimited: false,
+            moreAvailable: false,
+            cursorExhausted: false,
+            fullHistoryLoaded: false,
+            cacheId: '',
+            nextCursor: null,
+            stopPolling: false,
+            backoffMs: 0,
             eventCount: 0,
             mergedEventCount: 0,
             rejectedEventCount: 0,
@@ -92,6 +105,16 @@
             lastWallet: '',
             lastLoadedAt: 0,
             lastError: '',
+            workerConfigured: false,
+            workerAvailable: false,
+            rateLimited: false,
+            retryAfterSeconds: null,
+            providerLimited: false,
+            moreAvailable: false,
+            cursorExhausted: false,
+            fullHistoryLoaded: false,
+            cacheId: '',
+            nextCursor: null,
             eventCount: 0,
             mergedEventCount: 0,
             rejectedEventCount: 0,
@@ -114,6 +137,12 @@
             loadedTransactions: [],
             moreAvailable: false,
             nextCursor: null,
+            rateLimited: false,
+            retryAfterSeconds: null,
+            providerLimited: false,
+            cursorExhausted: false,
+            fullHistoryLoaded: false,
+            cacheId: '',
             backendProviderConnected: false,
             providerConfigured: false,
             lastStatus: 'idle',
@@ -288,7 +317,8 @@
         standard: 'Standard',
         fast: 'Fast'
     });
-    const LIVE_POLL_MS = { min: 3000, max: 5000, default: 4000 };
+    const LIVE_POLL_MS = { min: 15000, max: 60000, default: 15000, backoffCap: 120000 };
+    const WALLET_HISTORY_LOAD_UNTIL_PAGE_CAP = 10;
     const DATA_MODES = Object.freeze({
         GENERATED: 'generated_fixture',
         WALLET: 'wallet_lookup',
@@ -652,11 +682,14 @@
     function configureLiveFeed(options = {}) {
         const endpointConfig = resolveWorkerFeedEndpoint(options);
         state.live.endpoint = endpointConfig.endpoint;
+        state.live.endpointConfigured = endpointConfig.configured;
         state.live.endpointValid = endpointConfig.valid;
         if (!state.live.endpointValid) {
             state.live.enabled = false;
             state.live.workerAvailable = false;
-            state.live.lastError = 'Worker feed endpoint unavailable';
+            state.live.lastError = state.live.endpointConfigured
+                ? 'Worker feed endpoint unavailable'
+                : 'Worker feed endpoint not configured';
         } else {
             state.live.lastError = '';
         }
@@ -686,7 +719,8 @@
     function resolveWorkerEndpoint({ configuredValue, defaultEndpoint }) {
         const hasConfiguredValue = typeof configuredValue === 'string' && configuredValue.trim();
         const rawEndpoint = hasConfiguredValue ? configuredValue.trim() : defaultEndpoint;
-        const fallback = { endpoint: defaultEndpoint, valid: false };
+        const fallback = { endpoint: defaultEndpoint, valid: false, configured: Boolean(hasConfiguredValue) };
+        if (!hasConfiguredValue) return fallback;
         try {
             const parsed = parseWorkerEndpointUrl(rawEndpoint);
             if (isSafeWorkerUrl(parsed, {
@@ -695,7 +729,8 @@
             })) {
                 return {
                     endpoint: parsed.origin === window.location.origin ? parsed.pathname : parsed.href,
-                    valid: true
+                    valid: true,
+                    configured: true
                 };
             }
         } catch (error) {
@@ -758,21 +793,44 @@
 
     function updateLivePolling() {
         stopLivePolling();
-        if (state.dataMode !== DATA_MODES.LIVE || !state.live.enabled || !state.live.endpointValid || !state.active || !state.initialized) return;
+        if (!canScheduleLivePolling()) return;
+        scheduleNextLivePoll(state.live.pollMs);
+    }
 
-        state.live.pollTimerId = window.setInterval(() => {
+    function canScheduleLivePolling() {
+        return state.dataMode === DATA_MODES.LIVE
+            && state.live.enabled
+            && state.live.endpointConfigured
+            && state.live.endpointValid
+            && state.active
+            && state.initialized
+            && !state.live.inFlight
+            && !state.live.stopPolling;
+    }
+
+    function scheduleNextLivePoll(delayMs = state.live.pollMs) {
+        stopLivePolling();
+        if (!canScheduleLivePolling()) {
+            state.live.nextPollAt = 0;
+            return;
+        }
+        const safeDelay = clamp(Number(delayMs) || state.live.pollMs || LIVE_POLL_MS.default, LIVE_POLL_MS.min, LIVE_POLL_MS.backoffCap);
+        state.live.nextPollAt = Date.now() + safeDelay;
+        state.live.pollTimerId = window.setTimeout(() => {
+            state.live.pollTimerId = null;
             pollWorkerFeed({ animateNew: true });
-        }, state.live.pollMs);
+        }, safeDelay);
     }
 
     function stopLivePolling() {
         if (!state.live.pollTimerId) return;
-        window.clearInterval(state.live.pollTimerId);
+        window.clearTimeout(state.live.pollTimerId);
         state.live.pollTimerId = null;
+        state.live.nextPollAt = 0;
     }
 
     async function pollWorkerFeed(options = {}) {
-        if (state.dataMode !== DATA_MODES.LIVE || !state.live.enabled || !state.live.endpointValid || state.live.inFlight) return null;
+        if (state.dataMode !== DATA_MODES.LIVE || !state.live.enabled || !state.live.endpointConfigured || !state.live.endpointValid || state.live.inFlight || state.live.stopPolling) return null;
 
         state.live.inFlight = true;
         const requestModeVersion = state.modeVersion;
@@ -783,18 +841,27 @@
                 cache: 'no-store',
                 headers: { accept: 'application/json' }
             });
+            const payload = await response.json().catch(() => null);
+            const workerMetadata = normalizeWorkerResponseMetadata(payload, response);
+            applyLiveWorkerMetadata(workerMetadata);
             if (!response.ok) {
+                if (response.status === 429 || workerMetadata.rateLimited || workerMetadata.providerLimited) {
+                    state.live.workerAvailable = true;
+                    state.live.lastPollAt = Date.now();
+                    state.live.eventCount = 0;
+                    state.live.lastError = getWorkerMetadataAttention(workerMetadata) || `Worker feed returned ${response.status}`;
+                    renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+                    return null;
+                }
                 throw new Error(response.status === 404
                     ? 'Worker feed endpoint not configured for this host.'
                     : `Worker feed returned ${response.status}`);
             }
-
-            const payload = await response.json();
             const rawEvents = Array.isArray(payload?.events) ? payload.events : [];
             const events = rawEvents.filter(isRealWorkerEvent);
             if (state.dataMode !== DATA_MODES.LIVE || requestModeVersion !== state.modeVersion) return null;
             state.live.workerAvailable = true;
-            state.live.lastError = '';
+            state.live.lastError = getWorkerMetadataAttention(workerMetadata) || '';
             state.live.lastPollAt = Date.now();
             state.live.eventCount = events.length;
             state.live.rejectedEventCount = Math.max(0, rawEvents.length - events.length);
@@ -811,6 +878,7 @@
             if (requestModeVersion === state.modeVersion && state.dataMode === DATA_MODES.LIVE) {
                 state.live.workerAvailable = false;
                 state.live.lastError = error?.message || 'Worker feed unavailable';
+                state.live.backoffMs = getNextLiveBackoffMs({ error: true });
                 state.live.lastPollAt = Date.now();
                 renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             }
@@ -819,10 +887,186 @@
             if (requestModeVersion === state.modeVersion || state.dataMode !== DATA_MODES.LIVE) {
                 state.live.inFlight = false;
                 if (requestModeVersion === state.modeVersion && state.dataMode === DATA_MODES.LIVE) {
+                    if (!state.live.stopPolling) {
+                        scheduleNextLivePoll(getNextLiveBackoffMs());
+                    } else {
+                        stopLivePolling();
+                    }
                     renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
                 }
             }
         }
+    }
+
+    function normalizeWorkerResponseMetadata(payload = {}, response = null) {
+        const metadata = payload && typeof payload === 'object' && !Array.isArray(payload) ? (payload.metadata || {}) : {};
+        const pagination = payload?.pagination || payload?.page || {};
+        const rateLimit = payload?.rate_limit || payload?.rateLimit || metadata.rate_limit || {};
+        const cache = payload?.cache || metadata.cache || {};
+        const retryAfterHeader = parseRetryAfterSeconds(response?.headers?.get?.('Retry-After'));
+        const retryAfter = firstFiniteNumber(
+            payload?.retry_after_seconds,
+            payload?.retryAfterSeconds,
+            metadata.retry_after_seconds,
+            metadata.retryAfterSeconds,
+            rateLimit.retry_after_seconds,
+            rateLimit.retryAfterSeconds,
+            retryAfterHeader
+        );
+        const nextCursor = firstPresentValue(
+            payload?.nextCursor,
+            payload?.next_cursor,
+            payload?.cursor_next,
+            pagination.nextCursor,
+            pagination.next_cursor,
+            pagination.cursor_next,
+            metadata.nextCursor,
+            metadata.next_cursor
+        );
+        const currentCursor = firstPresentValue(
+            payload?.cursor,
+            payload?.current_cursor,
+            pagination.cursor,
+            pagination.current_cursor,
+            metadata.cursor,
+            metadata.current_cursor
+        );
+        const cacheId = firstPresentValue(payload?.cache_id, metadata.cache_id, cache.cache_id);
+        const rateLimited = booleanish(payload?.rate_limited)
+            || booleanish(metadata.rate_limited)
+            || booleanish(rateLimit.rate_limited)
+            || response?.status === 429;
+        const providerLimited = booleanish(payload?.provider_limited)
+            || booleanish(metadata.provider_limited)
+            || booleanish(metadata.provider_limit_reached);
+        const providerUnavailable = booleanish(payload?.provider_unavailable)
+            || booleanish(metadata.provider_unavailable)
+            || ['provider_unavailable', 'provider_not_configured'].includes(String(payload?.status || metadata.status || '').trim());
+        const moreAvailable = booleanish(payload?.moreAvailable)
+            || booleanish(payload?.more_available)
+            || booleanish(pagination.moreAvailable)
+            || booleanish(pagination.more_available)
+            || booleanish(metadata.moreAvailable)
+            || booleanish(metadata.more_available)
+            || Boolean(nextCursor);
+        const cursorExhausted = booleanish(payload?.cursor_exhausted)
+            || booleanish(pagination.cursor_exhausted)
+            || booleanish(metadata.cursor_exhausted);
+        const stopPolling = booleanish(payload?.stop_polling)
+            || booleanish(payload?.stopPolling)
+            || booleanish(metadata.stop_polling)
+            || booleanish(metadata.stopPolling)
+            || booleanish(rateLimit.stop_polling);
+        return {
+            status: String(payload?.status || metadata.status || ''),
+            message: String(payload?.message || metadata.message || ''),
+            rateLimited,
+            retryAfterSeconds: retryAfter,
+            providerLimited,
+            providerUnavailable,
+            moreAvailable,
+            cursorExhausted,
+            fullHistoryLoaded: booleanish(payload?.full_history_loaded) || booleanish(metadata.full_history_loaded),
+            cacheId: cacheId ? String(cacheId) : '',
+            currentCursor: currentCursor || null,
+            nextCursor: nextCursor || null,
+            cacheStatus: firstPresentValue(payload?.cache_status, metadata.cache_status, cache.cache_status),
+            pollAfterSeconds: firstFiniteNumber(payload?.poll_after_seconds, metadata.poll_after_seconds, rateLimit.poll_after_seconds),
+            stopPolling
+        };
+    }
+
+    function applyLiveWorkerMetadata(metadata = {}) {
+        state.live.rateLimited = Boolean(metadata.rateLimited);
+        state.live.retryAfterSeconds = Number.isFinite(Number(metadata.retryAfterSeconds)) ? Number(metadata.retryAfterSeconds) : null;
+        state.live.providerLimited = Boolean(metadata.providerLimited);
+        state.live.moreAvailable = Boolean(metadata.moreAvailable);
+        state.live.cursorExhausted = Boolean(metadata.cursorExhausted);
+        state.live.fullHistoryLoaded = Boolean(metadata.fullHistoryLoaded);
+        state.live.cacheId = metadata.cacheId || state.live.cacheId || '';
+        state.live.nextCursor = metadata.nextCursor || null;
+        if (metadata.stopPolling && metadata.rateLimited) {
+            state.live.stopPolling = true;
+        }
+        if (metadata.rateLimited || metadata.providerLimited) {
+            state.live.backoffMs = getNextLiveBackoffMs({ metadata });
+        } else if (!metadata.providerUnavailable) {
+            state.live.backoffMs = 0;
+        }
+    }
+
+    function applyWalletLookupWorkerMetadata(metadata = {}) {
+        state.walletLookup.rateLimited = Boolean(metadata.rateLimited);
+        state.walletLookup.retryAfterSeconds = Number.isFinite(Number(metadata.retryAfterSeconds)) ? Number(metadata.retryAfterSeconds) : null;
+        state.walletLookup.providerLimited = Boolean(metadata.providerLimited);
+        state.walletLookup.moreAvailable = Boolean(metadata.moreAvailable);
+        state.walletLookup.cursorExhausted = Boolean(metadata.cursorExhausted);
+        state.walletLookup.fullHistoryLoaded = Boolean(metadata.fullHistoryLoaded);
+        state.walletLookup.cacheId = metadata.cacheId || state.walletLookup.cacheId || '';
+        state.walletLookup.nextCursor = metadata.nextCursor || null;
+    }
+
+    function getWorkerMetadataAttention(metadata = {}) {
+        if (metadata.rateLimited) {
+            return metadata.retryAfterSeconds
+                ? `Worker rate limited; retry after ${Math.ceil(metadata.retryAfterSeconds)}s`
+                : 'Worker rate limited; polling backed off';
+        }
+        if (metadata.providerLimited) return 'Worker provider limit reached; response remains bounded';
+        if (metadata.providerUnavailable) return metadata.message || 'Worker provider unavailable';
+        return '';
+    }
+
+    function getNextLiveBackoffMs(options = {}) {
+        const metadata = options.metadata || {};
+        const retryAfterSeconds = firstFiniteNumber(metadata.retryAfterSeconds, state.live.retryAfterSeconds);
+        if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+            return clamp(retryAfterSeconds * 1000, LIVE_POLL_MS.min, LIVE_POLL_MS.backoffCap);
+        }
+        const pollAfterSeconds = firstFiniteNumber(metadata.pollAfterSeconds);
+        if (Number.isFinite(pollAfterSeconds) && pollAfterSeconds > 0) {
+            return clamp(pollAfterSeconds * 1000, LIVE_POLL_MS.min, LIVE_POLL_MS.backoffCap);
+        }
+        if (metadata.rateLimited || state.live.rateLimited || options.error) {
+            const previous = Number(state.live.backoffMs) || state.live.pollMs || LIVE_POLL_MS.default;
+            return clamp(previous * 2, LIVE_POLL_MS.min, LIVE_POLL_MS.backoffCap);
+        }
+        if (metadata.providerLimited || state.live.providerLimited) {
+            return LIVE_POLL_MS.backoffCap;
+        }
+        return clamp(state.live.pollMs || LIVE_POLL_MS.default, LIVE_POLL_MS.min, LIVE_POLL_MS.max);
+    }
+
+    function parseRetryAfterSeconds(value) {
+        const text = String(value || '').trim();
+        if (!text) return null;
+        const numeric = Number(text);
+        if (Number.isFinite(numeric)) return Math.max(0, numeric);
+        const parsed = Date.parse(text);
+        if (!Number.isFinite(parsed)) return null;
+        return Math.max(0, (parsed - Date.now()) / 1000);
+    }
+
+    function firstFiniteNumber(...values) {
+        for (const value of values) {
+            const number = Number(value);
+            if (Number.isFinite(number)) return number;
+        }
+        return null;
+    }
+
+    function firstPresentValue(...values) {
+        for (const value of values) {
+            if (value !== undefined && value !== null && value !== '') return value;
+        }
+        return null;
+    }
+
+    function booleanish(value) {
+        if (value === true) return true;
+        if (value === false || value === undefined || value === null || value === '') return false;
+        const text = String(value).trim().toLowerCase();
+        return ['1', 'true', 'yes', 'y'].includes(text);
     }
 
     function mergeWorkerFeedEvents(events = [], options = {}) {
@@ -1126,6 +1370,18 @@
         state.live.inFlight = false;
         state.live.workerAvailable = false;
         state.live.lastError = '';
+        state.live.lastPollAt = 0;
+        state.live.nextPollAt = 0;
+        state.live.rateLimited = false;
+        state.live.retryAfterSeconds = null;
+        state.live.providerLimited = false;
+        state.live.moreAvailable = false;
+        state.live.cursorExhausted = false;
+        state.live.fullHistoryLoaded = false;
+        state.live.cacheId = '';
+        state.live.nextCursor = null;
+        state.live.stopPolling = false;
+        state.live.backoffMs = 0;
         state.live.eventCount = 0;
         state.live.mergedEventCount = 0;
         state.live.rejectedEventCount = 0;
@@ -1144,6 +1400,16 @@
         state.walletLookup.lastWallet = '';
         state.walletLookup.lastLoadedAt = 0;
         state.walletLookup.lastError = '';
+        state.walletLookup.workerConfigured = false;
+        state.walletLookup.workerAvailable = false;
+        state.walletLookup.rateLimited = false;
+        state.walletLookup.retryAfterSeconds = null;
+        state.walletLookup.providerLimited = false;
+        state.walletLookup.moreAvailable = false;
+        state.walletLookup.cursorExhausted = false;
+        state.walletLookup.fullHistoryLoaded = false;
+        state.walletLookup.cacheId = '';
+        state.walletLookup.nextCursor = null;
         state.walletLookup.eventCount = 0;
         state.walletLookup.mergedEventCount = 0;
         state.walletLookup.rejectedEventCount = 0;
@@ -1164,6 +1430,12 @@
         state.history.loadedTransactions = [];
         state.history.moreAvailable = false;
         state.history.nextCursor = null;
+        state.history.rateLimited = false;
+        state.history.retryAfterSeconds = null;
+        state.history.providerLimited = false;
+        state.history.cursorExhausted = false;
+        state.history.fullHistoryLoaded = false;
+        state.history.cacheId = '';
         state.history.backendProviderConnected = false;
         state.history.providerConfigured = false;
         state.history.lastStatus = 'idle';
@@ -1201,6 +1473,8 @@
     function getCurrentSourceLabel() {
         if (state.dataMode === DATA_MODES.WALLET) {
             if (state.walletLookup.inFlight) return 'Wallet Lookup: waiting for Worker response';
+            if (state.walletLookup.rateLimited) return 'Wallet Lookup: rate limited';
+            if (state.walletLookup.providerLimited) return 'Wallet Lookup: provider limited';
             if (state.walletLookup.lastError && !state.walletLookup.lastLoadedAt) return 'Wallet Lookup: Worker unavailable';
             if (hasLoadedWalletReplacementGraph()) return SOURCE_LABELS.worker_wallet_lookup;
             if (state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0) return 'Wallet Lookup: zero Worker events';
@@ -1226,12 +1500,21 @@
     function getSourceBoundaryCopy() {
         if (state.dataMode === DATA_MODES.WALLET) {
             if (state.walletLookup.inFlight) return 'Wallet Lookup is loading a sanitized Worker response. The active graph remains an empty replacement shell until the Worker response is applied.';
+            if (state.walletLookup.rateLimited) return state.walletLookup.retryAfterSeconds
+                ? `Wallet Lookup was rate limited by the Worker. Retry after ${Math.ceil(state.walletLookup.retryAfterSeconds)}s; no browser provider call is made.`
+                : 'Wallet Lookup was rate limited by the Worker. No browser provider call is made.';
+            if (state.walletLookup.providerLimited) return 'Wallet Lookup was limited by Worker/provider metadata. No complete history, identity, ownership, risk, or liquidity claim is made.';
             if (state.walletLookup.lastError && !state.walletLookup.lastLoadedAt) return 'Wallet Lookup is unavailable for this request. No fixture, live feed, staged history, or provider data is merged.';
             if (state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0) return 'Wallet Lookup completed through the secure Worker, but no recent sanitized events were returned. No wallet relationships are implied.';
             return 'Wallet Lookup replaces the active graph with one secure Worker response. It is not merged with Local Cache, Live Feed events, or staged history.';
         }
         if (state.dataMode === DATA_MODES.LIVE) {
-            if (!state.live.endpointValid) return 'Worker endpoint missing. Live Feed stays empty, and the browser does not call chain providers directly.';
+            if (!state.live.endpointConfigured) return 'Worker endpoint is not configured. Live Feed stays empty, and the browser does not call chain providers directly.';
+            if (!state.live.endpointValid) return 'Worker endpoint unavailable. Live Feed stays empty, and the browser does not call chain providers directly.';
+            if (state.live.rateLimited) return state.live.retryAfterSeconds
+                ? `Worker rate limited Live Feed. Polling is backed off until retry-after ${Math.ceil(state.live.retryAfterSeconds)}s; no provider call is made by the browser.`
+                : 'Worker rate limited Live Feed. Polling is backed off and no provider call is made by the browser.';
+            if (state.live.providerLimited) return 'Worker reported provider limits. Live Feed remains bounded and does not claim complete activity.';
             if (state.live.lastError && !hasLoadedLiveFeedEvents()) return `Worker error: ${state.live.lastError}. Live Feed uses only sanitized Worker events and never calls chain providers directly.`;
             if (state.live.workerAvailable && state.live.rejectedEventCount > 0 && state.live.eventCount === 0) return 'Worker reachable but only sample/dev events were returned. Live Feed remains empty because those events are not active graph data.';
             if (state.live.workerAvailable && state.live.eventCount === 0) return 'Worker reachable but zero events. Live Feed remains an empty graph because no Worker events were returned.';
@@ -1248,9 +1531,13 @@
     }
 
     function getLiveStatusLabel() {
-        if (!state.live.endpointValid) return 'Worker endpoint missing';
+        if (!state.live.endpointConfigured) return 'Worker not configured';
+        if (!state.live.endpointValid) return 'Worker endpoint unavailable';
         if (!state.live.enabled) return 'Live Feed off';
         if (state.live.inFlight) return 'waiting for Worker response';
+        if (state.live.stopPolling) return 'rate limited / polling stopped';
+        if (state.live.rateLimited) return state.live.retryAfterSeconds ? `rate limited / retry after ${Math.ceil(state.live.retryAfterSeconds)}s` : 'rate limited / backed off';
+        if (state.live.providerLimited) return 'provider limited';
         if (hasLoadedLiveFeedEvents()) {
             const merged = `${state.live.mergedEventCount} merged`;
             return `Worker events loaded / ${merged}`;
@@ -1266,8 +1553,12 @@
     }
 
     function getLiveFeedSourceLabel() {
-        if (!state.live.endpointValid) return 'Live Feed: Worker endpoint missing';
+        if (!state.live.endpointConfigured) return 'Live Feed: Worker not configured';
+        if (!state.live.endpointValid) return 'Live Feed: Worker endpoint unavailable';
         if (state.live.inFlight) return 'Live Feed: waiting for Worker response';
+        if (state.live.stopPolling) return 'Live Feed: rate limited / polling stopped';
+        if (state.live.rateLimited) return 'Live Feed: rate limited / backed off';
+        if (state.live.providerLimited) return 'Live Feed: provider limited';
         if (hasLoadedLiveFeedEvents()) return SOURCE_LABELS.worker_feed;
         if (state.live.lastError) return 'Live Feed: Worker error';
         if (state.live.workerAvailable && state.live.rejectedEventCount > 0 && state.live.eventCount === 0) return 'Live Feed: Worker reachable but zero events';
@@ -1276,8 +1567,11 @@
     }
 
     function getLiveFeedToggleTitle() {
-        if (!state.live.endpointValid) return 'Worker endpoint missing. Configure a Worker feed endpoint before Live Feed can load.';
+        if (!state.live.endpointConfigured) return 'Configure a Worker feed endpoint before Live Feed can load.';
+        if (!state.live.endpointValid) return 'Worker endpoint unavailable. Configure a safe Worker feed endpoint before Live Feed can load.';
         if (state.live.inFlight) return 'Live Feed is polling the Worker now.';
+        if (state.live.rateLimited) return state.live.retryAfterSeconds ? `Worker rate limited. Retry after ${Math.ceil(state.live.retryAfterSeconds)} seconds.` : 'Worker rate limited. Polling is backed off.';
+        if (state.live.providerLimited) return 'Worker reported provider limits. No complete live-data claim is made.';
         if (hasLoadedLiveFeedEvents()) return 'Live Feed is showing sanitized Worker events only. No browser provider calls are made.';
         if (state.dataMode === DATA_MODES.LIVE && state.live.workerAvailable) return 'Worker reachable but zero events. No active graph data is shown.';
         if (state.live.lastError) return `Worker error: ${state.live.lastError}. No browser provider calls are made.`;
@@ -1679,6 +1973,12 @@
             const visible = state.graph?.flowEdges?.length || 0;
             const stateLabel = state.walletLookup.inFlight
                 ? 'Loading Worker response'
+                : state.walletLookup.rateLimited
+                    ? state.walletLookup.retryAfterSeconds
+                        ? `Rate limited / retry after ${Math.ceil(state.walletLookup.retryAfterSeconds)}s`
+                        : 'Rate limited'
+                : state.walletLookup.providerLimited
+                    ? 'Provider limited'
                 : hasLoadedWalletReplacementGraph()
                     ? 'Loaded Worker replacement graph'
                     : state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0
@@ -1692,6 +1992,7 @@
                     <div>State: ${escapeHtml(stateLabel)}</div>
                     <div title="${escapeAttr(tracked || 'No tracked wallet loaded')}">Tracked: ${escapeHtml(tracked ? shortLongValue(tracked) : '-')}</div>
                     <div>Returned / Visible: ${escapeHtml(state.walletLookup.eventCount || 0)} / ${escapeHtml(visible)}</div>
+                    <div title="${escapeAttr(state.walletLookup.cacheId || 'No cache id reported')}">Cache: ${escapeHtml(state.walletLookup.cacheId ? shortLongValue(state.walletLookup.cacheId) : '-')}</div>
                 </div>
             `;
         }
@@ -1700,8 +2001,16 @@
                 ? 'Loaded Worker events'
                 : state.live.inFlight
                     ? 'Polling Worker'
+                    : !state.live.endpointConfigured
+                        ? 'Worker not configured'
                     : !state.live.endpointValid
                         ? 'Worker endpoint unavailable'
+                    : state.live.rateLimited
+                        ? state.live.retryAfterSeconds
+                            ? `Rate limited / retry after ${Math.ceil(state.live.retryAfterSeconds)}s`
+                            : 'Rate limited / backed off'
+                    : state.live.providerLimited
+                        ? 'Provider limited'
                         : state.live.workerAvailable
                             ? 'Worker reachable / no events'
                             : state.live.lastError
@@ -1712,7 +2021,8 @@
                     <div>Mode: Sanitized live feed</div>
                     <div>State: ${escapeHtml(liveState)}</div>
                     <div>Events: ${escapeHtml(state.live.eventCount || 0)} returned / ${escapeHtml(state.live.mergedEventCount || 0)} shown</div>
-                    <div>Last Poll: ${escapeHtml(state.live.lastPollAt ? formatDateTime(state.live.lastPollAt) : '-')}</div>
+                    <div title="${escapeAttr(state.live.cacheId || 'No cache id reported')}">Cache: ${escapeHtml(state.live.cacheId ? shortLongValue(state.live.cacheId) : '-')}</div>
+                    <div>Next Poll: ${escapeHtml(state.live.nextPollAt ? formatDateTime(state.live.nextPollAt) : '-')}</div>
                 </div>
             `;
         }
@@ -2052,14 +2362,18 @@
         const current = state.dataMode === mode;
         if (mode === DATA_MODES.LIVE) {
             const active = current && hasLoadedLiveFeedEvents();
-            const pending = current && !active && state.live.endpointValid;
-            const disabled = !state.live.endpointValid;
+            const pending = current && !active && state.live.endpointConfigured && state.live.endpointValid;
+            const disabled = !state.live.endpointConfigured || !state.live.endpointValid;
             return {
                 active,
                 disabled,
                 label: current
                     ? active
                         ? 'Live Feed Loaded'
+                        : state.live.rateLimited
+                            ? 'Live Feed Rate Limited'
+                        : state.live.providerLimited
+                            ? 'Live Feed Limited'
                         : pending
                             ? 'Live Feed Waiting'
                             : 'Live Feed'
@@ -2257,7 +2571,9 @@
         if (state.history.providerDiagnosticsInFlight) return 'Provider diagnostics are checking Worker readiness. Wait before staging history.';
         if (!(state.walletLookup.lastWallet || state.walletLookup.walletInput)) return 'Enter and load a wallet before staging history.';
         if (!state.walletLookup.lastLoadedAt) return 'Load Wallet Lookup data before staging history.';
-        if (state.walletLookup.eventCount <= 0) return 'Worker returned no wallet events, so history staging remains hidden.';
+        if (!hasLoadedWalletReplacementGraph()) return 'Load a Worker wallet graph before staging history.';
+        if (state.history.rateLimited) return state.history.retryAfterSeconds ? `History is rate limited. Retry after ${Math.ceil(state.history.retryAfterSeconds)}s.` : 'History is rate limited by the Worker.';
+        if (state.history.providerLimited) return 'Provider limit reached; no more staged pages are available from the Worker.';
         if (state.history.providerPagesLoaded > 0 && !state.history.moreAvailable) return getWalletHistoryStuckMessage();
         if (!state.history.backendProviderConnected) return 'Worker wallet-history adapter is not connected; browser provider calls remain disabled.';
         return 'History loading is unavailable for the current state.';
@@ -2291,13 +2607,15 @@
 
     function isWalletHistoryLoadMoreDisabled() {
         const hasWallet = Boolean(state.walletLookup.lastWallet || state.walletLookup.walletInput);
-        const hasLoadedWalletData = Boolean(state.walletLookup.lastLoadedAt && state.walletLookup.eventCount > 0);
+        const hasLoadedWalletData = hasLoadedWalletReplacementGraph();
         const noMoreBackendPages = state.history.providerPagesLoaded > 0 && !state.history.moreAvailable;
         return state.walletLookup.inFlight
             || state.history.inFlight
             || state.history.providerDiagnosticsInFlight
             || !hasWallet
             || !hasLoadedWalletData
+            || state.history.rateLimited
+            || state.history.providerLimited
             || noMoreBackendPages
             || !state.history.backendProviderConnected;
     }
@@ -2312,8 +2630,8 @@
         const replayCoverage = getWalletHistoryReplayCoverage();
         const coverage = String(state.history.lastMetadata?.history_coverage || '').replaceAll('_', ' ');
         const limited = isWalletHistoryLimitedByProvider();
-        const rateLimited = state.history.lastStatus === 'provider_rate_limited' || state.history.lastMetadata?.rate_limited === true;
-        const cursorExhausted = state.history.lastMetadata?.cursor_exhausted === true || state.history.lastMetadata?.history_depth_estimate?.cursor_exhausted === true;
+        const rateLimited = state.history.rateLimited || state.history.lastStatus === 'provider_rate_limited' || state.history.lastMetadata?.rate_limited === true;
+        const cursorExhausted = state.history.cursorExhausted || state.history.lastMetadata?.cursor_exhausted === true || state.history.lastMetadata?.history_depth_estimate?.cursor_exhausted === true;
         const fullLoaded = (manifest.full_history_loaded === true || state.history.lastMetadata?.full_history_loaded === true) && cursorExhausted && !moreAvailable && !limited && !rateLimited && pages > 0;
         const label = pages
             ? `${tx} tx / ${pages} page${pages === 1 ? '' : 's'}${providerPages ? ` / ${providerPages} provider` : ''}`
@@ -4816,8 +5134,8 @@
     function getWalletHistoryProviderStateDisplay() {
         if (state.history.inFlight) return 'Loading';
         if (state.history.providerDiagnosticsInFlight) return 'Checking';
-        if (state.history.lastStatus === 'provider_rate_limited') return 'Rate-limited';
-        if (state.history.lastStatus === 'provider_limited') return 'Limited by provider';
+        if (state.history.rateLimited || state.history.lastStatus === 'provider_rate_limited') return 'Rate-limited';
+        if (state.history.providerLimited || state.history.lastStatus === 'provider_limited') return 'Limited by provider';
         if (state.history.lastStatus === 'provider_unavailable') return 'Unavailable';
         if (state.history.lastStatus === 'provider_not_configured' || state.history.lastStatus === 'provider_placeholder') return 'Unconfigured';
         if (getWalletHistoryProviderDiagnostics().configured === true) return 'Configured';
@@ -4978,8 +5296,8 @@
             ? `${state.history.progress.message}. ${state.history.totalLoadedTransactions} unique tx staged so far.`
             : 'Loading the next staged history page through the Worker wallet-history endpoint.';
         if (state.history.lastError) return state.history.lastError;
-        if (state.history.lastStatus === 'provider_rate_limited') return state.history.lastMessage || 'History provider is rate-limited. Wait briefly before loading another staged page.';
-        if (state.history.lastStatus === 'provider_limited') return state.history.lastMessage || 'History page is limited by provider coverage or permissions. Full history is not loaded.';
+        if (state.history.rateLimited || state.history.lastStatus === 'provider_rate_limited') return state.history.lastMessage || (state.history.retryAfterSeconds ? `History provider is rate-limited. Retry after ${Math.ceil(state.history.retryAfterSeconds)}s.` : 'History provider is rate-limited. Wait before loading another staged page.');
+        if (state.history.providerLimited || state.history.lastStatus === 'provider_limited') return state.history.lastMessage || 'History page is limited by provider coverage or permissions. Full history is not loaded.';
         if (state.history.lastStatus === 'provider_unavailable') return state.history.lastMessage || 'History provider is configured, but this page could not be loaded.';
         if (state.history.lastStatus === 'provider_not_configured') return state.history.lastMessage || 'Worker history provider is not configured.';
         if (state.history.lastStatus === 'diagnostics_ok') return state.history.lastMessage || 'Provider diagnostics are current. No history page was fetched or staged.';
@@ -5987,10 +6305,10 @@
         const motionLabel = state.flowMotion.enabled ? 'Motion: On' : 'Motion: Off';
         const queueLabel = state.flowReplay.playing ? 'Pause Flow Queue' : 'Play Flow Queue';
         const liveLoaded = hasLoadedLiveFeedEvents();
-        const livePending = state.dataMode === DATA_MODES.LIVE && !liveLoaded && state.live.endpointValid;
-        const liveDisabled = !state.live.endpointValid || state.live.inFlight;
+        const livePending = state.dataMode === DATA_MODES.LIVE && !liveLoaded && state.live.endpointConfigured && state.live.endpointValid;
+        const liveDisabled = !state.live.endpointConfigured || !state.live.endpointValid || state.live.inFlight;
         const liveLabel = state.dataMode === DATA_MODES.LIVE
-            ? liveLoaded ? 'Live Feed Loaded' : 'Live Feed Waiting'
+            ? liveLoaded ? 'Live Feed Loaded' : state.live.rateLimited ? 'Live Feed Rate Limited' : 'Live Feed Waiting'
             : 'Switch to Live Feed';
         const liveStatus = getLiveStatusLabel();
         const liveClass = liveLoaded
@@ -6449,13 +6767,14 @@
         if (!state.live.endpointValid) {
             state.live.enabled = false;
             state.live.workerAvailable = false;
-            state.live.lastError = 'Worker feed endpoint unavailable';
+            state.live.lastError = state.live.endpointConfigured
+                ? 'Worker feed endpoint unavailable'
+                : 'Worker feed endpoint not configured';
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             return state.dataMode;
         }
 
         state.live.enabled = true;
-        updateLivePolling();
         pollWorkerFeed({ animateNew: false });
         return state.dataMode;
     }
@@ -6514,6 +6833,7 @@
         });
 
         const endpoint = resolveWalletLookupEndpoint();
+        state.walletLookup.workerConfigured = Boolean(endpoint);
         if (!endpoint) {
             state.walletLookup.lastError = 'Worker wallet lookup endpoint unavailable';
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -6532,15 +6852,18 @@
                 headers: { accept: 'application/json' }
             });
             const payload = await response.json().catch(() => null);
+            const workerMetadata = normalizeWorkerResponseMetadata(payload, response);
+            applyWalletLookupWorkerMetadata(workerMetadata);
             if (!response.ok) {
                 throw new Error(response.status === 404
                     ? 'Worker wallet endpoint not configured for this host.'
-                    : payload?.message || `Worker wallet lookup returned ${response.status}`);
+                    : getWorkerMetadataAttention(workerMetadata) || payload?.message || `Worker wallet lookup returned ${response.status}`);
             }
 
             const rawEvents = Array.isArray(payload?.events) ? payload.events : [];
             const events = rawEvents.filter(isRealWorkerEvent);
             if (state.dataMode !== DATA_MODES.WALLET || requestModeVersion !== state.modeVersion) return null;
+            state.walletLookup.workerAvailable = true;
             const rawDataset = convertWorkerEventsToDataset(events, {
                 trackedWallet: normalizedWallet,
                 sourceKind: 'wallet_lookup'
@@ -6554,13 +6877,13 @@
             state.walletLookup.mergedEventCount = walletDataset.transactions.length;
             state.walletLookup.lastRawDataset = rawDataset;
             await seedWalletHistoryFromWorkerPayload(payload, events, normalizedWallet);
-            state.walletLookup.lastError = events.length && walletDataset.transactions.length
+            state.walletLookup.lastError = getWorkerMetadataAttention(workerMetadata) || (events.length && walletDataset.transactions.length
                 ? ''
                 : state.walletLookup.rejectedEventCount && !events.length
                     ? 'Worker returned only sample/dev events; no graph loaded'
                     : events.length
                     ? 'Recent activity was filtered to remove program/noise accounts'
-                    : 'No recent sanitized activity returned';
+                    : 'No recent sanitized activity returned');
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             return {
                 events: events.length,
@@ -6569,6 +6892,7 @@
             };
         } catch (error) {
             if (requestModeVersion === state.modeVersion && state.dataMode === DATA_MODES.WALLET) {
+                state.walletLookup.workerAvailable = false;
                 state.walletLookup.lastError = error?.message || 'Worker wallet lookup unavailable';
                 renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             }
@@ -6596,6 +6920,7 @@
                 return;
             }
             const nextCursor = getHistoryNextCursor(payload);
+            const workerMetadata = normalizeWorkerResponseMetadata(payload);
             controller.seedPage({
                 provider: 'worker_wallet_lookup',
                 wallet,
@@ -6609,6 +6934,13 @@
                     : 'Initial Worker wallet page is tracked; no pagination cursor returned',
                 metadata: {
                     ...(payload.metadata || {}),
+                    rate_limited: workerMetadata.rateLimited,
+                    retry_after_seconds: workerMetadata.retryAfterSeconds,
+                    provider_limited: workerMetadata.providerLimited,
+                    cursor_exhausted: workerMetadata.cursorExhausted,
+                    more_available: workerMetadata.moreAvailable,
+                    full_history_loaded: workerMetadata.fullHistoryLoaded,
+                    cache_id: workerMetadata.cacheId || payload.cache_id || payload.metadata?.cache_id || '',
                     worker_endpoint_contract: DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT,
                     initial_wallet_lookup_seed: true,
                     browser_provider_calls: false,
@@ -6632,12 +6964,16 @@
         }
         state.history.inFlight = true;
         state.history.lastError = '';
+        const requestedPageTarget = options.untilLimit
+            ? WALLET_HISTORY_LOAD_UNTIL_PAGE_CAP
+            : Math.max(1, Number(options.pages) || 1);
+        const beforeProviderPages = state.history.providerPagesLoaded;
         state.history.progress = {
             mode: options.untilLimit ? 'until_limit' : 'batch',
             current: 1,
-            target: options.untilLimit ? null : Math.max(1, Number(options.pages) || 1),
+            target: options.untilLimit ? WALLET_HISTORY_LOAD_UNTIL_PAGE_CAP : requestedPageTarget,
             totalTransactions: state.history.totalLoadedTransactions,
-            message: options.untilLimit ? 'Loading page 1 of ?' : `Loading page 1 of ${Math.max(1, Number(options.pages) || 1)}`
+            message: options.untilLimit ? `Loading page 1 of up to ${WALLET_HISTORY_LOAD_UNTIL_PAGE_CAP}` : `Loading page 1 of ${requestedPageTarget}`
         };
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         try {
@@ -6654,12 +6990,17 @@
             const snapshot = typeof controller.loadPages === 'function'
                 ? await controller.loadPages({
                     wallet,
-                    pages: options.untilLimit ? undefined : Math.max(1, Number(options.pages) || 1),
-                    untilLimit: options.untilLimit === true,
+                    pages: requestedPageTarget,
+                    untilLimit: false,
                     onProgress: progressHandler
                 })
                 : await controller.loadNextPage({ wallet });
             applyHistorySnapshot(snapshot);
+            applyWalletHistoryStopReason(snapshot, {
+                requestedPageTarget,
+                beforeProviderPages,
+                untilLimit: options.untilLimit === true
+            });
             normalizeWalletHistoryUnavailableStatus();
             return snapshot;
         } catch (error) {
@@ -6684,6 +7025,11 @@
         state.history.lastMessage = 'Checking Worker provider diagnostics without loading history pages.';
         renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         try {
+            const directDiagnostics = await fetchWorkerProviderDiagnostics(wallet);
+            if (directDiagnostics) {
+                applyProviderDiagnosticsResult(directDiagnostics);
+                return directDiagnostics;
+            }
             const controller = await ensureHistoryController(wallet);
             const provider = controller?.provider || createWorkerHistoryProvider();
             if (!provider || typeof provider.getProviderDiagnostics !== 'function') {
@@ -6692,19 +7038,7 @@
             }
 
             const result = await provider.getProviderDiagnostics(wallet);
-            const diagnostics = result.providerDiagnostics || result.metadata?.provider_diagnostics || null;
-            state.history.providerDiagnostics = diagnostics;
-            state.history.lastMetadata = {
-                ...(state.history.lastMetadata || {}),
-                ...(result.metadata || {}),
-                provider_diagnostics: diagnostics || result.metadata?.provider_diagnostics || null
-            };
-            state.history.lastStatus = result.status || state.history.lastStatus || 'diagnostics_ok';
-            state.history.lastMessage = result.message || 'Provider diagnostics loaded. No history page was fetched or staged.';
-            state.history.providerConfigured = diagnostics?.configured === true || result.metadata?.provider_configured === true;
-            state.history.provider = diagnostics?.active_provider || result.provider || state.history.provider;
-            state.history.providerLabel = diagnostics?.capabilities?.label || state.history.providerLabel || result.provider || '';
-            state.history.providerCapabilities = diagnostics?.capabilities || state.history.providerCapabilities;
+            applyProviderDiagnosticsResult(result);
             return result;
         } catch (error) {
             state.history.lastError = getSafeWalletHistoryErrorMessage(error);
@@ -6713,6 +7047,88 @@
         } finally {
             state.history.providerDiagnosticsInFlight = false;
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
+        }
+    }
+
+    async function fetchWorkerProviderDiagnostics(wallet = '') {
+        const endpoint = resolveProviderDiagnosticsEndpoint();
+        if (!endpoint) return null;
+        const separator = endpoint.includes('?') ? '&' : '?';
+        const params = new URLSearchParams({ diagnostics: '1' });
+        const normalizedWallet = String(wallet || '').trim();
+        if (isValidSolanaWalletAddress(normalizedWallet)) params.set('wallet', normalizedWallet);
+        const response = await fetch(`${endpoint}${separator}${params.toString()}`, {
+            cache: 'no-store',
+            headers: { accept: 'application/json' }
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok && !payload) {
+            if (response.status === 404) return null;
+            throw new Error(`Provider diagnostics returned ${response.status}`);
+        }
+        const workerMetadata = normalizeWorkerResponseMetadata(payload, response);
+        return {
+            provider: payload?.provider || '',
+            wallet: payload?.wallet || normalizedWallet,
+            status: payload?.status || (response.ok ? 'diagnostics_ok' : 'provider_unavailable'),
+            message: getWorkerMetadataAttention(workerMetadata) || payload?.message || (response.ok ? 'Provider diagnostics loaded. No history page was fetched or staged.' : 'Provider diagnostics unavailable from Worker.'),
+            metadata: {
+                ...(payload?.metadata || {}),
+                rate_limited: workerMetadata.rateLimited,
+                retry_after_seconds: workerMetadata.retryAfterSeconds,
+                provider_limited: workerMetadata.providerLimited,
+                provider_unavailable: workerMetadata.providerUnavailable,
+                worker_endpoint_contract: DEFAULT_WORKER_PROVIDER_DIAGNOSTICS_ENDPOINT,
+                browser_provider_calls: false,
+                no_history_page_loaded: true
+            },
+            providerDiagnostics: payload?.providerDiagnostics || payload?.provider_diagnostics || payload?.metadata?.provider_diagnostics || null
+        };
+    }
+
+    function applyProviderDiagnosticsResult(result = {}) {
+        const diagnostics = result.providerDiagnostics || result.metadata?.provider_diagnostics || null;
+        state.history.providerDiagnostics = diagnostics;
+        state.history.lastMetadata = {
+            ...(state.history.lastMetadata || {}),
+            ...(result.metadata || {}),
+            provider_diagnostics: diagnostics || result.metadata?.provider_diagnostics || null
+        };
+        state.history.rateLimited = Boolean(result.metadata?.rate_limited);
+        state.history.retryAfterSeconds = Number.isFinite(Number(result.metadata?.retry_after_seconds)) ? Number(result.metadata.retry_after_seconds) : null;
+        state.history.providerLimited = Boolean(result.metadata?.provider_limited);
+        state.history.lastStatus = result.status || state.history.lastStatus || 'diagnostics_ok';
+        state.history.lastMessage = result.message || 'Provider diagnostics loaded. No history page was fetched or staged.';
+        state.history.providerConfigured = diagnostics?.configured === true || result.metadata?.provider_configured === true;
+        state.history.provider = diagnostics?.active_provider || result.provider || state.history.provider;
+        state.history.providerLabel = diagnostics?.capabilities?.label || state.history.providerLabel || result.provider || '';
+        state.history.providerCapabilities = diagnostics?.capabilities || state.history.providerCapabilities;
+    }
+
+    function applyWalletHistoryStopReason(snapshot = {}, options = {}) {
+        const metadata = snapshot.lastMetadata || {};
+        const loadedThisRun = Math.max(0, Number(snapshot.providerPagesLoaded || 0) - Number(options.beforeProviderPages || 0));
+        const retryAfter = Number(metadata.retry_after_seconds ?? state.history.retryAfterSeconds);
+        let reason = '';
+        if (metadata.rate_limited === true || snapshot.lastStatus === 'provider_rate_limited') {
+            reason = Number.isFinite(retryAfter) && retryAfter > 0
+                ? `Stopped on Worker/provider rate limit. Retry after ${Math.ceil(retryAfter)}s.`
+                : 'Stopped on Worker/provider rate limit.';
+        } else if (metadata.provider_limited === true || metadata.provider_limit_reached === true || snapshot.lastStatus === 'provider_limited') {
+            reason = 'Stopped on provider limit. More complete history is not claimed.';
+        } else if (!snapshot.nextCursor || snapshot.moreAvailable === false || metadata.cursor_exhausted === true) {
+            reason = metadata.cursor_exhausted === true
+                ? 'Stopped because Worker reported cursor exhaustion.'
+                : 'Stopped because no next cursor was returned.';
+        } else if (loadedThisRun >= Number(options.requestedPageTarget || 0) && snapshot.moreAvailable) {
+            reason = options.untilLimit
+                ? `Stopped at the UI max page cap (${WALLET_HISTORY_LOAD_UNTIL_PAGE_CAP}) with more history still available.`
+                : `Stopped after requested page cap (${options.requestedPageTarget}).`;
+        }
+        if (!reason) return;
+        state.history.lastMessage = reason;
+        if (state.history.controller) {
+            state.history.controller.lastMessage = reason;
         }
     }
 
@@ -7665,6 +8081,12 @@
         state.history.lastMessage = snapshot.lastMessage || '';
         state.history.lastStatus = snapshot.lastStatus || 'idle';
         state.history.lastMetadata = snapshot.lastMetadata || {};
+        state.history.rateLimited = Boolean(snapshot.lastMetadata?.rate_limited || snapshot.lastStatus === 'provider_rate_limited');
+        state.history.retryAfterSeconds = Number.isFinite(Number(snapshot.lastMetadata?.retry_after_seconds)) ? Number(snapshot.lastMetadata.retry_after_seconds) : null;
+        state.history.providerLimited = Boolean(snapshot.lastMetadata?.provider_limited || snapshot.lastMetadata?.provider_limit_reached || snapshot.lastStatus === 'provider_limited');
+        state.history.cursorExhausted = Boolean(snapshot.lastMetadata?.cursor_exhausted || (!snapshot.moreAvailable && snapshot.providerPagesLoaded > 0));
+        state.history.fullHistoryLoaded = Boolean(snapshot.lastMetadata?.full_history_loaded);
+        state.history.cacheId = snapshot.lastMetadata?.cache_id || snapshot.lastMetadata?.scan_cache?.cache_id || state.history.cacheId || '';
         state.history.progress = snapshot.progress || null;
         state.history.providerConfigured = Boolean(snapshot.providerConfigured);
         state.history.provider = snapshot.provider || '';
@@ -8012,6 +8434,33 @@
             state.live.endpoint,
             DEFAULT_WORKER_FEED_ENDPOINT,
             DEFAULT_WORKER_WALLET_HISTORY_ENDPOINT
+        );
+    }
+
+    function resolveProviderDiagnosticsEndpoint() {
+        const configuredValue = [
+            window.CryptoPhotonicWorkerProviderDiagnosticsEndpoint,
+            state.root?.dataset?.workerProviderDiagnosticsEndpoint
+        ].find(value => typeof value === 'string' && value.trim());
+        if (configuredValue) {
+            const configuredEndpoint = resolveWorkerEndpoint({
+                configuredValue,
+                defaultEndpoint: DEFAULT_WORKER_PROVIDER_DIAGNOSTICS_ENDPOINT
+            });
+            return configuredEndpoint.valid ? configuredEndpoint.endpoint : '';
+        }
+
+        const fromHistoryEndpoint = deriveSiblingWorkerEndpoint(
+            resolveWalletHistoryEndpoint(),
+            DEFAULT_WORKER_WALLET_HISTORY_ENDPOINT,
+            DEFAULT_WORKER_PROVIDER_DIAGNOSTICS_ENDPOINT
+        );
+        if (fromHistoryEndpoint) return fromHistoryEndpoint;
+
+        return deriveSiblingWorkerEndpoint(
+            resolveWalletLookupEndpoint(),
+            DEFAULT_WORKER_WALLET_ACTIVITY_ENDPOINT,
+            DEFAULT_WORKER_PROVIDER_DIAGNOSTICS_ENDPOINT
         );
     }
 

@@ -478,6 +478,8 @@ def cache_summary(payload: dict[str, Any], row_count: int, summary: dict[str, An
     cache = {**as_dict(payload.get("normalized_cache_metadata")), **as_dict(payload.get("cache"))}
     return {
         "cache_schema": clean_text(cache.get("cache_schema")) or "generated_fixture_cache_summary_v1",
+        "cache_version": clean_text(cache.get("cache_version")) or clean_text(cache.get("cache_schema")) or "generated_fixture_cache_summary_v1",
+        "cache_id": clean_text(cache.get("cache_id")),
         "cache_state": clean_text(cache.get("cache_state")) or "generated_static_fixture",
         "cache_origin": cache.get("cache_origin"),
         "cache_class": cache.get("cache_class"),
@@ -485,6 +487,13 @@ def cache_summary(payload: dict[str, Any], row_count: int, summary: dict[str, An
         "provider_cache": bool(cache.get("provider_cache", False)),
         "provider_cache_derived": bool(cache.get("provider_cache_derived", False)),
         "provider_fetched": bool(cache.get("provider_fetched", False)),
+        "provider": cache.get("provider"),
+        "provider_label": cache.get("provider_label"),
+        "wallet": cache.get("wallet"),
+        "fetched_at": cache.get("fetched_at"),
+        "pages_loaded": cache.get("pages_loaded", 0),
+        "pages_requested": cache.get("pages_requested", 0),
+        "request_limit": cache.get("request_limit", 0),
         "source_rows": cache.get("source_rows", row_count),
         "normalized_event_count": cache.get("normalized_event_count", row_count),
         "signature_group_count": cache.get("signature_group_count", summary.get("signature_group_count", 0)),
@@ -514,7 +523,16 @@ def cache_summary(payload: dict[str, Any], row_count: int, summary: dict[str, An
         "more_available": bool(cache.get("more_available", False)),
         "cursor_exhausted": bool(cache.get("cursor_exhausted", False)),
         "full_history_loaded": bool(cache.get("full_history_loaded", False)),
+        "full_history_claim_allowed": bool(cache.get("full_history_claim_allowed", False)),
+        "rate_limited": bool(cache.get("rate_limited", False)),
+        "retry_after_seconds": cache.get("retry_after_seconds"),
+        "cooldown_applied_seconds": cache.get("cooldown_applied_seconds", 0),
+        "provider_limited": bool(cache.get("provider_limited", False)),
+        "provider_unavailable": bool(cache.get("provider_unavailable", False)),
+        "stop_reason": cache.get("stop_reason"),
+        "page_summaries": sanitize_value(cache.get("page_summaries", [])),
         "raw_payload_stored": False,
+        "raw_provider_payloads_included": False,
         "provider_keys_included": False,
         "provider_request_url_included": False,
         "provider_headers_included": False,
@@ -586,6 +604,22 @@ def build_fixture(payload: dict[str, Any], input_path: Path, generated_at: str) 
             "generated_at": generated_at,
             "transaction_count": len(transactions),
             "signature_group_count": len({tx.get("signature_group_id") for tx in transactions if tx.get("signature_group_id")}),
+            "cache_id": cache.get("cache_id"),
+            "cache_version": cache.get("cache_version"),
+            "provider": cache.get("provider") or source_metadata.get("provider"),
+            "provider_label": cache.get("provider_label") or source_metadata.get("provider_label"),
+            "fetched_at": cache.get("fetched_at") or source_metadata.get("fetched_at"),
+            "pages_loaded": cache.get("pages_loaded", 0),
+            "requested_limit": cache.get("requested_limit"),
+            "returned_count": cache.get("returned_count", len(transactions)),
+            "next_cursor": cache.get("next_cursor"),
+            "cursor_exhausted": cache.get("cursor_exhausted", False),
+            "more_available": cache.get("more_available", False),
+            "rate_limited": cache.get("rate_limited", False),
+            "retry_after_seconds": cache.get("retry_after_seconds"),
+            "provider_limited": cache.get("provider_limited", False),
+            "full_history_loaded": cache.get("full_history_loaded", False),
+            "full_history_claim_allowed": cache.get("full_history_claim_allowed", False),
             "sample": sample,
             "fixture": fixture,
             "sample_fixture_only": sample or fixture,
@@ -641,6 +675,21 @@ def build_fixture(payload: dict[str, Any], input_path: Path, generated_at: str) 
         "generated_at": generated_at,
         "transaction_count": len(transactions),
         "signature_group_count": output["metadata"]["signature_group_count"],
+        "cache_id": cache.get("cache_id"),
+        "cache_version": cache.get("cache_version"),
+        "provider": cache.get("provider") or source_metadata.get("provider"),
+        "provider_label": cache.get("provider_label") or source_metadata.get("provider_label"),
+        "pages_loaded": cache.get("pages_loaded", 0),
+        "requested_limit": cache.get("requested_limit"),
+        "returned_count": cache.get("returned_count", len(transactions)),
+        "next_cursor": cache.get("next_cursor"),
+        "cursor_exhausted": cache.get("cursor_exhausted", False),
+        "more_available": cache.get("more_available", False),
+        "rate_limited": cache.get("rate_limited", False),
+        "retry_after_seconds": cache.get("retry_after_seconds"),
+        "provider_limited": cache.get("provider_limited", False),
+        "full_history_loaded": cache.get("full_history_loaded", False),
+        "full_history_claim_allowed": cache.get("full_history_claim_allowed", False),
         "source": source,
         "sanitized": True,
         "production_meaning": False,
@@ -661,7 +710,17 @@ def build_fixture(payload: dict[str, Any], input_path: Path, generated_at: str) 
     return output, manifest_entry
 
 
-def default_output_path() -> Path:
+def safe_filename(value: Any, fallback: str = "provider-cache") -> str:
+    text = clean_text(value).lower()
+    text = re.sub(r"[^a-z0-9._-]+", "-", text).strip("-")
+    return text[:96] or fallback
+
+
+def default_output_path(manifest_entry: dict[str, Any] | None = None) -> Path:
+    entry = manifest_entry or {}
+    if is_manifest_provider_cache_candidate(entry):
+        stem = safe_filename(entry.get("cache_id") or entry.get("wallet") or "provider-cache")
+        return (DEFAULT_GENERATED_DIR / "provider-cache" / f"{stem}.generated.json").resolve()
     return (DEFAULT_GENERATED_DIR / DEFAULT_OUTPUT_NAME).resolve()
 
 
@@ -675,9 +734,9 @@ def output_boundary_message(path: Path, explicit_output: bool) -> str:
         raise SystemExit("Refusing to write outside data/crypto/generated/ without an explicit --output path.")
 
 
-def resolve_output(args: argparse.Namespace) -> tuple[Path, bool]:
+def resolve_output(args: argparse.Namespace, manifest_entry: dict[str, Any] | None = None) -> tuple[Path, bool]:
     explicit_output = "--output" in os.sys.argv
-    output_path = resolve_path(args.output) if args.output else default_output_path()
+    output_path = resolve_path(args.output) if args.output else default_output_path(manifest_entry)
     output_boundary_message(output_path, explicit_output)
     return output_path, explicit_output
 
@@ -765,10 +824,10 @@ def update_manifest(manifest_path: Path, entry: dict[str, Any], output_path: Pat
 def main() -> int:
     args = parse_args()
     input_path = resolve_path(args.input)
-    output_path, explicit_output = resolve_output(args)
     payload = load_json(input_path)
     generated_at = utc_now()
     fixture, manifest_entry = build_fixture(payload, input_path, generated_at)
+    output_path, explicit_output = resolve_output(args, manifest_entry)
     manifest_path = resolve_manifest(args.manifest) if args.manifest else None
     manifest_payload = update_manifest(manifest_path, manifest_entry, output_path) if manifest_path else None
     boundary = output_boundary_message(output_path, explicit_output)

@@ -16,6 +16,22 @@ DEFAULT_INPUT = DEFAULT_DATA_DIR / "sample_wallet_history.json"
 DEFAULT_OUTPUT = DEFAULT_DATA_DIR / "crypto_review_export.sample.csv"
 
 CSV_FIELDS = [
+    "cache_id",
+    "cache_version",
+    "provider",
+    "provider_label",
+    "page_number",
+    "cursor",
+    "current_cursor",
+    "next_cursor",
+    "cursor_exhausted",
+    "more_available",
+    "rate_limited",
+    "retry_after_seconds",
+    "cooldown_applied_seconds",
+    "provider_limited",
+    "full_history_loaded",
+    "full_history_claim_allowed",
     "signature",
     "signature_group_id",
     "signature_group_index",
@@ -68,6 +84,10 @@ def as_list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
 
 
+def as_dict(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
 def extract_rows(payload: dict[str, Any]) -> list[dict[str, Any]]:
     rows = as_list(payload.get("normalized_transactions"))
     if rows:
@@ -89,6 +109,25 @@ def serialize_cell(value: Any) -> str:
 
 def clean_text(value: Any) -> str:
     return str(value).strip() if value not in (None, "") else ""
+
+
+def first_present(*values: Any) -> Any:
+    for value in values:
+        if value not in (None, ""):
+            return value
+    return ""
+
+
+def pick_cache_value(payload: dict[str, Any], *keys: str, default: Any = "") -> Any:
+    normalized_cache = as_dict(payload.get("normalized_cache_metadata"))
+    cache = as_dict(payload.get("cache"))
+    metadata = as_dict(payload.get("metadata"))
+    for key in keys:
+        for source in (normalized_cache, cache, metadata):
+            value = source.get(key)
+            if value not in (None, ""):
+                return value
+    return default
 
 
 def amount_is_missing(row: dict[str, Any]) -> bool:
@@ -118,11 +157,38 @@ def summarize_rows(rows: list[dict[str, Any]]) -> dict[str, int]:
     }
 
 
-def to_csv_rows(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
-    return [
-        {field: serialize_cell(row.get(field, "")) for field in CSV_FIELDS}
-        for row in rows
-    ]
+def review_context(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "cache_id": pick_cache_value(payload, "cache_id"),
+        "cache_version": pick_cache_value(payload, "cache_version", "cache_schema"),
+        "provider": pick_cache_value(payload, "provider"),
+        "provider_label": pick_cache_value(payload, "provider_label"),
+        "cursor": pick_cache_value(payload, "cursor"),
+        "current_cursor": pick_cache_value(payload, "current_cursor", "cursor"),
+        "next_cursor": pick_cache_value(payload, "next_cursor"),
+        "cursor_exhausted": pick_cache_value(payload, "cursor_exhausted", default=False),
+        "more_available": pick_cache_value(payload, "more_available", default=False),
+        "rate_limited": pick_cache_value(payload, "rate_limited", default=False),
+        "retry_after_seconds": pick_cache_value(payload, "retry_after_seconds"),
+        "cooldown_applied_seconds": pick_cache_value(payload, "cooldown_applied_seconds", default=0),
+        "provider_limited": pick_cache_value(payload, "provider_limited", "provider_limit_reached", default=False),
+        "full_history_loaded": pick_cache_value(payload, "full_history_loaded", default=False),
+        "full_history_claim_allowed": pick_cache_value(payload, "full_history_claim_allowed", default=False),
+    }
+
+
+def to_csv_rows(rows: list[dict[str, Any]], payload: dict[str, Any]) -> list[dict[str, str]]:
+    context = review_context(payload)
+    output: list[dict[str, str]] = []
+    for row in rows:
+        raw_reference = as_dict(row.get("raw_reference"))
+        merged = {
+            **context,
+            "page_number": first_present(row.get("page_number"), raw_reference.get("page_number"), raw_reference.get("provider_page_number")),
+            **row,
+        }
+        output.append({field: serialize_cell(merged.get(field, "")) for field in CSV_FIELDS})
+    return output
 
 
 def write_csv(path: Path, rows: list[dict[str, str]]) -> None:
@@ -156,7 +222,7 @@ def main() -> int:
     output_path = resolve_path(args.output)
     payload = load_json(input_path)
     rows = extract_rows(payload)
-    csv_rows = to_csv_rows(rows)
+    csv_rows = to_csv_rows(rows, payload)
     summary = summarize_rows(rows)
 
     xlsx_status = "not requested"

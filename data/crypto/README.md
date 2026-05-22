@@ -26,6 +26,60 @@ Local Cache entries are selectable only when manifest and artifact metadata show
 
 The browser still never calls providers directly. Provider keys remain local/server-side only.
 
+## D349-D368 Real Provider Ingestion + Worker Polling Safeguards
+
+D349-D368 adds the guarded path for legitimate Solana wallet transaction history backfill and Worker-backed event polling without moving provider access into the browser.
+
+The browser remains provider-blind:
+
+- Browser code may call only configured Worker endpoints or read explicitly selected static Local Cache artifacts.
+- Browser code must not call Solana RPC, explorer, swap, wallet-history, or provider APIs directly.
+- Provider keys, bearer tokens, request headers, private URLs, and raw provider payloads must stay local/server-side and must not be written into browser-readable artifacts.
+- Live Feed polling is disabled unless a safe Worker endpoint is configured, bounded by a minimum interval, and backed off or stopped on Worker rate-limit metadata.
+- Worker `retry_after_seconds`, `rate_limited`, `provider_limited`, `more_available`, `cursor_exhausted`, `full_history_loaded`, `cache_id`, and `next_cursor` are UI states, not completeness or identity claims.
+- Sample/mock/dev events and sample fixtures remain dev/test only and cannot become active graph data.
+
+Local provider scripts remain explicit:
+
+- `scripts/crypto_fetch_history.py` sends no network request without `--allow-network`.
+- `scripts/crypto_fetch_history.py` writes nothing without `--write`.
+- Network mode requires `--wallet` and a provider key in the configured local environment variable.
+- Bounded backfill uses `--max-pages`, `--limit-per-page`, `--cooldown-seconds`, `--max-retries`, `--backoff-cap-seconds`, `--stop-on-rate-limit`, and `--resume-cursor`.
+- `scripts/crypto_provider_adapters.py` returns sanitized provider page summaries and rate-limit/provider-limit/cursor metadata, never provider keys, request headers, raw keyed URLs, or raw provider payloads.
+- `scripts/crypto_worker_contract.py` documents and validates the expected Worker response shape for `/api/crypto/wallet-activity`, `/api/crypto/wallet-history`, `/api/crypto/events`, and `/api/crypto/provider-diagnostics`; it does not deploy or implement a Worker.
+
+Provider-fetched normalized cache metadata must include:
+
+- `wallet`
+- `provider`
+- `provider_label`
+- `fetched_at`
+- `cache_id`
+- `cache_version`
+- `pages_loaded`
+- `requested_limit`
+- `returned_count`
+- `next_cursor`
+- `cursor_exhausted`
+- `more_available`
+- `rate_limited`
+- `retry_after_seconds`
+- `cooldown_applied_seconds`
+- `provider_limited`
+- `full_history_loaded`
+- `full_history_claim_allowed`
+- `browser_provider_calls: false`
+- `provider_keys_included: false`
+- `raw_provider_payloads_included: false`
+
+`full_history_claim_allowed` must remain false unless the cursor is exhausted and no rate limit, provider limit, provider unavailable state, or additional cursor remains. Even when true, it is a bounded provider/cache state and must not imply wallet identity, ownership, source-of-funds, risk, criminality, liquidity truth, or investment meaning.
+
+The intended provider-cache flow is:
+
+`crypto_fetch_history.py` -> `crypto_normalize_transactions.py` -> `crypto_build_generated_fixture.py` -> `data/crypto/generated/provider-cache/*.generated.json` -> `manifest.provider_cache_fixtures` -> explicit UI Local Cache selection.
+
+Generated provider-cache artifacts must be non-sample, sanitized, provider-cache-derived, and explicitly selected. The manifest must not auto-select sample fixtures, and first load must stay empty until Worker data or an explicitly selected provider cache is available.
+
 ## Data Classes
 
 ### Fixture Data

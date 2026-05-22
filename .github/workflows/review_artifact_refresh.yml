@@ -51,7 +51,7 @@ jobs:
           python-version: "3.12"
 
       - name: Restore OpenAlex cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: data/cache/openalex
           key: openalex-cache-${{ runner.os }}-${{ hashFiles('data/companies.json', 'data/candidates/sec_relationship_candidates.json') }}

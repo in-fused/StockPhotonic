@@ -2,6 +2,30 @@
 
 CryptoPhotonic browser code may read local static JSON, generated cache files, or Worker-normalized responses. It must not call chain providers, RPC endpoints, explorer APIs, swap APIs, or wallet-history providers directly from the browser.
 
+## D339-D348 Active Graph Rule
+
+CryptoPhotonic is truth-bound on first load. The active graph remains empty until one of these real-data sources is available:
+
+- Worker Wallet Lookup data
+- Worker Live Feed events returned and rendered
+- An explicitly selected generated Local Cache artifact marked as provider-fetched and non-sample
+
+Sample fixtures, sample caches, built-in dev samples, and generated `*.sample.json` files are dev/test artifacts only. They may remain in the repository for parser, layout, and replay QA, but they must not render as default active graph data or masquerade as production-safe Local Cache data.
+
+Local Cache entries are selectable only when manifest and artifact metadata show all of the following:
+
+- `sample: false`
+- `fixture: false`
+- `provider_cache: true`
+- `provider_cache_derived: true`
+- `cache_origin: provider_fetched`
+- `cache_class: provider_cache`
+- `sanitized: true`
+- `browser_provider_calls: false`
+- `provider_keys_included: false`
+
+The browser still never calls providers directly. Provider keys remain local/server-side only.
+
 ## Data Classes
 
 ### Fixture Data
@@ -76,7 +100,9 @@ Replay cache entries should include:
 
 D329-D338 adds `scripts/crypto_build_generated_fixture.py`, a local-only generated fixture builder that converts normalized wallet history or replay cache JSON into browser-readable CryptoPhotonic graph datasets under `data/crypto/generated/`. The builder defaults to dry-run, writes only when `--write` is supplied, updates `data/crypto/generated/manifest.json` only when `--manifest` is supplied, and keeps the default output boundary inside `data/crypto/generated/`.
 
-Generated fixtures are static/cache artifacts for browser rendering and replay review. They are not live blockchain fetches, production truth, source-of-funds evidence, wallet identity evidence, ownership evidence, risk labels, criminality labels, or complete-history claims. Generated sample fixtures and manifest entries must explicitly mark:
+Generated fixtures are static/cache artifacts for browser rendering and replay review. They are not live blockchain fetches, production truth, source-of-funds evidence, wallet identity evidence, ownership evidence, risk labels, criminality labels, or complete-history claims. D339-D348 changes the active graph rule: generated sample fixtures are never default active data, and generated Local Cache artifacts are selectable only when metadata marks them as non-sample and provider-cache-derived.
+
+Generated sample fixtures and manifest entries must explicitly mark:
 
 - `sample`
 - `fixture`
@@ -89,6 +115,8 @@ Generated fixtures are static/cache artifacts for browser rendering and replay r
 Generated graph fixtures should include wallets, tokens, transactions, transaction groups, parser quality summaries, cache/pagination summaries, replay cache references when present, and sanitized raw-reference flags. They must not include provider keys, request URLs, request headers, raw provider payloads, bearer tokens, private URLs, signing material, or browser-side provider-call instructions.
 
 The browser may read generated fixture JSON and the generated manifest as static files. It must continue to use only static/cache/Worker-normalized data and must not call chain providers directly.
+
+The generated manifest distinguishes `sample_fixtures`, `provider_cache_fixtures`, and `active_provider_cache_candidate`. `active_fixture` is kept only as a legacy/null field and must not point at sample data for production view.
 
 ### Review/Export Files
 

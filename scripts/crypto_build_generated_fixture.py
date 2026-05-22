@@ -479,6 +479,12 @@ def cache_summary(payload: dict[str, Any], row_count: int, summary: dict[str, An
     return {
         "cache_schema": clean_text(cache.get("cache_schema")) or "generated_fixture_cache_summary_v1",
         "cache_state": clean_text(cache.get("cache_state")) or "generated_static_fixture",
+        "cache_origin": cache.get("cache_origin"),
+        "cache_class": cache.get("cache_class"),
+        "cache_artifact_class": cache.get("cache_artifact_class"),
+        "provider_cache": bool(cache.get("provider_cache", False)),
+        "provider_cache_derived": bool(cache.get("provider_cache_derived", False)),
+        "provider_fetched": bool(cache.get("provider_fetched", False)),
         "source_rows": cache.get("source_rows", row_count),
         "normalized_event_count": cache.get("normalized_event_count", row_count),
         "signature_group_count": cache.get("signature_group_count", summary.get("signature_group_count", 0)),
@@ -517,6 +523,20 @@ def cache_summary(payload: dict[str, Any], row_count: int, summary: dict[str, An
     }
 
 
+def is_provider_cache_candidate(payload: dict[str, Any], source_metadata: dict[str, Any], cache: dict[str, Any], sample: bool, fixture: bool) -> bool:
+    if sample or fixture:
+        return False
+    values = {
+        "provider_cache": source_metadata.get("provider_cache"),
+        "provider_cache_derived": source_metadata.get("provider_cache_derived"),
+        "provider_fetched": source_metadata.get("provider_fetched") or cache.get("provider_fetched"),
+        "cache_origin": source_metadata.get("cache_origin") or cache.get("cache_origin"),
+        "cache_class": source_metadata.get("cache_class") or cache.get("cache_class"),
+        "cache_artifact_class": source_metadata.get("cache_artifact_class") or cache.get("cache_artifact_class"),
+    }
+    return values["provider_cache"] is True or values["provider_cache_derived"] is True or values["provider_fetched"] is True or values["cache_origin"] == "provider_fetched" or values["cache_class"] == "provider_cache" or values["cache_artifact_class"] == "provider_cache" or cache.get("provider_cache") is True or cache.get("provider_cache_derived") is True
+
+
 def replay_reference(payload: dict[str, Any]) -> dict[str, Any] | None:
     windows = [window for window in as_list(payload.get("replay_windows")) if isinstance(window, dict)]
     cache = as_dict(payload.get("cache"))
@@ -548,6 +568,8 @@ def build_fixture(payload: dict[str, Any], input_path: Path, generated_at: str) 
     sample = source_metadata.get("sample", False) is True or "sample" in input_path.name.lower()
     fixture = source_metadata.get("fixture", False) is True or sample
     source = clean_text(first_present(source_metadata.get("source"), cache.get("source"), source_kind))
+    provider_cache_candidate = is_provider_cache_candidate(payload, source_metadata, cache, sample, fixture)
+    cache_artifact_class = "sample_fixture" if sample or fixture else "provider_cache" if provider_cache_candidate else "local_generated_untrusted"
 
     output = {
         "metadata": {
@@ -566,6 +588,14 @@ def build_fixture(payload: dict[str, Any], input_path: Path, generated_at: str) 
             "signature_group_count": len({tx.get("signature_group_id") for tx in transactions if tx.get("signature_group_id")}),
             "sample": sample,
             "fixture": fixture,
+            "sample_fixture_only": sample or fixture,
+            "provider_cache": provider_cache_candidate,
+            "provider_cache_derived": provider_cache_candidate,
+            "cache_origin": "provider_fetched" if provider_cache_candidate else "sample_fixture" if sample or fixture else "unverified_local_cache",
+            "cache_class": cache_artifact_class,
+            "cache_artifact_class": cache_artifact_class,
+            "production_safe_cache_candidate": provider_cache_candidate,
+            "local_cache_selectable": provider_cache_candidate,
             "sanitized": True,
             "production_meaning": False,
             "live_blockchain_fetching": False,
@@ -587,6 +617,14 @@ def build_fixture(payload: dict[str, Any], input_path: Path, generated_at: str) 
         "boundary_flags": {
             "sample": sample,
             "fixture": fixture,
+            "sample_fixture_only": sample or fixture,
+            "provider_cache": provider_cache_candidate,
+            "provider_cache_derived": provider_cache_candidate,
+            "cache_origin": "provider_fetched" if provider_cache_candidate else "sample_fixture" if sample or fixture else "unverified_local_cache",
+            "cache_class": cache_artifact_class,
+            "cache_artifact_class": cache_artifact_class,
+            "production_safe_cache_candidate": provider_cache_candidate,
+            "local_cache_selectable": provider_cache_candidate,
             "sanitized": True,
             "production_meaning": False,
             "live_blockchain_fetching": False,
@@ -607,8 +645,18 @@ def build_fixture(payload: dict[str, Any], input_path: Path, generated_at: str) 
         "sanitized": True,
         "production_meaning": False,
         "browser_provider_calls": False,
+        "provider_keys_included": False,
+        "raw_provider_payloads_included": False,
         "sample": sample,
         "fixture": fixture,
+        "sample_fixture_only": sample or fixture,
+        "provider_cache": provider_cache_candidate,
+        "provider_cache_derived": provider_cache_candidate,
+        "cache_origin": "provider_fetched" if provider_cache_candidate else "sample_fixture" if sample or fixture else "unverified_local_cache",
+        "cache_class": cache_artifact_class,
+        "cache_artifact_class": cache_artifact_class,
+        "production_safe_cache_candidate": provider_cache_candidate,
+        "local_cache_selectable": provider_cache_candidate,
     }
     return output, manifest_entry
 
@@ -637,8 +685,24 @@ def resolve_output(args: argparse.Namespace) -> tuple[Path, bool]:
 def resolve_manifest(raw_path: str) -> Path:
     manifest_path = resolve_path(raw_path)
     if manifest_path != DEFAULT_MANIFEST.resolve():
-        raise SystemExit("Manifest writes are limited to data/crypto/generated/manifest.json for sample/demo-safe generated fixtures.")
+        raise SystemExit("Manifest writes are limited to data/crypto/generated/manifest.json.")
     return manifest_path
+
+
+def is_manifest_provider_cache_candidate(item: dict[str, Any]) -> bool:
+    return (
+        item.get("provider_cache") is True
+        and item.get("provider_cache_derived") is True
+        and item.get("sample") is False
+        and item.get("fixture") is False
+        and item.get("sample_fixture_only") is False
+        and item.get("sanitized") is True
+        and item.get("browser_provider_calls") is False
+        and item.get("provider_keys_included") is False
+        and item.get("raw_provider_payloads_included") is False
+        and item.get("cache_origin") == "provider_fetched"
+        and item.get("cache_class") == "provider_cache"
+    )
 
 
 def update_manifest(manifest_path: Path, entry: dict[str, Any], output_path: Path) -> dict[str, Any]:
@@ -648,9 +712,10 @@ def update_manifest(manifest_path: Path, entry: dict[str, Any], output_path: Pat
         manifest = {}
     rel_output = relative_repo_path(output_path)
     entry = {**entry, "path": rel_output}
-    fixtures = [
+
+    sample_fixtures = [
         item
-        for item in as_list(manifest.get("fixtures"))
+        for item in [*as_list(manifest.get("sample_fixtures")), *as_list(manifest.get("fixtures"))]
         if isinstance(item, dict)
         and item.get("sample") is True
         and item.get("fixture") is True
@@ -658,23 +723,42 @@ def update_manifest(manifest_path: Path, entry: dict[str, Any], output_path: Pat
         and item.get("production_meaning") is False
         and item.get("browser_provider_calls") is False
     ]
-    fixtures = [item for item in fixtures if item.get("path") != rel_output]
-    fixtures.append(entry)
-    fixtures.sort(key=lambda item: (str(item.get("sample")) != "True", str(item.get("path", ""))))
+    provider_cache_fixtures = [
+        item
+        for item in as_list(manifest.get("provider_cache_fixtures"))
+        if isinstance(item, dict) and is_manifest_provider_cache_candidate(item)
+    ]
+
+    sample_fixtures = [item for item in sample_fixtures if item.get("path") != rel_output]
+    provider_cache_fixtures = [item for item in provider_cache_fixtures if item.get("path") != rel_output]
+    if is_manifest_provider_cache_candidate(entry):
+        provider_cache_fixtures.append(entry)
+    else:
+        sample_fixtures.append(entry)
+    sample_fixtures.sort(key=lambda item: str(item.get("path", "")))
+    provider_cache_fixtures.sort(key=lambda item: str(item.get("path", "")))
+    active_provider_cache_candidate = rel_output if is_manifest_provider_cache_candidate(entry) else manifest.get("active_provider_cache_candidate")
+    if active_provider_cache_candidate and not any(item.get("path") == active_provider_cache_candidate for item in provider_cache_fixtures):
+        active_provider_cache_candidate = None
     return {
         "metadata": {
             "environment": "local_static_cache_generated_manifest",
             "sanitized": True,
-            "sample": True,
-            "fixture": True,
+            "sample": False,
+            "fixture": False,
             "production_meaning": False,
             "live_blockchain_fetching": False,
             "browser_provider_calls": False,
             "provider_keys_included": False,
+            "sample_fixtures_active_graph_allowed": False,
+            "provider_cache_required_for_active_graph": True,
             "updated_at": entry["generated_at"],
         },
-        "active_fixture": rel_output,
-        "fixtures": fixtures,
+        "active_provider_cache_candidate": active_provider_cache_candidate,
+        "active_fixture": None,
+        "provider_cache_fixtures": provider_cache_fixtures,
+        "sample_fixtures": sample_fixtures,
+        "fixtures": [*provider_cache_fixtures, *sample_fixtures],
     }
 
 

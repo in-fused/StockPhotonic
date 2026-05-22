@@ -54,9 +54,9 @@
         resizeObserver: null,
         fullscreen: false,
         datasetSource: null,
-        datasetSourceKind: 'built_in',
+        datasetSourceKind: 'worker_wallet_lookup',
         dataset: null,
-        dataMode: 'generated_fixture',
+        dataMode: 'wallet_lookup',
         activePresetKey: '',
         primaryActionNotice: {
             message: '',
@@ -65,6 +65,7 @@
         modeVersion: 0,
         generatedManifest: null,
         generatedFixtures: [],
+        generatedSampleFixtures: [],
         activeGeneratedFixture: null,
         live: {
             enabled: false,
@@ -80,6 +81,7 @@
             lastError: '',
             eventCount: 0,
             mergedEventCount: 0,
+            rejectedEventCount: 0,
             seenDedupeKeys: new Set(),
             pendingFlowIds: [],
             pulseTimerId: null
@@ -92,6 +94,7 @@
             lastError: '',
             eventCount: 0,
             mergedEventCount: 0,
+            rejectedEventCount: 0,
             graphDepth: 1,
             lastRawDataset: null
         },
@@ -313,13 +316,14 @@
     const LAMPORTS_PER_SOL = 1000000000;
     const RAW_SOL_LAMPORT_HEURISTIC_MIN = 1000000;
     const SOURCE_LABELS = {
-        generated: 'Generated Fixture',
-        solana_sample: 'Generated Fixture',
-        legacy_sample: 'Generated Fixture',
-        built_in: 'Generated Fixture',
-        worker_feed: 'Live Feed (Worker Events)',
-        worker_wallet_lookup: 'Wallet Lookup (Worker Replacement)',
-        sample_cache: 'Sample Cache (Fixture)'
+        generated: 'Local Cache',
+        generated_provider_cache: 'Generated Provider Cache',
+        solana_sample: 'Sample fixture (dev/test only)',
+        legacy_sample: 'Sample fixture (dev/test only)',
+        built_in: 'Built-in dev sample unavailable',
+        worker_feed: 'Worker Live Feed',
+        worker_wallet_lookup: 'Worker Wallet Lookup',
+        sample_cache: 'Sample cache (dev/test only)'
     };
     const NOISE_ADDRESS_PREFIXES = [
         'computebudget111111111111111111111111111111',
@@ -417,7 +421,12 @@
             state.resizeObserver.observe(state.canvas.parentElement || state.canvas);
         }
 
-        const dataset = await loadSampleDataset();
+        const manifest = await loadLocalJson('data/crypto/generated/manifest.json', 'Generated crypto manifest unavailable');
+        applyGeneratedManifest(manifest);
+        const dataset = createEmptyDataset(DATA_MODES.WALLET, {});
+        state.datasetSource = 'worker_wallet_lookup_empty';
+        state.datasetSourceKind = 'worker_wallet_lookup';
+        state.activeGeneratedFixture = null;
         state.dataset = cloneDataset(dataset);
         const graph = graphEngine.buildGraph(dataset);
         state.graph = layoutEngine.layoutGraph(graph, getCanvasSize());
@@ -426,7 +435,7 @@
         state.historyPreview.checkpoint = loadReplayAuditCheckpoint({ allowLatest: true });
         prepareFlowMotion();
         rebuildInteractionIndex();
-        state.selectedId = state.graph.hubNodes?.[0]?.id || state.graph.walletNodes?.[0]?.id || state.graph.nodes[0]?.id || null;
+        state.selectedId = null;
         state.initialized = true;
 
         renderSolanaStatusCopy(dataset);
@@ -450,68 +459,64 @@
         updateInteractionDock();
     }
 
-    async function loadSampleDataset(options = {}) {
-        const manifest = await loadLocalJson('data/crypto/generated/manifest.json', 'Generated crypto manifest unavailable');
-        applyGeneratedManifest(manifest);
+    async function loadLocalCacheDataset(options = {}) {
+        if (!state.generatedManifest) {
+            const manifest = await loadLocalJson('data/crypto/generated/manifest.json', 'Generated crypto manifest unavailable');
+            applyGeneratedManifest(manifest);
+        }
         const requestedPath = isSafeGeneratedFixturePath(options.generatedFixturePath) ? options.generatedFixturePath : '';
-        const generatedFixturePath = requestedPath || getPreferredGeneratedFixturePath();
-        if (generatedFixturePath) {
-            const normalized = await loadGeneratedFixtureDataset(generatedFixturePath);
+        const fixtureEntry = requestedPath ? getGeneratedFixtureEntry(requestedPath) : null;
+        if (isProductionSafeGeneratedFixtureEntry(fixtureEntry)) {
+            const normalized = await loadGeneratedFixtureDataset(requestedPath);
             if (normalized) return normalized;
         }
 
-        const solanaFixture = await loadLocalJson('data/crypto/solana-sample-flow.json', 'Solana fixture file unavailable');
-        if (solanaFixture) {
-            const normalized = await normalizeSolanaFixture(solanaFixture, 'data/crypto/solana-sample-flow.json');
-            if (normalized) {
-                state.datasetSource = 'data/crypto/solana-sample-flow.json';
-                state.datasetSourceKind = 'solana_sample';
-                state.activeGeneratedFixture = null;
-                return normalized;
-            }
-        }
-
-        const sampleFixture = await loadLocalJson('data/crypto/sample-flow.json', 'Crypto sample file unavailable');
-        if (sampleFixture) {
-            state.datasetSource = 'data/crypto/sample-flow.json';
-            state.datasetSourceKind = 'legacy_sample';
-            state.activeGeneratedFixture = null;
-            return sampleFixture;
-        }
-
-        console.warn('CryptoPhotonic sample data fell back to built-in dev sample');
-        state.datasetSource = 'built_in_dev_sample';
-        state.datasetSourceKind = 'built_in';
+        state.datasetSource = 'local_cache_empty';
+        state.datasetSourceKind = 'generated';
         state.activeGeneratedFixture = null;
-        return core.getSampleDataset();
+        return createEmptyDataset(DATA_MODES.GENERATED, {
+            local_cache_required: true
+        });
     }
 
     async function loadGeneratedFixtureDataset(path) {
-        const fixture = await loadLocalJson(path, 'Generated crypto fixture unavailable');
+        const fixtureEntry = getGeneratedFixtureEntry(path);
+        if (!isProductionSafeGeneratedFixtureEntry(fixtureEntry)) {
+            state.activeGeneratedFixture = null;
+            return null;
+        }
+
+        const fixture = await loadLocalJson(path, 'Generated provider cache unavailable');
         if (!fixture) return null;
+        if (!isProductionSafeGeneratedFixturePayload(fixture, fixtureEntry)) {
+            state.activeGeneratedFixture = null;
+            return null;
+        }
 
         const normalized = await normalizeSolanaFixture(fixture, path);
         if (!normalized) return null;
 
-        const fixtureEntry = getGeneratedFixtureEntry(path);
         const transactionCount = getFixtureTransactionCount(fixture, fixtureEntry);
         normalized.metadata = {
             ...(normalized.metadata || {}),
             ...(fixture.metadata || {}),
             source_path: path,
+            source_label: SOURCE_LABELS.generated_provider_cache,
+            provider_cache_active_graph: true,
             generated_wallet: fixtureEntry?.wallet || fixture.metadata?.wallet || '',
             generated_at: fixtureEntry?.generated_at || fixture.metadata?.generated_at || '',
             generated_transaction_count: transactionCount
         };
         state.datasetSource = path;
-        state.datasetSourceKind = 'generated';
+        state.datasetSourceKind = 'generated_provider_cache';
         state.activeGeneratedFixture = {
             path,
             wallet: normalized.metadata.generated_wallet,
             generated_at: normalized.metadata.generated_at,
             transaction_count: transactionCount,
             source: fixtureEntry?.source || fixture.metadata?.source || '',
-            sanitized: fixtureEntry?.sanitized === true || fixture.metadata?.sanitized === true
+            sanitized: fixtureEntry?.sanitized === true || fixture.metadata?.sanitized === true,
+            provider_cache: true
         };
         return normalized;
     }
@@ -519,6 +524,7 @@
     function applyGeneratedManifest(manifest) {
         state.generatedManifest = manifest && typeof manifest === 'object' ? manifest : null;
         state.generatedFixtures = getValidGeneratedFixtures(state.generatedManifest);
+        state.generatedSampleFixtures = state.generatedFixtures.filter(item => !isProductionSafeGeneratedFixtureEntry(item));
     }
 
     function getValidGeneratedFixtures(manifest) {
@@ -526,34 +532,39 @@
 
         const entries = [];
         const seen = new Set();
-        const addEntry = item => {
+        const addEntry = (item, classHint = '') => {
             const path = typeof item === 'string' ? item.trim() : typeof item?.path === 'string' ? item.path.trim() : '';
             if (!isSafeGeneratedFixturePath(path) || seen.has(path)) return;
             seen.add(path);
-            entries.push({
+            const entry = {
+                ...(typeof item === 'object' && item ? item : {}),
                 path,
                 wallet: typeof item?.wallet === 'string' ? item.wallet : '',
                 generated_at: typeof item?.generated_at === 'string' ? item.generated_at : '',
                 transaction_count: Number.isFinite(Number(item?.transaction_count)) ? Number(item.transaction_count) : null,
                 source: typeof item?.source === 'string' ? item.source : '',
-                sanitized: item?.sanitized === true
-            });
+                sanitized: item?.sanitized === true,
+                manifest_class: classHint
+            };
+            entry.production_safe_cache_candidate = isProductionSafeGeneratedFixtureEntry(entry);
+            entries.push(entry);
         };
 
-        const fixtures = Array.isArray(manifest.fixtures) ? manifest.fixtures : [];
-        fixtures.forEach(addEntry);
-        addEntry(manifest.active_fixture);
+        const providerFixtures = Array.isArray(manifest.provider_cache_fixtures) ? manifest.provider_cache_fixtures : [];
+        providerFixtures.forEach(item => addEntry(item, 'provider_cache'));
+        const sampleFixtures = Array.isArray(manifest.sample_fixtures) ? manifest.sample_fixtures : [];
+        sampleFixtures.forEach(item => addEntry(item, 'sample'));
         return entries;
     }
 
     function getPreferredGeneratedFixturePath() {
-        const activeFixture = typeof state.generatedManifest?.active_fixture === 'string'
-            ? state.generatedManifest.active_fixture.trim()
+        const activeFixture = typeof state.generatedManifest?.active_provider_cache_candidate === 'string'
+            ? state.generatedManifest.active_provider_cache_candidate.trim()
             : '';
-        if (isSafeGeneratedFixturePath(activeFixture) && state.generatedFixtures.some(item => item.path === activeFixture)) {
+        if (isSafeGeneratedFixturePath(activeFixture) && state.generatedFixtures.some(item => item.path === activeFixture && isProductionSafeGeneratedFixtureEntry(item))) {
             return activeFixture;
         }
-        return state.generatedFixtures[0]?.path || '';
+        return state.generatedFixtures.find(item => isProductionSafeGeneratedFixtureEntry(item))?.path || '';
     }
 
     function getGeneratedFixtureEntry(path) {
@@ -568,6 +579,54 @@
         const suffix = path.slice(GENERATED_FIXTURE_DIR.length);
         if (!suffix || !suffix.endsWith('.json')) return false;
         return suffix.split('/').every(part => part && part !== '.' && part !== '..');
+    }
+
+    function isProductionSafeGeneratedFixtureEntry(entry = null) {
+        if (!entry || typeof entry !== 'object') return false;
+        const sourceText = [
+            entry.path,
+            entry.source,
+            entry.cache_origin,
+            entry.cache_class,
+            entry.cache_artifact_class
+        ].join(' ').toLowerCase();
+        const providerCacheManifestEntry = entry.manifest_class === 'provider_cache';
+        const providerCacheDerived = entry.provider_cache === true
+            || entry.provider_cache_derived === true
+            || entry.provider_fetched === true
+            || entry.cache_origin === 'provider_fetched'
+            || entry.cache_class === 'provider_cache'
+            || entry.cache_artifact_class === 'provider_cache'
+            || sourceText.includes('provider_cache');
+        const sampleDevPath = /(^|[._/-])(sample|mock|placeholder|dev|test)([._/-]|$)/.test(sourceText);
+        return providerCacheManifestEntry
+            && providerCacheDerived
+            && entry.sanitized === true
+            && entry.sample !== true
+            && entry.fixture !== true
+            && entry.fixture_only !== true
+            && entry.sample_fixture_only !== true
+            && entry.production_safe_cache_candidate !== false
+            && entry.local_cache_selectable !== false
+            && !sampleDevPath
+            && entry.browser_provider_calls === false
+            && entry.provider_keys_included === false
+            && entry.raw_provider_payloads_included !== true
+            && entry.provider_request_url_included !== true
+            && entry.provider_headers_included !== true;
+    }
+
+    function isProductionSafeGeneratedFixturePayload(payload = {}, entry = null) {
+        const metadata = payload.metadata || {};
+        const flags = payload.boundary_flags || {};
+        const cache = payload.cache_summary || {};
+        return isProductionSafeGeneratedFixtureEntry(entry) && isProductionSafeGeneratedFixtureEntry({
+            manifest_class: entry?.manifest_class,
+            ...cache,
+            ...flags,
+            ...metadata,
+            path: entry?.path || metadata.source_path || ''
+        });
     }
 
     function getFixtureTransactionCount(fixture, fixtureEntry = null) {
@@ -673,7 +732,7 @@
         }
 
         if (state.dataMode === DATA_MODES.LIVE) {
-            switchDataMode(DATA_MODES.GENERATED);
+            switchDataMode(DATA_MODES.WALLET);
             return state.live;
         }
 
@@ -717,6 +776,7 @@
 
         state.live.inFlight = true;
         const requestModeVersion = state.modeVersion;
+        renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
         try {
             const separator = state.live.endpoint.includes('?') ? '&' : '?';
             const response = await fetch(`${state.live.endpoint}${separator}limit=${WORKER_FEED_LIMIT}`, {
@@ -730,12 +790,14 @@
             }
 
             const payload = await response.json();
-            const events = Array.isArray(payload?.events) ? payload.events : [];
+            const rawEvents = Array.isArray(payload?.events) ? payload.events : [];
+            const events = rawEvents.filter(isRealWorkerEvent);
             if (state.dataMode !== DATA_MODES.LIVE || requestModeVersion !== state.modeVersion) return null;
             state.live.workerAvailable = true;
             state.live.lastError = '';
             state.live.lastPollAt = Date.now();
             state.live.eventCount = events.length;
+            state.live.rejectedEventCount = Math.max(0, rawEvents.length - events.length);
             const newestTimestamp = getNewestEventTimestamp(events);
             if (newestTimestamp) state.live.lastEventAt = newestTimestamp;
 
@@ -1066,6 +1128,7 @@
         state.live.lastError = '';
         state.live.eventCount = 0;
         state.live.mergedEventCount = 0;
+        state.live.rejectedEventCount = 0;
         state.live.hasFetched = false;
         state.live.lastEventAt = '';
         state.live.seenDedupeKeys.clear();
@@ -1083,6 +1146,7 @@
         state.walletLookup.lastError = '';
         state.walletLookup.eventCount = 0;
         state.walletLookup.mergedEventCount = 0;
+        state.walletLookup.rejectedEventCount = 0;
         state.walletLookup.lastRawDataset = null;
         resetHistoryState();
     }
@@ -1136,16 +1200,18 @@
 
     function getCurrentSourceLabel() {
         if (state.dataMode === DATA_MODES.WALLET) {
-            if (state.walletLookup.inFlight) return 'Wallet Lookup (loading Worker response)';
-            if (state.walletLookup.lastError && !state.walletLookup.lastLoadedAt) return 'Wallet Lookup unavailable';
+            if (state.walletLookup.inFlight) return 'Wallet Lookup: waiting for Worker response';
+            if (state.walletLookup.lastError && !state.walletLookup.lastLoadedAt) return 'Wallet Lookup: Worker unavailable';
             if (hasLoadedWalletReplacementGraph()) return SOURCE_LABELS.worker_wallet_lookup;
-            if (state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0) return 'Wallet Lookup (no returned events)';
-            return 'Wallet Lookup (waiting for address)';
+            if (state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0) return 'Wallet Lookup: zero Worker events';
+            return 'Wallet Lookup: enter wallet';
         }
         if (state.dataMode === DATA_MODES.LIVE) {
             return getLiveFeedSourceLabel();
         }
+        if (state.datasetSourceKind === 'generated_provider_cache') return SOURCE_LABELS.generated_provider_cache;
         if (isSampleCacheMetadata(state.graph?.metadata || {})) return SOURCE_LABELS.sample_cache;
+        if (!(state.generatedFixtures || []).some(item => isProductionSafeGeneratedFixtureEntry(item))) return 'Local Cache: provider-fetched cache required';
         return SOURCE_LABELS[state.datasetSourceKind] || SOURCE_LABELS.built_in;
     }
 
@@ -1162,42 +1228,37 @@
             if (state.walletLookup.inFlight) return 'Wallet Lookup is loading a sanitized Worker response. The active graph remains an empty replacement shell until the Worker response is applied.';
             if (state.walletLookup.lastError && !state.walletLookup.lastLoadedAt) return 'Wallet Lookup is unavailable for this request. No fixture, live feed, staged history, or provider data is merged.';
             if (state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0) return 'Wallet Lookup completed through the secure Worker, but no recent sanitized events were returned. No wallet relationships are implied.';
-            return 'Wallet Lookup replaces the active graph with one secure Worker response. It is not merged with generated fixtures, Live Feed events, or staged history.';
+            return 'Wallet Lookup replaces the active graph with one secure Worker response. It is not merged with Local Cache, Live Feed events, or staged history.';
         }
         if (state.dataMode === DATA_MODES.LIVE) {
-            if (!state.live.endpointValid) return 'Live Feed is unavailable because the Worker feed endpoint is not configured for this host. The browser does not call chain providers directly.';
-            if (state.live.lastError && !hasLoadedLiveFeedEvents()) return `${state.live.lastError}. Live Feed uses only sanitized Worker events and never calls chain providers directly.`;
-            if (!hasLoadedLiveFeedEvents()) return 'Live Feed is waiting for sanitized Worker events. It is not a direct provider connection and does not imply live graph activity until events are returned and shown.';
+            if (!state.live.endpointValid) return 'Worker endpoint missing. Live Feed stays empty, and the browser does not call chain providers directly.';
+            if (state.live.lastError && !hasLoadedLiveFeedEvents()) return `Worker error: ${state.live.lastError}. Live Feed uses only sanitized Worker events and never calls chain providers directly.`;
+            if (state.live.workerAvailable && state.live.rejectedEventCount > 0 && state.live.eventCount === 0) return 'Worker reachable but only sample/dev events were returned. Live Feed remains empty because those events are not active graph data.';
+            if (state.live.workerAvailable && state.live.eventCount === 0) return 'Worker reachable but zero events. Live Feed remains an empty graph because no Worker events were returned.';
+            if (!hasLoadedLiveFeedEvents()) return 'Waiting for Worker response. Live Feed does not look active until Worker events are returned and rendered.';
             return 'Live Feed shows only sanitized Worker events already returned by the Worker. No provider keys, wallet-history pages, or browser provider calls are used.';
         }
-        if (!state.live.endpointValid) {
-            return 'Generated Fixture uses local sample files. Load Activity in Wallet Lookup asks the secure Worker for recent activity.';
-        }
-        if (state.walletLookup.eventCount > 0 || state.walletLookup.mergedEventCount > 0) {
-            return 'Generated Fixture uses local sample files. Wallet Lookup results stay separate and replace the graph only when loaded.';
-        }
-        if (state.live.workerAvailable) {
-            return 'Browser fetches only sanitized Worker feed events. No provider keys or direct provider calls are used.';
-        }
         if (isSampleCacheMetadata(state.graph?.metadata || {})) {
-            return 'Sample Cache mode uses local fixture/cache JSON for repeatable parser and replay QA. It is not live chain history, and Wallet Lookup/Live Feed remain separate Worker-backed modes.';
+            return 'Sample cache artifacts are dev/test only and cannot be active production graph data.';
         }
-        if (state.datasetSourceKind === 'generated') {
-            return 'Generated Fixture uses local sample/cache files for repeatable QA. Wallet Lookup and Live Feed remain separate Worker-backed modes.';
+        if (state.datasetSourceKind === 'generated_provider_cache') {
+            return 'Local Cache is using an explicitly selected provider-fetched cache artifact with non-sample metadata. It remains static and browser-safe.';
         }
-        return 'Generated Fixture uses local sample/cache files. Wallet Lookup and Live Feed remain separate Worker-backed modes.';
+        return 'Local Cache requires an explicitly selected provider-fetched generated cache. Sample fixtures stay dev/test only, so the active graph remains empty.';
     }
 
     function getLiveStatusLabel() {
-        if (!state.live.endpointValid) return 'Worker Feed OFF / endpoint unavailable';
-        if (!state.live.enabled) return `Worker Feed OFF / polls every ${Math.round(state.live.pollMs / 1000)}s when enabled`;
-        if (state.live.inFlight) return 'Polling Worker Feed';
+        if (!state.live.endpointValid) return 'Worker endpoint missing';
+        if (!state.live.enabled) return 'Live Feed off';
+        if (state.live.inFlight) return 'waiting for Worker response';
         if (hasLoadedLiveFeedEvents()) {
             const merged = `${state.live.mergedEventCount} merged`;
-            return `Worker Feed OK / ${merged}`;
+            return `Worker events loaded / ${merged}`;
         }
-        if (state.live.workerAvailable) return 'Worker reachable / no events loaded';
-        return state.live.lastError || 'Waiting for Worker Feed';
+        if (state.live.workerAvailable && state.live.rejectedEventCount > 0 && state.live.eventCount === 0) return 'Worker reachable but zero events';
+        if (state.live.workerAvailable) return 'Worker reachable but zero events';
+        if (state.live.lastError) return 'Worker error';
+        return 'waiting for Worker response';
     }
 
     function hasLoadedLiveFeedEvents() {
@@ -1205,20 +1266,21 @@
     }
 
     function getLiveFeedSourceLabel() {
-        if (!state.live.endpointValid) return 'Live Feed unavailable (Worker endpoint)';
-        if (state.live.inFlight) return 'Live Feed polling Worker';
+        if (!state.live.endpointValid) return 'Live Feed: Worker endpoint missing';
+        if (state.live.inFlight) return 'Live Feed: waiting for Worker response';
         if (hasLoadedLiveFeedEvents()) return SOURCE_LABELS.worker_feed;
-        if (state.live.lastError) return 'Live Feed unavailable (Worker endpoint)';
-        if (state.live.workerAvailable) return 'Live Feed waiting (0 Worker events)';
-        return 'Live Feed pending Worker response';
+        if (state.live.lastError) return 'Live Feed: Worker error';
+        if (state.live.workerAvailable && state.live.rejectedEventCount > 0 && state.live.eventCount === 0) return 'Live Feed: Worker reachable but zero events';
+        if (state.live.workerAvailable) return 'Live Feed: Worker reachable but zero events';
+        return 'Live Feed: waiting for Worker response';
     }
 
     function getLiveFeedToggleTitle() {
-        if (!state.live.endpointValid) return 'Live Feed unavailable: Worker feed endpoint is not configured for this host.';
+        if (!state.live.endpointValid) return 'Worker endpoint missing. Configure a Worker feed endpoint before Live Feed can load.';
         if (state.live.inFlight) return 'Live Feed is polling the Worker now.';
         if (hasLoadedLiveFeedEvents()) return 'Live Feed is showing sanitized Worker events only. No browser provider calls are made.';
-        if (state.dataMode === DATA_MODES.LIVE && state.live.workerAvailable) return 'Worker responded, but no sanitized events are loaded into the graph yet.';
-        if (state.live.lastError) return `${state.live.lastError}. No browser provider calls are made.`;
+        if (state.dataMode === DATA_MODES.LIVE && state.live.workerAvailable) return 'Worker reachable but zero events. No active graph data is shown.';
+        if (state.live.lastError) return `Worker error: ${state.live.lastError}. No browser provider calls are made.`;
         return 'Switch to sanitized Worker event feed. No browser provider calls are made.';
     }
 
@@ -1228,6 +1290,32 @@
 
     function getWorkerEventDedupeKey(event = {}) {
         return String(event.dedupe_key || event.id || event.signature || '').trim();
+    }
+
+    function isRealWorkerEvent(event = {}) {
+        const metadata = event.metadata || {};
+        const flags = [
+            event.sample,
+            event.fixture,
+            event.mock,
+            event.placeholder,
+            metadata.sample,
+            metadata.fixture,
+            metadata.mock,
+            metadata.placeholder
+        ];
+        if (flags.some(value => value === true)) return false;
+        const sourceText = [
+            event.ingestion_source,
+            event.source,
+            event.source_kind,
+            event.cache_origin,
+            metadata.ingestion_source,
+            metadata.source,
+            metadata.source_kind,
+            metadata.cache_origin
+        ].join(' ').toLowerCase();
+        return !/\b(sample|fixture|mock|placeholder|local_test|dev_test)\b/.test(sourceText);
     }
 
     function getWorkerEventConfidence(event = {}) {
@@ -1501,9 +1589,13 @@
             || metadata.source === 'helius_enhanced_transactions_sanitized';
         const subtitle = state.root.querySelector('h1 + p');
         if (subtitle && isSolana) {
-            subtitle.textContent = isGeneratedFixture
-                ? 'Solana local runner fixture mode for sanitized wallet, SPL token, and swap-like flow graphs'
-                : 'Solana-first offline fixture mode for wallet, SPL token, and swap-like flow graphs';
+            subtitle.textContent = state.dataMode === DATA_MODES.WALLET
+                ? 'Wallet-flow topology stays empty until the Worker returns wallet activity'
+                : state.dataMode === DATA_MODES.LIVE
+                    ? 'Live Feed renders only sanitized Worker events after they are returned'
+                    : state.datasetSourceKind === 'generated_provider_cache'
+                        ? 'Local Cache graph from an explicitly selected provider-fetched artifact'
+                        : 'Local Cache requires provider-fetched data; samples remain dev/test only';
         }
 
         const statusHost = document.getElementById('crypto-status-panel') || state.root.querySelector('.crypto-panel > div:first-child');
@@ -1549,7 +1641,7 @@
             ? 'Wallet lookup'
             : state.dataMode === DATA_MODES.LIVE
                 ? 'Live feed'
-                : 'Fixture';
+                : 'Local cache';
 
         return `
             <div class="crypto-control-group crypto-source-state-block rounded-2xl border border-cyan-200/15 bg-cyan-300/10 px-3 py-2">
@@ -1624,13 +1716,16 @@
                 </div>
             `;
         }
-        const modeLabel = isSampleCacheMetadata(metadata)
-            ? 'Local sample cache'
-            : 'Local QA fixture';
+        const hasProviderCacheCandidate = (state.generatedFixtures || []).some(item => isProductionSafeGeneratedFixtureEntry(item));
+        const modeLabel = state.datasetSourceKind === 'generated_provider_cache'
+            ? 'Generated Provider Cache'
+            : hasProviderCacheCandidate
+                ? 'Local Cache waiting for explicit selection'
+                : 'Local Cache: provider-fetched cache required';
         return `
             <div class="crypto-data-source-snapshot crypto-source-summary-grid mt-2 text-white/56">
                 <div>Mode: ${escapeHtml(modeLabel)}</div>
-                <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Fixture Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
+                <div title="${escapeAttr(generatedWallet || 'Unavailable')}">Cache Wallet: ${escapeHtml(generatedWallet ? shortLongValue(generatedWallet) : '-')}</div>
                 <div>Generated: ${escapeHtml(generatedAt || '-')}</div>
                 <div>Tx: ${escapeHtml(transactionCount ?? '-')}</div>
             </div>
@@ -1934,12 +2029,12 @@
 
     function renderDataModeSwitch() {
         const modes = [
-            [DATA_MODES.GENERATED, 'Generated Fixture'],
             [DATA_MODES.WALLET, 'Wallet Lookup'],
-            [DATA_MODES.LIVE, 'Live Feed']
+            [DATA_MODES.LIVE, 'Live Feed'],
+            [DATA_MODES.GENERATED, 'Local Cache']
         ];
         const help = {
-            [DATA_MODES.GENERATED]: 'Use local reviewed fixtures for repeatable QA without relying on Worker availability.',
+            [DATA_MODES.GENERATED]: 'Use an explicitly selected provider-fetched cache artifact. Sample fixtures are dev/test only.',
             [DATA_MODES.WALLET]: 'Replace the active graph with recent activity returned by the secure Worker for one wallet.',
             [DATA_MODES.LIVE]: 'Show sanitized Worker feed events only; the browser does not call chain providers.'
         };
@@ -1979,6 +2074,24 @@
                             : 'border-cyan-200/15 bg-slate-950/45 text-cyan-50/70'
             };
         }
+        if (mode === DATA_MODES.GENERATED) {
+            const active = current && state.datasetSourceKind === 'generated_provider_cache';
+            const pending = current && !active;
+            const hasProviderCache = (state.generatedFixtures || []).some(item => isProductionSafeGeneratedFixtureEntry(item));
+            return {
+                active,
+                disabled: false,
+                label: active ? 'Local Cache Loaded' : 'Local Cache',
+                title: hasProviderCache
+                    ? fallbackTitle
+                    : 'Provider-fetched cache required. Sample fixtures are listed for dev/test only and cannot be active graph data.',
+                className: active
+                    ? 'is-active border-emerald-200/40 bg-emerald-300/16 text-emerald-50/90'
+                    : pending
+                        ? 'is-pending border-yellow-200/34 bg-yellow-300/12 text-yellow-50/86'
+                        : 'border-cyan-200/15 bg-slate-950/45 text-cyan-50/70'
+            };
+        }
         const active = current;
         return {
             active,
@@ -1995,28 +2108,35 @@
 
     function renderGeneratedFixtureSelector() {
         const fixtures = state.generatedFixtures || [];
+        const providerFixtures = fixtures.filter(item => isProductionSafeGeneratedFixtureEntry(item));
+        const sampleFixtures = fixtures.filter(item => !isProductionSafeGeneratedFixtureEntry(item));
         if (!fixtures.length) {
-            return '<div class="text-white/38">No generated fixtures listed</div>';
+            return '<div class="text-white/38">No local cache manifest entries listed. Provider-fetched cache required.</div>';
         }
 
         const options = [
-            state.datasetSourceKind === 'generated' ? '' : '<option value="">Select Generated Fixture</option>',
-            ...fixtures.map(item => {
+            state.datasetSourceKind === 'generated_provider_cache' ? '' : '<option value="">Select provider-fetched cache</option>',
+            ...providerFixtures.map(item => {
                 const label = item.wallet
                     ? `${shortLongValue(item.wallet)} (${item.transaction_count ?? '-'} tx)`
                     : item.path.replace(GENERATED_FIXTURE_DIR, '');
                 return `<option value="${escapeAttr(item.path)}" ${item.path === state.datasetSource ? 'selected' : ''}>${escapeHtml(label)}</option>`;
             })
         ].join('');
+        const sampleList = sampleFixtures.slice(0, 4).map(item => {
+            const label = item.wallet ? `${shortLongValue(item.wallet)} / ${item.path.replace(GENERATED_FIXTURE_DIR, '')}` : item.path.replace(GENERATED_FIXTURE_DIR, '');
+            return `<div class="text-white/38">${escapeHtml(label)} - dev/test sample unavailable for production view</div>`;
+        }).join('');
 
         return `
             <label class="mt-2 flex items-center gap-2 text-white/52 ${state.dataMode === DATA_MODES.GENERATED ? '' : 'opacity-55'}">
-                <span title="Local fixture retained for repeatable demos, development, and Worker outage fallback.">Generated Fixture</span>
-                <select id="crypto-generated-fixture-select" ${state.dataMode === DATA_MODES.GENERATED ? '' : 'disabled'} class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none disabled:opacity-50">
+                <span title="Local Cache accepts only provider-fetched generated cache entries with non-sample metadata.">Local Cache</span>
+                <select id="crypto-generated-fixture-select" ${state.dataMode === DATA_MODES.GENERATED && providerFixtures.length ? '' : 'disabled'} class="bg-slate-950/80 border border-cyan-200/15 rounded-xl px-2 py-1 text-cyan-50/82 outline-none disabled:opacity-50">
                     ${options}
                 </select>
             </label>
-            ${renderControlHelp('Generated fixtures stay available so graph layout, filters, replay, and wallet intelligence can be tested with stable local data.')}
+            ${renderControlHelp(providerFixtures.length ? 'Select a provider-fetched cache artifact explicitly. Sample fixtures remain dev/test only.' : 'Provider-fetched cache required. Only sample/dev fixtures are present, so no Local Cache graph is shown.')}
+            ${sampleList ? `<div class="mt-1 grid gap-1">${sampleList}</div>` : ''}
         `;
     }
 
@@ -2039,7 +2159,7 @@
         return `
             <form id="crypto-wallet-lookup-form" class="mt-3 grid gap-2">
                 <div class="text-white/38">WALLET INVESTIGATION</div>
-                ${renderControlHelp('Load Activity asks the secure Worker for recent wallet activity and replaces the current graph. Refresh repeats the last lookup without merging generated fixture, live feed, or staged history data.')}
+                ${renderControlHelp('Load Activity asks the secure Worker for recent wallet activity and replaces the current graph. Refresh repeats the last lookup without merging Local Cache, Live Feed, or staged history data.')}
                 <div class="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] gap-2 items-end">
                     <label class="grid gap-1 min-w-0 text-white/52">
                         <span title="Solana wallet address to investigate through the Worker wallet-activity endpoint.">Wallet Address</span>
@@ -2063,13 +2183,19 @@
     }
 
     function getWalletLookupStatusLabel() {
-        if (state.walletLookup.inFlight) return 'Loading from secure Worker';
-        if (state.walletLookup.lastError) return state.walletLookup.lastError;
+        if (state.walletLookup.inFlight) return 'Loading: waiting for secure Worker response.';
+        if (state.walletLookup.lastLoadedAt && state.walletLookup.rejectedEventCount > 0 && state.walletLookup.eventCount === 0) {
+            return 'Worker response loaded: sample/dev events rejected, so no graph is shown.';
+        }
+        if (state.walletLookup.lastError) {
+            if (!state.walletLookup.walletInput && !state.walletLookup.lastWallet) return 'Empty input: enter a wallet address before loading Worker activity.';
+            return `Worker unavailable: ${state.walletLookup.lastError}`;
+        }
         if (!state.walletLookup.walletInput && !state.walletLookup.lastWallet && !state.walletLookup.lastLoadedAt) {
             return 'Empty input: enter a wallet address before loading Worker activity.';
         }
         if (state.walletLookup.lastLoadedAt && state.walletLookup.eventCount === 0) {
-            return 'Worker response loaded: no recent sanitized activity returned.';
+            return 'Worker response loaded: zero events returned, so no graph is shown.';
         }
         if (state.walletLookup.eventCount > 0 && state.walletLookup.mergedEventCount === 0) {
             return 'Worker response loaded: returned events were filtered from the visible graph.';
@@ -2481,7 +2607,7 @@
             return `${intelligence.visibleLegs} visible flow legs from the current Worker wallet lookup. History and replay stay staged and preview-only.`;
         }
         if (state.dataMode === DATA_MODES.LIVE) return 'Live Feed mode is active. Use Wallet Lookup for staged history and replay investigation tools.';
-        return 'Generated Fixture mode is active. Use Wallet Lookup to replace the graph with a Worker response and unlock history/replay drill-downs.';
+        return 'Local Cache mode requires an explicitly selected provider-fetched cache. Use Wallet Lookup to load Worker data and unlock history/replay drill-downs.';
     }
 
     function renderInvestigationTabContent(tab) {
@@ -2892,9 +3018,9 @@
         return `
             <div class="crypto-tab-section">
                 <div class="crypto-empty-state">
-                    <div class="crypto-kicker">GRAPH-FIRST MODE</div>
+                    <div class="crypto-kicker">REAL DATA REQUIRED</div>
                     <h3>${escapeHtml(getCurrentSourceLabel())}</h3>
-                    <p>Use Wallet Lookup to replace the graph with a secure Worker response. History, replay, and report tools stay separate from Generated Fixture and Live Feed data.</p>
+                    <p>Use Wallet Lookup, Live Feed Worker events, or an explicitly selected provider-fetched Local Cache artifact. Sample fixtures are dev/test only and are not rendered as active graph data.</p>
                 </div>
                 <div class="crypto-summary-grid">
                     ${renderWorkspaceMetric('Source', getCurrentSourceLabel())}
@@ -5813,9 +5939,16 @@
         if (state.walletLookup.inFlight) return '';
         if (!state.walletLookup.lastWallet && !state.walletLookup.eventCount) {
             return {
-                title: 'No Wallet Loaded',
-                body: 'Enter a wallet address to request sanitized recent activity from the secure Worker. The graph will stay empty until a response is loaded, so no relationships are implied.',
+                title: 'Real Data Required',
+                body: 'Enter a wallet for Worker lookup, enable Live Feed when a Worker endpoint is configured, or explicitly select a generated Local Cache artifact created from provider-fetched data. Sample fixtures are dev/test only, so the graph stays empty until real Worker/cache data is loaded.',
                 tone: 'info'
+            };
+        }
+        if (state.walletLookup.lastWallet && state.walletLookup.rejectedEventCount > 0 && state.walletLookup.eventCount === 0 && state.walletLookup.lastLoadedAt) {
+            return {
+                title: 'Sample Events Rejected',
+                body: 'The Worker response contained only sample/dev events. Those events are not production graph data, so no wallet relationships are shown.',
+                tone: 'warn'
             };
         }
         if (state.walletLookup.lastWallet && state.walletLookup.eventCount === 0 && state.walletLookup.lastLoadedAt) {
@@ -6292,9 +6425,10 @@
             state.live.enabled = false;
             stopLivePolling();
             applyEmptyModeDataset(DATA_MODES.GENERATED);
-            const dataset = await loadSampleDataset();
+            const dataset = await loadLocalCacheDataset();
             if (state.dataMode !== DATA_MODES.GENERATED || requestModeVersion !== state.modeVersion) return state.dataMode;
             applyDataset(dataset);
+            renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
             return state.dataMode;
         }
 
@@ -6327,13 +6461,26 @@
     }
 
     async function switchGeneratedFixture(path) {
-        if (!isSafeGeneratedFixturePath(path) || (path === state.datasetSource && state.dataMode === DATA_MODES.GENERATED)) return;
+        const requestedPath = isSafeGeneratedFixturePath(path) ? path : '';
         state.dataMode = DATA_MODES.GENERATED;
         state.modeVersion += 1;
         const requestModeVersion = state.modeVersion;
         resetFlowQueueState();
         applyEmptyModeDataset(DATA_MODES.GENERATED);
-        const dataset = await loadSampleDataset({ generatedFixturePath: path });
+        if (!state.generatedManifest) {
+            const emptyDataset = await loadLocalCacheDataset();
+            if (state.dataMode !== DATA_MODES.GENERATED || requestModeVersion !== state.modeVersion) return;
+            applyDataset(emptyDataset);
+        }
+        const fixtureEntry = requestedPath ? getGeneratedFixtureEntry(requestedPath) : null;
+        if (!isProductionSafeGeneratedFixtureEntry(fixtureEntry)) {
+            const emptyDataset = await loadLocalCacheDataset();
+            if (state.dataMode !== DATA_MODES.GENERATED || requestModeVersion !== state.modeVersion) return;
+            applyDataset(emptyDataset);
+            return;
+        }
+        if (requestedPath === state.datasetSource && state.datasetSourceKind === 'generated_provider_cache') return;
+        const dataset = await loadLocalCacheDataset({ generatedFixturePath: requestedPath });
         if (state.dataMode !== DATA_MODES.GENERATED || requestModeVersion !== state.modeVersion) return;
         applyDataset(dataset);
     }
@@ -6360,6 +6507,7 @@
         resetFlowQueueState();
         state.walletLookup.eventCount = 0;
         state.walletLookup.mergedEventCount = 0;
+        state.walletLookup.rejectedEventCount = 0;
         state.walletLookup.lastRawDataset = null;
         applyEmptyModeDataset(DATA_MODES.WALLET, { wallet: normalizedWallet }, {
             preserveWalletInput: true
@@ -6390,7 +6538,8 @@
                     : payload?.message || `Worker wallet lookup returned ${response.status}`);
             }
 
-            const events = Array.isArray(payload?.events) ? payload.events : [];
+            const rawEvents = Array.isArray(payload?.events) ? payload.events : [];
+            const events = rawEvents.filter(isRealWorkerEvent);
             if (state.dataMode !== DATA_MODES.WALLET || requestModeVersion !== state.modeVersion) return null;
             const rawDataset = convertWorkerEventsToDataset(events, {
                 trackedWallet: normalizedWallet,
@@ -6401,12 +6550,15 @@
             state.walletLookup.lastWallet = normalizedWallet;
             state.walletLookup.lastLoadedAt = Date.now();
             state.walletLookup.eventCount = events.length;
+            state.walletLookup.rejectedEventCount = Math.max(0, rawEvents.length - events.length);
             state.walletLookup.mergedEventCount = walletDataset.transactions.length;
             state.walletLookup.lastRawDataset = rawDataset;
             await seedWalletHistoryFromWorkerPayload(payload, events, normalizedWallet);
             state.walletLookup.lastError = events.length && walletDataset.transactions.length
                 ? ''
-                : events.length
+                : state.walletLookup.rejectedEventCount && !events.length
+                    ? 'Worker returned only sample/dev events; no graph loaded'
+                    : events.length
                     ? 'Recent activity was filtered to remove program/noise accounts'
                     : 'No recent sanitized activity returned';
             renderSolanaStatusCopy({ metadata: state.graph?.metadata || {} });
@@ -7891,6 +8043,7 @@
         const sourceKind = mode === DATA_MODES.LIVE ? 'worker_feed' : mode === DATA_MODES.WALLET ? 'worker_wallet_lookup' : 'generated';
         state.datasetSource = sourceKind;
         state.datasetSourceKind = sourceKind;
+        state.activeGeneratedFixture = null;
         if (mode !== DATA_MODES.LIVE) resetLiveMergeState();
         if (mode !== DATA_MODES.WALLET && !options.preserveWalletInput) resetWalletLookupState();
         applyDataset(createEmptyDataset(mode, metadata), {
@@ -7904,11 +8057,12 @@
         const isLive = mode === DATA_MODES.LIVE;
         return {
             metadata: {
-                name: isWallet ? 'CryptoPhotonic Wallet Lookup' : isLive ? 'CryptoPhotonic Worker Feed' : 'CryptoPhotonic Empty Fixture',
-                environment: isLive || isWallet ? 'secure_runtime_feed' : 'sample',
+                name: isWallet ? 'CryptoPhotonic Wallet Lookup' : isLive ? 'CryptoPhotonic Worker Feed' : 'CryptoPhotonic Local Cache',
+                environment: isLive || isWallet ? 'secure_runtime_feed' : 'local_cache_empty',
                 chain: 'solana',
-                adapter: isLive || isWallet ? 'worker_event_feed' : 'local_fixture',
-                source: isWallet ? 'wallet_lookup_live_pull' : isLive ? 'secure_runtime_feed' : 'generated_fixture',
+                adapter: isLive || isWallet ? 'worker_event_feed' : 'local_cache_manifest',
+                source: isWallet ? 'wallet_lookup_live_pull' : isLive ? 'secure_runtime_feed' : 'provider_cache_required',
+                source_label: isWallet ? SOURCE_LABELS.worker_wallet_lookup : isLive ? SOURCE_LABELS.worker_feed : SOURCE_LABELS.generated,
                 wallet: core.normalizeAddress(metadata.wallet || ''),
                 wallet_lookup_mode: isWallet,
                 wallet_lookup_tracked_wallet: isWallet ? core.normalizeAddress(metadata.wallet || '') : '',
@@ -7919,7 +8073,11 @@
                 wallet_lookup_fixture_merge: false,
                 worker_response_secure: isLive || isWallet,
                 live_worker_feed_enabled: isLive,
+                provider_cache_required: !isLive && !isWallet,
+                sample_fixtures_active_graph_allowed: false,
                 live_blockchain_fetching: false,
+                browser_provider_calls: false,
+                provider_keys_included: false,
                 production_meaning: false,
                 sanitized: true
             },

@@ -2,15 +2,44 @@
   "metadata": {
     "environment": "local_static_cache_generated_manifest",
     "sanitized": true,
-    "sample": true,
-    "fixture": true,
+    "sample": false,
+    "fixture": false,
     "production_meaning": false,
     "live_blockchain_fetching": false,
     "browser_provider_calls": false,
     "provider_keys_included": false,
+    "sample_fixtures_active_graph_allowed": false,
+    "provider_cache_required_for_active_graph": true,
     "updated_at": "2026-05-21T22:59:45.345260Z"
   },
-  "active_fixture": "data/crypto/generated/sample-wallet-history.generated.sample.json",
+  "active_provider_cache_candidate": null,
+  "active_fixture": null,
+  "provider_cache_fixtures": [],
+  "sample_fixtures": [
+    {
+      "path": "data/crypto/generated/sample-wallet-history.generated.sample.json",
+      "wallet": "samplewallet11111111111111111111111111111111",
+      "generated_at": "2026-05-21T22:59:45.345260Z",
+      "transaction_count": 4,
+      "signature_group_count": 3,
+      "source": "sample_fixture_only",
+      "sanitized": true,
+      "production_meaning": false,
+      "browser_provider_calls": false,
+      "provider_keys_included": false,
+      "raw_provider_payloads_included": false,
+      "sample": true,
+      "fixture": true,
+      "sample_fixture_only": true,
+      "provider_cache": false,
+      "provider_cache_derived": false,
+      "cache_origin": "sample_fixture",
+      "cache_class": "sample_fixture",
+      "cache_artifact_class": "sample_fixture",
+      "production_safe_cache_candidate": false,
+      "local_cache_selectable": false
+    }
+  ],
   "fixtures": [
     {
       "path": "data/crypto/generated/sample-wallet-history.generated.sample.json",
@@ -22,8 +51,18 @@
       "sanitized": true,
       "production_meaning": false,
       "browser_provider_calls": false,
+      "provider_keys_included": false,
+      "raw_provider_payloads_included": false,
       "sample": true,
-      "fixture": true
+      "fixture": true,
+      "sample_fixture_only": true,
+      "provider_cache": false,
+      "provider_cache_derived": false,
+      "cache_origin": "sample_fixture",
+      "cache_class": "sample_fixture",
+      "cache_artifact_class": "sample_fixture",
+      "production_safe_cache_candidate": false,
+      "local_cache_selectable": false
     }
   ]
 }

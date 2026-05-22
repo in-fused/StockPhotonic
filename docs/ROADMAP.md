@@ -1,5 +1,13 @@
 # Roadmap Notes
 
+## D339-D348 Crypto Real-Data-Only Mode + Placeholder Removal
+
+- Removed default Crypto placeholder/sample graph behavior: first load now stays empty until Worker Wallet Lookup, Worker Live Feed events, or an explicitly selected provider-fetched Local Cache artifact is available.
+- Reframed Crypto production modes as Wallet Lookup, Live Feed, and Local Cache; sample fixtures remain dev/test artifacts and cannot masquerade as active production graph data.
+- Tightened Local Cache manifest rules so generated provider cache candidates must be non-sample, sanitized, provider-cache-derived, and free of provider keys, raw payloads, request URLs, headers, and browser provider-call instructions before selection.
+- Preserved the browser boundary: Crypto browser code still reads only static/cache/Worker-normalized data and never calls chain providers directly.
+- No production data, backend/provider/API, Worker, SEC pipeline, source pipeline, persistence/auth/storage, browser-side provider-call, or secret-handling changes are part of D339-D348.
+
 ## D329-D338 Crypto Static Cache Ingestion + Generated Fixture Builder
 
 - Added a local-only generated fixture builder that converts normalized wallet history or replay cache JSON into browser-readable CryptoPhotonic graph artifacts under `data/crypto/generated/`, with dry-run defaults and writes gated by `--write`.

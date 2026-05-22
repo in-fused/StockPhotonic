@@ -1454,7 +1454,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
         window.CryptoPhotonicWorkerWalletActivityEndpoint =
             "https://cryptophotonic-runtime.cryptophotonic-runtime.workers.dev/api/crypto/wallet-activity";
     </script>
-    <script src="js/crypto/ui.js?v=d259-functional-integrity"></script>
+    <script src="js/crypto/ui.js?v=d339-d348-real-data-only"></script>
     <script>
         if (!window.StockPhotonicConfig) {
             throw new Error('StockPhotonicConfig failed to load');
@@ -2333,7 +2333,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     },
                     {
                         label: 'DATA SOURCE / MODE',
-                        body: '<strong>Generated Fixture</strong> loads stable local sample data for repeatable testing and demos. <strong>Wallet Lookup</strong> replaces the active graph with one wallet activity response from the secure Worker. <strong>Live Feed</strong> shows sanitized Worker events only.'
+                        body: '<strong>Wallet Lookup</strong> replaces the active graph with one wallet activity response from the secure Worker. <strong>Live Feed</strong> shows sanitized Worker events only after Worker events are returned. <strong>Local Cache</strong> requires an explicitly selected provider-fetched cache artifact; samples are dev/test only.'
                     },
                     {
                         label: 'WALLET INVESTIGATION',
@@ -2361,7 +2361,7 @@ python scripts/sec_signal_candidates_write.py --files data/cache/sec/filings/000
                     },
                     {
                         label: 'RECOMMENDED FIRST ACTION',
-                        body: 'Start with Generated Fixture to learn the controls. Then enter a wallet and use Load Activity to replace the graph with Worker-returned activity. Use filters and the timeline before drawing conclusions.'
+                        body: 'Start by entering a wallet and using Load Activity to request Worker-returned activity. Local sample fixtures remain dev/test artifacts and are not active graph data.'
                     }
                 ]
             };

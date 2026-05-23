@@ -26,6 +26,20 @@ Local Cache entries are selectable only when manifest and artifact metadata show
 
 The browser still never calls providers directly. Provider keys remain local/server-side only.
 
+## D369-D378 Crypto Worker/API Runtime Endpoints
+
+D369-D378 implements the first real server-side runtime bridge for the D349-D368 contract. Browser code calls only same-origin `/api/crypto/*` endpoints; those API handlers read provider credentials from server environment variables and call Helius server-side only.
+
+Runtime boundaries:
+
+- `HELIUS_API_KEY` is read only from the server environment and is never returned to the browser.
+- `/api/crypto/provider-diagnostics`, `/api/crypto/wallet-activity`, `/api/crypto/wallet-history`, and `/api/crypto/events` return sanitized metadata and normalized rows only.
+- Provider request URLs, headers, bearer tokens, keyed URLs, raw provider payloads, signing material, and secret values are not returned or cached.
+- The runtime cache is in-memory, TTL-bounded, best-effort, and non-persistent; it stores only sanitized response payloads and emits cache ids/status metadata.
+- Missing wallet and missing provider-key states return explicit empty/error metadata with no sample/mock/dev fallback.
+- Wallet Lookup remains a replacement graph path, wallet-history remains preview/review-only staged pagination, and Live Feed does not fake global events when no wallet source is supplied.
+- Sample fixtures and generated sample files remain dev/test artifacts and cannot become active graph data.
+
 ## D349-D368 Real Provider Ingestion + Worker Polling Safeguards
 
 D349-D368 adds the guarded path for legitimate Solana wallet transaction history backfill and Worker-backed event polling without moving provider access into the browser.

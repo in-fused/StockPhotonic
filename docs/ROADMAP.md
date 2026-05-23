@@ -1,5 +1,15 @@
 # Roadmap Notes
 
+## D369-D378 Crypto Worker/API Runtime Endpoints
+
+- Added the first real server-side CryptoPhotonic runtime bridge for `/api/crypto/provider-diagnostics`, `/api/crypto/wallet-activity`, `/api/crypto/wallet-history`, and `/api/crypto/events` using the D349-D368 response contract.
+- Added shared server helpers for Helius provider access, browser-safe normalization, and TTL-bounded in-memory cache metadata; provider calls are server-side only and read `HELIUS_API_KEY` from environment variables.
+- Wallet Lookup now has a real bounded provider-backed response path with explicit missing-wallet, provider-unavailable, rate-limit, cursor, provider-limit, and zero-event states, with no sample graph fallback.
+- Wallet-history pagination returns normalized preview/review-only transaction rows and never merges staged history into the active graph.
+- Live events return recent real provider events only for a supplied wallet and return an explicit zero-events state instead of faking a global feed when no wallet is supplied.
+- Tightened Crypto UI endpoint resolution so browser calls stay on same-origin `/api/crypto/*` endpoints even if older external Worker globals are present.
+- No production data, SEC pipeline, source pipeline, persistence/auth/storage, browser-side provider-call, sample fallback, or secret-exposure changes are part of D369-D378.
+
 ## D349-D368 Crypto Real Provider Ingestion + Worker Polling Safeguards
 
 - Added a guarded local/server-side provider ingestion path for legitimate Solana wallet history backfill: network is opt-in with `--allow-network`, writes are opt-in with `--write`, wallet scope is explicit, provider keys are environment-only, and request/page/retry/cooldown/backoff limits are bounded.

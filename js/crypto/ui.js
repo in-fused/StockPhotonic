@@ -719,13 +719,13 @@
     function resolveWorkerEndpoint({ configuredValue, defaultEndpoint }) {
         const hasConfiguredValue = typeof configuredValue === 'string' && configuredValue.trim();
         const rawEndpoint = hasConfiguredValue ? configuredValue.trim() : defaultEndpoint;
-        const fallback = { endpoint: defaultEndpoint, valid: false, configured: Boolean(hasConfiguredValue) };
+        const fallback = { endpoint: defaultEndpoint, valid: true, configured: true };
         if (!hasConfiguredValue) return fallback;
         try {
             const parsed = parseWorkerEndpointUrl(rawEndpoint);
             if (isSafeWorkerUrl(parsed, {
                 expectedPath: defaultEndpoint,
-                allowExternal: Boolean(hasConfiguredValue)
+                allowExternal: false
             })) {
                 return {
                     endpoint: parsed.origin === window.location.origin ? parsed.pathname : parsed.href,

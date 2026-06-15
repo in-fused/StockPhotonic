@@ -34,6 +34,9 @@ RAW_HEADER_KEYS = {
 }
 
 PROVIDER_URL_PATTERN = re.compile(r"https?://api\.helius\.xyz\b|api-key=", re.IGNORECASE)
+PROVIDER_URL_EXCLUSION_FLAGS = {
+    "provider_request_url_included",
+}
 
 
 def main() -> int:
@@ -142,7 +145,8 @@ def audit_json_tree(file_path: Path, value: Any, warnings: list[str], failures: 
             if key_lower in RAW_HEADER_KEYS:
                 failures.append(f"{file_path}: raw request/header field is not allowed at {child_path}")
             if "provider" in key_lower and "url" in key_lower:
-                failures.append(f"{file_path}: provider URL field is not allowed at {child_path}")
+                if not is_false_provider_url_exclusion_flag(key_lower, child):
+                    failures.append(f"{file_path}: provider URL field is not allowed at {child_path}")
             audit_json_tree(file_path, child, warnings, failures, child_path)
         return
 
@@ -153,6 +157,10 @@ def audit_json_tree(file_path: Path, value: Any, warnings: list[str], failures: 
 
     if isinstance(value, str) and PROVIDER_URL_PATTERN.search(value):
         failures.append(f"{file_path}: provider private URL or API-key query found at {path}")
+
+
+def is_false_provider_url_exclusion_flag(key_lower: str, value: Any) -> bool:
+    return key_lower in PROVIDER_URL_EXCLUSION_FLAGS and value is False
 
 
 if __name__ == "__main__":

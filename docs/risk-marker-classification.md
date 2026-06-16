@@ -148,9 +148,14 @@ These are not confirmed secret leaks or production mock-data paths, but they sho
 |---|---|---|
 | `python scripts\crypto\fixture_audit.py --path data\crypto\generated` fails on `provider_request_url_included` fields in `data/crypto/generated/sample-wallet-history.generated.sample.json`. | The field values are false flags, not URLs, but the audit tool currently treats the field name as disallowed. | Validation/tooling follow-up, not evidence of a leaked provider URL. |
 | `data/crypto/generated/solana-wallet-flow.9yhpCwGYTWycAAd41X3rKpH328iHSrU7TrQWeVsoGcX5.json` contains real-looking public Solana transaction fields and token-transfer fields. | It is sanitized and non-production by metadata, but lacks the newer full provider-cache gating fields inspected in the current docs. | Generated/static cache artifact with metadata follow-up. |
-| `worker/crypto-runtime/wrangler.toml` contains `CRYPTO_HELIUS_ALLOWED_WALLETS` with one public Solana address. | This is not a secret, token, private key, private URL, or local path, but it should stay intentionally controlled and small. | Intentional Worker allowlist config if the address is approved for committed config. |
 | `lana` and generic wallet-history providers are marked as placeholders. | They are disabled/Worker-side placeholders and do not call providers from the browser, but marker scans will continue to flag them. | Intentional disabled-provider reference. |
 | D1 storage `stub` naming appears in Worker storage code. | It is a named fallback path for an unimplemented binding, not production data. | Intentional disabled storage fallback. |
+
+### Confirmed Follow-up Findings
+
+| Finding | Confirmation | Current classification |
+|---|---|---|
+| `worker/crypto-runtime/wrangler.toml` contains `CRYPTO_HELIUS_ALLOWED_WALLETS` with one public Solana address. | Confirmed as intentionally committed public Worker allowlist configuration for the controlled Helius webhook scope. The value is a public Solana address only, not a secret, token, private key, private URL, signing value, or local path. | Intentional public Worker allowlist config. Keep the committed list to 1 to 3 approved controlled wallet addresses. |
 
 ### Actual Risks Requiring Fixes
 
@@ -166,13 +171,14 @@ The only failing check found during this audit was the generated fixture audit d
 - `placeholder` is expected in HTML input placeholders, candidate guardrails, disabled provider records, and placeholder-only Cloudflare binding examples.
 - `localhost` and `127.0.0.1` are expected in local Worker README commands and local URL parser fallbacks.
 - `stub` is expected only for backend-only disabled provider or storage fallback paths.
+- `CRYPTO_HELIUS_ALLOWED_WALLETS` in `worker/crypto-runtime/wrangler.toml` is intentionally public Worker configuration for a small controlled Helius webhook allowlist. It must contain only approved public Solana wallet addresses, never secrets or signing material.
 - `hardcoded` appears in documentation warning against hardcoded provider-plan assumptions.
 
 ## Follow-up Recommendations
 
 1. Review `scripts/crypto/fixture_audit.py` versus generated sample metadata fields such as `provider_request_url_included: false`; either allow boolean exclusion flags or rename generated metadata fields so the audit passes without weakening secret detection.
 2. Decide the intended class for `data/crypto/generated/solana-wallet-flow.9yhpCwGYTWycAAd41X3rKpH328iHSrU7TrQWeVsoGcX5.json`: regenerate it with current provider-cache metadata, classify it as an explicit fixture, or remove it only after human review confirms it is not needed.
-3. Confirm the committed `CRYPTO_HELIUS_ALLOWED_WALLETS` public address in `worker/crypto-runtime/wrangler.toml` is intentionally public and controlled.
+3. Keep the committed `CRYPTO_HELIUS_ALLOWED_WALLETS` value intentionally public and controlled; replace it only after review confirms the new value is an approved public Solana wallet address.
 4. Keep future marker cleanup targeted. Do not remove docs, validators, sanitizer patterns, or fixtures solely because they contain marker words.
 5. Rerun the required marker grep after future artifact or fixture changes and update this file when classifications change.
 

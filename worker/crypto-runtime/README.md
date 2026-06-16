@@ -283,6 +283,8 @@ Newest-first provider pages are marked with `oldest_first_reconstruction_require
 
 The Helius route is intentionally limited to 1 to 3 wallets. The source contains a static placeholder watchlist, and deployments can set `CRYPTO_HELIUS_ALLOWED_WALLETS` to a comma-separated list of up to three controlled wallet addresses. Events with no wallet match are rejected and not stored.
 
+The committed `wrangler.toml` value is intentionally public Worker configuration for this controlled allowlist. It is a public Solana wallet address only, not an API key, bearer token, private key, private RPC URL, signing value, or local/private service URL. Keep the list small and commit changes only after the replacement address is confirmed as an approved controlled wallet.
+
 This webhook watchlist is separate from the controlled wallet lookup endpoint. Do not broaden webhook ingestion beyond the 1 to 3 configured wallets, and do not add signing, swap execution, private RPC calls, or unrestricted background polling.
 
 ## Storage Modes

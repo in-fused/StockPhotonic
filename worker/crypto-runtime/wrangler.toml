@@ -7,6 +7,8 @@ workers_dev = true
 CRYPTO_RUNTIME_MODE = "mvp-dev"
 LIVE_PROVIDER_FETCHING = "false"
 ENVIRONMENT = "production"
+# Intentional public Solana allowlist address for the controlled Helius webhook scope.
+# This is not a secret, key, token, private URL, or signing value.
 CRYPTO_HELIUS_ALLOWED_WALLETS = "6auWkSk8nTL1XyuRPF5zG3WSwsFvLHDJn3TJWRY2JB3x"
 
 # Future Cloudflare binding placeholders only. Do not commit real IDs here.

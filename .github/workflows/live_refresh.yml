@@ -130,7 +130,7 @@ jobs:
         run: python scripts/validate_data.py
 
       - name: Upload live refresh artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bounded-live-refresh-artifacts
           retention-days: 14
